@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<!--
+/*******************************************************************************
+ * Copyright (c) 2012 VMware, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     VMware, Inc. - initial API and implementation
+ *******************************************************************************/
+-->
+<plugin>
+	<extension point="org.eclipse.wst.server.core.runtimeTypes">
+		<runtimeType id="org.cloudfoundry.appcloudserver.runtime.10"
+			version="1.0" 
+			name="Cloud Foundry (Runtime) v1.0" 
+			description="Cloud Foundry supports J2EE 1.2, 1.3, 1.4 and Java EE 5 Web modules."
+			vendor="VMware" 
+			class="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerRuntime">
+			<moduleType types="wst.web" versions="1.0" />
+			<moduleType types="jst.web" versions="2.2,2.3,2.4,2.5" />
+			<moduleType types="jst.utility" versions="1.0"/>
+			<moduleType types="grails.app" versions="1.0"/>
+		</runtimeType>
+	</extension>
+	<extension point="org.eclipse.wst.server.core.serverTypes">
+		<serverType
+	        behaviourClass="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour"
+	        class="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer"
+	        description="Publishes and runs J2EE Web projects to Cloud Foundry."
+	        hasConfiguration="false"
+	        id="org.cloudfoundry.appcloudserver.10"
+	        initialState="stopped"
+	        name="Cloud Foundry"
+	        runtime="true"
+	        runtimeTypeId="org.cloudfoundry.appcloudserver.runtime.10"
+	        startTimeout="600000"
+	        stopTimeout="60000">
+		</serverType>
+	</extension>
+	<extension point="org.eclipse.wst.common.project.facet.core.defaultFacets">
+    	<default-facets>
+      		<runtime-component id="org.cloudfoundry.appcloudserver"/>
+        	<facet id="wst.jsdt.web" version="1.0"/>
+    	</default-facets>
+  	</extension>
+  	<extension point="org.eclipse.wst.common.project.facet.core.runtimes">
+		<runtime-component-type id="org.cloudfoundry.appcloudserver" />
+		<runtime-component-version type="org.cloudfoundry.appcloudserver" version="1.0" />
+		
+		<adapter>
+			<runtime-component id="org.cloudfoundry.appcloudserver" />
+			<factory class="org.eclipse.jst.server.core.internal.RuntimeClasspathProvider$Factory" />
+			<type class="org.eclipse.jst.common.project.facet.core.IClasspathProvider" />
+		</adapter>
+		<adapter>
+	      <runtime-component id="org.cloudfoundry.appcloudserver"/>
+	      <factory class="org.eclipse.wst.server.ui.FacetRuntimeComponentLabelProvider"/>
+	      <type class="org.eclipse.wst.common.project.facet.ui.IRuntimeComponentLabelProvider"/>
+	    </adapter>
+		<supported>
+			<runtime-component id="org.cloudfoundry.appcloudserver" version="1.0" />
+			<facet id="jst.web" version="2.2,2.3,2.4,2.5" />
+			<facet id="jst.utility" version="1.0"/>
+			<facet id="grails.app" version="1.0"/>
+    	</supported>
+	</extension>
+	<extension point="org.eclipse.jst.server.core.runtimeFacetMappings">
+		<runtimeFacetMapping 
+			runtimeTypeId="org.cloudfoundry.appcloudserver.runtime.10"
+			runtime-component="org.cloudfoundry.appcloudserver" version="1.0" />
+	</extension>
+	<extension point="org.eclipse.jst.server.core.runtimeClasspathProviders">
+	     <runtimeClasspathProvider
+	        id="org.cloudfoundry.appcloudserver.classPathProvider"
+	        runtimeTypeIds="org.cloudfoundry.appcloudserver.runtime.10"
+	        class="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryRuntimeClasspathProvider"/>
+     </extension>
+     <extension point="org.eclipse.wst.server.ui.serverImages">
+		<image 
+			id="org.cloudfoundry.appcloudserver" 
+			icon="icons/obj16/cloud_obj.png"
+			typeIds="org.cloudfoundry.appcloudserver.10, org.cloudfoundry.appcloudserver.runtime.10" />
+	</extension>
+	<extension point="org.eclipse.wst.server.ui.wizardFragments">
+		<fragment
+			id="org.cloudfoundry.appcloudserver.10"
+			typeIds="org.cloudfoundry.appcloudserver.10"
+			class="org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryServerWizardFragment"/>
+	</extension>
+	 <extension
+       point="org.cloudfoundry.ide.eclipse.server.core.branding">
+	    <service
+           name="Cloud Foundry"
+           provideServices="true"
+           remoteSystemTypeId="org.cloudfoundry.cloudfoundryserver"
+           serverDisplayName="VMware Cloud Foundry"
+           serverTypeId="org.cloudfoundry.appcloudserver.10"
+           wizardBanner="icons/wizban/wizban_cloudfoundry.png">
+        <defaultUrl
+              name="VMware Cloud Foundry"
+              url="https://api.cloudfoundry.com">
+        </defaultUrl>
+        <cloudUrl
+              name="Microcloud"
+              url="http://api.mycloud.cloudfoundry.me">
+           <wildcard
+                 name="mycloud">
+           </wildcard>
+        </cloudUrl>
+        <cloudUrl
+              name="Local cloud"
+              url="http://api.vcap.me">
+        </cloudUrl>
+    </service>
+     </extension>
+    <extension
+       point="org.eclipse.rse.core.systemTypes">
+    <systemType
+          icon="icons/obj16/cloud_obj.png"
+          iconLive="icons/obj16/cloud_obj.png"
+          id="org.cloudfoundry.cloudfoundryserver"
+          label="VMware"
+          name="VMware"
+          subsystemConfigurationIds="cloudserver.applications">
+    </systemType>
+ </extension>
+</plugin>

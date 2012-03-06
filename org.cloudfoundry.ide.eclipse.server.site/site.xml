@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/*******************************************************************************
+ * Copyright (c) 2012 VMware, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     VMware, Inc. - initial API and implementation
+ *******************************************************************************/
+-->
+<site>
+   <feature url="features/org.cloudfoundry.ide.eclipse.server_0.0.0.jar" id="org.cloudfoundry.ide.eclipse.server" version="0.0.0">
+      <category name="Core / Cloud Foundry Integration"/>
+   </feature>
+   <feature url="features/org.springframework.ide.eclipse.uaa.feature_0.0.0.jar" id="org.springframework.ide.eclipse.uaa.feature" version="0.0.0">
+      <category name="Core / Cloud Foundry Integration"/>
+   </feature>
+   <category-def name="Core / Cloud Foundry Integration" label="Core / Cloud Foundry Integration"/>
+</site>

@@ -1,0 +1,165 @@
+diff --git src/main/java/org/cloudfoundry/client/lib/CloudFoundryClient.java src/main/java/org/cloudfoundry/client/lib/CloudFoundryClient.java
+index df8b8d5..a7e51d7 100644
+--- src/main/java/org/cloudfoundry/client/lib/CloudFoundryClient.java
++++ src/main/java/org/cloudfoundry/client/lib/CloudFoundryClient.java
+@@ -358,6 +358,7 @@
+ 			if (callback != null) callback.onMatchedFileNames(matchedFileNames);
+ 
+ 			byte[] incrementalUpload = processMatchedResources(archive, matchedFileNames);
++			
+ 			if (callback != null) callback.onProcessMatchedResources(incrementalUpload.length);
+ 
+ 			ObjectMapper objectMapper = new ObjectMapper();
+@@ -675,15 +676,18 @@
+ 		return hex.toString();
+ 	}
+ 
+-	private byte[] processMatchedResources(ZipFile archive, Set<String> matchedFileNames)
++	byte[] processMatchedResources(ZipFile archive, Set<String> matchedFileNames)
+ 				throws IOException {
+ 		ByteArrayOutputStream out = new ByteArrayOutputStream();
+-		ZipOutputStream zout = new ZipOutputStream(out);
++		ZipOutputStream zout = null;
+ 
+ 		Enumeration<? extends ZipEntry> entries = archive.entries();
+ 		while (entries.hasMoreElements()) {
+ 			ZipEntry entry = entries.nextElement();
+ 			if (!matchedFileNames.contains(entry.getName())) {
++				if (zout == null) {
++					zout = new ZipOutputStream(out);
++				}
+ 				zout.putNextEntry(new ZipEntry(entry.getName()));
+ 				if (!entry.isDirectory()) {
+ 					InputStream in = archive.getInputStream(entry);
+@@ -700,8 +704,9 @@
+ 				zout.closeEntry();
+ 			}
+ 		}
+-		zout.close();
+-
++		if (zout != null) {
++			zout.close();
++		} 
+ 		return out.toByteArray();
+ 	}
+ 
+diff --git src/test/java/org/cloudfoundry/client/lib/CloudFoundryClientTest.java src/test/java/org/cloudfoundry/client/lib/CloudFoundryClientTest.java
+index 3c0889b..5a6c56f 100644
+--- src/test/java/org/cloudfoundry/client/lib/CloudFoundryClientTest.java
++++ src/test/java/org/cloudfoundry/client/lib/CloudFoundryClientTest.java
+@@ -26,12 +26,18 @@
+ import static org.junit.Assume.assumeTrue;
+ 
+ import java.io.File;
++import java.io.FileOutputStream;
+ import java.io.IOException;
+ import java.net.MalformedURLException;
+ import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.Comparator;
++import java.util.HashSet;
+ import java.util.List;
++import java.util.Set;
++import java.util.zip.ZipEntry;
++import java.util.zip.ZipFile;
++import java.util.zip.ZipOutputStream;
+ 
+ import org.cloudfoundry.client.lib.CloudApplication.AppState;
+ import org.cloudfoundry.client.lib.ServiceConfiguration.Tier;
+@@ -183,6 +189,41 @@
+ 
+ 		assertNotNull(app);
+ 		assertEquals(AppState.STOPPED, app.getState());
++	}
++
++	@Test
++	public void uploadApplicationNoChange() throws IOException {
++		CloudApplication app = createAndUploadTestApp("travel_test3");
++		assertNotNull(app);
++		assertEquals(AppState.STOPPED, app.getState());
++
++		File file = new File(testAppDir + "/travelapp/swf-booking-mvc.war");
++		UploadStatusCallbackStub callback = new UploadStatusCallbackStub();
++		client.uploadApplication("travel_test3", file, callback);
++		assertTrue("Expected incremental upload", callback.checkResources);
++	}
++
++	@Test
++	public void uploadApplicationNoChangeNoDirectories() throws IOException {
++		File file = File.createTempFile("TestProcessMatchedResources", "war");
++		file.deleteOnExit();
++
++		ZipOutputStream out = new ZipOutputStream(new FileOutputStream(file));
++		ZipEntry e = new ZipEntry("file.txt");
++		out.putNextEntry(e);
++		out.close();
++
++		List<String> uris = new ArrayList<String>();
++		uris.add(computeAppUrl("travel_test3"));
++
++		client.createApplication("travel_test3", CloudApplication.SPRING, client.getDefaultApplicationMemory(CloudApplication.SPRING), uris, null);
++		client.uploadApplication("travel_test3", file);
++
++		UploadStatusCallbackStub callback = new UploadStatusCallbackStub();
++		client.uploadApplication("travel_test3", file, callback);
++		assertTrue("Expected incremental upload", callback.checkResources);
++		assertEquals("Expected no changes", 0, callback.length);
++		assertEquals(Collections.singleton("file.txt"), callback.matchedFileNames);	
+ 	}
+ 
+ 	@Test
+@@ -560,7 +601,28 @@
+ 		adminClient.setProxyUser(TEST_USER_EMAIL);
+ 		assertTrue(hasApplication(adminClient.getApplications(), appName));
+ 	}
++
++	@Test
++	public void processMatchedResources() throws IOException {
++		File file = File.createTempFile("TestProcessMatchedResources", "war");
++		file.deleteOnExit();
++
++		ZipOutputStream out = new ZipOutputStream(new FileOutputStream(file));
++		ZipEntry e = new ZipEntry("file.txt");
++		out.putNextEntry(e);
++		out.close();
++
++		Set<String> matchedFileNames = new HashSet<String>();
++		matchedFileNames.add("file.txt");
+ 
++		ZipFile zipFile = new ZipFile(file);
++		try {
++			client.processMatchedResources(zipFile , matchedFileNames);
++		} finally {
++			zipFile.close();
++		}
++	}
++	
+ 	private boolean hasApplication(List<CloudApplication> applications, String targetName) {
+ 		for (CloudApplication application : applications) {
+ 			if (application.getName().equals(targetName)) {
+@@ -644,4 +706,25 @@
+ 		client.createService(service);
+ 		return service;
+ 	}
++	
++	private class UploadStatusCallbackStub implements UploadStatusCallback {
++		
++		int length;
++		Set<String> matchedFileNames;
++		boolean checkResources;
++
++		public void onProcessMatchedResources(int length) {
++			this.length = length;
++		}
++		
++		public void onMatchedFileNames(Set<String> matchedFileNames) {
++			this.matchedFileNames = matchedFileNames;
++		}
++		
++		public void onCheckResources() {
++			checkResources = true;			
++		}
++		
++	};
++
+ }

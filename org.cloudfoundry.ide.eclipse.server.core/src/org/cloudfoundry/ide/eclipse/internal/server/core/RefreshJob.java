@@ -1,0 +1,74 @@
+/*******************************************************************************
+ * Copyright (c) 2012 VMware, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     VMware, Inc. - initial API and implementation
+ *******************************************************************************/
+package org.cloudfoundry.ide.eclipse.internal.server.core;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.wst.server.core.IServer;
+
+/**
+ * Refresh job for refreshing local server status to correspond to the actual
+ * server status
+ * @author Christian Dupuis
+ * @author Leo Dos Santos
+ * @author Steffen Pingel
+ */
+public class RefreshJob extends Job {
+
+	private static final long DEFAULT_INTERVAL = 60 * 1000;
+
+	private long interval;
+
+	private final CloudFoundryServer server;
+
+	public RefreshJob(CloudFoundryServer server) {
+		super("Refresh Server Job");
+		setSystem(true);
+		this.server = server;
+		this.interval = DEFAULT_INTERVAL;
+	}
+
+	public long getInterval() {
+		return interval;
+	}
+
+	public void reschedule() {
+		// schedule, if not already running or scheduled
+		cancel();
+		if (interval > 0) {
+			schedule(interval);
+		}
+	}
+
+	public void setInterval(long interval) {
+		this.interval = interval;
+	}
+
+	@Override
+	protected IStatus run(IProgressMonitor monitor) {
+		try {
+			server.getBehaviour().refreshModules(monitor);
+
+			if (server.getServer().getServerState() == IServer.STATE_STARTED && interval > 0) {
+				schedule(interval);
+			}
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.getDefault().getLog().log(
+					new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, "Refresh of server failed", e));
+		}
+
+		return Status.OK_STATUS;
+	}
+}

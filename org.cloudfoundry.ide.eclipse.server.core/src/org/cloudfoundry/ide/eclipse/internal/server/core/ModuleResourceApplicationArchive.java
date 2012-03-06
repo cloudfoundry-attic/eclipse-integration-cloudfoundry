@@ -1,0 +1,383 @@
+/*******************************************************************************
+ * Copyright (c) 2012 VMware, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     VMware, Inc. - initial API and implementation
+ *******************************************************************************/
+package org.cloudfoundry.ide.eclipse.internal.server.core;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
+
+import org.cloudfoundry.client.lib.archive.AbstractApplicationArchiveEntry;
+import org.cloudfoundry.client.lib.archive.ApplicationArchive;
+import org.cloudfoundry.ide.eclipse.internal.server.core.DeployedResourceCache.CachedDeployedApplication;
+import org.cloudfoundry.ide.eclipse.internal.server.core.DeployedResourceCache.DeployedResourceEntry;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.wst.server.core.IModule;
+import org.eclipse.wst.server.core.model.IModuleFile;
+import org.eclipse.wst.server.core.model.IModuleFolder;
+import org.eclipse.wst.server.core.model.IModuleResource;
+
+/**
+ * Application archive that optimises sha1 code and file size calculation by
+ * creating a deployable war file only after a list of known resources is
+ * obtained from the server via client callback and caching sha1 and file sizes
+ * for deployed resources. Note that the actual payload war file is NOT
+ * automatically created when the application archive is created. It is only
+ * created on a call back from the CF client once it receives a list of known
+ * server-side resources . This archive also manages the caching and
+ * recalculation of sha1 codes for all resources.
+ * <p/>
+ * Two separate operations occur with this archive.
+ * 
+ * <p/>
+ * 
+ * 1) entries for all module resources are collected, regardless if the resource
+ * has changed or not. The reason for this is that the CF client requires all
+ * entries in order to determine what has changed on the server side. During
+ * this phase, either cached entries are used for resources that have not
+ * changed, or entries are recalculated for resources that have changed.
+ * <p/>
+ * 2) The second phase involves handling the list of resources that the server
+ * indicates have not changed. This is done through a callback handler, which
+ * then builds the partial war file with only those resources that have changed.
+ * 
+ */
+public class ModuleResourceApplicationArchive implements ApplicationArchive {
+
+	private final List<IModuleResource> allResources;
+
+	private final Set<String> changedResources;
+
+	private List<Entry> entries;
+
+	private final IModule module;
+
+	private String fileName;
+
+	private final CachedDeployedApplication appID;
+
+	public ModuleResourceApplicationArchive(List<IModuleResource> allResources, List<IModuleResource> changedResources,
+			IModule module, String appName) {
+		this.allResources = allResources;
+		this.module = module;
+		this.appID = new CachedDeployedApplication(appName);
+		this.changedResources = changedResourcesAsZipNames(changedResources);
+	}
+
+	protected Set<String> changedResourcesAsZipNames(List<IModuleResource> changedResources) {
+		Set<String> names = new HashSet<String>();
+		for (IModuleResource resource : changedResources) {
+			names.add(CloudUtil.getZipRelativeName(resource));
+		}
+		return names;
+	}
+
+	public String getFilename() {
+		return fileName;
+	}
+
+	public Iterable<Entry> getEntries() {
+		if (entries == null) {
+			entries = new ArrayList<ApplicationArchive.Entry>();
+			collectEntriesPriorToDeployment(entries, allResources.toArray(new IModuleResource[0]));
+		}
+		return entries;
+	}
+
+	/**
+	 * All entries must be collected, for both resources that have changed as
+	 * well as those that haven't, as the CF client must first use that
+	 * collected list of entries to determine what has changed.
+	 * @param entries
+	 * @param resources
+	 */
+	protected void collectEntriesPriorToDeployment(List<Entry> entries, IModuleResource[] resources) {
+		if (resources == null) {
+			return;
+		}
+
+		for (IModuleResource resource : resources) {
+
+			if (resource instanceof IModuleFile) {
+				ModuleFileEntryAdapter fileAdapter = getFileResourceEntryAdapter((IModuleFile) resource);
+				if (fileAdapter != null) {
+					entries.add(fileAdapter);
+				}
+			}
+			else if (resource instanceof IModuleFolder) {
+				entries.add(new ModuleFolderEntryAdapter(resource));
+				collectEntriesPriorToDeployment(entries, ((IModuleFolder) resource).members());
+			}
+		}
+	}
+
+	protected ModuleFileEntryAdapter getFileResourceEntryAdapter(IModuleFile file) {
+		String zipName = CloudUtil.getZipRelativeName(file);
+		boolean changed = changedResources != null && changedResources.contains(zipName);
+		return new ModuleFileEntryAdapter(file, appID, changed);
+	}
+
+	public void generatePartialWarFile(Set<String> knownResourceNames) {
+		Iterable<Entry> localEntries = getEntries();
+		Map<String, AbstractModuleResourceEntryAdapter> missingChangedEntries = new HashMap<String, AbstractModuleResourceEntryAdapter>();
+		Set<IModuleResource> missingChangedResources = new HashSet<IModuleResource>();
+
+		for (Entry entry : localEntries) {
+
+			if (entry.isDirectory() || !knownResourceNames.contains(entry.getName())) {
+				missingChangedEntries.put(entry.getName(), (AbstractModuleResourceEntryAdapter) entry);
+				missingChangedResources.add(((AbstractModuleResourceEntryAdapter) entry).getResource());
+			}
+		}
+
+		// Build war file with changed/missing resources
+		try {
+
+			File partialWar = CloudUtil.createWarFile(allResources, module, missingChangedResources, null);
+
+			if (partialWar.exists()) {
+				fileName = partialWar.getName();
+				ZipFile zipPartialWar = new ZipFile(partialWar);
+				Enumeration<? extends ZipEntry> zipEntries = zipPartialWar.entries();
+				List<Entry> toDeploy = new ArrayList<ApplicationArchive.Entry>();
+				while (zipEntries.hasMoreElements()) {
+					ZipEntry zipEntry = zipEntries.nextElement();
+
+					AbstractModuleResourceEntryAdapter archiveEntry = missingChangedEntries.get(zipEntry.getName());
+					if (archiveEntry != null) {
+						DeployedResourceEntry deployedResourcesEntry = archiveEntry instanceof ModuleFileEntryAdapter ? ((ModuleFileEntryAdapter) archiveEntry)
+								.getDeployedResourcesEntry() : null;
+						toDeploy.add(new PartialZipEntryAdapter(deployedResourcesEntry, zipEntry, zipPartialWar));
+
+					}
+
+				}
+				entries = toDeploy;
+			}
+		}
+		catch (CoreException e) {
+			// Failed to create partial war
+			CloudFoundryPlugin.logError(e);
+		}
+		catch (ZipException e) {
+			// Failed to create partial war
+			CloudFoundryPlugin.logError(e);
+		}
+		catch (IOException e) {
+			// Failed to create partial war
+			CloudFoundryPlugin.logError(e);
+		}
+	}
+
+	/**
+	 * Entry to be used to access actual payload files. Sha1 entries should be
+	 * computed prior to creating the entry, ideally without uncompressing the
+	 * archive file, and possibly using a cache
+	 * 
+	 */
+	public class PartialZipEntryAdapter implements ApplicationArchive.Entry {
+		private final DeployedResourceEntry deployedResourcesEntry;
+
+		private final ZipEntry zipEntry;
+
+		private final ZipFile zipFile;
+
+		public PartialZipEntryAdapter(DeployedResourceEntry deployedResourcesEntry, ZipEntry zipEntry, ZipFile zipFile) {
+			this.zipFile = zipFile;
+			this.zipEntry = zipEntry;
+			this.deployedResourcesEntry = deployedResourcesEntry;
+		}
+
+		public boolean isDirectory() {
+			return zipEntry.isDirectory();
+		}
+
+		public String getName() {
+			return zipEntry.getName();
+		}
+
+		/**
+		 * 
+		 * @return deployed resource, or null if not defined for this zip entry.
+		 * Note that for directory cases, there won't be a deployed resource so
+		 * this would be one case where null is returned
+		 */
+		protected DeployedResourceEntry getDeployedResourceEntry() {
+			return deployedResourcesEntry;
+		}
+
+		public long getSize() {
+			return getDeployedResourceEntry() != null ? getDeployedResourceEntry().getFileSize()
+					: AbstractModuleResourceEntryAdapter.UNDEFINED_SIZE;
+		}
+
+		public byte[] getSha1Digest() {
+			// Do not obtain it from the zip Entry to avoid unzipping the
+			// archive.
+			return getDeployedResourceEntry() != null ? getDeployedResourceEntry().getSha1() : null;
+		}
+
+		public InputStream getInputStream() throws IOException {
+			if (isDirectory()) {
+				return null;
+			}
+
+			return zipFile.getInputStream(zipEntry);
+		}
+
+	}
+
+	/**
+	 * Module file resource specialisation of the Cloud Foundry client entry
+	 * adapter. This computes sha1 and file sizes and manages caching of such
+	 * values for resources that have changed.
+	 * 
+	 */
+	public class ModuleFileEntryAdapter extends AbstractModuleResourceEntryAdapter {
+
+		private final File file;
+
+		private final CachedDeployedApplication appName;
+
+		private final boolean recalculate;
+
+		public ModuleFileEntryAdapter(IModuleResource moduleResource, CachedDeployedApplication appName,
+				boolean recalculate) {
+			super(moduleResource);
+			file = getFile(moduleResource);
+			this.appName = appName;
+			this.recalculate = recalculate;
+		}
+
+		public boolean isDirectory() {
+			return false;
+		}
+
+		protected File getFile(IModuleResource moduleResource) {
+			File file = (File) moduleResource.getAdapter(File.class);
+			if (file == null) {
+				IFile iFile = (IFile) moduleResource.getAdapter(IFile.class);
+
+				if (iFile != null) {
+					file = iFile.getFullPath().toFile();
+				}
+			}
+			return file;
+		}
+
+		@Override
+		public long getSize() {
+			DeployedResourceEntry entry = getDeployedResourcesEntry();
+			return entry != null ? entry.getFileSize() : UNDEFINED_SIZE;
+		}
+
+		public DeployedResourceEntry getDeployedResourcesEntry() {
+
+			DeployedResourceEntry deployedResourcesEntry = CloudFoundryPlugin.getDefault().getDeployedResourcesCache()
+					.getEntry(appName, getName());
+
+			if (recalculate || deployedResourcesEntry == null) {
+				deployedResourcesEntry = computeNewDeployedResourceEntry();
+			}
+
+			return deployedResourcesEntry;
+		}
+
+		public byte[] getSha1Digest() {
+			DeployedResourceEntry entry = getDeployedResourcesEntry();
+			return entry != null ? entry.getSha1() : null;
+		}
+
+		protected DeployedResourceEntry computeNewDeployedResourceEntry() {
+			byte[] sha1 = super.getSha1Digest();
+			long fileSize = super.getSize();
+			DeployedResourceEntry entry = new DeployedResourceEntry(sha1, fileSize, zipRelativeName);
+			CloudFoundryPlugin.getDefault().getDeployedResourcesCache().add(appName, entry);
+			return entry;
+		}
+
+		public InputStream getInputStream() throws IOException {
+
+			if (file != null) {
+				return new FileInputStream(file);
+			}
+
+			return null;
+		}
+	}
+
+	public class ModuleFolderEntryAdapter extends AbstractModuleResourceEntryAdapter {
+
+		protected ModuleFolderEntryAdapter(IModuleResource moduleResource) {
+			super(moduleResource);
+		}
+
+		public boolean isDirectory() {
+			return true;
+		}
+
+		@Override
+		public long getSize() {
+			return UNDEFINED_SIZE;
+		}
+
+		public byte[] getSha1Digest() {
+			return null;
+		}
+
+		public InputStream getInputStream() throws IOException {
+			return null;
+		}
+
+	}
+
+	/**
+	 * Parent class that integrated webtool Module-based resources into the
+	 * Cloud Foundry Java client. Whereas the Java client operates on
+	 * directories or zip archives, this specialisation works on webtools module
+	 * resources. Further specialisations for files and folders are responsible
+	 * for calculate sha1 and file sizes, and allows specialisations to rely on
+	 * caching for those values.
+	 * 
+	 */
+	public abstract class AbstractModuleResourceEntryAdapter extends AbstractApplicationArchiveEntry {
+		public final IModuleResource moduleResource;
+
+		public final String zipRelativeName;
+
+		public static final long UNDEFINED_SIZE = AbstractApplicationArchiveEntry.UNDEFINED_SIZE;
+
+		public AbstractModuleResourceEntryAdapter(IModuleResource moduleResource) {
+			this.moduleResource = moduleResource;
+			zipRelativeName = CloudUtil.getZipRelativeName(moduleResource);
+		}
+
+		public IModuleResource getResource() {
+			return moduleResource;
+		}
+
+		public String getName() {
+			return zipRelativeName;
+		}
+	}
+
+}

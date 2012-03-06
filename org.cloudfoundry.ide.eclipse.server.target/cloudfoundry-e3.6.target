@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.6"?>
+
+<target name="cloudfoundry-e3.6" sequenceNumber="5">
+<locations>
+<location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.aopalliance" version="1.0.0.v201105210816"/>
+<unit id="org.codehaus.jackson.core" version="1.6.0.v20101005-0925"/>
+<unit id="org.codehaus.jackson.mapper" version="1.6.0.v20101005-0925"/>
+<unit id="org.apache.commons.lang" version="2.4.0.v201005080502"/>
+<unit id="org.apache.commons.logging" version="1.1.1.v201101211721"/>
+<repository location="http://download.eclipse.org/tools/orbit/downloads/drops/R20120119162704/repository/"/>
+</location>
+<location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.eclipse.emf.codegen.feature.group" version="2.6.0.v20100914-1218"/>
+<unit id="org.eclipse.emf.common.feature.group" version="2.6.0.v20100914-1218"/>
+<unit id="org.eclipse.emf.common.ui.feature.group" version="2.6.0.v20100914-1218"/>
+<unit id="org.eclipse.emf.ecore.feature.group" version="2.6.1.v20100914-1218"/>
+<unit id="org.eclipse.emf.ecore.edit.feature.group" version="2.6.0.v20100914-1218"/>
+<unit id="org.eclipse.emf.edit.feature.group" version="2.6.0.v20100914-1218"/>
+<unit id="org.eclipse.emf.edit.ui.feature.group" version="2.6.0.v20100914-1218"/>
+<unit id="org.eclipse.gef.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.jst.common.fproj.enablement.jdt.feature.group" version="3.2.2.v201008170019-377AB8s73533J5J759F"/>
+<unit id="org.eclipse.jst.enterprise_ui.feature.feature.group" version="3.2.3.v201011031800-7b7GHfIFSK2WBRT6E1mcyFXGPnSh"/>
+<unit id="org.eclipse.jst.server_ui.feature.feature.group" version="3.2.2.v20100908-7A5FEi9xFc7RCJMToAIOJC43A"/>
+<unit id="org.eclipse.jst.web_ui.feature.feature.group" version="3.2.3.v201101262333-7F77FJ_C25TkfyypjhqQuxNYsMrJ"/>
+<unit id="org.eclipse.rse.feature.group" version="3.2.2.R32x_v201102130925-7L78FA58SreKCHr_JG7UA8bra19p"/>
+<unit id="org.eclipse.wst.common.fproj.feature.group" version="3.2.3.v201101121727-377AC8s73543C6H4A5H"/>
+<unit id="org.eclipse.wst.common_ui.feature.feature.group" version="3.2.3.v201011031800-7C78FPlEdhO_oXWe4k_elbMgT1Lq"/>
+<unit id="org.eclipse.wst.server_ui.feature.feature.group" version="3.2.3.v20101104-7B4FBuAtJb1qEKLnCKHHHI347"/>
+<unit id="org.eclipse.wst.web_ui.feature.feature.group" version="3.2.3.v201102160541-7O7CFbWEMf84qYjGDyP3DNEwcgFU"/>
+<unit id="org.eclipse.wst.ws_ui.feature.feature.group" version="3.2.3.v201102160541-7I78FZIEtEoO2d7AsK6jSNqC-8jj"/>
+<unit id="org.eclipse.wst.xml_core.feature.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.wst.xml_ui.feature.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.xsd.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.xsd.edit.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.sdk.ide" version="3.6.2.M20110210-1200"/>
+<repository location="http://download.eclipse.org/releases/helios"/>
+</location>
+<location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.springframework.ide.eclipse.uaa.feature.feature.group" version="2.8.0.201110170010-RELEASE"/>
+<repository location="http://download.springsource.com/release/TOOLS/update/2.8.0.RELEASE/e3.7/"/>
+</location>
+<location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.springframework.aop" version="3.1.0.RELEASE"/>
+<unit id="org.springframework.asm" version="3.1.0.RELEASE"/>
+<unit id="org.springframework.beans" version="3.1.0.RELEASE"/>
+<unit id="org.springframework.context" version="3.1.0.RELEASE"/>
+<unit id="org.springframework.core" version="3.1.0.RELEASE"/>
+<unit id="org.springframework.expression" version="3.1.0.RELEASE"/>
+<unit id="org.springframework.web" version="3.1.0.RELEASE"/>
+<repository location="http://download.springsource.com/milestone/TOOLS/update/2.9.0.M2/e3.7/"/>
+</location>
+</locations>
+</target>

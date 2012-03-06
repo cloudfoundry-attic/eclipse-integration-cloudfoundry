@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.3"?>
+<!--
+/*******************************************************************************
+ * Copyright (c) 2012 VMware, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     VMware, Inc. - initial API and implementation
+ *******************************************************************************/
+-->
+<plugin>
+
+	<extension point="org.eclipse.wst.server.ui.serverImages">
+		<image
+        	icon="icons/full/obj16/cloud.png"
+        	id="org.cloudfoundry.ide.eclipse.server.ui.image.CloudApplication"
+        	typeIds="org.cloudfoundry.ide.eclipse.server.core.CloudFoundryApplicationModule" />
+	</extension>
+
+	<extension point="org.eclipse.wst.common.project.facet.ui.images">
+		<image 
+			runtime-component-type="org.cloudfoundry.appcloudserver"
+			path="icons/full/obj16/cloud_obj.png" />
+	</extension>   
+   
+	<!-- extension point="org.eclipse.wst.server.ui.wizardFragments">
+		<fragment 
+			id="org.cloudfoundry.appcloudserver.runtime.10" 
+			typeIds="org.cloudfoundry.appcloudserver.runtime.10"
+			class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerRuntimeWizardFragment" />
+	</extension-->
+
+	<extension point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+		<launchConfigurationTypeImage 
+			icon="icons/full/obj16/cloud_obj.png"
+			configTypeID="org.cloudfoundry.appcloudserver.launchConfiguration" 
+			id="org.cloudfoundry.appcloudserver.launchimage">
+		</launchConfigurationTypeImage>
+	</extension>
+
+  <extension point="org.eclipse.ui.popupMenus">
+    <objectContribution
+      adaptable="true"
+      id="org.cloudfoundry.ide.eclipse.server.ui.serveractions"
+      objectClass="org.eclipse.wst.server.core.IServer">
+      <visibility>
+        <objectState name="serverType" value="org.cloudfoundry.appcloudserver.*"/>
+      </visibility>
+      <action
+            class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DisconnectAction"
+            enablesFor="1"
+            icon="icons/full/obj16/disconnect.png"
+            id="org.cloudfoundry.ide.eclipse.server.ui.DisconnectAction"
+            label="Disconnect"
+            menubarPath="org.eclipse.wst.server.ui.internal.cnf.controlServerSectionStart">
+      </action>
+      <action
+            class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ConnectAction"
+            enablesFor="1"
+            icon="icons/full/obj16/connect.png"
+            id="org.cloudfoundry.ide.eclipse.server.ui.ConnectAction"
+            label="Connect"
+            menubarPath="org.eclipse.wst.server.ui.internal.cnf.controlServerSectionStart">
+      </action>
+      <action
+            class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdatePasswordAction"
+            enablesFor="1"
+            id="org.cloudfoundry.ide.eclipse.server.ui.changepassword"
+            label="Update Password">
+      </action>
+      <action
+             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.GoToSpringInsightAction"
+             enablesFor="1"
+             id="org.cloudfoundry.ide.eclipse.server.ui.action.gotoinsight"
+             label="Go to Spring Insight">
+       </action>
+    </objectContribution>
+    <objectContribution
+          adaptable="true"
+          id="org.cloudfoundry.ide.eclipse.server.ui.moduleactions"
+          objectClass="org.eclipse.wst.server.ui.internal.view.servers.ModuleServer">
+       <visibility>
+          <objectState
+                name="serverType"
+                value="org.cloudfoundry.appcloudserver.*">
+          </objectState>
+       </visibility>
+       <action
+             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateRestartModuleAction"
+             enablesFor="1"
+             id="org.cloudfoundry.ide.eclipse.server.ui.action.update.restart.module"
+             label="Update and Restart">
+       </action>
+       <action
+             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.OpenHomePageAction"
+             enablesFor="1"
+             id="org.cloudfoundry.ide.eclipse.server.ui.action.openHome"
+             label="Open Home Page"
+             menubarPath="org.cloudfoundry.ide.eclipse.server.ui.menu">
+       </action>
+       <menu
+             id="org.cloudfoundry.ide.eclipse.server.ui.menu"
+             label="Open Home Page">
+       </menu>
+    </objectContribution>
+  </extension>
+  <!--extension
+        point="org.eclipse.wst.server.ui.serverToolTip">
+     <serverToolTip
+           class="org.cloudfoundry.ide.eclipse.internal.servercom.ui.CloudFoundryServerTooltip"
+           id="org.cloudfoundry.ide.eclipse.server.ui.serverTooltip"
+           serverTypes="org.cloudfoundry.appcloudserver.10">
+     </serverToolTip>
+  </extension-->
+  <extension
+        point="org.cloudfoundry.ide.eclipse.server.core.callback">
+     <callback
+           class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryUiCallback"></callback>
+  </extension>
+
+	<extension
+	      point="org.eclipse.ui.decorators">
+	   <decorator
+	         class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryDecorator"
+	         icon="icons/full/obj16/single.png"
+	         id="org.cloudfoundry.ide.eclipse.server.navigatorDecorator"
+	         label="Cloud Foundry Server State Decorator"
+	         lightweight="true"
+	         location="BOTTOM_RIGHT"
+	         state="true">
+	      <enablement>
+	         <or>
+	            <objectClass
+	                  name="org.eclipse.wst.server.core.IServer">
+	            </objectClass>
+	            <objectClass
+	                  name="org.eclipse.wst.server.ui.internal.view.servers.ModuleServer">
+	            </objectClass>
+	         </or>
+	      </enablement>
+	   </decorator>
+	</extension>
+	<extension point="org.eclipse.wst.server.ui.editorPageSections">
+		<section
+			id="org.cloudfoundry.ide.eclipse.server.editor.general"
+         	order="1"
+         	insertionId="org.eclipse.wst.server.editor.overview.left"
+         	typeIds="org.cloudfoundry.appcloudserver.*"
+         	class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryAccountSection">
+      	</section>
+		<section
+			id="org.cloudfoundry.ide.eclipse.server.editor.status"
+         	order="2"
+         	insertionId="org.eclipse.wst.server.editor.overview.left"
+         	typeIds="org.cloudfoundry.appcloudserver.*"
+         	class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryServerStatusSection">
+      	</section>
+      	<section
+			id="org.cloudfoundry.ide.eclipse.server.editor.insight"
+         	order="3"
+         	insertionId="org.eclipse.wst.server.editor.overview.right"
+         	typeIds="org.cloudfoundry.appcloudserver.*"
+         	class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.SpringInsightSection">
+      	</section>
+  <section
+        class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.DisablePublishSection"
+        id="org.cloudfoundry.ide.eclipse.server.editor.disable.publish"
+        insertionId="org.eclipse.wst.server.editor.overview.right"
+        order="1"
+        typeIds="org.cloudfoundry.appcloudserver.*">
+  </section>
+    </extension>
+	<extension
+       point="org.eclipse.wst.server.core.launchableAdapters">
+    <launchableAdapter
+          class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryLaunchableAdapterDelegate"
+          id="org.cloudfoundry.ide.eclipse.server.launchableAdapter"
+          typeIds="org.cloudfoundry.appcloudserver*">
+    </launchableAdapter>
+ </extension>
+ <extension
+       point="org.eclipse.wst.server.core.clients">
+    <client
+          class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryLaunchableClient"
+          id="org.cloudfoundry.ide.eclipse.server.launchClient"
+          launchable="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryLaunchable"
+          name="Cloud Foundry Server">
+    </client>
+ </extension>
+ <extension
+       point="org.eclipse.wst.server.ui.editorPages">
+    <page
+          class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage"
+          id="org.cloudfoundry.ide.eclipse.server.editor.applications"
+          name="Applications"
+          order="1"
+          typeIds="org.cloudfoundry.appcloudserver.*">
+    </page>
+ </extension>
+ <extension
+       point="org.eclipse.ui.navigator.navigatorContent">
+    <actionProvider
+          class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryActionProvider"
+          id="org.cloudfoundry.ide.eclipse.server.ui.navigator.ActionProvider">
+       <enablement>
+          <instanceof
+                value="org.eclipse.wst.server.ui.IServerModule">
+          </instanceof>
+       </enablement>
+    </actionProvider>
+ </extension>
+ <extension
+       point="org.eclipse.ui.navigator.viewer">
+    <viewerActionBinding
+          viewerId="org.eclipse.wst.server.ui.ServersView">
+       <includes>
+          <actionExtension
+                pattern="org.cloudfoundry.ide.eclipse.server.ui.navigator.ActionProvider">
+          </actionExtension>
+       </includes>
+    </viewerActionBinding>
+ </extension>
+ <extension
+       point="org.eclipse.ui.console.consolePageParticipants">
+    <consolePageParticipant
+          class="org.cloudfoundry.ide.eclipse.internal.server.ui.console.CloudFoundryConsolePageParticipant"
+          id="org.cloudfoundry.ide.eclipse.server.ui.console">
+       <enablement></enablement>
+    </consolePageParticipant>
+ </extension>
+   <extension
+         point="org.eclipse.ui.console.consolePatternMatchListeners">
+      <consolePatternMatchListener
+            class="org.eclipse.jdt.internal.debug.ui.console.JavaConsoleTracker"
+            regex="\(\S*${java_extensions_regex}\S*\)"
+            qualifier="${java_extensions_regex}"
+            id="org.cloudfoundry.ide.eclipse.server.ui.console.JavaConsoleTracker">
+         <enablement>
+            <or>
+			  <test property="org.eclipse.ui.console.consoleTypeTest" value="org.cloudfoundry.ide.eclipse.server.ui.console"/>
+            </or>
+         </enablement>
+      </consolePatternMatchListener>
+      <consolePatternMatchListener
+            class="org.eclipse.jdt.internal.debug.ui.console.JavaNativeConsoleTracker"
+            regex="\(Native Method\)"
+            qualifier="Native Method"
+            id="org.cloudfoundry.ide.eclipse.server.ui.console.JavaNativeConsoleTracker">
+         <enablement>
+            <or>
+			  <test property="org.eclipse.ui.console.consoleTypeTest" value="org.cloudfoundry.ide.eclipse.server.ui.console"/>
+            </or>
+         </enablement>
+      </consolePatternMatchListener>
+            <consolePatternMatchListener
+            class="org.eclipse.jdt.internal.debug.ui.console.JavaExceptionConsoleTracker"
+            regex="\w[^\(\s]+Exception[\s|:]"
+            qualifier="Exception"
+            id="org.cloudfoundry.ide.eclipse.server.ui.console.JavaExceptionConsoleTracker">
+         <enablement>
+            <or>
+			  <test property="org.eclipse.ui.console.consoleTypeTest" value="org.cloudfoundry.ide.eclipse.server.ui.console"/>
+            </or>
+         </enablement>
+      </consolePatternMatchListener>
+   </extension>   
+   
+	<extension point="org.eclipse.ui.menus">
+  <menuContribution
+        allPopups="true"
+        class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DebugActionContributionFactory"
+        locationURI="popup:org.eclipse.wst.server.ui.ServersView?before=additions">
+  </menuContribution>
+	</extension>
+	
+ 
+   <extension point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryPropertyTester"
+            id="org.cloudfoundry.ide.eclipse.server.propertytester"
+            namespace="org.cloudfoundry.ide.eclipse.server.ui"
+            properties="isDebugEnabled, isModuleStopped, isApplicationRunningInDebugMode, isConnectedToDebugger"
+            type="java.lang.Object">
+      </propertyTester>
+   </extension>
+</plugin>

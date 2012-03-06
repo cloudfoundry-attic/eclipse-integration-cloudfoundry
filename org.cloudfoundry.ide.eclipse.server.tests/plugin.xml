@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<!--
+/*******************************************************************************
+ * Copyright (c) 2012 VMware, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     VMware, Inc. - initial API and implementation
+ *******************************************************************************/
+-->
+<plugin>
+	<extension point="org.eclipse.wst.server.core.runtimeTypes">
+		<runtimeType id="org.cloudfoundry.cloudfoundryserver.test.runtime.10"
+            version="1.0"
+            name="Cloud Foundry Test (Runtime) v.1.0"
+            description="Runtime type. For testing only."   
+ 	        vendor="VMware"
+            class="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerRuntime">
+            <moduleType types="wst.web" versions="1.0" />
+         	<moduleType types="jst.web" versions="2.2, 2.3, 2.4, 2.5"/>
+         	<moduleType types="jst.utility" versions="1.0"/>
+		</runtimeType>
+	</extension>
+
+	<extension point="org.eclipse.wst.server.core.serverTypes">
+		<serverType
+            behaviourClass="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour"
+            class="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer"
+            description="Server type. For testing only."
+            hasConfiguration="false"
+            id="org.cloudfoundry.cloudfoundryserver.test.10"
+            initialState="stopped"
+            name="Cloud Foundry Test Server"
+            runtime="true"
+            runtimeTypeId="org.cloudfoundry.cloudfoundryserver.test.runtime.10"
+            startTimeout="600000"
+            stopTimeout="60000">
+		</serverType>
+	</extension>
+   
+	<extension point="org.eclipse.wst.common.project.facet.core.defaultFacets">
+		<default-facets>
+			<runtime-component id="org.cloudfoundry.cloudfoundryserver.test"/>
+			<facet id="wst.jsdt.web" version="1.0"/>
+		</default-facets>
+	</extension>
+ 
+	<extension point="org.eclipse.wst.common.project.facet.core.runtimes">
+		<runtime-component-type id="org.cloudfoundry.cloudfoundryserver.test"/>
+		<runtime-component-version type="org.cloudfoundry.cloudfoundryserver.test" version="1.0"/>
+    
+    	<adapter>
+			<runtime-component id="org.cloudfoundry.cloudfoundryserver.test"/>
+			<factory class="org.eclipse.jst.server.core.internal.RuntimeClasspathProvider$Factory"/>
+			<type class="org.eclipse.jst.common.project.facet.core.IClasspathProvider"/>
+		</adapter>
+    <adapter>
+       <runtime-component
+             id="org.cloudfoundry.cloudfoundryserver.test">
+       </runtime-component>
+       <factory
+             class="org.eclipse.wst.server.ui.FacetRuntimeComponentLabelProvider">
+       </factory>
+       <type
+             class="org.eclipse.wst.common.project.facet.ui.IRuntimeComponentLabelProvider">
+       </type>
+    </adapter>
+		
+		<supported>
+			<runtime-component
+         id="org.cloudfoundry.cloudfoundryserver.test"
+         version="1.0"/>
+			<facet id="jst.web" version="2.2,2.3,2.4,2.5"/>
+      		<facet id="jst.utility" version="1.0"/>
+			<facet id="grails.app" version="1.0"/>
+		</supported>
+	</extension>
+
+	<extension point="org.eclipse.jst.server.core.runtimeFacetMappings">
+		<runtimeFacetMapping
+			runtime-component="org.cloudfoundry.cloudfoundryserver.test"
+			runtimeTypeId="org.cloudfoundry.cloudfoundryserver.test.runtime.10"
+           	version="1.0"/>
+	</extension>
+	
+	<extension point="org.eclipse.jst.server.core.runtimeClasspathProviders">
+	     <runtimeClasspathProvider
+	        id="org.cloudfoundry.cloudfoundryserver.classPathProvider"
+	        runtimeTypeIds="org.cloudfoundry.cloudfoundryserver.test.runtime.10"
+	        class="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryRuntimeClasspathProvider"/>
+     </extension>
+
+	<extension point="org.eclipse.wst.server.ui.serverImages">
+		<image
+            icon="icons/obj16/vcloud_obj.png"
+            id="org.cloudfoundry.cloudfoundryserver.test"
+            typeIds="org.cloudfoundry.cloudfoundryserver.test.10, org.cloudfoundry.cloudfoundryserver.test.runtime.10">
+		</image>
+	</extension>
+   
+	<extension point="org.eclipse.wst.server.ui.wizardFragments">
+		<fragment
+            class="org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryServerWizardFragment"
+            id="org.cloudfoundry.cloudfoundryserver.test.10"
+            typeIds="org.cloudfoundry.cloudfoundryserver.test.10" />
+	</extension>
+	
+	<extension point="org.cloudfoundry.ide.eclipse.server.core.branding">
+		<service
+          name="Cloud Foundry Test"
+          provideServices="true"
+          remoteSystemTypeId="org.cloudfoundry.cloudfoundryserver.systemtype.test"
+          serverTypeId="org.cloudfoundry.cloudfoundryserver.test.10"
+          wizardBanner="icons/wizban/cloud_sts.png">
+     <defaultUrl
+           name="Cloud Foundry Test"
+           url="http://api.cloudfoundry.com">
+     </defaultUrl>
+		</service>
+	</extension>
+	
+	<extension
+       point="org.eclipse.rse.core.systemTypes">
+	    <systemType
+	          icon="icons/obj16/vcloud_obj.png"
+	          iconLive="icons/obj16/vcloud_obj.png"
+	          id="org.cloudfoundry.cloudfoundryserver.systemtype.test"
+	          label="Cloud Foundry Test"
+	          name="Cloud Foundry Test"
+	          subsystemConfigurationIds="cloudserver.applications">
+	    </systemType>
+	</extension>
+	
+</plugin>

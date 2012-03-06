@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Cloud Foundry Integration for Eclipse (Branding)
+Bundle-SymbolicName: org.cloudfoundry.ide.eclipse.server.branding;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: VMware, Inc.
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-ActivationPolicy: lazy
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.wst.server.core,
+ org.eclipse.wst.server.ui,
+ org.eclipse.wst.common.project.facet.core,
+ org.eclipse.jst.server.core,
+ org.eclipse.jst.common.project.facet.core,
+ org.cloudfoundry.ide.eclipse.server.core,
+ org.cloudfoundry.ide.eclipse.server.ui
