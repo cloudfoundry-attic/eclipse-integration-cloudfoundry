@@ -12,9 +12,9 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.debug;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
-
 
 /**
  * Defines properties used to test various aspects of debugging an application.
@@ -71,6 +71,24 @@ public enum CloudFoundryProperties {
 		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
 
 			return DebugCommand.isConnectedToDebugger(cloudFoundryServer, modules);
+
+		}
+	},
+
+	/**
+	 * Determines is the module's workspace project is accessible. True if it
+	 * is. False, if the associated workspace project is inaccessible or cannot
+	 * be resolved
+	 */
+	isModuleProjectAccessible {
+		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
+
+			if (modules == null || modules.length == 0) {
+				return false;
+			}
+
+			IProject project = modules[0].getProject();
+			return project != null && project.isAccessible();
 
 		}
 	};

@@ -281,11 +281,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 			data = new RowData();
 			data.exclude = true;
-			updateRestartAppButton.setCompositeLayoutData(data);
-			updateRestartAppButton.setVisible(false);
-
-			data = new RowData();
-			data.exclude = true;
 			stopAppButton.setLayoutData(data);
 			stopAppButton.setVisible(false);
 
@@ -304,14 +299,30 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 			data = new RowData();
 			data.exclude = false;
-			updateRestartAppButton.setCompositeLayoutData(data);
-			updateRestartAppButton.setVisible(true);
-
-			data = new RowData();
-			data.exclude = false;
 			stopAppButton.setLayoutData(data);
 			stopAppButton.setVisible(true);
 		}
+
+		// handle the update and restart button
+		// Do not show the update button if there is not accessible
+		// module project in the workspace, as no source update would be
+		// possible within Eclipse
+		if (state == IServer.STATE_STOPPED
+				|| state == IServer.STATE_UNKNOWN
+				|| !CloudFoundryProperties.isModuleProjectAccessible
+						.testProperty(new IModule[] { module }, cloudServer)) {
+			RowData data = new RowData();
+			data.exclude = true;
+			updateRestartAppButton.setCompositeLayoutData(data);
+			updateRestartAppButton.setVisible(false);
+		}
+		else {
+			RowData data = new RowData();
+			data.exclude = false;
+			updateRestartAppButton.setCompositeLayoutData(data);
+			updateRestartAppButton.setVisible(true);
+		}
+
 		refreshRestartButtons();
 		refreshDebugButtons();
 		buttonComposite.layout(true, true);

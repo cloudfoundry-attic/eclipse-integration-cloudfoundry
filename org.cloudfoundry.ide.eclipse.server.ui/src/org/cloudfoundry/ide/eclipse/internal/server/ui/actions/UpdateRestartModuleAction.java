@@ -24,7 +24,6 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 
-
 public class UpdateRestartModuleAction extends AbstractCloudFoundryServerAction {
 
 	protected String getJobName() {
@@ -77,7 +76,14 @@ public class UpdateRestartModuleAction extends AbstractCloudFoundryServerAction 
 			ApplicationModule cloudModule = getSelectedCloudAppModule();
 			if (cloudModule != null) {
 				int state = cloudModule.getState();
-				if (state == IServer.STATE_STARTED && !cloudModule.isExternal()) {
+				// Do not enable the action if the associated module project is
+				// not accessible, as users shoudln't
+				// be able to modify files within Eclipse if the project is not
+				// accessible (i.e it is not open and writable in the workspace)
+				if (state == IServer.STATE_STARTED
+						&& !cloudModule.isExternal()
+						&& CloudFoundryProperties.isModuleProjectAccessible.testProperty(
+								new IModule[] { selectedModule }, getCloudFoundryServer())) {
 					action.setEnabled(true);
 					return;
 				}
