@@ -11,8 +11,12 @@
 package org.cloudfoundry.ide.eclipse.server.tests.util;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.util.Properties;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -41,6 +45,12 @@ import org.osgi.framework.Bundle;
  * @author Steffen Pingel
  */
 public class CloudFoundryTestFixture {
+
+	public static final String PASSWORD_PROPERTY = "password";
+
+	public static final String USEREMAIL_PROPERTY = "username";
+
+	public static final String CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY = "cloudfoundry.ide.eclipse.test.credentials";
 
 	public class Harness {
 
@@ -152,16 +162,16 @@ public class CloudFoundryTestFixture {
 
 	private static final String DOMAIN = System.getProperty("vcap.target", "cloudfoundry.com");
 
-	private static final String USER_EMAIL = System.getProperty("vcap.email", "java-client-test-user@vmware.com");
+	private static final CredentialProperties USER_CREDENTIALS = getUserTestCredentials();
 
-	private static final String USER_PASS = System.getProperty("vcap.passwd", "test-pass");
+	public static final CloudFoundryTestFixture VCLOUDLABS = new CloudFoundryTestFixture(DOMAIN,
+			USER_CREDENTIALS.getUserEmail(), USER_CREDENTIALS.getPassword());
 
-	public static final CloudFoundryTestFixture VCLOUDLABS = new CloudFoundryTestFixture(DOMAIN, USER_EMAIL, USER_PASS);
+	public static final CloudFoundryTestFixture LOCAL = new CloudFoundryTestFixture("localhost", "user",
+			PASSWORD_PROPERTY);
 
-	public static final CloudFoundryTestFixture LOCAL = new CloudFoundryTestFixture("localhost", "user", "password");
-
-	public static final CloudFoundryTestFixture LOCAL_CLOUD = new CloudFoundryTestFixture("vcap.me", USER_EMAIL,
-			USER_PASS);
+	public static final CloudFoundryTestFixture LOCAL_CLOUD = new CloudFoundryTestFixture("vcap.me",
+			USER_CREDENTIALS.getUserEmail(), USER_CREDENTIALS.getPassword());
 
 	private static CloudFoundryTestFixture current = VCLOUDLABS;
 
@@ -229,4 +239,73 @@ public class CloudFoundryTestFixture {
 		return new Harness();
 	}
 
+	static class CredentialProperties {
+
+		private final String userEmail;
+
+		private final String password;
+
+		public CredentialProperties(String userEmail, String password) {
+			this.userEmail = userEmail;
+			this.password = password;
+		}
+
+		public String getUserEmail() {
+			return userEmail;
+		}
+
+		public String getPassword() {
+			return password;
+		}
+	}
+
+	/**
+	 * Returns non-null credentials, although values of the credentials may be
+	 * empty if failed to read credentials
+	 * @return
+	 */
+	static CredentialProperties getUserTestCredentials() {
+		String propertiesLocation = System.getProperty(CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY);
+		String userEmail = null;
+		String password = null;
+		if (propertiesLocation != null) {
+
+			File propertiesFile = new File(propertiesLocation);
+
+			InputStream fileInputStream = null;
+			try {
+				if (propertiesFile.exists() && propertiesFile.canRead()) {
+					fileInputStream = new FileInputStream(propertiesFile);
+					Properties properties = new Properties();
+					properties.load(fileInputStream);
+					userEmail = properties.getProperty(USEREMAIL_PROPERTY);
+					password = properties.getProperty(PASSWORD_PROPERTY);
+				}
+			}
+			catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+			finally {
+				try {
+					if (fileInputStream != null) {
+						fileInputStream.close();
+					}
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		if (userEmail == null || password == null) {
+			userEmail = System.getProperty("vcap.email", "");
+			password = System.getProperty("vcap.passwd", "");
+		}
+
+		return new CredentialProperties(userEmail, password);
+
+	}
 }
