@@ -162,7 +162,7 @@ public class CloudFoundryTestFixture {
 
 	private static final String DOMAIN = System.getProperty("vcap.target", "cloudfoundry.com");
 
-	private static final CredentialProperties USER_CREDENTIALS = getUserTestCredentials();
+	public static final CredentialProperties USER_CREDENTIALS = getUserTestCredentials();
 
 	public static final CloudFoundryTestFixture VCLOUDLABS = new CloudFoundryTestFixture(DOMAIN,
 			USER_CREDENTIALS.getUserEmail(), USER_CREDENTIALS.getPassword());
@@ -239,7 +239,7 @@ public class CloudFoundryTestFixture {
 		return new Harness();
 	}
 
-	static class CredentialProperties {
+	public static class CredentialProperties {
 
 		private final String userEmail;
 
