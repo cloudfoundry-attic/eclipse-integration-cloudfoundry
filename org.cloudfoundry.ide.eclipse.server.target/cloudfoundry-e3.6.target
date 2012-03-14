@@ -38,18 +38,15 @@
 <repository location="http://download.eclipse.org/releases/helios"/>
 </location>
 <location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<unit id="org.springframework.ide.eclipse.uaa.feature.feature.group" version="2.8.0.201110170010-RELEASE"/>
-<repository location="http://download.springsource.com/release/TOOLS/update/2.8.0.RELEASE/e3.7/"/>
-</location>
-<location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<unit id="org.springframework.aop" version="3.1.0.RELEASE"/>
-<unit id="org.springframework.asm" version="3.1.0.RELEASE"/>
-<unit id="org.springframework.beans" version="3.1.0.RELEASE"/>
-<unit id="org.springframework.context" version="3.1.0.RELEASE"/>
-<unit id="org.springframework.core" version="3.1.0.RELEASE"/>
-<unit id="org.springframework.expression" version="3.1.0.RELEASE"/>
-<unit id="org.springframework.web" version="3.1.0.RELEASE"/>
-<repository location="http://download.springsource.com/milestone/TOOLS/update/2.9.0.M2/e3.7/"/>
+<unit id="org.springframework.aop" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.asm" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.beans" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.context" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.core" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.expression" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.web" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.ide.eclipse.uaa.feature.feature.group" version="2.9.0.201203011806-RELEASE"/>
+<repository location="http://dist.springsource.com/release/TOOLS/update/2.9.0.RELEASE/e3.7"/>
 </location>
 </locations>
 </target>
