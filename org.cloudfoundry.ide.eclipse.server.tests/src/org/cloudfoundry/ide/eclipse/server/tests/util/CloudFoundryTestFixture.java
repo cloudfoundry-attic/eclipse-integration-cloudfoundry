@@ -305,6 +305,12 @@ public class CloudFoundryTestFixture {
 			password = System.getProperty("vcap.passwd", "");
 		}
 
+		if (userEmail == null || password == null) {
+			System.out
+					.println("Unable to read user email or password. Ensure Cloud Foundry credentials are set as properties in a properties file and passed as an argument to the VM using \"-D"
+							+ CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY + "=[full file location]\"");
+		}
+
 		return new CredentialProperties(userEmail, password);
 
 	}
