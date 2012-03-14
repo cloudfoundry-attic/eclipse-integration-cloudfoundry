@@ -6,7 +6,7 @@ password : [Cloud Foundry server password]
 
 The full path location of the file should then be specified by the VM argument:
 
--Dcloudfoundry.ide.eclipse.test.credentials=[full path file location]
+-Dtest.credentials=[full path file location]
 
 The username must be a valid user email registered to the http://api.cloudfounry.com server. 
 
@@ -20,7 +20,7 @@ password : mypassword
 
 The file location is then passed as a VM argument:
 
--Dcloudfoundry.ide.eclipse.test.credentials=/User/myuser/testing/CFcredentials.txt
+-Dtest.credentials=/User/myuser/testing/CFcredentials.txt
 
 
 See:

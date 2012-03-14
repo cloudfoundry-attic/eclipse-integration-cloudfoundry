@@ -58,7 +58,6 @@
     <p2.qualifier>SNAPSHOT</p2.qualifier>
     <p2.sign>false</p2.sign>
     <p2.repository.name>Cloud Foundry Integration for Eclipse</p2.repository.name>
-    <cloudfoundry.ide.eclipse.test.credentials>${bamboo.sts.cf.properties}</cloudfoundry.ide.eclipse.test.credentials>
 
     <dist.name>Cloud Foundry Integration for Eclipse</dist.name>
     <dist.project>cloudfoundry</dist.project>
@@ -409,14 +408,11 @@
             <testSuite>${project.artifactId}</testSuite>
             <testClass>${test.class}</testClass>
             <argLine>
-              -Xmx1024m -XX:MaxPermSize=256m -Djava.io.tmpdir=${project.build.directory} -Duser.home=${project.build.directory} -Dcloudfoundry.ide.eclipse.test.credentials=${bamboo.sts.cf.properties} ${test.vmargs}
+              -Xmx1024m -XX:MaxPermSize=256m -Dtest.credentials=${bamboo.sts.cf.properties} -Djava.io.tmpdir=${project.build.directory} -Duser.home=${project.build.directory} ${test.vmargs}
             </argLine>
             <appArgLine>
               -eclipse.keyring ${project.build.directory}/keystore -eclipse.password ${project.build.directory}/keystore.password
             </appArgLine>
-            <systemPropertyVariables>
-            <propertyName>cloudfoundry.ide.eclipse.test.credentials</propertyName>
-            </systemPropertyVariables>
             <dependencies>
               <dependency>
                 <type>p2-installable-unit</type>

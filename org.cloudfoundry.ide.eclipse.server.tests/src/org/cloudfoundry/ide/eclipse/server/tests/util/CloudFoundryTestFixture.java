@@ -50,7 +50,7 @@ public class CloudFoundryTestFixture {
 
 	public static final String USEREMAIL_PROPERTY = "username";
 
-	public static final String CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY = "cloudfoundry.ide.eclipse.test.credentials";
+	public static final String CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY = "test.credentials";
 
 	public class Harness {
 
