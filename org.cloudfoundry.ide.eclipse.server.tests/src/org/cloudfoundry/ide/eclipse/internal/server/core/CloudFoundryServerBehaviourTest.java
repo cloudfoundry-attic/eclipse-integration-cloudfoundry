@@ -81,14 +81,6 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 	// XXX this test fails on the build server for an unknown reason
 	public void testStartModule() throws Exception {
-
-		// FIXNS: REMOVE ONLY FOR BUILD TESTS
-		assertEquals(CloudFoundryTestFixture.USER_CREDENTIALS.getUserEmail(), "java-client-test-user@vmware.com");
-		assertEquals(CloudFoundryTestFixture.USER_CREDENTIALS.getPassword(), "test-pass");
-		assertEquals(CloudFoundryTestFixture.USER_CREDENTIALS.getUserEmail(), "wrongemail");
-		assertEquals(CloudFoundryTestFixture.USER_CREDENTIALS.getPassword(), "wrongpassword");
-		// FIXNS: END REMOVE ONLY FOR BUILD TESTS
-
 		harness.createProjectAndAddModule("dynamic-webapp");
 
 		IModule[] modules = server.getModules();
@@ -98,7 +90,6 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		serverBehavior.deployOrStartModule(modules, true, null);
 		moduleState = server.getModuleState(modules);
-
 		assertEquals(IServer.STATE_STARTED, moduleState);
 		moduleState = server.getModulePublishState(modules);
 		// assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
