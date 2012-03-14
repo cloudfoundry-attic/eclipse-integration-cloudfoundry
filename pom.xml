@@ -27,6 +27,8 @@
     <module>org.cloudfoundry.ide.eclipse.server.branding</module>
     <module>org.cloudfoundry.ide.eclipse.server.site</module>
     <module>org.cloudfoundry.ide.eclipse.server.target</module>
+    <module>org.cloudfoundry.ide.eclipse.server.source</module>
+    <module>org.cloudfoundry.ide.eclipse.server.sdk</module>
   </modules>
 
   <!-- Common Configuration -->

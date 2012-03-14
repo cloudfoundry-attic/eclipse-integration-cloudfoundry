@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.cloudfoundry.ide.eclipse.server"
+      id="org.cloudfoundry.ide.eclipse.server.source"
       label="%featureName"
       version="1.0.0.qualifier"
       provider-name="%providerName"
@@ -18,30 +18,36 @@
       %license
    </license>
 
-
    <plugin
-         id="org.cloudfoundry.ide.eclipse.server.core"
+         id="org.cloudfoundry.ide.eclipse.server.core.source"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+         
+    <plugin
+         id="org.cloudfoundry.ide.eclipse.server.rse.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.cloudfoundry.ide.eclipse.server.rse"
+         id="org.cloudfoundry.ide.eclipse.server.ui.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.cloudfoundry.ide.eclipse.server.ui"
+         id="org.cloudfoundry.ide.eclipse.server.tests.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-
-   <plugin
-         id="org.cloudfoundry.ide.eclipse.server.branding"
+         
+    <plugin
+         id="org.cloudfoundry.ide.eclipse.server.branding.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
