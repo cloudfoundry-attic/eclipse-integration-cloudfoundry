@@ -21,7 +21,7 @@
           id="cloudserver.applications"
           name="Applications and Files"
           systemTypeIds="org.cloudfoundry.appcloudserver.systemtype"
-          vendor="SpringSource Tool Suite">
+          vendor="Cloud Foundry Integration for Eclipse">
     </configuration>
  </extension>
 </plugin>
