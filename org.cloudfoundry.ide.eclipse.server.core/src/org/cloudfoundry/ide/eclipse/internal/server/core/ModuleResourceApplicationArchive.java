@@ -31,6 +31,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.DeployedResourceCache.C
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeployedResourceCache.DeployedResourceEntry;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.IModuleFile;
 import org.eclipse.wst.server.core.model.IModuleFolder;
@@ -278,10 +279,17 @@ public class ModuleResourceApplicationArchive implements ApplicationArchive {
 				IFile iFile = (IFile) moduleResource.getAdapter(IFile.class);
 
 				if (iFile != null) {
-					file = iFile.getFullPath().toFile();
+					IPath location = iFile.getLocation();
+					if (location != null) {
+						return new File(location.toString());
+					}
 				}
 			}
 			return file;
+		}
+
+		protected boolean canComputeResourceEntry() {
+			return file != null && file.exists();
 		}
 
 		@Override
@@ -295,8 +303,11 @@ public class ModuleResourceApplicationArchive implements ApplicationArchive {
 			DeployedResourceEntry deployedResourcesEntry = CloudFoundryPlugin.getDefault().getDeployedResourcesCache()
 					.getEntry(appName, getName());
 
-			if (recalculate || deployedResourcesEntry == null) {
-				deployedResourcesEntry = computeNewDeployedResourceEntry();
+			if (canComputeResourceEntry() && (recalculate || deployedResourcesEntry == null)) {
+				byte[] sha1 = super.getSha1Digest();
+				long fileSize = super.getSize();
+				deployedResourcesEntry = new DeployedResourceEntry(sha1, fileSize, zipRelativeName);
+				CloudFoundryPlugin.getDefault().getDeployedResourcesCache().add(appName, deployedResourcesEntry);
 			}
 
 			return deployedResourcesEntry;
@@ -307,17 +318,9 @@ public class ModuleResourceApplicationArchive implements ApplicationArchive {
 			return entry != null ? entry.getSha1() : null;
 		}
 
-		protected DeployedResourceEntry computeNewDeployedResourceEntry() {
-			byte[] sha1 = super.getSha1Digest();
-			long fileSize = super.getSize();
-			DeployedResourceEntry entry = new DeployedResourceEntry(sha1, fileSize, zipRelativeName);
-			CloudFoundryPlugin.getDefault().getDeployedResourcesCache().add(appName, entry);
-			return entry;
-		}
-
 		public InputStream getInputStream() throws IOException {
 
-			if (file != null) {
+			if (canComputeResourceEntry()) {
 				return new FileInputStream(file);
 			}
 

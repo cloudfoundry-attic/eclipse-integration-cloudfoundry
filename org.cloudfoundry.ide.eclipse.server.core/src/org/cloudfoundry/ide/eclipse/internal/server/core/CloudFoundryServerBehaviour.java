@@ -58,7 +58,6 @@ import org.eclipse.wst.server.core.model.ServerBehaviourDelegate;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClientException;
 
-
 /**
  * @author Christian Dupuis
  * @author Leo Dos Santos
@@ -532,7 +531,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @throws CoreException
 	 */
 	public ApplicationModule debugModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		return doDebugModule(modules, true, monitor);
+		boolean incrementalPublish = false;
+		return doDebugModule(modules, incrementalPublish, monitor);
 	}
 
 	/**
@@ -1326,7 +1326,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 								descriptor.applicationInfo.setWarFile(warFile);
 
 							}
-							
+
 							// Tell webtools the module has been published
 							setModulePublishState(modules, IServer.PUBLISH_STATE_NONE);
 
