@@ -53,7 +53,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 
 	private CheckboxTableViewer servicesViewer;
 
-	private static final String DESCRIPTION = "Add, delete or create new services";
+	private static final String DESCRIPTION = "Add existing services or create new services";
 
 	private static final CloudService[] NO_SERVICES = new CloudService[0];
 
