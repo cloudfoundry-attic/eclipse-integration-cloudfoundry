@@ -53,7 +53,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 
 	private CheckboxTableViewer servicesViewer;
 
-	private static final String DESCRIPTION = "Add existing services or create new services";
+	private static final String DESCRIPTION = "Bind or add new services";
 
 	private static final CloudService[] NO_SERVICES = new CloudService[0];
 
@@ -109,7 +109,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 
 		Label label = new Label(toolBarArea, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).align(SWT.BEGINNING, SWT.CENTER).applyTo(label);
-		label.setText("Check services to add to the deployed application:");
+		label.setText("Select services to bind to the application:");
 
 		Table table = new Table(tableArea, SWT.BORDER | SWT.SINGLE | SWT.CHECK);
 
