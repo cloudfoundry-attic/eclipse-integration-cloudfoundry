@@ -11,11 +11,36 @@
 
 ## Installation (Release)
 
-  This project hasn't published a release yet.
+### when using Eclipse
 
-  For now, you can install the latest bits and pieces from the nightly update site. Once the first
-  release is out, we will provide a direct installation from the Eclipse Marketplace as well as
-  from an update site.
+  Go to the Eclipse Marketplace and search for "Cloud Foundry". You will find the release 1.0.0
+  of the Cloud Foundry Integration for Eclipse and can install that into your existing Eclipse
+  installation. An Eclipse JEE package is recommended.
+
+### when using STS
+
+  When using the SpringSource Tool Suite, please make sure to upgrade to the latest STS 2.9.1
+  release and then go to the Dashboard -> Extensions and select the Cloud Foundry Integration
+  for Eclipse from there.
+
+### manually from the update site
+
+  You can always install the latest release of the Cloud Foundry Integration for Eclipse from
+  here:
+
+  http://dist.springsource.com/release/TOOLS/cloudfoundry
+
+  (put this URL into the "Install New Software" dialog of your Eclipse)
+
+### Attention:
+
+  If you have previous versions of the Cloud Foundry Integration for Eclipse already installed
+  (M4 or M5, prior to this project being open-sourced), please uninstall those versions from
+  your STS or Eclipse. There is no path to directly upgrade an existing installation from
+  the closed-source milestone versions to this open-sourced releases.
+
+  Once you have the Cloud Foundry Integration for Eclipse installed from the update sites
+  mentioned here, you will get updates automatically.
 
 ## Installation (latest from the CI build)
 
