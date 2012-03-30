@@ -12,16 +12,21 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.cloudfoundry.caldecott.client.HttpTunnelFactory;
+import org.cloudfoundry.caldecott.client.TunnelHelper;
+import org.cloudfoundry.caldecott.client.TunnelServer;
 import org.cloudfoundry.client.lib.ApplicationInfo;
 import org.cloudfoundry.client.lib.ApplicationStats;
 import org.cloudfoundry.client.lib.CloudApplication;
@@ -68,6 +73,8 @@ import org.springframework.web.client.RestClientException;
 @SuppressWarnings("restriction")
 public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
+	private static final int BASE_CALDECOTT_PORT = 10000;
+
 	private static final long DEFAULT_INTERVAL = 60 * 1000;
 
 	private static final long DEPLOYMENT_TIMEOUT = 10 * 60 * 1000;
@@ -76,11 +83,16 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private static final long UPLOAD_TIMEOUT = 60 * 1000;
 
+	public static final String LOCAL_HOST = "127.0.0.1";
+
 	private CloudFoundryClient client;
 
 	private RefreshJob refreshJob;
 
 	private DebugSupportCheck isDebugModeSupported = DebugSupportCheck.UNCHECKED;
+
+	// This is performed during requests
+	private boolean hasCaldecottSupport = false;
 
 	private IServerListener serverListener = new IServerListener() {
 
@@ -531,8 +543,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @throws CoreException
 	 */
 	public ApplicationModule debugModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		boolean incrementalPublish = false;
-		return doDebugModule(modules, incrementalPublish, monitor);
+		return doDebugModule(modules, true, monitor);
 	}
 
 	/**
@@ -1199,6 +1210,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				progress.done();
 			}
 
+			// FIXNS: may not be optimal as it gets invoked for every request
+			if (succeeded) {
+				getCaldecottApp(client, monitor);
+			}
+
 			if (server.getServerState() != IServer.STATE_STARTED) {
 				server.setServerState(IServer.STATE_STARTED);
 			}
@@ -1485,6 +1501,157 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		}
 
+	}
+
+	/**
+	 * Determines if the server instance has Caldecott support. Note that this
+	 * is cached and only updated on actual Requests like a deployment or
+	 * starting/restarting an app.
+	 * @return
+	 */
+	public synchronized boolean hasCaldecottSupport() {
+		return hasCaldecottSupport;
+	}
+
+	/**
+	 * Retrieves the actual Caldecott Cloud Application from the server. It does
+	 * not rely on webtools IModule. May be a long running operation and
+	 * experience network I/O timeouts. SHould only be called when other
+	 * potential long running operations are performed.
+	 * @param client
+	 * @param monitor
+	 * @return
+	 */
+	public synchronized CloudApplication getCaldecottApp(CloudFoundryClient client, IProgressMonitor monitor) {
+
+		try {
+			CloudApplication caldecottApp = client.getApplication(TunnelHelper.getTunnelAppName());
+			hasCaldecottSupport = caldecottApp != null;
+			return caldecottApp;
+		}
+		catch (Throwable e) {
+			// Ignore all.
+		}
+		hasCaldecottSupport = false;
+		return null;
+	}
+
+	public synchronized IModule getCaldecottModule() {
+		try {
+			Collection<ApplicationModule> modules = getCloudFoundryServer().getApplications();
+			if (modules != null) {
+				String caldecottAppName = TunnelHelper.getTunnelAppName();
+				for (ApplicationModule module : modules) {
+					if (caldecottAppName.equals(module.getApplicationId())) {
+						return module;
+					}
+				}
+			}
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		return null;
+	}
+
+	public synchronized CaldecottTunnelDescriptor startCaldecottTunnel(final String serviceName,
+			IProgressMonitor monitor) {
+
+		// FIXNS: automatically connect tunnels for any existing service?
+		final List<CaldecottTunnelDescriptor> tunnel = new ArrayList<CaldecottTunnelDescriptor>(1);
+
+		try {
+			new Request<Boolean>() {
+				@Override
+				protected Boolean doRun(final CloudFoundryClient client, SubMonitor progress) throws CoreException {
+					boolean started = false;
+					try {
+						try {
+
+							// First check if there is a tunnel already
+
+							// then check if the service is already added but
+							// has no tunnel
+
+							// lastly add the service if it isn't there
+
+							// always do an actual caldecott app check before
+							// creating a tunnel
+							CloudApplication caldecottApp = getCaldecottApp(client, progress);
+							if (caldecottApp == null) {
+								return false;
+							}
+
+							List<String> updateCaldecottServices = caldecottApp.getServices();
+							if (updateCaldecottServices == null) {
+								updateCaldecottServices = new ArrayList<String>();
+							}
+							else {
+								List<String> nServices = new ArrayList<String>();
+								nServices.addAll(updateCaldecottServices);
+								updateCaldecottServices = nServices;
+							}
+							if (!updateCaldecottServices.contains(serviceName)) {
+								updateCaldecottServices.add(serviceName);
+								updateServices(TunnelHelper.getTunnelAppName(), updateCaldecottServices, progress);
+
+								// Refresh UI through service update call backs?
+							}
+							int tunnelPort = CloudFoundryPlugin.getCaldecottTunnelCache().getUnusedPort(
+									BASE_CALDECOTT_PORT);
+							InetSocketAddress local = new InetSocketAddress(LOCAL_HOST, tunnelPort);
+							String url = TunnelHelper.getTunnelUri(client);
+							Map<String, String> info = TunnelHelper.getTunnelServiceInfo(client, serviceName);
+							String host = info.get("hostname");
+							int port = Integer.valueOf(info.get("port"));
+							String auth = TunnelHelper.getTunnelAuth(client);
+							String serviceUserName = info.get("username");
+							String servicePassword = info.get("password");
+							
+				
+
+							TunnelServer tunnelServer = new TunnelServer(local, new HttpTunnelFactory(url, host, port,
+									auth));
+							tunnelServer.start();
+							CaldecottTunnelDescriptor descriptor = new CaldecottTunnelDescriptor(serviceUserName,
+									servicePassword, serviceName, tunnelServer, tunnelPort);
+
+							CloudFoundryPlugin.getCaldecottTunnelCache().addDescriptor(getCloudFoundryServer(),
+									descriptor);
+							tunnel.add(descriptor);
+
+							CloudFoundryCallback callBack = CloudFoundryPlugin.getCallback();
+							callBack.displayCaldecottTunnelConnections(CloudFoundryServerBehaviour.this);
+							started = true;
+
+						}
+						catch (CloudFoundryException ignore) {
+						}
+
+					}
+					catch (Exception e) {
+						throw new CoreException(CloudFoundryPlugin.getErrorStatus(e));
+					}
+
+					return started;
+				}
+			}.run(monitor);
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+
+		return tunnel.size() > 0 ? tunnel.get(0) : null;
+	}
+
+	public synchronized void stopCaldecottTunnel(String serviceName, IProgressMonitor monitor) throws CoreException {
+		// FIXNS: also stop all tunnels when server disconnects to clear ports
+
+		CaldecottTunnelDescriptor tunnelDescriptor = CloudFoundryPlugin.getCaldecottTunnelCache().getDescriptor(
+				getCloudFoundryServer(), serviceName);
+		if (tunnelDescriptor != null) {
+			tunnelDescriptor.getTunnelServer().stop();
+		}
 	}
 
 }

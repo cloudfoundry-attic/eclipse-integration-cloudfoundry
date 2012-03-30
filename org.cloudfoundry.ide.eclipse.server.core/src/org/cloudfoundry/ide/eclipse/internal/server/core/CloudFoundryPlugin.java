@@ -144,6 +144,12 @@ public class CloudFoundryPlugin extends Plugin {
 			// ignore
 		}
 
+		@Override
+		public void displayCaldecottTunnelConnections(CloudFoundryServerBehaviour behaviour) {
+			// TODO Auto-generated method stub
+			
+		}
+
 	}
 
 	// public static final String CLOUD_CONTROLLER_DEFAULT_URL_ATTRIBUTE =
@@ -166,6 +172,12 @@ public class CloudFoundryPlugin extends Plugin {
 	private DeployedResourceCache sha1Cache = new DeployedResourceCache();
 
 	private InstanceScope INSTANCE_SCOPE = new InstanceScope();
+
+	private static CaldecottTunnelCache caldecottCache = new CaldecottTunnelCache();
+
+	public static CaldecottTunnelCache getCaldecottTunnelCache() {
+		return caldecottCache;
+	}
 
 	public static synchronized CloudFoundryCallback getCallback() {
 		if (callback == null) {

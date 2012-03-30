@@ -20,7 +20,6 @@ import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
-
 /**
  * @author Christian Dupuis
  * @author Leo Dos Santos
@@ -33,6 +32,10 @@ public class CloudFoundryImages {
 	private final static String OBJ = "obj16/";
 
 	public static final ImageDescriptor EDIT = create(OBJ, "edit.gif");
+
+	public static final ImageDescriptor DISCONNECT = create(OBJ, "disconnect.png");
+
+	public static final ImageDescriptor CONNECT = create(OBJ, "connect.png");
 
 	public static final ImageDescriptor NEW_SERVICE = create(OBJ, "service_new.png");
 

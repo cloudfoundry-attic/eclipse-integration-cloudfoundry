@@ -18,8 +18,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DeleteServicesAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DeleteServicesAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryServiceWizard;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -64,7 +64,6 @@ import org.eclipse.wst.server.ui.internal.ServerLabelProvider;
 import org.eclipse.wst.server.ui.internal.view.servers.RemoveModuleAction;
 import org.eclipse.wst.server.ui.internal.view.servers.ServersViewDropAdapter;
 import org.eclipse.wst.server.ui.internal.wizard.ModifyModulesWizard;
-
 
 /**
  * @author Terry Denney
@@ -375,6 +374,17 @@ public class ApplicationMasterPart extends SectionPart {
 		}
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
+
+		if (cloudServer.getBehaviour().hasCaldecottSupport()) {
+			Action addCaldecottTunnel = new Action("Start Caldecott tunnel", CloudFoundryImages.CONNECT) {
+				public void run() {
+
+					new CaldecottEditorActionAdapter(cloudServer.getBehaviour(), editorPage)
+							.addServiceAndCreateTunnel(servicesViewer.getSelection());
+				}
+			};
+			manager.add(addCaldecottTunnel);
+		}
 	}
 
 	private void fillApplicationsContextMenu(IMenuManager manager) {

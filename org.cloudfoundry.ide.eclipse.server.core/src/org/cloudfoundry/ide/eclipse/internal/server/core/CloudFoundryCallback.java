@@ -34,28 +34,31 @@ public abstract class CloudFoundryCallback {
 
 	public abstract void getCredentials(CloudFoundryServer server);
 
-	public abstract DeploymentDescriptor prepareForDeployment(CloudFoundryServer server, ApplicationModule module, IProgressMonitor monitor);
+	public abstract void displayCaldecottTunnelConnections(final CloudFoundryServerBehaviour behaviour);
+
+	public abstract DeploymentDescriptor prepareForDeployment(CloudFoundryServer server, ApplicationModule module,
+			IProgressMonitor monitor);
 
 	public static class DeploymentDescriptor {
 
 		public ApplicationInfo applicationInfo;
 
 		public DeploymentInfo deploymentInfo;
-		
+
 		public ApplicationAction deploymentMode;
-		
+
 		public ApplicationArchive applicationArchive;
-		
+
 		public boolean isIncrementalPublish;
 
 	}
 
 	public abstract void deleteServices(List<String> services, CloudFoundryServer cloudServer);
-	
+
 	public abstract void deleteApplication(ApplicationModule cloudModule, CloudFoundryServer cloudServer);
 
 	public boolean isAutoDeployEnabled() {
 		return true;
 	}
-	
+
 }
