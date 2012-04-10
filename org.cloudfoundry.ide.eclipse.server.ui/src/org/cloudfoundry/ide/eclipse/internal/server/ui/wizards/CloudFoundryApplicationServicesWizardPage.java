@@ -57,9 +57,23 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 
 	private static final CloudService[] NO_SERVICES = new CloudService[0];
 
-	private final Map<String, CloudService> selectedServices = new HashMap<String, CloudService>();
+	/**
+	 * Services, either existing or new, that a user has checked for binding.
+	 */
+	private final Map<String, CloudService> selectedServicesToBind = new HashMap<String, CloudService>();
 
-	private final Set<CloudService> addedServices = new HashSet<CloudService>();
+	/**
+	 * This is a list of services to add to the CF server. This may not
+	 * necessarily match all the services a user has selected to bind to an
+	 * application, as a user may add a service, but uncheck it for binding.
+	 */
+	private final Set<CloudService> servicesToAdd = new HashSet<CloudService>();
+
+	/**
+	 * All services both existing and added, used to refresh the input of the
+	 * viewer
+	 */
+	private final List<CloudService> allServices = new ArrayList<CloudService>();
 
 	private final ApplicationModule module;
 
@@ -80,7 +94,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 	 * @return may be empty if no services selected, but never null
 	 */
 	public List<String> getSelectedServicesID() {
-		return new ArrayList<String>(selectedServices.keySet());
+		return new ArrayList<String>(selectedServicesToBind.keySet());
 	}
 
 	/**
@@ -88,7 +102,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 	 * @return may be empty if nothing new added, but never null
 	 */
 	public List<CloudService> getAddedServices() {
-		return new ArrayList<CloudService>(addedServices);
+		return new ArrayList<CloudService>(servicesToAdd);
 	}
 
 	public void createControl(Composite parent) {
@@ -128,10 +142,10 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 			public void selectionChanged(SelectionChangedEvent event) {
 				Object[] services = servicesViewer.getCheckedElements();
 				if (services != null) {
-					selectedServices.clear();
+					selectedServicesToBind.clear();
 					for (Object obj : services) {
 						CloudService service = (CloudService) obj;
-						selectedServices.put(service.getName(), service);
+						selectedServicesToBind.put(service.getName(), service);
 					}
 				}
 			}
@@ -165,13 +179,18 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 	}
 
 	/**
-	 * Also automatically selects the added service
-	 * @param service
+	 * Also automatically selects the added service to be bound to the
+	 * application.
+	 * @param service that was added and will also be automatically selected to
+	 * be bound to the application.
 	 */
 	protected void addService(CloudService service) {
-		addedServices.add(service);
-		selectedServices.put(service.getName(), service);
-		servicesViewer.add(service);
+		// FIXNS: check if duplicate services or with the same name but
+		// different type are
+		// allowable
+		servicesToAdd.add(service);
+		allServices.add(service);
+		selectedServicesToBind.put(service.getName(), service);
 		setSelection();
 	}
 
@@ -191,12 +210,14 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 		else {
 
 			// All available services should be displayed
-			servicesViewer.setInput(existingServices.toArray());
+			allServices.clear();
+			allServices.addAll(existingServices);
+			servicesViewer.setInput(allServices.toArray(new CloudService[] {}));
 			// Also add any actual services to the selected services ID map as
 			// the map may have been prepopulated
 			for (CloudService service : existingServices) {
-				if (selectedServices.containsKey(service.getName())) {
-					selectedServices.put(service.getName(), service);
+				if (selectedServicesToBind.containsKey(service.getName())) {
+					selectedServicesToBind.put(service.getName(), service);
 				}
 			}
 			setSelection();
@@ -206,7 +227,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 
 	protected void populatedServicesFromLastDeployment() {
 		// Set the initial selection based on the past deployment history
-		selectedServices.clear();
+		selectedServicesToBind.clear();
 		DeploymentInfo lastDeploymentInfo = module.getLastDeploymentInfo();
 		if (lastDeploymentInfo != null) {
 			List<String> serviceNames = lastDeploymentInfo.getServices();
@@ -217,15 +238,15 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 			// actual services
 			if (serviceNames != null) {
 				for (String name : serviceNames) {
-					selectedServices.put(name, null);
+					selectedServicesToBind.put(name, null);
 				}
-
 			}
 		}
 	}
 
 	protected void setSelection() {
-		servicesViewer.setCheckedElements(selectedServices.values().toArray());
+		servicesViewer.setInput(allServices.toArray(new CloudService[] {}));
+		servicesViewer.setCheckedElements(selectedServicesToBind.values().toArray());
 	}
 
 	public void setErrorText(String newMessage) {

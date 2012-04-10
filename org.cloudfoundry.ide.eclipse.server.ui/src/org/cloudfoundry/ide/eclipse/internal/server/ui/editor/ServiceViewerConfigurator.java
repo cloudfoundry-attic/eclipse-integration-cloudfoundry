@@ -16,6 +16,8 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
@@ -73,6 +75,8 @@ public class ServiceViewerConfigurator {
 			tableColumn.setData(column);
 			tableColumn.setText(column.name());
 			tableColumn.setWidth(column.getWidth());
+			tableColumn.addSelectionListener(new ColumnSortListener(tableViewer));
+
 			if (column == ServiceViewColumn.Name) {
 				sortColumn = tableColumn;
 			}
@@ -113,7 +117,7 @@ public class ServiceViewerConfigurator {
 								result = super.compare(viewer, e1, e2);
 								break;
 							case Type:
-								result = service1.getType().compareTo(service2.getVendor());
+								result = service1.getType().compareTo(service2.getType());
 								break;
 							case Vendor:
 								result = service1.getVendor().compareTo(service2.getVendor());
@@ -156,6 +160,36 @@ public class ServiceViewerConfigurator {
 			lastColumn.setWidth(newWidth);
 		}
 
+	}
+
+	protected class ColumnSortListener extends SelectionAdapter {
+
+		private final TableViewer viewer;
+
+		public ColumnSortListener(TableViewer viewer) {
+			this.viewer = viewer;
+		}
+
+		public void widgetSelected(SelectionEvent e) {
+			if (e.widget instanceof TableColumn) {
+				TableColumn selected = (TableColumn) e.widget;
+				Table table = viewer.getTable();
+				TableColumn current = table.getSortColumn();
+
+				int newDirection = SWT.UP;
+				// If selecting a different column, keep the ascending
+				// direction as default. Only switch
+				// directions if the same column has been selected.
+				if (current == selected) {
+					newDirection = table.getSortDirection() == SWT.UP ? SWT.DOWN : SWT.UP;
+				}
+				else {
+					table.setSortColumn(selected);
+				}
+				table.setSortDirection(newDirection);
+				viewer.refresh();
+			}
+		}
 	}
 
 }
