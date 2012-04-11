@@ -33,6 +33,7 @@
 	        description="Publishes and runs J2EE Web projects to Cloud Foundry."
 	        hasConfiguration="false"
 	        id="org.cloudfoundry.appcloudserver.10"
+            supportsRemoteHosts="true"
 	        initialState="stopped"
 	        name="Cloud Foundry"
 	        runtime="true"
