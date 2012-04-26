@@ -66,7 +66,6 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.part.PageBook;
 import org.eclipse.ui.statushandlers.StatusManager;
 
-
 /**
  * @author Steffen Pingel
  * @author Terry Denney
@@ -92,10 +91,8 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 	private Composite tierDetailsComposite;
 
 	private Group tierGroup;
-	
+
 	private PageBook pageBook;
-	
-	private Label tierLabel;
 
 	private WritableValue tierObservable = new WritableValue();
 
@@ -135,8 +132,9 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 
 		WizardPageSupport.create(this, bindingContext);
 
-		bindingContext.bindValue(SWTObservables.observeText(nameText, SWT.Modify), Observables.observeMapEntry(map,
-				"name"), new UpdateValueStrategy().setAfterConvertValidator(new StringValidator()), null);
+		bindingContext.bindValue(SWTObservables.observeText(nameText, SWT.Modify),
+				Observables.observeMapEntry(map, "name"),
+				new UpdateValueStrategy().setAfterConvertValidator(new StringValidator()), null);
 
 		label = new Label(composite, SWT.NONE);
 		label.setText("Type:");
@@ -161,10 +159,7 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 
 		pageBook = new PageBook(composite, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(true, true).span(2, 1).applyTo(pageBook);
-		
-		tierLabel = new Label(pageBook, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(tierLabel);
-		
+
 		tierGroup = new Group(pageBook, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(tierGroup);
 		tierGroup.setLayout(new GridLayout());
@@ -219,27 +214,37 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 		int index = typeCombo.getSelectionIndex();
 		if (index == -1) {
 			pageBook.setVisible(false);
-//			tierGroup.setVisible(false);
+			tierGroup.setVisible(false);
 
 			// re-validate
 			tierObservable.setValue(null);
 		}
 		else {
 			pageBook.setVisible(true);
-			
+
 			for (Control control : tierGroup.getChildren()) {
 				control.dispose();
 			}
 			ServiceConfiguration configuration = configurations.get(index);
 			List<Tier> tiers = configuration.getTiers();
-			
+
 			if (tiers.size() > 1) {
 				pageBook.showPage(tierGroup);
-//				tierGroup.setVisible(true);
+				tierGroup.setVisible(true);
+
+				Button defaultTierControl = null;
 
 				for (Tier tier : tiers) {
+
+					String tierLabelText = tier.getDescription() != null ? tier.getDescription() : tier.getType();
+
 					Button tierButton = new Button(tierGroup, SWT.RADIO);
-					tierButton.setText(tier.getDescription());
+
+					if (defaultTierControl == null) {
+						defaultTierControl = tierButton;
+					}
+
+					tierButton.setText(tierLabelText);
 					tierButton.setData(tier);
 					tierButton.addSelectionListener(new SelectionAdapter() {
 						@Override
@@ -247,10 +252,7 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 							Button button = (Button) event.widget;
 							if (button.getSelection()) {
 								Tier tier = (Tier) button.getData();
-								service.setTier(tier.getType());
-								service.getOptions().clear();
-								// re-validate
-								tierObservable.setValue(tier);
+								setTier(tier);
 								refreshTierDetails(tier);
 							}
 						}
@@ -258,22 +260,35 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 				}
 
 				tierDetailsComposite = new Composite(tierGroup, SWT.NONE);
-				GridLayoutFactory.fillDefaults().extendedMargins(0, 0, 10, 0).numColumns(2).applyTo(tierDetailsComposite);
-			} else if (tiers.size() == 1) {
-				pageBook.showPage(tierLabel);
-				Tier tier = tiers.get(0);
-				if (tier.getDescription() != null) {
-					tierLabel.setText(tier.getDescription());
+				GridLayoutFactory.fillDefaults().extendedMargins(0, 0, 10, 0).numColumns(2)
+						.applyTo(tierDetailsComposite);
+
+				// Set a default tier, if one exists
+				if (defaultTierControl != null) {
+					defaultTierControl.setSelection(true);
+					Tier tier = (Tier) defaultTierControl.getData();
+					setTier(tier);
+					refreshTierDetails(tier);
 				}
-				
-				service.setTier(tier.getType());
-				service.getOptions().clear();
-				tierObservable.setValue(tier);
-			} else {
+			}
+			else if (tiers.size() == 1) {
+				tierGroup.setVisible(false);
+				Tier tier = tiers.get(0);
+				setTier(tier);
+			}
+			else {
 				pageBook.setVisible(false);
 			}
 		}
 		((Composite) getControl()).layout(true, true);
+
+	}
+
+	protected void setTier(Tier tier) {
+		service.setTier(tier.getType());
+		service.getOptions().clear();
+		// re-validate
+		tierObservable.setValue(tier);
 	}
 
 	protected void refreshTierDetails(Tier tier) {
@@ -289,8 +304,8 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 					.entrySet());
 			for (Entry<String, Integer> entry : list) {
 				if (entry.getValue() != null) {
-					combo.add(NLS.bind("{0} (${1}/{2})", new Object[] { entry.getKey(), entry.getValue(),
-							tier.getPricingPeriod() }));
+					combo.add(NLS.bind("{0} (${1}/{2})",
+							new Object[] { entry.getKey(), entry.getValue(), tier.getPricingPeriod() }));
 				}
 				else {
 					combo.add(entry.getKey());
@@ -303,8 +318,8 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 				}
 			});
 
-			bindingContext.bindValue(SWTObservables.observeSelection(combo), Observables.observeMapEntry(map, option
-					.getName()), new UpdateValueStrategy().setAfterConvertValidator(new ComboValidator(NLS.bind(
+			bindingContext.bindValue(SWTObservables.observeSelection(combo), Observables.observeMapEntry(map,
+					option.getName()), new UpdateValueStrategy().setAfterConvertValidator(new ComboValidator(NLS.bind(
 					"Select a {0}", option.getName()))), null);
 		}
 
@@ -344,8 +359,8 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 			return true;
 		}
 		catch (InvocationTargetException e) {
-			IStatus status = cloudServer.error(NLS.bind("Configuration retrieval failed: {0}", e.getCause()
-					.getMessage()), e);
+			IStatus status = cloudServer.error(
+					NLS.bind("Configuration retrieval failed: {0}", e.getCause().getMessage()), e);
 			StatusManager.getManager().handle(status, StatusManager.LOG);
 			setMessage(status.getMessage(), IMessageProvider.ERROR);
 		}
