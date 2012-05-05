@@ -116,7 +116,7 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 		return !CloudUtil.isNotFoundException(e);
 	}
 
-	protected List<String> getServiceNames(IStructuredSelection selection) {
+	public static List<String> getServiceNames(IStructuredSelection selection) {
 		Object[] objects = selection.toArray();
 		List<String> services = new ArrayList<String>();
 

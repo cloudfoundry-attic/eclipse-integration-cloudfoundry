@@ -19,13 +19,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.viewers.IStructuredSelection;
 
 public class StartAndAddCaldecottService extends AddServicesToApplicationAction {
 
-	public StartAndAddCaldecottService(IStructuredSelection selection, ApplicationModule caldecottApp,
+	public StartAndAddCaldecottService(List<String> services, ApplicationModule caldecottApp,
 			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
-		super(selection, caldecottApp, serverBehaviour, editorPage);
+		super(services, caldecottApp, serverBehaviour, editorPage);
 	}
 
 	@Override

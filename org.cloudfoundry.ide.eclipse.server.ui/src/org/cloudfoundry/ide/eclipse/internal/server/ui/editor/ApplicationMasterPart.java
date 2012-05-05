@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudApplication;
@@ -374,13 +376,16 @@ public class ApplicationMasterPart extends SectionPart {
 		}
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
-
-		if (cloudServer.getBehaviour().hasCaldecottSupport()) {
+		Collection<String> selectedServices = StartAndAddCaldecottService.getServiceNames(selection);
+		selectedServices = cloudServer.getBehaviour().canOpenTunnel(selectedServices, null);
+		
+		if (selectedServices != null && !selectedServices.isEmpty()) {
+			final List<String> servicesToAdd = new ArrayList<String>(selectedServices);
 			Action addCaldecottTunnel = new Action("Start Caldecott tunnel", CloudFoundryImages.CONNECT) {
 				public void run() {
 
 					new CaldecottEditorActionAdapter(cloudServer.getBehaviour(), editorPage)
-							.addServiceAndCreateTunnel(servicesViewer.getSelection());
+							.addServiceAndCreateTunnel(servicesToAdd);
 				}
 			};
 			manager.add(addCaldecottTunnel);

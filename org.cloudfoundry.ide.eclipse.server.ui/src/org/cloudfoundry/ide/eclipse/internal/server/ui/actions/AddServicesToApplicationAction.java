@@ -11,14 +11,13 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.jface.viewers.IStructuredSelection;
-
-
 
 /**
  * @author Terry Denney
@@ -33,7 +32,14 @@ public class AddServicesToApplicationAction extends ModifyServicesForApplication
 			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
 		super(appModule, serverBehaviour, editorPage);
 
-		services = getServiceNames(selection);
+		this.services = getServiceNames(selection);
+	}
+
+	public AddServicesToApplicationAction(Collection<String> services, ApplicationModule appModule,
+			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
+		super(appModule, serverBehaviour, editorPage);
+
+		this.services = new ArrayList<String>(services);
 	}
 
 	@Override

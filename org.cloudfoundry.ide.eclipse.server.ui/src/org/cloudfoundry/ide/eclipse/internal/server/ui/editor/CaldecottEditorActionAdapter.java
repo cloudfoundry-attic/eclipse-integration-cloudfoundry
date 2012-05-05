@@ -10,10 +10,10 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
+import java.util.List;
+
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.wst.server.core.IModule;
 
 public class CaldecottEditorActionAdapter {
@@ -28,15 +28,12 @@ public class CaldecottEditorActionAdapter {
 		this.editorPage = editorPage;
 	}
 
-	public void addServiceAndCreateTunnel(ISelection selection) {
+	public void addServiceAndCreateTunnel(List<String> services) {
 
 		IModule caldecottModule = behaviour.getCaldecottModule();
-		if (caldecottModule instanceof ApplicationModule && selection instanceof IStructuredSelection) {
-			new StartAndAddCaldecottService((IStructuredSelection) selection, (ApplicationModule) caldecottModule,
-					behaviour, editorPage).run();
-
+		if (caldecottModule instanceof ApplicationModule) {
+			new StartAndAddCaldecottService(services, (ApplicationModule) caldecottModule, behaviour, editorPage).run();
 		}
-
 	}
 
 }
