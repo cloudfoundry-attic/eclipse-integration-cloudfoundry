@@ -270,13 +270,12 @@
    </extension>   
    
 	<extension point="org.eclipse.ui.menus">
-  <menuContribution
+      <menuContribution
         allPopups="true"
-        class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DebugActionContributionFactory"
+        class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryActionContributionFactory"
         locationURI="popup:org.eclipse.wst.server.ui.ServersView?before=additions">
-  </menuContribution>
+      </menuContribution>
 	</extension>
-	
  
    <extension point="org.eclipse.core.expressions.propertyTesters">
       <propertyTester

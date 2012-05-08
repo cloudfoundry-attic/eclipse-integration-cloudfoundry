@@ -19,16 +19,13 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DebugMenuActionHandler.DebugAction.DebugActionDescriptor;
-import org.eclipse.core.expressions.IEvaluationContext;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.ui.IServerModule;
 
@@ -37,7 +34,11 @@ import org.eclipse.wst.server.ui.IServerModule;
  * should include a server module and a cloud foundry server as a bare minimum.
  * 
  */
-public class DebugMenuActionHandler {
+public class DebugMenuActionHandler extends MenuActionHandler<IServerModule> {
+
+	protected DebugMenuActionHandler() {
+		super(IServerModule.class);
+	}
 
 	public static final String DEBUG_ACTION_ID = "org.cloudfoundry.ide.eclipse.server.ui.action.debug";
 
@@ -46,45 +47,6 @@ public class DebugMenuActionHandler {
 	public static final String DEBUG_TOOLTIP_TEXT = "Debug the selected application";
 
 	public static final String CONNECT_TO_DEBUBGGER_TOOTIP_TEXT = "Connect the debugger to the deployed application";
-
-	/**
-	 * Returns a list of applicable debug context menu actions based on the
-	 * given context. Always returns a non-null list, although the list may be
-	 * empty if no debug actions are applicable to the given context. As a bare
-	 * minimum, the context should include a server module and be associated
-	 * with a valid cloud foundry server.
-	 * 
-	 * @param context to evaluate for the creation of debug actions. If null, an
-	 * attempt will be made to obtain the context directly from the Servers view
-	 * @return non-null list of debug actions corresponding to the given
-	 * evaluation context. May be empty if context is invalid.
-	 */
-	public List<IAction> getApplicableActions(Object context) {
-
-		IServerModule serverModule = getServerModule(context);
-		if (serverModule == null) {
-			return Collections.emptyList();
-		}
-
-		CloudFoundryServer cloudFoundryServer = (CloudFoundryServer) serverModule.getServer().loadAdapter(
-				CloudFoundryServer.class, null);
-		if (cloudFoundryServer == null) {
-			return Collections.emptyList();
-		}
-
-		ApplicationAction debugAction = getApplicationAction(serverModule, cloudFoundryServer);
-		if (debugAction == null) {
-			return Collections.emptyList();
-		}
-
-		// For now only handle one action per context request.
-		DebugActionDescriptor descriptor = new DebugActionDescriptor(serverModule, cloudFoundryServer, debugAction);
-		DebugAction menuAction = new DebugAction(descriptor);
-		List<IAction> actions = new ArrayList<IAction>();
-		actions.add(menuAction);
-		return actions;
-
-	}
 
 	protected ApplicationAction getApplicationAction(IServerModule serverModule, CloudFoundryServer cloudFoundryServer) {
 
@@ -98,42 +60,6 @@ public class DebugMenuActionHandler {
 			return ApplicationAction.DEBUG;
 		}
 		return null;
-	}
-
-	protected IServerModule getServerModule(Object context) {
-		IServerModule serverModule = null;
-
-		// First check if the context is an evaluation context, and attempt to
-		// obtain the server module from the context
-		if (context instanceof IEvaluationContext) {
-
-			Object evalContext = ((IEvaluationContext) context).getDefaultVariable();
-
-			if (evalContext instanceof List<?>) {
-				List<?> content = (List<?>) evalContext;
-				if (!content.isEmpty()) {
-					Object obj = content.get(0);
-					if (obj instanceof IServerModule) {
-						serverModule = (IServerModule) obj;
-					}
-				}
-			}
-		}
-
-		// Failed to get context selection from context.
-		// Try the servers view directly
-		if (serverModule == null) {
-
-			IStructuredSelection selection = CloudUiUtil.getServersViewSelection();
-			if (selection != null && !selection.isEmpty()) {
-				Object selectObj = selection.getFirstElement();
-				if (selectObj instanceof IServerModule) {
-					serverModule = (IServerModule) selectObj;
-				}
-			}
-		}
-
-		return serverModule;
 	}
 
 	static class DebugAction extends Action {
@@ -251,5 +177,26 @@ public class DebugMenuActionHandler {
 			}
 
 		}
+	}
+
+	@Override
+	protected List<IAction> getActionsFromSelection(IServerModule serverModule) {
+		CloudFoundryServer cloudFoundryServer = (CloudFoundryServer) serverModule.getServer().loadAdapter(
+				CloudFoundryServer.class, null);
+		if (cloudFoundryServer == null) {
+			return Collections.emptyList();
+		}
+
+		ApplicationAction debugAction = getApplicationAction(serverModule, cloudFoundryServer);
+		if (debugAction == null) {
+			return Collections.emptyList();
+		}
+
+		// For now only handle one action per context request.
+		DebugActionDescriptor descriptor = new DebugActionDescriptor(serverModule, cloudFoundryServer, debugAction);
+		DebugAction menuAction = new DebugAction(descriptor);
+		List<IAction> actions = new ArrayList<IAction>();
+		actions.add(menuAction);
+		return actions;
 	}
 }

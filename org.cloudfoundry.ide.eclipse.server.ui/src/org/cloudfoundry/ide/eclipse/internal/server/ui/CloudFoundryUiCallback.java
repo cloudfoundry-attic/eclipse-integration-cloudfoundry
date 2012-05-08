@@ -11,7 +11,6 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import java.util.List;
-import java.util.Set;
 
 import org.cloudfoundry.client.lib.ApplicationInfo;
 import org.cloudfoundry.client.lib.CloudApplication;
@@ -19,29 +18,22 @@ import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.client.lib.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CaldecottTunnelWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryCredentialsWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.DeleteServicesWizard;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.progress.UIJob;
 
 /**
  * @author Christian Dupuis
@@ -64,36 +56,8 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		}
 	}
 
-	public void displayCaldecottTunnelConnections(final CloudFoundryServerBehaviour behaviour) {
-		UIJob uiJob = new UIJob("Show Caldecott Tunnels") {
-
-			public IStatus runInUIThread(IProgressMonitor monitor) {
-				Shell shell = PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
-
-				CaldecottTunnelWizard wizard = new CaldecottTunnelWizard(behaviour);
-				WizardDialog dialog = new WizardDialog(shell, wizard);
-				if (dialog.open() == Window.OK) {
-
-					Set<CaldecottTunnelDescriptor> descriptorsToRemove = wizard.getDescriptorsToRemove();
-					if (descriptorsToRemove != null) {
-						for (CaldecottTunnelDescriptor descriptor : descriptorsToRemove) {
-							try {
-								behaviour.stopCaldecottTunnel(descriptor.getServiceName(), monitor);
-							}
-							catch (CoreException e) {
-								CloudFoundryPlugin.logError(e);
-							}
-						}
-
-					}
-
-				}
-
-				return Status.OK_STATUS;
-			}
-
-		};
-		uiJob.schedule();
+	public void displayCaldecottTunnelConnections(CloudFoundryServer cloudServer) {
+		new CaldecottUIHelper(cloudServer).displayCaldecottTunnelConnections();
 	}
 
 	@Override

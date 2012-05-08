@@ -145,9 +145,8 @@ public class CloudFoundryPlugin extends Plugin {
 		}
 
 		@Override
-		public void displayCaldecottTunnelConnections(CloudFoundryServerBehaviour behaviour) {
-			// TODO Auto-generated method stub
-			
+		public void displayCaldecottTunnelConnections(CloudFoundryServer cloudServer) {
+			// ignore
 		}
 
 	}

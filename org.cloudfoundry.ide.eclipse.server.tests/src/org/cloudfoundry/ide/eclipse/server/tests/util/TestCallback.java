@@ -19,7 +19,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 
@@ -118,9 +117,8 @@ public class TestCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public void displayCaldecottTunnelConnections(CloudFoundryServerBehaviour behaviour) {
-		// TODO Auto-generated method stub
-
+	public void displayCaldecottTunnelConnections(CloudFoundryServer server) {
+		// ignore
 	}
 
 }

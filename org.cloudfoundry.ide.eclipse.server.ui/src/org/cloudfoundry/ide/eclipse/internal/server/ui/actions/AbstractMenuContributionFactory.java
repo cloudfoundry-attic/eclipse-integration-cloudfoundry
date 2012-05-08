@@ -24,16 +24,10 @@ import org.eclipse.ui.menus.IContributionRoot;
 import org.eclipse.ui.menus.IMenuService;
 import org.eclipse.ui.services.IServiceLocator;
 
-/**
- * Contributes debug context menu actions to the Server view based on valid
- * context selections. This is invoked any time a user right-clicks on the
- * Servers view, and therefore context selection checks should be fast.
- * 
- */
-public class DebugActionContributionFactory extends AbstractContributionFactory {
+public abstract class AbstractMenuContributionFactory extends AbstractContributionFactory {
 
-	public DebugActionContributionFactory() {
-		super("popup:org.eclipse.wst.server.ui.ServersView?before=additions", null);
+	public AbstractMenuContributionFactory(String location, String namespace) {
+		super(location, namespace);
 	}
 
 	@Override
@@ -41,11 +35,11 @@ public class DebugActionContributionFactory extends AbstractContributionFactory 
 		IMenuService menuService = (IMenuService) serviceLocator.getService(IMenuService.class);
 		if (menuService == null) {
 			CloudFoundryPlugin
-					.logError("Unable to retrieve Eclipse menu service. Cannot add Cloud Foundry context menus for debugging.");
+					.logError("Unable to retrieve Eclipse menu service. Cannot add Cloud Foundry context menus.");
 			return;
 		}
 
-		List<IAction> debugActions = new DebugMenuActionHandler().getApplicableActions(menuService.getCurrentState());
+		List<IAction> debugActions = getActions(menuService);
 		for (IAction action : debugActions) {
 			additions.addContributionItem(new ActionContributionItem(action), new Expression() {
 				public EvaluationResult evaluate(IEvaluationContext context) {
@@ -57,5 +51,7 @@ public class DebugActionContributionFactory extends AbstractContributionFactory 
 			});
 		}
 	}
+	
+	protected abstract List<IAction> getActions(IMenuService menuService);
 
 }

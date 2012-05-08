@@ -377,19 +377,17 @@ public class ApplicationMasterPart extends SectionPart {
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
 		Collection<String> selectedServices = StartAndAddCaldecottService.getServiceNames(selection);
-		selectedServices = cloudServer.getBehaviour().canOpenTunnel(selectedServices, null);
-		
-		if (selectedServices != null && !selectedServices.isEmpty()) {
-			final List<String> servicesToAdd = new ArrayList<String>(selectedServices);
-			Action addCaldecottTunnel = new Action("Start Caldecott tunnel", CloudFoundryImages.CONNECT) {
-				public void run() {
+		selectedServices = cloudServer.getBehaviour().refreshTunnelConnections(selectedServices, null);
 
-					new CaldecottEditorActionAdapter(cloudServer.getBehaviour(), editorPage)
-							.addServiceAndCreateTunnel(servicesToAdd);
-				}
-			};
-			manager.add(addCaldecottTunnel);
-		}
+		final List<String> servicesToAdd = new ArrayList<String>(selectedServices);
+		Action addCaldecottTunnel = new Action("Start Caldecott tunnel", CloudFoundryImages.CONNECT) {
+			public void run() {
+
+				new CaldecottEditorActionAdapter(cloudServer.getBehaviour(), editorPage)
+						.addServiceAndCreateTunnel(servicesToAdd);
+			}
+		};
+		manager.add(addCaldecottTunnel);
 	}
 
 	private void fillApplicationsContextMenu(IMenuManager manager) {

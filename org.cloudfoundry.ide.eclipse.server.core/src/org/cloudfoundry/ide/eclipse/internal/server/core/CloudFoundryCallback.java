@@ -34,7 +34,7 @@ public abstract class CloudFoundryCallback {
 
 	public abstract void getCredentials(CloudFoundryServer server);
 
-	public abstract void displayCaldecottTunnelConnections(final CloudFoundryServerBehaviour behaviour);
+	public abstract void displayCaldecottTunnelConnections(CloudFoundryServer server);
 
 	public abstract DeploymentDescriptor prepareForDeployment(CloudFoundryServer server, ApplicationModule module,
 			IProgressMonitor monitor);
