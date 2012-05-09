@@ -15,12 +15,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class CaldecottTunnelCache {
-	private Map<String, Map<String, CaldecottTunnelDescriptor>> caldecottTunnels = new HashMap<String, Map<String, CaldecottTunnelDescriptor>>();
 
-	private Set<Integer> usedPorts = new HashSet<Integer>();
+	public static final int PORT_BASE = 10000;
+
+	private Map<String, Map<String, CaldecottTunnelDescriptor>> caldecottTunnels = new HashMap<String, Map<String, CaldecottTunnelDescriptor>>();
 
 	public synchronized CaldecottTunnelDescriptor getDescriptor(CloudFoundryServer server, String serviceName) {
 		String id = server.getServerId();
@@ -45,10 +47,7 @@ public class CaldecottTunnelCache {
 		Map<String, CaldecottTunnelDescriptor> descriptors = caldecottTunnels.get(id);
 		if (descriptors != null) {
 			CaldecottTunnelDescriptor descr = descriptors.remove(serviceName);
-			if (descr != null) {
-				Integer port = new Integer(descr.tunnelPort());
-				usedPorts.remove(port);
-			}
+			return descr;
 		}
 		return null;
 	}
@@ -61,25 +60,23 @@ public class CaldecottTunnelCache {
 			descriptors = new HashMap<String, CaldecottTunnelDescriptor>();
 			caldecottTunnels.put(id, descriptors);
 		}
-		Integer port = new Integer(descriptor.tunnelPort());
-		usedPorts.add(port);
 		descriptors.put(descriptor.getServiceName(), descriptor);
 	}
 
-	public synchronized int getUnusedPort(int base) {
+	public synchronized int getUnusedPort() {
+		int base = PORT_BASE;
 
-		boolean contains = true;
-		while (contains) {
-			contains = usedPorts.contains(new Integer(base));
-			if (!contains) {
-				return base;
-			}
-			else {
-				base++;
+		Set<Integer> used = new HashSet<Integer>();
+		for (Entry<String, Map<String, CaldecottTunnelDescriptor>> entry : caldecottTunnels.entrySet()) {
+			for (Entry<String, CaldecottTunnelDescriptor> descEntry : entry.getValue().entrySet()) {
+				used.add(descEntry.getValue().tunnelPort());
 			}
 		}
 
-		return -1;
+		while (used.contains(base)) {
+			base++;
+		}
 
+		return base;
 	}
 }

@@ -13,7 +13,10 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.wst.server.core.IModule;
 
 public class CaldecottEditorActionAdapter {
@@ -30,10 +33,22 @@ public class CaldecottEditorActionAdapter {
 
 	public void addServiceAndCreateTunnel(List<String> services) {
 
-		IModule caldecottModule = behaviour.getCaldecottModule();
-		if (caldecottModule instanceof ApplicationModule) {
-			new StartAndAddCaldecottService(services, (ApplicationModule) caldecottModule, behaviour, editorPage).run();
+		try {
+			IModule caldecottModule = new CaldecottTunnelHandler(behaviour.getCloudFoundryServer())
+					.getCaldecottModule();
+			if (caldecottModule instanceof ApplicationModule) {
+				new StartAndAddCaldecottService(services, (ApplicationModule) caldecottModule, behaviour, editorPage,
+						getActionName()).run();
+			}
 		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(
+					"Failed to add Caldecott Tunnel editor action. Check server connection and try again.", e);
+		}
+	}
+
+	public String getActionName() {
+		return "Open New Caldecott Tunnel...";
 	}
 
 }

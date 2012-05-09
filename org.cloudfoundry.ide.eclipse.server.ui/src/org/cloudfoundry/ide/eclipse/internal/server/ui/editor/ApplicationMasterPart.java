@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudApplication;
@@ -20,6 +18,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DeleteServicesAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryServiceWizard;
@@ -376,18 +375,12 @@ public class ApplicationMasterPart extends SectionPart {
 		}
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
-		Collection<String> selectedServices = StartAndAddCaldecottService.getServiceNames(selection);
-		selectedServices = cloudServer.getBehaviour().refreshTunnelConnections(selectedServices, null);
 
-		final List<String> servicesToAdd = new ArrayList<String>(selectedServices);
-		Action addCaldecottTunnel = new Action("Start Caldecott tunnel", CloudFoundryImages.CONNECT) {
-			public void run() {
+		Action caldecottAction = new CaldecottUIHelper(cloudServer).getAddCaldecottAction(selection, editorPage);
+		if (caldecottAction != null) {
+			manager.add(caldecottAction);
+		}
 
-				new CaldecottEditorActionAdapter(cloudServer.getBehaviour(), editorPage)
-						.addServiceAndCreateTunnel(servicesToAdd);
-			}
-		};
-		manager.add(addCaldecottTunnel);
 	}
 
 	private void fillApplicationsContextMenu(IMenuManager manager) {

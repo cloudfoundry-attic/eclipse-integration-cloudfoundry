@@ -10,9 +10,11 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelDescriptor;
@@ -21,18 +23,22 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehav
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.ToolBarManager;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.graphics.Image;
@@ -40,9 +46,9 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.ToolBar;
 
 public class CaldecottTunnelWizardPage extends WizardPage {
 
@@ -80,7 +86,7 @@ public class CaldecottTunnelWizardPage extends WizardPage {
 		}
 	}
 
-	private CheckboxTableViewer servicesViewer;
+	private TableViewer servicesViewer;
 
 	public void createControl(Composite parent) {
 
@@ -98,25 +104,19 @@ public class CaldecottTunnelWizardPage extends WizardPage {
 		GridDataFactory.fillDefaults().grab(false, false).align(SWT.BEGINNING, SWT.CENTER).applyTo(label);
 		label.setText("List of Caldecott tunnels:");
 
-		Table table = new Table(tableArea, SWT.BORDER | SWT.SINGLE | SWT.CHECK);
+		Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI);
 		table.setSize(new Point(400, 400));
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(table);
 
-		ToolBarManager toolBarManager = new ToolBarManager(SWT.FLAT);
-		ToolBar bar = toolBarManager.createControl(toolBarArea);
-		GridDataFactory.fillDefaults().align(SWT.END, SWT.BEGINNING).grab(true, false).applyTo(bar);
-
-		servicesViewer = new CheckboxTableViewer(table);
+		servicesViewer = new TableViewer(table);
 
 		servicesViewer.setContentProvider(new IStructuredContentProvider() {
 
 			public void dispose() {
-				// TODO Auto-generated method stub
 
 			}
 
 			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-				// TODO Auto-generated method stub
 
 			}
 
@@ -143,55 +143,36 @@ public class CaldecottTunnelWizardPage extends WizardPage {
 
 			}
 		});
-
-		Action addServiceAction = new Action("Remove Connection", CloudFoundryImages.REMOVE) {
-
-			public void run() {
-
-				Collection<CaldecottTunnelDescriptor> descriptors = (Collection) servicesViewer.getInput();
-				if (descriptors == null || descriptors.isEmpty()) {
-					return;
-				}
-
-				Object[] services = servicesViewer.getCheckedElements();
-				if (services != null) {
-					removeDescriptors.clear();
-					for (Object obj : services) {
-						if (!removeDescriptors.contains(obj)) {
-							removeDescriptors.add((CaldecottTunnelDescriptor) obj);
-						}
-					}
-				}
-
-				descriptors = new HashSet<CaldecottTunnelDescriptor>(descriptors);
-				if (!removeDescriptors.isEmpty()) {
-					for (Iterator<?> it = removeDescriptors.iterator(); it.hasNext();) {
-						Object obj = it.next();
-
-						if (obj instanceof CaldecottTunnelDescriptor) {
-							descriptors.remove(obj);
-
-						}
-					}
-
-					servicesViewer.setInput(descriptors);
-					servicesViewer.refresh();
-				}
-			}
-
-			public String getToolTipText() {
-				return "Remove the selected connection(s)";
-			}
-		};
-		toolBarManager.add(addServiceAction);
-
-		toolBarManager.update(true);
+		addTableActions();
 
 		setControl(tableArea);
 		setInput();
 
 		resizeTable();
 
+	}
+
+	protected void addTableActions() {
+		MenuManager menuManager = new MenuManager();
+		menuManager.setRemoveAllWhenShown(true);
+		menuManager.addMenuListener(new IMenuListener() {
+
+			public void menuAboutToShow(IMenuManager manager) {
+				List<CaldecottTunnelDescriptor> descriptors = getSelectedCaldecotTunnelDescriptors();
+
+				if (!descriptors.isEmpty()) {
+					Action caldecottAction = new DeleteTunnelAction("Delete Connection", CloudFoundryImages.REMOVE);
+					manager.add(caldecottAction);
+					if (descriptors.size() == 1) {
+						manager.add(new CopyPassword());
+						manager.add(new CopyUserName());
+					}
+				}
+			}
+		});
+
+		Menu menu = menuManager.createContextMenu(servicesViewer.getControl());
+		servicesViewer.getControl().setMenu(menu);
 	}
 
 	protected void resizeTable() {
@@ -321,6 +302,125 @@ public class CaldecottTunnelWizardPage extends WizardPage {
 				}
 			}
 			return result;
+		}
+
+	}
+
+	protected List<CaldecottTunnelDescriptor> getSelectedCaldecotTunnelDescriptors() {
+		IStructuredSelection selection = (IStructuredSelection) servicesViewer.getSelection();
+		List<CaldecottTunnelDescriptor> descriptors = new ArrayList<CaldecottTunnelDescriptor>();
+		if (!selection.isEmpty()) {
+			Object[] servicesObjs = selection.toArray();
+			for (Object serviceObj : servicesObjs) {
+				descriptors.add((CaldecottTunnelDescriptor) serviceObj);
+
+			}
+		}
+		return descriptors;
+	}
+
+	protected class DeleteTunnelAction extends Action {
+
+		public DeleteTunnelAction(String actionName, ImageDescriptor actionImage) {
+			super(actionName, actionImage);
+		}
+
+		public void run() {
+
+			Collection<CaldecottTunnelDescriptor> descriptors = (Collection) servicesViewer.getInput();
+			if (descriptors == null || descriptors.isEmpty()) {
+				return;
+			}
+
+			List<CaldecottTunnelDescriptor> selectedDescriptors = getSelectedCaldecotTunnelDescriptors();
+
+			for (CaldecottTunnelDescriptor desc : selectedDescriptors) {
+				if (!removeDescriptors.contains(desc)) {
+					removeDescriptors.add(desc);
+				}
+			}
+
+			descriptors = new HashSet<CaldecottTunnelDescriptor>(descriptors);
+			if (!removeDescriptors.isEmpty()) {
+				for (Iterator<?> it = removeDescriptors.iterator(); it.hasNext();) {
+					Object obj = it.next();
+
+					if (obj instanceof CaldecottTunnelDescriptor) {
+						descriptors.remove(obj);
+
+					}
+				}
+
+				servicesViewer.setInput(descriptors);
+				servicesViewer.refresh();
+			}
+		}
+
+		public String getToolTipText() {
+			return "Remove the selected connection(s)";
+		}
+	};
+
+	protected abstract class CopyTunnelInformation extends Action {
+
+		public CopyTunnelInformation(String actionName, ImageDescriptor actionImage) {
+			super(actionName, actionImage);
+		}
+
+		public void run() {
+			Clipboard clipBoard = new Clipboard(getShell().getDisplay());
+			CaldecottTunnelDescriptor descriptor = getSelectedTunnelDescriptor();
+			if (descriptor != null) {
+				String value = getTunnelInformation(descriptor);
+				clipBoard.setContents(new Object[] { value }, new TextTransfer[] { TextTransfer.getInstance() });
+			}
+		}
+
+		protected CaldecottTunnelDescriptor getSelectedTunnelDescriptor() {
+
+			List<CaldecottTunnelDescriptor> descriptors = getSelectedCaldecotTunnelDescriptors();
+
+			return !descriptors.isEmpty() ? descriptors.get(0) : null;
+		}
+
+		abstract public String getToolTipText();
+
+		abstract String getTunnelInformation(CaldecottTunnelDescriptor descriptor);
+
+	}
+
+	protected class CopyUserName extends CopyTunnelInformation {
+
+		public CopyUserName() {
+			super("Copy username", CloudFoundryImages.EDIT);
+		}
+
+		@Override
+		public String getToolTipText() {
+			return "Copy username";
+		}
+
+		@Override
+		String getTunnelInformation(CaldecottTunnelDescriptor descriptor) {
+			return descriptor.getUserName();
+		}
+
+	}
+
+	protected class CopyPassword extends CopyTunnelInformation {
+
+		public CopyPassword() {
+			super("Copy password", CloudFoundryImages.EDIT);
+		}
+
+		@Override
+		public String getToolTipText() {
+			return "Copy password";
+		}
+
+		@Override
+		String getTunnelInformation(CaldecottTunnelDescriptor descriptor) {
+			return descriptor.getPassword();
 		}
 
 	}

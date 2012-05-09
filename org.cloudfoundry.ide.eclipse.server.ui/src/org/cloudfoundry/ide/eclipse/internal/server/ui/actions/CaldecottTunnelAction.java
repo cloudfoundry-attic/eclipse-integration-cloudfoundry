@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 2012 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
@@ -27,7 +26,7 @@ public class CaldecottTunnelAction extends Action {
 	protected void setActionValues() {
 		setText("Caldecott Tunnels...");
 		setImageDescriptor(CloudFoundryImages.CONNECT);
-		setToolTipText("Open Caldecott Tunnels");
+		setToolTipText("Show active Caldecott tunnels");
 		setEnabled(true);
 	}
 

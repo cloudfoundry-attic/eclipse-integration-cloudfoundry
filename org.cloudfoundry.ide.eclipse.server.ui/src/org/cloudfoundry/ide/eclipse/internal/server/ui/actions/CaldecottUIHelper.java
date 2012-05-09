@@ -10,17 +10,27 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CaldecottEditorActionAdapter;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.StartAndAddCaldecottService;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CaldecottTunnelWizard;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
@@ -50,7 +60,7 @@ public class CaldecottUIHelper {
 					if (descriptorsToRemove != null) {
 						for (CaldecottTunnelDescriptor descriptor : descriptorsToRemove) {
 							try {
-								behaviour.stopCaldecottTunnel(descriptor.getServiceName(), monitor);
+								new CaldecottTunnelHandler(cloudServer).stopAndDeleteCaldecottTunnel(descriptor.getServiceName(), monitor);
 							}
 							catch (CoreException e) {
 								CloudFoundryPlugin.logError(e);
@@ -63,6 +73,25 @@ public class CaldecottUIHelper {
 
 		};
 		uiJob.schedule();
+	}
+
+	public Action getAddCaldecottAction(IStructuredSelection selection,
+			final CloudFoundryApplicationsEditorPage editorPage) {
+		Collection<String> selectedServices = StartAndAddCaldecottService.getServiceNames(selection);
+
+		if (selectedServices != null && !selectedServices.isEmpty()) {
+			final List<String> servicesToAdd = new ArrayList<String>(selectedServices);
+			Action addCaldecottTunnel = new Action("Start Caldecott tunnel", CloudFoundryImages.CONNECT) {
+				public void run() {
+
+					new CaldecottEditorActionAdapter(cloudServer.getBehaviour(), editorPage)
+							.addServiceAndCreateTunnel(servicesToAdd);
+				}
+			};
+			return addCaldecottTunnel;
+
+		}
+		return null;
 	}
 
 }
