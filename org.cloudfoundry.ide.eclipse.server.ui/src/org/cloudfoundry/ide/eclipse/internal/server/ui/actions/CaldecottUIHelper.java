@@ -29,7 +29,9 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -60,7 +62,8 @@ public class CaldecottUIHelper {
 					if (descriptorsToRemove != null) {
 						for (CaldecottTunnelDescriptor descriptor : descriptorsToRemove) {
 							try {
-								new CaldecottTunnelHandler(cloudServer).stopAndDeleteCaldecottTunnel(descriptor.getServiceName(), monitor);
+								new CaldecottTunnelHandler(cloudServer).stopAndDeleteCaldecottTunnel(
+										descriptor.getServiceName(), monitor);
 							}
 							catch (CoreException e) {
 								CloudFoundryPlugin.logError(e);
@@ -75,23 +78,43 @@ public class CaldecottUIHelper {
 		uiJob.schedule();
 	}
 
-	public Action getAddCaldecottAction(IStructuredSelection selection,
+	/**
+	 * Returns a list of applicable Caldecott Actions given the selection, or
+	 * empty list if not actions are applicable.
+	 * @param selection
+	 * @param editorPage
+	 * @return non-null list of actions. May be empty.
+	 */
+	public List<IAction> getCaldecottActions(IStructuredSelection selection,
 			final CloudFoundryApplicationsEditorPage editorPage) {
 		Collection<String> selectedServices = StartAndAddCaldecottService.getServiceNames(selection);
-
+		List<IAction> actions = new ArrayList<IAction>();
 		if (selectedServices != null && !selectedServices.isEmpty()) {
 			final List<String> servicesToAdd = new ArrayList<String>(selectedServices);
 			Action addCaldecottTunnel = new Action("Start Caldecott tunnel", CloudFoundryImages.CONNECT) {
 				public void run() {
 
-					new CaldecottEditorActionAdapter(cloudServer.getBehaviour(), editorPage)
-							.addServiceAndCreateTunnel(servicesToAdd);
+					Job job = new Job("Starting Caldecott tunnel") {
+
+						@Override
+						protected IStatus run(IProgressMonitor monitor) {
+							new CaldecottEditorActionAdapter(cloudServer.getBehaviour(), editorPage)
+									.addServiceAndCreateTunnel(servicesToAdd, monitor);
+							return Status.OK_STATUS;
+						}
+					};
+					job.setSystem(false);
+					job.schedule();
+
 				}
 			};
-			return addCaldecottTunnel;
+			actions.add(addCaldecottTunnel);
 
+			if (new CaldecottTunnelHandler(cloudServer).hasCaldecottTunnels()) {
+				actions.add(new CaldecottTunnelAction(cloudServer));
+			}
 		}
-		return null;
+		return actions;
 	}
 
 }

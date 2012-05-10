@@ -17,6 +17,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 
 public class CaldecottEditorActionAdapter {
@@ -31,11 +32,11 @@ public class CaldecottEditorActionAdapter {
 		this.editorPage = editorPage;
 	}
 
-	public void addServiceAndCreateTunnel(List<String> services) {
+	public void addServiceAndCreateTunnel(List<String> services, IProgressMonitor monitor) {
 
 		try {
 			IModule caldecottModule = new CaldecottTunnelHandler(behaviour.getCloudFoundryServer())
-					.getCaldecottModule();
+					.getCaldecottModule(monitor);
 			if (caldecottModule instanceof ApplicationModule) {
 				new StartAndAddCaldecottService(services, (ApplicationModule) caldecottModule, behaviour, editorPage,
 						getActionName()).run();

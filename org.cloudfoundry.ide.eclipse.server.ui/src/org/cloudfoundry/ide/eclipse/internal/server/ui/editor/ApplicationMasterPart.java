@@ -27,6 +27,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
@@ -376,11 +377,10 @@ public class ApplicationMasterPart extends SectionPart {
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
 
-		Action caldecottAction = new CaldecottUIHelper(cloudServer).getAddCaldecottAction(selection, editorPage);
-		if (caldecottAction != null) {
-			manager.add(caldecottAction);
+		List<IAction> caldecottAction = new CaldecottUIHelper(cloudServer).getCaldecottActions(selection, editorPage);
+		for (IAction action : caldecottAction) {
+			manager.add(action);
 		}
-
 	}
 
 	private void fillApplicationsContextMenu(IMenuManager manager) {

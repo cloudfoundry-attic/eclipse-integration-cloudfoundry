@@ -25,7 +25,10 @@ import org.cloudfoundry.client.lib.CloudFoundryClient;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour.Request;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 
@@ -48,7 +51,7 @@ public class CaldecottTunnelHandler {
 			updateCaldecottServices.addAll(existingServices);
 		}
 
-		IModule caldecottModule = getCaldecottModule();
+		IModule caldecottModule = getCaldecottModule(monitor);
 
 		if (!updateCaldecottServices.contains(serviceName)) {
 			updateCaldecottServices.add(serviceName);
@@ -149,6 +152,38 @@ public class CaldecottTunnelHandler {
 
 	}
 
+	/**
+	 * Stops and deletes all Caldecott tunnels for the given server. Operation
+	 * is scheduled in a separate Job.
+	 * @param monitor
+	 * @throws CoreException
+	 */
+	public synchronized void stopAndDeleteAllTunnels() {
+
+		Job job = new Job("Stopping all Caldecott tunnels for: " + cloudServer.getDeploymentName()) {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				try {
+					Collection<CaldecottTunnelDescriptor> descriptors = CloudFoundryPlugin.getCaldecottTunnelCache()
+							.getDescriptors(cloudServer);
+					if (descriptors != null) {
+						for (CaldecottTunnelDescriptor desc : descriptors) {
+							stopAndDeleteCaldecottTunnel(desc.getServiceName(), monitor);
+						}
+					}
+				}
+				catch (CoreException e) {
+					return CloudFoundryPlugin.getErrorStatus(e);
+				}
+				return Status.OK_STATUS;
+			}
+
+		};
+		job.setSystem(false);
+		job.schedule();
+	}
+
 	public synchronized CaldecottTunnelDescriptor stopCaldecottTunnel(String serviceName) throws CoreException {
 
 		CaldecottTunnelDescriptor tunnelDescriptor = CloudFoundryPlugin.getCaldecottTunnelCache().getDescriptor(
@@ -158,6 +193,12 @@ public class CaldecottTunnelHandler {
 
 		}
 		return tunnelDescriptor;
+	}
+
+	public synchronized boolean hasCaldecottTunnels() {
+		Collection<CaldecottTunnelDescriptor> descriptors = CloudFoundryPlugin.getCaldecottTunnelCache()
+				.getDescriptors(cloudServer);
+		return descriptors != null && descriptors.size() > 0;
 	}
 
 	/**
@@ -218,10 +259,11 @@ public class CaldecottTunnelHandler {
 			protected Boolean doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
 				Thread t = Thread.currentThread();
 				ClassLoader oldLoader = t.getContextClassLoader();
+				boolean deployed = false;
 				try {
 					t.setContextClassLoader(CloudFoundryServerBehaviour.class.getClassLoader());
 					TunnelHelper.deployTunnelApp(client);
-					return true;
+					deployed = true;
 				}
 				catch (TunnelException te) {
 					CloudFoundryPlugin.logError(te);
@@ -229,24 +271,52 @@ public class CaldecottTunnelHandler {
 				finally {
 					t.setContextClassLoader(oldLoader);
 				}
-				return false;
+
+				// refresh the list of modules to create a module for the
+				// deployed Caldecott App
+				if (deployed) {
+					cloudServer.getBehaviour().refreshModules(progress);
+				}
+				return deployed;
 			}
 		};
 		request.run(monitor);
 
 	}
 
-	public synchronized IModule getCaldecottModule() {
-		Collection<ApplicationModule> modules = cloudServer.getApplications();
-		if (modules != null) {
-			String caldecottAppName = TunnelHelper.getTunnelAppName();
-			for (ApplicationModule module : modules) {
-				if (caldecottAppName.equals(module.getApplicationId())) {
-					return module;
+	public synchronized IModule getCaldecottModule(IProgressMonitor monitor) {
+
+		CloudApplication caldecottApp = null;
+		Throwable error = null;
+		// Deploy the application first, if it isn't deployed yet
+		try {
+			caldecottApp = getCaldecottApp(monitor);
+		}
+		catch (CoreException e) {
+			error = e;
+		}
+
+		if (caldecottApp == null) {
+			if (error != null) {
+				CloudFoundryPlugin.logError("Failed to deploy Caldecott app. Check server connection.", error);
+			}
+			else {
+				CloudFoundryPlugin.logError("Failed to deploy Caldecott app. Check server connection.");
+			}
+			return null;
+		}
+		else {
+			IModule appModule = null;
+			Collection<ApplicationModule> modules = cloudServer.getApplications();
+			if (modules != null) {
+				String caldecottAppName = TunnelHelper.getTunnelAppName();
+				for (ApplicationModule module : modules) {
+					if (caldecottAppName.equals(module.getApplicationId())) {
+						appModule = module;
+					}
 				}
 			}
+			return appModule;
 		}
-		return null;
 	}
-
 }

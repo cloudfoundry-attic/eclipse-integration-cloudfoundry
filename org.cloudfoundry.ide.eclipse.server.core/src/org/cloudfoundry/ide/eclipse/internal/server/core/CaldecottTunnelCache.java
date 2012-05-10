@@ -33,6 +33,12 @@ public class CaldecottTunnelCache {
 		return null;
 	}
 
+	/**
+	 * Returns a unmodifiable copy of all descriptors for the given server, or
+	 * null if no tunnels have been opened for the server yet.
+	 * @param server
+	 * @return unmodifiable list of tunnel descriptors, or null if non exist.
+	 */
 	public synchronized Collection<CaldecottTunnelDescriptor> getDescriptors(CloudFoundryServer server) {
 		String id = server.getServerId();
 		Map<String, CaldecottTunnelDescriptor> descriptors = caldecottTunnels.get(id);

@@ -616,10 +616,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	protected void closeCaldecottTunnels() {
 		// Close all open Caldecott Tunnels
 		try {
-			CloudFoundryPlugin.getCaldecottTunnelCache().getDescriptors(getCloudFoundryServer()).clear();
+			new CaldecottTunnelHandler(getCloudFoundryServer()).stopAndDeleteAllTunnels();
 		}
 		catch (CoreException e) {
-			CloudFoundryPlugin.logError("Failed to close Caldecott tunnels", e);
+			CloudFoundryPlugin.logError(e);
 		}
 	}
 
