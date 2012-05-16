@@ -20,9 +20,14 @@ import java.util.Set;
 import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.client.lib.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationsMasterPartContentProvider;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewColumn;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewerConfigurator;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewerSorter;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServicesTreeLabelProvider;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.Action;
@@ -37,6 +42,7 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
@@ -134,6 +140,41 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 		GridDataFactory.fillDefaults().align(SWT.END, SWT.BEGINNING).grab(true, false).applyTo(bar);
 
 		servicesViewer = new CheckboxTableViewer(table);
+
+		servicesViewer.setContentProvider(new ApplicationsMasterPartContentProvider());
+		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
+
+			protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
+				if (column == ServiceViewColumn.Caldecott) {
+					CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+					if (handler.hasCaldecottTunnel(service.getName())) {
+						return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
+					}
+				}
+				return null;
+			}
+
+		});
+		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer) {
+
+			@Override
+			protected int compare(CloudService service1, CloudService service2, ServiceViewColumn sortColumn) {
+				if (sortColumn == ServiceViewColumn.Caldecott) {
+					CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+					if (handler.hasCaldecottTunnel(service1.getName())) {
+						return -1;
+					}
+					else if (handler.hasCaldecottTunnel(service2.getName())) {
+						return 1;
+					}
+					else {
+						return 0;
+					}
+				}
+				return super.compare(service1, service2, sortColumn);
+			}
+
+		});
 
 		new ServiceViewerConfigurator().enableAutomaticViewerResizing().configureViewer(servicesViewer);
 

@@ -35,7 +35,7 @@ public class ServerMenuActionHandler extends MenuActionHandler<IServer> {
 
 		if (new CaldecottTunnelHandler(cloudFoundryServer).hasCaldecottTunnels()) {
 			actions.add(new CaldecottTunnelAction(cloudFoundryServer));
-			actions.add(new CaldecottRemoveDisconnectAllAction(cloudFoundryServer));
+			actions.add(new CaldecottDisconnectAllAction(cloudFoundryServer));
 		}
 
 		return actions;

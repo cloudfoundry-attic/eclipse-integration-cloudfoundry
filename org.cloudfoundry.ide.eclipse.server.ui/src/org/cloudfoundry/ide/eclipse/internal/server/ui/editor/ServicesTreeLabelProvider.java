@@ -12,13 +12,11 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
 import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewerConfigurator.ServiceViewColumn;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.TableColumn;
-
 
 /**
  * @author Terry Denney
@@ -52,10 +50,20 @@ public class ServicesTreeLabelProvider extends LabelProvider implements ITableLa
 	public Image getColumnImage(Object element, int columnIndex) {
 
 		TableColumn column = viewer.getTable().getColumn(columnIndex);
-		if (column != null && column.getData() == ServiceViewColumn.Name) {
-			return getImage(element);
+		if (column != null && column.getData() instanceof ServiceViewColumn) {
+
+			switch ((ServiceViewColumn) column.getData()) {
+			case Name:
+				return getImage(element);
+			default:
+				return getColumnImage((CloudService) element, (ServiceViewColumn) column.getData());
+			}
 		}
 
+		return null;
+	}
+
+	protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
 		return null;
 	}
 

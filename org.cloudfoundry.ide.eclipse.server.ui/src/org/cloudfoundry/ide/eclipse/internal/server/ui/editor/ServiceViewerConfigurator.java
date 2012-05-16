@@ -10,9 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
-import org.cloudfoundry.client.lib.CloudService;
 import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
@@ -36,19 +34,6 @@ public class ServiceViewerConfigurator {
 		this.addAutomaticViewerResizing = false;
 	}
 
-	enum ServiceViewColumn {
-		Name(150), Type(100), Vendor(200);
-		private int width;
-
-		private ServiceViewColumn(int width) {
-			this.width = width;
-		}
-
-		public int getWidth() {
-			return width;
-		}
-	}
-
 	public ServiceViewerConfigurator enableAutomaticViewerResizing() {
 		addAutomaticViewerResizing = true;
 		return this;
@@ -59,9 +44,8 @@ public class ServiceViewerConfigurator {
 	 * @param tableViewer
 	 */
 	public void configureViewer(final TableViewer tableViewer) {
-		tableViewer.setContentProvider(new ApplicationsMasterPartContentProvider());
-		tableViewer.setLabelProvider(new ServicesTreeLabelProvider(tableViewer));
 
+		
 		final Table table = tableViewer.getTable();
 		table.setHeaderVisible(true);
 
@@ -98,40 +82,6 @@ public class ServiceViewerConfigurator {
 		}
 
 		tableViewer.setColumnProperties(columnProperties);
-
-		tableViewer.setSorter(new CloudFoundryViewerSorter() {
-
-			@Override
-			public int compare(Viewer viewer, Object e1, Object e2) {
-				TableColumn sortColumn = tableViewer.getTable().getSortColumn();
-				if (sortColumn != null) {
-					ServiceViewColumn serviceColumn = (ServiceViewColumn) sortColumn.getData();
-					int result = 0;
-					int sortDirection = tableViewer.getTable().getSortDirection();
-					if (serviceColumn != null) {
-						if (e1 instanceof CloudService && e2 instanceof CloudService) {
-							CloudService service1 = (CloudService) e1;
-							CloudService service2 = (CloudService) e2;
-							switch (serviceColumn) {
-							case Name:
-								result = super.compare(viewer, e1, e2);
-								break;
-							case Type:
-								result = service1.getType().compareTo(service2.getType());
-								break;
-							case Vendor:
-								result = service1.getVendor().compareTo(service2.getVendor());
-								break;
-							}
-						}
-					}
-					return sortDirection == SWT.UP ? result : -result;
-				}
-
-				return super.compare(viewer, e1, e2);
-			}
-
-		});
 
 		if (sortColumn != null) {
 			table.setSortColumn(sortColumn);

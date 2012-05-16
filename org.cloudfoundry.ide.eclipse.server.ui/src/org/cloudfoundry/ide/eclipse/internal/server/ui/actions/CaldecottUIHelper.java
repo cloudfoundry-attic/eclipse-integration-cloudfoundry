@@ -19,7 +19,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelDescript
 import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CaldecottEditorActionAdapter;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
@@ -48,13 +47,13 @@ public class CaldecottUIHelper {
 	}
 
 	public void displayCaldecottTunnelConnections() {
-		final CloudFoundryServerBehaviour behaviour = cloudServer.getBehaviour();
+
 		UIJob uiJob = new UIJob("Show Caldecott Tunnels") {
 
 			public IStatus runInUIThread(IProgressMonitor monitor) {
 				Shell shell = PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
 
-				CaldecottTunnelWizard wizard = new CaldecottTunnelWizard(behaviour);
+				CaldecottTunnelWizard wizard = new CaldecottTunnelWizard(cloudServer);
 				WizardDialog dialog = new WizardDialog(shell, wizard);
 				if (dialog.open() == Window.OK) {
 
@@ -89,32 +88,78 @@ public class CaldecottUIHelper {
 			final CloudFoundryApplicationsEditorPage editorPage) {
 		Collection<String> selectedServices = StartAndAddCaldecottService.getServiceNames(selection);
 		List<IAction> actions = new ArrayList<IAction>();
+		final CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
 		if (selectedServices != null && !selectedServices.isEmpty()) {
-			final List<String> servicesToAdd = new ArrayList<String>(selectedServices);
-			Action addCaldecottTunnel = new Action("Start Caldecott tunnel", CloudFoundryImages.CONNECT) {
-				public void run() {
+			final List<String> servicesWithTunnels = new ArrayList<String>();
+			final List<String> servicesToAdd = getServicesWithNoTunnel(selectedServices, handler, servicesWithTunnels);
 
-					Job job = new Job("Starting Caldecott tunnel") {
+			if (!servicesToAdd.isEmpty()) {
+				Action addCaldecottTunnel = new Action("Start Caldecott tunnel", CloudFoundryImages.CONNECT) {
+					public void run() {
 
-						@Override
-						protected IStatus run(IProgressMonitor monitor) {
-							new CaldecottEditorActionAdapter(cloudServer.getBehaviour(), editorPage)
-									.addServiceAndCreateTunnel(servicesToAdd, monitor);
-							return Status.OK_STATUS;
-						}
-					};
-					job.setSystem(false);
-					job.schedule();
+						Job job = new Job("Starting Caldecott tunnel") {
+
+							@Override
+							protected IStatus run(IProgressMonitor monitor) {
+								new CaldecottEditorActionAdapter(cloudServer.getBehaviour(), editorPage)
+										.addServiceAndCreateTunnel(servicesToAdd, monitor);
+								return Status.OK_STATUS;
+							}
+						};
+						job.setSystem(false);
+						job.schedule();
+
+					}
+				};
+				actions.add(addCaldecottTunnel);
+			}
+			else if (!servicesWithTunnels.isEmpty()) {
+				Action addCaldecottTunnel = new Action("Close Caldecott tunnel", CloudFoundryImages.CONNECT) {
+					public void run() {
+
+						Job job = new Job("Closing Caldecott tunnel") {
+
+							@Override
+							protected IStatus run(IProgressMonitor monitor) {
+								for (String serviceName : servicesWithTunnels) {
+									try {
+										handler.stopAndDeleteCaldecottTunnel(serviceName, monitor);
+									}
+									catch (CoreException e) {
+										CloudFoundryPlugin.logError("Failed to close Caldecott tunnel for service: "
+												+ serviceName, e);
+									}
+								}
+
+								return Status.OK_STATUS;
+							}
+						};
+						job.setSystem(false);
+						job.schedule();
+
+					}
+				};
+				actions.add(addCaldecottTunnel);
+				if (servicesWithTunnels.size() == 1) {
 
 				}
-			};
-			actions.add(addCaldecottTunnel);
-
-			if (new CaldecottTunnelHandler(cloudServer).hasCaldecottTunnels()) {
-				actions.add(new CaldecottTunnelAction(cloudServer));
 			}
 		}
 		return actions;
+	}
+
+	public List<String> getServicesWithNoTunnel(Collection<String> selectedServices, CaldecottTunnelHandler handler,
+			List<String> servicesWithTunnels) {
+		List<String> filteredInServices = new ArrayList<String>();
+		for (String serviceName : selectedServices) {
+			if (!handler.hasCaldecottTunnel(serviceName)) {
+				filteredInServices.add(serviceName);
+			}
+			else {
+				servicesWithTunnels.add(serviceName);
+			}
+		}
+		return filteredInServices;
 	}
 
 }

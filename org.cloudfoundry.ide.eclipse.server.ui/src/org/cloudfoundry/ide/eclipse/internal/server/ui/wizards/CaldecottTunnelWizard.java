@@ -13,25 +13,25 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.Set;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.jface.wizard.Wizard;
 
 public class CaldecottTunnelWizard extends Wizard {
 
-	private final CloudFoundryServerBehaviour behaviour;
+	private final CloudFoundryServer cloudServer;
 
 	private CaldecottTunnelWizardPage page;
 
-	public CaldecottTunnelWizard(CloudFoundryServerBehaviour behaviour) {
+	public CaldecottTunnelWizard(CloudFoundryServer cloudServer) {
 		super();
-		this.behaviour = behaviour;
+		this.cloudServer = cloudServer;
 
 		setWindowTitle("Active Caldecott Tunnels");
 		setNeedsProgressMonitor(true);
 	}
 
 	public void addPages() {
-		page = new CaldecottTunnelWizardPage(behaviour);
+		page = new CaldecottTunnelWizardPage(cloudServer);
 		addPage(page);
 	}
 	

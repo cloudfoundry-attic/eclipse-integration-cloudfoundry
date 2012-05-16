@@ -15,6 +15,7 @@ import java.util.List;
 import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
@@ -310,6 +311,41 @@ public class ApplicationMasterPart extends SectionPart {
 
 		servicesViewer = new TableViewer(toolkit.createTable(client, SWT.MULTI));
 		new ServiceViewerConfigurator().configureViewer(servicesViewer);
+
+		servicesViewer.setContentProvider(new ApplicationsMasterPartContentProvider());
+		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
+
+			protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
+				if (column == ServiceViewColumn.Caldecott) {
+					CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+					if (handler.hasCaldecottTunnel(service.getName())) {
+						return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
+					}
+				}
+				return null;
+			}
+
+		});
+		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer) {
+
+			@Override
+			protected int compare(CloudService service1, CloudService service2, ServiceViewColumn sortColumn) {
+				if (sortColumn == ServiceViewColumn.Caldecott) {
+					CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+					if (handler.hasCaldecottTunnel(service1.getName())) {
+						return -1;
+					}
+					else if (handler.hasCaldecottTunnel(service2.getName())) {
+						return 1;
+					}
+					else {
+						return 0;
+					}
+				}
+				return super.compare(service1, service2, sortColumn);
+			}
+
+		});
 
 		servicesViewer.setInput(new CloudService[0]);
 

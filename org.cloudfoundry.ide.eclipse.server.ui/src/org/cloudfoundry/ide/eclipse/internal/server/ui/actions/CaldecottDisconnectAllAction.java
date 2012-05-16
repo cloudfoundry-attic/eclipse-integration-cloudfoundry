@@ -15,11 +15,11 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.jface.action.Action;
 
-public class CaldecottRemoveDisconnectAllAction extends Action {
+public class CaldecottDisconnectAllAction extends Action {
 
 	protected final CloudFoundryServer cloudServer;
 
-	public CaldecottRemoveDisconnectAllAction(CloudFoundryServer cloudServer) {
+	public CaldecottDisconnectAllAction(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
 		setActionValues();
 	}

@@ -202,6 +202,21 @@ public class CaldecottTunnelHandler {
 	}
 
 	/**
+	 * Returns an a tunnel descriptor if the service currently is connected via
+	 * a tunnel, or null if no open tunnel exists
+	 * @param serviceName
+	 * @return
+	 */
+	public synchronized CaldecottTunnelDescriptor getCaldecottTunnel(String serviceName) {
+
+		return CloudFoundryPlugin.getCaldecottTunnelCache().getDescriptor(cloudServer, serviceName);
+	}
+
+	public synchronized boolean hasCaldecottTunnel(String serviceName) {
+		return getCaldecottTunnel(serviceName) != null;
+	}
+
+	/**
 	 * Retrieves the actual Caldecott Cloud Application from the server. It does
 	 * not rely on webtools IModule. May be a long running operation and
 	 * experience network I/O timeouts. SHould only be called when other
