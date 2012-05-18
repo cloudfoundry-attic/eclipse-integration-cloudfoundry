@@ -10,19 +10,18 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 public class CaldecottTunnelCache {
 
-	public static final int PORT_BASE = 10000;
-
 	private Map<String, Map<String, CaldecottTunnelDescriptor>> caldecottTunnels = new HashMap<String, Map<String, CaldecottTunnelDescriptor>>();
+
+	private List<Integer> usedPorts = new ArrayList<Integer>();
 
 	public synchronized CaldecottTunnelDescriptor getDescriptor(CloudFoundryServer server, String serviceName) {
 		String id = server.getServerId();
@@ -65,24 +64,19 @@ public class CaldecottTunnelCache {
 
 			descriptors = new HashMap<String, CaldecottTunnelDescriptor>();
 			caldecottTunnels.put(id, descriptors);
+
 		}
 		descriptors.put(descriptor.getServiceName(), descriptor);
+		usedPorts.add(descriptor.tunnelPort());
 	}
 
 	public synchronized int getUnusedPort() {
-		int base = PORT_BASE;
-
-		Set<Integer> used = new HashSet<Integer>();
-		for (Entry<String, Map<String, CaldecottTunnelDescriptor>> entry : caldecottTunnels.entrySet()) {
-			for (Entry<String, CaldecottTunnelDescriptor> descEntry : entry.getValue().entrySet()) {
-				used.add(descEntry.getValue().tunnelPort());
-			}
-		}
-
-		while (used.contains(base)) {
+		int base = CaldecottTunnelHandler.PORT_BASE;
+		while (usedPorts.contains(base)) {
 			base++;
 		}
 
 		return base;
 	}
+
 }

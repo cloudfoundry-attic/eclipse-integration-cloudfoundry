@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
@@ -37,6 +38,8 @@ public class CaldecottTunnelHandler {
 	public static final String LOCAL_HOST = "127.0.0.1";
 
 	private final CloudFoundryServer cloudServer;
+
+	public static final int PORT_BASE = 10000;
 
 	public CaldecottTunnelHandler(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
@@ -109,7 +112,13 @@ public class CaldecottTunnelHandler {
 
 				InetSocketAddress local = new InetSocketAddress(LOCAL_HOST, unusedPort);
 				String url = TunnelHelper.getTunnelUri(client);
-				Map<String, String> info = TunnelHelper.getTunnelServiceInfo(client, serviceName);
+
+				Map<String, String> info = getTunnelInfo(client, serviceName, monitor);
+
+				if (info == null) {
+					return null;
+				}
+
 				String host = info.get("hostname");
 				int port = Integer.valueOf(info.get("port"));
 				String auth = TunnelHelper.getTunnelAuth(client);
@@ -140,6 +149,49 @@ public class CaldecottTunnelHandler {
 		}.run(monitor);
 
 		return tunnel.size() > 0 ? tunnel.get(0) : null;
+	}
+
+	public Map<String, String> getTunnelInfo(CloudFoundryClient client, String serviceName, IProgressMonitor monitor) {
+		Throwable t = null;
+
+		Map<String, String> info = null;
+		int ticks = 10;
+		IProgressMonitor subMonitor = new SubProgressMonitor(monitor, ticks);
+		subMonitor.beginTask("Waiting for Caldecott tunnel information for service: " + serviceName, ticks);
+
+		int i = 0;
+		while (i < ticks && !subMonitor.isCanceled()) {
+			try {
+				info = TunnelHelper.getTunnelServiceInfo(client, serviceName);
+			}
+			catch (Throwable th) {
+				t = th;
+			}
+			subMonitor.worked(i++);
+			if (info == null) {
+				long sleepTime = 5000;
+				try {
+					Thread.sleep(sleepTime);
+				}
+				catch (InterruptedException e) {
+					// Ignore and proceed
+				}
+			}
+			else {
+				break;
+			}
+
+		}
+
+		if (info == null) {
+
+			CloudFoundryPlugin.logError("Timeout trying to obtain tunnel information for: " + serviceName
+					+ ". Please wait a few seconds before trying again.", t);
+
+		}
+
+		subMonitor.done();
+		return info;
 	}
 
 	public synchronized CaldecottTunnelDescriptor stopAndDeleteCaldecottTunnel(String serviceName,
@@ -336,4 +388,5 @@ public class CaldecottTunnelHandler {
 			return appModule;
 		}
 	}
+
 }
