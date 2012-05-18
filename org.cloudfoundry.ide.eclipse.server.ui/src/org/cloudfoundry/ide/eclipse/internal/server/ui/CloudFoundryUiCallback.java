@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.ApplicationInfo;
@@ -18,6 +19,7 @@ import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.client.lib.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -56,8 +58,17 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		}
 	}
 
-	public void displayCaldecottTunnelConnections(CloudFoundryServer cloudServer) {
-		new CaldecottUIHelper(cloudServer).displayCaldecottTunnelConnections();
+	public void displayCaldecottTunnelConnections(CloudFoundryServer cloudServer,
+			List<CaldecottTunnelDescriptor> descriptors) {
+
+		if (descriptors != null && !descriptors.isEmpty()) {
+			List<String> serviceNames = new ArrayList<String>();
+
+			for (CaldecottTunnelDescriptor descriptor : descriptors) {
+				serviceNames.add(descriptor.getServiceName());
+			}
+			new CaldecottUIHelper(cloudServer).displayCaldecottTunnels(serviceNames);
+		}
 	}
 
 	@Override

@@ -20,15 +20,14 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CaldecottEditorActionAdapter;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AddServiceStartCaldecottAction;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CaldecottTunnelInfoDialog;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.StartAndAddCaldecottService;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CaldecottTunnelWizard;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -46,12 +45,12 @@ public class CaldecottUIHelper {
 		this.cloudServer = cloudServer;
 	}
 
-	public void displayCaldecottTunnelConnections() {
+	public void openCaldecottTunnelWizard() {
 
 		UIJob uiJob = new UIJob("Show Caldecott Tunnels") {
 
 			public IStatus runInUIThread(IProgressMonitor monitor) {
-				Shell shell = PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
+				Shell shell = getShell();
 
 				CaldecottTunnelWizard wizard = new CaldecottTunnelWizard(cloudServer);
 				WizardDialog dialog = new WizardDialog(shell, wizard);
@@ -77,6 +76,30 @@ public class CaldecottUIHelper {
 		uiJob.schedule();
 	}
 
+	protected Shell getShell() {
+		return PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
+	}
+
+	public void displayCaldecottTunnels(List<String> srcNames) {
+
+		if (srcNames != null && !srcNames.isEmpty()) {
+			final List<String> serviceNames = srcNames;
+			UIJob job = new UIJob("Display Caldecott Info...") {
+
+				@Override
+				public IStatus runInUIThread(IProgressMonitor monitor) {
+					CaldecottTunnelInfoDialog dialogue = new CaldecottTunnelInfoDialog(getShell(), cloudServer,
+							serviceNames);
+					dialogue.open();
+					return Status.OK_STATUS;
+				}
+			};
+			job.setSystem(true);
+			job.schedule();
+		}
+
+	}
+
 	/**
 	 * Returns a list of applicable Caldecott Actions given the selection, or
 	 * empty list if not actions are applicable.
@@ -86,7 +109,7 @@ public class CaldecottUIHelper {
 	 */
 	public List<IAction> getCaldecottActions(IStructuredSelection selection,
 			final CloudFoundryApplicationsEditorPage editorPage) {
-		Collection<String> selectedServices = StartAndAddCaldecottService.getServiceNames(selection);
+		Collection<String> selectedServices = AddServiceStartCaldecottAction.getServiceNames(selection);
 		List<IAction> actions = new ArrayList<IAction>();
 		final CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
 		if (selectedServices != null && !selectedServices.isEmpty()) {
@@ -94,55 +117,19 @@ public class CaldecottUIHelper {
 			final List<String> servicesToAdd = getServicesWithNoTunnel(selectedServices, handler, servicesWithTunnels);
 
 			if (!servicesToAdd.isEmpty()) {
-				Action addCaldecottTunnel = new Action("Start Caldecott tunnel", CloudFoundryImages.CONNECT) {
-					public void run() {
-
-						Job job = new Job("Starting Caldecott tunnel") {
-
-							@Override
-							protected IStatus run(IProgressMonitor monitor) {
-								new CaldecottEditorActionAdapter(cloudServer.getBehaviour(), editorPage)
-										.addServiceAndCreateTunnel(servicesToAdd, monitor);
-								return Status.OK_STATUS;
-							}
-						};
-						job.setSystem(false);
-						job.schedule();
-
-					}
-				};
-				actions.add(addCaldecottTunnel);
+				actions.add(new AddServiceStartCaldecottAction(servicesToAdd, cloudServer.getBehaviour(), editorPage,
+						"Open Caldecott Tunnel"));
 			}
 			else if (!servicesWithTunnels.isEmpty()) {
-				Action addCaldecottTunnel = new Action("Close Caldecott tunnel", CloudFoundryImages.CONNECT) {
+
+				actions.add(new DisconnectCaldecottTunnelAction(editorPage, handler, servicesWithTunnels));
+				IAction showCaldecottTunnelInfo = new Action("Show Caldecott Tunnel info...",
+						CloudFoundryImages.CONNECT) {
 					public void run() {
-
-						Job job = new Job("Closing Caldecott tunnel") {
-
-							@Override
-							protected IStatus run(IProgressMonitor monitor) {
-								for (String serviceName : servicesWithTunnels) {
-									try {
-										handler.stopAndDeleteCaldecottTunnel(serviceName, monitor);
-									}
-									catch (CoreException e) {
-										CloudFoundryPlugin.logError("Failed to close Caldecott tunnel for service: "
-												+ serviceName, e);
-									}
-								}
-
-								return Status.OK_STATUS;
-							}
-						};
-						job.setSystem(false);
-						job.schedule();
-
+						displayCaldecottTunnels(servicesWithTunnels);
 					}
 				};
-				actions.add(addCaldecottTunnel);
-				if (servicesWithTunnels.size() == 1) {
-
-				}
+				actions.add(showCaldecottTunnelInfo);
 			}
 		}
 		return actions;
@@ -160,6 +147,44 @@ public class CaldecottUIHelper {
 			}
 		}
 		return filteredInServices;
+	}
+
+	static class DisconnectCaldecottTunnelAction extends CloudFoundryEditorAction {
+
+		static final String ACTION_NAME = "Disconnect Caldecott Tunnel";
+
+		private final List<String> servicesWithTunnels;
+
+		private final CaldecottTunnelHandler handler;
+
+		public DisconnectCaldecottTunnelAction(CloudFoundryApplicationsEditorPage editorPage,
+				CaldecottTunnelHandler handler, List<String> servicesWithTunnels) {
+			super(editorPage, RefreshArea.ALL);
+			setText(ACTION_NAME);
+			setImageDescriptor(CloudFoundryImages.DISCONNECT);
+			this.servicesWithTunnels = servicesWithTunnels;
+			this.handler = handler;
+		}
+
+		@Override
+		public String getJobName() {
+			return ACTION_NAME;
+		}
+
+		@Override
+		public IStatus performAction(IProgressMonitor monitor) throws CoreException {
+			for (String serviceName : servicesWithTunnels) {
+				try {
+					handler.stopAndDeleteCaldecottTunnel(serviceName, monitor);
+				}
+				catch (CoreException e) {
+					CloudFoundryPlugin.logError("Failed to close Caldecott tunnel for service: " + serviceName, e);
+				}
+			}
+
+			return Status.OK_STATUS;
+		}
+
 	}
 
 }

@@ -131,7 +131,9 @@ public class CaldecottTunnelHandler {
 				tunnel.add(descriptor);
 
 				CloudFoundryCallback callBack = CloudFoundryPlugin.getCallback();
-				callBack.displayCaldecottTunnelConnections(cloudServer);
+				List<CaldecottTunnelDescriptor> descriptors = new ArrayList<CaldecottTunnelDescriptor>();
+				descriptors.add(descriptor);
+				callBack.displayCaldecottTunnelConnections(cloudServer, descriptors);
 				return descriptor;
 			}
 

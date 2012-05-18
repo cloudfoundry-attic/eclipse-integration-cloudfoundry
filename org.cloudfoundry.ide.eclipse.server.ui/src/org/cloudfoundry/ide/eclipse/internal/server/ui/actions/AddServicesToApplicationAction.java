@@ -36,8 +36,8 @@ public class AddServicesToApplicationAction extends ModifyServicesForApplication
 	}
 
 	public AddServicesToApplicationAction(Collection<String> services, ApplicationModule appModule,
-			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
-		super(appModule, serverBehaviour, editorPage);
+			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage, RefreshArea area) {
+		super(appModule, serverBehaviour, editorPage, area);
 
 		this.services = new ArrayList<String>(services);
 	}

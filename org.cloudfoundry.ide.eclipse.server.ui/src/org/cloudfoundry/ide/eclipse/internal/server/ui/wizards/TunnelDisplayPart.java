@@ -19,8 +19,14 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -28,6 +34,8 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.graphics.Image;
@@ -35,7 +43,7 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -82,19 +90,9 @@ public class TunnelDisplayPart {
 
 	public Control createControl(Composite parent) {
 
-		shell.setText("Active Caldecott Tunnels");
-
 		Composite tableArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(tableArea);
+		GridLayoutFactory.fillDefaults().numColumns(1).spacing(0, 0).applyTo(tableArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(tableArea);
-
-		Composite toolBarArea = new Composite(tableArea, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(toolBarArea);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(toolBarArea);
-
-		Label label = new Label(toolBarArea, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(false, false).align(SWT.BEGINNING, SWT.CENTER).applyTo(label);
-		label.setText("List of Caldecott tunnels:");
 
 		Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI);
 		table.setSize(new Point(400, 400));
@@ -135,6 +133,8 @@ public class TunnelDisplayPart {
 
 			}
 		});
+
+		addTableActions();
 
 		setInput();
 
@@ -283,6 +283,103 @@ public class TunnelDisplayPart {
 			}
 		}
 		return descriptors;
+	}
+
+	protected void addTableActions() {
+		MenuManager menuManager = new MenuManager();
+		menuManager.setRemoveAllWhenShown(true);
+		menuManager.addMenuListener(new IMenuListener() {
+
+			public void menuAboutToShow(IMenuManager manager) {
+				List<CaldecottTunnelDescriptor> descriptors = getSelectedCaldecotTunnelDescriptors();
+				List<IAction> actions = getViewerActions(descriptors);
+				if (actions != null) {
+					for (IAction action : actions) {
+						manager.add(action);
+					}
+				}
+
+			}
+		});
+
+		Menu menu = menuManager.createContextMenu(getViewer().getControl());
+		getViewer().getControl().setMenu(menu);
+
+	}
+
+	protected List<IAction> getViewerActions(List<CaldecottTunnelDescriptor> descriptors) {
+		List<IAction> actions = new ArrayList<IAction>();
+
+		if (descriptors.size() == 1) {
+			actions.add(new CopyPassword());
+			actions.add(new CopyUserName());
+		}
+
+		return actions;
+	}
+
+	protected abstract class CopyTunnelInformation extends Action {
+
+		public CopyTunnelInformation(String actionName, ImageDescriptor actionImage) {
+			super(actionName, actionImage);
+		}
+
+		public void run() {
+			Clipboard clipBoard = new Clipboard(shell.getDisplay());
+			CaldecottTunnelDescriptor descriptor = getSelectedTunnelDescriptor();
+			if (descriptor != null) {
+				String value = getTunnelInformation(descriptor);
+				clipBoard.setContents(new Object[] { value }, new TextTransfer[] { TextTransfer.getInstance() });
+			}
+		}
+
+		protected CaldecottTunnelDescriptor getSelectedTunnelDescriptor() {
+
+			List<CaldecottTunnelDescriptor> descriptors = getSelectedCaldecotTunnelDescriptors();
+
+			return !descriptors.isEmpty() ? descriptors.get(0) : null;
+		}
+
+		abstract public String getToolTipText();
+
+		abstract String getTunnelInformation(CaldecottTunnelDescriptor descriptor);
+
+	}
+
+	protected class CopyUserName extends CopyTunnelInformation {
+
+		public CopyUserName() {
+			super("Copy username", CloudFoundryImages.EDIT);
+		}
+
+		@Override
+		public String getToolTipText() {
+			return "Copy username";
+		}
+
+		@Override
+		String getTunnelInformation(CaldecottTunnelDescriptor descriptor) {
+			return descriptor.getUserName();
+		}
+
+	}
+
+	protected class CopyPassword extends CopyTunnelInformation {
+
+		public CopyPassword() {
+			super("Copy password", CloudFoundryImages.EDIT);
+		}
+
+		@Override
+		public String getToolTipText() {
+			return "Copy password";
+		}
+
+		@Override
+		String getTunnelInformation(CaldecottTunnelDescriptor descriptor) {
+			return descriptor.getPassword();
+		}
+
 	}
 
 }

@@ -26,7 +26,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.viewers.IStructuredSelection;
 
-
 /**
  * Action for modifying list of services for an application. Subclasses are
  * responsible for defining the list of services to add or to remove.
@@ -36,7 +35,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
  */
 public abstract class ModifyServicesForApplicationAction extends CloudFoundryEditorAction {
 
-	private final ApplicationModule appModule;
+	private ApplicationModule appModule;
 
 	private final CloudFoundryServerBehaviour serverBehaviour;
 
@@ -48,9 +47,21 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 		this.serverBehaviour = serverBehaviour;
 	}
 
+	public ModifyServicesForApplicationAction(ApplicationModule appModule, CloudFoundryServerBehaviour serverBehaviour,
+			CloudFoundryApplicationsEditorPage editorPage, RefreshArea area) {
+		super(editorPage, area);
+
+		this.appModule = appModule;
+		this.serverBehaviour = serverBehaviour;
+	}
+
 	abstract public List<String> getServicesToAdd();
 
 	abstract public List<String> getServicesToRemove();
+
+	protected void setApplicationModule(ApplicationModule appModule) {
+		this.appModule = appModule;
+	}
 
 	@Override
 	public IStatus performAction(IProgressMonitor monitor) throws CoreException {

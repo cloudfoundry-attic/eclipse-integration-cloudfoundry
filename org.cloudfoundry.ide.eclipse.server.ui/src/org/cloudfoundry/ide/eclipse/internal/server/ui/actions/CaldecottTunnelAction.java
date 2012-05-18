@@ -31,6 +31,6 @@ public class CaldecottTunnelAction extends Action {
 	}
 
 	public void run() {
-		new CaldecottUIHelper(cloudServer).displayCaldecottTunnelConnections();
+		new CaldecottUIHelper(cloudServer).openCaldecottTunnelWizard();
 	}
 }

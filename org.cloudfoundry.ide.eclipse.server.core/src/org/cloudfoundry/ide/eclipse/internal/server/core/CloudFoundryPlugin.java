@@ -145,7 +145,8 @@ public class CloudFoundryPlugin extends Plugin {
 		}
 
 		@Override
-		public void displayCaldecottTunnelConnections(CloudFoundryServer cloudServer) {
+		public void displayCaldecottTunnelConnections(CloudFoundryServer cloudServer,
+				List<CaldecottTunnelDescriptor> descriptor) {
 			// ignore
 		}
 

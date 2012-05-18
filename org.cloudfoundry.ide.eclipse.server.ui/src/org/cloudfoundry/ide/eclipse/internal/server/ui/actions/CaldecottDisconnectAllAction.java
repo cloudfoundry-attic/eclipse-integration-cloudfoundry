@@ -26,7 +26,7 @@ public class CaldecottDisconnectAllAction extends Action {
 
 	protected void setActionValues() {
 		setText("Disconnect All Caldecott Tunnels");
-		setImageDescriptor(CloudFoundryImages.CONNECT);
+		setImageDescriptor(CloudFoundryImages.DISCONNECT);
 		setToolTipText("Disconnect All Caldecott Tunnels");
 		setEnabled(true);
 	}
