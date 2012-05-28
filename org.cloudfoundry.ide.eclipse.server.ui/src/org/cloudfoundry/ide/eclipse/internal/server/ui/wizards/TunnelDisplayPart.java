@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -65,7 +66,7 @@ public class TunnelDisplayPart {
 	}
 
 	enum ViewColumn {
-		ServiceName(150), UserName(100), Password(200);
+		ServiceName(150), ServiceType(100), UserName(200), Password(200), Port(50);
 		private int width;
 
 		private ViewColumn(int width) {
@@ -254,15 +255,22 @@ public class TunnelDisplayPart {
 			if (column != null) {
 				ViewColumn serviceColumn = (ViewColumn) column.getData();
 				if (serviceColumn != null) {
+					CaldecottTunnelDescriptor descriptor = (CaldecottTunnelDescriptor) element;
 					switch (serviceColumn) {
 					case ServiceName:
 						result = getText(element);
 						break;
 					case UserName:
-						result = ((CaldecottTunnelDescriptor) element).getUserName();
+						result = descriptor.getUserName();
 						break;
 					case Password:
-						result = ((CaldecottTunnelDescriptor) element).getPassword();
+						result = descriptor.getPassword();
+						break;
+					case Port:
+						result = descriptor.tunnelPort() + "";
+						break;
+					case ServiceType:
+						result = descriptor.getServiceType();
 						break;
 					}
 				}
@@ -313,6 +321,8 @@ public class TunnelDisplayPart {
 		if (descriptors.size() == 1) {
 			actions.add(new CopyPassword());
 			actions.add(new CopyUserName());
+			actions.add(new CopyPort());
+			actions.add(new CopyAll());
 		}
 
 		return actions;
@@ -364,6 +374,24 @@ public class TunnelDisplayPart {
 
 	}
 
+	protected class CopyPort extends CopyTunnelInformation {
+
+		public CopyPort() {
+			super("Copy port", CloudFoundryImages.EDIT);
+		}
+
+		@Override
+		public String getToolTipText() {
+			return "Copy port";
+		}
+
+		@Override
+		String getTunnelInformation(CaldecottTunnelDescriptor descriptor) {
+			return descriptor.tunnelPort() + "";
+		}
+
+	}
+
 	protected class CopyPassword extends CopyTunnelInformation {
 
 		public CopyPassword() {
@@ -378,6 +406,31 @@ public class TunnelDisplayPart {
 		@Override
 		String getTunnelInformation(CaldecottTunnelDescriptor descriptor) {
 			return descriptor.getPassword();
+		}
+
+	}
+
+	protected class CopyAll extends CopyTunnelInformation {
+		private static final String SPACE = "   ";
+
+		public CopyAll() {
+			super("Copy all", CloudFoundryImages.EDIT);
+		}
+
+		@Override
+		public String getToolTipText() {
+			return "Copy all";
+		}
+
+		@Override
+		String getTunnelInformation(CaldecottTunnelDescriptor descriptor) {
+			StringWriter writer = new StringWriter();
+			writer.append(descriptor.getUserName());
+			writer.append(SPACE);
+			writer.append(descriptor.getPassword());
+			writer.append(SPACE);
+			writer.append(descriptor.tunnelPort() + "");
+			return writer.toString();
 		}
 
 	}

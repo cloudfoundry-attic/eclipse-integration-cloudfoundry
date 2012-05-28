@@ -24,13 +24,20 @@ public class CaldecottTunnelDescriptor {
 
 	private final String serviceName;
 
-	public CaldecottTunnelDescriptor(String userName, String password, String serviceName, TunnelServer server,
-			int tunnelPort) {
+	private final String serviceType;
+
+	public CaldecottTunnelDescriptor(String userName, String password, String serviceName, String serviceType,
+			TunnelServer server, int tunnelPort) {
 		this.server = server;
 		this.userName = userName;
 		this.password = password;
 		this.tunnelPort = tunnelPort;
 		this.serviceName = serviceName;
+		this.serviceType = serviceType;
+	}
+
+	public String getServiceType() {
+		return serviceType;
 	}
 
 	public String getServiceName() {

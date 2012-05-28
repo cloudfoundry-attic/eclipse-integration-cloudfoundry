@@ -316,7 +316,7 @@ public class ApplicationMasterPart extends SectionPart {
 		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
 
 			protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
-				if (column == ServiceViewColumn.Caldecott) {
+				if (column == ServiceViewColumn.Tunnel) {
 					CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
 					if (handler.hasCaldecottTunnel(service.getName())) {
 						return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
@@ -330,7 +330,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 			@Override
 			protected int compare(CloudService service1, CloudService service2, ServiceViewColumn sortColumn) {
-				if (sortColumn == ServiceViewColumn.Caldecott) {
+				if (sortColumn == ServiceViewColumn.Tunnel) {
 					CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
 					if (handler.hasCaldecottTunnel(service1.getName())) {
 						return -1;

@@ -124,6 +124,7 @@ public class CaldecottTunnelHandler {
 				String auth = TunnelHelper.getTunnelAuth(client);
 				String serviceUserName = info.get("username");
 				String servicePassword = info.get("password");
+				String dataBase = info.get("db");
 
 				TunnelServer tunnelServer = new TunnelServer(local, new HttpTunnelFactory(url, host, port, auth));
 				tunnelServer.start();
@@ -134,7 +135,7 @@ public class CaldecottTunnelHandler {
 				}
 
 				CaldecottTunnelDescriptor descriptor = new CaldecottTunnelDescriptor(serviceUserName, servicePassword,
-						serviceName, tunnelServer, unusedPort);
+						serviceName, dataBase, tunnelServer, unusedPort);
 
 				CloudFoundryPlugin.getCaldecottTunnelCache().addDescriptor(cloudServer, descriptor);
 				tunnel.add(descriptor);

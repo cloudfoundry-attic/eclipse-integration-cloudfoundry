@@ -32,6 +32,7 @@ public class CaldecottTunnelInfoDialog extends TitleAreaDialog {
 
 	public CaldecottTunnelInfoDialog(Shell shell, CloudFoundryServer cloudServer, List<String> servicesWithTunnels) {
 		super(shell);
+		setBlockOnOpen(false);
 		this.cloudServer = cloudServer;
 		this.servicesWithTunnels = servicesWithTunnels;
 	}

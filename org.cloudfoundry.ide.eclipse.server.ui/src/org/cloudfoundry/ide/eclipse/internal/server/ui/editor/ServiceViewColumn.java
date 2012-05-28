@@ -11,7 +11,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
 public enum ServiceViewColumn {
-	Name(150), Type(100), Vendor(100), Caldecott(80);
+	Name(150), Type(100), Vendor(100), Tunnel(80);
 	private int width;
 
 	private ServiceViewColumn(int width) {

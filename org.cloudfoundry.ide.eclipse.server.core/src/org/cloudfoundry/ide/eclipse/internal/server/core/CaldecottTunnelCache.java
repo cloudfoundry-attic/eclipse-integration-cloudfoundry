@@ -12,7 +12,6 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,16 +32,16 @@ public class CaldecottTunnelCache {
 	}
 
 	/**
-	 * Returns a unmodifiable copy of all descriptors for the given server, or
-	 * null if no tunnels have been opened for the server yet.
+	 * Returns a copy of all descriptors for the given server, or null if no
+	 * tunnels have been opened for the server yet.
 	 * @param server
-	 * @return unmodifiable list of tunnel descriptors, or null if non exist.
+	 * @return list of tunnel descriptors, or null if non exist.
 	 */
 	public synchronized Collection<CaldecottTunnelDescriptor> getDescriptors(CloudFoundryServer server) {
 		String id = server.getServerId();
 		Map<String, CaldecottTunnelDescriptor> descriptors = caldecottTunnels.get(id);
 		if (descriptors != null) {
-			return Collections.unmodifiableCollection(descriptors.values());
+			return new ArrayList<CaldecottTunnelDescriptor>(descriptors.values());
 		}
 		return null;
 	}
@@ -75,7 +74,6 @@ public class CaldecottTunnelCache {
 		while (usedPorts.contains(base)) {
 			base++;
 		}
-
 		return base;
 	}
 
