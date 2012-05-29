@@ -66,7 +66,7 @@ public class TunnelDisplayPart {
 	}
 
 	enum ViewColumn {
-		ServiceName(150), ServiceType(100), UserName(200), Password(200), Port(50);
+		ServiceName(100), Vendor(100), UserName(250), Password(250), Port(50);
 		private int width;
 
 		private ViewColumn(int width) {
@@ -269,8 +269,8 @@ public class TunnelDisplayPart {
 					case Port:
 						result = descriptor.tunnelPort() + "";
 						break;
-					case ServiceType:
-						result = descriptor.getServiceType();
+					case Vendor:
+						result = descriptor.getServiceVendor();
 						break;
 					}
 				}

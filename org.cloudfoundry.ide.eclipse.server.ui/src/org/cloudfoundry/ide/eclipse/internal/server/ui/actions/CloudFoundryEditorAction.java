@@ -33,8 +33,6 @@ import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.wst.server.core.IModule;
 
-
-
 /**
  * Abstract class implementing an app cloud action. Before the job starts, the
  * app cloud application editor page is set to show busy state, and after the
@@ -52,7 +50,7 @@ public abstract class CloudFoundryEditorAction extends Action {
 	private boolean userAction;
 
 	private final RefreshArea area;
-	
+
 	public enum RefreshArea {
 		MASTER, DETAIL, ALL
 	}
@@ -75,13 +73,26 @@ public abstract class CloudFoundryEditorAction extends Action {
 	}
 
 	public abstract IStatus performAction(IProgressMonitor monitor) throws CoreException;
-	
+
 	protected boolean shouldLogException(CoreException e) {
 		return true;
 	}
 
 	@Override
 	public void run() {
+
+		Job job = getJob();
+		IWorkbenchSiteProgressService service = (IWorkbenchSiteProgressService) editorPage.getEditorSite().getService(
+				IWorkbenchSiteProgressService.class);
+		if (service != null) {
+			service.schedule(job, 0L, true);
+		}
+		else {
+			job.schedule();
+		}
+	}
+
+	protected Job getJob() {
 		Job job = new Job(getJobName()) {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -95,7 +106,9 @@ public abstract class CloudFoundryEditorAction extends Action {
 				}
 				catch (CoreException e) {
 					if (shouldLogException(e)) {
-						StatusManager.getManager().handle(new Status(Status.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, "Failed to perform server editor action", e), StatusManager.LOG);
+						StatusManager.getManager().handle(
+								new Status(Status.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
+										"Failed to perform server editor action", e), StatusManager.LOG);
 					}
 					return new Status(Status.CANCEL, CloudFoundryServerUiPlugin.PLUGIN_ID, e.getMessage(), e);
 				}
@@ -128,9 +141,11 @@ public abstract class CloudFoundryEditorAction extends Action {
 									return;
 								}
 								if (userAction && CloudUtil.isWrongCredentialsException((CoreException) exception)) {
-									CloudFoundryCredentialsWizard wizard = new CloudFoundryCredentialsWizard(editorPage.getCloudServer(), 
+									CloudFoundryCredentialsWizard wizard = new CloudFoundryCredentialsWizard(editorPage
+											.getCloudServer(),
 											"Access to Cloud Foundry was denied. Make sure your Cloud Foundry credentials are correct.");
-									WizardDialog dialog = new WizardDialog(Display.getDefault().getActiveShell(), wizard);
+									WizardDialog dialog = new WizardDialog(Display.getDefault().getActiveShell(),
+											wizard);
 									if (dialog.open() == Dialog.OK) {
 										CloudFoundryEditorAction.this.run();
 										return;
@@ -154,17 +169,9 @@ public abstract class CloudFoundryEditorAction extends Action {
 				});
 			}
 		});
-
-		IWorkbenchSiteProgressService service = (IWorkbenchSiteProgressService) editorPage.getEditorSite().getService(
-				IWorkbenchSiteProgressService.class);
-		if (service != null) {
-			service.schedule(job, 0L, true);
-		}
-		else {
-			job.schedule();
-		}
+		return job;
 	}
-	
+
 	protected void display404Error(IStatus status) {
 		editorPage.setMessage(status.getMessage(), IMessageProvider.ERROR);
 	}

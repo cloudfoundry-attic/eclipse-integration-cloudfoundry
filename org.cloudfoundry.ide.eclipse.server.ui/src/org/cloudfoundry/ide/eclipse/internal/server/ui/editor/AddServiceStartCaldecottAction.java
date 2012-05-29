@@ -22,6 +22,9 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.wst.server.core.IModule;
 
 public class AddServiceStartCaldecottAction extends AddServicesToApplicationAction {
@@ -42,25 +45,46 @@ public class AddServiceStartCaldecottAction extends AddServicesToApplicationActi
 		return jobName;
 	}
 
+	protected Shell getShell() {
+		return PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
+	}
+
+	@Override
+	protected Job getJob() {
+		Job job = super.getJob();
+		// As starting a Caldecott tunnel may take time, show progress dialog
+		// that also
+		// allows the user to run it as a background job.
+		job.setUser(true);
+		return job;
+	}
+
 	@Override
 	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
 		CaldecottTunnelHandler handler = new CaldecottTunnelHandler(getBehavior().getCloudFoundryServer());
 
 		IModule caldecottApp = handler.getCaldecottModule(monitor);
 		if (caldecottApp instanceof ApplicationModule) {
-
+			ApplicationModule caldecottModule = (ApplicationModule) caldecottApp;
 			// Application Module MUST be set first before invoking parent
 			// action, as the latter
 			// requires a valid application module
-			setApplicationModule((ApplicationModule) caldecottApp);
+			setApplicationModule(caldecottModule);
 
-			super.performAction(monitor);
-			// Create tunnel once services have been added
 			List<String> servicesToAdd = getServicesToAdd();
-			if (servicesToAdd != null && !servicesToAdd.isEmpty()) {
-				handler.startCaldecottTunnel(servicesToAdd.get(0), monitor);
-			}
 
+			if (servicesToAdd != null && !servicesToAdd.isEmpty()) {
+
+				try {
+					super.performAction(monitor);
+
+					handler.startCaldecottTunnel(servicesToAdd.get(0), monitor);
+				}
+				catch (CoreException e) {
+					return CloudFoundryPlugin.getErrorStatus(e);
+				}
+
+			}
 			return Status.OK_STATUS;
 		}
 		else {

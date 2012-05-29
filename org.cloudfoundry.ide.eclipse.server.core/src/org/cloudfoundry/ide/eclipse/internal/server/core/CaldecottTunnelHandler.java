@@ -22,6 +22,7 @@ import org.cloudfoundry.caldecott.client.TunnelHelper;
 import org.cloudfoundry.caldecott.client.TunnelServer;
 import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
+import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour.Request;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -81,12 +82,14 @@ public class CaldecottTunnelHandler {
 			@Override
 			protected CaldecottTunnelDescriptor doRun(CloudFoundryClient client, SubMonitor progress)
 					throws CoreException {
-				CloudApplication caldecottApp = getCaldecottApp(monitor);
+				CloudApplication caldecottApp = getCaldecottApp(progress);
 				if (caldecottApp == null) {
 					return null;
 				}
 
-				bindServiceToCaldecottApp(caldecottApp, serviceName, monitor);
+				progress.setTaskName("Binding " + serviceName + " to Caldecott.");
+
+				bindServiceToCaldecottApp(caldecottApp, serviceName, progress);
 
 				// First get an unused port, even if there may be an
 				// existing tunnel, as deleting an existing tunnel
@@ -111,9 +114,12 @@ public class CaldecottTunnelHandler {
 				}
 
 				InetSocketAddress local = new InetSocketAddress(LOCAL_HOST, unusedPort);
+
+				progress.setTaskName("Getting tunnel information for " + serviceName);
+
 				String url = TunnelHelper.getTunnelUri(client);
 
-				Map<String, String> info = getTunnelInfo(client, serviceName, monitor);
+				Map<String, String> info = getTunnelInfo(client, serviceName, progress);
 
 				if (info == null) {
 					return null;
@@ -124,9 +130,12 @@ public class CaldecottTunnelHandler {
 				String auth = TunnelHelper.getTunnelAuth(client);
 				String serviceUserName = info.get("username");
 				String servicePassword = info.get("password");
-				String dataBase = info.get("db");
+				String dataBase = getServiceVendor(serviceName, progress);
 
 				TunnelServer tunnelServer = new TunnelServer(local, new HttpTunnelFactory(url, host, port, auth));
+
+				progress.setTaskName("Starting tunnel for " + serviceName);
+
 				tunnelServer.start();
 
 				// Delete the old tunnel
@@ -143,13 +152,27 @@ public class CaldecottTunnelHandler {
 				CloudFoundryCallback callBack = CloudFoundryPlugin.getCallback();
 				List<CaldecottTunnelDescriptor> descriptors = new ArrayList<CaldecottTunnelDescriptor>();
 				descriptors.add(descriptor);
+
 				callBack.displayCaldecottTunnelConnections(cloudServer, descriptors);
+
 				return descriptor;
 			}
 
 		}.run(monitor);
 
 		return tunnel.size() > 0 ? tunnel.get(0) : null;
+	}
+
+	protected String getServiceVendor(String serviceName, IProgressMonitor monitor) throws CoreException {
+		List<CloudService> services = cloudServer.getBehaviour().getServices(monitor);
+		if (services != null) {
+			for (CloudService service : services) {
+				if (serviceName.equals(service.getName())) {
+					return service.getVendor();
+				}
+			}
+		}
+		return null;
 	}
 
 	public Map<String, String> getTunnelInfo(CloudFoundryClient client, String serviceName, IProgressMonitor monitor) {
