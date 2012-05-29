@@ -66,7 +66,7 @@ public class TunnelDisplayPart {
 	}
 
 	enum ViewColumn {
-		ServiceName(100), Vendor(100), UserName(250), Password(250), Port(50);
+		ServiceName(100), Vendor(100), Name(100), UserName(250), Password(250), Port(50);
 		private int width;
 
 		private ViewColumn(int width) {
@@ -272,6 +272,9 @@ public class TunnelDisplayPart {
 					case Vendor:
 						result = descriptor.getServiceVendor();
 						break;
+					case Name:
+						result = descriptor.getDatabaseName();
+						break;
 					}
 				}
 			}
@@ -321,7 +324,6 @@ public class TunnelDisplayPart {
 		if (descriptors.size() == 1) {
 			actions.add(new CopyPassword());
 			actions.add(new CopyUserName());
-			actions.add(new CopyPort());
 			actions.add(new CopyAll());
 		}
 
@@ -374,24 +376,6 @@ public class TunnelDisplayPart {
 
 	}
 
-	protected class CopyPort extends CopyTunnelInformation {
-
-		public CopyPort() {
-			super("Copy port", CloudFoundryImages.EDIT);
-		}
-
-		@Override
-		public String getToolTipText() {
-			return "Copy port";
-		}
-
-		@Override
-		String getTunnelInformation(CaldecottTunnelDescriptor descriptor) {
-			return descriptor.tunnelPort() + "";
-		}
-
-	}
-
 	protected class CopyPassword extends CopyTunnelInformation {
 
 		public CopyPassword() {
@@ -411,7 +395,7 @@ public class TunnelDisplayPart {
 	}
 
 	protected class CopyAll extends CopyTunnelInformation {
-		private static final String SPACE = "   ";
+		private static final String SPACE = "     ";
 
 		public CopyAll() {
 			super("Copy all", CloudFoundryImages.EDIT);
@@ -425,10 +409,16 @@ public class TunnelDisplayPart {
 		@Override
 		String getTunnelInformation(CaldecottTunnelDescriptor descriptor) {
 			StringWriter writer = new StringWriter();
+			writer.append("UserName: ");
 			writer.append(descriptor.getUserName());
 			writer.append(SPACE);
+			writer.append("Password: ");
 			writer.append(descriptor.getPassword());
 			writer.append(SPACE);
+			writer.append("DatabaseName: ");
+			writer.append(descriptor.getDatabaseName());
+			writer.append(SPACE);
+			writer.append("Port: ");
 			writer.append(descriptor.tunnelPort() + "");
 			return writer.toString();
 		}

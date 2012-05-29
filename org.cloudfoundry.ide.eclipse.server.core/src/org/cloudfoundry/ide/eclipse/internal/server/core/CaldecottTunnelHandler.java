@@ -33,6 +33,8 @@ import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 public class CaldecottTunnelHandler {
 
@@ -132,7 +134,13 @@ public class CaldecottTunnelHandler {
 				String servicePassword = info.get("password");
 				String dataBase = getServiceVendor(serviceName, progress);
 
-				TunnelServer tunnelServer = new TunnelServer(local, new HttpTunnelFactory(url, host, port, auth));
+				String name = info.get("vhost");
+				if (name == null) {
+					name = info.get("db") != null ? info.get("db") : info.get("name");
+				}
+
+				TunnelServer tunnelServer = new TunnelServer(local, new HttpTunnelFactory(url, host, port, auth),
+						getTunnelServerThreadExecutor());
 
 				progress.setTaskName("Starting tunnel for " + serviceName);
 
@@ -144,7 +152,7 @@ public class CaldecottTunnelHandler {
 				}
 
 				CaldecottTunnelDescriptor descriptor = new CaldecottTunnelDescriptor(serviceUserName, servicePassword,
-						serviceName, dataBase, tunnelServer, unusedPort);
+						name, serviceName, dataBase, tunnelServer, unusedPort);
 
 				CloudFoundryPlugin.getCaldecottTunnelCache().addDescriptor(cloudServer, descriptor);
 				tunnel.add(descriptor);
@@ -161,6 +169,15 @@ public class CaldecottTunnelHandler {
 		}.run(monitor);
 
 		return tunnel.size() > 0 ? tunnel.get(0) : null;
+	}
+
+	protected TaskExecutor getTunnelServerThreadExecutor() {
+		int defaultPoolSize = 20;
+		ThreadPoolTaskExecutor te = new ThreadPoolTaskExecutor();
+		te.setCorePoolSize(defaultPoolSize);
+		te.setMaxPoolSize(defaultPoolSize * 2);
+		te.setQueueCapacity(100);
+		return te;
 	}
 
 	protected String getServiceVendor(String serviceName, IProgressMonitor monitor) throws CoreException {
