@@ -11,7 +11,6 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
@@ -33,13 +32,6 @@ public class AddServicesToApplicationAction extends ModifyServicesForApplication
 		super(appModule, serverBehaviour, editorPage);
 
 		this.services = getServiceNames(selection);
-	}
-
-	public AddServicesToApplicationAction(Collection<String> services, ApplicationModule appModule,
-			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage, RefreshArea area) {
-		super(appModule, serverBehaviour, editorPage, area);
-
-		this.services = new ArrayList<String>(services);
 	}
 
 	@Override

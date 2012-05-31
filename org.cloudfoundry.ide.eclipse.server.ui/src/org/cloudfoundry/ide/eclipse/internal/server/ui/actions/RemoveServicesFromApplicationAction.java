@@ -34,7 +34,7 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 
 	public RemoveServicesFromApplicationAction(IStructuredSelection selection, ApplicationModule application,
 			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
-		super(application, serverBehaviour, editorPage, RefreshArea.ALL);
+		super(application, serverBehaviour, editorPage);
 
 		setText("Remove from Application");
 		setImageDescriptor(CloudFoundryImages.REMOVE);

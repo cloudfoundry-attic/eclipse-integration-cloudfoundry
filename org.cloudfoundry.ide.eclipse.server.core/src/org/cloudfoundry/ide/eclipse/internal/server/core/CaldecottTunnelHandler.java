@@ -27,10 +27,7 @@ import org.cloudfoundry.client.lib.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour.Request;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 import org.springframework.core.task.TaskExecutor;
@@ -87,6 +84,10 @@ public class CaldecottTunnelHandler {
 			return true;
 		}
 
+	}
+
+	public static boolean isCaldecottApp(String appName) {
+		return TunnelHelper.getTunnelAppName().equals(appName);
 	}
 
 	public synchronized CaldecottTunnelDescriptor startCaldecottTunnel(final String serviceName,
@@ -307,35 +308,18 @@ public class CaldecottTunnelHandler {
 	}
 
 	/**
-	 * Stops and deletes all Caldecott tunnels for the given server. Operation
-	 * is scheduled in a separate Job.
+	 * Stops and deletes all Caldecott tunnels for the given server.
 	 * @param monitor
 	 * @throws CoreException
 	 */
-	public synchronized void stopAndDeleteAllTunnels() {
-
-		Job job = new Job("Stopping all Caldecott tunnels for: " + cloudServer.getDeploymentName()) {
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				try {
-					Collection<CaldecottTunnelDescriptor> descriptors = CloudFoundryPlugin.getCaldecottTunnelCache()
-							.getDescriptors(cloudServer);
-					if (descriptors != null) {
-						for (CaldecottTunnelDescriptor desc : descriptors) {
-							stopAndDeleteCaldecottTunnel(desc.getServiceName(), monitor);
-						}
-					}
-				}
-				catch (CoreException e) {
-					return CloudFoundryPlugin.getErrorStatus(e);
-				}
-				return Status.OK_STATUS;
+	public synchronized void stopAndDeleteAllTunnels(IProgressMonitor monitor) throws CoreException {
+		Collection<CaldecottTunnelDescriptor> descriptors = CloudFoundryPlugin.getCaldecottTunnelCache()
+				.getDescriptors(cloudServer);
+		if (descriptors != null) {
+			for (CaldecottTunnelDescriptor desc : descriptors) {
+				stopAndDeleteCaldecottTunnel(desc.getServiceName(), monitor);
 			}
-
-		};
-		job.setSystem(false);
-		job.schedule();
+		}
 	}
 
 	public synchronized CaldecottTunnelDescriptor stopCaldecottTunnel(String serviceName) throws CoreException {

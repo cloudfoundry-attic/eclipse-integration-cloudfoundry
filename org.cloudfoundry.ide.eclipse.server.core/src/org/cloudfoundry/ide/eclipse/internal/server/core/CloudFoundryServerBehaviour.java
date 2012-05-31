@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.cloudfoundry.caldecott.client.TunnelHelper;
 import org.cloudfoundry.client.lib.ApplicationInfo;
 import org.cloudfoundry.client.lib.ApplicationStats;
 import org.cloudfoundry.client.lib.CloudApplication;
@@ -45,6 +44,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jst.server.core.IWebModule;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
@@ -192,7 +192,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						if (application.getName().equals(appModule.getApplicationId())) {
 							client.deleteApplication(appModule.getApplicationId());
 
-							isCaldecottApp = TunnelHelper.getTunnelAppName().equals(appModule.getApplicationId());
+							isCaldecottApp = CaldecottTunnelHandler.isCaldecottApp(appModule.getApplicationId());
 							break;
 						}
 					}
@@ -207,7 +207,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 					if (isCaldecottApp) {
 						// Delete all tunnels if the Caldecott app is removed
-						new CaldecottTunnelHandler(cloudServer).stopAndDeleteAllTunnels();
+						new CaldecottTunnelHandler(cloudServer).stopAndDeleteAllTunnels(progress);
 					}
 				}
 				return null;
@@ -222,7 +222,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				CaldecottTunnelHandler handler = new CaldecottTunnelHandler(getCloudFoundryServer());
 				for (String service : services) {
 					client.deleteService(service);
-					
+
 					// Also delete any existing Tunnels
 					handler.stopAndDeleteCaldecottTunnel(service, progress);
 				}
@@ -348,14 +348,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		server.setServerState(IServer.STATE_STOPPED);
 		server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
-		closeCaldecottTunnels();
+		closeCaldecottTunnels(monitor);
 	}
 
 	@Override
 	public void dispose() {
 		super.dispose();
 		getServer().removeServerListener(serverListener);
-		closeCaldecottTunnels();
+		closeCaldecottTunnelsAsynch();
 	}
 
 	/**
@@ -625,13 +625,36 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	@Override
 	public void stop(boolean force) {
 		setServerState(IServer.STATE_STOPPED);
-		closeCaldecottTunnels();
+		closeCaldecottTunnelsAsynch();
 	}
 
-	protected void closeCaldecottTunnels() {
+	protected void closeCaldecottTunnelsAsynch() {
+		String jobName = "Stopping all Caldecott tunnels";
+
+		try {
+			jobName += " :" + getCloudFoundryServer().getDeploymentName();
+		}
+		catch (CoreException e1) {
+			CloudFoundryPlugin.logError(e1);
+		}
+
+		Job job = new Job(jobName) {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				closeCaldecottTunnels(monitor);
+				return Status.OK_STATUS;
+			}
+
+		};
+		job.setSystem(false);
+		job.schedule();
+	}
+
+	protected void closeCaldecottTunnels(IProgressMonitor monitor) {
 		// Close all open Caldecott Tunnels
 		try {
-			new CaldecottTunnelHandler(getCloudFoundryServer()).stopAndDeleteAllTunnels();
+			new CaldecottTunnelHandler(getCloudFoundryServer()).stopAndDeleteAllTunnels(monitor);
 		}
 		catch (CoreException e) {
 			CloudFoundryPlugin.logError(e);
@@ -659,6 +682,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			server.setModuleState(modules, IServer.STATE_STOPPED);
 			succeeded = true;
+
+			// If succeeded, stop all Caldecott tunnels if the app is the
+			// Caldecott app
+			if (CaldecottTunnelHandler.isCaldecottApp(cloudModule.getApplicationId())) {
+				CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+				handler.stopAndDeleteAllTunnels(monitor);
+			}
 		}
 		finally {
 			if (!succeeded) {
@@ -1265,6 +1295,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				if (descriptor.deploymentMode == ApplicationAction.DEBUG) {
 					new DebugCommandBuilder(modules, cloudServer).getDebugCommand(
 							ApplicationAction.CONNECT_TO_DEBUGGER, null).run(monitor);
+				}
+
+				// In addition, starting, restarting, and update-restarting a
+				// caldecott app should always
+				// disconnect existing tunnels.
+				if (CaldecottTunnelHandler.isCaldecottApp(deployedModule.getApplicationId())) {
+					new CaldecottTunnelHandler(cloudServer).stopAndDeleteAllTunnels(monitor);
 				}
 				return deployedModule;
 			}

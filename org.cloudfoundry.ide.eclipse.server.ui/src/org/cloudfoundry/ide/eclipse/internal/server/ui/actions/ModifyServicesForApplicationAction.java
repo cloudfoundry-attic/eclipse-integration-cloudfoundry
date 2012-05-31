@@ -47,14 +47,6 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 		this.serverBehaviour = serverBehaviour;
 	}
 
-	public ModifyServicesForApplicationAction(ApplicationModule appModule, CloudFoundryServerBehaviour serverBehaviour,
-			CloudFoundryApplicationsEditorPage editorPage, RefreshArea area) {
-		super(editorPage, area);
-
-		this.appModule = appModule;
-		this.serverBehaviour = serverBehaviour;
-	}
-
 	abstract public List<String> getServicesToAdd();
 
 	abstract public List<String> getServicesToRemove();
