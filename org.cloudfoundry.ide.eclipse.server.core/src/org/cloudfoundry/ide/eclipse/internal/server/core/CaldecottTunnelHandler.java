@@ -23,26 +23,39 @@ import org.cloudfoundry.caldecott.client.TunnelServer;
 import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
 import org.cloudfoundry.client.lib.CloudService;
+import org.cloudfoundry.client.lib.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour.Request;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
-import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+/**
+ * Primary handler for all Caldecott operations, like starting and stopping a
+ * tunnel.
+ * <p/>
+ * If a Caldecott app is not yet deployed, this handler will automatically
+ * deploy and start it.
+ * <p/>
+ * 
+ * When creating a tunnel for a service that hasn't been bound, this handler
+ * will automatically bind the service first to the Caldecott application before
+ * attempting to create a tunnel.
+ * 
+ */
 public class CaldecottTunnelHandler {
 
 	public static final String LOCAL_HOST = "127.0.0.1";
 
 	private final CloudFoundryServer cloudServer;
 
-	public static final int PORT_BASE = 10000;
+	public static final int BASE_PORT = 10000;
 
 	public CaldecottTunnelHandler(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
@@ -66,6 +79,8 @@ public class CaldecottTunnelHandler {
 			behaviour.updateServices(TunnelHelper.getTunnelAppName(), updateCaldecottServices, monitor);
 			behaviour.startModule(new IModule[] { caldecottModule }, monitor);
 
+			setDeploymentServices(serviceName, monitor);
+
 			return caldecottApp.getServices().contains(serviceName);
 		}
 		else {
@@ -82,9 +97,9 @@ public class CaldecottTunnelHandler {
 		cloudServer.getBehaviour().new Request<CaldecottTunnelDescriptor>() {
 
 			@Override
-			protected CaldecottTunnelDescriptor doRun(CloudFoundryClient client, SubMonitor progress)
+			protected CaldecottTunnelDescriptor doRun(final CloudFoundryClient client, SubMonitor progress)
 					throws CoreException {
-				CloudApplication caldecottApp = getCaldecottApp(progress);
+				final CloudApplication caldecottApp = getCaldecottApp(progress);
 				if (caldecottApp == null) {
 					return null;
 				}
@@ -92,6 +107,27 @@ public class CaldecottTunnelHandler {
 				progress.setTaskName("Binding " + serviceName + " to Caldecott.");
 
 				bindServiceToCaldecottApp(caldecottApp, serviceName, progress);
+
+				// The application must be started before creating a tunnel
+				int ticks = 1;
+				long sleep = 5000;
+
+				progress.setTaskName("Starting Caldecott application.");
+
+				new WaitWithProgressJob<Boolean>(ticks, sleep) {
+
+					@Override
+					protected Boolean runInWait(IProgressMonitor monitor) {
+
+						if (!caldecottApp.getState().equals(CloudApplication.AppState.STARTED)) {
+							client.startApplication(caldecottApp.getName());
+							// wait to check again the state of the app
+							return null;
+						}
+						return true;
+					}
+
+				}.run(monitor);
 
 				// First get an unused port, even if there may be an
 				// existing tunnel, as deleting an existing tunnel
@@ -110,20 +146,21 @@ public class CaldecottTunnelHandler {
 					catch (CoreException e) {
 						CloudFoundryPlugin
 								.logError(NLS
-										.bind("Failed to stop existing tunnel for the following service {0} on port {1}. Attempting to create a new tunnel on a different port {2}.",
+										.bind("Failed to stop existing tunnel for service {0} on port {1}. Attempting to create a new tunnel on a different port {2}.",
 												new Object[] { serviceName, oldDescriptor.tunnelPort(), unusedPort }));
 					}
 				}
 
 				InetSocketAddress local = new InetSocketAddress(LOCAL_HOST, unusedPort);
 
-				progress.setTaskName("Getting tunnel information for " + serviceName);
-
 				String url = TunnelHelper.getTunnelUri(client);
 
 				Map<String, String> info = getTunnelInfo(client, serviceName, progress);
 
 				if (info == null) {
+					CloudFoundryPlugin.logError(NLS.bind("Failed to obtain tunnel information for {0} on port {1}.",
+							new Object[] { serviceName, unusedPort }));
+
 					return null;
 				}
 
@@ -146,7 +183,8 @@ public class CaldecottTunnelHandler {
 
 				tunnelServer.start();
 
-				// Delete the old tunnel
+				// Delete the old tunnel only after a new one has been created,
+				// as to allow the port checker to assign a unused port
 				if (oldDescriptor != null) {
 					CloudFoundryPlugin.getCaldecottTunnelCache().removeDescriptor(cloudServer, serviceName);
 				}
@@ -161,6 +199,8 @@ public class CaldecottTunnelHandler {
 				List<CaldecottTunnelDescriptor> descriptors = new ArrayList<CaldecottTunnelDescriptor>();
 				descriptors.add(descriptor);
 
+				// Update any UI that needs to be notified that a tunnel was
+				// created
 				callBack.displayCaldecottTunnelConnections(cloudServer, descriptors);
 
 				return descriptor;
@@ -169,6 +209,46 @@ public class CaldecottTunnelHandler {
 		}.run(monitor);
 
 		return tunnel.size() > 0 ? tunnel.get(0) : null;
+	}
+
+	/**
+	 * Sets the new service in the existing deployment info for an existing
+	 * Caldecott ApplicationModule, if and only if the application module
+	 * already has a deployment info and does not yet contain the service.
+	 * Returns true if the latter iff condition is met, false any other case.
+	 * @param serviceName
+	 * @param monitor
+	 * @return
+	 */
+	protected boolean setDeploymentServices(String serviceName, IProgressMonitor monitor) {
+
+		boolean serviceChanges = false;
+
+		IModule module = getCaldecottModule(monitor);
+
+		if (module instanceof ApplicationModule) {
+			ApplicationModule appModule = (ApplicationModule) module;
+
+			DeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
+			// Do NOT set a deployment info if one does not exist, as another
+			// component of CF integration does it, only
+			// add to the existing deployment info.
+			if (deploymentInfo != null) {
+				List<String> existingServices = deploymentInfo.getServices();
+				List<String> updatedServices = new ArrayList<String>();
+				if (existingServices != null) {
+					updatedServices.addAll(existingServices);
+				}
+
+				if (!updatedServices.contains(serviceName)) {
+					updatedServices.add(serviceName);
+					deploymentInfo.setServices(updatedServices);
+					serviceChanges = true;
+				}
+			}
+		}
+
+		return serviceChanges;
 	}
 
 	protected TaskExecutor getTunnelServerThreadExecutor() {
@@ -192,46 +272,25 @@ public class CaldecottTunnelHandler {
 		return null;
 	}
 
-	public Map<String, String> getTunnelInfo(CloudFoundryClient client, String serviceName, IProgressMonitor monitor) {
-		Throwable t = null;
+	public Map<String, String> getTunnelInfo(final CloudFoundryClient client, final String serviceName,
+			IProgressMonitor monitor) {
 
-		Map<String, String> info = null;
-		int ticks = 10;
-		IProgressMonitor subMonitor = new SubProgressMonitor(monitor, ticks);
-		subMonitor.beginTask("Waiting for Caldecott tunnel information for service: " + serviceName, ticks);
+		int ticks = 5;
+		long sleepTime = 5000;
+		monitor.setTaskName("Getting tunnel information for " + serviceName);
+		Map<String, String> info = new WaitWithProgressJob<Map<String, String>>(ticks, sleepTime) {
 
-		int i = 0;
-		while (i < ticks && !subMonitor.isCanceled()) {
-			try {
-				info = TunnelHelper.getTunnelServiceInfo(client, serviceName);
+			@Override
+			protected Map<String, String> runInWait(IProgressMonitor monitor) {
+				return TunnelHelper.getTunnelServiceInfo(client, serviceName);
 			}
-			catch (Throwable th) {
-				t = th;
-			}
-			subMonitor.worked(i++);
-			if (info == null) {
-				long sleepTime = 5000;
-				try {
-					Thread.sleep(sleepTime);
-				}
-				catch (InterruptedException e) {
-					// Ignore and proceed
-				}
-			}
-			else {
-				break;
-			}
-
-		}
+		}.run(monitor);
 
 		if (info == null) {
-
 			CloudFoundryPlugin.logError("Timeout trying to obtain tunnel information for: " + serviceName
-					+ ". Please wait a few seconds before trying again.", t);
-
+					+ ". Please wait a few seconds before trying again.");
 		}
 
-		subMonitor.done();
 		return info;
 	}
 
@@ -285,7 +344,6 @@ public class CaldecottTunnelHandler {
 				cloudServer, serviceName);
 		if (tunnelDescriptor != null) {
 			tunnelDescriptor.getTunnelServer().stop();
-
 		}
 		return tunnelDescriptor;
 	}
@@ -367,6 +425,7 @@ public class CaldecottTunnelHandler {
 
 			@Override
 			protected Boolean doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+				progress.setTaskName("Deploying Caldecott application.");
 				Thread t = Thread.currentThread();
 				ClassLoader oldLoader = t.getContextClassLoader();
 				boolean deployed = false;
@@ -427,6 +486,60 @@ public class CaldecottTunnelHandler {
 				}
 			}
 			return appModule;
+		}
+	}
+
+	abstract class WaitWithProgressJob<T> {
+
+		private final int ticks;
+
+		private final long sleepTime;
+
+		public WaitWithProgressJob(int ticks, long sleepTime) {
+			this.ticks = ticks;
+			this.sleepTime = sleepTime;
+		}
+
+		/**
+		 * Return null if the run operation failed to obtain a run result. Null
+		 * value will cause the wait operation to wait for a specified amount of
+		 * time. Returning a non-null result will stop any further waiting.
+		 * @return
+		 */
+		abstract protected T runInWait(IProgressMonitor monitor);
+
+		public T run(IProgressMonitor monitor) {
+
+			Throwable t = null;
+
+			T result = null;
+			int i = 0;
+			while (i < ticks && !monitor.isCanceled()) {
+				try {
+					result = runInWait(monitor);
+				}
+				catch (Throwable th) {
+					t = th;
+				}
+				if (result == null) {
+
+					try {
+						Thread.sleep(sleepTime);
+					}
+					catch (InterruptedException e) {
+						// Ignore and proceed
+					}
+				}
+				else {
+					break;
+				}
+				i++;
+			}
+
+			if (result == null && t != null) {
+				CloudFoundryPlugin.logError(t);
+			}
+			return result;
 		}
 	}
 

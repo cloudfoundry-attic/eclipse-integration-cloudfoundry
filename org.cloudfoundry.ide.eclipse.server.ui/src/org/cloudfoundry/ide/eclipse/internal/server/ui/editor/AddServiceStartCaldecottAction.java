@@ -10,14 +10,14 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.AddServicesToApplicationAction;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -25,19 +25,21 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.wst.server.core.IModule;
 
-public class AddServiceStartCaldecottAction extends AddServicesToApplicationAction {
+public class AddServiceStartCaldecottAction extends CloudFoundryEditorAction {
 
 	private final String jobName;
+
+	private List<String> services;
 
 	public AddServiceStartCaldecottAction(List<String> services, CloudFoundryServerBehaviour serverBehaviour,
 			CloudFoundryApplicationsEditorPage editorPage, String jobName) {
 		// Null application module, as it is resolved only at action run time
-		super(services, null, serverBehaviour, editorPage, RefreshArea.ALL);
+		super(editorPage, RefreshArea.ALL);
 		this.jobName = jobName;
 		setText(jobName);
 		setImageDescriptor(CloudFoundryImages.CONNECT);
+		this.services = new ArrayList<String>(services);
 	}
 
 	@Override
@@ -63,34 +65,17 @@ public class AddServiceStartCaldecottAction extends AddServicesToApplicationActi
 	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
 		CaldecottTunnelHandler handler = new CaldecottTunnelHandler(getBehavior().getCloudFoundryServer());
 
-		IModule caldecottApp = handler.getCaldecottModule(monitor);
-		if (caldecottApp instanceof ApplicationModule) {
-			ApplicationModule caldecottModule = (ApplicationModule) caldecottApp;
-			// Application Module MUST be set first before invoking parent
-			// action, as the latter
-			// requires a valid application module
-			setApplicationModule(caldecottModule);
+		if (services != null && !services.isEmpty()) {
 
-			List<String> servicesToAdd = getServicesToAdd();
-
-			if (servicesToAdd != null && !servicesToAdd.isEmpty()) {
-
-				try {
-					super.performAction(monitor);
-
-					handler.startCaldecottTunnel(servicesToAdd.get(0), monitor);
-				}
-				catch (CoreException e) {
-					return CloudFoundryPlugin.getErrorStatus(e);
-				}
-
+			try {
+				handler.startCaldecottTunnel(services.get(0), monitor);
 			}
-			return Status.OK_STATUS;
+			catch (CoreException e) {
+				return CloudFoundryPlugin.getErrorStatus(e);
+			}
+
 		}
-		else {
-			return CloudFoundryPlugin
-					.getErrorStatus("Unable to resolve Caldecott application module. Failed to open Caldecott tunnel.");
-		}
+		return Status.OK_STATUS;
 
 	}
 

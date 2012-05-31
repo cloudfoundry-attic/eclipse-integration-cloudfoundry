@@ -109,7 +109,7 @@ public class CaldecottUIHelper {
 	 */
 	public List<IAction> getCaldecottActions(IStructuredSelection selection,
 			final CloudFoundryApplicationsEditorPage editorPage) {
-		Collection<String> selectedServices = AddServiceStartCaldecottAction.getServiceNames(selection);
+		Collection<String> selectedServices = ModifyServicesForApplicationAction.getServiceNames(selection);
 		List<IAction> actions = new ArrayList<IAction>();
 		final CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
 		if (selectedServices != null && !selectedServices.isEmpty()) {

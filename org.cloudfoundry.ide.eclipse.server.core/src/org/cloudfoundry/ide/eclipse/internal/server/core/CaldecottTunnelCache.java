@@ -70,7 +70,7 @@ public class CaldecottTunnelCache {
 	}
 
 	public synchronized int getUnusedPort() {
-		int base = CaldecottTunnelHandler.PORT_BASE;
+		int base = CaldecottTunnelHandler.BASE_PORT;
 		while (usedPorts.contains(base)) {
 			base++;
 		}
