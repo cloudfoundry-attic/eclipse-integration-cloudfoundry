@@ -14,12 +14,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.viewers.IStructuredSelection;
-
-
 
 /**
  * @author Terry Denney
@@ -32,12 +34,28 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 
 	public RemoveServicesFromApplicationAction(IStructuredSelection selection, ApplicationModule application,
 			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
-		super(application, serverBehaviour, editorPage);
+		super(application, serverBehaviour, editorPage, RefreshArea.ALL);
 
 		setText("Remove from Application");
 		setImageDescriptor(CloudFoundryImages.REMOVE);
 
 		services = getServiceNames(selection);
+	}
+
+	@Override
+	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
+		IStatus status = super.performAction(monitor);
+		// Remove any Caldecott tunnels associated with removed services.
+		List<String> servicesToRemove = getServicesToRemove();
+
+		if (servicesToRemove != null) {
+			CaldecottTunnelHandler handler = new CaldecottTunnelHandler(getBehavior().getCloudFoundryServer());
+			for (String serviceName : servicesToRemove) {
+				handler.stopAndDeleteCaldecottTunnel(serviceName, monitor);
+			}
+		}
+
+		return status;
 	}
 
 	@Override

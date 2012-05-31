@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.cloudfoundry.caldecott.client.TunnelHelper;
 import org.cloudfoundry.client.lib.ApplicationInfo;
 import org.cloudfoundry.client.lib.ApplicationStats;
 import org.cloudfoundry.client.lib.CloudApplication;
@@ -184,9 +185,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							.getServices() : null;
 
 					List<CloudApplication> applications = client.getApplications();
+
+					boolean isCaldecottApp = false;
+
 					for (CloudApplication application : applications) {
 						if (application.getName().equals(appModule.getApplicationId())) {
 							client.deleteApplication(appModule.getApplicationId());
+
+							isCaldecottApp = TunnelHelper.getTunnelAppName().equals(appModule.getApplicationId());
 							break;
 						}
 					}
@@ -198,6 +204,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						CloudFoundryPlugin.getCallback().deleteServices(services, cloudServer);
 						CloudFoundryPlugin.getDefault().fireServicesUpdated(cloudServer);
 					}
+
+					if (isCaldecottApp) {
+						// Delete all tunnels if the Caldecott app is removed
+						new CaldecottTunnelHandler(cloudServer).stopAndDeleteAllTunnels();
+					}
 				}
 				return null;
 			}
@@ -208,8 +219,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		new Request<Void>("Deleting services") {
 			@Override
 			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+				CaldecottTunnelHandler handler = new CaldecottTunnelHandler(getCloudFoundryServer());
 				for (String service : services) {
 					client.deleteService(service);
+					
+					// Also delete any existing Tunnels
+					handler.stopAndDeleteCaldecottTunnel(service, progress);
 				}
 				return null;
 			}
