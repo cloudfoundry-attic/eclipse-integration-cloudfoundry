@@ -40,6 +40,7 @@
            id="org.cloudfoundry.ide.eclipse.debug.sourcepathcomputer">
      </sourcePathComputer>
   </extension>
+  <!--
 	    <extension
          point="org.eclipse.wst.server.core.moduleFactories">
       <moduleFactory
@@ -53,5 +54,6 @@
          </moduleType>
       </moduleFactory>
    </extension>
+   -->
 	 	 		
  </plugin>
