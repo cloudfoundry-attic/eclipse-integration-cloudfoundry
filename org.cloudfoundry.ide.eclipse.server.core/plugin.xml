@@ -40,6 +40,18 @@
            id="org.cloudfoundry.ide.eclipse.debug.sourcepathcomputer">
      </sourcePathComputer>
   </extension>
-	 
+	    <extension
+         point="org.eclipse.wst.server.core.moduleFactories">
+      <moduleFactory
+            class="org.cloudfoundry.ide.eclipse.internal.server.core.StandAloneModuleFactory"
+            id="org.cloudfoundry.ide.eclipse.server.core.StandAloneModuleFactory"
+            order="1"
+            projects="true">
+         <moduleType
+               types="java"
+               versions="1.6">
+         </moduleType>
+      </moduleFactory>
+   </extension>
 	 	 		
  </plugin>

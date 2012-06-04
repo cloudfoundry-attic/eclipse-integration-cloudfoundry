@@ -53,7 +53,6 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.wst.server.core.IModule;
 
-
 /**
  * @author Christian Dupuis
  * @author Leo Dos Santos
@@ -70,6 +69,10 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 	private final String serverTypeId;
 
 	private Text urlText;
+
+	private Text standaloneStartText;
+
+	private String standaloneStartCommand;
 
 	protected final String deploymentName;
 
@@ -259,11 +262,34 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 			}
 		});
 
+		if (wizard.isStandaloneApplication()) {
+			label = new Label(topComposite, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+			label.setText("Standalone Application Start Command:");
+
+			standaloneStartText = new Text(topComposite, SWT.BORDER);
+			standaloneStartText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+			standaloneStartText.setEditable(true);
+
+			standaloneStartText.addModifyListener(new ModifyListener() {
+
+				public void modifyText(ModifyEvent e) {
+					standaloneStartCommand = standaloneStartText.getText();
+					update();
+				}
+
+			});
+		}
+
 		createStartOrDebugOptions(topComposite);
 
 		setControl(composite);
 
 		update(false);
+	}
+
+	public String getStandaloneStartCommand() {
+		return standaloneStartCommand;
 	}
 
 	protected void createStartOrDebugOptions(Composite parent) {
@@ -379,20 +405,35 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 
 	private void update(boolean updateButtons) {
 		canFinish = true;
-		if (urlText.getText() == null || urlText.getText().length() == 0) {
+		if (!wizard.isStandaloneApplication() && (urlText.getText() == null || urlText.getText().length() == 0)) {
 			setMessage("Enter a deployment name.");
 			canFinish = false;
 		}
-		else {
-			setMessage(null);
-		}
 
 		Matcher matcher = VALID_CHARS.matcher(urlText.getText());
-		if (canFinish && !matcher.matches()) {
+		if (canFinish && !wizard.isStandaloneApplication() && !matcher.matches()) {
 			setErrorMessage("The entered name contains invalid characters.");
 			canFinish = false;
 		}
-		else {
+
+		if (canFinish && wizard.isStandaloneApplication()) {
+			canFinish = standaloneStartCommand != null;
+			if (canFinish) {
+				canFinish = false;
+				for (int i = 0; i < standaloneStartCommand.length(); i++) {
+					if (!Character.isWhitespace(standaloneStartCommand.charAt(i))) {
+						canFinish = true;
+						break;
+					}
+				}
+			}
+
+			if (!canFinish) {
+				setErrorMessage("A start command is required when deploying a standalone application.");
+			}
+		}
+
+		if (canFinish) {
 			setErrorMessage(null);
 		}
 

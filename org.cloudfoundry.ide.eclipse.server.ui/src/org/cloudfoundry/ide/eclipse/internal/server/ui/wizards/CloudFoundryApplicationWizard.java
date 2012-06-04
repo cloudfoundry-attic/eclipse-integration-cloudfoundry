@@ -83,9 +83,9 @@ public class CloudFoundryApplicationWizard extends Wizard {
 		if (isStandaloneApplication()) {
 			StandaloneApplicationWizardPage standalonePage = (StandaloneApplicationWizardPage) applicationPage;
 			String runtime = standalonePage.getRuntime();
-//			String command = deploymentPage.getStandaloneStartCommand();
+			String command = deploymentPage.getStandaloneStartCommand();
 			Staging staging = new Staging(DeploymentConstants.STANDALONE_FRAMEWORK);
-//			staging.setCommand(command);
+			staging.setCommand(command);
 			staging.setRuntime(runtime);
 			return staging;
 		}

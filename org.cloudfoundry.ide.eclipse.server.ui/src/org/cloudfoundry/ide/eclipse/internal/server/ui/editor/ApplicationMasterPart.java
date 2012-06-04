@@ -169,7 +169,6 @@ public class ApplicationMasterPart extends SectionPart {
 		public boolean performDrop(final Object data) {
 			UIJob job = new UIJob("Deploying application") {
 
-
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					boolean result = ApplicationViewersDropAdapter.super.performDrop(data);
