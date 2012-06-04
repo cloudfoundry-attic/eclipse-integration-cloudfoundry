@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.ApplicationInfo;
 import org.cloudfoundry.client.lib.DeploymentInfo;
+import org.cloudfoundry.client.lib.Staging;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.eclipse.core.runtime.IProgressMonitor;
 
@@ -51,6 +52,8 @@ public abstract class CloudFoundryCallback {
 		public ApplicationArchive applicationArchive;
 
 		public boolean isIncrementalPublish;
+		
+		public Staging staging;
 
 	}
 

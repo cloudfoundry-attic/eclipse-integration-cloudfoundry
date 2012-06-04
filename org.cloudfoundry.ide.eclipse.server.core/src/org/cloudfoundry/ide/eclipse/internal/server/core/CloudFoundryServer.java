@@ -36,7 +36,6 @@ import org.eclipse.wst.server.core.internal.Server;
 import org.eclipse.wst.server.core.internal.ServerPlugin;
 import org.eclipse.wst.server.core.model.ServerDelegate;
 
-
 /**
  * @author Christian Dupuis
  * @author Terry Denney
@@ -52,15 +51,21 @@ public class CloudFoundryServer extends ServerDelegate {
 			return Boolean.TRUE;
 		}
 	};
-	
+
 	private static final String ID_GRAILS_APP = "grails.app";
+
 	private static final String ID_WEB_MODULE = "jst.web";
 
+	public static final String ID_JAVA_STANDALONE_APP = "java";
+
+	public static final String ID_JAVA_STANDALONE_APP_VERSION = "1.6";
+
 	/**
-	 * Attribute key for the a unique server ID used to store credentials in the secure store.
+	 * Attribute key for the a unique server ID used to store credentials in the
+	 * secure store.
 	 */
 	static final String PROP_SERVER_ID = "org.cloudfoundry.ide.eclipse.serverId";
-	
+
 	/**
 	 * Attribute key for the password.
 	 */
@@ -95,7 +100,7 @@ public class CloudFoundryServer extends ServerDelegate {
 	private String initialServerId;
 
 	private String password;
-		
+
 	public CloudFoundryServer() {
 		// constructor
 	}
@@ -110,7 +115,8 @@ public class CloudFoundryServer extends ServerDelegate {
 			int size = add.length;
 			for (int i = 0; i < size; i++) {
 				IModule module = add[i];
-				if (!(ID_WEB_MODULE.equals(module.getModuleType().getId()) || ID_GRAILS_APP.equals(module.getModuleType().getId()))) {
+				if (!(ID_WEB_MODULE.equals(module.getModuleType().getId()) || ID_JAVA_STANDALONE_APP.equals(module
+						.getModuleType().getId()) || ID_GRAILS_APP.equals(module.getModuleType().getId()))) {
 					return new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, 0,
 							"This server only supports running J2EE Web modules.", null);
 				}
@@ -141,8 +147,8 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	public IStatus error(String message, Exception e) {
-		return new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-				NLS.bind("{0} [{1}]", message, getServer().getName()), e);
+		return new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind("{0} [{1}]", message, getServer()
+				.getName()), e);
 	}
 
 	public ApplicationModule getApplication(IModule module) {
@@ -151,7 +157,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		}
 		return getData().getOrCreateApplicationModule(module);
 	}
-	
+
 	public ApplicationModule getApplication(IModule[] modules) {
 		if (modules != null && modules.length > 0) {
 			return getApplication(modules[0]);
@@ -224,7 +230,7 @@ public class CloudFoundryServer extends ServerDelegate {
 	@Override
 	public IModule[] getRootModules(IModule module) throws CoreException {
 		final String typeId = module.getModuleType().getId();
-		if (ID_WEB_MODULE.equals(typeId) || ID_GRAILS_APP.equals(typeId)) {
+		if (ID_WEB_MODULE.equals(typeId) || ID_GRAILS_APP.equals(typeId) || ID_JAVA_STANDALONE_APP.equals(typeId)) {
 			IStatus status = canModifyModules(new IModule[] { module }, null);
 			if (status == null || !status.isOK()) {
 				throw new CoreException(status);
@@ -240,7 +246,7 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	/**
-	 * This method is API used by CloudFoundry Code.  
+	 * This method is API used by CloudFoundry Code.
 	 */
 	public String getUrl() {
 		return getAttribute(PROP_URL, (String) null);
@@ -279,7 +285,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		if (add != null && add.length > 0) {
 			for (IModule module : add) {
 				// avoid automatic deletion before module has been deployed
-				getData().tagAsUndeployed(module);				
+				getData().tagAsUndeployed(module);
 			}
 
 			// callback to disable auto deploy when testing
@@ -293,18 +299,19 @@ public class CloudFoundryServer extends ServerDelegate {
 								getBehaviour().deployOrStartModule(new IModule[] { module }, true, monitor2);
 								pending.remove(module);
 							}
-						} catch (OperationCanceledException e) {
+						}
+						catch (OperationCanceledException e) {
 							// remove module from server
 							doDeleteModules(pending);
 							return Status.CANCEL_STATUS;
 						}
 						catch (CoreException e) {
 							CloudFoundryPlugin
-							.getDefault()
-							.getLog()
-							.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-									"Failed to deploy module", e));
-						} 
+									.getDefault()
+									.getLog()
+									.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+											"Failed to deploy module", e));
+						}
 						return Status.OK_STATUS;
 					}
 				};
@@ -327,7 +334,7 @@ public class CloudFoundryServer extends ServerDelegate {
 			i++;
 		}
 		getServerWorkingCopy().setName(name);
-		
+
 		setAttribute("auto-publish-setting", 1);
 	}
 
@@ -338,14 +345,16 @@ public class CloudFoundryServer extends ServerDelegate {
 	public void setPassword(String password) {
 		this.secureStoreDirty = true;
 		this.password = password;
-		
-		// remove password in case an earlier version stored it in server properties 
+
+		// remove password in case an earlier version stored it in server
+		// properties
 		if (getServerWorkingCopy() != null) {
-			getServerWorkingCopy().setAttribute(PROP_PASSWORD_ID, (String)null);
+			getServerWorkingCopy().setAttribute(PROP_PASSWORD_ID, (String) null);
 		}
-		// in case setUrl() or setPassword() were never called, e.g. for legacy servers
+		// in case setUrl() or setPassword() were never called, e.g. for legacy
+		// servers
 		updateServerId();
-		
+
 		getData().setPassword(password);
 	}
 
@@ -358,20 +367,20 @@ public class CloudFoundryServer extends ServerDelegate {
 		setAttribute(PROP_USERNAME_ID, username);
 		updateServerId();
 	}
-	
+
 	private void updateServerId() {
-		setAttribute(PROP_SERVER_ID, getUsername()+ "@" + getUrl());
+		setAttribute(PROP_SERVER_ID, getUsername() + "@" + getUrl());
 	}
 
 	@Override
 	protected void initialize() {
 		super.initialize();
 		serverTypeId = getServer().getServerType().getId();
-		// legacy in case password was saved by an earlier version		
-		this.password = getAttribute(PROP_PASSWORD_ID, (String)null);
+		// legacy in case password was saved by an earlier version
+		this.password = getAttribute(PROP_PASSWORD_ID, (String) null);
 		this.initialServerId = getAttribute(PROP_SERVER_ID, (String) null);
 	}
-	
+
 	void updateModules(Map<String, CloudApplication> applicationByName) throws CoreException {
 		Server server = (Server) getServer();
 
@@ -380,7 +389,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		final Set<IModule> deletedModules = new HashSet<IModule>();
 
 		synchronized (this) {
-			// check for existing modules and remove them from applicationByName 
+			// check for existing modules and remove them from applicationByName
 			for (IModule module : server.getModules()) {
 				ApplicationModule appModule = getApplication(module);
 				CloudApplication application = applicationByName.remove(appModule.getApplicationId());
@@ -391,10 +400,12 @@ public class CloudFoundryServer extends ServerDelegate {
 						externalModules.add(appModule);
 					}
 					allModules.add(appModule);
-				} else if (getData().isUndeployed(module)) {
+				}
+				else if (getData().isUndeployed(module)) {
 					// deployment is still in progress
 					allModules.add(appModule);
-				} else {
+				}
+				else {
 					// the module maps to an application that no longer exists
 					deletedModules.add(module);
 				}
@@ -409,7 +420,7 @@ public class CloudFoundryServer extends ServerDelegate {
 
 			// update state for cloud applications
 			server.setExternalModules(externalModules.toArray(new IModule[0]));
-			
+
 			for (IModule module : server.getModules()) {
 				ApplicationModule appModule = getApplication(module);
 				updateState(server, appModule);
@@ -417,14 +428,14 @@ public class CloudFoundryServer extends ServerDelegate {
 
 			// update state for deleted applications to trigger a refresh
 			if (deletedModules.size() > 0) {
-					for (IModule module : deletedModules) {
-						server.setModuleState(new IModule[] { module }, IServer.STATE_UNKNOWN);
-					}
-					deleteModules(deletedModules);
+				for (IModule module : deletedModules) {
+					server.setModuleState(new IModule[] { module }, IServer.STATE_UNKNOWN);
+				}
+				deleteModules(deletedModules);
 			}
-			
+
 			getData().removeObsoleteModules(allModules);
-		}		
+		}
 	}
 
 	private void deleteModules(final Set<IModule> deletedModules) {
@@ -442,7 +453,9 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	public IServer getServerOriginal() {
-		// if a working copy is saved the delegate is replaced so getServer() is not guaranteed to return an original even if the delegate was accessed from an original 
+		// if a working copy is saved the delegate is replaced so getServer() is
+		// not guaranteed to return an original even if the delegate was
+		// accessed from an original
 		IServer server = getServer();
 		if (server instanceof IServerWorkingCopy) {
 			return ((IServerWorkingCopy) server).getOriginal();
@@ -459,7 +472,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		String serverId = getServerId();
 		if (secureStoreDirty || (serverId != null && !serverId.equals(initialServerId))) {
 			getData().updateServerId(initialServerId, serverId);
-			
+
 			// cache password
 			getData().setPassword(password);
 			// persist password
@@ -467,7 +480,7 @@ public class CloudFoundryServer extends ServerDelegate {
 			store.setUsername(getUsername());
 			store.setPassword(password);
 			store.flush(serverId);
-			
+
 			this.initialServerId = serverId;
 			this.secureStoreDirty = false;
 		}
@@ -484,10 +497,10 @@ public class CloudFoundryServer extends ServerDelegate {
 		catch (CoreException e) {
 			// log error to avoid pop-up dialog
 			CloudFoundryPlugin
-			.getDefault()
-			.getLog()
-			.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-					"Unexpected error while updating modules", e));
+					.getDefault()
+					.getLog()
+					.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+							"Unexpected error while updating modules", e));
 			return Status.CANCEL_STATUS;
 		}
 		finally {
@@ -496,11 +509,10 @@ public class CloudFoundryServer extends ServerDelegate {
 		return Status.OK_STATUS;
 	}
 
-	
 	public void tagAsDeployed(IModule module) {
 		synchronized (this) {
 			getData().tagAsDeployed(module);
 		}
 	}
-		
+
 }

@@ -10,27 +10,28 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import java.io.File;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.ApplicationInfo;
 import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.client.lib.DeploymentInfo;
+import org.cloudfoundry.client.lib.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConstants;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.wizard.Wizard;
-
 
 /**
  * @author Christian Dupuis
  * @author Steffen Pingel
  * @author Terry Denney
  */
+@SuppressWarnings("restriction")
 public class CloudFoundryApplicationWizard extends Wizard {
 
-	private CloudFoundryApplicationWizardPage applicationPage;
+	private AbstractCloudFoundryApplicationWizardPage applicationPage;
 
 	private CloudFoundryDeploymentWizardPage deploymentPage;
 
@@ -52,13 +53,18 @@ public class CloudFoundryApplicationWizard extends Wizard {
 	public void addPages() {
 		deploymentPage = new CloudFoundryDeploymentWizardPage(server, module, this);
 		if (module.getLocalModule() != null) {
-			applicationPage = new CloudFoundryApplicationWizardPage(server, deploymentPage, module);
+			applicationPage = isStandaloneApplication() ? new StandaloneApplicationWizardPage(server, deploymentPage,
+					module) : new CloudFoundryApplicationWizardPage(server, deploymentPage, module);
 			addPage(applicationPage);
 		}
 		addPage(deploymentPage);
 		servicesPage = new CloudFoundryApplicationServicesWizardPage(server, module);
 		addPage(servicesPage);
 
+	}
+
+	public boolean isStandaloneApplication() {
+		return CloudFoundryServer.ID_JAVA_STANDALONE_APP.equals(module.getLocalModule().getModuleType().getId());
 	}
 
 	public ApplicationInfo getApplicationInfo() {
@@ -73,8 +79,17 @@ public class CloudFoundryApplicationWizard extends Wizard {
 		return deploymentPage.getDeploymentMode();
 	}
 
-	public File getWarFile() {
-		return (applicationPage != null) ? applicationPage.getWarFile() : null;
+	public Staging getStaging() {
+		if (isStandaloneApplication()) {
+			StandaloneApplicationWizardPage standalonePage = (StandaloneApplicationWizardPage) applicationPage;
+			String runtime = standalonePage.getRuntime();
+//			String command = deploymentPage.getStandaloneStartCommand();
+			Staging staging = new Staging(DeploymentConstants.STANDALONE_FRAMEWORK);
+//			staging.setCommand(command);
+			staging.setRuntime(runtime);
+			return staging;
+		}
+		return null;
 	}
 
 	/**

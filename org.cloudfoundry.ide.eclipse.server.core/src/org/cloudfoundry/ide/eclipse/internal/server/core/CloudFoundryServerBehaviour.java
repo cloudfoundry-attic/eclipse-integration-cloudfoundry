@@ -31,12 +31,15 @@ import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.client.lib.InstancesInfo;
 import org.cloudfoundry.client.lib.ServiceConfiguration;
+import org.cloudfoundry.client.lib.Staging;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
+import org.cloudfoundry.client.lib.archive.DirectoryApplicationArchive;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -253,9 +256,16 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 
 			if (!found) {
-				client.createApplication(applicationId, applicationInfo.getFramework(),
-						descriptor.deploymentInfo.getMemory(), descriptor.deploymentInfo.getUris(),
-						descriptor.deploymentInfo.getServices());
+				Staging staging = descriptor.staging;
+				if (staging != null) {
+					client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(),
+							descriptor.deploymentInfo.getUris(), descriptor.deploymentInfo.getServices());
+				}
+				else {
+					client.createApplication(applicationId, applicationInfo.getFramework(),
+							descriptor.deploymentInfo.getMemory(), descriptor.deploymentInfo.getUris(),
+							descriptor.deploymentInfo.getServices());
+				}
 			}
 			File warFile = applicationInfo.getWarFile();
 
@@ -284,6 +294,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// Once the application has run, do a clean up of the sha1
 					// cache for deleted resources
 
+				}
+				else {
+					client.uploadApplication(applicationId, archive);
 				}
 			}
 
@@ -1378,6 +1391,16 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 								handleIncrementalPublish(descriptor, modules);
 							}
+							else if (isStandaloneApp(module)) {
+								IProject project = modules[0].getProject();
+								if (project.isAccessible()) {
+									File projectFile = new File(project.getLocation().toString());
+									if (projectFile.exists()) {
+										descriptor.applicationArchive = new DirectoryApplicationArchive(projectFile);
+									}
+								}
+
+							}
 							else {
 								// Create a full war archive
 								File warFile = CloudUtil.createWarFile(modules, server, progress);
@@ -1453,7 +1476,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				throw e;
 			}
 		}
+	}
 
+	protected boolean isStandaloneApp(IModule module) {
+		return CloudFoundryServer.ID_JAVA_STANDALONE_APP.equals(module.getModuleType().getId());
 	}
 
 	protected void handleIncrementalPublish(final DeploymentDescriptor descriptor, IModule[] modules) {

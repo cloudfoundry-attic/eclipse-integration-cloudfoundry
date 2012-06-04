@@ -26,7 +26,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryServi
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuListener;
@@ -61,6 +60,7 @@ import org.eclipse.ui.forms.events.ExpansionAdapter;
 import org.eclipse.ui.forms.events.ExpansionEvent;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.Section;
+import org.eclipse.ui.progress.UIJob;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.ui.internal.ImageResource;
 import org.eclipse.wst.server.ui.internal.ServerLabelProvider;
@@ -167,10 +167,11 @@ public class ApplicationMasterPart extends SectionPart {
 
 		@Override
 		public boolean performDrop(final Object data) {
-			Job job = new Job("Deploying application") {
+			UIJob job = new UIJob("Deploying application") {
+
 
 				@Override
-				protected IStatus run(IProgressMonitor monitor) {
+				public IStatus runInUIThread(IProgressMonitor monitor) {
 					boolean result = ApplicationViewersDropAdapter.super.performDrop(data);
 					if (result) {
 						editorPage.refresh(RefreshArea.MASTER, true);

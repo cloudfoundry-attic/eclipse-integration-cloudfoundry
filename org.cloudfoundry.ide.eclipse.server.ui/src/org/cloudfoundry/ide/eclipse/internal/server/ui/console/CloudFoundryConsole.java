@@ -24,7 +24,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.console.MessageConsole;
 
-
 /**
  * @author Steffen Pingel
  * @author Christian Dupuis
@@ -34,7 +33,7 @@ class CloudFoundryConsole extends Job {
 	static final String ATTRIBUTE_SERVER = "org.cloudfoundry.ide.eclipse.server.Server";
 
 	static final String ATTRIBUTE_APP = "org.cloudfoundry.ide.eclipse.server.CloudApp";
-	
+
 	static final String ATTRIBUTE_INSTANCE = "org.cloudfoundry.ide.eclipse.server.CloudInstance";
 
 	static final String CONSOLE_TYPE = "org.cloudfoundry.ide.eclipse.server.appcloud";
@@ -67,7 +66,8 @@ class CloudFoundryConsole extends Job {
 
 	private final MessageConsole console;
 
-	public CloudFoundryConsole(CloudFoundryServer server, CloudApplication app, int instanceIndex, MessageConsole console) {
+	public CloudFoundryConsole(CloudFoundryServer server, CloudApplication app, int instanceIndex,
+			MessageConsole console) {
 		super(getConsoleName(app));
 		this.server = server;
 		this.app = app;
@@ -92,7 +92,7 @@ class CloudFoundryConsole extends Job {
 	public void stopTailing() {
 		tailing = false;
 	}
-	
+
 	public void resetConsole() {
 		console.clearConsole();
 		this.stderrOffset = 0;
@@ -125,7 +125,8 @@ class CloudFoundryConsole extends Job {
 			}
 			if (failureCount < 5) {
 				schedule(sampleInterval);
-			} else {
+			}
+			else {
 				stopTailing();
 			}
 		}
@@ -133,9 +134,10 @@ class CloudFoundryConsole extends Job {
 	}
 
 	static String getConsoleName(CloudApplication app) {
-		return app.getUris().get(0);
+		String name = (app.getUris() != null && app.getUris().size() > 0) ? app.getUris().get(0) : app.getName();
+		return name;
 	}
-	
+
 	public MessageConsole getConsole() {
 		return console;
 	}

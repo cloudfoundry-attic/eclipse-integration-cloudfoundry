@@ -129,7 +129,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 						descriptor.applicationInfo = wizard.getApplicationInfo();
 						descriptor.deploymentInfo = wizard.getDeploymentInfo();
 						descriptor.deploymentMode = wizard.getDeploymentMode();
-
+						descriptor.staging = wizard.getStaging();
 						// First add any new services to the server
 						final List<CloudService> addedServices = wizard.getAddedCloudServices();
 
