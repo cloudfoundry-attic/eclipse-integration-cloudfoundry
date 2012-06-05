@@ -19,7 +19,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.codehaus.jackson.core,
  org.codehaus.jackson.mapper,
  org.eclipse.debug.core,
- org.eclipse.debug.ui
+ org.eclipse.debug.ui,
+ org.eclipse.wst.common.project.facet.core
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
