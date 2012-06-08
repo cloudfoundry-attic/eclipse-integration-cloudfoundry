@@ -12,6 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.ModuleDelegate;
 import org.eclipse.wst.server.core.util.ProjectModuleFactoryDelegate;
@@ -19,8 +20,8 @@ import org.eclipse.wst.server.core.util.ProjectModuleFactoryDelegate;
 public class StandAloneModuleFactory extends ProjectModuleFactoryDelegate {
 
 	@Override
-	public ModuleDelegate getModuleDelegate(IModule arg0) {
-		return new StandaloneModuleDelegate();
+	public ModuleDelegate getModuleDelegate(IModule module) {
+		return new StandaloneModuleDelegate(module.getProject());
 	}
 
 	/*
@@ -41,6 +42,10 @@ public class StandAloneModuleFactory extends ProjectModuleFactoryDelegate {
 	}
 
 	protected boolean canCreateModule(IProject project) {
-		return true;
+		// Check if it is a Java project that isn't already supported by another
+		// framework (Spring, Grails, etc..), as those
+		// modules are created separately.
+		return CloudUtil.getFramework(project) == null
+				&& CloudFoundryProjectUtil.hasNature(project, JavaCore.NATURE_ID);
 	}
 }

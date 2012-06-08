@@ -24,9 +24,17 @@
 			<moduleType types="jst.web" versions="2.2,2.3,2.4,2.5" />
 			<moduleType types="jst.utility" versions="1.0"/>
 			<moduleType types="grails.app" versions="1.0"/>
-            <moduleType types="cloudfoundry.standalone.app" versions="1.0"/>
+            <moduleType types="standalone.app" versions="1.0"/>
 		</runtimeType>
 	</extension>
+	
+	<extension
+         point="org.eclipse.wst.server.core.moduleTypes">
+      <moduleType
+            id="standalone.app"
+            name="Cloud Foundry Standalone Application">
+      </moduleType>
+   </extension>
 
 	<extension point="org.eclipse.wst.server.core.serverTypes">
 		<serverType
@@ -68,9 +76,6 @@
 			<facet id="jst.web" version="2.2,2.3,2.4,2.5" />
 			<facet id="jst.utility" version="1.0"/>
 			<facet id="grails.app" version="1.0"/>
-            <facet
-               id="cloudfoundry.standalone.app" version="1.0">
-            </facet>
     	</supported>
 	</extension>
 	<extension point="org.eclipse.jst.server.core.runtimeFacetMappings">
@@ -88,7 +93,7 @@
 		<image 
 			id="org.cloudfoundry.appcloudserver" 
 			icon="icons/obj16/cloud_obj.png"
-			typeIds="org.cloudfoundry.appcloudserver.10, org.cloudfoundry.appcloudserver.runtime.10" />
+			typeIds="standalone.app, org.cloudfoundry.appcloudserver.10, org.cloudfoundry.appcloudserver.runtime.10" />
 	</extension>
 	<extension point="org.eclipse.wst.server.ui.wizardFragments">
 		<fragment

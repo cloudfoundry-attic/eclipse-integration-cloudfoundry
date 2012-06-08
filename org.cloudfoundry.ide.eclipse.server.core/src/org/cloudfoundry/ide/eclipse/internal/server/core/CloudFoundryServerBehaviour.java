@@ -542,10 +542,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	protected DeploymentDescriptor getDeploymentDescriptor(IModule[] modules, IProgressMonitor monitor)
 			throws CoreException {
 
-		CloudFoundryServer cloudServer = getCloudFoundryServer();
 		IModule module = modules[0];
+
+		CloudFoundryServer cloudServer = getCloudFoundryServer();
 		ApplicationModule cloudModule = cloudServer.getApplication(module);
 		// prompt user for missing details
+
 		DeploymentDescriptor descriptor = CloudFoundryPlugin.getCallback().prepareForDeployment(cloudServer,
 				cloudModule, monitor);
 
@@ -590,14 +592,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		// whether certain functionality is enabled, etc..
 		boolean waitForDeployment = true;
 
-		DeploymentDescriptor descriptor = getDeploymentDescriptor(modules, monitor);
+		boolean debug = true;
 
-		descriptor.isIncrementalPublish = incrementalPublish;
-
-		// Set the mode to Debug
-		descriptor.deploymentMode = ApplicationAction.DEBUG;
-
-		return new StartOrDeployAction(waitForDeployment, modules, descriptor).deployModule(monitor);
+		return doDeployOrStartModule(modules, waitForDeployment, incrementalPublish, monitor, debug);
 	}
 
 	/**
@@ -610,7 +607,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public ApplicationModule deployOrStartModule(final IModule[] modules, boolean waitForDeployment,
 			IProgressMonitor monitor) throws CoreException {
-		return doDeployOrStartModule(modules, waitForDeployment, false, monitor);
+		return doDeployOrStartModule(modules, waitForDeployment, false, monitor, false);
 	}
 
 	/**
@@ -623,11 +620,21 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @throws CoreException
 	 */
 	protected ApplicationModule doDeployOrStartModule(final IModule[] modules, boolean waitForDeployment,
-			boolean isIncremental, IProgressMonitor monitor) throws CoreException {
+			boolean isIncremental, IProgressMonitor monitor, boolean debug) throws CoreException {
+
+		ApplicationModule appModule = null;
+
 		DeploymentDescriptor descriptor = getDeploymentDescriptor(modules, monitor);
 
 		descriptor.isIncrementalPublish = isIncremental;
-		return new StartOrDeployAction(waitForDeployment, modules, descriptor).deployModule(monitor);
+
+		if (debug) {
+			// Set the mode to Debug
+			descriptor.deploymentMode = ApplicationAction.DEBUG;
+		}
+		appModule = new StartOrDeployAction(waitForDeployment, modules, descriptor).deployModule(monitor);
+
+		return appModule;
 	}
 
 	@Override
@@ -779,7 +786,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public void updateRestartModuleRunMode(IModule[] modules, boolean isIncrementalPublishing, IProgressMonitor monitor)
 			throws CoreException {
-		doDeployOrStartModule(modules, false, isIncrementalPublishing, monitor);
+		doDeployOrStartModule(modules, false, isIncrementalPublishing, monitor, false);
 	}
 
 	/**

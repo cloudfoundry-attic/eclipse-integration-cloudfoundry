@@ -12,6 +12,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 public class DeploymentConstants {
 
+	public static final String GRAILS_NATURE = "com.springsource.sts.grails.core.nature";
+
 	public static final String JAVA_RUNTIME = "java";
 
 	public static final String NODE_RUNTIME = "node";
@@ -21,9 +23,9 @@ public class DeploymentConstants {
 	public static final String RUBY18 = "ruby18";
 
 	public static final String RUBY19 = "ruby19";
-	
+
 	public static final String LIFT = "lift/1.0";
-	
+
 	public static final String STANDALONE_FRAMEWORK = "standalone";
 
 }

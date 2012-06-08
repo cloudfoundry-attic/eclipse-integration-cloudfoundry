@@ -40,32 +40,21 @@
            id="org.cloudfoundry.ide.eclipse.debug.sourcepathcomputer">
      </sourcePathComputer>
   </extension>
-
-	    <extension
-         point="org.eclipse.wst.server.core.moduleFactories">
-      <moduleFactory
-            class="org.cloudfoundry.ide.eclipse.internal.server.core.StandAloneModuleFactory"
-            id="org.cloudfoundry.ide.eclipse.server.core.StandAloneModuleFactory"
-            order="1"
-            projects="true">
-         <moduleType
-               types="cloudfoundry.standalone.app"
-               versions="1.0">
-         </moduleType>
-      </moduleFactory>
+      
+   <extension
+         point="org.eclipse.wst.server.core.moduleArtifactAdapters">
+      <moduleArtifactAdapter
+            class="org.cloudfoundry.ide.eclipse.internal.server.core.StandaloneArtifactAdapter"
+            id="org.cloudfoundry.ide.eclipse.server.core.StandaloneArtifactAdapter"
+            priority="1">
+         <enablement>
+            <with variable="selection">
+               <adapt type="org.eclipse.core.resources.IProject">
+               </adapt>
+            </with>
+         </enablement>
+      </moduleArtifactAdapter>
    </extension>
-	<extension point="org.eclipse.wst.common.project.facet.core.facets">
+ 
 
-	  <project-facet id="cloudfoundry.standalone.app"> 
-	    <label>Cloud Foundry Standalone Application</label>
-	    <description>Standalone application that can be deployed to a Cloud Foundry server.</description>
-	  </project-facet>
-	
-	  <project-facet-version facet="cloudfoundry.standalone.app" version="1.0">
-	    <action type="INSTALL">
-	      <delegate class="org.cloudfoundry.ide.eclipse.internal.server.core.StandaloneFacetInstallDelegate"/>
-	    </action>
-	  </project-facet-version>   
-   </extension>
-	 	 		
  </plugin>

@@ -56,7 +56,7 @@ public class CloudFoundryServer extends ServerDelegate {
 
 	private static final String ID_WEB_MODULE = "jst.web";
 
-	public static final String ID_JAVA_STANDALONE_APP = "cloudfoundry.standalone.app";
+	public static final String ID_JAVA_STANDALONE_APP = "standalone.app";
 
 	public static final String ID_JAVA_STANDALONE_APP_VERSION = "1.0";
 
@@ -115,8 +115,9 @@ public class CloudFoundryServer extends ServerDelegate {
 			int size = add.length;
 			for (int i = 0; i < size; i++) {
 				IModule module = add[i];
-				if (!(ID_WEB_MODULE.equals(module.getModuleType().getId()) || ID_JAVA_STANDALONE_APP.equals(module
-						.getModuleType().getId()) || ID_GRAILS_APP.equals(module.getModuleType().getId()))) {
+				if (!(ID_WEB_MODULE.equals(module.getModuleType().getId())
+						|| ID_JAVA_STANDALONE_APP.equals(module.getModuleType().getId()) || ID_GRAILS_APP.equals(module
+						.getModuleType().getId()))) {
 					return new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, 0,
 							"This server only supports running J2EE Web modules.", null);
 				}
