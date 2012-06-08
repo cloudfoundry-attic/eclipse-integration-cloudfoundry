@@ -34,7 +34,6 @@ import org.cloudfoundry.client.lib.ServiceConfiguration;
 import org.cloudfoundry.client.lib.Staging;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.cloudfoundry.client.lib.archive.DirectoryApplicationArchive;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
@@ -1375,7 +1374,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						}
 
 						boolean started = false;
-						String applicationId = descriptor.applicationInfo.getAppName();
+						final String applicationId = descriptor.applicationInfo.getAppName();
 
 						if (modules[0].isExternal()) {
 							restartOrDebugApplicationInClient(applicationId, client, descriptor.deploymentMode);
@@ -1399,11 +1398,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 								handleIncrementalPublish(descriptor, modules);
 							}
 							else if (isStandaloneApp(module)) {
-								IProject project = modules[0].getProject();
-								if (project.isAccessible()) {
+							    IProject project = modules[0].getProject();
+								if (project != null && project.isAccessible()) {
 									File projectFile = new File(project.getLocation().toString());
 									if (projectFile.exists()) {
-										descriptor.applicationArchive = new DirectoryApplicationArchive(projectFile);
+										descriptor.applicationArchive = new StandaloneApplicationArchive(projectFile,
+												applicationId, project);
 									}
 								}
 
