@@ -13,8 +13,6 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.DeploymentInfo;
@@ -23,6 +21,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
+import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentInfoValidator;
+import org.cloudfoundry.ide.eclipse.internal.server.core.URLNameValidation;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.core.runtime.CoreException;
@@ -58,11 +58,10 @@ import org.eclipse.wst.server.core.IModule;
  * @author Leo Dos Santos
  * @author Terry Denney
  * @author Steffen Pingel
+ * @author Nieraj Singh
  */
 @SuppressWarnings("restriction")
 public class CloudFoundryDeploymentWizardPage extends WizardPage {
-
-	private final Pattern VALID_CHARS = Pattern.compile("[A-Za-z\\$_0-9\\-.]+");
 
 	private boolean canFinish;
 
@@ -384,7 +383,12 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 		info.setDeploymentName(deploymentName);
 		info.setMemory(memory);
 		List<String> uris = new ArrayList<String>();
-		uris.add(deploymentUrl);
+
+		// Be sure not to add an empty URL if it is a standalone application
+		if (!wizard.isStandaloneApplication() || !URLNameValidation.isEmpty(deploymentUrl)) {
+			uris.add(deploymentUrl);
+		}
+
 		info.setUris(uris);
 
 		return info;
@@ -405,36 +409,18 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 
 	private void update(boolean updateButtons) {
 		canFinish = true;
-		if (!wizard.isStandaloneApplication() && (urlText.getText() == null || urlText.getText().length() == 0)) {
-			setMessage("Enter a deployment name.");
-			canFinish = false;
-		}
 
-		Matcher matcher = VALID_CHARS.matcher(urlText.getText());
-		if (canFinish && !wizard.isStandaloneApplication() && !matcher.matches()) {
-			setErrorMessage("The entered name contains invalid characters.");
-			canFinish = false;
-		}
+		DeploymentInfoValidator validator = new DeploymentInfoValidator(urlText.getText(), standaloneStartCommand,
+				wizard.isStandaloneApplication());
 
-		if (canFinish && wizard.isStandaloneApplication()) {
-			canFinish = standaloneStartCommand != null;
-			if (canFinish) {
-				canFinish = false;
-				for (int i = 0; i < standaloneStartCommand.length(); i++) {
-					if (!Character.isWhitespace(standaloneStartCommand.charAt(i))) {
-						canFinish = true;
-						break;
-					}
-				}
-			}
-
-			if (!canFinish) {
-				setErrorMessage("A start command is required when deploying a standalone application.");
-			}
-		}
+		IStatus status = validator.isValid();
+		canFinish = status.getSeverity() == IStatus.OK;
 
 		if (canFinish) {
 			setErrorMessage(null);
+		}
+		else {
+			setErrorMessage(status.getMessage() != null ? status.getMessage() : "Invalid value entered.");
 		}
 
 		if (updateButtons) {

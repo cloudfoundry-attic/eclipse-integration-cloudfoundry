@@ -16,6 +16,7 @@ import junit.framework.TestSuite;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviourTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtilTest;
+import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentURLTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsStoreTest;
 import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ManagedTestSuite;
 
@@ -43,6 +44,7 @@ public class AllCloudFoundryTests {
 		// XXX suite.addTestSuite(LocalCloudFoundryServerBehaviourTest.class);
 		suite.addTestSuite(CloudUtilTest.class);
 		// suite.addTestSuite(CloudFoundryMockServerTest.class);
+		suite.addTestSuite(DeploymentURLTest.class);
 		return suite;
 	}
 

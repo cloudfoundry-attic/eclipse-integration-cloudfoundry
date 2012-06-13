@@ -256,9 +256,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			if (!found) {
 				Staging staging = descriptor.staging;
-				if (staging != null) {
-					client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(),
-							descriptor.deploymentInfo.getUris(), descriptor.deploymentInfo.getServices());
+				if (isValidStaging(staging)) {
+					List<String> uris = descriptor.deploymentInfo.getUris() != null ? descriptor.deploymentInfo
+							.getUris() : new ArrayList<String>();
+					List<String> services = descriptor.deploymentInfo.getServices() != null ? descriptor.deploymentInfo
+							.getServices() : new ArrayList<String>();
+					client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(), uris,
+							services);
 				}
 				else {
 					client.createApplication(applicationId, applicationInfo.getFramework(),
@@ -313,6 +317,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		catch (InterruptedException e) {
 			throw new OperationCanceledException();
 		}
+	}
+
+	protected boolean isValidStaging(Staging staging) {
+		return staging != null && staging.getCommand() != null && staging.getFramework() != null
+				&& staging.getRuntime() != null;
 	}
 
 	protected List<IModuleResource> getChangedResources(IModuleResourceDelta[] deltas) {
@@ -1398,7 +1407,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 								handleIncrementalPublish(descriptor, modules);
 							}
 							else if (isStandaloneApp(module)) {
-							    IProject project = modules[0].getProject();
+								IProject project = modules[0].getProject();
 								if (project != null && project.isAccessible()) {
 									File projectFile = new File(project.getLocation().toString());
 									if (projectFile.exists()) {
