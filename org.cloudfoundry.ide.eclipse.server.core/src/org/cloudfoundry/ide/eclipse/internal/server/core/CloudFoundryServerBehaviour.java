@@ -176,15 +176,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				for (IModule module : modules) {
 					final ApplicationModule appModule = cloudServer.getApplication(module);
 
-					// Fix for STS-2416: Get the list of services associated
-					// with the application from the application itself rather
-					// than the last
-					// deployed descriptor as the last deployed descriptor may
-					// be out of date, especially
-					// if services listed in the last deployed descriptor have
-					// already been deleted
-					List<String> services = appModule.getApplication() != null ? appModule.getApplication()
-							.getServices() : null;
+					List<String> servicesToDelete = new ArrayList<String>();
 
 					List<CloudApplication> applications = client.getApplications();
 
@@ -192,6 +184,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 					for (CloudApplication application : applications) {
 						if (application.getName().equals(appModule.getApplicationId())) {
+							// Fix for STS-2416: Get the CloudApplication from
+							// the client again, as the CloudApplication
+							// associate with the WTP ApplicationModule may be
+							// out of date and have an out of date list of
+							// services.
+							List<String> actualServices = application.getServices();
+							if (actualServices != null) {
+								servicesToDelete.addAll(actualServices);
+							}
 							client.deleteApplication(appModule.getApplicationId());
 
 							isCaldecottApp = CaldecottTunnelHandler.isCaldecottApp(appModule.getApplicationId());
@@ -202,8 +203,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					appModule.setLastDeploymentInfo(null);
 					appModule.setCloudApplication(null);
 
-					if (deleteServices && services != null) {
-						CloudFoundryPlugin.getCallback().deleteServices(services, cloudServer);
+					if (deleteServices && !servicesToDelete.isEmpty()) {
+						CloudFoundryPlugin.getCallback().deleteServices(servicesToDelete, cloudServer);
 						CloudFoundryPlugin.getDefault().fireServicesUpdated(cloudServer);
 					}
 
