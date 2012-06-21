@@ -56,7 +56,7 @@ public class CloudFoundryServer extends ServerDelegate {
 
 	private static final String ID_WEB_MODULE = "jst.web";
 
-	public static final String ID_JAVA_STANDALONE_APP = "standalone.app";
+	public static final String ID_JAVA_STANDALONE_APP = "cloudfoundry.standalone.app";
 
 	public static final String ID_JAVA_STANDALONE_APP_VERSION = "1.0";
 

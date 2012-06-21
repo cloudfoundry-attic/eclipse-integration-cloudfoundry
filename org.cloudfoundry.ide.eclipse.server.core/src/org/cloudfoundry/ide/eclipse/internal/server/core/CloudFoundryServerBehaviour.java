@@ -38,7 +38,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.De
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
-import org.eclipse.core.resources.IProject;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneApplicationArchive;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -1393,10 +1393,28 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						}
 						else {
 
-							// Determine if an incremental publish should occur
-							// For the time being support incremental publish
-							// only if the app does not have child modules
-							if (descriptor.isIncrementalPublish && !hasChildModules(modules)) {
+							if (isStandaloneApp(module)) {
+
+								// Get the module resources for the standalone
+								// as provided by the standlaone module factory
+								IModuleResource[] resources = getResources(modules);
+								if (resources == null || resources.length == 0) {
+									throw new CoreException(
+											new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+													"Unable to deploy standalone Java module. No deployable resources found in target or output folders."));
+								}
+								else {
+									descriptor.applicationArchive = new StandaloneApplicationArchive(modules[0],
+											Arrays.asList(resources));
+								}
+
+							}
+							else if (descriptor.isIncrementalPublish && !hasChildModules(modules)) {
+								// Determine if an incremental publish should
+								// occur
+								// For the time being support incremental
+								// publish
+								// only if the app does not have child modules
 								// To compute incremental deltas locally,
 								// modules must be provided
 								// Computes deltas locally before publishing to
@@ -1406,17 +1424,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 								// builds
 
 								handleIncrementalPublish(descriptor, modules);
-							}
-							else if (isStandaloneApp(module)) {
-								IProject project = modules[0].getProject();
-								if (project != null && project.isAccessible()) {
-									File projectFile = new File(project.getLocation().toString());
-									if (projectFile.exists()) {
-										descriptor.applicationArchive = new StandaloneApplicationArchive(projectFile,
-												applicationId, project);
-									}
-								}
-
 							}
 							else {
 								// Create a full war archive

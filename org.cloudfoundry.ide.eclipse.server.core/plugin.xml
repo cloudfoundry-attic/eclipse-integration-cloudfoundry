@@ -44,7 +44,7 @@
    <extension
          point="org.eclipse.wst.server.core.moduleArtifactAdapters">
       <moduleArtifactAdapter
-            class="org.cloudfoundry.ide.eclipse.internal.server.core.StandaloneArtifactAdapter"
+            class="org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneArtifactAdapter"
             id="org.cloudfoundry.ide.eclipse.server.core.StandaloneArtifactAdapter"
             priority="1">
          <enablement>
@@ -55,6 +55,17 @@
          </enablement>
       </moduleArtifactAdapter>
    </extension>
- 
+    <extension
+         point="org.eclipse.wst.server.core.moduleFactories">
+      <moduleFactory
+            class="org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandAloneModuleFactory"
+            id="org.cloudfoundry.ide.eclipse.server.core.StandAloneModuleFactory"
+            order="1"
+            projects="true">
+         <moduleType
+         	types="cloudfoundry.standalone.app"
+         	versions="1.0"/>
+      </moduleFactory>
+   </extension>
 
  </plugin>

@@ -8,9 +8,11 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.internal.server.core.standalone;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.wst.server.core.IModule;
@@ -45,7 +47,12 @@ public class StandAloneModuleFactory extends ProjectModuleFactoryDelegate {
 		// Check if it is a Java project that isn't already supported by another
 		// framework (Spring, Grails, etc..), as those
 		// modules are created separately.
+		return canHandle(project);
+	}
+
+	public static boolean canHandle(IProject project) {
+		StandaloneFacetHandler handler = new StandaloneFacetHandler(project);
 		return CloudUtil.getFramework(project) == null
-				&& CloudFoundryProjectUtil.hasNature(project, JavaCore.NATURE_ID);
+				&& CloudFoundryProjectUtil.hasNature(project, JavaCore.NATURE_ID) && handler.hasFacet();
 	}
 }
