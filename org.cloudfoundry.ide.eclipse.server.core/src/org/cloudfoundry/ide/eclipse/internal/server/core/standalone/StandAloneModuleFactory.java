@@ -12,7 +12,6 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.standalone;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.wst.server.core.IModule;
@@ -38,9 +37,15 @@ public class StandAloneModuleFactory extends ProjectModuleFactoryDelegate {
 			IModule module = createModule(project.getName(), project.getName(),
 					CloudFoundryServer.ID_JAVA_STANDALONE_APP, CloudFoundryServer.ID_JAVA_STANDALONE_APP_VERSION,
 					project);
-			return new IModule[] { module };
+			if (module != null) {
+				return new IModule[] { module };
+			}
 		}
-		return new IModule[0];
+		// Return null if a module was not created. Returning an empty module
+		// list will cache the empty list in WTP
+		// preventing a new module from being created if the project state
+		// changes in the future
+		return null;
 	}
 
 	protected boolean canCreateModule(IProject project) {
@@ -52,7 +57,6 @@ public class StandAloneModuleFactory extends ProjectModuleFactoryDelegate {
 
 	public static boolean canHandle(IProject project) {
 		StandaloneFacetHandler handler = new StandaloneFacetHandler(project);
-		return CloudUtil.getFramework(project) == null
-				&& CloudFoundryProjectUtil.hasNature(project, JavaCore.NATURE_ID) && handler.hasFacet();
+		return CloudFoundryProjectUtil.hasNature(project, JavaCore.NATURE_ID) && handler.hasFacet();
 	}
 }

@@ -26,13 +26,13 @@ public class StandaloneFacetHandler {
 		this.project = project;
 	}
 
-
-	public static final IProjectFacet FACET = ProjectFacetsManager.getProjectFacet(CloudFoundryServer.ID_JAVA_STANDALONE_APP);
+	public static final IProjectFacet FACET = ProjectFacetsManager
+			.getProjectFacet(CloudFoundryServer.ID_JAVA_STANDALONE_APP);
 
 	public boolean hasFacet() {
 		try {
 			IFacetedProject facetedProject = ProjectFacetsManager.create(project);
-			return facetedProject.hasProjectFacet(FACET);
+			return facetedProject != null && facetedProject.hasProjectFacet(FACET);
 		}
 		catch (CoreException e) {
 			CloudFoundryPlugin.logError(e);
@@ -44,8 +44,10 @@ public class StandaloneFacetHandler {
 		if (!hasFacet()) {
 			try {
 				IFacetedProject facetedProject = ProjectFacetsManager.create(project);
-				facetedProject.installProjectFacet(FACET.getDefaultVersion(), null, null);
-				return true;
+				if (facetedProject != null) {
+					facetedProject.installProjectFacet(FACET.getDefaultVersion(), null, null);
+					return true;
+				}
 			}
 			catch (CoreException e) {
 				CloudFoundryPlugin.logError(e);
