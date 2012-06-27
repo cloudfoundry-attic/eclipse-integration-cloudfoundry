@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.DeploymentInfo;
+import org.cloudfoundry.client.lib.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -24,6 +25,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentInfoValidator;
 import org.cloudfoundry.ide.eclipse.internal.server.core.URLNameValidation;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -269,6 +271,20 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 			standaloneStartText = new Text(topComposite, SWT.BORDER);
 			standaloneStartText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 			standaloneStartText.setEditable(true);
+
+			// If a staging is already set, attempt to determine the runtime
+			// type
+			Staging staging = wizard.getStaging();
+			if (staging != null) {
+				String runtimeType = staging.getRuntime();
+				StartCommand command = StartCommand.getCommand(runtimeType, module.getProject());
+				if (command != null) {
+					String startCommand = command.getStartCommand();
+					if (startCommand != null) {
+						standaloneStartText.setText(startCommand);
+					}
+				}
+			}
 
 			standaloneStartText.addModifyListener(new ModifyListener() {
 

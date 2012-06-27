@@ -8,14 +8,19 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.internal.server.core.standalone;
 
-public class DeploymentConstants {
+public enum StandaloneRuntimeType {
 
-	public static final String GRAILS_NATURE = "com.springsource.sts.grails.core.nature";
+	Java("java"), Node("node"), Node06("node06"), Ruby18("ruby18"), Ruby19("ruby19");
+	private String id;
 
-	public static final String LIFT = "lift/1.0";
+	private StandaloneRuntimeType(String id) {
+		this.id = id;
+	}
 
-	public static final String STANDALONE_FRAMEWORK = "standalone";
+	public String getId() {
+		return id;
+	}
 
 }

@@ -206,13 +206,17 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 			}
 		}
 		frameworkCombo.select(index);
-		value = frameworkCombo.getText();
+		setValue(frameworkCombo.getText());
 		frameworkCombo.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
 				update();
-				value = frameworkCombo.getText();
+				setValue(frameworkCombo.getText());
 			}
 		});
+	}
+
+	protected void setValue(String value) {
+		this.value = value;
 	}
 
 	/**

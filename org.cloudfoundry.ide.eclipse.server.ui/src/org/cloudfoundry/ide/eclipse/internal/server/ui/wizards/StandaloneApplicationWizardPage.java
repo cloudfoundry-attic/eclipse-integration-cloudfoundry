@@ -15,7 +15,7 @@ import java.util.Map;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConstants;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneRuntimeType;
 import org.eclipse.swt.widgets.Composite;
 
 public class StandaloneApplicationWizardPage extends AbstractCloudFoundryApplicationWizardPage {
@@ -27,13 +27,13 @@ public class StandaloneApplicationWizardPage extends AbstractCloudFoundryApplica
 
 	@Override
 	protected Map<String, String> getValuesByLabel() {
-		// Rails, Spring, Grails, Roo, JavaWeb, Sinatra, Node
 		Map<String, String> valuesByLabel = new LinkedHashMap<String, String>();
-		valuesByLabel.put("Java", DeploymentConstants.JAVA_RUNTIME);
-		valuesByLabel.put("Node", DeploymentConstants.NODE_RUNTIME);
-		valuesByLabel.put("Node06", DeploymentConstants.NODE06_RUNTIME);
-		valuesByLabel.put("Ruby18", DeploymentConstants.RUBY18);
-		valuesByLabel.put("Ruby19", DeploymentConstants.RUBY19);
+		valuesByLabel.put(StandaloneRuntimeType.Java.name(), StandaloneRuntimeType.Java.getId());
+		valuesByLabel.put(StandaloneRuntimeType.Node.name(), StandaloneRuntimeType.Node.getId());
+		valuesByLabel.put(StandaloneRuntimeType.Node06.name(), StandaloneRuntimeType.Node06.getId());
+		valuesByLabel.put(StandaloneRuntimeType.Ruby18.name(), StandaloneRuntimeType.Ruby18.getId());
+		valuesByLabel.put(StandaloneRuntimeType.Ruby19.name(), StandaloneRuntimeType.Ruby19.getId());
+
 		return valuesByLabel;
 	}
 
@@ -44,7 +44,7 @@ public class StandaloneApplicationWizardPage extends AbstractCloudFoundryApplica
 
 	@Override
 	protected String getComparisonValue() {
-		return DeploymentConstants.JAVA_RUNTIME;
+		return StandaloneRuntimeType.Java.name();
 	}
 
 	@Override

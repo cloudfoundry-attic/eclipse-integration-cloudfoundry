@@ -30,6 +30,7 @@ Bundle-Activator: org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundry
 Export-Package: org.cloudfoundry.client.lib,
  org.cloudfoundry.ide.eclipse.internal.server.core,
  org.cloudfoundry.ide.eclipse.internal.server.core.debug,
+ org.cloudfoundry.ide.eclipse.internal.server.core.standalone,
  org.cloudfoundry.ide.eclipse.internal.uaa
 Import-Package: com.google.protobuf;resolution:=optional,
  org.apache.commons.logging;version="1.1.1",
