@@ -29,7 +29,6 @@ import org.eclipse.rse.services.files.IHostFile;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.ServerCore;
 
-
 /**
  * @author Leo Dos Santos
  */
@@ -239,12 +238,18 @@ public class CloudFoundryFileService extends AbstractFileService implements IClo
 			for (ApplicationResource app : applications) {
 				CloudApplication cloudApp = app.getCloudApplication();
 				String cloudAppId = ((Integer) app.getInstanceId()).toString();
-				if (appUrl.equals(cloudApp.getUris().get(0)) && instance.equals(cloudAppId)) {
+				if (validApp(appUrl, cloudApp, cloudAppId, instance)) {
 					return app;
 				}
 			}
 		}
 		return null;
+	}
+
+	protected boolean validApp(String appUrl, CloudApplication cloudApp, String cloudAppId, String instance) {
+		List<String> uris = cloudApp.getUris();
+		return ((uris != null && !uris.isEmpty() && appUrl.equals(uris.get(0))) || uris == null || uris.isEmpty())
+				&& instance.equals(cloudAppId);
 	}
 
 	private Object[] parseNestedFiles(String path) {
@@ -259,7 +264,7 @@ public class CloudFoundryFileService extends AbstractFileService implements IClo
 				for (ApplicationResource app : applications) {
 					CloudApplication cloudApp = app.getCloudApplication();
 					String cloudAppId = ((Integer) app.getInstanceId()).toString();
-					if (appUrl.equals(cloudApp.getUris().get(0)) && instance.equals(cloudAppId)) {
+					if (validApp(appUrl, cloudApp, cloudAppId, instance)) {
 						return new Object[] { app, filePath };
 					}
 				}

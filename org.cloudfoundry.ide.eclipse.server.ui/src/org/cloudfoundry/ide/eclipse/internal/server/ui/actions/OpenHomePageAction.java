@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
+import java.util.List;
+
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
@@ -21,7 +23,6 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.ui.IServerModule;
-
 
 /**
  * @author Christian Dupuis
@@ -79,12 +80,18 @@ public class OpenHomePageAction implements IObjectActionDelegate {
 	}
 
 	private ApplicationModule getSelectedCloudAppModule() {
-		CloudFoundryServer cloudServer = (CloudFoundryServer) selectedServer.loadAdapter(CloudFoundryServer.class, null);
+		CloudFoundryServer cloudServer = (CloudFoundryServer) selectedServer
+				.loadAdapter(CloudFoundryServer.class, null);
 		return cloudServer.getApplication(selectedModule);
 	}
 
 	public static boolean open(ApplicationModule cloudApp) {
-		CloudUiUtil.openUrl("http://" + cloudApp.getApplication().getUris().get(0));
+		// verify that URIs are set, as it may be a standalone application with
+		// no URI
+		List<String> uris = cloudApp.getApplication().getUris();
+		if (uris != null && !uris.isEmpty()) {
+			CloudUiUtil.openUrl("http://" + uris.get(0));
+		}
 		return true;
 	}
 }

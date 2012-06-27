@@ -20,7 +20,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
-
 /**
  * @author Leo Dos Santos
  * @author Christian Dupuis
@@ -60,7 +59,7 @@ public class FilesContentProvider {
 							}
 							resource.setName(name);
 							resource.setModifiedDate(timestamp);
-							String parentPath = app.getUris().get(0) + "/" + id + parent;
+							String parentPath = ApplicationResource.getAbsolutePath(app, id + parent);
 							resource.setParentPath(parentPath);
 							resource.setAbsolutePath(parentPath.concat(content[0]));
 							if (content.length > 1) {

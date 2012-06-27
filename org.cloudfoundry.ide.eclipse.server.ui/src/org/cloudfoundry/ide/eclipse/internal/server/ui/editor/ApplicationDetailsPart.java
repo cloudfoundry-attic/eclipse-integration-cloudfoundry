@@ -442,7 +442,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			}
 		}
 
-		List<String> currentURIs;
+		List<String> currentURIs = null;
 		if (cloudApplication != null) {
 			currentURIs = cloudApplication.getUris();
 
@@ -465,7 +465,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				instancesViewer.setInput(statsAndInfos);
 			}
 		}
-		else {
+
+		if (currentURIs == null) {
 			currentURIs = Collections.emptyList();
 		}
 

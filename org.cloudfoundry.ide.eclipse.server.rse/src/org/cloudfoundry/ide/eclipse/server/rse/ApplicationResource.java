@@ -18,7 +18,6 @@ import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.IProgressMonitor;
 
-
 /**
  * @author Leo Dos Santos
  * @author Christian Dupuis
@@ -72,7 +71,18 @@ public class ApplicationResource extends CloudFoundryHostFile {
 	}
 
 	public String getAbsolutePath() {
-		return app.getUris().get(0) + "/" + id;
+		return getAbsolutePath(app, id + "");
+	}
+
+	public static String getAbsolutePath(CloudApplication app, String id) {
+		StringBuilder builder = new StringBuilder();
+		List<String> uris = app.getUris();
+		if (uris != null && !uris.isEmpty()) {
+			builder.append(uris.get(0));
+		}
+		builder.append("/");
+		builder.append(id);
+		return builder.toString();
 	}
 
 	/**
