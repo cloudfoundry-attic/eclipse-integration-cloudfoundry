@@ -66,7 +66,7 @@ public class TunnelDisplayPart {
 	}
 
 	enum ViewColumn {
-		ServiceName(100), Vendor(100), Name(100), UserName(250), Password(250), Port(50);
+		ServiceName(100), Vendor(100), Name(100), UserName(100), Password(100), Port(50);
 		private int width;
 
 		private ViewColumn(int width) {
