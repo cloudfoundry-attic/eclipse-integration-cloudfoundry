@@ -48,7 +48,7 @@
   automatically produced by the continuous integration build. This reflects always the latest
   development, so you might observe some intereting behavior here and there.
 
-  http://dist.springsource.com/snapshot/TOOLS/nightly/cloudfoundry
+  http://dist.springsource.com/snapshot/TOOLS/cloudfoundry/nightly
 
   (put this URL into the "Install New Software" dialog of your Eclipse)
 
