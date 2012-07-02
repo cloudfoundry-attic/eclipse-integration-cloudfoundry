@@ -10,6 +10,7 @@
   </parent>
   <artifactId>org.cloudfoundry.ide.eclipse.server.core</artifactId>
   <packaging>eclipse-plugin</packaging>
+
   <build>
     <plugins>
       <plugin>
@@ -33,6 +34,22 @@
           </execution>
         </executions>
       </plugin>
+
+		<plugin>
+			<groupId>org.eclipse.tycho</groupId>
+			<artifactId>tycho-p2-plugin</artifactId>
+			<version>${tycho-version}</version>
+			<executions>
+				<execution>
+					<id>second-generate-p2-metadata</id>
+					<goals>
+						<goal>p2-metadata</goal>
+					</goals>
+					<phase>verify</phase>
+				</execution>
+			</executions>
+		</plugin>
+
     </plugins>
   </build>
 </project>

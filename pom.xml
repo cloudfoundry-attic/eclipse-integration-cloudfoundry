@@ -59,6 +59,14 @@
     <p2.sign>false</p2.sign>
     <p2.repository.name>Cloud Foundry Integration for Eclipse</p2.repository.name>
 
+	<!-- Signing -->
+	<signing.skip>true</signing.skip>
+	<signing.alias>vmware</signing.alias>
+	<signing.keystore>~/.keytool/springsource.jks</signing.keystore>
+	<signing.store.password>${STORE_PASSWORD}</signing.store.password>
+	<signing.key.password>${KEY_PASSWORD}</signing.key.password>
+    <signing.properties>signing.properties</signing.properties>
+
     <dist.name>Cloud Foundry Integration for Eclipse</dist.name>
     <dist.project>cloudfoundry</dist.project>
     <dist.key>TOOLS</dist.key>
@@ -73,6 +81,9 @@
     <dist.target></dist.target>
     <dist.properties>dist.properties</dist.properties>
 
+	<dist.pathpostfix>nightly</dist.pathpostfix>
+	<dist.path>${dist.type}/${dist.key}/${dist.project}/${dist.pathpostfix}</dist.path>
+
     <skip.source.check>true</skip.source.check>
 
     <test.vmargs>${test.osvmargs}</test.vmargs>
@@ -80,7 +91,7 @@
     <test.useUIThread>true</test.useUIThread>
     <test.skip>${maven.test.skip}</test.skip>
 
-    <tycho-version>0.14.0</tycho-version>
+    <tycho-version>0.14.1</tycho-version>
 
     <maven.test.error.ignore>true</maven.test.error.ignore>
     <maven.test.failure.ignore>true</maven.test.failure.ignore>
@@ -90,6 +101,7 @@
   </properties>
 
   <profiles>
+
     <profile>
       <id>e36</id>
       <activation>
@@ -104,6 +116,15 @@
         <version.weaving>1.0.0.R3_6_2</version.weaving>
       </properties>
     </profile>
+		
+		<profile>
+			<id>bamboo-signing</id>
+			<properties>
+				<signing.store.password>${env.bamboo_signing_store_password}</signing.store.password>
+				<signing.key.password>${env.bamboo_signing_key_password}</signing.key.password>
+			</properties>
+		</profile>
+
     <profile>
       <id>build.springsource.com</id>
       <activation>
@@ -117,6 +138,7 @@
         <p2.replaceQualifier>true</p2.replaceQualifier>
       </properties>
     </profile>
+
     <profile>
       <id>osx</id>
       <activation>
@@ -129,6 +151,7 @@
         <test.osvmargs>-Dosgi.ws=cocoa -XstartOnFirstThread</test.osvmargs>
       </properties>
     </profile>
+
   </profiles>
 
   <repositories>
@@ -171,7 +194,9 @@
         <version>3.1.0.RELEASE</version>
       </extension>
     </extensions>
+
     <plugins>
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
@@ -200,6 +225,7 @@
           </successCodes>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
@@ -220,6 +246,7 @@
           </execution>
         </executions>
       </plugin>
+
       <plugin>
         <artifactId>maven-deploy-plugin</artifactId>
         <version>2.5</version>
@@ -227,12 +254,14 @@
           <skip>true</skip>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.eclipse.tycho</groupId>
         <artifactId>tycho-maven-plugin</artifactId>
         <version>${tycho-version}</version>
         <extensions>true</extensions>
       </plugin>
+
       <plugin>
         <groupId>org.eclipse.tycho</groupId>
         <artifactId>target-platform-configuration</artifactId>
@@ -241,6 +270,28 @@
           <resolver>p2</resolver>
         </configuration>
       </plugin>
+		
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-jarsigner-plugin</artifactId>
+			<version>1.2</version>
+			<executions>
+				<execution>
+					<id>sign</id>
+					<goals>
+						<goal>sign</goal>
+					</goals>
+				</execution>
+			</executions>
+			<configuration>
+				<skip>${signing.skip}</skip>
+				<alias>${signing.alias}</alias>
+				<keystore>${signing.keystore}</keystore>
+				<storepass>${signing.store.password}</storepass>
+				<keypass>${signing.key.password}</keypass>
+			</configuration>
+		</plugin>
+		
     </plugins>
     <pluginManagement>
       <plugins>
