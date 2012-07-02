@@ -65,7 +65,6 @@
 	<signing.keystore>~/.keytool/springsource.jks</signing.keystore>
 	<signing.store.password>${STORE_PASSWORD}</signing.store.password>
 	<signing.key.password>${KEY_PASSWORD}</signing.key.password>
-    <signing.properties>signing.properties</signing.properties>
 
     <dist.name>Cloud Foundry Integration for Eclipse</dist.name>
     <dist.project>cloudfoundry</dist.project>
