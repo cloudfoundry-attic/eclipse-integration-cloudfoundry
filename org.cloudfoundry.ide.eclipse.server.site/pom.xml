@@ -80,7 +80,7 @@
 								</delete>
 
 								<upload bucketName="${dist.bucket}" toDir="${dist.path}" publicRead="true">
-									<fileset dir="${site.target.dir}/repository">
+									<fileset dir="${site.target.dir}/site">
 										<include name="**/*" />
 										<include name="**" />
 										<exclude name="*.zip" />
