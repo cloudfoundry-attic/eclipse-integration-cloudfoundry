@@ -135,10 +135,12 @@ public class StandaloneModuleDelegate extends ProjectModule {
 
 		IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(getProject());
 
-		String[] resolvedPaths = JavaRuntime.computeDefaultRuntimeClassPath(javaProject);
-		if (resolvedPaths != null) {
-			for (String path : resolvedPaths) {
-				addModuleResources(path, members);
+		if (javaProject != null) {
+			String[] resolvedPaths = JavaRuntime.computeDefaultRuntimeClassPath(javaProject);
+			if (resolvedPaths != null) {
+				for (String path : resolvedPaths) {
+					addModuleResources(path, members);
+				}
 			}
 		}
 		return members.toArray(new IModuleResource[0]);

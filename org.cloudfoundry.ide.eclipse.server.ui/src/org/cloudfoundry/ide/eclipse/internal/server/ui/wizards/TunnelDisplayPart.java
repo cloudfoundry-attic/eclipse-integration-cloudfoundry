@@ -325,6 +325,10 @@ public class TunnelDisplayPart {
 			actions.add(new CopyPassword());
 			actions.add(new CopyUserName());
 			actions.add(new CopyAll());
+			CaldecottTunnelDescriptor descriptor = descriptors.get(0);
+			if (descriptor.getURL() != null) {
+				actions.add(new CopyURL());
+			}
 		}
 
 		return actions;
@@ -355,6 +359,24 @@ public class TunnelDisplayPart {
 		abstract public String getToolTipText();
 
 		abstract String getTunnelInformation(CaldecottTunnelDescriptor descriptor);
+
+	}
+
+	protected class CopyURL extends CopyTunnelInformation {
+
+		public CopyURL() {
+			super("Copy URL", CloudFoundryImages.EDIT);
+		}
+
+		@Override
+		public String getToolTipText() {
+			return "Copy connection URL";
+		}
+
+		@Override
+		String getTunnelInformation(CaldecottTunnelDescriptor descriptor) {
+			return descriptor.getURL();
+		}
 
 	}
 
@@ -420,6 +442,12 @@ public class TunnelDisplayPart {
 			writer.append(SPACE);
 			writer.append("Port: ");
 			writer.append(descriptor.tunnelPort() + "");
+			if (descriptor.getURL() != null) {
+				writer.append(SPACE);
+				writer.append("URL: ");
+				writer.append(descriptor.getURL() + "");
+			}
+
 			return writer.toString();
 		}
 

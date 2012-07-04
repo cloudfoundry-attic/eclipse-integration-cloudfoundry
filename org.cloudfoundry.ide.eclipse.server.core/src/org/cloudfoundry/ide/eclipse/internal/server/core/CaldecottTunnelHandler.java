@@ -90,6 +90,45 @@ public class CaldecottTunnelHandler {
 		return TunnelHelper.getTunnelAppName().equals(appName);
 	}
 
+	protected void startCaldecottApp(IProgressMonitor progress, final CloudApplication caldecottApp,
+			final CloudFoundryClient client) {
+		int ticks = 2;
+		long sleep = 3000;
+
+		progress.setTaskName("Starting Caldecott application.");
+		new WaitWithProgressJob<Boolean>(ticks, sleep) {
+
+			@Override
+			protected Boolean runInWait(IProgressMonitor monitor) {
+
+				if (!caldecottApp.getState().equals(CloudApplication.AppState.STARTED)) {
+					client.startApplication(caldecottApp.getName());
+					// wait to check again the state of the app
+					return null;
+				}
+				return true;
+			}
+
+		}.run(progress);
+	}
+
+	protected String getTunnelUri(final CloudFoundryClient client, IProgressMonitor progress) {
+		int ticks = 2;
+		long sleep = 3000;
+
+		progress.setTaskName("Getting tunnel URL.");
+		String url = new WaitWithProgressJob<String>(ticks, sleep) {
+
+			@Override
+			protected String runInWait(IProgressMonitor monitor) {
+				return TunnelHelper.getTunnelUri(client);
+			}
+
+		}.run(progress);
+
+		return url;
+	}
+
 	public synchronized CaldecottTunnelDescriptor startCaldecottTunnel(final String serviceName,
 			final IProgressMonitor monitor) throws CoreException {
 
@@ -110,25 +149,7 @@ public class CaldecottTunnelHandler {
 				bindServiceToCaldecottApp(caldecottApp, serviceName, progress);
 
 				// The application must be started before creating a tunnel
-				int ticks = 1;
-				long sleep = 5000;
-
-				progress.setTaskName("Starting Caldecott application.");
-
-				new WaitWithProgressJob<Boolean>(ticks, sleep) {
-
-					@Override
-					protected Boolean runInWait(IProgressMonitor monitor) {
-
-						if (!caldecottApp.getState().equals(CloudApplication.AppState.STARTED)) {
-							client.startApplication(caldecottApp.getName());
-							// wait to check again the state of the app
-							return null;
-						}
-						return true;
-					}
-
-				}.run(monitor);
+				startCaldecottApp(progress, caldecottApp, client);
 
 				// First get an unused port, even if there may be an
 				// existing tunnel, as deleting an existing tunnel
@@ -154,7 +175,7 @@ public class CaldecottTunnelHandler {
 
 				InetSocketAddress local = new InetSocketAddress(LOCAL_HOST, unusedPort);
 
-				String url = TunnelHelper.getTunnelUri(client);
+				String url = getTunnelUri(client, progress);
 
 				Map<String, String> info = getTunnelInfo(client, serviceName, progress);
 
@@ -277,7 +298,7 @@ public class CaldecottTunnelHandler {
 			IProgressMonitor monitor) {
 
 		int ticks = 5;
-		long sleepTime = 5000;
+		long sleepTime = 2000;
 		monitor.setTaskName("Getting tunnel information for " + serviceName);
 		Map<String, String> info = new WaitWithProgressJob<Map<String, String>>(ticks, sleepTime) {
 
@@ -486,8 +507,9 @@ public class CaldecottTunnelHandler {
 
 		/**
 		 * Return null if the run operation failed to obtain a run result. Null
-		 * value will cause the wait operation to wait for a specified amount of
-		 * time. Returning a non-null result will stop any further waiting.
+		 * value or an exception will cause the wait operation to wait for a
+		 * specified amount of time before trying again. Returning a non-null
+		 * result will stop any further waiting.
 		 * @return
 		 */
 		abstract protected T runInWait(IProgressMonitor monitor);

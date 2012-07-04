@@ -63,7 +63,77 @@ public class CaldecottTunnelDescriptor {
 		return password;
 	}
 
+	protected ServiceVendor getVendor() {
+		String serviceVendorName = getServiceVendor();
+		if (serviceVendorName != null) {
+			for (ServiceVendor vendor : ServiceVendor.values()) {
+				if (serviceVendorName.equals(vendor.name())) {
+					return vendor;
+				}
+			}
+		}
+		return null;
+	}
+
+	public String getURL() {
+		ServiceVendor vendor = getVendor();
+		if (vendor != null) {
+			StringBuilder builtURL = null;
+			switch (vendor) {
+			case mysql:
+				builtURL = new StringBuilder();
+				builtURL.append("jdbc:mysql");
+				builtURL.append("://");
+				builtURL.append(CaldecottTunnelHandler.LOCAL_HOST);
+				builtURL.append(":");
+				builtURL.append(tunnelPort());
+				if (getDatabaseName() != null) {
+					builtURL.append("/");
+					builtURL.append(getDatabaseName());
+				}
+
+				break;
+			// FIXNS: enable when corresponding test case is available
+			// case mongodb:
+			// builtURL = new StringBuilder();
+			// builtURL.append("mongodb");
+			// builtURL.append("://");
+			// builtURL.append(CaldecottTunnelHandler.LOCAL_HOST);
+			// builtURL.append(":");
+			// builtURL.append(tunnelPort());
+			// if (getDatabaseName() != null) {
+			// builtURL.append("/");
+			// builtURL.append(getDatabaseName());
+			// }
+			//
+			// break;
+			case postgresql:
+				builtURL = new StringBuilder();
+				builtURL.append("jdbc:postgresql");
+				builtURL.append("://");
+				builtURL.append(CaldecottTunnelHandler.LOCAL_HOST);
+				builtURL.append(":");
+				builtURL.append(tunnelPort());
+				if (getDatabaseName() != null) {
+					builtURL.append("/");
+					builtURL.append(getDatabaseName());
+				}
+				break;
+
+			}
+
+			if (builtURL != null) {
+				return builtURL.toString();
+			}
+		}
+		return null;
+	}
+
 	public TunnelServer getTunnelServer() {
 		return server;
+	}
+
+	public enum ServiceVendor {
+		postgresql, mysql, mongodb
 	}
 }
