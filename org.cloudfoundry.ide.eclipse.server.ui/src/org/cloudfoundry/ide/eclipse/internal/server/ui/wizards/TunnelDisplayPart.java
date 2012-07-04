@@ -445,7 +445,7 @@ public class TunnelDisplayPart {
 			if (descriptor.getURL() != null) {
 				writer.append(SPACE);
 				writer.append("URL: ");
-				writer.append(descriptor.getURL() + "");
+				writer.append(descriptor.getURL());
 			}
 
 			return writer.toString();
