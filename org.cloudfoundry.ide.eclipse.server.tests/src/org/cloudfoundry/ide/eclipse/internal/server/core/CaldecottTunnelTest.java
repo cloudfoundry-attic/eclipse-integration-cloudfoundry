@@ -20,11 +20,11 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
 public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
-	public static final String MYSQL_SERVICE_NAME = "mysqlTestService";
+	public static final String MYSQL_SERVICE_NAME = "mysqlCaldecottTestService";
 
-	public static final String MONGODB_SERVICE_NAME = "mongodbTestService";
+	public static final String MONGODB_SERVICE_NAME = "mongodbCaldecottTestService";
 
-	public static final String POSTGRESQL_SERVICE_NAME = "postgresqlTestService";
+	public static final String POSTGRESQL_SERVICE_NAME = "postgresqlCaldecottTestService";
 
 	public static final String LOCAL_HOST = "127.0.0.1";
 
