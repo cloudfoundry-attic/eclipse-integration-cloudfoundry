@@ -58,9 +58,8 @@ public class CaldecottTunnelHandler {
 		this.cloudServer = cloudServer;
 	}
 
-	public boolean bindServiceToCaldecottApp(CloudApplication caldecottApp, String serviceName, IProgressMonitor monitor)
-			throws CoreException {
-
+	public boolean bindServiceToCaldecottApp(String serviceName, IProgressMonitor monitor) throws CoreException {
+		CloudApplication caldecottApp = getCaldecottApp(monitor);
 		List<String> updateCaldecottServices = new ArrayList<String>();
 		List<String> existingServices = caldecottApp.getServices();
 		if (existingServices != null) {
@@ -74,7 +73,6 @@ public class CaldecottTunnelHandler {
 			CloudFoundryServerBehaviour behaviour = cloudServer.getBehaviour();
 			behaviour.stopModule(new IModule[] { caldecottModule }, monitor);
 			behaviour.updateServices(TunnelHelper.getTunnelAppName(), updateCaldecottServices, monitor);
-			behaviour.startModule(new IModule[] { caldecottModule }, monitor);
 
 			setDeploymentServices(serviceName, monitor);
 
@@ -90,37 +88,44 @@ public class CaldecottTunnelHandler {
 		return TunnelHelper.getTunnelAppName().equals(appName);
 	}
 
-	protected void startCaldecottApp(IProgressMonitor progress, final CloudApplication caldecottApp,
-			final CloudFoundryClient client) throws CoreException {
-		int ticks = 2;
+	protected void startCaldecottApp(IProgressMonitor progress, final CloudFoundryClient client) throws CoreException {
+		int ticks = 10;
 		long sleep = 3000;
-
+		CloudApplication caldecottApp = getCaldecottApp(progress);
 		progress.setTaskName("Starting Caldecott application.");
-		new WaitWithProgressJob<Boolean>(ticks, sleep) {
+		if (caldecottApp == null) {
+			return;
+		}
 
-			@Override
-			protected Boolean runInWait(IProgressMonitor monitor) {
+		if (!caldecottApp.getState().equals(CloudApplication.AppState.STARTED)) {
+			IModule caldecottModule = getCaldecottModule(progress);
+			cloudServer.getBehaviour().startModule(new IModule[] { caldecottModule }, progress);
+			new WaitWithProgressJob<Boolean>(ticks, sleep) {
 
-				if (!caldecottApp.getState().equals(CloudApplication.AppState.STARTED)) {
-					client.startApplication(caldecottApp.getName());
+				@Override
+				protected Boolean runInWait(IProgressMonitor monitor) throws CoreException {
+					CloudApplication caldecottApp = getCaldecottApp(monitor);
+					if (caldecottApp != null && caldecottApp.getState().equals(CloudApplication.AppState.STARTED)) {
+						return true;
+					}
+
 					// wait to check again the state of the app
 					return null;
 				}
-				return true;
-			}
 
-		}.run(progress);
+			}.run(progress);
+		}
 	}
 
 	protected String getTunnelUri(final CloudFoundryClient client, IProgressMonitor progress) throws CoreException {
-		int ticks = 2;
+		int ticks = 10;
 		long sleep = 3000;
 
 		progress.setTaskName("Getting tunnel URL.");
 		String url = new WaitWithProgressJob<String>(ticks, sleep) {
 
 			@Override
-			protected String runInWait(IProgressMonitor monitor) {
+			protected String runInWait(IProgressMonitor monitor) throws CoreException {
 				return TunnelHelper.getTunnelUri(client);
 			}
 
@@ -139,17 +144,20 @@ public class CaldecottTunnelHandler {
 			@Override
 			protected CaldecottTunnelDescriptor doRun(final CloudFoundryClient client, SubMonitor progress)
 					throws CoreException {
-				final CloudApplication caldecottApp = getCaldecottApp(progress);
+				progress = SubMonitor.convert(progress);
+
+				CloudApplication caldecottApp = getOrDeployCaldecottApp(progress);
+
 				if (caldecottApp == null) {
 					return null;
 				}
 
 				progress.setTaskName("Binding " + serviceName + " to Caldecott.");
 
-				bindServiceToCaldecottApp(caldecottApp, serviceName, progress);
+				bindServiceToCaldecottApp(serviceName, progress);
 
 				// The application must be started before creating a tunnel
-				startCaldecottApp(progress, caldecottApp, client);
+				startCaldecottApp(progress, client);
 
 				// First get an unused port, even if there may be an
 				// existing tunnel, as deleting an existing tunnel
@@ -172,13 +180,10 @@ public class CaldecottTunnelHandler {
 												new Object[] { serviceName, oldDescriptor.tunnelPort(), unusedPort }));
 					}
 				}
-
 				InetSocketAddress local = new InetSocketAddress(LOCAL_HOST, unusedPort);
 
 				String url = getTunnelUri(client, progress);
-
 				Map<String, String> info = getTunnelInfo(client, serviceName, progress);
-
 				if (info == null) {
 					CloudFoundryPlugin.logError(NLS.bind("Failed to obtain tunnel information for {0} on port {1}.",
 							new Object[] { serviceName, unusedPort }));
@@ -300,6 +305,7 @@ public class CaldecottTunnelHandler {
 		int ticks = 5;
 		long sleepTime = 2000;
 		monitor.setTaskName("Getting tunnel information for " + serviceName);
+
 		Map<String, String> info = new WaitWithProgressJob<Map<String, String>>(ticks, sleepTime) {
 
 			@Override
@@ -374,6 +380,25 @@ public class CaldecottTunnelHandler {
 		return getCaldecottTunnel(serviceName) != null;
 	}
 
+	public synchronized CloudApplication getCaldecottApp(IProgressMonitor monitor) throws CoreException {
+
+		Request<CloudApplication> request = cloudServer.getBehaviour().new Request<CloudApplication>() {
+
+			@Override
+			protected CloudApplication doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+				CloudApplication caldecottApp = null;
+				try {
+					caldecottApp = client.getApplication(TunnelHelper.getTunnelAppName());
+				}
+				catch (Throwable e) {
+					throw new CoreException(CloudFoundryPlugin.getErrorStatus(e));
+				}
+				return caldecottApp;
+			}
+		};
+		return request.run(monitor);
+	}
+
 	/**
 	 * Retrieves the actual Caldecott Cloud Application from the server. It does
 	 * not rely on webtools IModule. May be a long running operation and
@@ -383,40 +408,28 @@ public class CaldecottTunnelHandler {
 	 * @param monitor
 	 * @return
 	 */
-	public synchronized CloudApplication getCaldecottApp(IProgressMonitor monitor) throws CoreException {
-
+	public synchronized CloudApplication getOrDeployCaldecottApp(IProgressMonitor monitor) throws CoreException {
 		Request<CloudApplication> request = cloudServer.getBehaviour().new Request<CloudApplication>() {
 
 			@Override
 			protected CloudApplication doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
 				CloudApplication caldecottApp = null;
 				try {
-
-					try {
-						caldecottApp = client.getApplication(TunnelHelper.getTunnelAppName());
-					}
-					catch (Throwable e) {
-						// Ignore all first attempt.
-					}
-
-					if (caldecottApp == null) {
-						deployCaldecottApp(progress);
-					}
-
-					try {
-						caldecottApp = client.getApplication(TunnelHelper.getTunnelAppName());
-					}
-					catch (Exception e) {
-						throw new CoreException(CloudFoundryPlugin.getErrorStatus(e));
-					}
-
-					if (caldecottApp != null && !caldecottApp.getState().equals(CloudApplication.AppState.STARTED)) {
-						client.startApplication(caldecottApp.getName());
-					}
-
+					caldecottApp = getCaldecottApp(progress);
 				}
-				catch (CoreException ce) {
-					CloudFoundryPlugin.logError("Failed to deploy Caldecott app. Unable to create service tunnel.", ce);
+				catch (Throwable e) {
+					// Ignore all first attempt.
+				}
+
+				if (caldecottApp == null) {
+					deployCaldecottApp(progress);
+				}
+
+				try {
+					caldecottApp = client.getApplication(TunnelHelper.getTunnelAppName());
+				}
+				catch (Throwable e) {
+					throw new CoreException(CloudFoundryPlugin.getErrorStatus(e));
 				}
 				return caldecottApp;
 			}
@@ -460,38 +473,18 @@ public class CaldecottTunnelHandler {
 
 	public synchronized IModule getCaldecottModule(IProgressMonitor monitor) {
 
-		CloudApplication caldecottApp = null;
-		Throwable error = null;
-		// Deploy the application first, if it isn't deployed yet
-		try {
-			caldecottApp = getCaldecottApp(monitor);
-		}
-		catch (CoreException e) {
-			error = e;
-		}
-
-		if (caldecottApp == null) {
-			if (error != null) {
-				CloudFoundryPlugin.logError("Failed to deploy Caldecott app. Check server connection.", error);
-			}
-			else {
-				CloudFoundryPlugin.logError("Failed to deploy Caldecott app. Check server connection.");
-			}
-			return null;
-		}
-		else {
-			IModule appModule = null;
-			Collection<ApplicationModule> modules = cloudServer.getApplications();
-			if (modules != null) {
-				String caldecottAppName = TunnelHelper.getTunnelAppName();
-				for (ApplicationModule module : modules) {
-					if (caldecottAppName.equals(module.getApplicationId())) {
-						appModule = module;
-					}
+		IModule appModule = null;
+		Collection<ApplicationModule> modules = cloudServer.getApplications();
+		if (modules != null) {
+			String caldecottAppName = TunnelHelper.getTunnelAppName();
+			for (ApplicationModule module : modules) {
+				if (caldecottAppName.equals(module.getApplicationId())) {
+					appModule = module;
+					break;
 				}
 			}
-			return appModule;
 		}
+		return appModule;
 	}
 
 	abstract class WaitWithProgressJob<T> {
@@ -512,11 +505,11 @@ public class CaldecottTunnelHandler {
 		 * result will stop any further waiting.
 		 * @return
 		 */
-		abstract protected T runInWait(IProgressMonitor monitor);
+		abstract protected T runInWait(IProgressMonitor monitor) throws CoreException;
 
 		public T run(IProgressMonitor monitor) throws CoreException {
 
-			Throwable t = null;
+			Throwable error = null;
 
 			T result = null;
 			int i = 0;
@@ -525,7 +518,7 @@ public class CaldecottTunnelHandler {
 					result = runInWait(monitor);
 				}
 				catch (Throwable th) {
-					t = th;
+					error = th;
 				}
 				if (result == null) {
 
@@ -542,8 +535,8 @@ public class CaldecottTunnelHandler {
 				i++;
 			}
 
-			if (result == null && t != null) {
-				throw new CoreException(CloudFoundryPlugin.getErrorStatus(t));
+			if (result == null && error != null) {
+				throw new CoreException(CloudFoundryPlugin.getErrorStatus(error));
 			}
 			return result;
 		}
