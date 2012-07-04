@@ -91,7 +91,7 @@ public class CaldecottTunnelHandler {
 	}
 
 	protected void startCaldecottApp(IProgressMonitor progress, final CloudApplication caldecottApp,
-			final CloudFoundryClient client) {
+			final CloudFoundryClient client) throws CoreException {
 		int ticks = 2;
 		long sleep = 3000;
 
@@ -112,7 +112,7 @@ public class CaldecottTunnelHandler {
 		}.run(progress);
 	}
 
-	protected String getTunnelUri(final CloudFoundryClient client, IProgressMonitor progress) {
+	protected String getTunnelUri(final CloudFoundryClient client, IProgressMonitor progress) throws CoreException {
 		int ticks = 2;
 		long sleep = 3000;
 
@@ -295,7 +295,7 @@ public class CaldecottTunnelHandler {
 	}
 
 	public Map<String, String> getTunnelInfo(final CloudFoundryClient client, final String serviceName,
-			IProgressMonitor monitor) {
+			IProgressMonitor monitor) throws CoreException {
 
 		int ticks = 5;
 		long sleepTime = 2000;
@@ -514,7 +514,7 @@ public class CaldecottTunnelHandler {
 		 */
 		abstract protected T runInWait(IProgressMonitor monitor);
 
-		public T run(IProgressMonitor monitor) {
+		public T run(IProgressMonitor monitor) throws CoreException {
 
 			Throwable t = null;
 
@@ -543,7 +543,7 @@ public class CaldecottTunnelHandler {
 			}
 
 			if (result == null && t != null) {
-				CloudFoundryPlugin.logError(t);
+				throw new CoreException(CloudFoundryPlugin.getErrorStatus(t));
 			}
 			return result;
 		}
