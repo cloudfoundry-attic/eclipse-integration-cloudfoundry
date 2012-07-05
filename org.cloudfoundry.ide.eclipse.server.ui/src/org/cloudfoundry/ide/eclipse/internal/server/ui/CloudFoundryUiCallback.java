@@ -120,7 +120,9 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			descriptor.deploymentInfo = new DeploymentInfo();
 			descriptor.deploymentInfo.setUris(existingApp.getUris());
 			descriptor.deploymentMode = ApplicationAction.START;
-			descriptor.staging = getStaging(appModule);
+			
+			// FIXNS: uncomment when CF client supports staging
+//			descriptor.staging = getStaging(appModule);
 
 			DeploymentInfo lastDeploymentInfo = appModule.getLastDeploymentInfo();
 			if (lastDeploymentInfo != null) {

@@ -32,7 +32,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.ICloudFoundryDebuggerListener;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StagingHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
@@ -178,6 +177,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	private FormToolkit toolkit;
 
 	private List<String> URIs;
+
+	private String startCommand;
 
 	private final boolean provideServices;
 
@@ -407,7 +408,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		ApplicationModule appModule = getApplication();
 		int state = appModule.getState();
 
-		refreshStandaloneCommandArea();
+		// FIXNS: Uncomment when stagin updates are supported in CF client
+		// refreshStandaloneCommandArea();
 
 		setCurrentStartDebugApplicationAction();
 		instanceSpinner.setSelection(appModule.getInstanceCount());
@@ -584,22 +586,12 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		});
 	}
 
-	private String startCommand;
-
 	protected void setStartCommand(String command) {
 		startCommand = command;
 	}
 
 	protected String getStartCommand() {
 		return startCommand;
-	}
-
-	protected String getExistingStartCommand() {
-		Staging staging = getStaging();
-		if (staging != null) {
-			return staging.getCommand();
-		}
-		return null;
 	}
 
 	protected Staging getStaging() {
@@ -707,7 +699,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		});
 		toolkit.adapt(instanceSpinner);
 
-		createStandaloneCommandArea(client);
+		// FIXNS: Uncomment when CF client supports staging updates
+		// createStandaloneCommandArea(client);
 
 		buttonComposite = toolkit.createComposite(client);
 		GridDataFactory.fillDefaults().span(2, 1).applyTo(buttonComposite);
