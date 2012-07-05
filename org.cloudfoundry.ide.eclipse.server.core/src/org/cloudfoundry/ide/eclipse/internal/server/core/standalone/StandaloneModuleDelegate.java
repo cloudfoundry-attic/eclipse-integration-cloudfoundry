@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.launching.IRuntimeClasspathEntry;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.IModuleResource;
@@ -69,6 +70,7 @@ public class StandaloneModuleDelegate extends ProjectModule {
 			IPath projectPath = project.getLocation();
 
 			if (projectPath != null && resourceLocation.equals(projectPath.toString())) {
+
 				return getModuleResources(Path.EMPTY, project);
 			}
 			else {
@@ -114,6 +116,7 @@ public class StandaloneModuleDelegate extends ProjectModule {
 								publishableResource.getName(), Path.EMPTY) };
 					}
 				}
+				// Others check if it is an external file
 				else if (publishableFile != null && publishableFile.exists() && publishableFile.isFile()) {
 					// Try creating a module if the file system file exists
 					return new IModuleResource[] { new ModuleFile(publishableFile, publishableFile.getName(),
@@ -127,16 +130,16 @@ public class StandaloneModuleDelegate extends ProjectModule {
 
 	@Override
 	public IModuleResource[] members() throws CoreException {
-		return computeDefaultRuntimeClasspathMembers();
+		return computeRuntimeClasspathMembers();
 	}
 
-	protected IModuleResource[] computeDefaultRuntimeClasspathMembers() throws CoreException {
+	protected IModuleResource[] computeRuntimeClasspathMembers() throws CoreException {
 		Set<IModuleResource> members = new HashSet<IModuleResource>();
 
 		IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(getProject());
 
 		if (javaProject != null) {
-			String[] resolvedPaths = JavaRuntime.computeDefaultRuntimeClassPath(javaProject);
+			String[] resolvedPaths = computeRuntimeClassPath(javaProject);
 			if (resolvedPaths != null) {
 				for (String path : resolvedPaths) {
 					addModuleResources(path, members);
@@ -157,6 +160,31 @@ public class StandaloneModuleDelegate extends ProjectModule {
 				}
 			}
 		}
+	}
+
+	public String[] computeRuntimeClassPath(IJavaProject jproject) throws CoreException {
+		IRuntimeClasspathEntry[] unresolved = JavaRuntime.computeUnresolvedRuntimeClasspath(jproject);
+		IRuntimeClasspathEntry jreEntry = JavaRuntime.computeJREEntry(jproject);
+		Set<String> resolved = new HashSet<String>(unresolved.length);
+		for (IRuntimeClasspathEntry rcEntry : unresolved) {
+
+			if (rcEntry.equals(jreEntry)) {
+				continue;
+			}
+			else {
+				IRuntimeClasspathEntry[] entries = JavaRuntime.resolveRuntimeClasspathEntry(rcEntry, jproject);
+				if (entries != null) {
+					for (IRuntimeClasspathEntry userEntry : entries) {
+						String location = userEntry.getLocation();
+						if (location != null) {
+							resolved.add(location);
+						}
+					}
+				}
+			}
+		}
+
+		return resolved.toArray(new String[resolved.size()]);
 	}
 
 }

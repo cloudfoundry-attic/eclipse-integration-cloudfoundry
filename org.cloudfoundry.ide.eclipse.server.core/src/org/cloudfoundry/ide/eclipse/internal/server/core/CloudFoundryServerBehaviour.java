@@ -39,6 +39,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryPrope
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneApplicationArchive;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneUtil;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -1372,6 +1373,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// update mapping
 				cloudModule.setApplicationId(descriptor.applicationInfo.getAppName());
 
+				// Update the Staging in the Application module
+				cloudModule.setStaging(descriptor.staging);
+
 				server.setModuleState(modules, IServer.STATE_STARTING);
 				setRefreshInterval(SHORT_INTERVAL);
 
@@ -1393,15 +1397,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						}
 						else {
 
-							if (isStandaloneApp(module)) {
+							if (StandaloneUtil.isStandaloneApp(cloudModule)) {
 
 								// Get the module resources for the standalone
 								// as provided by the standlaone module factory
 								IModuleResource[] resources = getResources(modules);
 								if (resources == null || resources.length == 0) {
 									throw new CoreException(
-											new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-													"Unable to deploy standalone Java module. No deployable resources found in target or output folders."));
+											CloudFoundryPlugin
+													.getErrorStatus("Unable to deploy standalone Java module. No deployable resources found in target or output folders."));
 								}
 								else {
 									descriptor.applicationArchive = new StandaloneApplicationArchive(modules[0],
@@ -1500,10 +1504,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				throw e;
 			}
 		}
-	}
-
-	protected boolean isStandaloneApp(IModule module) {
-		return CloudFoundryServer.ID_JAVA_STANDALONE_APP.equals(module.getModuleType().getId());
 	}
 
 	protected void handleIncrementalPublish(final DeploymentDescriptor descriptor, IModule[] modules) {

@@ -16,6 +16,7 @@ import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudApplication.AppState;
 import org.cloudfoundry.client.lib.DeploymentInfo;
 import org.cloudfoundry.client.lib.InstancesInfo;
+import org.cloudfoundry.client.lib.Staging;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.wst.server.core.IModule;
@@ -58,19 +59,21 @@ public class ApplicationModule extends ExternalModule {
 	private String applicationId;
 
 	private ApplicationStats applicationStats;
-	
+
 	private InstancesInfo instancesInfo;
 
 	private ApplicationInfo lastApplicationInfo;
 
 	private DeploymentInfo lastDeploymentInfo;
 
+	private Staging staging;
+
 	private IModule localModule;
 
 	private final IServer server;
 
 	private CoreException error;
-	
+
 	public ApplicationModule(IModule module, String name, IServer server) {
 		super(name, name, MODULE_ID, MODULE_VERSION, null);
 		Assert.isNotNull(name);
@@ -97,14 +100,18 @@ public class ApplicationModule extends ExternalModule {
 		return instancesInfo;
 	}
 
+	public Staging getStaging() {
+		return staging;
+	}
+
 	public String getDefaultLaunchUrl() {
 		return getLaunchUrl(getName());
 	}
-	
+
 	public String getLaunchUrl(String appName) {
 		// replace first segment of server url with app name
 		appName = appName.toLowerCase();
-		String url = server.getAttribute(CloudFoundryServer.PROP_URL, ""); 
+		String url = server.getAttribute(CloudFoundryServer.PROP_URL, "");
 		url = url.replace("http://", "");
 		String prefix = url.split("\\.")[0];
 		return url.replace(prefix, appName);
@@ -130,10 +137,10 @@ public class ApplicationModule extends ExternalModule {
 	}
 
 	public int getPublishState() {
-//		if (isExternal()) {
+		// if (isExternal()) {
 		return IServer.PUBLISH_STATE_NONE;
-//		}
-//		return IServer.PUBLISH_STATE_UNKNOWN;
+		// }
+		// return IServer.PUBLISH_STATE_UNKNOWN;
 	}
 
 	public String getServerTypeId() {
@@ -164,10 +171,15 @@ public class ApplicationModule extends ExternalModule {
 		if (!this.applicationId.equals(applicationId)) {
 			this.applicationId = applicationId;
 			if (localModule != null) {
-				CloudFoundryServer cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
+				CloudFoundryServer cloudServer = (CloudFoundryServer) server
+						.loadAdapter(CloudFoundryServer.class, null);
 				cloudServer.updateApplication(this);
 			}
 		}
+	}
+
+	public void setStaging(Staging staging) {
+		this.staging = staging;
 	}
 
 	public void setApplicationStats(ApplicationStats applicationStats) {
@@ -184,7 +196,7 @@ public class ApplicationModule extends ExternalModule {
 			setApplicationId(cloudApplication.getName());
 		}
 	}
-	
+
 	public synchronized void setLastApplicationInfo(ApplicationInfo lastApplicationInfo) {
 		Assert.isNotNull(lastApplicationInfo);
 		this.lastApplicationInfo = lastApplicationInfo;
@@ -198,12 +210,12 @@ public class ApplicationModule extends ExternalModule {
 	public synchronized void setErrorStatus(CoreException error) {
 		this.error = error;
 	}
-	
+
 	public String getErrorMessage() {
 		if (error == null) {
 			return null;
 		}
 		return error.getMessage();
 	}
-	
+
 }
