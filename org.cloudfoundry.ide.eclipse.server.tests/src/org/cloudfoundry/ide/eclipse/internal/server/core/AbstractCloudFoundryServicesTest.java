@@ -17,10 +17,23 @@ import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.client.lib.ServiceConfiguration;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
+import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
 public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		// Make sure services used in this test are deleted first.
+		List<CloudService> services = getAllServices();
+		for (CloudService service : services) {
+			deleteService(service);
+			CloudFoundryTestUtil.waitIntervals(2000);
+		}
+
+	}
 
 	@Override
 	protected Harness createHarness() {
