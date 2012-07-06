@@ -16,6 +16,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+
 public class CloudFoundryTestUtil {
 
 	/**
@@ -45,4 +47,14 @@ public class CloudFoundryTestUtil {
 		}
 		return foundProxy;
 	}
+
+	public static void waitIntervals(long timePerTick) {
+		try {
+			Thread.sleep(timePerTick);
+		}
+		catch (InterruptedException e) {
+
+		}
+	}
+
 }

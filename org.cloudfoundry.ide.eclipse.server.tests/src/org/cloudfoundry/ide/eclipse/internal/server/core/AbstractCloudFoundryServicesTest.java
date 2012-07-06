@@ -98,6 +98,14 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 		return foundService;
 	}
 
+	protected List<CloudService> getAllServices() throws CoreException {
+		List<CloudService> services = serverBehavior.getServices(new NullProgressMonitor());
+		if (services == null) {
+			services = new ArrayList<CloudService>(0);
+		}
+		return services;
+	}
+
 	protected void assertServiceNotExist(String expectedServicename) throws Exception {
 
 		CloudService foundService = getCloudService(expectedServicename);

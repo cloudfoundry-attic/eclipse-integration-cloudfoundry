@@ -10,12 +10,12 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
+import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
@@ -37,22 +37,12 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 	protected void setUp() throws Exception {
 		super.setUp();
 		// Make sure services used in this test are deleted first.
-		List<CloudService> toDelete = new ArrayList<CloudService>();
-		CloudService service = getMysqlService();
-		if (service != null) {
-			toDelete.add(service);
+		List<CloudService> services = getAllServices();
+		for (CloudService service : services) {
+			deleteService(service);
+			CloudFoundryTestUtil.waitIntervals(2000);
 		}
-		service = getMongodbService();
-		if (service != null) {
-			toDelete.add(service);
-		}
-		service = getPostgresqlService();
-		if (service != null) {
-			toDelete.add(service);
-		}
-		for (CloudService serviceToDelete : toDelete) {
-			deleteService(serviceToDelete);
-		}
+
 	}
 
 	public void testCreateMysqlTunnel() throws Exception {
