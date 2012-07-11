@@ -40,7 +40,8 @@
            id="org.cloudfoundry.ide.eclipse.debug.sourcepathcomputer">
      </sourcePathComputer>
   </extension>
-      
+  <!-- FIXNS_STANDALONE -->
+      <!--
    <extension
          point="org.eclipse.wst.server.core.moduleArtifactAdapters">
       <moduleArtifactAdapter
@@ -67,5 +68,5 @@
          	versions="1.0"/>
       </moduleFactory>
    </extension>
-
+  -->
  </plugin>

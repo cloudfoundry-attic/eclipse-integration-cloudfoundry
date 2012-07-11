@@ -1090,7 +1090,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	private void startStopApplication(ApplicationAction action) {
 		// if it is a standalone Application, and the start command is set, set
 		// a new staging
-		setStartCommandInStaging();
+		// FIXNS_STANDALONE
+		// setStartCommandInStaging();
 		new StartStopApplicationAction(editorPage, action, getApplication(), serverBehaviour, module).run();
 	}
 
