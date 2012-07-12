@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.cloudfoundry.caldecott.TunnelException;
 import org.cloudfoundry.caldecott.client.HttpTunnelFactory;
+import org.cloudfoundry.caldecott.client.TunnelFactory;
 import org.cloudfoundry.caldecott.client.TunnelHelper;
 import org.cloudfoundry.caldecott.client.TunnelServer;
 import org.cloudfoundry.client.lib.CloudApplication;
@@ -52,7 +53,9 @@ public class CaldecottTunnelHandler {
 
 	private final CloudFoundryServer cloudServer;
 
-	public static final int BASE_PORT = 10000;
+	public static final int BASE_PORT = 10100;
+
+	public static final int MAX_PORT = 10120;
 
 	public CaldecottTunnelHandler(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
@@ -159,34 +162,26 @@ public class CaldecottTunnelHandler {
 				// The application must be started before creating a tunnel
 				startCaldecottApp(progress, client);
 
-				// First get an unused port, even if there may be an
-				// existing tunnel, as deleting an existing tunnel
-				// right away
-				// may not necessarily free the port immediately on
-				// the server side.
-				int unusedPort = CloudFoundryPlugin.getCaldecottTunnelCache().getUnusedPort();
-
 				CaldecottTunnelDescriptor oldDescriptor = CloudFoundryPlugin.getCaldecottTunnelCache().getDescriptor(
 						cloudServer, serviceName);
 
 				if (oldDescriptor != null) {
 					try {
-						stopCaldecottTunnel(serviceName);
+						stopAndDeleteCaldecottTunnel(serviceName, monitor);
 					}
 					catch (CoreException e) {
-						CloudFoundryPlugin
-								.logError(NLS
-										.bind("Failed to stop existing tunnel for service {0} on port {1}. Attempting to create a new tunnel on a different port {2}.",
-												new Object[] { serviceName, oldDescriptor.tunnelPort(), unusedPort }));
+						CloudFoundryPlugin.logError(NLS.bind(
+								"Failed to stop existing tunnel for service {0}. Unable to create new tunnel.",
+								new Object[] { serviceName }));
+						return null;
 					}
 				}
-				InetSocketAddress local = new InetSocketAddress(LOCAL_HOST, unusedPort);
 
 				String url = getTunnelUri(client, progress);
 				Map<String, String> info = getTunnelInfo(client, serviceName, progress);
 				if (info == null) {
-					CloudFoundryPlugin.logError(NLS.bind("Failed to obtain tunnel information for {0} on port {1}.",
-							new Object[] { serviceName, unusedPort }));
+					CloudFoundryPlugin.logError(NLS.bind("Failed to obtain tunnel information for {0}.",
+							new Object[] { serviceName }));
 
 					return null;
 				}
@@ -203,21 +198,27 @@ public class CaldecottTunnelHandler {
 					name = info.get("db") != null ? info.get("db") : info.get("name");
 				}
 
-				TunnelServer tunnelServer = new TunnelServer(local, new HttpTunnelFactory(url, host, port, auth),
-						getTunnelServerThreadExecutor());
+				TunnelFactory tunnelFactory = new HttpTunnelFactory(url, host, port, auth);
+
+				List<TunnelServer> tunnelServers = new ArrayList<TunnelServer>(1);
+				int localPort = getTunnelServer(tunnelFactory, tunnelServers);
+
+				if (tunnelServers.isEmpty() || localPort == -1) {
+					CloudFoundryPlugin
+							.logError(NLS
+									.bind("Caldecott tunnel information obtained for {0}, but failed to create tunnel server for ports between: {1} and {2}",
+											new Object[] { serviceName, new Integer(BASE_PORT), new Integer(MAX_PORT) }));
+					return null;
+				}
+
+				TunnelServer tunnelServer = tunnelServers.get(0);
 
 				progress.setTaskName("Starting tunnel for " + serviceName);
 
 				tunnelServer.start();
 
-				// Delete the old tunnel only after a new one has been created,
-				// as to allow the port checker to assign a unused port
-				if (oldDescriptor != null) {
-					CloudFoundryPlugin.getCaldecottTunnelCache().removeDescriptor(cloudServer, serviceName);
-				}
-
 				CaldecottTunnelDescriptor descriptor = new CaldecottTunnelDescriptor(serviceUserName, servicePassword,
-						name, serviceName, dataBase, tunnelServer, unusedPort);
+						name, serviceName, dataBase, tunnelServer, localPort);
 
 				CloudFoundryPlugin.getCaldecottTunnelCache().addDescriptor(cloudServer, descriptor);
 				tunnel.add(descriptor);
@@ -236,6 +237,44 @@ public class CaldecottTunnelHandler {
 		}.run(monitor);
 
 		return tunnel.size() > 0 ? tunnel.get(0) : null;
+	}
+
+	/**
+	 * 
+	 * @param tunnelFactory
+	 * @param server non null, where created tunnel will be stored.
+	 * @return -1 if port failed to open
+	 * @throws CoreException
+	 */
+	protected int getTunnelServer(TunnelFactory tunnelFactory, List<TunnelServer> tunnelServers) throws CoreException {
+
+		RuntimeException se = null;
+
+		int port = -1;
+		TunnelServer tunnelServer = null;
+		for (int i = BASE_PORT; i <= MAX_PORT; i++) {
+
+			try {
+				InetSocketAddress local = new InetSocketAddress(LOCAL_HOST, i);
+				tunnelServer = new TunnelServer(local, tunnelFactory, getTunnelServerThreadExecutor());
+				tunnelServers.add(tunnelServer);
+				port = i;
+				break;
+			}
+			catch (TunnelException e) {
+				se = e;
+			}
+			catch (SecurityException e) {
+				se = e;
+			}
+
+		}
+		// Only rethrow security exception if all ports have failed
+		if (tunnelServer == null && se != null) {
+			throw new CoreException(CloudFoundryPlugin.getErrorStatus(se));
+		}
+		return port;
+
 	}
 
 	/**

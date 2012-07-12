@@ -13,14 +13,11 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class CaldecottTunnelCache {
 
 	private Map<String, Map<String, CaldecottTunnelDescriptor>> caldecottTunnels = new HashMap<String, Map<String, CaldecottTunnelDescriptor>>();
-
-	private List<Integer> usedPorts = new ArrayList<Integer>();
 
 	public synchronized CaldecottTunnelDescriptor getDescriptor(CloudFoundryServer server, String serviceName) {
 		String id = server.getServerId();
@@ -66,15 +63,6 @@ public class CaldecottTunnelCache {
 
 		}
 		descriptors.put(descriptor.getServiceName(), descriptor);
-		usedPorts.add(descriptor.tunnelPort());
-	}
-
-	public synchronized int getUnusedPort() {
-		int base = CaldecottTunnelHandler.BASE_PORT;
-		while (usedPorts.contains(base)) {
-			base++;
-		}
-		return base;
 	}
 
 }
