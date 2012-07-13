@@ -55,7 +55,7 @@ public class CaldecottTunnelHandler {
 
 	public static final int BASE_PORT = 10100;
 
-	public static final int MAX_PORT = 10120;
+	public static final int MAX_PORT = 49150;
 
 	public CaldecottTunnelHandler(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
