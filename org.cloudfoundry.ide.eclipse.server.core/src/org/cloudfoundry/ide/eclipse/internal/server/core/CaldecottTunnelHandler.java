@@ -92,32 +92,12 @@ public class CaldecottTunnelHandler {
 	}
 
 	protected void startCaldecottApp(IProgressMonitor progress, final CloudFoundryClient client) throws CoreException {
-		int ticks = 10;
-		long sleep = 3000;
+
 		CloudApplication caldecottApp = getCaldecottApp(progress);
-		progress.setTaskName("Starting Caldecott application.");
-		if (caldecottApp == null) {
-			return;
-		}
 
-		if (!caldecottApp.getState().equals(CloudApplication.AppState.STARTED)) {
-			IModule caldecottModule = getCaldecottModule(progress);
-			cloudServer.getBehaviour().startModule(new IModule[] { caldecottModule }, progress);
-			new WaitWithProgressJob<Boolean>(ticks, sleep) {
+		new StartApplicationInWaitOperation(cloudServer, "Starting Caldecott application").run(progress, client,
+				caldecottApp);
 
-				@Override
-				protected Boolean runInWait(IProgressMonitor monitor) throws CoreException {
-					CloudApplication caldecottApp = getCaldecottApp(monitor);
-					if (caldecottApp != null && caldecottApp.getState().equals(CloudApplication.AppState.STARTED)) {
-						return true;
-					}
-
-					// wait to check again the state of the app
-					return null;
-				}
-
-			}.run(progress);
-		}
 	}
 
 	protected String getTunnelUri(final CloudFoundryClient client, IProgressMonitor progress) throws CoreException {
@@ -286,14 +266,13 @@ public class CaldecottTunnelHandler {
 	 * @param monitor
 	 * @return
 	 */
-	protected boolean setDeploymentServices(String serviceName, IProgressMonitor monitor) {
+	protected boolean setDeploymentServices(String serviceName, IProgressMonitor monitor) throws CoreException {
 
 		boolean serviceChanges = false;
 
-		IModule module = getCaldecottModule(monitor);
+		ApplicationModule appModule = getCaldecottModule(monitor);
 
-		if (module instanceof ApplicationModule) {
-			ApplicationModule appModule = (ApplicationModule) module;
+		if (appModule != null) {
 
 			DeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
 			// Do NOT set a deployment info if one does not exist, as another
@@ -510,75 +489,8 @@ public class CaldecottTunnelHandler {
 
 	}
 
-	public synchronized IModule getCaldecottModule(IProgressMonitor monitor) {
-
-		IModule appModule = null;
-		Collection<ApplicationModule> modules = cloudServer.getApplications();
-		if (modules != null) {
-			String caldecottAppName = TunnelHelper.getTunnelAppName();
-			for (ApplicationModule module : modules) {
-				if (caldecottAppName.equals(module.getApplicationId())) {
-					appModule = module;
-					break;
-				}
-			}
-		}
-		return appModule;
-	}
-
-	abstract class WaitWithProgressJob<T> {
-
-		private final int ticks;
-
-		private final long sleepTime;
-
-		public WaitWithProgressJob(int ticks, long sleepTime) {
-			this.ticks = ticks;
-			this.sleepTime = sleepTime;
-		}
-
-		/**
-		 * Return null if the run operation failed to obtain a run result. Null
-		 * value or an exception will cause the wait operation to wait for a
-		 * specified amount of time before trying again. Returning a non-null
-		 * result will stop any further waiting.
-		 * @return
-		 */
-		abstract protected T runInWait(IProgressMonitor monitor) throws CoreException;
-
-		public T run(IProgressMonitor monitor) throws CoreException {
-
-			Throwable error = null;
-
-			T result = null;
-			int i = 0;
-			while (i < ticks && !monitor.isCanceled()) {
-				try {
-					result = runInWait(monitor);
-				}
-				catch (Throwable th) {
-					error = th;
-				}
-				if (result == null) {
-
-					try {
-						Thread.sleep(sleepTime);
-					}
-					catch (InterruptedException e) {
-						// Ignore and proceed
-					}
-				}
-				else {
-					break;
-				}
-				i++;
-			}
-
-			if (result == null && error != null) {
-				throw new CoreException(CloudFoundryPlugin.getErrorStatus(error));
-			}
-			return result;
-		}
+	public synchronized ApplicationModule getCaldecottModule(IProgressMonitor monitor) throws CoreException {
+		return cloudServer.getApplicationModule(TunnelHelper.getTunnelAppName());
 	}
 
 }

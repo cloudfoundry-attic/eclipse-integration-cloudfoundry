@@ -516,4 +516,19 @@ public class CloudFoundryServer extends ServerDelegate {
 		}
 	}
 
+	public ApplicationModule getApplicationModule(String appName) throws CoreException {
+
+		ApplicationModule appModule = null;
+		Collection<ApplicationModule> modules = getApplications();
+		if (modules != null) {
+			for (ApplicationModule module : modules) {
+				if (appName.equals(module.getApplicationId())) {
+					appModule = module;
+					break;
+				}
+			}
+		}
+		return appModule;
+	}
+
 }

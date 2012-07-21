@@ -1,10 +1,3 @@
-package org.cloudfoundry.ide.eclipse.internal.server.core;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 /*******************************************************************************
  * Copyright (c) 2012 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
@@ -15,18 +8,29 @@ import java.io.InputStreamReader;
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
+package org.cloudfoundry.ide.eclipse.internal.server.core;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.List;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
+import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
 import org.cloudfoundry.ide.eclipse.server.tests.server.TestServlet;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 
 public abstract class AbstractCloudFoundryTest extends TestCase {
@@ -106,5 +110,87 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	}
 
 	abstract protected Harness createHarness();
+
+	protected CloudApplication createAndAssertTestApp() throws Exception {
+		return createWebApplication("dynamic-webapp");
+	}
+
+	// Utility methods
+	protected CloudApplication createWebApplication(String appName) throws Exception {
+
+		harness.createProjectAndAddModule(appName);
+
+		IModule module = getModule(appName);
+		CloudApplication cloudApplication = deployAndStartModule(module);
+		return cloudApplication;
+
+	}
+
+	protected void startAndAssertApplication(CloudApplication cloudApplication) throws Exception {
+
+		boolean started = new StartApplicationInWaitOperation(cloudServer, "Starting test app").run(
+				new NullProgressMonitor(), getClient(), cloudApplication);
+		serverBehavior.refreshModules(new NullProgressMonitor());
+
+		assertTrue(started);
+
+	}
+
+	protected void stopAndAssertApplication(CloudApplication cloudApplication) throws Exception {
+		boolean stopped = new StopApplicationInWaitOperation(cloudServer).run(new NullProgressMonitor(), getClient(),
+				cloudApplication);
+		serverBehavior.refreshModules(new NullProgressMonitor());
+
+		assertTrue(stopped);
+	}
+
+	protected void removeAndAssertApplication(CloudApplication cloudApplication) throws Exception {
+		IModule module = getModule(cloudApplication.getName());
+		assertNotNull(module);
+		serverBehavior.deleteModules(new IModule[] { module }, false, new NullProgressMonitor());
+
+		serverBehavior.refreshModules(new NullProgressMonitor());
+		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
+		boolean found = false;
+
+		for (CloudApplication application : applications) {
+			if (application.getName().equals(cloudApplication.getName())) {
+				found = true;
+				break;
+			}
+		}
+		assertFalse(found);
+	}
+
+	protected CloudApplication getUpdatedApplication(String appName) throws CoreException {
+		return serverBehavior.getApplication(appName, new NullProgressMonitor());
+	}
+
+	protected CloudApplication deployAndStartModule(IModule module) throws CoreException {
+		serverBehavior.deployOrStartModule(new IModule[] { module }, true, null);
+
+		// wait 1s until app is actually started
+
+		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
+		CloudApplication cloudApp = null;
+
+		for (CloudApplication application : applications) {
+			if (application.getName().equals(module.getName())) {
+				cloudApp = application;
+				break;
+			}
+		}
+		return cloudApp;
+	}
+
+	protected IModule getModule(String appName) {
+		IModule[] modules = server.getModules();
+		for (IModule module : modules) {
+			if (appName.equals(module.getName())) {
+				return module;
+			}
+		}
+		return null;
+	}
 
 }

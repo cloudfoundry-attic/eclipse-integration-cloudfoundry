@@ -13,6 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.client.lib.ServiceConfiguration;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
@@ -70,6 +71,51 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 			}
 		}
 		return null;
+	}
+
+	protected void bindServiceToApp(CloudApplication application, CloudService service) throws Exception {
+		List<String> servicesToBind = new ArrayList<String>();
+		servicesToBind.add(service.getName());
+		serverBehavior.updateServices(application.getName(), servicesToBind, new NullProgressMonitor());
+	}
+
+	protected void unbindServiceToApp(CloudApplication application, CloudService service) throws Exception {
+		CloudApplication updatedApplication = getUpdatedApplication(application.getName());
+		List<String> boundServices = updatedApplication.getServices();
+		List<String> servicesToUpdate = new ArrayList<String>(boundServices);
+
+		if (servicesToUpdate.contains(service.getName())) {
+			servicesToUpdate.remove(service.getName());
+		}
+		serverBehavior.updateServicesAndCloseCaldecottTunnels(application.getName(), servicesToUpdate,
+				new NullProgressMonitor());
+
+	}
+
+	protected void assertServiceBound(String serviceName, CloudApplication application) throws Exception {
+		CloudApplication updatedApplication = getUpdatedApplication(application.getName());
+		assertNotNull(updatedApplication);
+		String foundService = findService(serviceName, updatedApplication);
+		assertNotNull(foundService);
+	}
+
+	protected void assertServiceNotBound(String serviceName, CloudApplication application) throws Exception {
+		CloudApplication updatedApplication = getUpdatedApplication(application.getName());
+		assertNotNull(updatedApplication);
+		String foundService = findService(serviceName, updatedApplication);
+		assertNull(foundService);
+	}
+
+	protected String findService(String serviceName, CloudApplication app) {
+		List<String> boundServices = app.getServices();
+		String foundService = null;
+		for (String boundService : boundServices) {
+			if (serviceName.equals(boundService)) {
+				foundService = boundService;
+				break;
+			}
+		}
+		return foundService;
 	}
 
 	protected void createService(CloudService service) throws CoreException {

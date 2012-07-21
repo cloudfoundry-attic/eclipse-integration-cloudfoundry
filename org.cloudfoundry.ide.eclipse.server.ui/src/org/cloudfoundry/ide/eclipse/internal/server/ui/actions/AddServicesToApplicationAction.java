@@ -16,6 +16,8 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.IStructuredSelection;
 
 /**
@@ -47,5 +49,11 @@ public class AddServicesToApplicationAction extends ModifyServicesForApplication
 	@Override
 	public List<String> getServicesToRemove() {
 		return new ArrayList<String>();
+	}
+
+	@Override
+	protected void updateServices(IProgressMonitor monitor, ApplicationModule appModule, CloudFoundryServerBehaviour serverBehaviour, List<String> updatedServices) throws CoreException {
+		serverBehaviour.updateServices(appModule.getApplicationId(),
+				updatedServices, monitor);
 	}
 }

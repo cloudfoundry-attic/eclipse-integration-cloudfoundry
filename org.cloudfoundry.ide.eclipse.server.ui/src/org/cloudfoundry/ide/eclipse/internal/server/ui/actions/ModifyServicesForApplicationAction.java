@@ -94,7 +94,7 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 		if (serviceChanges) {
 			// update services right away, if app is already deployed
 			if (appModule.getApplication() != null) {
-				serverBehaviour.updateServices(appModule.getApplicationId(), updatedServices, monitor);
+				updateServices(monitor, appModule, serverBehaviour, updatedServices);
 			}
 
 			// DeploymentInfo deploymentInfo =
@@ -108,6 +108,9 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 
 		return Status.OK_STATUS;
 	}
+
+	protected abstract void updateServices(IProgressMonitor monitor, ApplicationModule appModule,
+			CloudFoundryServerBehaviour serverBehaviour, List<String> updatedServices) throws CoreException;
 
 	@Override
 	protected void display404Error(IStatus status) {

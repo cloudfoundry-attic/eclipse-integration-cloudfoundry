@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
+import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
@@ -35,6 +36,8 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 		assertServiceExists(MYSQL_SERVICE_NAME);
 		CaldecottTunnelDescriptor descriptor = createCaldecottTunnel(MYSQL_SERVICE_NAME);
 		assertNotNull(descriptor);
+		assertTunnel(MYSQL_SERVICE_NAME);
+
 		String expectedURL = "jdbc:mysql://" + LOCAL_HOST + ":" + descriptor.tunnelPort() + "/"
 				+ descriptor.getDatabaseName();
 		assertEquals(expectedURL, descriptor.getURL());
@@ -47,6 +50,8 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 		CloudService service = getMongodbService();
 		CaldecottTunnelDescriptor descriptor = createCaldecottTunnel(MONGODB_SERVICE_NAME);
 		assertNotNull(descriptor);
+		assertTunnel(MONGODB_SERVICE_NAME);
+
 		stopTunnel(MONGODB_SERVICE_NAME);
 		assertNoTunnel(MONGODB_SERVICE_NAME);
 		deleteService(service);
@@ -56,12 +61,49 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 		CloudService service = getPostgresqlService();
 		CaldecottTunnelDescriptor descriptor = createCaldecottTunnel(POSTGRESQL_SERVICE_NAME);
 		assertNotNull(descriptor);
+		assertTunnel(POSTGRESQL_SERVICE_NAME);
+
 		String expectedURL = "jdbc:postgresql://" + LOCAL_HOST + ":" + descriptor.tunnelPort() + "/"
 				+ descriptor.getDatabaseName();
 		assertEquals(expectedURL, descriptor.getURL());
 		stopTunnel(POSTGRESQL_SERVICE_NAME);
 		assertNoTunnel(POSTGRESQL_SERVICE_NAME);
 		deleteService(service);
+	}
+
+	/*
+	 * Test that when a non caldecott app has a service unbound, and that
+	 * service also has a Caldecott tunnel, the tunnel does not get closed.
+	 */
+	public void testNonCaldecottServiceUnbinding_STS_2767() throws Exception {
+		CloudApplication nonCaldecottApp = createAndAssertTestApp();
+		CloudService service = getMysqlService();
+		assertServiceExists(MYSQL_SERVICE_NAME);
+
+		stopAndAssertApplication(nonCaldecottApp);
+
+		bindServiceToApp(nonCaldecottApp, service);
+
+		CaldecottTunnelDescriptor descriptor = createCaldecottTunnel(MYSQL_SERVICE_NAME);
+		assertNotNull(descriptor);
+		assertTunnel(MYSQL_SERVICE_NAME);
+
+		startAndAssertApplication(nonCaldecottApp);
+		assertServiceBound(service.getName(), nonCaldecottApp);
+
+		stopAndAssertApplication(nonCaldecottApp);
+
+		unbindServiceToApp(nonCaldecottApp, service);
+		assertServiceNotBound(service.getName(), nonCaldecottApp);
+
+		assertTunnel(MYSQL_SERVICE_NAME);
+
+		stopTunnel(MYSQL_SERVICE_NAME);
+		assertNoTunnel(MYSQL_SERVICE_NAME);
+		deleteService(service);
+
+		removeAndAssertApplication(nonCaldecottApp);
+
 	}
 
 	protected void stopTunnel(String serviceName) throws CoreException {
@@ -73,6 +115,11 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 	protected void assertNoTunnel(String serviceName) throws Exception {
 		CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
 		assertFalse(handler.hasCaldecottTunnel(serviceName));
+	}
+
+	protected void assertTunnel(String serviceName) throws Exception {
+		CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+		assertTrue(handler.hasCaldecottTunnel(serviceName));
 	}
 
 	protected CloudService getMysqlService() throws Exception {

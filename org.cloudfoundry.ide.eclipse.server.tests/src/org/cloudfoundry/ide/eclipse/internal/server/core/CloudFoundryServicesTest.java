@@ -10,23 +10,56 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
+import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudService;
 
 public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 
 	public static final String MYSQL_SERVICE_NAME = "mysqlTestService";
 
-	public void testCreateMysqlService() throws Exception {
+	public void testCreateAndDeleteMysqlService() throws Exception {
 		CloudService service = createMysqlService();
 		assertServiceExists(service);
 		deleteService(service);
+		assertServiceNotExist(MYSQL_SERVICE_NAME);
 	}
 
-	public void testDeleteMysqlService() throws Exception {
-		CloudService mysqlService = createMysqlService();
-		assertServiceExists(mysqlService);
-		deleteService(mysqlService);
+	public void testServiceBinding() throws Exception {
+		CloudService service = createMysqlService();
+
+		CloudApplication app = createAndAssertTestApp();
+		stopAndAssertApplication(app);
+
+		bindServiceToApp(app, service);
+		startAndAssertApplication(app);
+		assertServiceBound(service.getName(), app);
+
+		removeAndAssertApplication(app);
+		deleteService(service);
+
 		assertServiceNotExist(MYSQL_SERVICE_NAME);
+
+	}
+
+	public void testServiceUnBinding() throws Exception {
+		CloudService service = createMysqlService();
+
+		CloudApplication app = createAndAssertTestApp();
+		stopAndAssertApplication(app);
+		bindServiceToApp(app, service);
+
+		startAndAssertApplication(app);
+		assertServiceBound(service.getName(), app);
+
+		stopAndAssertApplication(app);
+		unbindServiceToApp(app, service);
+		assertServiceNotBound(service.getName(), app);
+
+		removeAndAssertApplication(app);
+		deleteService(service);
+
+		assertServiceNotExist(MYSQL_SERVICE_NAME);
+
 	}
 
 	public void testNoService() throws Exception {

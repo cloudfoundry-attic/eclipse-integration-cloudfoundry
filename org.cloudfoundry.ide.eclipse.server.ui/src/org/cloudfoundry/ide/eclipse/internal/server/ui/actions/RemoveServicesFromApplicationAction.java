@@ -14,13 +14,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.viewers.IStructuredSelection;
 
 /**
@@ -43,22 +41,6 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 	}
 
 	@Override
-	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
-		IStatus status = super.performAction(monitor);
-		// Remove any Caldecott tunnels associated with removed services.
-		List<String> servicesToRemove = getServicesToRemove();
-
-		if (servicesToRemove != null) {
-			CaldecottTunnelHandler handler = new CaldecottTunnelHandler(getBehavior().getCloudFoundryServer());
-			for (String serviceName : servicesToRemove) {
-				handler.stopAndDeleteCaldecottTunnel(serviceName, monitor);
-			}
-		}
-
-		return status;
-	}
-
-	@Override
 	public String getJobName() {
 		return "Removing services";
 	}
@@ -71,6 +53,11 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 	@Override
 	public List<String> getServicesToRemove() {
 		return services;
+	}
+
+	protected void updateServices(IProgressMonitor monitor, ApplicationModule appModule,
+			CloudFoundryServerBehaviour serverBehaviour, List<String> updatedServices) throws CoreException {
+		serverBehaviour.updateServicesAndCloseCaldecottTunnels(appModule.getApplicationId(), updatedServices, monitor);
 	}
 
 }

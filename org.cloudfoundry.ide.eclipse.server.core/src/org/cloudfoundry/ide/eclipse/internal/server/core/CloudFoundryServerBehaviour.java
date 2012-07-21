@@ -38,8 +38,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.De
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneApplicationArchive;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneUtil;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -181,8 +179,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 					List<CloudApplication> applications = client.getApplications();
 
-					boolean isCaldecottApp = false;
-
 					for (CloudApplication application : applications) {
 						if (application.getName().equals(appModule.getApplicationId())) {
 							// Fix for STS-2416: Get the CloudApplication from
@@ -194,9 +190,16 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							if (actualServices != null) {
 								servicesToDelete.addAll(actualServices);
 							}
+
+							// Close any Caldecott tunnels before deleting app
+							if (CaldecottTunnelHandler.isCaldecottApp(appModule.getApplicationId())) {
+								// Delete all tunnels if the Caldecott app is
+								// removed
+								new CaldecottTunnelHandler(cloudServer).stopAndDeleteAllTunnels(progress);
+							}
+
 							client.deleteApplication(appModule.getApplicationId());
 
-							isCaldecottApp = CaldecottTunnelHandler.isCaldecottApp(appModule.getApplicationId());
 							break;
 						}
 					}
@@ -209,10 +212,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						CloudFoundryPlugin.getDefault().fireServicesUpdated(cloudServer);
 					}
 
-					if (isCaldecottApp) {
-						// Delete all tunnels if the Caldecott app is removed
-						new CaldecottTunnelHandler(cloudServer).stopAndDeleteAllTunnels(progress);
-					}
 				}
 				return null;
 			}
@@ -866,12 +865,61 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
-	public void updateServices(final String appName, final List<String> services, IProgressMonitor monitor)
+	public List<String> findCaldecottTunnelsToClose(CloudFoundryClient client, String appName,
+			List<String> servicesToUpdate) {
+		List<String> services = new ArrayList<String>();
+
+		CloudApplication caldecottApp = client.getApplication(appName);
+		if (caldecottApp != null) {
+			List<String> existingServices = caldecottApp.getServices();
+			if (existingServices != null) {
+				Set<String> possibleDeletedServices = new HashSet<String>(existingServices);
+				for (String updatedService : servicesToUpdate) {
+					if (possibleDeletedServices.contains(updatedService)) {
+						possibleDeletedServices.remove(updatedService);
+					}
+				}
+				services.addAll(possibleDeletedServices);
+			}
+		}
+		return services;
+	}
+
+	public void updateServices(String appName, List<String> services, IProgressMonitor monitor) throws CoreException {
+		updateServices(appName, services, false, monitor);
+	}
+
+	public void updateServicesAndCloseCaldecottTunnels(String appName, List<String> services, IProgressMonitor monitor)
 			throws CoreException {
+		updateServices(appName, services, true, monitor);
+
+	}
+
+	protected void updateServices(final String appName, final List<String> services,
+			final boolean closeRelatedCaldecottTunnels, IProgressMonitor monitor) throws CoreException {
 		new Request<Void>() {
 			@Override
 			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+				// Prior to updating the services, obtain the current list of
+				// bound services for the app
+				// and determine if any services are being unbound. If unbound,
+				// check if it is the Caldecott app
+				// and accordingly, close related tunnels.
+				if (closeRelatedCaldecottTunnels && CaldecottTunnelHandler.isCaldecottApp(appName)) {
+
+					List<String> caldecottServicesToClose = findCaldecottTunnelsToClose(client, appName, services);
+					// Close tunnels before the services are removed
+					if (caldecottServicesToClose != null) {
+						CaldecottTunnelHandler handler = new CaldecottTunnelHandler(getCloudFoundryServer());
+
+						for (String serviceName : caldecottServicesToClose) {
+							handler.stopAndDeleteCaldecottTunnel(serviceName, progress);
+						}
+					}
+				}
+
 				client.updateApplicationServices(appName, services);
+
 				return null;
 			}
 		}.run(monitor);
@@ -1381,7 +1429,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				// Update the Staging in the Application module
 				// FIXNS_STANDALONE
-//				cloudModule.setStaging(descriptor.staging);
+				// cloudModule.setStaging(descriptor.staging);
 
 				server.setModuleState(modules, IServer.STATE_STARTING);
 				setRefreshInterval(SHORT_INTERVAL);
