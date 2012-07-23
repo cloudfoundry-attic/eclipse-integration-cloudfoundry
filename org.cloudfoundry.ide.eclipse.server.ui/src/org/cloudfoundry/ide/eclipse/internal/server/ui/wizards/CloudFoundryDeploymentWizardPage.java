@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.DeploymentInfo;
+import org.cloudfoundry.client.lib.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -24,6 +25,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentInfoValidator;
 import org.cloudfoundry.ide.eclipse.internal.server.core.URLNameValidation;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -68,9 +70,8 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 	private final String serverTypeId;
 
 	private Text urlText;
-	
-//FIXNS_STANDALONE
-//	private Text standaloneStartText;
+
+	private Text standaloneStartText;
 
 	private String standaloneStartCommand;
 
@@ -262,40 +263,9 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 			}
 		});
 
-		
-		//FIXNS_STANDALONE
-//		if (wizard.isStandaloneApplication()) {
-//			label = new Label(topComposite, SWT.NONE);
-//			label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-//			label.setText("Standalone Application Start Command:");
-//
-//			standaloneStartText = new Text(topComposite, SWT.BORDER);
-//			standaloneStartText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-//			standaloneStartText.setEditable(true);
-//
-//			// If a staging is already set, attempt to determine the runtime
-//			// type
-//			Staging staging = wizard.getStaging();
-//			if (staging != null) {
-//				String runtimeType = staging.getRuntime();
-//				StartCommand command = StartCommand.getCommand(runtimeType, module.getProject());
-//				if (command != null) {
-//					String startCommand = command.getStartCommand();
-//					if (startCommand != null) {
-//						standaloneStartText.setText(startCommand);
-//					}
-//				}
-//			}
-//
-//			standaloneStartText.addModifyListener(new ModifyListener() {
-//
-//				public void modifyText(ModifyEvent e) {
-//					standaloneStartCommand = standaloneStartText.getText();
-//					update();
-//				}
-//
-//			});
-//		}
+		if (wizard.isStandaloneApplication()) {
+			createStandaloneSection(topComposite);
+		}
 
 		createStartOrDebugOptions(topComposite);
 
@@ -304,10 +274,42 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 		update(false);
 	}
 
-	// FIXNS_STANDALONE
-//	public String getStandaloneStartCommand() {
-//		return standaloneStartCommand;
-//	}
+	protected void createStandaloneSection(Composite parent) {
+		Label label = new Label(parent, SWT.NONE);
+		label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+		label.setText("Standalone Application Start Command:");
+
+		standaloneStartText = new Text(parent, SWT.BORDER);
+		standaloneStartText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		standaloneStartText.setEditable(true);
+
+		// If a staging is already set, attempt to determine the runtime
+		// type
+		Staging staging = wizard.getStaging();
+		if (staging != null) {
+			String runtimeType = staging.getRuntime();
+			StartCommand command = StartCommand.getCommand(runtimeType, module.getProject());
+			if (command != null) {
+				String startCommand = command.getStartCommand();
+				if (startCommand != null) {
+					standaloneStartText.setText(startCommand);
+				}
+			}
+		}
+
+		standaloneStartText.addModifyListener(new ModifyListener() {
+
+			public void modifyText(ModifyEvent e) {
+				standaloneStartCommand = standaloneStartText.getText();
+				update();
+			}
+
+		});
+	}
+
+	public String getStandaloneStartCommand() {
+		return standaloneStartCommand;
+	}
 
 	protected void createStartOrDebugOptions(Composite parent) {
 		regularStartOnDeploymentButton = new Button(parent, SWT.CHECK);

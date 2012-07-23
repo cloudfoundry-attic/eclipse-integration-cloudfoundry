@@ -45,4 +45,9 @@ public class StandaloneUtil {
 		}
 		return staging;
 	}
+
+	public static boolean isValidStaging(Staging staging) {
+		return staging != null && staging.getCommand() != null
+				&& CloudApplication.STANDALONE.equals(staging.getFramework()) && staging.getRuntime() != null;
+	}
 }

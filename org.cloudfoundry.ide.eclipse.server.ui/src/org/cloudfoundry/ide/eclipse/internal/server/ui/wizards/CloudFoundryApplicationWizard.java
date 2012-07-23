@@ -19,6 +19,8 @@ import org.cloudfoundry.client.lib.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConstants;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneUtil;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.wizard.Wizard;
 
@@ -52,10 +54,8 @@ public class CloudFoundryApplicationWizard extends Wizard {
 	public void addPages() {
 		deploymentPage = new CloudFoundryDeploymentWizardPage(server, module, this);
 		if (module.getLocalModule() != null) {
-			// FIXNS_STANDALONE 
-//			applicationPage = isStandaloneApplication() ? new StandaloneApplicationWizardPage(server, deploymentPage,
-//					module) : new CloudFoundryApplicationWizardPage(server, deploymentPage, module);
-			applicationPage = new CloudFoundryApplicationWizardPage(server, deploymentPage, module);
+			applicationPage = isStandaloneApplication() ? new StandaloneApplicationWizardPage(server, deploymentPage,
+					module) : new CloudFoundryApplicationWizardPage(server, deploymentPage, module);
 			addPage(applicationPage);
 		}
 		addPage(deploymentPage);
@@ -65,10 +65,7 @@ public class CloudFoundryApplicationWizard extends Wizard {
 	}
 
 	public boolean isStandaloneApplication() {
-		
-		//FIXNS_STANDALONE:
-//		return StandaloneUtil.isStandaloneApp(module);
-		return false;
+		return StandaloneUtil.isStandaloneApp(module);
 	}
 
 	public ApplicationInfo getApplicationInfo() {
@@ -84,16 +81,15 @@ public class CloudFoundryApplicationWizard extends Wizard {
 	}
 
 	public Staging getStaging() {
-		// FIXNS_STANDALONE 
-//		if (isStandaloneApplication()) {
-//			StandaloneApplicationWizardPage standalonePage = (StandaloneApplicationWizardPage) applicationPage;
-//			String runtime = standalonePage.getRuntime();
-//			String command = deploymentPage.getStandaloneStartCommand();
-//			Staging staging = new Staging(DeploymentConstants.STANDALONE_FRAMEWORK);
-//			staging.setCommand(command);
-//			staging.setRuntime(runtime);
-//			return staging;
-//		}
+		if (isStandaloneApplication()) {
+			StandaloneApplicationWizardPage standalonePage = (StandaloneApplicationWizardPage) applicationPage;
+			String runtime = standalonePage.getRuntime();
+			String command = deploymentPage.getStandaloneStartCommand();
+			Staging staging = new Staging(DeploymentConstants.STANDALONE_FRAMEWORK);
+			staging.setCommand(command);
+			staging.setRuntime(runtime);
+			return staging;
+		}
 		return null;
 	}
 

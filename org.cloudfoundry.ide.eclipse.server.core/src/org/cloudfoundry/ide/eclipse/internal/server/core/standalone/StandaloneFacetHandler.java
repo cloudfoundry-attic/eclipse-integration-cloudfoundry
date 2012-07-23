@@ -11,11 +11,16 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.standalone;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.wst.common.project.facet.core.IDelegate;
 import org.eclipse.wst.common.project.facet.core.IFacetedProject;
 import org.eclipse.wst.common.project.facet.core.IProjectFacet;
+import org.eclipse.wst.common.project.facet.core.IProjectFacetVersion;
 import org.eclipse.wst.common.project.facet.core.ProjectFacetsManager;
 
 public class StandaloneFacetHandler {
@@ -54,6 +59,25 @@ public class StandaloneFacetHandler {
 			}
 		}
 		return false;
+	}
+
+	public static class CFFacetInstallDelegate implements IDelegate {
+		public void execute(IProject project, IProjectFacetVersion fv, Object config, IProgressMonitor monitor)
+				throws CoreException {
+			IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(project);
+			if (!project.isAccessible() || javaProject == null || !javaProject.exists()) {
+				throw new CoreException(
+						CloudFoundryPlugin
+								.getErrorStatus("Cloud Foundry Standalone Facet can only be installed on a Java project."));
+			}
+		}
+	}
+
+	public static class CFFacetUninstallDelegate implements IDelegate {
+		public void execute(IProject project, IProjectFacetVersion fv, Object config, IProgressMonitor monitor)
+				throws CoreException {
+			// Nothing. Allow Cloud Foundry facets to always be uninstallable.
+		}
 	}
 
 }

@@ -38,6 +38,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.De
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneApplicationArchive;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneUtil;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -256,25 +258,21 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 
 			if (!found) {
-				//FIXNS_STANDALONE
-//				Staging staging = descriptor.staging;
-//				if (isValidStaging(staging)) {
-//					List<String> uris = descriptor.deploymentInfo.getUris() != null ? descriptor.deploymentInfo
-//							.getUris() : new ArrayList<String>();
-//					List<String> services = descriptor.deploymentInfo.getServices() != null ? descriptor.deploymentInfo
-//							.getServices() : new ArrayList<String>();
-//					client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(), uris,
-//							services);
-//				}
-//				else {
-//				
-//				client.createApplication(applicationId, applicationInfo.getFramework(),
-//						descriptor.deploymentInfo.getMemory(), descriptor.deploymentInfo.getUris(),
-//						descriptor.deploymentInfo.getServices());
-//				}
-				client.createApplication(applicationId, applicationInfo.getFramework(),
-						descriptor.deploymentInfo.getMemory(), descriptor.deploymentInfo.getUris(),
-						descriptor.deploymentInfo.getServices());
+				Staging staging = descriptor.staging;
+				if (StandaloneUtil.isStandaloneApp(appModule) && StandaloneUtil.isValidStaging(staging)) {
+					List<String> uris = descriptor.deploymentInfo.getUris() != null ? descriptor.deploymentInfo
+							.getUris() : new ArrayList<String>();
+					List<String> services = descriptor.deploymentInfo.getServices() != null ? descriptor.deploymentInfo
+							.getServices() : new ArrayList<String>();
+					client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(), uris,
+							services);
+				}
+				else {
+
+					client.createApplication(applicationId, applicationInfo.getFramework(),
+							descriptor.deploymentInfo.getMemory(), descriptor.deploymentInfo.getUris(),
+							descriptor.deploymentInfo.getServices());
+				}
 			}
 			File warFile = applicationInfo.getWarFile();
 
@@ -304,10 +302,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// cache for deleted resources
 
 				}
-				// FIXNS_STANDALONE
-//				else {
-//					client.uploadApplication(applicationId, archive);
-//				}
+				else {
+					client.uploadApplication(applicationId, archive);
+				}
 			}
 
 		}
@@ -324,11 +321,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		catch (InterruptedException e) {
 			throw new OperationCanceledException();
 		}
-	}
-
-	protected boolean isValidStaging(Staging staging) {
-		return staging != null && staging.getCommand() != null && staging.getFramework() != null
-				&& staging.getRuntime() != null;
 	}
 
 	protected List<IModuleResource> getChangedResources(IModuleResourceDelta[] deltas) {
@@ -1428,8 +1420,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				cloudModule.setApplicationId(descriptor.applicationInfo.getAppName());
 
 				// Update the Staging in the Application module
-				// FIXNS_STANDALONE
-				// cloudModule.setStaging(descriptor.staging);
+				cloudModule.setStaging(descriptor.staging);
 
 				server.setModuleState(modules, IServer.STATE_STARTING);
 				setRefreshInterval(SHORT_INTERVAL);
@@ -1451,28 +1442,23 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							started = true;
 						}
 						else {
-							// FIXNS_STANDALONE:
-							// if (StandaloneUtil.isStandaloneApp(cloudModule))
-							// {
-							//
-							// // Get the module resources for the standalone
-							// // as provided by the standlaone module factory
-							// IModuleResource[] resources =
-							// getResources(modules);
-							// if (resources == null || resources.length == 0) {
-							// throw new CoreException(
-							// CloudFoundryPlugin
-							// .getErrorStatus("Unable to deploy standalone Java module. No deployable resources found in target or output folders."));
-							// }
-							// else {
-							// descriptor.applicationArchive = new
-							// StandaloneApplicationArchive(modules[0],
-							// Arrays.asList(resources));
-							// }
-							//
-							// }
-							// else
-							if (descriptor.isIncrementalPublish && !hasChildModules(modules)) {
+							if (StandaloneUtil.isStandaloneApp(cloudModule)) {
+
+								// Get the module resources for the standalone
+								// as provided by the standlaone module factory
+								IModuleResource[] resources = getResources(modules);
+								if (resources == null || resources.length == 0) {
+									throw new CoreException(
+											CloudFoundryPlugin
+													.getErrorStatus("Unable to deploy standalone Java module. No deployable resources found in target or output folders."));
+								}
+								else {
+									descriptor.applicationArchive = new StandaloneApplicationArchive(modules[0],
+											Arrays.asList(resources));
+								}
+
+							}
+							else if (descriptor.isIncrementalPublish && !hasChildModules(modules)) {
 								// Determine if an incremental publish should
 								// occur
 								// For the time being support incremental
