@@ -15,7 +15,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.List;
@@ -126,7 +125,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	}
 
-	protected void startAndAssertApplication(CloudApplication cloudApplication) throws Exception {
+	protected void assertStartApplication(CloudApplication cloudApplication) throws Exception {
 
 		boolean started = new StartApplicationInWaitOperation(cloudServer, "Starting test app").run(
 				new NullProgressMonitor(), getClient(), cloudApplication);
@@ -136,7 +135,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	}
 
-	protected void stopAndAssertApplication(CloudApplication cloudApplication) throws Exception {
+	protected void assertStopApplication(CloudApplication cloudApplication) throws Exception {
 		boolean stopped = new StopApplicationInWaitOperation(cloudServer).run(new NullProgressMonitor(), getClient(),
 				cloudApplication);
 		serverBehavior.refreshModules(new NullProgressMonitor());
@@ -144,7 +143,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		assertTrue(stopped);
 	}
 
-	protected void removeAndAssertApplication(CloudApplication cloudApplication) throws Exception {
+	protected void assertRemoveApplication(CloudApplication cloudApplication) throws Exception {
 		IModule module = getModule(cloudApplication.getName());
 		assertNotNull(module);
 		serverBehavior.deleteModules(new IModule[] { module }, false, new NullProgressMonitor());

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
+import org.cloudfoundry.caldecott.client.TunnelHelper;
 import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
@@ -41,9 +42,12 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 		String expectedURL = "jdbc:mysql://" + LOCAL_HOST + ":" + descriptor.tunnelPort() + "/"
 				+ descriptor.getDatabaseName();
 		assertEquals(expectedURL, descriptor.getURL());
+
 		stopTunnel(MYSQL_SERVICE_NAME);
 		assertNoTunnel(MYSQL_SERVICE_NAME);
+
 		deleteService(service);
+		assertServiceNotExist(MYSQL_SERVICE_NAME);
 	}
 
 	public void testCreateMongodbTunnel() throws Exception {
@@ -54,7 +58,9 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 
 		stopTunnel(MONGODB_SERVICE_NAME);
 		assertNoTunnel(MONGODB_SERVICE_NAME);
+
 		deleteService(service);
+		assertServiceNotExist(MONGODB_SERVICE_NAME);
 	}
 
 	public void testCreatePostgresqlTunnel() throws Exception {
@@ -68,7 +74,21 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 		assertEquals(expectedURL, descriptor.getURL());
 		stopTunnel(POSTGRESQL_SERVICE_NAME);
 		assertNoTunnel(POSTGRESQL_SERVICE_NAME);
+
 		deleteService(service);
+		assertServiceNotExist(POSTGRESQL_SERVICE_NAME);
+	}
+
+	public void testCaldecottTunnelCloseOnServiceDeletion() throws Exception {
+		CloudService service = getMysqlService();
+		assertServiceExists(MYSQL_SERVICE_NAME);
+		CaldecottTunnelDescriptor descriptor = createCaldecottTunnel(MYSQL_SERVICE_NAME);
+		assertNotNull(descriptor);
+		assertTunnel(MYSQL_SERVICE_NAME);
+
+		deleteService(service);
+		assertServiceNotExist(MYSQL_SERVICE_NAME);
+		assertNoTunnel(MYSQL_SERVICE_NAME);
 	}
 
 	/*
@@ -80,7 +100,7 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 		CloudService service = getMysqlService();
 		assertServiceExists(MYSQL_SERVICE_NAME);
 
-		stopAndAssertApplication(nonCaldecottApp);
+		assertStopApplication(nonCaldecottApp);
 
 		bindServiceToApp(nonCaldecottApp, service);
 
@@ -88,11 +108,10 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 		assertNotNull(descriptor);
 		assertTunnel(MYSQL_SERVICE_NAME);
 
-		startAndAssertApplication(nonCaldecottApp);
+		assertStartApplication(nonCaldecottApp);
 		assertServiceBound(service.getName(), nonCaldecottApp);
 
-		stopAndAssertApplication(nonCaldecottApp);
-
+		assertStopApplication(nonCaldecottApp);
 		unbindServiceToApp(nonCaldecottApp, service);
 		assertServiceNotBound(service.getName(), nonCaldecottApp);
 
@@ -100,10 +119,81 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 
 		stopTunnel(MYSQL_SERVICE_NAME);
 		assertNoTunnel(MYSQL_SERVICE_NAME);
+
 		deleteService(service);
+		assertServiceNotExist(MYSQL_SERVICE_NAME);
 
-		removeAndAssertApplication(nonCaldecottApp);
+		assertRemoveApplication(nonCaldecottApp);
 
+	}
+
+	public void testTunnelCloseOnCaldecottStop() throws Exception {
+
+		CloudService service = getMysqlService();
+		assertServiceExists(MYSQL_SERVICE_NAME);
+
+		CaldecottTunnelDescriptor descriptor = createCaldecottTunnel(MYSQL_SERVICE_NAME);
+		assertNotNull(descriptor);
+		assertTunnel(MYSQL_SERVICE_NAME);
+
+		CloudApplication caldecottApp = getCaldecottApplication();
+		assertNotNull(caldecottApp);
+
+		assertStopApplication(caldecottApp);
+
+		assertNoTunnel(MYSQL_SERVICE_NAME);
+
+		deleteService(service);
+		assertServiceNotExist(MYSQL_SERVICE_NAME);
+	}
+
+	public void testTunnelCloseOnCaldecottDeletion() throws Exception {
+
+		CloudService service = getMysqlService();
+		assertServiceExists(MYSQL_SERVICE_NAME);
+
+		CaldecottTunnelDescriptor descriptor = createCaldecottTunnel(MYSQL_SERVICE_NAME);
+		assertNotNull(descriptor);
+		assertTunnel(MYSQL_SERVICE_NAME);
+
+		CloudApplication caldecottApp = getCaldecottApplication();
+		assertNotNull(caldecottApp);
+
+		assertRemoveApplication(caldecottApp);
+
+		assertNoTunnel(MYSQL_SERVICE_NAME);
+
+		deleteService(service);
+		assertServiceNotExist(MYSQL_SERVICE_NAME);
+	}
+
+	public void testTunnelCloseOnCaldecottServiceUnbinding() throws Exception {
+		CloudService service = getMysqlService();
+		assertServiceExists(MYSQL_SERVICE_NAME);
+
+		CaldecottTunnelDescriptor descriptor = createCaldecottTunnel(MYSQL_SERVICE_NAME);
+		assertNotNull(descriptor);
+		assertTunnel(MYSQL_SERVICE_NAME);
+
+		CloudApplication caldecottApp = getCaldecottApplication();
+		assertNotNull(caldecottApp);
+
+		unbindServiceToApp(caldecottApp, service);
+		assertServiceNotBound(service.getName(), caldecottApp);
+
+		assertNoTunnel(MYSQL_SERVICE_NAME);
+
+		deleteService(service);
+		assertServiceNotExist(MYSQL_SERVICE_NAME);
+	}
+
+	/*
+	 * 
+	 * HELPERS
+	 */
+
+	protected CloudApplication getCaldecottApplication() throws CoreException {
+		return getUpdatedApplication(TunnelHelper.getTunnelAppName());
 	}
 
 	protected void stopTunnel(String serviceName) throws CoreException {

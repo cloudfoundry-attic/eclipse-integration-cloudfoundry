@@ -28,13 +28,13 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		CloudService service = createMysqlService();
 
 		CloudApplication app = createAndAssertTestApp();
-		stopAndAssertApplication(app);
+		assertStopApplication(app);
 
 		bindServiceToApp(app, service);
-		startAndAssertApplication(app);
+		assertStartApplication(app);
 		assertServiceBound(service.getName(), app);
 
-		removeAndAssertApplication(app);
+		assertRemoveApplication(app);
 		deleteService(service);
 
 		assertServiceNotExist(MYSQL_SERVICE_NAME);
@@ -45,17 +45,17 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		CloudService service = createMysqlService();
 
 		CloudApplication app = createAndAssertTestApp();
-		stopAndAssertApplication(app);
+		assertStopApplication(app);
 		bindServiceToApp(app, service);
 
-		startAndAssertApplication(app);
+		assertStartApplication(app);
 		assertServiceBound(service.getName(), app);
 
-		stopAndAssertApplication(app);
+		assertStopApplication(app);
 		unbindServiceToApp(app, service);
 		assertServiceNotBound(service.getName(), app);
 
-		removeAndAssertApplication(app);
+		assertRemoveApplication(app);
 		deleteService(service);
 
 		assertServiceNotExist(MYSQL_SERVICE_NAME);
