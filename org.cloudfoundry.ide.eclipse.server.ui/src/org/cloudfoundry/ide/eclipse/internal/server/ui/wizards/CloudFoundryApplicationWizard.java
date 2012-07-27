@@ -20,7 +20,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConstants;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneRuntimeType;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.wizard.Wizard;
 
@@ -40,6 +41,8 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	private final ApplicationModule module;
 
+	private StandaloneDescriptor descriptor;
+
 	private final CloudFoundryServer server;
 
 	public CloudFoundryApplicationWizard(CloudFoundryServer server, ApplicationModule module) {
@@ -48,6 +51,27 @@ public class CloudFoundryApplicationWizard extends Wizard {
 		this.server = server;
 		this.module = module;
 		setWindowTitle("Application");
+	}
+
+	/**
+	 * Always non-null, although the application may not be a standalone
+	 * application.
+	 * @return
+	 */
+	public StandaloneDescriptor getStandaloneDescriptor() {
+		if (descriptor == null) {
+			descriptor = new StandaloneDescriptor(module);
+		}
+		return descriptor;
+	}
+
+	/**
+	 * 
+	 * @return true if the application is a standalone application with a
+	 * supported runtime. False otherwise.
+	 */
+	public boolean isStandaloneApplication() {
+		return getStandaloneDescriptor().isSupportedStandalone();
 	}
 
 	@Override
@@ -64,10 +88,6 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	}
 
-	public boolean isStandaloneApplication() {
-		return StandaloneUtil.isStandaloneApp(module);
-	}
-
 	public ApplicationInfo getApplicationInfo() {
 		return (applicationPage != null) ? applicationPage.getApplicationInfo() : null;
 	}
@@ -82,14 +102,15 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	public Staging getStaging() {
 		if (isStandaloneApplication()) {
-			StandaloneApplicationWizardPage standalonePage = (StandaloneApplicationWizardPage) applicationPage;
-			String runtime = standalonePage.getRuntime();
+			StandaloneDescriptor standaloneDescriptor = getStandaloneDescriptor();
+			StandaloneRuntimeType runtimeType = standaloneDescriptor.getRuntimeType();
 			String command = deploymentPage.getStandaloneStartCommand();
 			Staging staging = new Staging(DeploymentConstants.STANDALONE_FRAMEWORK);
 			staging.setCommand(command);
-			staging.setRuntime(runtime);
+			staging.setRuntime(runtimeType.getId());
 			return staging;
 		}
+
 		return null;
 	}
 

@@ -10,81 +10,82 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.standalone;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.jdt.core.IJavaProject;
+import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.List;
 
+/**
+ * Defines a Standalone start command for a given runtime type. A start command
+ * may be defined by multiple start command types. For example, a Java start
+ * command may defined a java application start command "java ..." or a script
+ * file.
+ * <p/>
+ * If defining multiple start command definitions, a default start command type
+ * can also be specified.
+ */
 public abstract class StartCommand {
 
-	private final StandaloneRuntimeType type;
+	private final StandaloneDescriptor descriptor;
 
-	private final IProject project;
-
-	protected StartCommand(StandaloneRuntimeType type, IProject project) {
-		this.type = type;
-		this.project = project;
+	public StartCommand(StandaloneDescriptor descriptor) {
+		this.descriptor = descriptor;
 	}
 
-	public IProject getProject() {
-		return project;
+	public StandaloneDescriptor getDescriptor() {
+		return descriptor;
 	}
 
+	/**
+	 * The start command in the form that it would be used to start the
+	 * application.
+	 */
 	abstract public String getStartCommand();
 
-	abstract public String getArguments();
+	abstract public StartCommandType getDefaultStartCommandType();
 
-	public StandaloneRuntimeType getRuntimeType() {
-		return type;
-	}
+	abstract public List<StartCommandType> getStartCommandTypes();
 
-	public static StartCommand getCommand(StandaloneRuntimeType type, IProject project) {
-		if (type != null) {
-			switch (type) {
-			case Java:
-				return new JavaStartCommand(type, project);
-			}
-		}
-		return null;
-	}
+	public static class JavaStartCommand extends StartCommand {
 
-	public static StartCommand getCommand(String type, IProject project) {
-		if (type != null) {
-			StandaloneRuntimeType runtimeType = null;
-			for (StandaloneRuntimeType rType : StandaloneRuntimeType.values()) {
-				if (type.equals(rType.getId())) {
-					runtimeType = rType;
-					break;
-				}
-			}
-			return getCommand(runtimeType, project);
-		}
-		return null;
-	}
-
-	static class JavaStartCommand extends StartCommand {
-
-		protected JavaStartCommand(StandaloneRuntimeType type, IProject project) {
-			super(type, project);
+		protected JavaStartCommand(StandaloneDescriptor descriptor) {
+			super(descriptor);
 		}
 
 		protected String getMainMethodType() {
-			if (getProject().isAccessible()) {
-				IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(getProject());
-				if (javaProject != null) {
 
-				}
-			}
 			return null;
 		}
 
 		@Override
 		public String getStartCommand() {
-			return "java $JAVA_OPTS";
+			StringWriter writer = new StringWriter();
+			writer.append("java");
+			if (getOptions() != null) {
+				writer.append(" ");
+				writer.append(getOptions());
+			}
+			if (getMainMethodType() != null) {
+				writer.append(" ");
+				writer.append(getMainMethodType());
+			}
+			return writer.toString();
+		}
+
+		public String getOptions() {
+			return "$JAVA_OPTS";
 		}
 
 		@Override
-		public String getArguments() {
-			return null;
+		public StartCommandType getDefaultStartCommandType() {
+			return StartCommandType.Java;
+		}
+
+		/**
+		 * May be empty, but never null
+		 * @return
+		 */
+		public List<StartCommandType> getStartCommandTypes() {
+			return Arrays.asList(new StartCommandType[] { StartCommandType.Java, StartCommandType.Other });
 		}
 
 	}

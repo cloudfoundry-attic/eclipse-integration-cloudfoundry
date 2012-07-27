@@ -10,13 +10,13 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneRuntimeType;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Label;
 
 public class StandaloneApplicationWizardPage extends AbstractCloudFoundryApplicationWizardPage {
 
@@ -26,34 +26,33 @@ public class StandaloneApplicationWizardPage extends AbstractCloudFoundryApplica
 	}
 
 	@Override
-	protected Map<String, String> getValuesByLabel() {
-		Map<String, String> valuesByLabel = new LinkedHashMap<String, String>();
-		valuesByLabel.put(StandaloneRuntimeType.Java.name(), StandaloneRuntimeType.Java.getId());
-		valuesByLabel.put(StandaloneRuntimeType.Node.name(), StandaloneRuntimeType.Node.getId());
-		valuesByLabel.put(StandaloneRuntimeType.Node06.name(), StandaloneRuntimeType.Node06.getId());
-		valuesByLabel.put(StandaloneRuntimeType.Ruby18.name(), StandaloneRuntimeType.Ruby18.getId());
-		valuesByLabel.put(StandaloneRuntimeType.Ruby19.name(), StandaloneRuntimeType.Ruby19.getId());
+	protected Composite createContents(Composite parent) {
+		Composite composite = super.createContents(parent);
+		StandaloneRuntimeType type = null;
+		if (getWizard() instanceof CloudFoundryApplicationWizard) {
+			CloudFoundryApplicationWizard appWizard = (CloudFoundryApplicationWizard) getWizard();
+			type = appWizard.getStandaloneDescriptor().getRuntimeType();
+		}
 
-		return valuesByLabel;
+		if (type == null) {
+			setErrorMessage("Unable to publish standalone application. Application runtime cannot be determined.");
+		}
+		else {
+			setErrorMessage(null);
+			createRuntimeArea(composite, type);
+		}
+
+		return composite;
 	}
 
-	public void createControl(Composite parent) {
-		super.createControl(parent);
-		setDescription("Standalone application detected. " + DEFAULT_DESCRIPTION);
-	}
+	protected void createRuntimeArea(Composite composite, StandaloneRuntimeType type) {
+		Label runtimeLabel = new Label(composite, SWT.NONE);
+		runtimeLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+		runtimeLabel.setText("Runtime: ");
 
-	@Override
-	protected String getComparisonValue() {
-		return StandaloneRuntimeType.Java.name();
-	}
-
-	@Override
-	protected String getValueLabel() {
-		return "Runtime";
-	}
-
-	public String getRuntime() {
-		return getSelectedValue();
+		Label runtime = new Label(composite, SWT.NONE);
+		runtime.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, false, false));
+		runtime.setText(type.name());
 	}
 
 }
