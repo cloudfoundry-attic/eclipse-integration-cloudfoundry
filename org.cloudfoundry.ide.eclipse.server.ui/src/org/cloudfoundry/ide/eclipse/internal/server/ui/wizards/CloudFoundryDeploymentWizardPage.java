@@ -269,7 +269,39 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 
 		setControl(composite);
 
+		if (wizard.isStandaloneApplication()) {
+			updateStandaloneControls();
+		}
+
 		update(false);
+	}
+
+	protected void updateStandaloneControls() {
+		if (standalonePart != null) {
+			IRunnableWithProgress runnable = new IRunnableWithProgress() {
+
+				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+					standalonePart.update(monitor);
+				}
+			};
+			Exception error = null;
+			try {
+				// Do not fork. Part update must occur in UI thread.
+				getContainer().run(false, true, runnable);
+			}
+			catch (InvocationTargetException e) {
+				error = e;
+			}
+			catch (InterruptedException e) {
+				error = e;
+			}
+
+			if (error != null) {
+				setMessage("Unable to initialize Standalone controls due to: "
+						+ error.getLocalizedMessage()
+						+ ". Type browsing and content assist may not be available, but start command can still be entered.");
+			}
+		}
 	}
 
 	public String getStandaloneStartCommand() {
@@ -403,6 +435,9 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 
 		IStatus status = validator.isValid();
 		canFinish = status.getSeverity() == IStatus.OK;
+		if (wizard.isStandaloneApplication() && standalonePart != null) {
+			canFinish &= standalonePart.isStartCommandValid();
+		}
 
 		if (canFinish) {
 			setErrorMessage(null);

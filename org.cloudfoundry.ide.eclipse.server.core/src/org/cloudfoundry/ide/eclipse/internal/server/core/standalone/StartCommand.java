@@ -51,11 +51,6 @@ public abstract class StartCommand {
 			super(descriptor);
 		}
 
-		protected String getMainMethodType() {
-
-			return null;
-		}
-
 		@Override
 		public String getStartCommand() {
 			StringWriter writer = new StringWriter();
@@ -63,10 +58,6 @@ public abstract class StartCommand {
 			if (getOptions() != null) {
 				writer.append(" ");
 				writer.append(getOptions());
-			}
-			if (getMainMethodType() != null) {
-				writer.append(" ");
-				writer.append(getMainMethodType());
 			}
 			return writer.toString();
 		}

@@ -15,7 +15,8 @@ import org.eclipse.core.runtime.Status;
 
 /**
  * Validates whether a url name value, and optionally a start command if an app
- * is a standalone app, are valid.
+ * is a standalone app, are valid. If a standalone app, URL is optional, which
+ * is also checked by this validator
  * <p/>
  * Valid url names should not include the protocol (e.g. http://www.google.com)
  * or queries in the name valid names are:

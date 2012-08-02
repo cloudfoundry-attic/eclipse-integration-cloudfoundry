@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +18,8 @@ import java.util.Map;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommandType;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.StandaloneUIDescriptor.ICommandChangeListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.StartCommandPartFactory.ICommandChangeListener;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
@@ -51,7 +51,9 @@ public class StandaloneStartCommandPart implements ICommandChangeListener {
 
 	private String standaloneStartCommand;
 
-	private Map<StartCommandType, Composite> startCommandAreas = new HashMap<StartCommandType, Composite>();
+	private boolean isStartCommandValid = false;
+
+	private Map<StartCommandType, StartCommandPart> startCommandAreas = new HashMap<StartCommandType, StartCommandPart>();
 
 	public StandaloneStartCommandPart(StandaloneDescriptor descriptor) {
 		this.descriptor = descriptor;
@@ -76,11 +78,15 @@ public class StandaloneStartCommandPart implements ICommandChangeListener {
 		return null;
 	}
 
+	public boolean isStartCommandValid() {
+		return isStartCommandValid;
+	}
+
 	protected void createStandaloneSection(Composite parent) {
 
 		List<StartCommandType> commandTypes = getStartCommandTypes();
 
-		StandaloneUIDescriptor uiDescriptor = new StandaloneUIDescriptor(descriptor);
+		StartCommandPartFactory partFactory = new StartCommandPartFactory(descriptor);
 		boolean createdControls = false;
 
 		Label label = new Label(parent, SWT.NONE);
@@ -92,40 +98,32 @@ public class StandaloneStartCommandPart implements ICommandChangeListener {
 		GridLayoutFactory.fillDefaults().numColumns(1).spacing(0, 0).applyTo(startCommandArea);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(startCommandArea);
 
-		if (!commandTypes.isEmpty() && uiDescriptor.hasUIControl()) {
-			createdControls = createStartCommandArea(commandTypes, uiDescriptor, startCommandArea);
+		if (!commandTypes.isEmpty()) {
+			createdControls = createStartCommandArea(commandTypes, partFactory, startCommandArea);
 		}
 
 		// If no controls have been created, create a default start command
 		// control.
 		if (!createdControls) {
-			uiDescriptor.createDefaultStartCommandControl(startCommandArea, this);
+			partFactory.createStartCommandTypePart(StartCommandType.Other, startCommandArea, this);
 		}
 	}
 
 	/**
 	 * 
 	 * @param commandTypes
-	 * @param uiDescriptor
+	 * @param partFactory
 	 * @param parent
 	 * @return true if start command area was created. False otherwise.
 	 */
-	protected boolean createStartCommandArea(List<StartCommandType> commandTypes, StandaloneUIDescriptor uiDescriptor,
+	protected boolean createStartCommandArea(List<StartCommandType> commandTypes, StartCommandPartFactory partFactory,
 			Composite parent) {
 
-		List<StartCommandType> createdUITypes = new ArrayList<StartCommandType>();
-
-		for (StartCommandType commandType : commandTypes) {
-			if (uiDescriptor.hasUIControl(commandType)) {
-				createdUITypes.add(commandType);
-			}
-		}
-
-		if (createdUITypes.isEmpty()) {
+		if (commandTypes.isEmpty()) {
 			return false;
 		}
 
-		int columnNumber = createdUITypes.size();
+		int columnNumber = commandTypes.size();
 
 		Composite buttonSelectionArea = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(columnNumber).applyTo(buttonSelectionArea);
@@ -136,7 +134,7 @@ public class StandaloneStartCommandPart implements ICommandChangeListener {
 		// Create radio buttons for each start command type, which
 		// allows users to
 		// toggle between the different start command
-		for (StartCommandType commandType : createdUITypes) {
+		for (StartCommandType commandType : commandTypes) {
 
 			// If no default start command type was specified, make
 			// the first one encountered
@@ -168,9 +166,12 @@ public class StandaloneStartCommandPart implements ICommandChangeListener {
 		GridLayoutFactory.fillDefaults().numColumns(1).spacing(0, 0).applyTo(startCompositeArea);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(startCompositeArea);
 
-		for (StartCommandType commandType : createdUITypes) {
-			Composite commandComposite = uiDescriptor.createStartCommandControl(startCompositeArea, commandType, this);
-			startCommandAreas.put(commandType, commandComposite);
+		for (StartCommandType commandType : commandTypes) {
+			StartCommandPart commandPart = partFactory
+					.createStartCommandTypePart(commandType, startCompositeArea, this);
+			if (commandPart != null) {
+				startCommandAreas.put(commandType, commandPart);
+			}
 		}
 
 		// At this stage, at least one UI control has been created
@@ -198,7 +199,8 @@ public class StandaloneStartCommandPart implements ICommandChangeListener {
 	}
 
 	protected void makeStartCommandControlsVisible(StartCommandType typeToMakeVisible) {
-		Composite areaToMakeVisible = startCommandAreas.get(typeToMakeVisible);
+		StartCommandPart part = startCommandAreas.get(typeToMakeVisible);
+		Composite areaToMakeVisible = part != null ? part.getComposite() : null;
 
 		if (areaToMakeVisible != null && !areaToMakeVisible.isDisposed()) {
 
@@ -211,13 +213,17 @@ public class StandaloneStartCommandPart implements ICommandChangeListener {
 			// made invisible
 			for (StartCommandType otherTypes : startCommandAreas.keySet()) {
 				if (!otherTypes.equals(typeToMakeVisible)) {
-					Composite otherArea = startCommandAreas.get(otherTypes);
+					StartCommandPart otherArea = startCommandAreas.get(otherTypes);
 
-					if (!otherArea.isDisposed()) {
-						data = (GridData) otherArea.getLayoutData();
-						GridDataFactory.createFrom(data).exclude(true).applyTo(otherArea);
+					if (otherArea != null) {
+						Composite otherAreaComposite = otherArea.getComposite();
 
-						otherArea.setVisible(false);
+						if (!otherAreaComposite.isDisposed()) {
+							data = (GridData) otherAreaComposite.getLayoutData();
+							GridDataFactory.createFrom(data).exclude(true).applyTo(otherAreaComposite);
+
+							otherAreaComposite.setVisible(false);
+						}
 					}
 				}
 			}
@@ -228,8 +234,21 @@ public class StandaloneStartCommandPart implements ICommandChangeListener {
 
 	}
 
-	public void handleChange(String command) {
+	/**
+	 * Updates the values of the part. Some update operations may be long
+	 * running, therefore a progress monitor is included as an option.
+	 * 
+	 * @param monitor
+	 */
+	public void update(IProgressMonitor monitor) {
+		for (StartCommandPart parts : startCommandAreas.values()) {
+			parts.update(monitor);
+		}
+	}
+
+	public void handleChange(String command, boolean isValid) {
 		standaloneStartCommand = command;
+		isStartCommandValid = isValid;
 	}
 
 }
