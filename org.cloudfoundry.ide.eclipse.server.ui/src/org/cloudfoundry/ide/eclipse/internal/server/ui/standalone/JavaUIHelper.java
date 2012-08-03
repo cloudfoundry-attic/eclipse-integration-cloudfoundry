@@ -8,11 +8,9 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui;
+package org.cloudfoundry.ide.eclipse.internal.server.ui.standalone;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaElement;
@@ -25,6 +23,11 @@ import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.internal.debug.ui.launcher.MainMethodSearchEngine;
 
+/**
+ * 
+ * Helper methods for UI components that require Java type searching, given a
+ * valid java project.
+ */
 public class JavaUIHelper {
 
 	private final IJavaProject project;
@@ -69,6 +72,9 @@ public class JavaUIHelper {
 
 				if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
 					roots = javaProject.findPackageFragmentRoots(entry);
+					if (roots != null) {
+						break;
+					}
 				}
 			}
 

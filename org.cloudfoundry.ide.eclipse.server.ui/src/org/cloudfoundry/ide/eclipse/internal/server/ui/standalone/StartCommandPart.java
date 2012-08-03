@@ -8,9 +8,9 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui;
+package org.cloudfoundry.ide.eclipse.internal.server.ui.standalone;
 
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.StartCommandEvent;
 import org.eclipse.swt.widgets.Composite;
 
 /**
@@ -24,10 +24,14 @@ public interface StartCommandPart {
 	 * A new composite should not be created every time this method is called
 	 * 
 	 * 
-	 * @return
+	 * @return Composite instance to be re-used throughout life of the part
 	 */
 	public Composite getComposite();
 
-	public void update(IProgressMonitor monitor);
+	/**
+	 * Tells the part to update the start command from current values of in the
+	 * UI control and notify listeners with the revised start command
+	 */
+	public void updateStartCommand(StartCommandEvent event);
 
 }

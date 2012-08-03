@@ -8,10 +8,13 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui;
+package org.cloudfoundry.ide.eclipse.internal.server.ui.standalone;
 
-import org.cloudfoundry.ide.eclipse.internal.server.ui.StartCommandPartFactory.ICommandChangeListener;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.StartCommandPartFactory.JavaStartCommandPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.IStartCommandPartListener;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -32,6 +35,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.progress.UIJob;
 
 /**
  * Given a Java start command part, it applies type browsing to a browse button
@@ -44,10 +48,6 @@ import org.eclipse.swt.widgets.Text;
  */
 public class JavaTypeUIAdapter {
 
-	private final Button browseButton;
-
-	private final Text typeText;
-
 	private final IJavaProject javaProject;
 
 	private final String title;
@@ -57,10 +57,8 @@ public class JavaTypeUIAdapter {
 	private final JavaStartCommandPart javaStartCommandPart;
 
 	public JavaTypeUIAdapter(JavaStartCommandPart javaStartCommandPart, IJavaProject javaProject, String title,
-			ICommandChangeListener listener) {
+			IStartCommandPartListener listener) {
 
-		this.browseButton = javaStartCommandPart.getBrowseButton();
-		this.typeText = javaStartCommandPart.getTypeText();
 		this.javaProject = javaProject;
 		this.title = title;
 		this.javaStartCommandPart = javaStartCommandPart;
@@ -68,7 +66,7 @@ public class JavaTypeUIAdapter {
 	}
 
 	public JavaTypeUIAdapter(JavaStartCommandPart javaStartCommandPart, IJavaProject javaProject,
-			ICommandChangeListener listener) {
+			IStartCommandPartListener listener) {
 		this(javaStartCommandPart, javaProject, "Browse Type with main method", listener);
 	}
 
@@ -99,6 +97,35 @@ public class JavaTypeUIAdapter {
 		}
 		processor = createContentAssistProcessor();
 		ControlContentAssistHelper.createTextContentAssistant(text, processor);
+		final JavaUIHelper helper = new JavaUIHelper(javaProject);
+		final IPackageFragment defaultPackageFragment = helper.getDefaultPackageFragment();
+
+		if (defaultPackageFragment != null) {
+			processor.setCompletionContextRequestor(new CompletionContextRequestor() {
+				public StubTypeContext getStubTypeContext() {
+					return TypeContextChecker.createSuperClassStubTypeContext(
+							JavaTypeCompletionProcessor.DUMMY_CLASS_NAME, null, defaultPackageFragment);
+				}
+			});
+		}
+		UIJob job = new UIJob("Initialising Java Content Assist") {
+
+			public IStatus runInUIThread(IProgressMonitor monitor) {
+
+				IType[] types = helper.getMainMethodTypes(monitor);
+				String qualifiedTypeName = types != null && types.length > 0 ? types[0].getFullyQualifiedName() : null;
+				Text text = javaStartCommandPart.getTypeText();
+				if (text != null) {
+					text.setText(qualifiedTypeName);
+				}
+				return Status.OK_STATUS;
+			}
+
+		};
+		job.setPriority(Job.INTERACTIVE);
+		job.setSystem(true);
+		job.schedule();
+
 	}
 
 	protected Shell getShell() {
@@ -139,22 +166,6 @@ public class JavaTypeUIAdapter {
 		}
 
 		javaStartCommandPart.updateStartCommand();
-	}
-
-	public void update(String qualifiedTypeName, final IPackageFragment defaultPackageFragment, IJavaProject javaProject) {
-		Text text = javaStartCommandPart.getTypeText();
-		if (text != null && qualifiedTypeName != null) {
-			text.setText(qualifiedTypeName);
-		}
-
-		if (defaultPackageFragment != null) {
-			processor.setCompletionContextRequestor(new CompletionContextRequestor() {
-				public StubTypeContext getStubTypeContext() {
-					return TypeContextChecker.createSuperClassStubTypeContext(
-							JavaTypeCompletionProcessor.DUMMY_CLASS_NAME, null, defaultPackageFragment);
-				}
-			});
-		}
 	}
 
 	protected JavaTypeCompletionProcessor createContentAssistProcessor() {

@@ -63,7 +63,17 @@ public abstract class StartCommand {
 		}
 
 		public String getOptions() {
-			return "$JAVA_OPTS";
+			StringWriter options = new StringWriter();
+			options.append("$JAVA_OPTS");
+			options.append(" ");
+			options.append("-cp");
+			options.append(" ");
+			options.append(getClassPathOptionArg());
+			return options.toString();
+		}
+		
+		protected String getClassPathOptionArg() {
+			return ".:*";
 		}
 
 		@Override

@@ -22,6 +22,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConstants;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneRuntimeType;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StandaloneApplicationWizardPage;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.wizard.Wizard;
 
@@ -76,6 +77,7 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	@Override
 	public void addPages() {
+
 		deploymentPage = new CloudFoundryDeploymentWizardPage(server, module, this);
 		if (module.getLocalModule() != null) {
 			applicationPage = isStandaloneApplication() ? new StandaloneApplicationWizardPage(server, deploymentPage,
@@ -85,6 +87,10 @@ public class CloudFoundryApplicationWizard extends Wizard {
 		addPage(deploymentPage);
 		servicesPage = new CloudFoundryApplicationServicesWizardPage(server, module);
 		addPage(servicesPage);
+
+		if (isStandaloneApplication()) {
+			setNeedsProgressMonitor(true);
+		}
 
 	}
 

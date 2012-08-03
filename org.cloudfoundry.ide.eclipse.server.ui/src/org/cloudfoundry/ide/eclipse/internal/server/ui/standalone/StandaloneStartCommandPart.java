@@ -8,7 +8,7 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui;
+package org.cloudfoundry.ide.eclipse.internal.server.ui.standalone;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,8 +18,9 @@ import java.util.Map;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommandType;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.StartCommandPartFactory.ICommandChangeListener;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.IStartCommandChangeListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.IStartCommandPartListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.StartCommandEvent;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
@@ -45,7 +46,7 @@ import org.eclipse.swt.widgets.Label;
  * default start command UI will be created containing an editable text where a
  * full start command value can be specified.
  */
-public class StandaloneStartCommandPart implements ICommandChangeListener {
+public class StandaloneStartCommandPart implements IStartCommandPartListener {
 
 	private final StandaloneDescriptor descriptor;
 
@@ -55,8 +56,11 @@ public class StandaloneStartCommandPart implements ICommandChangeListener {
 
 	private Map<StartCommandType, StartCommandPart> startCommandAreas = new HashMap<StartCommandType, StartCommandPart>();
 
-	public StandaloneStartCommandPart(StandaloneDescriptor descriptor) {
+	private final IStartCommandChangeListener listener;
+
+	public StandaloneStartCommandPart(StandaloneDescriptor descriptor, IStartCommandChangeListener listener) {
 		this.descriptor = descriptor;
+		this.listener = listener;
 	}
 
 	public String getStandaloneStartCommand() {
@@ -154,7 +158,13 @@ public class StandaloneStartCommandPart implements ICommandChangeListener {
 
 				public void widgetSelected(SelectionEvent e) {
 					if (radio.getSelection()) {
-						makeStartCommandControlsVisible((StartCommandType) radio.getData());
+						StartCommandType type = (StartCommandType) radio.getData();
+						
+						makeStartCommandControlsVisible(type);
+						StartCommandPart part = startCommandAreas.get(type);
+						if (part != null) {
+							part.updateStartCommand(StartCommandEvent.UPDATE);
+						}
 					}
 				}
 			});
@@ -234,21 +244,12 @@ public class StandaloneStartCommandPart implements ICommandChangeListener {
 
 	}
 
-	/**
-	 * Updates the values of the part. Some update operations may be long
-	 * running, therefore a progress monitor is included as an option.
-	 * 
-	 * @param monitor
-	 */
-	public void update(IProgressMonitor monitor) {
-		for (StartCommandPart parts : startCommandAreas.values()) {
-			parts.update(monitor);
-		}
-	}
-
 	public void handleChange(String command, boolean isValid) {
 		standaloneStartCommand = command;
 		isStartCommandValid = isValid;
+		if (listener != null) {
+			listener.handleEvent(StartCommandEvent.UPDATE);
+		}
 	}
 
 }
