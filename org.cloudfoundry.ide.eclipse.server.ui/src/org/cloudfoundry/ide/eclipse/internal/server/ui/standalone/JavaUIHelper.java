@@ -56,6 +56,20 @@ public class JavaUIHelper {
 
 	}
 
+	public IType getMainMethodTypeFromSource(IProgressMonitor monitor) {
+		IType[] types = getMainMethodTypes(monitor);
+		IType firstEncounteredSourceType = null;
+		if (types != null) {
+			for (IType type : types) {
+				if (!type.isBinary()) {
+					firstEncounteredSourceType = type;
+					break;
+				}
+			}
+		}
+		return firstEncounteredSourceType;
+	}
+
 	public IPackageFragment getDefaultPackageFragment() {
 		IJavaProject javaProject = getJavaProject();
 

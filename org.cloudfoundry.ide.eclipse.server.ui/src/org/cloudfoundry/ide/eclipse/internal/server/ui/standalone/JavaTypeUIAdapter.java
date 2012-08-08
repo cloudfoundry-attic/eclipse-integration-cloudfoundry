@@ -112,10 +112,10 @@ public class JavaTypeUIAdapter {
 
 			public IStatus runInUIThread(IProgressMonitor monitor) {
 
-				IType[] types = helper.getMainMethodTypes(monitor);
-				String qualifiedTypeName = types != null && types.length > 0 ? types[0].getFullyQualifiedName() : null;
+				IType type = helper.getMainMethodTypeFromSource(monitor);
+				String qualifiedTypeName = type != null ? type.getFullyQualifiedName() : null;
 				Text text = javaStartCommandPart.getTypeText();
-				if (text != null) {
+				if (qualifiedTypeName != null && text != null) {
 					text.setText(qualifiedTypeName);
 				}
 				return Status.OK_STATUS;
