@@ -26,7 +26,7 @@ public class CaldecottTunnelWizard extends Wizard {
 		super();
 		this.cloudServer = cloudServer;
 
-		setWindowTitle("Active Caldecott Tunnels");
+		setWindowTitle("Active Tunnels");
 		setNeedsProgressMonitor(true);
 	}
 

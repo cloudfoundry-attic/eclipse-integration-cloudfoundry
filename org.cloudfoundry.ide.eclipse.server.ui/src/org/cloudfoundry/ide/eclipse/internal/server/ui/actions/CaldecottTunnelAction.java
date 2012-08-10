@@ -24,9 +24,9 @@ public class CaldecottTunnelAction extends Action {
 	}
 
 	protected void setActionValues() {
-		setText("Caldecott Tunnels...");
+		setText("Show Tunnels...");
 		setImageDescriptor(CloudFoundryImages.CONNECT);
-		setToolTipText("Show active Caldecott tunnels");
+		setToolTipText("Show active tunnels");
 		setEnabled(true);
 	}
 

@@ -95,7 +95,7 @@ public class CaldecottTunnelHandler {
 
 		CloudApplication caldecottApp = getCaldecottApp(progress);
 
-		new StartApplicationInWaitOperation(cloudServer, "Starting Caldecott application").run(progress, client,
+		new StartApplicationInWaitOperation(cloudServer, "Starting tunnel application").run(progress, client,
 				caldecottApp);
 
 	}
@@ -104,7 +104,7 @@ public class CaldecottTunnelHandler {
 		int ticks = 10;
 		long sleep = 3000;
 
-		progress.setTaskName("Getting tunnel URL.");
+		progress.setTaskName("Getting tunnel URL");
 		String url = new WaitWithProgressJob<String>(ticks, sleep) {
 
 			@Override
@@ -135,7 +135,7 @@ public class CaldecottTunnelHandler {
 					return null;
 				}
 
-				progress.setTaskName("Binding " + serviceName + " to Caldecott.");
+				progress.setTaskName("Binding " + serviceName + " to tunnel application");
 
 				bindServiceToCaldecottApp(serviceName, progress);
 
@@ -186,7 +186,7 @@ public class CaldecottTunnelHandler {
 				if (tunnelServers.isEmpty() || localPort == -1) {
 					CloudFoundryPlugin
 							.logError(NLS
-									.bind("Caldecott tunnel information obtained for {0}, but failed to create tunnel server for ports between: {1} and {2}",
+									.bind("Tunnel information obtained for {0}, but failed to create tunnel server for ports between: {1} and {2}",
 											new Object[] { serviceName, new Integer(BASE_PORT), new Integer(MAX_PORT) }));
 					return null;
 				}
@@ -461,7 +461,7 @@ public class CaldecottTunnelHandler {
 
 			@Override
 			protected Boolean doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
-				progress.setTaskName("Deploying Caldecott application.");
+				progress.setTaskName("Deploying tunnel application");
 				Thread t = Thread.currentThread();
 				ClassLoader oldLoader = t.getContextClassLoader();
 				boolean deployed = false;

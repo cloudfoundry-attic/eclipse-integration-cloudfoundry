@@ -56,9 +56,9 @@ public class CaldecottTunnelInfoDialog extends TitleAreaDialog {
 	protected Control createDialogArea(Composite parent) {
 		ImageDescriptor descriptor = CloudFoundryImages
 				.getWizardBanner(cloudServer.getServer().getServerType().getId());
-		setTitle("Active Caldecott Tunnels");
+		setTitle("Tunnel Information");
+		
 		if (descriptor != null) {
-
 			setTitleImage(CloudFoundryImages.getImage(descriptor));
 		}
 

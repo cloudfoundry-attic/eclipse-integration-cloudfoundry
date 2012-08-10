@@ -656,10 +656,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	protected void closeCaldecottTunnelsAsynch() {
-		String jobName = "Stopping all Caldecott tunnels";
+		String jobName = "Stopping all tunnels";
 
 		try {
-			jobName += " :" + getCloudFoundryServer().getDeploymentName();
+			jobName += ": " + getCloudFoundryServer().getDeploymentName();
 		}
 		catch (CoreException e1) {
 			CloudFoundryPlugin.logError(e1);

@@ -36,10 +36,10 @@ public class CaldecottTunnelWizardPage extends WizardPage {
 	private TunnelDisplayPart part;
 
 	public CaldecottTunnelWizardPage(CloudFoundryServer cloudServer) {
-		super("Caldecott Service Tunnels");
+		super("Active Tunnels");
 		this.cloudServer = cloudServer;
-		setTitle("Caldecott Service Tunnels");
-		setDescription("Manage Caldecott Tunnels");
+		setTitle("Active Tunnels");
+		setDescription("Manage active tunnels");
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(cloudServer.getServer().getServerType().getId());
 		if (banner != null) {
 			setImageDescriptor(banner);

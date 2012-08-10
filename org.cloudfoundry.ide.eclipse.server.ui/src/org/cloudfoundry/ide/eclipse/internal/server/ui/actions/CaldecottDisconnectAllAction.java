@@ -31,15 +31,15 @@ public class CaldecottDisconnectAllAction extends Action {
 	}
 
 	protected void setActionValues() {
-		setText("Disconnect All Caldecott Tunnels");
+		setText("Disconnect All Tunnels");
 		setImageDescriptor(CloudFoundryImages.DISCONNECT);
-		setToolTipText("Disconnect All Caldecott Tunnels");
+		setToolTipText("Disconnect All Tunnels");
 		setEnabled(true);
 	}
 
 	public void run() {
 
-		Job job = new Job("Stopping all Caldecott tunnels for: " + cloudServer.getDeploymentName()) {
+		Job job = new Job("Stopping all tunnels for: " + cloudServer.getDeploymentName()) {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
