@@ -11,7 +11,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.standalone;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.URLNameValidation;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommand;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.JavaStartCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.IStartCommandPartListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.StartCommandEvent;
 import org.eclipse.jdt.core.IJavaProject;
@@ -98,7 +98,7 @@ public class JavaStartCommandPart extends AbstractStartCommandPart {
 
 		javaOptions = startCommandPartFactory.createdEditableText(mainTypeArea);
 
-		StartCommand.JavaStartCommand javaStartCommand = (StartCommand.JavaStartCommand) startCommandPartFactory.standaloneDescriptor
+		JavaStartCommand javaStartCommand = (JavaStartCommand) startCommandPartFactory.standaloneDescriptor
 				.getStartCommand();
 
 		String defaultArgs = javaStartCommand.getOptions();

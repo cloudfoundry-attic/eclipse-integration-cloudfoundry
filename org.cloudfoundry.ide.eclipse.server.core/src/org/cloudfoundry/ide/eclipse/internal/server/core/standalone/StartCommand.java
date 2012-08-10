@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.standalone;
 
-import java.io.StringWriter;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -44,51 +42,5 @@ public abstract class StartCommand {
 	abstract public StartCommandType getDefaultStartCommandType();
 
 	abstract public List<StartCommandType> getStartCommandTypes();
-
-	public static class JavaStartCommand extends StartCommand {
-
-		protected JavaStartCommand(StandaloneDescriptor descriptor) {
-			super(descriptor);
-		}
-
-		@Override
-		public String getStartCommand() {
-			StringWriter writer = new StringWriter();
-			writer.append("java");
-			if (getOptions() != null) {
-				writer.append(" ");
-				writer.append(getOptions());
-			}
-			return writer.toString();
-		}
-
-		public String getOptions() {
-			StringWriter options = new StringWriter();
-			options.append("$JAVA_OPTS");
-			options.append(" ");
-			options.append("-cp");
-			options.append(" ");
-			options.append(getClassPathOptionArg());
-			return options.toString();
-		}
-		
-		protected String getClassPathOptionArg() {
-			return ".:*";
-		}
-
-		@Override
-		public StartCommandType getDefaultStartCommandType() {
-			return StartCommandType.Java;
-		}
-
-		/**
-		 * May be empty, but never null
-		 * @return
-		 */
-		public List<StartCommandType> getStartCommandTypes() {
-			return Arrays.asList(new StartCommandType[] { StartCommandType.Java, StartCommandType.Other });
-		}
-
-	}
 
 }

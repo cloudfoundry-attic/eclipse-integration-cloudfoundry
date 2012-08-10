@@ -81,7 +81,7 @@ public class StandaloneDescriptor {
 		if (type != null) {
 			switch (type) {
 			case Java:
-				return new StartCommand.JavaStartCommand(this);
+				return new JavaStartCommand(this);
 			}
 		}
 		return null;
