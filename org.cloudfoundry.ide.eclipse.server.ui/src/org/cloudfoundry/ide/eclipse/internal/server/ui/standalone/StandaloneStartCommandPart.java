@@ -10,17 +10,16 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.standalone;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommandType;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.IStartCommandChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.IStartCommandPartListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.StartCommandEvent;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
@@ -48,7 +47,7 @@ import org.eclipse.swt.widgets.Label;
  */
 public class StandaloneStartCommandPart implements IStartCommandPartListener {
 
-	private final StandaloneDescriptor descriptor;
+	private final StartCommand startCommand;
 
 	private String standaloneStartCommand;
 
@@ -58,9 +57,12 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 
 	private final IStartCommandChangeListener listener;
 
-	public StandaloneStartCommandPart(StandaloneDescriptor descriptor, IStartCommandChangeListener listener) {
-		this.descriptor = descriptor;
+	private final IProject project;
+
+	public StandaloneStartCommandPart(StartCommand startCommand, IStartCommandChangeListener listener, IProject project) {
+		this.startCommand = startCommand;
 		this.listener = listener;
+		this.project = project;
 	}
 
 	public String getStandaloneStartCommand() {
@@ -72,25 +74,15 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 		return parent;
 	}
 
-	protected StartCommandType getDefaultStartCommandType(StandaloneDescriptor descriptor) {
-		if (descriptor != null) {
-			StartCommand startCommand = descriptor.getStartCommand();
-			if (startCommand != null) {
-				return startCommand.getDefaultStartCommandType();
-			}
-		}
-		return null;
-	}
-
 	public boolean isStartCommandValid() {
 		return isStartCommandValid;
 	}
 
 	protected void createStandaloneSection(Composite parent) {
 
-		List<StartCommandType> commandTypes = getStartCommandTypes();
+		List<StartCommandType> commandTypes = startCommand.getStartCommandTypes();
 
-		StartCommandPartFactory partFactory = new StartCommandPartFactory(descriptor);
+		StartCommandPartFactory partFactory = new StartCommandPartFactory(startCommand, project);
 		boolean createdControls = false;
 
 		Label label = new Label(parent, SWT.NONE);
@@ -133,7 +125,7 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 		GridLayoutFactory.fillDefaults().numColumns(columnNumber).applyTo(buttonSelectionArea);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(buttonSelectionArea);
 
-		StartCommandType defaultStartCommandType = getDefaultStartCommandType(descriptor);
+		StartCommandType defaultStartCommandType = startCommand.getDefaultStartCommandType();
 
 		// Create radio buttons for each start command type, which
 		// allows users to
@@ -159,7 +151,7 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 				public void widgetSelected(SelectionEvent e) {
 					if (radio.getSelection()) {
 						StartCommandType type = (StartCommandType) radio.getData();
-						
+
 						makeStartCommandControlsVisible(type);
 						StartCommandPart part = startCommandAreas.get(type);
 						if (part != null) {
@@ -187,25 +179,6 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 		// At this stage, at least one UI control has been created
 		makeStartCommandControlsVisible(defaultStartCommandType);
 		return true;
-	}
-
-	/**
-	 * @return non-null list of start command types, or empty if none are
-	 * defined for the given standalone descriptor
-	 */
-	protected List<StartCommandType> getStartCommandTypes() {
-
-		if (descriptor.getStartCommand() == null) {
-			return Collections.emptyList();
-		}
-
-		List<StartCommandType> commandTypes = descriptor.getStartCommand().getStartCommandTypes();
-
-		if (commandTypes == null) {
-			return Collections.emptyList();
-		}
-
-		return commandTypes;
 	}
 
 	protected void makeStartCommandControlsVisible(StartCommandType typeToMakeVisible) {

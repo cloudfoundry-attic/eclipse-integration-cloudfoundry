@@ -16,6 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudApplication.AppState;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
 import org.cloudfoundry.client.lib.CloudFoundryException;
+import org.cloudfoundry.client.lib.CloudInfo;
 import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.client.lib.InstancesInfo;
 import org.cloudfoundry.client.lib.ServiceConfiguration;
@@ -39,7 +41,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryPrope
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneApplicationArchive;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneHandler;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -85,6 +87,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private RefreshJob refreshJob;
 
 	private DebugSupportCheck isDebugModeSupported = DebugSupportCheck.UNCHECKED;
+
+	private List<CloudInfo.Runtime> runtimes = null;
 
 	private IServerListener serverListener = new IServerListener() {
 
@@ -143,6 +147,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			isDebugModeSupported = client.getCloudInfo().getAllowDebug() ? DebugSupportCheck.SUPPORTED
 					: DebugSupportCheck.UNSUPPORTED;
 		}
+	}
+
+	public List<CloudInfo.Runtime> getRuntimes() {
+		return runtimes;
 	}
 
 	/**
@@ -236,6 +244,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
+	protected boolean isStandalone(ApplicationModule appModule) throws CoreException {
+		return new StandaloneHandler(appModule, getCloudFoundryServer()).isSupportedStandalone();
+	}
+
 	private CloudApplication doDeployApplication(CloudFoundryClient client, final ApplicationModule appModule,
 			final DeploymentDescriptor descriptor, IProgressMonitor monitor) throws CoreException {
 		Assert.isNotNull(descriptor.applicationInfo);
@@ -259,7 +271,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			if (!found) {
 				Staging staging = descriptor.staging;
-				if (StandaloneUtil.isStandaloneApp(appModule) && StandaloneUtil.isValidStaging(staging)) {
+				if (isStandalone(appModule)) {
 					List<String> uris = descriptor.deploymentInfo.getUris() != null ? descriptor.deploymentInfo
 							.getUris() : new ArrayList<String>();
 					List<String> services = descriptor.deploymentInfo.getServices() != null ? descriptor.deploymentInfo
@@ -1319,6 +1331,16 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// if the server supports debugging.
 				requestAllowDebug(client);
 
+				// Check runtimes as well once per server behaviour instance
+				if (runtimes == null) {
+					runtimes = new ArrayList<CloudInfo.Runtime>();
+
+					Collection<CloudInfo.Runtime> clientRuntimes = client.getCloudInfo().getRuntimes();
+					if (clientRuntimes != null) {
+						runtimes.addAll(clientRuntimes);
+					}
+				}
+
 			}
 			catch (RestClientException e) {
 				throw toCoreException(e);
@@ -1442,7 +1464,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							started = true;
 						}
 						else {
-							if (StandaloneUtil.isStandaloneApp(cloudModule)) {
+							if (isStandalone(cloudModule)) {
 
 								// Get the module resources for the standalone
 								// as provided by the standlaone module factory

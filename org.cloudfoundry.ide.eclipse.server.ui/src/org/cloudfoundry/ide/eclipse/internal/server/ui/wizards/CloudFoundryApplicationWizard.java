@@ -20,8 +20,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConstants;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneRuntimeType;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StandaloneApplicationWizardPage;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.wizard.Wizard;
@@ -42,7 +41,7 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	private final ApplicationModule module;
 
-	private StandaloneDescriptor descriptor;
+	private StandaloneHandler standaloneHandler;
 
 	private final CloudFoundryServer server;
 
@@ -59,11 +58,11 @@ public class CloudFoundryApplicationWizard extends Wizard {
 	 * application.
 	 * @return
 	 */
-	public StandaloneDescriptor getStandaloneDescriptor() {
-		if (descriptor == null) {
-			descriptor = new StandaloneDescriptor(module);
+	public StandaloneHandler getStandaloneHandler() {
+		if (standaloneHandler == null) {
+			standaloneHandler = new StandaloneHandler(module, server);
 		}
-		return descriptor;
+		return standaloneHandler;
 	}
 
 	/**
@@ -72,7 +71,7 @@ public class CloudFoundryApplicationWizard extends Wizard {
 	 * supported runtime. False otherwise.
 	 */
 	public boolean isStandaloneApplication() {
-		return getStandaloneDescriptor().isSupportedStandalone();
+		return getStandaloneHandler().isSupportedStandalone();
 	}
 
 	@Override
@@ -108,12 +107,11 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	public Staging getStaging() {
 		if (isStandaloneApplication()) {
-			StandaloneDescriptor standaloneDescriptor = getStandaloneDescriptor();
-			StandaloneRuntimeType runtimeType = standaloneDescriptor.getRuntimeType();
+			String runtimeType = applicationPage.getSelectedValue();
 			String command = deploymentPage.getStandaloneStartCommand();
 			Staging staging = new Staging(DeploymentConstants.STANDALONE_FRAMEWORK);
 			staging.setCommand(command);
-			staging.setRuntime(runtimeType.getId());
+			staging.setRuntime(runtimeType);
 			return staging;
 		}
 

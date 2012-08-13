@@ -28,6 +28,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StandaloneStartCommandPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.IStartCommandChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.StartCommandEvent;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -263,7 +264,12 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 		});
 
 		if (wizard.isStandaloneApplication()) {
-			standalonePart = new StandaloneStartCommandPart(wizard.getStandaloneDescriptor(), this);
+			IProject project = module.getProject();
+			if (project == null) {
+				project = module.getLocalModule().getProject();
+			}
+			standalonePart = new StandaloneStartCommandPart(wizard.getStandaloneHandler().getStartCommand(), this,
+					project);
 			standalonePart.createPart(topComposite);
 		}
 
@@ -406,14 +412,14 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 		IStatus status = validator.isValid();
 		canFinish = status.getSeverity() == IStatus.OK;
 
-
 		if (canFinish) {
 			if (wizard.isStandaloneApplication() && standalonePart != null) {
 				canFinish = standalonePart.isStartCommandValid();
 			}
 			if (!canFinish) {
 				setErrorMessage("Invalid start command entered.");
-			} else {
+			}
+			else {
 				setErrorMessage(null);
 			}
 		}

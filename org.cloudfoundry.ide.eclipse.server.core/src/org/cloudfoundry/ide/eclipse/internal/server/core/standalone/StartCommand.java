@@ -23,16 +23,6 @@ import java.util.List;
  */
 public abstract class StartCommand {
 
-	private final StandaloneDescriptor descriptor;
-
-	public StartCommand(StandaloneDescriptor descriptor) {
-		this.descriptor = descriptor;
-	}
-
-	public StandaloneDescriptor getDescriptor() {
-		return descriptor;
-	}
-
 	/**
 	 * The start command in the form that it would be used to start the
 	 * application.
@@ -42,5 +32,7 @@ public abstract class StartCommand {
 	abstract public StartCommandType getDefaultStartCommandType();
 
 	abstract public List<StartCommandType> getStartCommandTypes();
+
+	abstract public String getArgs();
 
 }

@@ -11,6 +11,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,8 +28,10 @@ import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
@@ -64,13 +67,18 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 
 	private final CloudFoundryDeploymentWizardPage deploymentPage;
 
+	private Combo frameworkCombo;
+
+	private Map<String, String> valuesByLabel;
+
+	private String value;
+
 	public AbstractCloudFoundryApplicationWizardPage(CloudFoundryServer server,
 			CloudFoundryDeploymentWizardPage deploymentPage, ApplicationModule module) {
 		super("Deployment Wizard");
 		this.server = server;
 		this.deploymentPage = deploymentPage;
 		this.module = module;
-
 		if (module == null) {
 			// this.app = null;
 			this.lastApplicationInfo = null;
@@ -87,6 +95,10 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 		appName = lastApplicationInfo.getAppName();
 
 	}
+
+	abstract protected Map<String, String> getValuesByLabel();
+
+	abstract protected String getValueLabel();
 
 	public static String getAppName(ApplicationModule module) {
 		CloudApplication app = module.getApplication();
@@ -120,7 +132,9 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 		if (banner != null) {
 			setImageDescriptor(banner);
 		}
-
+		
+		valuesByLabel = getValuesByLabel();
+		
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -130,6 +144,14 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 		setControl(composite);
 
 		update(false);
+	}
+
+	protected void setValue(String value) {
+		this.value = value;
+	}
+
+	public String getSelectedValue() {
+		return valuesByLabel.get(value);
 	}
 
 	/**
@@ -173,6 +195,7 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 				update();
 			}
 		});
+		createFrameworkArea(composite);
 		return composite;
 
 	}
@@ -217,6 +240,32 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 		if (updateButtons) {
 			getWizard().getContainer().updateButtons();
 		}
+	}
+
+	abstract protected String getInitialValue();
+
+	protected void createFrameworkArea(Composite composite) {
+		Label frameworkLabel = new Label(composite, SWT.NONE);
+		frameworkLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+		frameworkLabel.setText(getValueLabel() + ":");
+
+		frameworkCombo = new Combo(composite, SWT.BORDER | SWT.READ_ONLY);
+		frameworkCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		int index = 0;
+		for (Map.Entry<String, String> entry : valuesByLabel.entrySet()) {
+			frameworkCombo.add(entry.getKey());
+			if (entry.getValue().equals(getInitialValue())) {
+				index = frameworkCombo.getItemCount() - 1;
+			}
+		}
+		frameworkCombo.select(index);
+		setValue(frameworkCombo.getText());
+		frameworkCombo.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
+				update();
+				setValue(frameworkCombo.getText());
+			}
+		});
 	}
 
 }

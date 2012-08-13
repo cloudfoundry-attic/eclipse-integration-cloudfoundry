@@ -12,7 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.standalone;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.URLNameValidation;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommandType;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IJavaProject;
@@ -33,10 +33,13 @@ import org.eclipse.swt.widgets.Text;
  */
 public class StartCommandPartFactory {
 
-	final StandaloneDescriptor standaloneDescriptor;
+	private final StartCommand startCommand;
 
-	public StartCommandPartFactory(StandaloneDescriptor standaloneDescriptor) {
-		this.standaloneDescriptor = standaloneDescriptor;
+	private final IProject project;
+
+	public StartCommandPartFactory(StartCommand startCommand, IProject project) {
+		this.startCommand = startCommand;
+		this.project = project;
 	}
 
 	public StartCommandPart createStartCommandTypePart(StartCommandType type, Composite parent,
@@ -127,9 +130,9 @@ public class StartCommandPartFactory {
 		return composite;
 	}
 
-	protected StartCommandPart getJavaStartArea(Composite parent, final IStartCommandPartListener listener) {
-		return new JavaStartCommandPart(this, parent, listener);
-
+	protected StartCommandPart getJavaStartArea(Composite parent, IStartCommandPartListener listener) {
+		IJavaProject javaProject = project != null ? CloudFoundryProjectUtil.getJavaProject(project) : null;
+		return new JavaStartCommandPart(javaProject, this, startCommand, parent, listener);
 	}
 
 	/**
@@ -170,12 +173,4 @@ public class StartCommandPartFactory {
 		}
 	}
 
-	protected IJavaProject getJavaProject() {
-		IProject project = standaloneDescriptor.getProject();
-		if (project == null || !project.isAccessible()) {
-			return null;
-		}
-
-		return CloudFoundryProjectUtil.getJavaProject(project);
-	}
 }

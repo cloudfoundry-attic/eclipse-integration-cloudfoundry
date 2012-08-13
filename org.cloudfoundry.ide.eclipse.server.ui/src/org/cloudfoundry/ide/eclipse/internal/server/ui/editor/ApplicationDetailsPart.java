@@ -21,7 +21,6 @@ import org.cloudfoundry.client.lib.DeploymentInfo;
 import org.cloudfoundry.client.lib.InstanceInfo;
 import org.cloudfoundry.client.lib.InstanceStats;
 import org.cloudfoundry.client.lib.InstancesInfo;
-import org.cloudfoundry.client.lib.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
@@ -32,7 +31,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.ICloudFoundryDebuggerListener;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
@@ -75,7 +73,6 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
@@ -160,10 +157,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	private Combo memoryCombo;
 
-	private Label standaloneLabel;
-
-	private Text standaloneText;
-
 	/**
 	 * This must NOT be set directly. Use appropriate setter
 	 */
@@ -177,8 +170,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	private FormToolkit toolkit;
 
 	private List<String> URIs;
-
-	private String startCommand;
 
 	private final boolean provideServices;
 
@@ -262,41 +253,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			buttonComposite.layout(true, true);
 		}
 
-	}
-
-	protected void refreshStandaloneCommandArea() {
-		if (!standaloneLabel.isDisposed() && !standaloneText.isDisposed()) {
-			Composite parent = standaloneLabel.getParent();
-			if (isStandaloneApplication()) {
-				GridData data = (GridData) standaloneLabel.getLayoutData();
-				data = GridDataFactory.copyData(data);
-				data.exclude = false;
-				standaloneLabel.setLayoutData(data);
-				standaloneLabel.setVisible(true);
-
-				data = (GridData) standaloneText.getLayoutData();
-				data = GridDataFactory.copyData(data);
-				data.exclude = false;
-				standaloneText.setLayoutData(data);
-				standaloneText.setVisible(true);
-
-			}
-			else {
-				GridData data = (GridData) standaloneLabel.getLayoutData();
-				data = GridDataFactory.copyData(data);
-				data.exclude = true;
-				standaloneLabel.setLayoutData(data);
-				standaloneLabel.setVisible(false);
-
-				data = (GridData) standaloneText.getLayoutData();
-				data = GridDataFactory.copyData(data);
-				data.exclude = true;
-				standaloneText.setLayoutData(data);
-				standaloneText.setVisible(false);
-			}
-			parent.layout(true, true);
-
-		}
 	}
 
 	protected void refreshApplicationDeploymentButtons() {
@@ -561,49 +517,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		DropTarget dropTarget = new DropTarget(section, ops);
 		dropTarget.setTransfer(transfers);
 		dropTarget.addDropListener(servicesDropListener);
-	}
-
-	protected void createStandaloneCommandArea(Composite parent) {
-
-		standaloneLabel = createLabel(parent, "Start Command:", SWT.CENTER);
-
-		standaloneText = toolkit.createText(parent, "");
-		GridDataFactory.fillDefaults().grab(false, false).align(SWT.BEGINNING, SWT.CENTER).hint(350, SWT.DEFAULT)
-				.applyTo(standaloneText);
-
-		standaloneText.setData(FormToolkit.KEY_DRAW_BORDER, FormToolkit.TEXT_BORDER);
-
-		String commandText = getStartCommand();
-		if (commandText != null) {
-			standaloneText.setText(commandText);
-		}
-		standaloneText.addModifyListener(new ModifyListener() {
-
-			public void modifyText(ModifyEvent e) {
-				setStartCommand(standaloneText.getText());
-			}
-
-		});
-	}
-
-	protected void setStartCommand(String command) {
-		startCommand = command;
-	}
-
-	protected String getStartCommand() {
-		return startCommand;
-	}
-
-	protected Staging getStaging() {
-		ApplicationModule appModule = getApplication();
-		if (appModule != null) {
-			return StandaloneUtil.getStaging(appModule);
-		}
-		return null;
-	}
-
-	protected boolean isStandaloneApplication() {
-		return StandaloneUtil.isStandaloneApp(getApplication());
 	}
 
 	private void createGeneralSection(Composite parent) {
@@ -1088,23 +1001,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	}
 
 	private void startStopApplication(ApplicationAction action) {
-		// if it is a standalone Application, and the start command is set, set
-		// a new staging
-		// FIXNS_STANDALONE
-		// setStartCommandInStaging();
 		new StartStopApplicationAction(editorPage, action, getApplication(), serverBehaviour, module).run();
-	}
-
-	protected void setStartCommandInStaging() {
-		if (isStandaloneApplication()) {
-			String startCommand = getStartCommand();
-			if (startCommand != null && startCommand.length() > 0) {
-				Staging staging = getStaging();
-				staging.setCommand(startCommand);
-				ApplicationModule appModule = getApplication();
-				appModule.setStaging(staging);
-			}
-		}
 	}
 
 	private static String getURIsAsLinkText(List<String> uris) {

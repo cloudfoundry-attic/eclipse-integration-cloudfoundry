@@ -23,29 +23,19 @@ public class JavaStartCommand extends StartCommand {
 
 	public static final IPath DEFAULT_LIB_PATH = Path.EMPTY.append(DEFAULT_LIB);
 
-	protected JavaStartCommand(StandaloneDescriptor descriptor) {
-		super(descriptor);
+	protected JavaStartCommand() {
+		super();
 	}
 
 	@Override
 	public String getStartCommand() {
 		StringWriter writer = new StringWriter();
 		writer.append("java");
-		if (getOptions() != null) {
+		if (getArgs() != null) {
 			writer.append(" ");
-			writer.append(getOptions());
+			writer.append(getArgs());
 		}
 		return writer.toString();
-	}
-
-	public String getOptions() {
-		StringWriter options = new StringWriter();
-		options.append("$JAVA_OPTS");
-		options.append(" ");
-		options.append("-cp");
-		options.append(" ");
-		options.append(getClassPathOptionArg());
-		return options.toString();
 	}
 
 	protected String getClassPathOptionArg() {
@@ -55,6 +45,16 @@ public class JavaStartCommand extends StartCommand {
 		options.append("*");
 		options.append(":");
 		options.append(".");
+		return options.toString();
+	}
+
+	public String getArgs() {
+		StringWriter options = new StringWriter();
+		options.append("$JAVA_OPTS");
+		options.append(" ");
+		options.append("-cp");
+		options.append(" ");
+		options.append(getClassPathOptionArg());
 		return options.toString();
 	}
 

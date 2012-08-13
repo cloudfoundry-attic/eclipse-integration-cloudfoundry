@@ -11,7 +11,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.standalone;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.URLNameValidation;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.JavaStartCommand;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.IStartCommandPartListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.StartCommandEvent;
 import org.eclipse.jdt.core.IJavaProject;
@@ -38,10 +38,16 @@ public class JavaStartCommandPart extends AbstractStartCommandPart {
 
 	private JavaTypeUIAdapter typeAdapter;
 
-	public JavaStartCommandPart(StartCommandPartFactory startCommandPartFactory, Composite parent,
-			IStartCommandPartListener listener) {
+	private StartCommand startCommand;
+
+	private final IJavaProject javaProject;
+
+	public JavaStartCommandPart(IJavaProject javaProject, StartCommandPartFactory startCommandPartFactory,
+			StartCommand startCommand, Composite parent, IStartCommandPartListener listener) {
 		super(parent, listener);
 		this.startCommandPartFactory = startCommandPartFactory;
+		this.startCommand = startCommand;
+		this.javaProject = javaProject;
 	}
 
 	/**
@@ -86,9 +92,6 @@ public class JavaStartCommandPart extends AbstractStartCommandPart {
 		browseButton.setText("Browse...");
 		GridDataFactory.fillDefaults().grab(false, false).align(SWT.BEGINNING, SWT.CENTER).applyTo(browseButton);
 
-		// Set type browsing and content assist functionality in the
-		// controls
-		IJavaProject javaProject = startCommandPartFactory.getJavaProject();
 		if (javaProject != null) {
 			typeAdapter = new JavaTypeUIAdapter(this, javaProject, listener);
 			typeAdapter.apply();
@@ -98,10 +101,7 @@ public class JavaStartCommandPart extends AbstractStartCommandPart {
 
 		javaOptions = startCommandPartFactory.createdEditableText(mainTypeArea);
 
-		JavaStartCommand javaStartCommand = (JavaStartCommand) startCommandPartFactory.standaloneDescriptor
-				.getStartCommand();
-
-		String defaultArgs = javaStartCommand.getOptions();
+		String defaultArgs = startCommand.getArgs();
 		if (defaultArgs != null) {
 			javaOptions.setText(defaultArgs);
 		}

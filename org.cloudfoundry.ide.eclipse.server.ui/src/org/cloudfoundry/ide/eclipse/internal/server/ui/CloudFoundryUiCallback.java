@@ -12,21 +12,17 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.cloudfoundry.client.lib.ApplicationInfo;
 import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudService;
 import org.cloudfoundry.client.lib.DeploymentInfo;
-import org.cloudfoundry.client.lib.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StagingHandler;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationWizard;
@@ -106,10 +102,6 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		}
 	}
 
-	protected Staging getStaging(ApplicationModule appModule) {
-		return StandaloneUtil.getStaging(appModule);
-	}
-
 	@Override
 	public DeploymentDescriptor prepareForDeployment(final CloudFoundryServer server,
 			final ApplicationModule appModule, final IProgressMonitor monitor) {
@@ -120,9 +112,9 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			descriptor.deploymentInfo = new DeploymentInfo();
 			descriptor.deploymentInfo.setUris(existingApp.getUris());
 			descriptor.deploymentMode = ApplicationAction.START;
-			
-//			 FIXNS_STANDALONE: uncomment when CF client supports staging
-//			descriptor.staging = getStaging(appModule);
+
+			// FIXNS_STANDALONE: uncomment when CF client supports staging
+			// descriptor.staging = getStaging(appModule);
 
 			DeploymentInfo lastDeploymentInfo = appModule.getLastDeploymentInfo();
 			if (lastDeploymentInfo != null) {
@@ -140,7 +132,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 						descriptor.applicationInfo = wizard.getApplicationInfo();
 						descriptor.deploymentInfo = wizard.getDeploymentInfo();
 						descriptor.deploymentMode = wizard.getDeploymentMode();
-						
+
 						descriptor.staging = wizard.getStaging();
 						// First add any new services to the server
 						final List<CloudService> addedServices = wizard.getAddedCloudServices();
