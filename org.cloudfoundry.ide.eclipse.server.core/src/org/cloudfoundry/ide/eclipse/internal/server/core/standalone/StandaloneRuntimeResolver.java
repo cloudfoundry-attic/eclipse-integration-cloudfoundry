@@ -21,6 +21,7 @@ import java.util.Set;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -101,17 +102,7 @@ public class StandaloneRuntimeResolver {
 			IPath path = entry.getOutputLocation();
 
 			// For source entries, path is relative to workspace root
-			if (path != null) {
-				
-				// The path may be the project itself
-				
-
-				IFolder folder = ResourcesPlugin.getWorkspace().getRoot().getFolder(path);
-
-				if (folder.isAccessible()) {
-					path = folder.getLocation();
-				}
-			}
+			path = getWorkspaceFullPath(path);
 
 			if (path != null) {
 				locations.add(path.toOSString());
@@ -131,11 +122,9 @@ public class StandaloneRuntimeResolver {
 		// add the Java project default output location as well
 		try {
 			IPath location = javaProject.getOutputLocation();
+			location = getWorkspaceFullPath(location);
+
 			if (location != null) {
-				IFolder folder = ResourcesPlugin.getWorkspace().getRoot().getFolder(location);
-				if (folder.isAccessible()) {
-					location = folder.getLocation();
-				}
 				nonTestOutput.add(location.toOSString());
 			}
 		}
@@ -143,6 +132,34 @@ public class StandaloneRuntimeResolver {
 			CloudFoundryPlugin.logError(e);
 		}
 		return nonTestOutput;
+	}
+
+	/**
+	 * Gets full path for workspace paths. The path may be a path to a project
+	 * relative folder, or to a project itself
+	 * @param relativePath
+	 * @return
+	 */
+	protected IPath getWorkspaceFullPath(IPath relativePath) {
+		if (relativePath == null) {
+			return null;
+		}
+		IPath path = relativePath;
+		if (path.segmentCount() == 1) {
+			// The path may be the project itself
+			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(path.segment(0));
+			if (project.isAccessible()) {
+				path = project.getLocation();
+			}
+		}
+		else {
+			IFolder folder = ResourcesPlugin.getWorkspace().getRoot().getFolder(path);
+
+			if (folder.isAccessible()) {
+				path = folder.getLocation();
+			}
+		}
+		return path;
 	}
 
 	/**

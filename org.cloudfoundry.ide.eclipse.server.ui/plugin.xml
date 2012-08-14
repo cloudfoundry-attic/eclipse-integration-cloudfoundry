@@ -275,6 +275,11 @@
         class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryActionContributionFactory"
         locationURI="popup:org.eclipse.wst.server.ui.ServersView?before=additions">
       </menuContribution>
+    <menuContribution
+          allPopups="true"
+          class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryProjectExplorerMenuFactory"
+          locationURI="popup:org.eclipse.ui.projectConfigure?endof=additions">
+    </menuContribution>
 	</extension>
  
    <extension point="org.eclipse.core.expressions.propertyTesters">

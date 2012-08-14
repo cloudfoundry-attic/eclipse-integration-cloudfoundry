@@ -45,27 +45,47 @@ public class StandaloneFacetHandler {
 		}
 	}
 
-	public boolean addFacet() {
-		if (!hasFacet()) {
+	public void addFacet() {
+		if (canAddFacet()) {
 			try {
 				IFacetedProject facetedProject = ProjectFacetsManager.create(project);
 				if (facetedProject != null) {
 					facetedProject.installProjectFacet(FACET.getDefaultVersion(), null, null);
-					return true;
 				}
 			}
 			catch (CoreException e) {
 				CloudFoundryPlugin.logError(e);
 			}
 		}
-		return false;
+	}
+
+	public void removeFacet() {
+		if (hasFacet()) {
+			try {
+				IFacetedProject facetedProject = ProjectFacetsManager.create(project);
+				if (facetedProject != null) {
+					facetedProject.uninstallProjectFacet(FACET.getDefaultVersion(), null, null);
+				}
+			}
+			catch (CoreException e) {
+				CloudFoundryPlugin.logError(e);
+			}
+		}
+	}
+
+	public boolean canAddFacet() {
+		if (project == null || !project.isAccessible() || hasFacet()) {
+			return false;
+		}
+
+		IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(project);
+		return javaProject != null && javaProject.exists();
 	}
 
 	public static class CFFacetInstallDelegate implements IDelegate {
 		public void execute(IProject project, IProjectFacetVersion fv, Object config, IProgressMonitor monitor)
 				throws CoreException {
-			IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(project);
-			if (!project.isAccessible() || javaProject == null || !javaProject.exists()) {
+			if (!new StandaloneFacetHandler(project).canAddFacet()) {
 				throw new CoreException(
 						CloudFoundryPlugin
 								.getErrorStatus("Cloud Foundry Standalone Facet can only be installed on a Java project."));
