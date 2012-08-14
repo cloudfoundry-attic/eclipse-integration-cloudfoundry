@@ -92,7 +92,7 @@ public class CloudFoundryProjectExplorerMenuFactory extends AbstractMenuContribu
 
 				protected IStatus run(IProgressMonitor monitor) {
 
-					new StandaloneFacetHandler(project).addFacet();
+					new StandaloneFacetHandler(project).addFacet(monitor);
 					return Status.OK_STATUS;
 				}
 			};

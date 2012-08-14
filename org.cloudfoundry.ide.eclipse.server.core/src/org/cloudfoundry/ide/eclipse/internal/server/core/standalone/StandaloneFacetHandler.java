@@ -45,10 +45,13 @@ public class StandaloneFacetHandler {
 		}
 	}
 
-	public void addFacet() {
+	public void addFacet(IProgressMonitor monitor) {
 		if (canAddFacet()) {
 			try {
 				IFacetedProject facetedProject = ProjectFacetsManager.create(project);
+				if (facetedProject == null) {
+					facetedProject = ProjectFacetsManager.create(project, true, monitor);
+				}
 				if (facetedProject != null) {
 					facetedProject.installProjectFacet(FACET.getDefaultVersion(), null, null);
 				}
