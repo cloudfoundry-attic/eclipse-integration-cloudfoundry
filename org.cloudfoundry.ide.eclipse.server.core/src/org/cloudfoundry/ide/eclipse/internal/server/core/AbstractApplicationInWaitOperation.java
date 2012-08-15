@@ -42,7 +42,10 @@ public abstract class AbstractApplicationInWaitOperation {
 		}
 		int ticks = 10;
 		long sleep = 3000;
-		progress.setTaskName(jobName);
+
+		if (jobName != null) {
+			progress.setTaskName(jobName);
+		}
 
 		if (!isInState(cloudApplication.getState())) {
 			final String appName = cloudApplication.getName();

@@ -18,8 +18,12 @@ import org.eclipse.wst.server.core.IModule;
 
 public class StartApplicationInWaitOperation extends AbstractApplicationInWaitOperation {
 
-	public StartApplicationInWaitOperation(CloudFoundryServer cloudServer, String jobName) {
-		super(cloudServer, jobName);
+	public StartApplicationInWaitOperation(CloudFoundryServer cloudServer, String operationLabel) {
+		super(cloudServer, operationLabel);
+	}
+
+	public StartApplicationInWaitOperation(CloudFoundryServer cloudServer) {
+		this(cloudServer, null);
 	}
 
 	@Override

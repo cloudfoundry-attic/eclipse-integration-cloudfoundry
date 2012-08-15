@@ -1279,6 +1279,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	//
 	// }
 
+	/**
+	 * A request checks server state prior to performing a server operation via
+	 * a Cloud Foundry client, and resolves the Cloud Foundry client to be used
+	 * for the operation.  All request behaviour is performed in a sub monitor, therefore
+	 * submonitor operations like creating a new child to track progress worked
+	 * should be used.
+	 * 
+	 * @param <T>
+	 */
 	abstract class Request<T> {
 
 		private final String label;
@@ -1305,21 +1314,21 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				server.setServerState(IServer.STATE_STARTING);
 			}
 
-			SubMonitor progress = SubMonitor.convert(monitor, label, 100);
+			SubMonitor subProgress = SubMonitor.convert(monitor, label, 100);
 
 			T result;
 			boolean succeeded = false;
 			try {
 				CloudFoundryClient client = getClient();
 				try {
-					result = doRun(client, progress);
+					result = doRun(client, subProgress);
 					succeeded = true;
 				}
 				catch (CloudFoundryException e) {
 					// try again in case of a login failure
 					if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
 						client.login();
-						result = doRun(client, progress);
+						result = doRun(client, subProgress);
 						succeeded = true;
 					}
 					else {
@@ -1351,7 +1360,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						server.setServerState(IServer.STATE_STOPPED);
 					}
 				}
-				progress.done();
+				subProgress.done();
 			}
 
 			if (server.getServerState() != IServer.STATE_STARTED) {
