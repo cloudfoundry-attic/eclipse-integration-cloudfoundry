@@ -177,6 +177,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	private int memory;
 
+	private boolean isPublished = false;
+
 	// Workaround as there is no restart state in the app server state,
 	// and button refresh should not occur during restart mode
 	protected boolean skipButtonRefreshOnRestart;
@@ -359,10 +361,16 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		new DebugApplicationEditorAction(editorPage, command).run();
 	}
 
+	protected void refreshPublishState() {
+		isPublished = getApplication().getState() != IServer.STATE_UNKNOWN;
+	}
+
 	public void refreshUI() {
 		canUpdate = false;
 		ApplicationModule appModule = getApplication();
 		int state = appModule.getState();
+
+		refreshPublishState();
 
 		// FIXNS: Uncomment when stagin updates are supported in CF client
 		// refreshStandaloneCommandArea();
@@ -560,14 +568,18 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			@Override
 			public void linkActivated(HyperlinkEvent e) {
 				CloudFoundryURLsWizard wizard = new CloudFoundryURLsWizard(cloudServer, getApplication()
-						.getApplicationId(), URIs);
+						.getApplicationId(), URIs, isPublished);
 				WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(), wizard);
 				if (dialog.open() == Window.OK) {
-					URIs = wizard.getURLs();
-					mappedURIsLink.setText(getURIsAsLinkText(wizard.getURLs()));
-					generalSection.getParent().layout(true, true);
-					editorPage.reflow();
-					getApplication().getApplication().setUris(URIs);
+
+					CloudApplication application = getApplication().getApplication();
+					if (application != null) {
+						URIs = wizard.getURLs();
+						mappedURIsLink.setText(getURIsAsLinkText(wizard.getURLs()));
+						generalSection.getParent().layout(true, true);
+						editorPage.reflow();
+						application.setUris(URIs);
+					}
 				}
 			}
 		});

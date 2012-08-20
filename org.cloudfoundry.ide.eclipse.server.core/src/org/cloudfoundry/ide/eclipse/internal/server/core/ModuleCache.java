@@ -51,6 +51,8 @@ public class ModuleCache {
 		 */
 		private final List<IModule> undeployedModules = new ArrayList<IModule>();
 
+		private final Map<String, RepublishModule> automaticRepublishModules = new HashMap<String, RepublishModule>();
+
 		private int[] applicationMemoryChoices;
 
 		ServerData(IServer server) {
@@ -94,13 +96,13 @@ public class ModuleCache {
 			if (module.getLocalModule() != null) {
 				mapping.remove(module.getLocalModule().getId());
 				setMapping(mapping);
-			}			
+			}
 		}
 
 		public synchronized void removeObsoleteModules(Set<ApplicationModule> allModules) {
 			HashSet<ApplicationModule> deletedModules = new HashSet<ApplicationModule>(applications);
 			deletedModules.removeAll(allModules);
-			if (deletedModules.size() > 0){
+			if (deletedModules.size() > 0) {
 				Map<String, String> mapping = getModuleIdToApplicationId();
 				boolean mappingModified = false;
 				for (ApplicationModule deletedModule : deletedModules) {
@@ -124,6 +126,14 @@ public class ModuleCache {
 
 		public synchronized void tagAsUndeployed(IModule module) {
 			undeployedModules.add(module);
+		}
+
+		public synchronized void tagForAutomaticRepublish(RepublishModule module) {
+			automaticRepublishModules.put(module.getModule().getName(), module);
+		}
+
+		public synchronized RepublishModule untagForAutomaticRepublish(IModule module) {
+			return automaticRepublishModules.remove(module.getName());
 		}
 
 		private void add(ApplicationModule module) {
@@ -214,7 +224,8 @@ public class ModuleCache {
 				if (appModule != null) {
 					return appModule;
 				}
-			} else {
+			}
+			else {
 				// assume that application ID and module name match
 				applicationId = module.getName();
 			}

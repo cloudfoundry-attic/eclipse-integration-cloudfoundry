@@ -10,16 +10,21 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.RepublishApplicationHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.Wizard;
-
 
 /**
  * @author Terry Denney
@@ -32,7 +37,9 @@ public class CloudFoundryURLsWizard extends Wizard {
 
 	private final CloudFoundryServer cloudServer;
 
-	private final List<String> existingURIs;
+	private List<String> existingURIs;
+
+	private boolean isPublished = true;
 
 	private CloudFoundryURLsWizardPage page;
 
@@ -45,8 +52,27 @@ public class CloudFoundryURLsWizard extends Wizard {
 		setNeedsProgressMonitor(true);
 	}
 
+	public CloudFoundryURLsWizard(CloudFoundryServer cloudServer, String appName, List<String> existingURIs,
+			boolean isPublished) {
+		this(cloudServer, appName, existingURIs);
+		this.isPublished = isPublished;
+	}
+
 	@Override
 	public void addPages() {
+
+		if (!isPublished && (existingURIs == null || existingURIs.isEmpty())) {
+			try {
+				ApplicationModule module = cloudServer.getApplicationModule(appName);
+				String defaultURL = module != null ? module.getLaunchUrl(appName) : null;
+				if (defaultURL != null) {
+					existingURIs = Arrays.asList(new String[] { defaultURL });
+				}
+			}
+			catch (CoreException e) {
+				// Ignore if no default URL can be determined
+			}
+		}
 		page = new CloudFoundryURLsWizardPage(cloudServer, existingURIs);
 		addPage(page);
 	}
@@ -58,12 +84,64 @@ public class CloudFoundryURLsWizard extends Wizard {
 	@Override
 	public boolean performFinish() {
 		page.setErrorMessage(null);
-		IStatus result = CloudUiUtil.runForked(new ICoreRunnable() {
-			public void run(IProgressMonitor monitor) throws CoreException {
-				cloudServer.getBehaviour().updateApplicationUrls(appName, page.getURLs(), monitor);
+		final boolean shouldRepublish = page.shouldRepublish();
+
+		final IStatus[] result = new IStatus[1];
+		if (shouldRepublish) {
+			final ApplicationModule appModule = getAppModule();
+			if (appModule != null) {
+				IRunnableWithProgress runnable = new IRunnableWithProgress() {
+
+					public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+						try {
+							new RepublishApplicationHandler(appModule, page.getURLs(), cloudServer).republish(monitor);
+						}
+						catch (CoreException e) {
+							CloudFoundryPlugin.logError(e);
+							result[0] = CloudFoundryPlugin.getErrorStatus(e);
+						}
+
+					}
+				};
+				try {
+					// Must both fork and set cancellable to true in order to
+					// enable
+					// cancellation of long-running validations
+					getContainer().run(true, true, runnable);
+				}
+				catch (InvocationTargetException e) {
+					result[0] = CloudFoundryPlugin.getErrorStatus(e);
+				}
+				catch (InterruptedException e) {
+					result[0] = CloudFoundryPlugin.getErrorStatus(e);
+				}
 			}
-		}, this);
-		return result.isOK();
+		}
+		else {
+			result[0] = CloudUiUtil.runForked(new ICoreRunnable() {
+				public void run(IProgressMonitor monitor) throws CoreException {
+					cloudServer.getBehaviour().updateApplicationUrls(appName, page.getURLs(), monitor);
+
+				}
+			}, this);
+		}
+
+		return result[0] != null ? result[0].isOK() : true;
+	}
+
+	public ApplicationModule getAppModule() {
+
+		try {
+			return cloudServer.getApplicationModule(appName);
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		return null;
+	}
+
+	public boolean isPublished() {
+		return isPublished;
 	}
 
 }

@@ -629,6 +629,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return doDeployOrStartModule(modules, waitForDeployment, false, monitor, false);
 	}
 
+	public ApplicationModule deployOrStartModule(final IModule[] modules, boolean waitForDeployment,
+			IProgressMonitor monitor, DeploymentDescriptor descriptor) throws CoreException {
+		ApplicationModule appModule = new StartOrDeployAction(waitForDeployment, modules, descriptor)
+				.deployModule(monitor);
+
+		return appModule;
+	}
+
 	/**
 	 * Deploys or starts a module by doing either a full publish or incremental.
 	 * @param modules
@@ -1282,9 +1290,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	/**
 	 * A request checks server state prior to performing a server operation via
 	 * a Cloud Foundry client, and resolves the Cloud Foundry client to be used
-	 * for the operation.  All request behaviour is performed in a sub monitor, therefore
-	 * submonitor operations like creating a new child to track progress worked
-	 * should be used.
+	 * for the operation. All request behaviour is performed in a sub monitor,
+	 * therefore submonitor operations like creating a new child to track
+	 * progress worked should be used.
 	 * 
 	 * @param <T>
 	 */

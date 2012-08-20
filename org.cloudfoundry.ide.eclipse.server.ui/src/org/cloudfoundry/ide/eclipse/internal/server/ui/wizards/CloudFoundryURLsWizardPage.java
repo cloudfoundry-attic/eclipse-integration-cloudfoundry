@@ -38,8 +38,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 
-
-
 /**
  * @author Terry Denney
  * @author Steffen Pingel
@@ -50,8 +48,10 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 	private Button addButton;
 
 	private Button removeButton;
-	
+
 	private Button editButton;
+
+	private Button shouldRepublishButton;
 
 	private List<String> urls;
 
@@ -92,7 +92,8 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 			public void selectionChanged(SelectionChangedEvent event) {
 				ISelection selection = event.getSelection();
 				removeButton.setEnabled(!selection.isEmpty());
-				editButton.setEnabled(!selection.isEmpty() && selection instanceof IStructuredSelection && ((IStructuredSelection) selection).toArray().length == 1);
+				editButton.setEnabled(!selection.isEmpty() && selection instanceof IStructuredSelection
+						&& ((IStructuredSelection) selection).toArray().length == 1);
 			}
 		});
 
@@ -106,15 +107,16 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 		addButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				InputDialog dialog = new InputDialog(addButton.getShell(), "Add URL Mapping", "URL:", "", new IInputValidator() {
-					
-					public String isValid(String newText) {
-						if (newText == null || newText.length() == 0) {
-							return "URL cannot be empty";
-						}
-						return null;
-					}
-				});
+				InputDialog dialog = new InputDialog(addButton.getShell(), "Add URL Mapping", "URL:", "",
+						new IInputValidator() {
+
+							public String isValid(String newText) {
+								if (newText == null || newText.length() == 0) {
+									return "URL cannot be empty";
+								}
+								return null;
+							}
+						});
 				if (dialog.open() == Dialog.OK) {
 					String newURI = dialog.getValue();
 					urls.add(newURI);
@@ -122,7 +124,7 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 				}
 			}
 		});
-		
+
 		editButton = new Button(buttonComposite, SWT.PUSH);
 		editButton.setText("Edit...");
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(editButton);
@@ -132,16 +134,17 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 			public void widgetSelected(SelectionEvent e) {
 				IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
 				String url = (String) selection.getFirstElement();
-				
-				InputDialog dialog = new InputDialog(addButton.getShell(), "Unpdate URL Mapping", "URL:", url, new IInputValidator() {
-					
-					public String isValid(String newText) {
-						if (newText == null || newText.length() == 0) {
-							return "URL cannot be empty";
-						}
-						return null;
-					}
-				});
+
+				InputDialog dialog = new InputDialog(addButton.getShell(), "Unpdate URL Mapping", "URL:", url,
+						new IInputValidator() {
+
+							public String isValid(String newText) {
+								if (newText == null || newText.length() == 0) {
+									return "URL cannot be empty";
+								}
+								return null;
+							}
+						});
 				if (dialog.open() == Dialog.OK) {
 					String newURI = dialog.getValue();
 					urls.remove(url);
@@ -150,7 +153,7 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 				}
 			}
 		});
-		
+
 		removeButton = new Button(buttonComposite, SWT.PUSH);
 		removeButton.setText("Remove");
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(addButton);
@@ -167,21 +170,37 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 			}
 		});
 
+		boolean isPublished = ((CloudFoundryURLsWizard) getWizard()).isPublished();
+
+		if (!isPublished) {
+			shouldRepublishButton = new Button(composite, SWT.CHECK);
+			shouldRepublishButton.setText("Republish");
+			GridDataFactory.fillDefaults().span(2, 1).applyTo(shouldRepublishButton);
+			GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(shouldRepublishButton);
+			shouldRepublishButton.setEnabled(true);
+			shouldRepublishButton.setSelection(true);
+		}
+
 		Dialog.applyDialogFont(composite);
 		setControl(composite);
 	}
-	
+
 	private void update() {
 		viewer.refresh(true);
 		getWizard().getContainer().updateButtons();
 	}
-	
+
 	public boolean isPageComplete() {
-		return ! urls.isEmpty();
+		return !urls.isEmpty() && (shouldRepublishButton == null || shouldRepublish());
 	}
 
 	public List<String> getURLs() {
 		return urls;
+	}
+
+	public boolean shouldRepublish() {
+		return shouldRepublishButton != null && !shouldRepublishButton.isDisposed()
+				&& shouldRepublishButton.getSelection();
 	}
 
 	private class URIsContentProvider implements ITreeContentProvider {

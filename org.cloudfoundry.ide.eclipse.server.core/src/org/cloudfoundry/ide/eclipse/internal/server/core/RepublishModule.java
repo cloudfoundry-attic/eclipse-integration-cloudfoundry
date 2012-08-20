@@ -1,0 +1,35 @@
+/*******************************************************************************
+ * Copyright (c) 2012 VMware, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     VMware, Inc. - initial API and implementation
+ *******************************************************************************/
+package org.cloudfoundry.ide.eclipse.internal.server.core;
+
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
+import org.eclipse.wst.server.core.IModule;
+
+public class RepublishModule {
+
+	private final IModule module;
+
+	private final DeploymentDescriptor descriptor;
+
+	public RepublishModule(IModule module, DeploymentDescriptor descriptor) {
+		this.module = module;
+		this.descriptor = descriptor;
+	}
+
+	public IModule getModule() {
+		return module;
+	}
+
+	public DeploymentDescriptor getDeploymentDescriptor() {
+		return descriptor;
+	}
+
+}

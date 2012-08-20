@@ -23,6 +23,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelDescript
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationWizard;
@@ -36,6 +37,7 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.wst.server.core.IModule;
 
 /**
  * @author Christian Dupuis
@@ -105,9 +107,11 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	@Override
 	public DeploymentDescriptor prepareForDeployment(final CloudFoundryServer server,
 			final ApplicationModule appModule, final IProgressMonitor monitor) {
-		final DeploymentDescriptor descriptor = new DeploymentDescriptor();
+
+		DeploymentDescriptor descriptor = null;
 		CloudApplication existingApp = appModule.getApplication();
 		if (existingApp != null) {
+			descriptor = new DeploymentDescriptor();
 			descriptor.applicationInfo = new ApplicationInfo(existingApp.getName());
 			descriptor.deploymentInfo = new DeploymentInfo();
 			descriptor.deploymentInfo.setUris(existingApp.getUris());
@@ -122,45 +126,74 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			}
 		}
 		else {
-			Display.getDefault().syncExec(new Runnable() {
-				public void run() {
-					CloudFoundryApplicationWizard wizard = new CloudFoundryApplicationWizard(server, appModule);
-					WizardDialog dialog = new WizardDialog(PlatformUI.getWorkbench().getModalDialogShellProvider()
-							.getShell(), wizard);
-					int status = dialog.open();
-					if (status == Dialog.OK) {
-						descriptor.applicationInfo = wizard.getApplicationInfo();
-						descriptor.deploymentInfo = wizard.getDeploymentInfo();
-						descriptor.deploymentMode = wizard.getDeploymentMode();
+			IModule module = appModule.getLocalModule();
 
-						descriptor.staging = wizard.getStaging();
-						// First add any new services to the server
-						final List<CloudService> addedServices = wizard.getAddedCloudServices();
+			RepublishModule repModule = CloudFoundryPlugin.getModuleCache().getData(server.getServerOriginal())
+					.untagForAutomaticRepublish(module);
 
-						if (!addedServices.isEmpty()) {
-							IProgressMonitor subMonitor = new SubProgressMonitor(monitor, addedServices.size());
-							try {
-								server.getBehaviour().createService(addedServices.toArray(new CloudService[0]),
-										subMonitor);
+			// First check if the module is set for automatic republish. This is
+			// different that a
+			// start or update restart, as the latter two require the module to
+			// already be published.
+			// Automatic republish are for modules that are configured for
+			// deployment but failed to
+			// publish the first time. In this case it is unnecessary to open
+			// the
+			// deployment wizard
+			// as all the configuration is already available in an existing
+			// descriptor
+			if (repModule != null) {
+				descriptor = repModule.getDeploymentDescriptor();
+			}
+
+			if (!isValidDescriptor(descriptor)) {
+				final DeploymentDescriptor[] depDescriptors = new DeploymentDescriptor[1];
+				Display.getDefault().syncExec(new Runnable() {
+					public void run() {
+						CloudFoundryApplicationWizard wizard = new CloudFoundryApplicationWizard(server, appModule);
+						WizardDialog dialog = new WizardDialog(PlatformUI.getWorkbench().getModalDialogShellProvider()
+								.getShell(), wizard);
+						int status = dialog.open();
+						if (status == Dialog.OK) {
+							DeploymentDescriptor descriptorToUpdate = new DeploymentDescriptor();
+							descriptorToUpdate.applicationInfo = wizard.getApplicationInfo();
+							descriptorToUpdate.deploymentInfo = wizard.getDeploymentInfo();
+							descriptorToUpdate.deploymentMode = wizard.getDeploymentMode();
+
+							descriptorToUpdate.staging = wizard.getStaging();
+							// First add any new services to the server
+							final List<CloudService> addedServices = wizard.getAddedCloudServices();
+
+							if (!addedServices.isEmpty()) {
+								IProgressMonitor subMonitor = new SubProgressMonitor(monitor, addedServices.size());
+								try {
+									server.getBehaviour().createService(addedServices.toArray(new CloudService[0]),
+											subMonitor);
+								}
+								catch (CoreException e) {
+									CloudFoundryPlugin.logError(e);
+								}
+								finally {
+									subMonitor.done();
+								}
 							}
-							catch (CoreException e) {
-								CloudFoundryPlugin.logError(e);
-							}
-							finally {
-								subMonitor.done();
-							}
+
+							// Now set any selected services, which may
+							// include
+							// past
+							// deployed services
+							List<String> selectedServices = wizard.getSelectedCloudServicesID();
+
+							descriptorToUpdate.deploymentInfo.setServices(selectedServices);
+							depDescriptors[0] = descriptorToUpdate;
 						}
-
-						// Now set any selected services, which may include past
-						// deployed services
-						List<String> selectedServices = wizard.getSelectedCloudServicesID();
-
-						descriptor.deploymentInfo.setServices(selectedServices);
 					}
-				}
-			});
+				});
+				descriptor = depDescriptors[0];
+			}
 		}
-		if (descriptor.deploymentInfo == null) {
+
+		if (descriptor == null || descriptor.deploymentInfo == null) {
 			throw new OperationCanceledException();
 		}
 		return descriptor;
@@ -183,4 +216,31 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		});
 	}
 
+	protected boolean isValidDescriptor(DeploymentDescriptor descriptor) {
+		if (descriptor == null) {
+			return false;
+		}
+
+		if (descriptor.deploymentMode == null) {
+			return false;
+		}
+
+		ApplicationInfo info = descriptor.applicationInfo;
+		if (info == null || info.getAppName() == null || info.getFramework() == null) {
+			return false;
+		}
+
+		DeploymentInfo deploymentInfo = descriptor.deploymentInfo;
+		if (deploymentInfo == null
+				|| deploymentInfo.getDeploymentName() == null
+				// If it is not standalone app (not having staging is consider
+				// non-standalone), then URIs must be set to be a valid
+				// descriptor
+				|| ((descriptor.staging == null || !CloudApplication.STANDALONE.equals(descriptor.staging
+						.getFramework())) && (deploymentInfo.getUris() == null || deploymentInfo.getUris().isEmpty()))) {
+			return false;
+		}
+
+		return true;
+	}
 }
