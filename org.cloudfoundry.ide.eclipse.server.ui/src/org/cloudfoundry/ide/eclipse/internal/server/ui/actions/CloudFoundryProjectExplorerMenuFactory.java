@@ -82,13 +82,13 @@ public class CloudFoundryProjectExplorerMenuFactory extends AbstractMenuContribu
 		}
 
 		protected void setActionValues() {
-			setText("Convert to Standalone Project");
-			setToolTipText("Convert to Standalone");
+			setText("Enable as Cloud Foundry Standalone App");
+			setToolTipText("Enable as Cloud Foundry Standalone App");
 			setEnabled(true);
 		}
 
 		public void run() {
-			Job job = new Job("Converting to Standalone Project") {
+			Job job = new Job("Enabling as Cloud Foundry Standalone App") {
 
 				protected IStatus run(IProgressMonitor monitor) {
 
@@ -112,13 +112,13 @@ public class CloudFoundryProjectExplorerMenuFactory extends AbstractMenuContribu
 		}
 
 		protected void setActionValues() {
-			setText("Remove Standalone Support");
-			setToolTipText("Convert to Standalone");
+			setText("Disable as Cloud Foundry Standalone App");
+			setToolTipText("Disable as Cloud Foundry Standalone App");
 			setEnabled(true);
 		}
 
 		public void run() {
-			Job job = new Job("Remove Standalone Support") {
+			Job job = new Job("Disabling as Cloud Foundry Standalone App") {
 
 				protected IStatus run(IProgressMonitor monitor) {
 
