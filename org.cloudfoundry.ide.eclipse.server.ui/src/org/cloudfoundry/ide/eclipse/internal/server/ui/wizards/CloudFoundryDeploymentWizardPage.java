@@ -273,7 +273,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 			standalonePart.createPart(topComposite);
 		}
 
-		createStartOrDebugOptions(composite);
+		createStartOrDebugOptions(topComposite);
 
 		setControl(composite);
 
@@ -288,24 +288,21 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 	}
 
 	protected void createStartOrDebugOptions(Composite parent) {
+
+		String startLabelText = (isServerDebugModeAllowed() && wizard.isStandaloneApplication()) ? "Start application:"
+				: "Start application on deployment";
+
 		regularStartOnDeploymentButton = new Button(parent, SWT.CHECK);
-		regularStartOnDeploymentButton.setText("Start application on deployment");
+		regularStartOnDeploymentButton.setText(startLabelText);
 		regularStartOnDeploymentButton.setSelection(deploymentMode == ApplicationAction.START);
-		GridData buttonData = new GridData(SWT.FILL, SWT.FILL, true, false);
-		buttonData.horizontalSpan = 2;
-		buttonData.verticalIndent = 10;
+		GridData buttonData = new GridData(SWT.FILL, SWT.FILL, false, false);
+
+		if (!isServerDebugModeAllowed() || !wizard.isStandaloneApplication()) {
+			buttonData.horizontalSpan = 2;
+			buttonData.verticalIndent = 10;
+		}
+
 		regularStartOnDeploymentButton.setLayoutData(buttonData);
-
-		runDebugOptions = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().margins(getRunDebugControlIndentation()).numColumns(1)
-				.applyTo(runDebugOptions);
-
-		GridDataFactory.fillDefaults().grab(false, false).applyTo(runDebugOptions);
-
-		final Button runRadioButton = new Button(runDebugOptions, SWT.RADIO);
-		runRadioButton.setText("Run");
-		runRadioButton.setToolTipText("Run application after deployment");
-		runRadioButton.setSelection(deploymentMode == ApplicationAction.START);
 
 		regularStartOnDeploymentButton.addSelectionListener(new SelectionAdapter() {
 
@@ -326,33 +323,50 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 			}
 		});
 
-		runRadioButton.addSelectionListener(new SelectionAdapter() {
+		if (isServerDebugModeAllowed()) {
+			runDebugOptions = new Composite(parent, SWT.NONE);
 
-			public void widgetSelected(SelectionEvent e) {
-
-				deploymentMode = ApplicationAction.START;
-
+			if (wizard.isStandaloneApplication()) {
+				GridLayoutFactory.fillDefaults().numColumns(2).applyTo(runDebugOptions);
 			}
-		});
-
-		final Button debugRadioButton = new Button(runDebugOptions, SWT.RADIO);
-		debugRadioButton.setText("Debug");
-		debugRadioButton.setToolTipText("Debug application after deployment");
-		debugRadioButton.setSelection(deploymentMode == ApplicationAction.DEBUG);
-
-		debugRadioButton.addSelectionListener(new SelectionAdapter() {
-
-			public void widgetSelected(SelectionEvent e) {
-
-				deploymentMode = ApplicationAction.DEBUG;
-
+			else {
+				GridLayoutFactory.fillDefaults().margins(getRunDebugControlIndentation()).numColumns(1)
+						.applyTo(runDebugOptions);
 			}
-		});
 
-		// Hide run or debug selection controls if there is no server support
-		if (!isServerDebugModeAllowed() || deploymentMode == null) {
-			makeStartDeploymentControlsVisible(false);
+			GridDataFactory.fillDefaults().grab(false, false).applyTo(runDebugOptions);
 
+			final Button runRadioButton = new Button(runDebugOptions, SWT.RADIO);
+			runRadioButton.setText("Run");
+			runRadioButton.setToolTipText("Run application after deployment");
+			runRadioButton.setSelection(deploymentMode == ApplicationAction.START);
+
+			runRadioButton.addSelectionListener(new SelectionAdapter() {
+
+				public void widgetSelected(SelectionEvent e) {
+
+					deploymentMode = ApplicationAction.START;
+
+				}
+			});
+
+			final Button debugRadioButton = new Button(runDebugOptions, SWT.RADIO);
+			debugRadioButton.setText("Debug");
+			debugRadioButton.setToolTipText("Debug application after deployment");
+			debugRadioButton.setSelection(deploymentMode == ApplicationAction.DEBUG);
+
+			debugRadioButton.addSelectionListener(new SelectionAdapter() {
+
+				public void widgetSelected(SelectionEvent e) {
+
+					deploymentMode = ApplicationAction.DEBUG;
+
+				}
+			});
+
+			// Hide run or debug selection controls if there is no server
+			// support
+			makeStartDeploymentControlsVisible(true);
 		}
 
 	}
@@ -362,16 +376,23 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 	}
 
 	protected void makeStartDeploymentControlsVisible(boolean makeVisible) {
-		GridData data = (GridData) runDebugOptions.getLayoutData();
+		if (runDebugOptions != null && !runDebugOptions.isDisposed()) {
+			GridData data = (GridData) runDebugOptions.getLayoutData();
 
-		// If hiding, exclude from layout as to not take up space when it is
-		// made invisible
-		GridDataFactory.createFrom(data).exclude(!makeVisible).applyTo(runDebugOptions);
+			// If hiding, exclude from layout as to not take up space when it is
+			// made invisible
+			GridDataFactory.createFrom(data).exclude(!makeVisible).applyTo(runDebugOptions);
 
-		runDebugOptions.setVisible(makeVisible);
+			runDebugOptions.setVisible(makeVisible);
 
-		// Recalculate layout if run debug options are excluded
-		runDebugOptions.getParent().layout(true, true);
+			// Recalculate layout if run debug options are excluded
+			runDebugOptions.getParent().layout(true, true);
+
+			if (wizard.isStandaloneApplication()) {
+				String label = makeVisible ? "Start application:" : "Start application ";
+				regularStartOnDeploymentButton.setText(label);
+			}
+		}
 	}
 
 	public DeploymentInfo getDeploymentInfo() {
