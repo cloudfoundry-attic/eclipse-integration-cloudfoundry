@@ -121,7 +121,6 @@ public class CloudFoundryURLsWizard extends Wizard {
 			result[0] = CloudUiUtil.runForked(new ICoreRunnable() {
 				public void run(IProgressMonitor monitor) throws CoreException {
 					cloudServer.getBehaviour().updateApplicationUrls(appName, page.getURLs(), monitor);
-
 				}
 			}, this);
 		}

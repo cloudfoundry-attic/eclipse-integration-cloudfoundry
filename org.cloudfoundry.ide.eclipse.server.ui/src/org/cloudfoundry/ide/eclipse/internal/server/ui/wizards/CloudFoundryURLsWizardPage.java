@@ -177,7 +177,7 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 			shouldRepublishButton.setText("Republish");
 			GridDataFactory.fillDefaults().span(2, 1).applyTo(shouldRepublishButton);
 			GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(shouldRepublishButton);
-			shouldRepublishButton.setEnabled(true);
+			shouldRepublishButton.setEnabled(false);
 			shouldRepublishButton.setSelection(true);
 		}
 
@@ -191,7 +191,7 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 	}
 
 	public boolean isPageComplete() {
-		return !urls.isEmpty() && (shouldRepublishButton == null || shouldRepublish());
+		return !urls.isEmpty();
 	}
 
 	public List<String> getURLs() {
