@@ -244,8 +244,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
-	protected boolean isStandalone(ApplicationModule appModule) throws CoreException {
-		return new StandaloneHandler(appModule, getCloudFoundryServer()).isSupportedStandalone();
+	protected boolean isStandalone(DeploymentDescriptor descriptor, ApplicationModule appModule) throws CoreException {
+		return (descriptor != null && descriptor.staging != null && CloudApplication.STANDALONE
+				.equals(descriptor.staging.getFramework()))
+				|| new StandaloneHandler(appModule, getCloudFoundryServer()).isSupportedStandalone();
 	}
 
 	private CloudApplication doDeployApplication(CloudFoundryClient client, final ApplicationModule appModule,
@@ -271,7 +273,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			if (!found) {
 				Staging staging = descriptor.staging;
-				if (isStandalone(appModule)) {
+				if (staging != null) {
 					List<String> uris = descriptor.deploymentInfo.getUris() != null ? descriptor.deploymentInfo
 							.getUris() : new ArrayList<String>();
 					List<String> services = descriptor.deploymentInfo.getServices() != null ? descriptor.deploymentInfo
@@ -280,7 +282,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							services);
 				}
 				else {
-
 					client.createApplication(applicationId, applicationInfo.getFramework(),
 							descriptor.deploymentInfo.getMemory(), descriptor.deploymentInfo.getUris(),
 							descriptor.deploymentInfo.getServices());
@@ -1481,7 +1482,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							started = true;
 						}
 						else {
-							if (isStandalone(cloudModule)) {
+							if (isStandalone(descriptor, cloudModule)) {
 
 								// Get the module resources for the standalone
 								// as provided by the standlaone module factory

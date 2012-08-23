@@ -11,6 +11,8 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,6 +23,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache;
+import org.cloudfoundry.ide.eclipse.internal.server.core.RuntimeType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -67,18 +70,26 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 
 	private final CloudFoundryDeploymentWizardPage deploymentPage;
 
-	private Combo frameworkCombo;
+	private Map<String, String> runtimeByLabels;
 
-	private Map<String, String> valuesByLabel;
+	private String selectedRuntime;
 
-	private String value;
+	private Combo runtimeCombo;
+
+	private String selectedFramework;
 
 	public AbstractCloudFoundryApplicationWizardPage(CloudFoundryServer server,
 			CloudFoundryDeploymentWizardPage deploymentPage, ApplicationModule module) {
+		this(server, deploymentPage, module, null);
+	}
+
+	public AbstractCloudFoundryApplicationWizardPage(CloudFoundryServer server,
+			CloudFoundryDeploymentWizardPage deploymentPage, ApplicationModule module, String framework) {
 		super("Deployment Wizard");
 		this.server = server;
 		this.deploymentPage = deploymentPage;
 		this.module = module;
+		this.selectedFramework = framework;
 		if (module == null) {
 			// this.app = null;
 			this.lastApplicationInfo = null;
@@ -93,12 +104,72 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 			lastApplicationInfo = detectApplicationInfo(module);
 		}
 		appName = lastApplicationInfo.getAppName();
-
 	}
 
-	abstract protected Map<String, String> getValuesByLabel();
+	public String getSelectedFramework() {
+		return selectedFramework;
+	}
 
-	abstract protected String getValueLabel();
+	protected void setFramework(String framework) {
+		this.selectedFramework = framework;
+	}
+
+	protected CloudFoundryApplicationWizard getApplicationWizard() {
+		return (CloudFoundryApplicationWizard) getWizard();
+	}
+
+	protected void createRuntimeArea(Composite composite) {
+
+		if (selectedRuntime != null && runtimeByLabels.size() > 0) {
+			// Only show the runtime if it is a standalone, or there is more
+			// than one runtime to chose from. Don't show the runtime if there
+			// is only one runtime
+			// and its not standalone
+			if (getApplicationWizard().isStandaloneApplication() && runtimeByLabels.size() == 1) {
+				Label runtimeLabel = new Label(composite, SWT.NONE);
+				runtimeLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+				runtimeLabel.setText("Runtime: ");
+
+				Label runtime = new Label(composite, SWT.NONE);
+				runtime.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, false, false));
+				String label = selectedRuntime;
+				for (Map.Entry<String, String> entry : runtimeByLabels.entrySet()) {
+					if (entry.getValue().equals(selectedRuntime)) {
+						label = entry.getKey();
+						break;
+					}
+				}
+				runtime.setText(label);
+			}
+			else if (runtimeByLabels.size() > 1) {
+				Label runtimeLabel = new Label(composite, SWT.NONE);
+				runtimeLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+				runtimeLabel.setText("Runtime: ");
+
+				runtimeCombo = new Combo(composite, SWT.BORDER | SWT.READ_ONLY);
+				runtimeCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+				int index = 0;
+				for (Map.Entry<String, String> entry : runtimeByLabels.entrySet()) {
+					runtimeCombo.add(entry.getKey());
+					if (entry.getValue().equals(selectedRuntime)) {
+						index = runtimeCombo.getItemCount() - 1;
+					}
+				}
+				runtimeCombo.select(index);
+
+				runtimeCombo.addSelectionListener(new SelectionAdapter() {
+					public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
+						update();
+						selectedRuntime = runtimeByLabels.get(runtimeCombo.getText());
+					}
+				});
+			}
+		}
+	}
+
+	public String getSelectedRuntime() {
+		return selectedRuntime;
+	}
 
 	public static String getAppName(ApplicationModule module) {
 		CloudApplication app = module.getApplication();
@@ -132,9 +203,18 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 		if (banner != null) {
 			setImageDescriptor(banner);
 		}
-		
-		valuesByLabel = getValuesByLabel();
-		
+
+		List<RuntimeType> runtimes = getApplicationWizard().getRuntimes();
+		runtimeByLabels = new HashMap<String, String>();
+
+		for (RuntimeType type : runtimes) {
+			runtimeByLabels.put(type.getLabel(), type.name());
+		}
+
+		if (!runtimes.isEmpty()) {
+			selectedRuntime = runtimes.get(0).name();
+		}
+
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -146,14 +226,6 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 		update(false);
 	}
 
-	protected void setValue(String value) {
-		this.value = value;
-	}
-
-	public String getSelectedValue() {
-		return valuesByLabel.get(value);
-	}
-
 	/**
 	 * Get a new application info based on the UI selection. THis only returns a
 	 * basic application info with the application name. Subclasses can override
@@ -162,6 +234,7 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 	 */
 	public ApplicationInfo getApplicationInfo() {
 		ApplicationInfo info = new ApplicationInfo(appName);
+		info.setFramework(getSelectedFramework());
 		return info;
 	}
 
@@ -195,9 +268,16 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 				update();
 			}
 		});
-		createFrameworkArea(composite);
+
+		createAdditionalContents(composite);
+
 		return composite;
 
+	}
+
+	protected Composite createAdditionalContents(Composite parent) {
+		createRuntimeArea(parent);
+		return parent;
 	}
 
 	protected void update() {
@@ -240,32 +320,6 @@ public abstract class AbstractCloudFoundryApplicationWizardPage extends WizardPa
 		if (updateButtons) {
 			getWizard().getContainer().updateButtons();
 		}
-	}
-
-	abstract protected String getInitialValue();
-
-	protected void createFrameworkArea(Composite composite) {
-		Label frameworkLabel = new Label(composite, SWT.NONE);
-		frameworkLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		frameworkLabel.setText(getValueLabel() + ":");
-
-		frameworkCombo = new Combo(composite, SWT.BORDER | SWT.READ_ONLY);
-		frameworkCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		int index = 0;
-		for (Map.Entry<String, String> entry : valuesByLabel.entrySet()) {
-			frameworkCombo.add(entry.getKey());
-			if (entry.getValue().equals(getInitialValue())) {
-				index = frameworkCombo.getItemCount() - 1;
-			}
-		}
-		frameworkCombo.select(index);
-		setValue(frameworkCombo.getText());
-		frameworkCombo.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
-				update();
-				setValue(frameworkCombo.getText());
-			}
-		});
 	}
 
 }

@@ -454,16 +454,19 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 	}
 
 	public void updateUrl() {
-		String appName = wizard.getApplicationInfo().getAppName();
-		if (appName != null) {
-			deploymentUrl = module.getLaunchUrl(appName);
-		}
-		else {
-			deploymentUrl = module.getDefaultLaunchUrl();
-		}
 
-		if (urlText != null) {
-			urlText.setText(deploymentUrl);
+		if (!wizard.isStandaloneApplication()) {
+			String appName = wizard.getApplicationInfo().getAppName();
+			if (appName != null) {
+				deploymentUrl = module.getLaunchUrl(appName);
+			}
+			else {
+				deploymentUrl = module.getDefaultLaunchUrl();
+			}
+
+			if (urlText != null) {
+				urlText.setText(deploymentUrl);
+			}
 		}
 	}
 

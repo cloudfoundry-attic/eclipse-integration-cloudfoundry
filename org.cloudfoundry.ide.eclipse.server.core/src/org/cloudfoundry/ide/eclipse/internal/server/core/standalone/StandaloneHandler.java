@@ -10,18 +10,16 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.standalone;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.cloudfoundry.client.lib.CloudApplication;
-import org.cloudfoundry.client.lib.CloudInfo;
 import org.cloudfoundry.client.lib.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.RuntimeType;
+import org.cloudfoundry.ide.eclipse.internal.server.core.JavaRuntimeTypeHelper;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.wst.server.core.IModule;
@@ -43,7 +41,7 @@ public class StandaloneHandler {
 
 	private final CloudFoundryServer cloudServer;
 
-	private List<StandaloneRuntimeType> appTypes;
+	private List<RuntimeType> appTypes;
 
 	public StandaloneHandler(ApplicationModule appModule, CloudFoundryServer cloudServer) {
 		this.appModule = appModule;
@@ -86,7 +84,28 @@ public class StandaloneHandler {
 				&& CloudApplication.STANDALONE.equals(staging.getFramework()) && staging.getRuntime() != null;
 	}
 
-	public IProject getProject() {
+	protected ApplicationModule getApplicationModule() {
+		return appModule;
+	}
+
+	public List<RuntimeType> getRuntimeTypes() {
+		if (appTypes == null) {
+			IProject project = getProject();
+			if (project != null) {
+				IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(project);
+				if (javaProject != null && javaProject.exists()) {
+					appTypes = new JavaRuntimeTypeHelper(cloudServer).getRuntimeTypes();
+				}
+			}
+
+			if (appTypes == null) {
+				appTypes = Collections.emptyList();
+			}
+		}
+		return appTypes;
+	}
+
+	protected IProject getProject() {
 		if (appModule != null) {
 			IProject project = null;
 			IModule mod = appModule.getLocalModule();
@@ -98,65 +117,6 @@ public class StandaloneHandler {
 		return null;
 	}
 
-	protected ApplicationModule getApplicationModule() {
-		return appModule;
-	}
-
-	/**
-	 * Always returns a non-null list. May be empty
-	 * @return
-	 */
-	public List<StandaloneRuntimeType> getRuntimeTypes() {
-		if (appTypes == null) {
-			IProject project = getProject();
-			if (project != null) {
-				IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(getProject());
-				if (javaProject != null && javaProject.exists()) {
-					List<CloudInfo.Runtime> actualTypes = cloudServer.getBehaviour().getRuntimes();
-					appTypes = new ArrayList<StandaloneRuntimeType>(getJavaTypes(actualTypes));
-				}
-			}
-
-			if (appTypes == null) {
-				appTypes = Collections.emptyList();
-			}
-		}
-
-		return appTypes;
-	}
-
-	/**
-	 * Returns the Java runtimes supported by the given cloud server based on
-	 * the local Java runtime definitions. If no Java runtimes are found,
-	 * returns empty list
-	 * @param actualRuntimes
-	 * @return Java runtimes supported by cloud server, or empty list. Never
-	 * null.
-	 */
-	protected List<StandaloneRuntimeType> getJavaTypes(List<CloudInfo.Runtime> actualRuntimes) {
-		if (actualRuntimes == null) {
-			return Collections.emptyList();
-		}
-		Set<String> runtimeIds = new HashSet<String>();
-		for (CloudInfo.Runtime actualRuntime : actualRuntimes) {
-			runtimeIds.add(actualRuntime.getName());
-		}
-		StandaloneRuntimeType[] expectedTypes = { StandaloneRuntimeType.java, StandaloneRuntimeType.java7 };
-		List<StandaloneRuntimeType> foundRuntimes = new ArrayList<StandaloneRuntimeType>();
-
-		// Check whether the expected types still are found in the server
-		// runtime list. Only show runtime types that
-		// match those that are actually supported in the server
-		for (StandaloneRuntimeType expectedType : expectedTypes) {
-			if (runtimeIds.contains(expectedType.name())) {
-				foundRuntimes.add(expectedType);
-			}
-		}
-
-		return foundRuntimes;
-
-	}
-
 	/**
 	 * Optional start command definition, if defined for this standalone type.
 	 * It may be null if no runtime can be resolved for the given application,
@@ -164,7 +124,7 @@ public class StandaloneHandler {
 	 */
 	public StartCommand getStartCommand() {
 		// Find the first start command that matches any of the runtime types
-		for (StandaloneRuntimeType type : getRuntimeTypes()) {
+		for (RuntimeType type : getRuntimeTypes()) {
 			if (type != null) {
 				switch (type) {
 				case java:
