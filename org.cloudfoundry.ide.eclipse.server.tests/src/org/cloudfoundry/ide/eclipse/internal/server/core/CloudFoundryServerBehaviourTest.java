@@ -57,7 +57,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 				List<String> uris = new ArrayList<String>();
 				uris.add("test-proxy-upload.cloudfoundry.com");
 				CloudFoundryClient client = getClient();
-				client.createApplication("test", CloudApplication.SPRING, 128, uris, new ArrayList<String>());
+				client.createApplication("test", DeploymentConstants.SPRING, 128, uris, new ArrayList<String>());
 				fail("Expected ResourceAccessException due to invalid proxy configuration");
 			}
 			catch (Exception e) {

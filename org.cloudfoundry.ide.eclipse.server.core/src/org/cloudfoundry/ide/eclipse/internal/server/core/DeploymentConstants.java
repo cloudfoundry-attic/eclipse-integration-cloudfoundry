@@ -15,6 +15,10 @@ public class DeploymentConstants {
 	public static final String GRAILS_NATURE = "com.springsource.sts.grails.core.nature";
 
 	public static final String LIFT = "lift/1.0";
+	
+    public static final String JAVA_WEB = "java_web";
+    public static final String SPRING = "spring";
+    public static final String GRAILS = "grails";
 
 	public static final String STANDALONE_FRAMEWORK = "standalone";
 

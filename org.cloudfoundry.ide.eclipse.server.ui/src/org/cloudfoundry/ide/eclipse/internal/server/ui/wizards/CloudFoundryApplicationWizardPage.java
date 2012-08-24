@@ -15,7 +15,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.cloudfoundry.client.lib.ApplicationInfo;
-import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
@@ -56,10 +55,10 @@ public class CloudFoundryApplicationWizardPage extends AbstractCloudFoundryAppli
 	protected Map<String, String> getFrameworksByLabel() {
 		// Rails, Spring, Grails, Roo, JavaWeb, Sinatra, Node
 		Map<String, String> valuesByLabel = new LinkedHashMap<String, String>();
-		valuesByLabel.put("Spring", CloudApplication.SPRING);
-		valuesByLabel.put("Grails", CloudApplication.GRAILS);
+		valuesByLabel.put("Spring", DeploymentConstants.SPRING);
+		valuesByLabel.put("Grails", DeploymentConstants.GRAILS);
 		valuesByLabel.put("Lift", DeploymentConstants.LIFT);
-		valuesByLabel.put("Java Web", CloudApplication.JAVA_WEB);
+		valuesByLabel.put("Java Web", DeploymentConstants.JAVA_WEB);
 		return valuesByLabel;
 	}
 
@@ -68,7 +67,7 @@ public class CloudFoundryApplicationWizardPage extends AbstractCloudFoundryAppli
 		Label frameworkLabel = new Label(composite, SWT.NONE);
 		frameworkLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 		frameworkLabel.setText("Application Type:");
-		
+
 		String defaultFramework = getInitialValue();
 
 		frameworkCombo = new Combo(composite, SWT.BORDER | SWT.READ_ONLY);
@@ -81,9 +80,9 @@ public class CloudFoundryApplicationWizardPage extends AbstractCloudFoundryAppli
 			}
 		}
 		frameworkCombo.select(index);
-		
+
 		setFramework(frameworksByLabel.get(frameworkCombo.getText()));
-		
+
 		frameworkCombo.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
 				update();

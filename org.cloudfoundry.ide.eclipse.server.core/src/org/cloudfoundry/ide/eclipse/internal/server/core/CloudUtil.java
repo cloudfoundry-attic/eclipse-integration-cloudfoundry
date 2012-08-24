@@ -25,7 +25,6 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -76,7 +75,7 @@ public class CloudUtil {
 
 	public static final int DEFAULT_MEMORY = 512;
 
-	public static final String DEFAULT_FRAMEWORK = CloudApplication.SPRING;
+	public static final String DEFAULT_FRAMEWORK = DeploymentConstants.SPRING;
 
 	private static final IStatus[] EMPTY_STATUS = new IStatus[0];
 
@@ -474,7 +473,7 @@ public class CloudUtil {
 			}
 		}
 
-		return CloudApplication.JAVA_WEB;
+		return DeploymentConstants.JAVA_WEB;
 	}
 
 	public static String getFramework(IProject project) {
@@ -482,14 +481,14 @@ public class CloudUtil {
 			IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(project);
 			if (javaProject != null) {
 				if (CloudFoundryProjectUtil.hasNature(project, DeploymentConstants.GRAILS_NATURE)) {
-					return CloudApplication.GRAILS;
+					return DeploymentConstants.GRAILS;
 				}
 
 				// in case user has Grails projects without the nature
 				// attached
 				if (project.isAccessible() && project.getFolder("grails-app").exists()
 						&& project.getFile("application.properties").exists()) {
-					return CloudApplication.GRAILS;
+					return DeploymentConstants.GRAILS;
 				}
 
 				IClasspathEntry[] entries;
@@ -528,11 +527,11 @@ public class CloudUtil {
 				}
 
 				if (CloudFoundryProjectUtil.isSpringProject(project)) {
-					return CloudApplication.SPRING;
+					return DeploymentConstants.SPRING;
 				}
 
 				if (foundSpringLibrary) {
-					return CloudApplication.SPRING;
+					return DeploymentConstants.SPRING;
 				}
 			}
 		}

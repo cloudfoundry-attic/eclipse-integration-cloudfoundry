@@ -534,11 +534,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			@Override
 			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
 				try {
-					getClient().createApplication(appName, CloudApplication.SPRING, memory, uris, serviceNames);
+					getClient().createApplication(appName, DeploymentConstants.SPRING, memory, uris, serviceNames);
 					getClient().uploadApplication(appName, warFile);
 					getClient().startApplication(appName);
 					// getClient().createAndUploadAndStartApplication(appName,
-					// CloudApplication.SPRING, memory, warFile, uris,
+					// DeploymentConstants.SPRING, memory, warFile, uris,
 					// serviceNames);
 				}
 				catch (IOException e) {
