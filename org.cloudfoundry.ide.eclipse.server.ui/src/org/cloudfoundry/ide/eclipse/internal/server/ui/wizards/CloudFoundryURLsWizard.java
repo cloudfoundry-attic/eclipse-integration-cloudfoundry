@@ -11,7 +11,6 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
@@ -60,19 +59,6 @@ public class CloudFoundryURLsWizard extends Wizard {
 
 	@Override
 	public void addPages() {
-
-		if (!isPublished && (existingURIs == null || existingURIs.isEmpty())) {
-			try {
-				ApplicationModule module = cloudServer.getApplicationModule(appName);
-				String defaultURL = module != null ? module.getLaunchUrl(appName) : null;
-				if (defaultURL != null) {
-					existingURIs = Arrays.asList(new String[] { defaultURL });
-				}
-			}
-			catch (CoreException e) {
-				// Ignore if no default URL can be determined
-			}
-		}
 		page = new CloudFoundryURLsWizardPage(cloudServer, existingURIs);
 		addPage(page);
 	}

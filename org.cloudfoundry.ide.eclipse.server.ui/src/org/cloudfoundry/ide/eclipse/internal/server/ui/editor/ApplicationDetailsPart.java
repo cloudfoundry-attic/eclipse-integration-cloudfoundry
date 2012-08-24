@@ -477,6 +477,14 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			}
 		}
 
+		if (currentURIs == null && !isPublished) {
+			// At this stage, the app may not have deployed due to errors, but
+			// there may already
+			// be set URIs in an existing descriptor
+			currentURIs = appModule.getLastDeploymentInfo() != null ? appModule.getLastDeploymentInfo().getUris()
+					: null;
+		}
+
 		if (currentURIs == null) {
 			currentURIs = Collections.emptyList();
 		}
@@ -550,19 +558,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		GridLayoutFactory.fillDefaults().numColumns(2).margins(0, 0).applyTo(uriComposite);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(uriComposite);
 
-		mappedURIsLink = new Link(uriComposite, SWT.MULTI);
-		GridDataFactory.fillDefaults().grab(true, false).hint(250, SWT.DEFAULT).applyTo(mappedURIsLink);
-		adaptControl(mappedURIsLink);
-
-		mappedURIsLink.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				CloudUiUtil.openUrl("http://" + e.text);
-			}
-		});
-
 		ImageHyperlink editURI = toolkit.createImageHyperlink(uriComposite, SWT.PUSH);
-		GridDataFactory.fillDefaults().grab(true, false).align(SWT.RIGHT, SWT.TOP).applyTo(editURI);
+		GridDataFactory.fillDefaults().grab(false, false).align(SWT.BEGINNING, SWT.TOP).applyTo(editURI);
 		editURI.setImage(CloudFoundryImages.getImage(CloudFoundryImages.EDIT));
 		editURI.addHyperlinkListener(new HyperlinkAdapter() {
 			@Override
@@ -581,6 +578,17 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 						application.setUris(URIs);
 					}
 				}
+			}
+		});
+
+		mappedURIsLink = new Link(uriComposite, SWT.MULTI);
+		GridDataFactory.fillDefaults().grab(true, false).hint(250, SWT.DEFAULT).applyTo(mappedURIsLink);
+		adaptControl(mappedURIsLink);
+
+		mappedURIsLink.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				CloudUiUtil.openUrl("http://" + e.text);
 			}
 		});
 
