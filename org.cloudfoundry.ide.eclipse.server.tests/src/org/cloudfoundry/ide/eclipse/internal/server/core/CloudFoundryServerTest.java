@@ -12,7 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import junit.framework.TestCase;
 
-import org.cloudfoundry.client.lib.CloudFoundryClient;
+import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ServerDescriptor;
 import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ServerHandler;
 import org.eclipse.core.runtime.CoreException;
@@ -124,7 +124,7 @@ public class CloudFoundryServerTest extends TestCase {
 		assertEquals("pwd", cloudFoundryServer.getPassword());
 		CloudFoundryServerBehaviour CloudFoundryServerBehaviour = (CloudFoundryServerBehaviour) serverWC.loadAdapter(
 				CloudFoundryServerBehaviour.class, null);
-		CloudFoundryClient client = CloudFoundryServerBehaviour.getClient();
+		CloudFoundryOperations client = CloudFoundryServerBehaviour.getClient();
 
 		// create new server instance
 		serverWC = server.createWorkingCopy();

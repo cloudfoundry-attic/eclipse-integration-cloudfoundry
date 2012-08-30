@@ -12,7 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import junit.framework.TestCase;
 
-import org.cloudfoundry.client.lib.CloudFoundryClient;
+import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudInfo;
 import org.junit.Assert;
 
@@ -22,7 +22,7 @@ import org.junit.Assert;
 public class CloudFoundryClientTest extends TestCase {
 
 	public void testConnectToNonSecureUrl() throws Exception {
-		CloudFoundryClient client = CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory()
+		CloudFoundryOperations client = CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory()
 				.getCloudFoundryClient("http://api.cloudfoundry.com");
 
 		CloudInfo cloudInfo = client.getCloudInfo();
@@ -30,7 +30,7 @@ public class CloudFoundryClientTest extends TestCase {
 	}
 
 	public void testConnectToSecureUrl() throws Exception {
-		CloudFoundryClient client = CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory()
+		CloudFoundryOperations client = CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory()
 				.getCloudFoundryClient("https://api.cloudfoundry.com");
 		CloudInfo cloudInfo = client.getCloudInfo();
 		Assert.assertNotNull(cloudInfo);

@@ -17,8 +17,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.CloudApplication;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
+import org.cloudfoundry.client.lib.CloudFoundryOperations;
+import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.net.proxy.IProxyData;
@@ -56,7 +57,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 			try {
 				List<String> uris = new ArrayList<String>();
 				uris.add("test-proxy-upload.cloudfoundry.com");
-				CloudFoundryClient client = getClient();
+				CloudFoundryOperations client = getClient();
 				client.createApplication("test", DeploymentConstants.SPRING, 128, uris, new ArrayList<String>());
 				fail("Expected ResourceAccessException due to invalid proxy configuration");
 			}
@@ -112,7 +113,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		int moduleState = server.getModulePublishState(modules);
 		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
-		CloudFoundryClient client = getClient();
+		CloudFoundryOperations client = getClient();
 		Field field = CloudFoundryClient.class.getDeclaredField("token");
 		field.setAccessible(true);
 		field.set(client, "invalid");
@@ -141,7 +142,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
 		Field field = null;
-		CloudFoundryClient client = null;
+		CloudFoundryOperations client = null;
 		Object oldValue = null;
 
 		try {
@@ -186,7 +187,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		}
 		assertTrue(found);
 
-		CloudFoundryClient client = CloudFoundryPlugin
+		CloudFoundryOperations client = CloudFoundryPlugin
 				.getDefault()
 				.getCloudFoundryClientFactory()
 				.getCloudFoundryClient(CloudFoundryTestFixture.VCLOUDLABS.getUsername(),

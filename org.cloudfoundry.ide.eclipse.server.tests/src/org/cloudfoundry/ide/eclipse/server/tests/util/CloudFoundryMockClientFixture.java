@@ -14,10 +14,12 @@ import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryClientFactory;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.uaa.RequestFactory;
+import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryMockClientFixture.CFClientMockedRestTemplate;
+import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryMockClientFixture.TestConnectionDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.springframework.web.client.RestTemplate;
 
@@ -82,23 +84,17 @@ public class CloudFoundryMockClientFixture {
 	class CFClientMockedRestTemplate extends CloudFoundryClient {
 
 		public CFClientMockedRestTemplate(String cloudControllerUrl) throws MalformedURLException, CoreException {
-			this(null, null, null, new URL(cloudControllerUrl));
+			this(null, null, new URL(cloudControllerUrl));
 		}
 
 		public CFClientMockedRestTemplate(String userName, String password, URL url) throws MalformedURLException,
 				CoreException {
-			this(userName, password, null, url);
+			super(new CloudCredentials(userName, password), url);
+
+			initMockedRestTemplate(userName, password, url);
 		}
 
-		public CFClientMockedRestTemplate(String email, String password, String token, URL cloudControllerUrl)
-				throws CoreException {
-			super(email, password, token, cloudControllerUrl, new RequestFactory());
-
-			initMockedRestTemplate(email, password, token, cloudControllerUrl);
-
-		}
-
-		protected void initMockedRestTemplate(String email, String password, String token, URL cloudControllerUrl)
+		protected void initMockedRestTemplate(String email, String password, URL cloudControllerUrl)
 				throws CoreException {
 			Class<?> cls = CloudFoundryClient.class;
 			Field restTemplateField;
@@ -107,7 +103,7 @@ public class CloudFoundryMockClientFixture {
 				restTemplateField = cls.getDeclaredField("restTemplate");
 
 				RestTemplate mockedTemplate = new MockRestTemplate(new TestConnectionDescriptor(cloudControllerUrl,
-						email, token, password));
+						email, null, password));
 
 				// Set the mocked template
 				restTemplateField.setAccessible(true);
