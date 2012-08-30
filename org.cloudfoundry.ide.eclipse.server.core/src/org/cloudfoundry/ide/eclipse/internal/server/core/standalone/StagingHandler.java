@@ -12,7 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.standalone;
 
 import java.util.Map;
 
-import org.cloudfoundry.client.lib.Staging;
+import org.cloudfoundry.client.lib.domain.Staging;
 
 public class StagingHandler {
 

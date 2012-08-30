@@ -13,13 +13,13 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.standalone;
 import java.util.Collections;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.CloudApplication;
-import org.cloudfoundry.client.lib.Staging;
+import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.RuntimeType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.JavaRuntimeTypeHelper;
+import org.cloudfoundry.ide.eclipse.internal.server.core.RuntimeType;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.wst.server.core.IModule;

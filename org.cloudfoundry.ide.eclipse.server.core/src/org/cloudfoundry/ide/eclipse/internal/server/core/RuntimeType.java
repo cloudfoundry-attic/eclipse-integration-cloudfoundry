@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import org.cloudfoundry.client.lib.CloudInfo;
+import org.cloudfoundry.client.lib.domain.CloudInfo;
 
 /**
  * 

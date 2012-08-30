@@ -14,7 +14,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.cloudfoundry.client.lib.CloudFoundryClient;
+import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -323,7 +323,7 @@ public class CloudFoundryPlugin extends Plugin {
 	 * @return non-null Cloud Foundry Java client, including a UAA aware client
 	 * if UAA is available
 	 */
-	public CloudFoundryClient getCloudFoundryClient(String userName, String password, URL url) {
+	public CloudFoundryOperations getCloudFoundryClient(String userName, String password, URL url) {
 		return getCloudFoundryClientFactory().getCloudFoundryClient(isUAAIDEAvailable(), userName, password, url);
 	}
 

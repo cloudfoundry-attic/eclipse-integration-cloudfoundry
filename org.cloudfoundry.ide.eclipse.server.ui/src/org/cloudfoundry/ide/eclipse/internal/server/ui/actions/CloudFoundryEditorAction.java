@@ -152,8 +152,7 @@ public abstract class CloudFoundryEditorAction extends Action {
 								}
 								if (userAction && CloudUtil.isWrongCredentialsException((CoreException) exception)) {
 									CloudFoundryCredentialsWizard wizard = new CloudFoundryCredentialsWizard(editorPage
-											.getCloudServer(),
-											"Access to Cloud Foundry was denied. Make sure your Cloud Foundry credentials are correct.");
+											.getCloudServer());
 									WizardDialog dialog = new WizardDialog(Display.getDefault().getActiveShell(),
 											wizard);
 									if (dialog.open() == Dialog.OK) {

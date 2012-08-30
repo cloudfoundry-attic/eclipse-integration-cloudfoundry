@@ -10,9 +10,9 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import org.cloudfoundry.client.lib.CloudApplication;
-import org.cloudfoundry.client.lib.CloudApplication.AppState;
-import org.cloudfoundry.client.lib.CloudFoundryClient;
+import org.cloudfoundry.client.lib.CloudFoundryOperations;
+import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
@@ -34,7 +34,7 @@ public abstract class AbstractApplicationInWaitOperation {
 		this.jobName = jobName;
 	}
 
-	public boolean run(IProgressMonitor progress, final CloudFoundryClient client, CloudApplication cloudApplication)
+	public boolean run(IProgressMonitor progress, final CloudFoundryOperations client, CloudApplication cloudApplication)
 			throws CoreException {
 
 		if (cloudApplication == null) {

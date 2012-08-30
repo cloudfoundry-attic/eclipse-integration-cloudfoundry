@@ -11,11 +11,18 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.net.MalformedURLException;
+import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 
+import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
-import org.cloudfoundry.ide.eclipse.internal.uaa.RequestFactory;
+import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.ide.eclipse.internal.uaa.UaaAwareCloudFoundryClient;
+import org.eclipse.core.runtime.URIUtil;
 import org.springframework.ide.eclipse.uaa.UaaPlugin;
 
 /**
@@ -28,29 +35,75 @@ public class CloudFoundryClientFactory {
 	// services
 	public static final String SPRING_IDE_UAA_BUNDLE_SYMBOLIC_NAME = "org.springframework.ide.eclipse.uaa";
 
-	public CloudFoundryClient getCloudFoundryClient(boolean isUAAIDEAvailable, String userName, String password, URL url) {
+	public CloudFoundryOperations getCloudFoundryClient(boolean isUAAIDEAvailable, String userName, String password,
+			URL url) {
 		if (isUAAIDEAvailable) {
 			return UaaAwareCloudFoundryClientAccessor.getCloudFoundryClient(userName, password, url);
 		}
 		else {
-			return new CloudFoundryClient(userName, password, null, url, new RequestFactory());
+			return getCloudFoundryOperations(userName, password, url);
 		}
 	}
 
-	public CloudFoundryClient getCloudFoundryClient(String userName, String password, String url)
+	public CloudFoundryOperations getCloudFoundryClient(String userName, String password, String url)
 			throws MalformedURLException {
-		return new CloudFoundryClient(userName, password, url);
+		return getCloudFoundryOperations(userName, password, new URL(url));
 	}
 
-	public CloudFoundryClient getCloudFoundryClient(String cloudControllerUrl) throws MalformedURLException {
-		return new CloudFoundryClient(cloudControllerUrl);
+	public CloudFoundryOperations getCloudFoundryOperations(String userName, String password, URL url) {
+		CloudCredentials credentials = getCredentials(userName, password, url);
+
+		try {
+			return new CloudFoundryClient(credentials, url);
+		}
+		catch (MalformedURLException e) {
+			CloudFoundryPlugin.logError("Failed to obtain Cloud Foundry operations for " + url.toString(), e);
+		}
+		return null;
+	}
+
+	protected static CloudCredentials getCredentials(String userName, String password, URL url) {
+		CloudCredentials credentials = new CloudCredentials(userName, password);
+		String proxy = getProxy(url);
+
+		if (proxy != null) {
+			credentials = new CloudCredentials(credentials, proxy);
+		}
+		return credentials;
+	}
+
+	public CloudFoundryOperations getCloudFoundryClient(String cloudControllerUrl) throws MalformedURLException {
+		return new CloudFoundryClient(new URL(cloudControllerUrl));
 	}
 
 	static class UaaAwareCloudFoundryClientAccessor {
 
-		public static CloudFoundryClient getCloudFoundryClient(String userName, String password, URL url) {
-			return new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), userName, password, null, url,
-					new RequestFactory());
+		public static CloudFoundryOperations getCloudFoundryClient(String userName, String password, URL url) {
+			try {
+				CloudCredentials credentials = getCredentials(userName, password, url);
+				return new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url);
+			}
+			catch (MalformedURLException e) {
+				CloudFoundryPlugin.logError("Failed to obtain Cloud Foundry operations for " + url.toString(), e);
+			}
+			return null;
 		}
+	}
+
+	protected static String getProxy(URL url) {
+
+		List<Proxy> proxies = null;
+
+		try {
+			URI uri = URIUtil.toURI(url);
+
+			if (uri != null) {
+				proxies = ProxySelector.getDefault().select(uri);
+			}
+		}
+		catch (URISyntaxException e) {
+			// Ignore
+		}
+		return proxies != null && proxies.size() > 0 ? proxies.get(0).toString() : null;
 	}
 }

@@ -53,11 +53,15 @@
     <system>BAMBOO</system>
   </ciManagement>
 
+
   <properties>
     <!-- CloudFloundry Properties -->
     <p2.qualifier>SNAPSHOT</p2.qualifier>
     <p2.sign>false</p2.sign>
     <p2.repository.name>Cloud Foundry Integration for Eclipse</p2.repository.name>
+    
+    <spring.framework.version>3.0.7.RELEASE</spring.framework.version>
+    <spring.security.oauth.version>1.0.0.RC1</spring.security.oauth.version>
 
 	<!-- Signing -->
 	<signing.skip>true</signing.skip>
@@ -165,11 +169,57 @@
       <id>apache-release</id>
       <url>https://repository.apache.org/content/repositories/releases/</url>
     </repository>
+    <!-- required for Cloud Foundry lib 0.8.0 -->
+    <repository>
+			<id>spring-libs-milestone</id>
+			<url>http://repo.springsource.org/libs-milestone</url>
+    </repository>
     <repository>
       <id>maven-mirror</id>
       <url>http://repo.exist.com/maven2</url>
     </repository>
   </repositories>
+  
+  	<dependencies>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${spring.framework.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.security.oauth</groupId>
+			<artifactId>spring-security-oauth2</artifactId>
+			<version>${spring.security.oauth.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework</groupId>
+					<artifactId>spring-jdbc</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-httpclient</groupId>
+			<artifactId>commons-httpclient</artifactId>
+			<version>3.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>${spring.framework.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.cloudfoundry.test</groupId>
+			<artifactId>non-ascii-file-name</artifactId>
+			<version>0.1.0.BUILD-SNAPSHOT</version>
+			<type>war</type>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
   
   <pluginRepositories>
     <!-- required for Maven and Ant AWS dependency -->

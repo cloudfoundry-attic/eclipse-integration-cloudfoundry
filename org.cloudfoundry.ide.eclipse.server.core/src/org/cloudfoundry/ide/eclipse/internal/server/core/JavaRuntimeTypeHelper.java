@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.cloudfoundry.client.lib.CloudInfo;
+import org.cloudfoundry.client.lib.domain.CloudInfo;
 
 public class JavaRuntimeTypeHelper {
 

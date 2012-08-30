@@ -16,8 +16,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-
 public class CloudFoundryTestUtil {
 
 	/**

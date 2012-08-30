@@ -12,7 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.cloudfoundry.client.lib.CloudService;
+import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;

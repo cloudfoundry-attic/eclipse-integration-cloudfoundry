@@ -23,19 +23,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.cloudfoundry.client.lib.ApplicationInfo;
-import org.cloudfoundry.client.lib.ApplicationStats;
-import org.cloudfoundry.client.lib.CloudApplication;
-import org.cloudfoundry.client.lib.CloudApplication.AppState;
-import org.cloudfoundry.client.lib.CloudFoundryClient;
 import org.cloudfoundry.client.lib.CloudFoundryException;
-import org.cloudfoundry.client.lib.CloudInfo;
-import org.cloudfoundry.client.lib.CloudService;
-import org.cloudfoundry.client.lib.InstancesInfo;
-import org.cloudfoundry.client.lib.ServiceConfiguration;
-import org.cloudfoundry.client.lib.Staging;
+import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
+import org.cloudfoundry.client.lib.domain.ApplicationStats;
+import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
+import org.cloudfoundry.client.lib.domain.CloudInfo;
+import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.client.lib.domain.InstancesInfo;
+import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
+import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
@@ -82,7 +81,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private static final long UPLOAD_TIMEOUT = 60 * 1000;
 
-	private CloudFoundryClient client;
+	private CloudFoundryOperations client;
 
 	private RefreshJob refreshJob;
 
@@ -120,7 +119,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		new Request<Void>(NLS.bind("Loggging in to {0}", cloudServer.getUrl())) {
 			@Override
-			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.login();
 				doRefreshModules(cloudServer, client, progress);
 
@@ -141,7 +140,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * checks.
 	 * 
 	 */
-	protected synchronized void requestAllowDebug(CloudFoundryClient client) throws CoreException {
+	protected synchronized void requestAllowDebug(CloudFoundryOperations client) throws CoreException {
 		// Check the debug support of the server once per working copy of server
 		if (isDebugModeSupported == DebugSupportCheck.UNCHECKED) {
 			isDebugModeSupported = client.getCloudInfo().getAllowDebug() ? DebugSupportCheck.SUPPORTED
@@ -164,7 +163,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		new Request<Void>(services.length == 1 ? NLS.bind("Creating service {0}", services[0].getName())
 				: "Creating services") {
 			@Override
-			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 
 				for (CloudService service : services) {
 					client.createService(service);
@@ -181,7 +180,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		final CloudFoundryServer cloudServer = getCloudFoundryServer();
 		new Request<Void>() {
 			@Override
-			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				for (IModule module : modules) {
 					final ApplicationModule appModule = cloudServer.getApplication(module);
 
@@ -231,7 +230,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public void deleteServices(final List<String> services, IProgressMonitor monitor) throws CoreException {
 		new Request<Void>("Deleting services") {
 			@Override
-			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				CaldecottTunnelHandler handler = new CaldecottTunnelHandler(getCloudFoundryServer());
 				for (String service : services) {
 					client.deleteService(service);
@@ -250,7 +249,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				|| new StandaloneHandler(appModule, getCloudFoundryServer()).isSupportedStandalone();
 	}
 
-	private CloudApplication doDeployApplication(CloudFoundryClient client, final ApplicationModule appModule,
+	private CloudApplication doDeployApplication(CloudFoundryOperations client, final ApplicationModule appModule,
 			final DeploymentDescriptor descriptor, IProgressMonitor monitor) throws CoreException {
 		Assert.isNotNull(descriptor.applicationInfo);
 
@@ -407,7 +406,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public CloudApplication getApplication(final String applicationId, IProgressMonitor monitor) throws CoreException {
 		return new Request<CloudApplication>() {
 			@Override
-			protected CloudApplication doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected CloudApplication doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getApplication(applicationId);
 			}
 		}.run(monitor);
@@ -416,7 +415,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public List<CloudApplication> getApplications(IProgressMonitor monitor) throws CoreException {
 		return new Request<List<CloudApplication>>("Getting applications") {
 			@Override
-			protected List<CloudApplication> doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected List<CloudApplication> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getApplications();
 			}
 		}.run(monitor);
@@ -426,7 +425,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			throws CoreException {
 		return new Request<ApplicationStats>(NLS.bind("Getting application statistics for {0}", applicationId)) {
 			@Override
-			protected ApplicationStats doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected ApplicationStats doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getApplicationStats(applicationId);
 			}
 		}.run(monitor);
@@ -435,7 +434,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public InstancesInfo getInstancesInfo(final String applicationId, IProgressMonitor monitor) throws CoreException {
 		return new Request<InstancesInfo>(NLS.bind("Getting application statistics for {0}", applicationId)) {
 			@Override
-			protected InstancesInfo doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected InstancesInfo doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getApplicationInstances(applicationId);
 			}
 		}.run(monitor);
@@ -445,7 +444,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			IProgressMonitor monitor) throws CoreException {
 		return new Request<String>("Retrieving file") {
 			@Override
-			protected String doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getFile(applicationId, instanceIndex, path);
 			}
 		}.run(monitor);
@@ -462,7 +461,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			throws CoreException {
 		return new Request<DeploymentConfiguration>("Getting available service options") {
 			@Override
-			protected DeploymentConfiguration doRun(CloudFoundryClient client, SubMonitor progress)
+			protected DeploymentConfiguration doRun(CloudFoundryOperations client, SubMonitor progress)
 					throws CoreException {
 				DeploymentConfiguration configuration = new DeploymentConfiguration();
 				// XXX make bogus call that triggers login if needed to work
@@ -478,7 +477,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public List<ServiceConfiguration> getServiceConfigurations(IProgressMonitor monitor) throws CoreException {
 		return new Request<List<ServiceConfiguration>>("Getting available service options") {
 			@Override
-			protected List<ServiceConfiguration> doRun(CloudFoundryClient client, SubMonitor progress)
+			protected List<ServiceConfiguration> doRun(CloudFoundryOperations client, SubMonitor progress)
 					throws CoreException {
 				return client.getServiceConfigurations();
 			}
@@ -491,7 +490,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public void deleteAllApplications(IProgressMonitor monitor) throws CoreException {
 		new Request<Object>("Deleting all applications") {
 			@Override
-			protected Object doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Object doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.deleteAllApplications();
 				return null;
 			}
@@ -501,7 +500,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public List<CloudService> getServices(IProgressMonitor monitor) throws CoreException {
 		return new Request<List<CloudService>>("Getting available services") {
 			@Override
-			protected List<CloudService> doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected List<CloudService> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getServices();
 			}
 		}.run(monitor);
@@ -512,7 +511,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		new Request<Void>() {
 			@Override
-			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				doRefreshModules(cloudServer, client, progress);
 				return null;
 			}
@@ -532,7 +531,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		new Request<Void>() {
 			@Override
-			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				try {
 					getClient().createApplication(appName, DeploymentConstants.SPRING, memory, uris, serviceNames);
 					getClient().uploadApplication(appName, warFile);
@@ -722,7 +721,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			CloudFoundryPlugin.getCallback().applicationStopping(getCloudFoundryServer(), cloudModule);
 			new Request<Void>() {
 				@Override
-				protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+				protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 					client.stopApplication(cloudModule.getApplicationId());
 					return null;
 				}
@@ -834,7 +833,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		final String appName = module.getApplication().getName();
 		new Request<Void>() {
 			@Override
-			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.updateApplicationInstances(appName, instanceCount);
 				return null;
 			}
@@ -847,7 +846,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		new Request<Void>() {
 
 			@Override
-			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.updatePassword(newPassword);
 				return null;
 			}
@@ -860,7 +859,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		final String appName = module.getApplication().getName();
 		new Request<Void>() {
 			@Override
-			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.updateApplicationMemory(appName, memory);
 				return null;
 			}
@@ -871,14 +870,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			throws CoreException {
 		new Request<Void>() {
 			@Override
-			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.updateApplicationUris(appName, uris);
 				return null;
 			}
 		}.run(monitor);
 	}
 
-	public List<String> findCaldecottTunnelsToClose(CloudFoundryClient client, String appName,
+	public List<String> findCaldecottTunnelsToClose(CloudFoundryOperations client, String appName,
 			List<String> servicesToUpdate) {
 		List<String> services = new ArrayList<String>();
 
@@ -912,7 +911,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			final boolean closeRelatedCaldecottTunnels, IProgressMonitor monitor) throws CoreException {
 		new Request<Void>() {
 			@Override
-			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				// Prior to updating the services, obtain the current list of
 				// bound services for the app
 				// and determine if any services are being unbound. If unbound,
@@ -941,7 +940,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public void register(final String email, final String password, IProgressMonitor monitor) throws CoreException {
 		new Request<Void>() {
 			@Override
-			protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.register(email, password);
 				return null;
 			}
@@ -951,7 +950,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	/**
 	 * Public for testing only.
 	 */
-	public synchronized CloudFoundryClient getClient() throws CoreException {
+	public synchronized CloudFoundryOperations getClient() throws CoreException {
 		if (client == null) {
 			String userName = getCloudFoundryServer().getUsername();
 			String password = getCloudFoundryServer().getPassword();
@@ -990,7 +989,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		refreshJob.reschedule();
 	}
 
-	private boolean waitForStart(CloudFoundryClient client, String deploymentId, IProgressMonitor monitor)
+	private boolean waitForStart(CloudFoundryOperations client, String deploymentId, IProgressMonitor monitor)
 			throws InterruptedException {
 		long timeLeft = DEPLOYMENT_TIMEOUT;
 		while (timeLeft > 0) {
@@ -1004,7 +1003,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return false;
 	}
 
-	private CloudApplication waitForUpload(CloudFoundryClient client, String applicationId, IProgressMonitor monitor)
+	private CloudApplication waitForUpload(CloudFoundryOperations client, String applicationId, IProgressMonitor monitor)
 			throws InterruptedException {
 		long timeLeft = UPLOAD_TIMEOUT;
 		while (timeLeft > 0) {
@@ -1018,7 +1017,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return null;
 	}
 
-	protected void doRefreshModules(final CloudFoundryServer cloudServer, CloudFoundryClient client,
+	protected void doRefreshModules(final CloudFoundryServer cloudServer, CloudFoundryOperations client,
 			IProgressMonitor progress) throws CoreException {
 		// update applications and deployments from server
 		Map<String, CloudApplication> applicationByName = new LinkedHashMap<String, CloudApplication>();
@@ -1090,7 +1089,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			if (cloudModule.getApplication() != null) {
 				new Request<Void>() {
 					@Override
-					protected Void doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException {
+					protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 						client.deleteApplication(cloudModule.getName());
 						return null;
 					}
@@ -1150,7 +1149,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param client
 	 * @param restartOrDebugAction either debug mode or regular start/restart
 	 */
-	protected void restartOrDebugApplicationInClient(String applicationId, CloudFoundryClient client,
+	protected void restartOrDebugApplicationInClient(String applicationId, CloudFoundryOperations client,
 			ApplicationAction restartOrDebugAction) {
 		switch (restartOrDebugAction) {
 		case DEBUG:
@@ -1168,7 +1167,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		SubMonitor progress = SubMonitor.convert(monitor);
 		progress.beginTask("Connecting", IProgressMonitor.UNKNOWN);
 		try {
-			CloudFoundryClient client = createClient(location, userName, password);
+			CloudFoundryOperations client = createClient(location, userName, password);
 			client.login();
 		}
 		catch (RestClientException e) {
@@ -1199,7 +1198,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		SubMonitor progress = SubMonitor.convert(monitor);
 		progress.beginTask("Connecting", IProgressMonitor.UNKNOWN);
 		try {
-			CloudFoundryClient client = createClient(location, userName, password);
+			CloudFoundryOperations client = createClient(location, userName, password);
 			client.register(userName, password);
 		}
 		catch (RestClientException e) {
@@ -1225,7 +1224,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 	}
 
-	private static CloudFoundryClient createClient(String location, String userName, String password)
+	private static CloudFoundryOperations createClient(String location, String userName, String password)
 			throws CoreException {
 		URL url;
 		try {
@@ -1328,7 +1327,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			T result;
 			boolean succeeded = false;
 			try {
-				CloudFoundryClient client = getClient();
+				CloudFoundryOperations client = getClient();
 				try {
 					result = doRun(client, subProgress);
 					succeeded = true;
@@ -1380,7 +1379,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			return result;
 		}
 
-		protected abstract T doRun(CloudFoundryClient client, SubMonitor progress) throws CoreException;
+		protected abstract T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException;
 
 	}
 
@@ -1467,7 +1466,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				boolean started = new Request<Boolean>() {
 					@Override
-					protected Boolean doRun(final CloudFoundryClient client, SubMonitor progress) throws CoreException {
+					protected Boolean doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 						if (descriptor.applicationInfo == null) {
 							throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
 									"Unable to deploy module"));
@@ -1602,7 +1601,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	}
 
-	protected void refreshAfterDeployment(boolean waitForDeployment, CloudFoundryClient client,
+	protected void refreshAfterDeployment(boolean waitForDeployment, CloudFoundryOperations client,
 			ApplicationModule cloudModule, CloudFoundryServer cloudServer, String applicationId,
 			IProgressMonitor progress) throws CoreException {
 		if (waitForDeployment) {
@@ -1645,7 +1644,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				boolean started = new Request<Boolean>() {
 					@Override
-					protected Boolean doRun(final CloudFoundryClient client, SubMonitor progress) throws CoreException {
+					protected Boolean doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 						if (descriptor.applicationInfo == null) {
 							throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
 									"Unable to deploy module"));

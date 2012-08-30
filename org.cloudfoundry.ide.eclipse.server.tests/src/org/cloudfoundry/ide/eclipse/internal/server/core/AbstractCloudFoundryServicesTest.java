@@ -13,9 +13,9 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.CloudApplication;
-import org.cloudfoundry.client.lib.CloudService;
-import org.cloudfoundry.client.lib.ServiceConfiguration;
+import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestUtil;

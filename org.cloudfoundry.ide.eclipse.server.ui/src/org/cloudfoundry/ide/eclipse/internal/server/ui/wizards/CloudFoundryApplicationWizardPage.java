@@ -14,7 +14,7 @@ import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.cloudfoundry.client.lib.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;

@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
-import org.cloudfoundry.client.lib.InstanceStats;
-import org.cloudfoundry.client.lib.InstanceStats.Usage;
+import org.cloudfoundry.client.lib.domain.InstanceStats;
+import org.cloudfoundry.client.lib.domain.InstanceStats.Usage;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AppStatsContentProvider.InstanceStatsAndInfo;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;

@@ -10,13 +10,12 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import org.cloudfoundry.client.lib.ApplicationInfo;
-import org.cloudfoundry.client.lib.ApplicationStats;
-import org.cloudfoundry.client.lib.CloudApplication;
-import org.cloudfoundry.client.lib.CloudApplication.AppState;
-import org.cloudfoundry.client.lib.DeploymentInfo;
-import org.cloudfoundry.client.lib.InstancesInfo;
-import org.cloudfoundry.client.lib.Staging;
+import org.cloudfoundry.client.lib.domain.ApplicationStats;
+import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
+import org.cloudfoundry.client.lib.domain.DeploymentInfo;
+import org.cloudfoundry.client.lib.domain.InstancesInfo;
+import org.cloudfoundry.client.lib.domain.Staging;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.wst.server.core.IModule;

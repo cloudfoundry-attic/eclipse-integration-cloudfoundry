@@ -13,7 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.CloudService;
+import org.cloudfoundry.client.lib.domain.CloudService;
 import org.eclipse.jface.viewers.IStructuredSelection;
 
 public class ServicesHandler {

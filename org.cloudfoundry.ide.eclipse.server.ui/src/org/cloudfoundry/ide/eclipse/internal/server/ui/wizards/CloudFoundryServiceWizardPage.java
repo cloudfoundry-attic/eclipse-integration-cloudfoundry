@@ -19,10 +19,11 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.cloudfoundry.client.lib.CloudService;
-import org.cloudfoundry.client.lib.ServiceConfiguration;
-import org.cloudfoundry.client.lib.ServiceConfiguration.Option;
-import org.cloudfoundry.client.lib.ServiceConfiguration.Tier;
+
+import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
+import org.cloudfoundry.client.lib.domain.ServiceConfiguration.Option;
+import org.cloudfoundry.client.lib.domain.ServiceConfiguration.Tier;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.core.databinding.DataBindingContext;

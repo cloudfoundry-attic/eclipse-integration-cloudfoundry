@@ -13,6 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.uaa;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -24,17 +25,17 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.cloudfoundry.client.lib.ApplicationStats;
-import org.cloudfoundry.client.lib.CloudApplication;
+import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
-import org.cloudfoundry.client.lib.CloudInfo;
-import org.cloudfoundry.client.lib.CloudService;
-import org.cloudfoundry.client.lib.CrashesInfo;
-import org.cloudfoundry.client.lib.InstancesInfo;
-import org.cloudfoundry.client.lib.ServiceConfiguration;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
+import org.cloudfoundry.client.lib.domain.ApplicationStats;
+import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.CloudInfo;
+import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.client.lib.domain.CrashesInfo;
+import org.cloudfoundry.client.lib.domain.InstancesInfo;
+import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
 import org.json.simple.JSONObject;
-import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.uaa.client.TransmissionAwareUaaService;
 import org.springframework.uaa.client.TransmissionEventListener;
 import org.springframework.uaa.client.UaaService;
@@ -43,8 +44,6 @@ import org.springframework.uaa.client.protobuf.UaaClient.FeatureUse;
 import org.springframework.uaa.client.protobuf.UaaClient.Product;
 import org.springframework.uaa.client.util.HexUtils;
 import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RequestCallback;
-import org.springframework.web.client.ResponseExtractor;
 
 /**
  * @author Christian Dupuis
@@ -52,22 +51,35 @@ import org.springframework.web.client.ResponseExtractor;
 public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements TransmissionEventListener {
 
 	public final static String VCLOUD_URL = "http://api.cloudfoundry.com";
-	
+
 	public final static String VCLOUD_SECURE_URL = "https://api.cloudfoundry.com";
 
 	private final static int HTTP_SUCCESS_CODE = 200;
+
 	private UaaService uaaService;
+
 	private Set<String> discoveredAppNames = new HashSet<String>();
+
 	private URL cloudControllerUrl;
-	/** key: method name, value: sorted map of HTTP response code keys to count of that response code */
+
+	/**
+	 * key: method name, value: sorted map of HTTP response code keys to count
+	 * of that response code
+	 */
 	private Map<String, SortedMap<Integer, Integer>> methodToResponses = new HashMap<String, SortedMap<Integer, Integer>>();
-	private final Product PRODUCT = VersionHelper.getProduct("Cloud Foundry Java API", "1.0.0.SNAPSHOT", "d4bfc41476f83ecfa164511b3d3448cca9807266");
+
+	private final Product PRODUCT = VersionHelper.getProduct("Cloud Foundry Java API", "1.0.0.SNAPSHOT",
+			"d4bfc41476f83ecfa164511b3d3448cca9807266");
+
 	private int cloudMajorVersion = 0;
+
 	private int cloudMinorVersion = 0;
+
 	private int cloudPatchVersion = 0;
 
-	public UaaAwareCloudFoundryClient(UaaService _uaaService, String email, String password, String token, URL cloudControllerUrl, ClientHttpRequestFactory requestFactory) {
-		super(email, password, token, cloudControllerUrl, requestFactory);
+	public UaaAwareCloudFoundryClient(UaaService _uaaService, CloudCredentials credentials, URL cloudControllerUrl)
+			throws MalformedURLException {
+		super(credentials, cloudControllerUrl);
 		this.uaaService = _uaaService;
 		this.cloudControllerUrl = cloudControllerUrl;
 		if (uaaService instanceof TransmissionAwareUaaService) {
@@ -81,14 +93,14 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		}
 		flushToUaa();
 	}
-	
+
 	public void afterTransmission(TransmissionType type, boolean successful) {
 		if (type == TransmissionType.UPLOAD && successful) {
 			discoveredAppNames.clear();
 			methodToResponses.clear();
 		}
 	}
-	
+
 	public void beforeTransmission(TransmissionType type) {
 		if (type == TransmissionType.UPLOAD) {
 			flushToUaa();
@@ -105,11 +117,14 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		String ccType = "Cloud Controller: Custom";
 		if (VCLOUD_URL.equals(cloudControllerUrl.toExternalForm())) {
 			ccType = "Cloud Controller: Public Cloud";
-		} else if (VCLOUD_SECURE_URL.equals(cloudControllerUrl.toExternalForm())) {
+		}
+		else if (VCLOUD_SECURE_URL.equals(cloudControllerUrl.toExternalForm())) {
 			ccType = "Cloud Controller: Public Cloud";
-		} else if (cloudControllerUrl.getHost().equals("localhost")) {
+		}
+		else if (cloudControllerUrl.getHost().equals("localhost")) {
 			ccType = "Cloud Controller: Localhost";
-		} else if (cloudControllerUrl.getHost().equals("127.0.0.1")) {
+		}
+		else if (cloudControllerUrl.getHost().equals("127.0.0.1")) {
 			ccType = "Cloud Controller: Localhost";
 		}
 		// Store the cloud controller hostname SHA 256
@@ -131,14 +146,18 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 			registerFeatureUse(methodName, methodCallInfo);
 		}
 	}
-	
+
 	private void registerFeatureUse(String featureName, Map<String, Object> jsonPayload) {
-		jsonPayload.put("version", PRODUCT.getMajorVersion() + "." + PRODUCT.getMinorVersion() + "." + PRODUCT.getPatchVersion());
+		jsonPayload.put("version",
+				PRODUCT.getMajorVersion() + "." + PRODUCT.getMinorVersion() + "." + PRODUCT.getPatchVersion());
 		String jsonAsString = JSONObject.toJSONString(jsonPayload);
-		FeatureUse featureToRegister = FeatureUse.newBuilder().setName(featureName).setDateLastUsed(System.currentTimeMillis()).setMajorVersion(cloudMajorVersion).setMinorVersion(cloudMinorVersion).setPatchVersion(cloudPatchVersion).build();
+		FeatureUse featureToRegister = FeatureUse.newBuilder().setName(featureName)
+				.setDateLastUsed(System.currentTimeMillis()).setMajorVersion(cloudMajorVersion)
+				.setMinorVersion(cloudMinorVersion).setPatchVersion(cloudPatchVersion).build();
 		try {
 			uaaService.registerFeatureUsage(PRODUCT, featureToRegister, jsonAsString.getBytes("UTF-8"));
-		} catch (UnsupportedEncodingException ignore) {
+		}
+		catch (UnsupportedEncodingException ignore) {
 		}
 	}
 
@@ -147,9 +166,11 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 			MessageDigest sha1 = MessageDigest.getInstance("SHA-256");
 			byte[] digest = sha1.digest(input.getBytes("UTF-8"));
 			return HexUtils.toHex(digest);
-		} catch (NoSuchAlgorithmException e) {
+		}
+		catch (NoSuchAlgorithmException e) {
 			// This can't happen as we know that there is an SHA-256 algorithm
-		} catch (UnsupportedEncodingException e) {
+		}
+		catch (UnsupportedEncodingException e) {
 			// This can't happen as we know that there is an UTF-8 encoding
 		}
 		return null;
@@ -180,49 +201,61 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.bindService(appName, serviceName);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("bindService", resultCode, appName);
 		}
 	}
 
-//	@Override
-//	public void createAndUploadAndStartApplication(String appName, String framework, int memory, File warFile, List<String> uris, List<String> serviceNames) throws IOException {
-//		int resultCode = HTTP_SUCCESS_CODE;
-//		try {
-//			super.createAndUploadAndStartApplication(appName, framework, memory, warFile, uris, serviceNames);
-//		} catch (HttpStatusCodeException he) {
-//			resultCode = he.getStatusCode().value();
-//			throw he;
-//		} finally {
-//			recordHttpResult("createAndUploadAndStartApplication", resultCode, appName);
-//		}
-//	}
+	// @Override
+	// public void createAndUploadAndStartApplication(String appName, String
+	// framework, int memory, File warFile, List<String> uris, List<String>
+	// serviceNames) throws IOException {
+	// int resultCode = HTTP_SUCCESS_CODE;
+	// try {
+	// super.createAndUploadAndStartApplication(appName, framework, memory,
+	// warFile, uris, serviceNames);
+	// } catch (HttpStatusCodeException he) {
+	// resultCode = he.getStatusCode().value();
+	// throw he;
+	// } finally {
+	// recordHttpResult("createAndUploadAndStartApplication", resultCode,
+	// appName);
+	// }
+	// }
 
 	@Override
-	public void createApplication(String appName, String framework, int memory, List<String> uris, List<String> serviceNames, boolean checkExists) {
+	public void createApplication(String appName, String framework, int memory, List<String> uris,
+			List<String> serviceNames, boolean checkExists) {
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.createApplication(appName, framework, memory, uris, serviceNames, checkExists);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("createApplication", resultCode, appName);
 		}
 	}
 
 	@Override
-	public void createApplication(String appName, String framework, int memory, List<String> uris, List<String> serviceNames) {
+	public void createApplication(String appName, String framework, int memory, List<String> uris,
+			List<String> serviceNames) {
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.createApplication(appName, framework, memory, uris, serviceNames);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("createApplication", resultCode, appName);
 		}
 	}
@@ -232,10 +265,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.createService(service);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("createService", resultCode);
 		}
 	}
@@ -245,10 +280,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.deleteAllApplications();
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("deleteAllApplications", resultCode);
 		}
 	}
@@ -258,10 +295,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.deleteAllServices();
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("deleteAllServices", resultCode);
 		}
 	}
@@ -271,10 +310,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.deleteApplication(appName);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("deleteApplication", resultCode, appName);
 		}
 	}
@@ -284,10 +325,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.deleteService(service);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("deleteService", resultCode);
 		}
 	}
@@ -297,10 +340,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getApplication(appName);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("getApplication", resultCode, appName);
 		}
 	}
@@ -310,10 +355,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getApplicationInstances(appName);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("getApplicationInstances", resultCode, appName);
 		}
 	}
@@ -323,10 +370,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getApplicationMemoryChoices();
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("getApplicationMemoryChoices", resultCode);
 		}
 	}
@@ -336,10 +385,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getApplications();
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("getApplications", resultCode);
 		}
 	}
@@ -349,10 +400,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getApplicationStats(appName);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("getApplicationStats", resultCode, appName);
 		}
 	}
@@ -362,10 +415,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getCloudControllerUrl();
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("getCloudControllerUrl", resultCode);
 		}
 	}
@@ -375,10 +430,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getCloudInfo();
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("getCloudInfo", resultCode);
 		}
 	}
@@ -388,10 +445,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getCrashes(appName);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("getCrashes", resultCode, appName);
 		}
 	}
@@ -401,24 +460,13 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getDefaultApplicationMemory(framework);
-		} catch (HttpStatusCodeException he) {
-			resultCode = he.getStatusCode().value();
-			throw he;
-		} finally {
-			recordHttpResult("getDefaultApplicationMemory", resultCode);
 		}
-	}
-
-	@Override
-	public <T> T getFile(String appName, int instanceIndex, String filePath, RequestCallback requestCallback, ResponseExtractor<T> responseHandler) {
-		int resultCode = HTTP_SUCCESS_CODE;
-		try {
-			return super.getFile(appName, instanceIndex, filePath, requestCallback, responseHandler);
-		} catch (HttpStatusCodeException he) {
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
-			recordHttpResult("getFile", resultCode, appName);
+		}
+		finally {
+			recordHttpResult("getDefaultApplicationMemory", resultCode);
 		}
 	}
 
@@ -427,10 +475,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getFile(appName, instanceIndex, filePath);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("getFile", resultCode, appName);
 		}
 	}
@@ -440,10 +490,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getService(service);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("getService", resultCode);
 		}
 	}
@@ -453,10 +505,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getServiceConfigurations();
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("getServiceConfigurations", resultCode);
 		}
 	}
@@ -466,10 +520,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.getServices();
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("getServices", resultCode);
 		}
 	}
@@ -479,36 +535,40 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.login();
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("login", resultCode);
 		}
 	}
 
-//	@Override
-//	public String loginIfNeeded() {
-//		int resultCode = 200;
-//		try {
-//			return super.loginIfNeeded();
-//		} catch (HttpStatusCodeException he) {
-//			resultCode = he.getStatusCode().value();
-//			throw he;
-//		} finally {
-//			recordHttpResult("loginIfNeeded", resultCode);
-//		}
-//	}
+	// @Override
+	// public String loginIfNeeded() {
+	// int resultCode = 200;
+	// try {
+	// return super.loginIfNeeded();
+	// } catch (HttpStatusCodeException he) {
+	// resultCode = he.getStatusCode().value();
+	// throw he;
+	// } finally {
+	// recordHttpResult("loginIfNeeded", resultCode);
+	// }
+	// }
 
 	@Override
 	public void register(String email, String password) {
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.register(email, password);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("register", resultCode);
 		}
 	}
@@ -518,10 +578,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.rename(appName, newName);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("rename", resultCode, appName);
 		}
 	}
@@ -531,10 +593,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.restartApplication(appName);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("restartApplication", resultCode, appName);
 		}
 	}
@@ -544,10 +608,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.startApplication(appName);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("startApplication", resultCode, appName);
 		}
 	}
@@ -557,10 +623,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.stopApplication(appName);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("stopApplication", resultCode, appName);
 		}
 	}
@@ -570,10 +638,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.unbindService(appName, serviceName);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("unbindService", resultCode, appName);
 		}
 	}
@@ -583,10 +653,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.unregister();
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("unregister", resultCode);
 		}
 	}
@@ -596,10 +668,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.updateApplicationInstances(appName, instances);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("updateApplicationInstances", resultCode, appName);
 		}
 	}
@@ -609,10 +683,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.updateApplicationMemory(appName, memory);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("updateApplicationMemory", resultCode, appName);
 		}
 	}
@@ -622,10 +698,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.updateApplicationServices(appName, services);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("updateApplicationServices", resultCode, appName);
 		}
 	}
@@ -635,10 +713,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.updateApplicationUris(appName, uris);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("updateApplicationUris", resultCode, appName);
 		}
 	}
@@ -648,10 +728,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.uploadApplication(appName, warFile, callback);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("uploadApplication", resultCode, appName);
 		}
 	}
@@ -661,10 +743,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.uploadApplication(appName, warFile);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("uploadApplication", resultCode, appName);
 		}
 	}
@@ -674,10 +758,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			super.uploadApplication(appName, warFilePath);
-		} catch (HttpStatusCodeException he) {
+		}
+		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
-		} finally {
+		}
+		finally {
 			recordHttpResult("uploadApplication", resultCode, appName);
 		}
 	}

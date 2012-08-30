@@ -22,8 +22,8 @@ import java.util.List;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
-import org.cloudfoundry.client.lib.CloudApplication;
-import org.cloudfoundry.client.lib.CloudFoundryClient;
+import org.cloudfoundry.client.lib.CloudFoundryOperations;
+import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.server.tests.server.TestServlet;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.runtime.CoreException;
@@ -52,8 +52,8 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		serverBehavior = (CloudFoundryServerBehaviour) server.loadAdapter(CloudFoundryServerBehaviour.class, null);
 	}
 
-	protected CloudFoundryClient getClient() throws CoreException {
-		CloudFoundryClient client = serverBehavior.getClient();
+	protected CloudFoundryOperations getClient() throws CoreException {
+		CloudFoundryOperations client = serverBehavior.getClient();
 		client.login();
 		return client;
 	}

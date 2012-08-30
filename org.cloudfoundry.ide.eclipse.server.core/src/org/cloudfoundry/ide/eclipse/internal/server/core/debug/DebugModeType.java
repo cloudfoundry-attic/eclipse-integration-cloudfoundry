@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.debug;
 
-import org.cloudfoundry.client.lib.CloudApplication.DebugMode;
+import org.cloudfoundry.client.lib.domain.CloudApplication.DebugMode;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 
 

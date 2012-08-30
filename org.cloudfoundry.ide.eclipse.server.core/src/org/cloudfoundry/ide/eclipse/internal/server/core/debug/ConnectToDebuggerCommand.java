@@ -12,8 +12,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.debug;
 
 import java.util.List;
 
-import org.cloudfoundry.client.lib.ApplicationStats;
-import org.cloudfoundry.client.lib.InstanceStats;
+import org.cloudfoundry.client.lib.domain.ApplicationStats;
+import org.cloudfoundry.client.lib.domain.InstanceStats;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;

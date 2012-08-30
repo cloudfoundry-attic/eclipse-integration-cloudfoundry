@@ -16,7 +16,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
 
-
 /**
  * Prompts for the password if an operation requires authentication.
  * @author Christian Dupuis
@@ -30,16 +29,9 @@ public class CloudFoundryCredentialsWizard extends Wizard {
 
 	private final IServerWorkingCopy serverWC;
 
-	private final String errorMessage;
-
 	public CloudFoundryCredentialsWizard(CloudFoundryServer server) {
-		this(server, null);
-	}
-	
-	public CloudFoundryCredentialsWizard(CloudFoundryServer server, String errorMessage) {
 		serverWC = server.getServer().createWorkingCopy();
 		this.server = (CloudFoundryServer) serverWC.loadAdapter(CloudFoundryServer.class, null);
-		this.errorMessage = errorMessage;
 		setWindowTitle(server.getServer().getName());
 		setNeedsProgressMonitor(true);
 	}

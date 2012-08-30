@@ -13,8 +13,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.debug;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.InstanceInfo;
-import org.cloudfoundry.client.lib.InstancesInfo;
+import org.cloudfoundry.client.lib.domain.InstanceInfo;
+import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;

@@ -12,10 +12,9 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.util.List;
 
-import org.cloudfoundry.client.lib.ApplicationInfo;
-import org.cloudfoundry.client.lib.DeploymentInfo;
-import org.cloudfoundry.client.lib.Staging;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
+import org.cloudfoundry.client.lib.domain.DeploymentInfo;
+import org.cloudfoundry.client.lib.domain.Staging;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 /**

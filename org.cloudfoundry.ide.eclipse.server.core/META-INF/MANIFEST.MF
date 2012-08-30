@@ -24,11 +24,16 @@ Require-Bundle: org.eclipse.core.runtime,
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
- lib/cloudfoundry-client-lib-0.7.5.jar,
- lib/cloudfoundry-caldecott-lib-0.1.1.jar
+ lib/cloudfoundry-caldecott-lib-0.1.1.jar,
+ lib/cloudfoundry-client-lib-0.8.0.BUILD-SNAPSHOT.jar
 Bundle-Activator: org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin
 Export-Package: org.cloudfoundry.caldecott.client,
  org.cloudfoundry.client.lib,
+ org.cloudfoundry.client.lib.archive,
+ org.cloudfoundry.client.lib.domain,
+ org.cloudfoundry.client.lib.io,
+ org.cloudfoundry.client.lib.rest,
+ org.cloudfoundry.client.lib.util,
  org.cloudfoundry.ide.eclipse.internal.server.core,
  org.cloudfoundry.ide.eclipse.internal.server.core.debug,
  org.cloudfoundry.ide.eclipse.internal.server.core.standalone,
