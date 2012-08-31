@@ -64,11 +64,7 @@ public class CloudFoundryClientFactory {
 
 	protected static CloudCredentials getCredentials(String userName, String password, URL url) {
 		CloudCredentials credentials = new CloudCredentials(userName, password);
-		String proxy = getProxy(url);
 
-		if (proxy != null) {
-			credentials = new CloudCredentials(credentials, proxy);
-		}
 		return credentials;
 	}
 
