@@ -22,6 +22,7 @@ import java.util.List;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
+import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.server.tests.server.TestServlet;
@@ -44,6 +45,11 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	protected TestServlet testServlet;
 
+	// Some tests do not create Apps, and deleting apps will result in errors in
+	// those cases. This flag should be set per unit test, as teardowns occur
+	// per test method.
+	protected boolean hasAppsToDelete = true;
+
 	@Override
 	protected void setUp() throws Exception {
 		harness = createHarness();
@@ -58,9 +64,22 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		return client;
 	}
 
+	protected CloudFoundryOperations getClient(String token) throws CoreException {
+		CloudCredentials credentials = new CloudCredentials(token);
+		return getClient(credentials);
+	}
+
+	protected CloudFoundryOperations getClient(CloudCredentials credentials) throws CoreException {
+		CloudFoundryOperations client = serverBehavior.getClient(credentials);
+		client.login();
+		return client;
+	}
+
 	@Override
 	protected void tearDown() throws Exception {
-		getClient().deleteAllApplications();
+		if (hasAppsToDelete) {
+			getClient().deleteAllApplications();
+		}
 		harness.dispose();
 	}
 

@@ -38,10 +38,19 @@ public class CloudFoundryClientFactory {
 	public CloudFoundryOperations getCloudFoundryClient(boolean isUAAIDEAvailable, String userName, String password,
 			URL url) {
 		if (isUAAIDEAvailable) {
-			return UaaAwareCloudFoundryClientAccessor.getCloudFoundryClient(userName, password, url);
+			return new UaaAwareCloudFoundryClientAccessor().getCloudFoundryClient(userName, password, url);
 		}
 		else {
 			return getCloudFoundryOperations(userName, password, url);
+		}
+	}
+
+	public CloudFoundryOperations getCloudFoundryClient(boolean isUAAIDEAvailable, CloudCredentials credentials, URL url) {
+		if (isUAAIDEAvailable) {
+			return new UaaAwareCloudFoundryClientAccessor().getCloudFoundryClient(credentials, url);
+		}
+		else {
+			return getCloudFoundryOperations(credentials, url);
 		}
 	}
 
@@ -62,10 +71,18 @@ public class CloudFoundryClientFactory {
 		return null;
 	}
 
-	protected static CloudCredentials getCredentials(String userName, String password, URL url) {
-		CloudCredentials credentials = new CloudCredentials(userName, password);
+	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url) {
+		try {
+			return new CloudFoundryClient(credentials, url);
+		}
+		catch (MalformedURLException e) {
+			CloudFoundryPlugin.logError("Failed to obtain Cloud Foundry operations for " + url.toString(), e);
+		}
+		return null;
+	}
 
-		return credentials;
+	protected static CloudCredentials getCredentials(String userName, String password, URL url) {
+		return new CloudCredentials(userName, password);
 	}
 
 	public CloudFoundryOperations getCloudFoundryClient(String cloudControllerUrl) throws MalformedURLException {
@@ -74,9 +91,19 @@ public class CloudFoundryClientFactory {
 
 	static class UaaAwareCloudFoundryClientAccessor {
 
-		public static CloudFoundryOperations getCloudFoundryClient(String userName, String password, URL url) {
+		public CloudFoundryOperations getCloudFoundryClient(String userName, String password, URL url) {
 			try {
 				CloudCredentials credentials = getCredentials(userName, password, url);
+				return new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url);
+			}
+			catch (MalformedURLException e) {
+				CloudFoundryPlugin.logError("Failed to obtain Cloud Foundry operations for " + url.toString(), e);
+			}
+			return null;
+		}
+
+		public CloudFoundryOperations getCloudFoundryClient(CloudCredentials credentials, URL url) {
+			try {
 				return new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url);
 			}
 			catch (MalformedURLException e) {

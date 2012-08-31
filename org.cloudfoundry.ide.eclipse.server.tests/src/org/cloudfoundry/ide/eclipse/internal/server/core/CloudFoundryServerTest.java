@@ -122,9 +122,9 @@ public class CloudFoundryServerTest extends TestCase {
 
 		assertEquals("user", cloudFoundryServer.getUsername());
 		assertEquals("pwd", cloudFoundryServer.getPassword());
-		CloudFoundryServerBehaviour CloudFoundryServerBehaviour = (CloudFoundryServerBehaviour) serverWC.loadAdapter(
+		CloudFoundryServerBehaviour serverBehaviour = (CloudFoundryServerBehaviour) serverWC.loadAdapter(
 				CloudFoundryServerBehaviour.class, null);
-		CloudFoundryOperations client = CloudFoundryServerBehaviour.getClient();
+		CloudFoundryOperations client = serverBehaviour.getClient();
 
 		// create new server instance
 		serverWC = server.createWorkingCopy();
@@ -137,7 +137,7 @@ public class CloudFoundryServerTest extends TestCase {
 		assertEquals("newuser", cloudFoundryServer.getUsername());
 		assertEquals("newpwd", cloudFoundryServer.getPassword());
 		assertNotSame("Expected new client instance due to password change", client,
-				CloudFoundryServerBehaviour.getClient());
+				serverBehaviour.getClient());
 	}
 
 	public void testSaveCredentials() throws CoreException {

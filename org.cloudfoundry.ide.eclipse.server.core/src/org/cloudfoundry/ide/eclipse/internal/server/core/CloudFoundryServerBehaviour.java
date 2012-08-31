@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
@@ -415,7 +416,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public List<CloudApplication> getApplications(IProgressMonitor monitor) throws CoreException {
 		return new Request<List<CloudApplication>>("Getting applications") {
 			@Override
-			protected List<CloudApplication> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+			protected List<CloudApplication> doRun(CloudFoundryOperations client, SubMonitor progress)
+					throws CoreException {
 				return client.getApplications();
 			}
 		}.run(monitor);
@@ -948,16 +950,25 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
-	 * Public for testing only.
+	 * Public for testing only. If token is not used, null must be passed for
+	 * the token.
 	 */
-	public synchronized CloudFoundryOperations getClient() throws CoreException {
+	public synchronized CloudFoundryOperations getClient(CloudCredentials credentials) throws CoreException {
 		if (client == null) {
-			String userName = getCloudFoundryServer().getUsername();
-			String password = getCloudFoundryServer().getPassword();
-			client = createClient(getCloudFoundryServer().getUrl(), userName, password);
-
+			if (credentials != null) {
+				client = createClient(getCloudFoundryServer().getUrl(), credentials);
+			}
+			else {
+				String userName = getCloudFoundryServer().getUsername();
+				String password = getCloudFoundryServer().getPassword();
+				client = createClient(getCloudFoundryServer().getUrl(), userName, password);
+			}
 		}
 		return client;
+	}
+
+	public synchronized CloudFoundryOperations getClient() throws CoreException {
+		return getClient(null);
 	}
 
 	private boolean isApplicationReady(CloudApplication application) {
@@ -1246,6 +1257,23 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 	}
 
+	private static CloudFoundryOperations createClient(String location, CloudCredentials credentials)
+			throws CoreException {
+		URL url;
+		try {
+			url = new URL(location);
+			int port = url.getPort();
+			if (port == -1) {
+				port = url.getDefaultPort();
+			}
+			return CloudFoundryPlugin.getDefault().getCloudFoundryClient(credentials, url);
+		}
+		catch (MalformedURLException e) {
+			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
+					"The server url ''{0}'' is invalid: {1}", location, e.getMessage()), e));
+		}
+	}
+
 	static CoreException toCoreException(Exception e) {
 		if (e instanceof CloudFoundryException) {
 			if (((CloudFoundryException) e).getDescription() != null) {
@@ -1466,7 +1494,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				boolean started = new Request<Boolean>() {
 					@Override
-					protected Boolean doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+					protected Boolean doRun(final CloudFoundryOperations client, SubMonitor progress)
+							throws CoreException {
 						if (descriptor.applicationInfo == null) {
 							throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
 									"Unable to deploy module"));
@@ -1644,7 +1673,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				boolean started = new Request<Boolean>() {
 					@Override
-					protected Boolean doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+					protected Boolean doRun(final CloudFoundryOperations client, SubMonitor progress)
+							throws CoreException {
 						if (descriptor.applicationInfo == null) {
 							throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
 									"Unable to deploy module"));
