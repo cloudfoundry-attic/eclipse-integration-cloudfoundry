@@ -950,8 +950,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
-	 * Public for testing only. If token is not used, null must be passed for
-	 * the token.
+	 * Public for testing only. If credentials are not used, null must be passed for
+	 * the credentials.
 	 */
 	public synchronized CloudFoundryOperations getClient(CloudCredentials credentials) throws CoreException {
 		if (client == null) {

@@ -45,11 +45,6 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	protected TestServlet testServlet;
 
-	// Some tests do not create Apps, and deleting apps will result in errors in
-	// those cases. This flag should be set per unit test, as teardowns occur
-	// per test method.
-	protected boolean hasAppsToDelete = true;
-
 	@Override
 	protected void setUp() throws Exception {
 		harness = createHarness();
@@ -77,9 +72,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
-		if (hasAppsToDelete) {
-			getClient().deleteAllApplications();
-		}
+		getClient().deleteAllApplications();
 		harness.dispose();
 	}
 

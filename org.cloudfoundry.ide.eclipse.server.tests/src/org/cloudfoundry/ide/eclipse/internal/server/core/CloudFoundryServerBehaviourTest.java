@@ -105,9 +105,15 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 	// XXX this test fails on the build server for an unknown reason
 	public void testStartModuleInvalidToken() throws Exception {
+		harness.createProjectAndAddModule("dynamic-webapp");
+
+		IModule[] modules = server.getModules();
+		assertEquals("Expected dynamic-webapp module, got " + Arrays.toString(modules), 1, modules.length);
+		int moduleState = server.getModulePublishState(modules);
+		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
 		try {
-			hasAppsToDelete = false;
+			serverBehavior.resetClient();
 			getClient("invalid");
 		}
 		catch (Exception e) {
@@ -115,20 +121,17 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		}
 
 		try {
-			harness.createProjectAndAddModule("dynamic-webapp");
+			serverBehavior.deployOrStartModule(modules, true, null);
 
 		}
-		catch (Exception e) {
-			assertEquals("403 Error requesting access token.", e.getMessage());
+		catch (Throwable e) {
+			assertEquals("Operation not permitted (403 Forbidden)", e.getMessage());
 		}
 
-		// shouldDeleteApps = false;
-		IModule[] modules = server.getModules();
-		assertEquals("Expected dynamic-webapp module, got " + Arrays.toString(modules), 1, modules.length);
-		int moduleState = server.getModulePublishState(modules);
-		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
+		// Set the client again
+		serverBehavior.resetClient();
+		getClient();
 
-		// serverBehavior.deployOrStartModule(modules, true, null);
 		// moduleState = server.getModuleState(modules);
 		// assertEquals(IServer.STATE_STARTED, moduleState);
 		// moduleState = server.getModulePublishState(modules);
@@ -146,8 +149,6 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 	}
 
 	public void testStartModuleInvalidPassword() throws Exception {
-		// This test does not publish any apps
-		hasAppsToDelete = false;
 
 		harness.createProjectAndAddModule("dynamic-webapp");
 
@@ -156,23 +157,24 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		int moduleState = server.getModulePublishState(modules);
 		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
-		CloudFoundryOperations client = null;
-
 		try {
+			serverBehavior.resetClient();
 			CloudFoundryServer cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
 
 			String userName = cloudServer.getUsername();
 			CloudCredentials credentials = new CloudCredentials(userName, "invalid-password");
-			client = getClient(credentials);
-
-			client.login();
+			getClient(credentials);
 
 			serverBehavior.deployOrStartModule(modules, true, null);
 			fail("Expected CoreException due to invalid password");
 		}
-		catch (Exception e) {
+		catch (Throwable e) {
 			assertEquals("403 Error requesting access token.", e.getMessage());
 		}
+
+		// Set the client again
+		serverBehavior.resetClient();
+		getClient();
 
 	}
 
