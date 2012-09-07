@@ -79,6 +79,9 @@ public class ApplicationResource extends CloudFoundryHostFile {
 		List<String> uris = app.getUris();
 		if (uris != null && !uris.isEmpty()) {
 			builder.append(uris.get(0));
+		} else {
+			// for standalone, append the app name
+			builder.append(app.getName());
 		}
 		builder.append("/");
 		builder.append(id);

@@ -61,24 +61,11 @@ public class CloudFoundryClientFactory {
 
 	public CloudFoundryOperations getCloudFoundryOperations(String userName, String password, URL url) {
 		CloudCredentials credentials = getCredentials(userName, password, url);
-
-		try {
-			return new CloudFoundryClient(credentials, url);
-		}
-		catch (MalformedURLException e) {
-			CloudFoundryPlugin.logError("Failed to obtain Cloud Foundry operations for " + url.toString(), e);
-		}
-		return null;
+		return new CloudFoundryClient(credentials, url);
 	}
 
 	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url) {
-		try {
-			return new CloudFoundryClient(credentials, url);
-		}
-		catch (MalformedURLException e) {
-			CloudFoundryPlugin.logError("Failed to obtain Cloud Foundry operations for " + url.toString(), e);
-		}
-		return null;
+		return new CloudFoundryClient(credentials, url);
 	}
 
 	protected static CloudCredentials getCredentials(String userName, String password, URL url) {

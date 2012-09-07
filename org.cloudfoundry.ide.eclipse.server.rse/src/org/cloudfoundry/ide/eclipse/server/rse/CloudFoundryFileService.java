@@ -248,8 +248,14 @@ public class CloudFoundryFileService extends AbstractFileService implements IClo
 
 	protected boolean validApp(String appUrl, CloudApplication cloudApp, String cloudAppId, String instance) {
 		List<String> uris = cloudApp.getUris();
-		return ((uris != null && !uris.isEmpty() && appUrl.equals(uris.get(0))) || uris == null || uris.isEmpty())
-				&& instance.equals(cloudAppId);
+		boolean matchingUri = false;
+		if (appUrl != null && appUrl.length() > 0) {
+			// an appURL will be one of two things: 1. an actual URL or 2. app
+			// name for standalone apps with no actual URL
+			matchingUri = (uris != null && !uris.isEmpty() && appUrl.equals(uris.get(0)))
+					|| (appUrl.equals(cloudApp.getName()));
+		}
+		return matchingUri && instance.equals(cloudAppId);
 	}
 
 	private Object[] parseNestedFiles(String path) {
