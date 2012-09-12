@@ -54,7 +54,7 @@
 	  </then>
 	</if>
 
-	<get src="http://www.apache.org/dist/maven/binaries/apache-maven-2.2.1-bin.zip" 
+	<get src="http://www.apache.org/dist/maven/maven-2/2.2.1/binaries/apache-maven-2.2.1-bin.zip" 
 		 dest="${project.build.directory}/../apache-maven-2.2.1-bin.zip"
 		 verbose="true"
 		 skipexisting="true"/>
