@@ -23,7 +23,6 @@ import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.wst.server.core.IServer;
 
-
 /**
  * @author Steffen Pingel
  * @author Christian Dupuis
@@ -45,8 +44,7 @@ public class ConsoleManager {
 					Object server = ((MessageConsole) console).getAttribute(CloudFoundryConsole.ATTRIBUTE_SERVER);
 					Object app = ((MessageConsole) console).getAttribute(CloudFoundryConsole.ATTRIBUTE_APP);
 					Object index = ((MessageConsole) console).getAttribute(CloudFoundryConsole.ATTRIBUTE_INSTANCE);
-					if (server instanceof
-							IServer && app instanceof CloudApplication && index instanceof Integer) {
+					if (server instanceof IServer && app instanceof CloudApplication && index instanceof Integer) {
 						stopConsole((IServer) server, (CloudApplication) app, (Integer) index);
 					}
 				}
@@ -75,7 +73,8 @@ public class ConsoleManager {
 	 * @param instanceIndex
 	 * @param show
 	 * 
-	 * Start console if show is true, otherwise reset and start only if console was previously created already
+	 * Start console if show is true, otherwise reset and start only if console
+	 * was previously created already
 	 */
 	public void startConsole(CloudFoundryServer server, CloudApplication app, int instanceIndex, boolean show) {
 		String appUrl = getConsoleId(server.getServer(), app, instanceIndex);
@@ -85,12 +84,12 @@ public class ConsoleManager {
 			serverLogTail = new CloudFoundryConsole(server, app, instanceIndex, appConsole);
 			consoleByUri.put(getConsoleId(server.getServer(), app, instanceIndex), serverLogTail);
 		}
-		
+
 		if (serverLogTail != null) {
 			serverLogTail.resetConsole();
 			serverLogTail.startTailing();
 		}
-		
+
 		if (show && serverLogTail != null) {
 			consoleManager.showConsoleView(serverLogTail.getConsole());
 		}
@@ -111,7 +110,7 @@ public class ConsoleManager {
 		}
 	}
 
-	private MessageConsole getOrCreateConsole(IServer server, CloudApplication app, int instanceIndex) {
+	public static MessageConsole getOrCreateConsole(IServer server, CloudApplication app, int instanceIndex) {
 		MessageConsole appConsole = null;
 		String consoleName = getConsoleId(server, app, instanceIndex);
 		for (IConsole console : ConsolePlugin.getDefault().getConsoleManager().getConsoles()) {
@@ -120,7 +119,8 @@ public class ConsoleManager {
 			}
 		}
 		if (appConsole == null) {
-			appConsole = new MessageConsole(app.getName() + "#" + instanceIndex, CloudFoundryConsole.CONSOLE_TYPE, null, true);
+			appConsole = new MessageConsole(app.getName() + "#" + instanceIndex, CloudFoundryConsole.CONSOLE_TYPE,
+					null, true);
 			appConsole.setAttribute(CloudFoundryConsole.ATTRIBUTE_SERVER, server);
 			appConsole.setAttribute(CloudFoundryConsole.ATTRIBUTE_APP, app);
 			appConsole.setAttribute(CloudFoundryConsole.ATTRIBUTE_INSTANCE, instanceIndex);
@@ -130,7 +130,7 @@ public class ConsoleManager {
 		return appConsole;
 	}
 
-	String getConsoleId(IServer server, CloudApplication app, int instanceIndex) {
+	public static String getConsoleId(IServer server, CloudApplication app, int instanceIndex) {
 		return server.getId() + "/" + app.getName() + "#" + instanceIndex;
 	}
 

@@ -19,9 +19,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.console.MessageConsole;
 
 /**
@@ -38,28 +35,12 @@ class CloudFoundryConsole extends Job {
 
 	static final String CONSOLE_TYPE = "org.cloudfoundry.ide.eclipse.server.appcloud";
 
-	private CloudApplication app;
-
 	private int failureCount;
 
-	private int instanceIndex;
+	private final ConsoleContent content;
 
 	/** How frequently to check for log changes; defaults to 1 seconds */
 	private long sampleInterval = 5000;
-
-	private final CloudFoundryServer server;
-
-	private IOConsoleOutputStream stderr;
-
-	private int stderrOffset = 0;
-
-	private String stderrPath = "logs/stderr.log";
-
-	private IOConsoleOutputStream stdout;
-
-	private int stdoutOffset = 0;
-
-	private String stdoutPath = "logs/stdout.log";
 
 	/** Is the tailer currently tailing? */
 	private boolean tailing = true;
@@ -69,19 +50,12 @@ class CloudFoundryConsole extends Job {
 	public CloudFoundryConsole(CloudFoundryServer server, CloudApplication app, int instanceIndex,
 			MessageConsole console) {
 		super(getConsoleName(app));
-		this.server = server;
-		this.app = app;
-		this.instanceIndex = instanceIndex;
-		this.console = console;
-		this.stdout = console.newOutputStream();
-		this.stderr = console.newOutputStream();
-		Display.getDefault().asyncExec(new Runnable() {
-			public void run() {
-				stderr.setColor(Display.getDefault().getSystemColor(SWT.COLOR_RED));
-			}
-		});
-		setSystem(true);
 
+		this.console = console;
+
+		content = new ConsoleContent(server, console, app, instanceIndex);
+
+		setSystem(true);
 	}
 
 	public void startTailing() {
@@ -94,9 +68,7 @@ class CloudFoundryConsole extends Job {
 	}
 
 	public void resetConsole() {
-		console.clearConsole();
-		this.stderrOffset = 0;
-		this.stdoutOffset = 0;
+		content.reset();
 		this.failureCount = 0;
 	}
 
@@ -104,24 +76,16 @@ class CloudFoundryConsole extends Job {
 	protected IStatus run(IProgressMonitor monitor) {
 		if (this.tailing) {
 			try {
-				String content;
-				content = server.getBehaviour().getFile(app.getName(), instanceIndex, stderrPath, monitor);
-				if (content != null && content.length() > stderrOffset) {
-					stderr.write(content.substring(stderrOffset));
-					stderrOffset = content.length();
-				}
-				content = server.getBehaviour().getFile(app.getName(), instanceIndex, stdoutPath, monitor);
-				if (content != null && content.length() > stdoutOffset) {
-					stdout.write(content.substring(stdoutOffset));
-					stdoutOffset = content.length();
-				}
-			}
-			catch (IOException e) {
-				// console was closed
-				return Status.CANCEL_STATUS;
+				content.getFileContent(monitor);
 			}
 			catch (CoreException e) {
-				failureCount++;
+				Throwable t = e.getCause();
+				if (t instanceof IOException) {
+					return Status.CANCEL_STATUS;
+				}
+				else {
+					failureCount++;
+				}
 			}
 			if (failureCount < 5) {
 				schedule(sampleInterval);

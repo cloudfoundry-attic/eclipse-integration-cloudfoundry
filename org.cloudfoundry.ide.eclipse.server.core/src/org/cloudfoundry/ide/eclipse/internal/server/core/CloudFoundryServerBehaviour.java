@@ -452,6 +452,16 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
+	public String getFile(final String applicationId, final int instanceIndex, final String filePath,
+			final int startPosition, IProgressMonitor monitor) throws CoreException {
+		return new Request<String>("Retrieving file") {
+			@Override
+			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				return client.getFile(applicationId, instanceIndex, filePath, startPosition);
+			}
+		}.run(monitor);
+	}
+
 	public int[] getApplicationMemoryChoices() {
 		if (client != null) {
 			return client.getApplicationMemoryChoices();
@@ -950,8 +960,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
-	 * Public for testing only. If credentials are not used, null must be passed for
-	 * the credentials.
+	 * Public for testing only. If credentials are not used, null must be passed
+	 * for the credentials.
 	 */
 	public synchronized CloudFoundryOperations getClient(CloudCredentials credentials) throws CoreException {
 		if (client == null) {

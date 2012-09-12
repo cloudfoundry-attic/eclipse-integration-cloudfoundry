@@ -181,7 +181,10 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		serverBehavior.deployOrStartModule(new IModule[] { module }, true, null);
 
 		// wait 1s until app is actually started
+		return getCloudApplication(module);
+	}
 
+	protected CloudApplication getCloudApplication(IModule module) throws CoreException {
 		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
 		CloudApplication cloudApp = null;
 
