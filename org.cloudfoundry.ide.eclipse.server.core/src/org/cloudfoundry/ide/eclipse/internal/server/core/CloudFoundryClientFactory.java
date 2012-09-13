@@ -11,18 +11,15 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.net.MalformedURLException;
-import java.net.Proxy;
-import java.net.ProxySelector;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
+import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.uaa.UaaAwareCloudFoundryClient;
-import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.net.proxy.IProxyData;
+import org.eclipse.core.net.proxy.IProxyService;
 import org.springframework.ide.eclipse.uaa.UaaPlugin;
 
 /**
@@ -61,11 +58,7 @@ public class CloudFoundryClientFactory {
 
 	public CloudFoundryOperations getCloudFoundryOperations(String userName, String password, URL url) {
 		CloudCredentials credentials = getCredentials(userName, password, url);
-		return new CloudFoundryClient(credentials, url);
-	}
-
-	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url) {
-		return new CloudFoundryClient(credentials, url);
+		return getCloudFoundryOperations(credentials, url);
 	}
 
 	protected static CloudCredentials getCredentials(String userName, String password, URL url) {
@@ -73,7 +66,14 @@ public class CloudFoundryClientFactory {
 	}
 
 	public CloudFoundryOperations getCloudFoundryClient(String cloudControllerUrl) throws MalformedURLException {
-		return new CloudFoundryClient(new URL(cloudControllerUrl));
+		URL url = new URL(cloudControllerUrl);
+		HttpProxyConfiguration proxyConfiguration = getProxy(url);
+		return new CloudFoundryClient(url, proxyConfiguration);
+	}
+
+	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url) {
+		HttpProxyConfiguration proxyConfiguration = getProxy(url);
+		return new CloudFoundryClient(credentials, url, proxyConfiguration);
 	}
 
 	static class UaaAwareCloudFoundryClientAccessor {
@@ -81,7 +81,8 @@ public class CloudFoundryClientFactory {
 		public CloudFoundryOperations getCloudFoundryClient(String userName, String password, URL url) {
 			try {
 				CloudCredentials credentials = getCredentials(userName, password, url);
-				return new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url);
+				HttpProxyConfiguration proxyConfiguration = getProxy(url);
+				return new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url, proxyConfiguration);
 			}
 			catch (MalformedURLException e) {
 				CloudFoundryPlugin.logError("Failed to obtain Cloud Foundry operations for " + url.toString(), e);
@@ -91,7 +92,8 @@ public class CloudFoundryClientFactory {
 
 		public CloudFoundryOperations getCloudFoundryClient(CloudCredentials credentials, URL url) {
 			try {
-				return new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url);
+				HttpProxyConfiguration proxyConfiguration = getProxy(url);
+				return new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url, proxyConfiguration);
 			}
 			catch (MalformedURLException e) {
 				CloudFoundryPlugin.logError("Failed to obtain Cloud Foundry operations for " + url.toString(), e);
@@ -100,20 +102,21 @@ public class CloudFoundryClientFactory {
 		}
 	}
 
-	protected static String getProxy(URL url) {
+	protected static HttpProxyConfiguration getProxy(URL url) {
 
-		List<Proxy> proxies = null;
-
-		try {
-			URI uri = URIUtil.toURI(url);
-
-			if (uri != null) {
-				proxies = ProxySelector.getDefault().select(uri);
+		IProxyService proxyService = CloudFoundryPlugin.getDefault().getProxyService();
+		IProxyData[] existingProxies = proxyService.getProxyData();
+		if (existingProxies != null && existingProxies.length > 0) {
+			for (IProxyData data : existingProxies) {
+				if (IProxyData.HTTP_PROXY_TYPE.equals(data.getType())) {
+					int proxyPort = existingProxies[0].getPort();
+					String proxyHost = existingProxies[0].getHost();
+					return proxyHost != null ? new HttpProxyConfiguration(proxyHost, proxyPort) : null;
+				}
 			}
 		}
-		catch (URISyntaxException e) {
-			// Ignore
-		}
-		return proxies != null && proxies.size() > 0 ? proxies.get(0).toString() : null;
+
+		return null;
+
 	}
 }

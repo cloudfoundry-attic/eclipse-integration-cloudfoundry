@@ -27,6 +27,7 @@ import java.util.TreeMap;
 
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
+import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.domain.ApplicationStats;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
@@ -77,9 +78,9 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 
 	private int cloudPatchVersion = 0;
 
-	public UaaAwareCloudFoundryClient(UaaService _uaaService, CloudCredentials credentials, URL cloudControllerUrl)
-			throws MalformedURLException {
-		super(credentials, cloudControllerUrl);
+	public UaaAwareCloudFoundryClient(UaaService _uaaService, CloudCredentials credentials, URL cloudControllerUrl,
+			HttpProxyConfiguration proxyConfiguration) throws MalformedURLException {
+		super(credentials, cloudControllerUrl, proxyConfiguration);
 		this.uaaService = _uaaService;
 		this.cloudControllerUrl = cloudControllerUrl;
 		if (uaaService instanceof TransmissionAwareUaaService) {
