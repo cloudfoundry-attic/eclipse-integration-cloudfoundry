@@ -40,7 +40,7 @@ public class CloudFoundryMockClientFixture {
 		CloudFoundryClientFactory factory = new CloudFoundryClientFactory() {
 
 			@Override
-			public CloudFoundryClient getCloudFoundryClient(boolean uaaAvailable, String userName, String password,
+			public CloudFoundryClient getCloudFoundryOperations(boolean uaaAvailable, String userName, String password,
 					URL url) {
 
 				try {
@@ -56,13 +56,7 @@ public class CloudFoundryMockClientFixture {
 			}
 
 			@Override
-			public CloudFoundryClient getCloudFoundryClient(String userName, String password, String url)
-					throws MalformedURLException {
-				return getCloudFoundryClient(false, userName, password, new URL(url));
-			}
-
-			@Override
-			public CloudFoundryClient getCloudFoundryClient(String cloudControllerUrl) throws MalformedURLException {
+			public CloudFoundryClient getCloudFoundryOperations(String cloudControllerUrl) throws MalformedURLException {
 				try {
 					return new CFClientMockedRestTemplate(cloudControllerUrl);
 				}

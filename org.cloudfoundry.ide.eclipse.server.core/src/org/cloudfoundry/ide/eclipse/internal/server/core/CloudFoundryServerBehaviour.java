@@ -33,6 +33,7 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.client.lib.domain.CloudInfo;
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
 import org.cloudfoundry.client.lib.domain.Staging;
@@ -40,6 +41,9 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.De
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceServerLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneApplicationArchive;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneHandler;
 import org.eclipse.core.runtime.Assert;
@@ -85,6 +89,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private CloudFoundryOperations client;
 
 	private RefreshJob refreshJob;
+
+	private Boolean supportsSpaces = null;
 
 	private DebugSupportCheck isDebugModeSupported = DebugSupportCheck.UNCHECKED;
 
@@ -545,9 +551,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				try {
-					getClient().createApplication(appName, DeploymentConstants.SPRING, memory, uris, serviceNames);
-					getClient().uploadApplication(appName, warFile);
-					getClient().startApplication(appName);
+					getClient(progress).createApplication(appName, DeploymentConstants.SPRING, memory, uris,
+							serviceNames);
+					getClient(progress).uploadApplication(appName, warFile);
+					getClient(progress).startApplication(appName);
 					// getClient().createAndUploadAndStartApplication(appName,
 					// DeploymentConstants.SPRING, memory, warFile, uris,
 					// serviceNames);
@@ -909,6 +916,21 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return services;
 	}
 
+	public boolean supportsSpaces(IProgressMonitor monitor) throws CoreException {
+
+		if (supportsSpaces == null) {
+			supportsSpaces = new Request<Boolean>() {
+
+				protected Boolean doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+					return client.supportsSpaces();
+				}
+
+			}.run(monitor);
+		}
+
+		return supportsSpaces != null && supportsSpaces.booleanValue();
+	}
+
 	public void updateServices(String appName, List<String> services, IProgressMonitor monitor) throws CoreException {
 		updateServices(appName, services, false, monitor);
 	}
@@ -960,25 +982,37 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
-	 * Public for testing only. If credentials are not used, null must be passed
-	 * for the credentials.
+	 * Public for testing only. If credentials are not used, as in the case when
+	 * only a URL is present for a server, null must be passed for the
+	 * credentials.
 	 */
-	public synchronized CloudFoundryOperations getClient(CloudCredentials credentials) throws CoreException {
+	public synchronized CloudFoundryOperations getClient(CloudCredentials credentials, IProgressMonitor monitor)
+			throws CoreException {
 		if (client == null) {
+			CloudFoundrySpace cloudSpace = new CloudSpaceServerLookup(getCloudFoundryServer(), credentials)
+					.getCloudSpace(monitor);
+
 			if (credentials != null) {
-				client = createClient(getCloudFoundryServer().getUrl(), credentials);
+				client = createClient(getCloudFoundryServer().getUrl(), credentials, cloudSpace);
 			}
 			else {
 				String userName = getCloudFoundryServer().getUsername();
 				String password = getCloudFoundryServer().getPassword();
-				client = createClient(getCloudFoundryServer().getUrl(), userName, password);
+				client = createClient(getCloudFoundryServer().getUrl(), userName, password, cloudSpace);
 			}
 		}
 		return client;
 	}
 
-	public synchronized CloudFoundryOperations getClient() throws CoreException {
-		return getClient(null);
+	/**
+	 * In most cases, the progress monitor can be null, although if available
+	 * 
+	 * @param monitor
+	 * @return
+	 * @throws CoreException
+	 */
+	public synchronized CloudFoundryOperations getClient(IProgressMonitor monitor) throws CoreException {
+		return getClient((CloudCredentials) null, monitor);
 	}
 
 	private boolean isApplicationReady(CloudApplication application) {
@@ -1162,6 +1196,26 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return null;
 	}
 
+	public List<CloudSpace> getCloudSpaces(IProgressMonitor monitor) throws CoreException {
+
+		return new Request<List<CloudSpace>>() {
+
+			@Override
+			protected List<CloudSpace> doRun(CloudFoundryOperations operations, SubMonitor progress)
+					throws CoreException {
+				if (operations.supportsSpaces()) {
+					return operations.getSpaces();
+				}
+				return null;
+			}
+		}.run(monitor);
+	}
+
+	public CloudSpaceDescriptor getCloudSpaceDescriptor(IProgressMonitor monitor) throws CoreException {
+		CloudFoundryOperations operations = getClient(monitor);
+		return CloudSpaceServerLookup.getCloudSpaceDescriptor(operations, monitor);
+	}
+
 	/**
 	 * Invokes the appropriate Java client API for either restarting an
 	 * application in regular mode or debug mode. If debug mode is not
@@ -1192,7 +1246,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			client.login();
 		}
 		catch (RestClientException e) {
-			throw toCoreException(e);
+			throw CloudUtil.toCoreException(e);
 		}
 		catch (RuntimeException e) {
 			// try to guard against IOException in parsing response
@@ -1223,7 +1277,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			client.register(userName, password);
 		}
 		catch (RestClientException e) {
-			throw toCoreException(e);
+			throw CloudUtil.toCoreException(e);
 		}
 		catch (RuntimeException e) {
 			// try to guard against IOException in parsing response
@@ -1245,8 +1299,34 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 	}
 
-	private static CloudFoundryOperations createClient(String location, String userName, String password)
+	/**
+	 * Creates a standalone client with no association with a server behaviour.
+	 * This is used only for connecting to a Cloud Foundry server for credential
+	 * verification verification. To create a client bound to a server
+	 * behaviour, it must be done through the server behaviour
+	 * @param location
+	 * @param userName
+	 * @param password
+	 * @return
+	 * @throws CoreException
+	 */
+	public static CloudFoundryOperations createClient(String location, String userName, String password)
 			throws CoreException {
+		return createClient(location, userName, password, null);
+	}
+
+	private static CloudFoundryOperations createClient(String location, String userName, String password,
+			CloudFoundrySpace cloudSpace) throws CoreException {
+		if (password == null) {
+			// lost the password, start with an empty one to avoid assertion
+			// error
+			password = "";
+		}
+		return createClient(location, new CloudCredentials(userName, password), cloudSpace);
+	}
+
+	private static CloudFoundryOperations createClient(String location, CloudCredentials credentials,
+			CloudFoundrySpace cloudSpace) throws CoreException {
 		URL url;
 		try {
 			url = new URL(location);
@@ -1254,45 +1334,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			if (port == -1) {
 				port = url.getDefaultPort();
 			}
-			if (password == null) {
-				// lost the password, start with an empty one to avoid assertion
-				// error
-				password = "";
-			}
-			return CloudFoundryPlugin.getDefault().getCloudFoundryClient(userName, password, url);
+			// At this stage, determine if it is a cloud server and account that
+			// supports orgs and spaces
+
+			return cloudSpace != null ? CloudFoundryPlugin.getDefault().getCloudFoundryClient(credentials,
+					cloudSpace.getSpace(), url) : CloudFoundryPlugin.getDefault().getCloudFoundryClient(credentials,
+					url);
 		}
 		catch (MalformedURLException e) {
 			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
 					"The server url ''{0}'' is invalid: {1}", location, e.getMessage()), e));
 		}
-	}
-
-	private static CloudFoundryOperations createClient(String location, CloudCredentials credentials)
-			throws CoreException {
-		URL url;
-		try {
-			url = new URL(location);
-			int port = url.getPort();
-			if (port == -1) {
-				port = url.getDefaultPort();
-			}
-			return CloudFoundryPlugin.getDefault().getCloudFoundryClient(credentials, url);
-		}
-		catch (MalformedURLException e) {
-			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-					"The server url ''{0}'' is invalid: {1}", location, e.getMessage()), e));
-		}
-	}
-
-	static CoreException toCoreException(Exception e) {
-		if (e instanceof CloudFoundryException) {
-			if (((CloudFoundryException) e).getDescription() != null) {
-				return new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind("{0} ({1})",
-						((CloudFoundryException) e).getDescription(), e.getMessage()), e));
-			}
-		}
-		return new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-				"Communication with server failed: {0}", e.getMessage()), e));
 	}
 
 	// public static class RequestFactory extends
@@ -1365,7 +1417,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			T result;
 			boolean succeeded = false;
 			try {
-				CloudFoundryOperations client = getClient();
+				CloudFoundryOperations client = getClient(subProgress);
 				try {
 					result = doRun(client, subProgress);
 					succeeded = true;
@@ -1395,10 +1447,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						runtimes.addAll(clientRuntimes);
 					}
 				}
-
 			}
 			catch (RestClientException e) {
-				throw toCoreException(e);
+				throw CloudUtil.toCoreException(e);
 			}
 			finally {
 				if (!succeeded) {

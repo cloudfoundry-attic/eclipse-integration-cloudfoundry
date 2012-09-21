@@ -11,11 +11,11 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart.CloudSpaceListener;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
-
-
 
 /**
  * @author Christian Dupuis
@@ -23,10 +23,12 @@ import org.eclipse.swt.widgets.Composite;
  * @author Steffen Pingel
  * @author Terry Denney
  */
-public class CloudFoundryCredentialsWizardPage extends WizardPage {
+public class CloudFoundryCredentialsWizardPage extends WizardPage implements CloudSpaceListener {
 
 	private final CloudFoundryCredentialsPart credentialsPart;
-	
+
+	private CloudSpaceDescriptor spacesDescriptor;
+
 	protected CloudFoundryCredentialsWizardPage(CloudFoundryServer server) {
 		super(server.getServer().getName() + " Credentials");
 		credentialsPart = new CloudFoundryCredentialsPart(server, this);
@@ -40,6 +42,18 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 	@Override
 	public boolean isPageComplete() {
 		return credentialsPart.isComplete();
+	}
+
+	public void handleCloudSpaceSelection(CloudSpaceDescriptor spacesDescriptor) {
+		this.spacesDescriptor = spacesDescriptor;
+	}
+
+	public CloudSpaceDescriptor getCloudSpacesDescriptor() {
+		return spacesDescriptor;
+	}
+
+	public boolean canFlipToNextPage() {
+		return getCloudSpacesDescriptor() != null && getCloudSpacesDescriptor().supportsSpaces();
 	}
 
 }

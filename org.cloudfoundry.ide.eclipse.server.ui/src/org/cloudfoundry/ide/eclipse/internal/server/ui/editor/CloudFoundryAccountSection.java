@@ -46,9 +46,7 @@ import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.Section;
 import org.eclipse.wst.server.ui.editor.ServerEditorSection;
 
-
-
-/** 
+/**
  * @author Andy Clement
  * @author Christian Dupuis
  * @author Leo Dos Santos
@@ -67,23 +65,41 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 
 	private Text urlText;
 
-//	private CloudUrlWidget urlWidget;
-	
-//	private Combo urlCombo;
-	
-	
+	private Text orgText;
+
+	private Text spaceText;
+
+	// private CloudUrlWidget urlWidget;
+
+	// private Combo urlCombo;
+
 	public CloudFoundryAccountSection() {
 	}
-	
+
 	public void update() {
-		if (cfServer.getUsername() != null && emailText != null && ! cfServer.getUsername().equals(emailText.getText())) {
+		if (cfServer.getUsername() != null && emailText != null && !cfServer.getUsername().equals(emailText.getText())) {
 			emailText.setText(cfServer.getUsername());
 		}
-		if (cfServer.getPassword() != null && passwordText != null && ! cfServer.getPassword().equals(passwordText.getText())) {
+		if (cfServer.getPassword() != null && passwordText != null
+				&& !cfServer.getPassword().equals(passwordText.getText())) {
 			passwordText.setText(cfServer.getPassword());
 		}
-		if (cfServer.getUrl() != null && urlText != null && ! CloudUiUtil.getDisplayTextFromUrl(cfServer.getUrl(), cfServer.getServer().getServerType().getId()).equals(urlText.getText())) {
-			urlText.setText(CloudUiUtil.getDisplayTextFromUrl(cfServer.getUrl(), cfServer.getServer().getServerType().getId()));
+		if (cfServer.getUrl() != null
+				&& urlText != null
+				&& !CloudUiUtil.getDisplayTextFromUrl(cfServer.getUrl(), cfServer.getServer().getServerType().getId())
+						.equals(urlText.getText())) {
+			urlText.setText(CloudUiUtil.getDisplayTextFromUrl(cfServer.getUrl(), cfServer.getServer().getServerType()
+					.getId()));
+		}
+		if (cfServer.supportsCloudSpaces()) {
+			if (cfServer.getCloudFoundrySpace() != null && cfServer.getCloudFoundrySpace().getOrgName() != null && orgText != null
+					&& !cfServer.getCloudFoundrySpace().getOrgName().equals(orgText.getText())) {
+				orgText.setText(cfServer.getCloudFoundrySpace().getOrgName());
+			}
+			if (cfServer.getCloudFoundrySpace() != null && cfServer.getCloudFoundrySpace().getSpaceName() != null
+					&& spaceText != null && !cfServer.getCloudFoundrySpace().getSpaceName().equals(spaceText.getText())) {
+				spaceText.setText(cfServer.getCloudFoundrySpace().getSpaceName());
+			}
 		}
 
 	}
@@ -136,48 +152,80 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		Label label = toolkit.createLabel(topComposite, "URL:");
 		label.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 		label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		
+
 		urlText = toolkit.createText(topComposite, "", SWT.NONE);
 		urlText.setEditable(false);
 		urlText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		urlText.setData(FormToolkit.KEY_DRAW_BORDER, Boolean.FALSE);
 		if (cfServer.getUrl() != null) {
-			urlText.setText(CloudUiUtil.getDisplayTextFromUrl(cfServer.getUrl(), cfServer.getServer().getServerType().getId()));
+			urlText.setText(CloudUiUtil.getDisplayTextFromUrl(cfServer.getUrl(), cfServer.getServer().getServerType()
+					.getId()));
 		}
-		
-//		urlWidget = new CloudUrlWidget(cfServer);
-//		urlWidget.createControls(topComposite);
-//		urlWidget.getUrlCombo().addModifyListener(new DataChangeListener(DataType.URL));
-//
+
+		if (cfServer.supportsCloudSpaces()) {
+
+			Label orgLabel = toolkit.createLabel(topComposite, "Organization:", SWT.NONE);
+			orgLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
+			orgLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+
+			orgText = toolkit.createText(topComposite, "", SWT.NONE);
+			orgText.setEditable(false);
+			orgText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+			orgText.setData(FormToolkit.KEY_DRAW_BORDER, Boolean.FALSE);
+			if (cfServer.getCloudFoundrySpace() != null && cfServer.getCloudFoundrySpace().getOrgName() != null) {
+				orgText.setText(cfServer.getCloudFoundrySpace().getOrgName());
+			}
+
+			Label spaceLabel = toolkit.createLabel(topComposite, "Space:", SWT.NONE);
+			spaceLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
+			spaceLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+
+			spaceText = toolkit.createText(topComposite, "", SWT.NONE);
+			spaceText.setEditable(false);
+			spaceText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+			spaceText.setData(FormToolkit.KEY_DRAW_BORDER, Boolean.FALSE);
+			if (cfServer.getCloudFoundrySpace() != null && cfServer.getCloudFoundrySpace().getSpaceName() != null) {
+				spaceText.setText(cfServer.getCloudFoundrySpace().getSpaceName());
+			}
+		}
+
+		// urlWidget = new CloudUrlWidget(cfServer);
+		// urlWidget.createControls(topComposite);
+		// urlWidget.getUrlCombo().addModifyListener(new
+		// DataChangeListener(DataType.URL));
+		//
 		final Composite validateComposite = toolkit.createComposite(composite);
 		validateComposite.setLayout(new GridLayout(4, false));
 		validateComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
 		final Label validateLabel = toolkit.createLabel(validateComposite, "", SWT.NONE);
 		validateLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-		
+
 		final Button changePasswordButton = toolkit.createButton(validateComposite, "Change Password...", SWT.PUSH);
 		changePasswordButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 		changePasswordButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				if (server.isDirty()) {
-					boolean confirm = MessageDialog.openQuestion(getShell(), "Unsaved Changes", "There are unsaved changes on the server that will be saved upon password change. Do you wish to continue?");
+					boolean confirm = MessageDialog
+							.openQuestion(getShell(), "Unsaved Changes",
+									"There are unsaved changes on the server that will be saved upon password change. Do you wish to continue?");
 					if (!confirm) {
 						return;
 					}
 				}
 
 				UpdatePasswordDialog dialog = new UpdatePasswordDialog(getShell(), cfServer.getUsername());
-						
+
 				if (dialog.open() == IDialogConstants.OK_ID) {
 					final String newPassword = dialog.getPassword();
 					String errorMsg = CloudUiUtil.updatePassword(newPassword, cfServer, server);
-					
+
 					if (errorMsg != null) {
 						validateLabel.setText(errorMsg);
 						validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
-					} else {
+					}
+					else {
 						validateLabel.setText("Password sucessfully changed.");
 						passwordText.setText(newPassword);
 					}
@@ -193,21 +241,23 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 				final String url = cfServer.getUrl();
 				final String userName = emailText.getText();
 				final String password = passwordText.getText();
-				
+				final String org = orgText != null ? orgText.getText() : null;
+				final String space = spaceText != null ? spaceText.getText() : null;
 				String errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, url, false, null);
-				
+
 				if (errorMsg == null) {
 					validateLabel.setText("Account information is valid.");
 					validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_BLACK));
-				} else {
+				}
+				else {
 					validateLabel.setText(errorMsg);
 					validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
 				}
-				
+
 				validateComposite.layout(new Control[] { validateLabel, validateButton });
 			}
 		});
-		
+
 		// Create signup button only if the server is not local or micro
 		if (CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(cfServer)) {
 			Button cfSignup = toolkit.createButton(validateComposite, "CloudFoundry.com Signup", SWT.PUSH);
@@ -222,26 +272,27 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 
 		toolkit.paintBordersFor(topComposite);
 		section.setExpanded(true);
-		
+
 		CloudFoundryPlugin.getDefault().addServerListener(this);
 	}
-	
+
 	@Override
 	public void init(IEditorSite site, IEditorInput input) {
 		super.init(site, input);
-//		String serviceName = null;
+		// String serviceName = null;
 		if (server != null) {
 			cfServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
 			update();
-//			serviceName = CloudFoundryBrandingExtensionPoint.getServiceName(server.getServerType().getId());
+			// serviceName =
+			// CloudFoundryBrandingExtensionPoint.getServiceName(server.getServerType().getId());
 		}
-//		if (serviceName == null) {
-			sectionTitle = "Account Information";
-			
-//		}
-//		else {
-//			sectionTitle = serviceName + " Account";
-//		}
+		// if (serviceName == null) {
+		sectionTitle = "Account Information";
+
+		// }
+		// else {
+		// sectionTitle = serviceName + " Account";
+		// }
 	}
 
 	private class DataChangeListener implements ModifyListener {
@@ -266,12 +317,13 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 				oldValue = cfServer.getPassword();
 				newValue = passwordText.getText();
 				break;
-//			case URL:
-//				Combo urlCombo = urlWidget.getUrlCombo();
-//				int index = urlCombo.getSelectionIndex();
-//				oldValue = cfServer.getUrl();
-//				newValue = index < 0? null: CloudUiUtil.getUrlFromDisplayText(urlCombo.getItem(index));
-//				break;
+			// case URL:
+			// Combo urlCombo = urlWidget.getUrlCombo();
+			// int index = urlCombo.getSelectionIndex();
+			// oldValue = cfServer.getUrl();
+			// newValue = index < 0? null:
+			// CloudUiUtil.getUrlFromDisplayText(urlCombo.getItem(index));
+			// break;
 			}
 
 			execute(new AbstractOperation("CloudFoundryServerUpdate") {
@@ -297,21 +349,21 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 				private void updateServer(String value) {
 					switch (type) {
 					case EMAIL:
-						if (! value.equals(cfServer.getUsername())) {
+						if (!value.equals(cfServer.getUsername())) {
 							cfServer.setUsername(value);
 						}
 						updateTextField(value, emailText);
 						break;
 					case PASSWORD:
-						if (! value.equals(cfServer.getPassword())) {
+						if (!value.equals(cfServer.getPassword())) {
 							cfServer.setPassword(value);
 						}
 						updateTextField(value, passwordText);
 						break;
-//					case URL:
-//						cfServer.setUrl(value);
-//						updateComboBox(value, urlWidget.getUrlCombo());
-//						break;
+					// case URL:
+					// cfServer.setUrl(value);
+					// updateComboBox(value, urlWidget.getUrlCombo());
+					// break;
 					}
 				}
 
@@ -320,25 +372,25 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 						text.setText(input == null ? "" : input);
 					}
 				}
-				
-//				private void updateComboBox(String input, Combo combo) {
-//					int index = combo.getSelectionIndex();
-//					if (index < 0) {
-//						if (input == null) {
-//							return;
-//						}
-//					} else if (combo.getItem(index).equals(input)) {
-//						return;
-//					}
-//					
-//					for(int i=0; i<combo.getItemCount(); i++) {
-//						if (combo.getItem(i).equals(input)) {
-//							combo.select(i);
-//							return;
-//						}
-//					}
-//					combo.deselectAll();
-//				}
+
+				// private void updateComboBox(String input, Combo combo) {
+				// int index = combo.getSelectionIndex();
+				// if (index < 0) {
+				// if (input == null) {
+				// return;
+				// }
+				// } else if (combo.getItem(index).equals(input)) {
+				// return;
+				// }
+				//
+				// for(int i=0; i<combo.getItemCount(); i++) {
+				// if (combo.getItem(i).equals(input)) {
+				// combo.select(i);
+				// return;
+				// }
+				// }
+				// combo.deselectAll();
+				// }
 			});
 		}
 	}
@@ -350,11 +402,12 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 	public void serverChanged(CloudServerEvent event) {
 		if (event.getType() == CloudServerEvent.EVENT_UPDATE_PASSWORD) {
 			cfServer = event.getServer();
-			
+
 			Display.getDefault().syncExec(new Runnable() {
-				
+
 				public void run() {
-					if (passwordText != null && ! passwordText.isDisposed() && ! passwordText.getText().equals(cfServer.getPassword())) {
+					if (passwordText != null && !passwordText.isDisposed()
+							&& !passwordText.getText().equals(cfServer.getPassword())) {
 						passwordText.setText(cfServer.getPassword());
 					}
 				}

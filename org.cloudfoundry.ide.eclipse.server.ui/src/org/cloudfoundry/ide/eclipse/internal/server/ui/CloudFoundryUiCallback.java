@@ -231,11 +231,10 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		}
 
 		DeploymentInfo deploymentInfo = descriptor.deploymentInfo;
-		if (deploymentInfo == null
-				|| deploymentInfo.getDeploymentName() == null
-				// If it is not standalone app (not having staging is consider
-				// non-standalone), then URIs must be set to be a valid
-				// descriptor
+		if (deploymentInfo == null || deploymentInfo.getDeploymentName() == null
+		// If it is not standalone app (not having staging is consider
+		// non-standalone), then URIs must be set to be a valid
+		// descriptor
 				|| ((descriptor.staging == null || !CloudApplication.STANDALONE.equals(descriptor.staging
 						.getFramework())) && (deploymentInfo.getUris() == null || deploymentInfo.getUris().isEmpty()))) {
 			return false;

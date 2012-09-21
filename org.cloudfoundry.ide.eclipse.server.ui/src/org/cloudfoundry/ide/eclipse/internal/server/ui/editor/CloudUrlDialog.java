@@ -175,7 +175,7 @@ public class CloudUrlDialog extends Dialog {
 			
 			public void run() {
 				try {
-					CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory().getCloudFoundryClient(url).getCloudInfo();
+					CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory().getCloudFoundryOperations(url).getCloudInfo();
 					shouldProceed[0] = true;
 				}
 				catch (Exception e) {

@@ -16,6 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
+import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -325,11 +326,15 @@ public class CloudFoundryPlugin extends Plugin {
 	 * if UAA is available
 	 */
 	public CloudFoundryOperations getCloudFoundryClient(String userName, String password, URL url) {
-		return getCloudFoundryClientFactory().getCloudFoundryClient(isUAAIDEAvailable(), userName, password, url);
+		return getCloudFoundryClientFactory().getCloudFoundryOperations(isUAAIDEAvailable(), userName, password, url);
 	}
 
 	public CloudFoundryOperations getCloudFoundryClient(CloudCredentials credentials, URL url) {
-		return getCloudFoundryClientFactory().getCloudFoundryClient(isUAAIDEAvailable(), credentials, url);
+		return getCloudFoundryClientFactory().getCloudFoundryOperations(isUAAIDEAvailable(), credentials, url);
+	}
+
+	public CloudFoundryOperations getCloudFoundryClient(CloudCredentials credentials, CloudSpace session, URL url) {
+		return getCloudFoundryClientFactory().getCloudFoundryOperations(isUAAIDEAvailable(), credentials, url, session);
 	}
 
 	public static void trace(String string) {

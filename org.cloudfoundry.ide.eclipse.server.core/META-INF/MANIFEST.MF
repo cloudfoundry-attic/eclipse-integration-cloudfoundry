@@ -42,6 +42,7 @@ Export-Package: org.cloudfoundry.caldecott.client,
  org.cloudfoundry.client.lib.util,
  org.cloudfoundry.ide.eclipse.internal.server.core,
  org.cloudfoundry.ide.eclipse.internal.server.core.debug,
+ org.cloudfoundry.ide.eclipse.internal.server.core.spaces,
  org.cloudfoundry.ide.eclipse.internal.server.core.standalone,
  org.cloudfoundry.ide.eclipse.internal.uaa
 Import-Package: com.google.protobuf;resolution:=optional,

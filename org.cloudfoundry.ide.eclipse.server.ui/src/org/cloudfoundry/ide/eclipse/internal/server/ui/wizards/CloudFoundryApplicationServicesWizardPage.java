@@ -23,7 +23,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationsMasterPartContentProvider;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.TreeContentProvider;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewColumn;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewerConfigurator;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewerSorter;
@@ -141,7 +141,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 
 		servicesViewer = new CheckboxTableViewer(table);
 
-		servicesViewer.setContentProvider(new ApplicationsMasterPartContentProvider());
+		servicesViewer.setContentProvider(new TreeContentProvider());
 		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
 
 			protected Image getColumnImage(CloudService service, ServiceViewColumn column) {

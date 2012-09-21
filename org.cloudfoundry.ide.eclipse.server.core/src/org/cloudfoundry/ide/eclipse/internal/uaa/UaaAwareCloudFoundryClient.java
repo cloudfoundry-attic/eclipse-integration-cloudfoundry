@@ -33,6 +33,7 @@ import org.cloudfoundry.client.lib.domain.ApplicationStats;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudInfo;
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.client.lib.domain.CrashesInfo;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
@@ -80,7 +81,12 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 
 	public UaaAwareCloudFoundryClient(UaaService _uaaService, CloudCredentials credentials, URL cloudControllerUrl,
 			HttpProxyConfiguration proxyConfiguration) throws MalformedURLException {
-		super(credentials, cloudControllerUrl, proxyConfiguration);
+		this(_uaaService, credentials, cloudControllerUrl, proxyConfiguration, null);
+	}
+
+	public UaaAwareCloudFoundryClient(UaaService _uaaService, CloudCredentials credentials, URL cloudControllerUrl,
+			HttpProxyConfiguration proxyConfiguration, CloudSpace session) throws MalformedURLException {
+		super(credentials, cloudControllerUrl, proxyConfiguration, session);
 		this.uaaService = _uaaService;
 		this.cloudControllerUrl = cloudControllerUrl;
 		if (uaaService instanceof TransmissionAwareUaaService) {

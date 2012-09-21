@@ -54,7 +54,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	}
 
 	protected CloudFoundryOperations getClient() throws CoreException {
-		CloudFoundryOperations client = serverBehavior.getClient();
+		CloudFoundryOperations client = serverBehavior.getClient(null);
 		client.login();
 		return client;
 	}
@@ -65,7 +65,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	}
 
 	protected CloudFoundryOperations getClient(CloudCredentials credentials) throws CoreException {
-		CloudFoundryOperations client = serverBehavior.getClient(credentials);
+		CloudFoundryOperations client = serverBehavior.getClient(credentials, null);
 		client.login();
 		return client;
 	}

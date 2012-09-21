@@ -11,6 +11,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -205,12 +206,12 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 			}
 		}
 		assertTrue(found);
-
+		URL url = new URL(CloudFoundryTestFixture.VCLOUDLABS.getUrl());
 		CloudFoundryOperations client = CloudFoundryPlugin
 				.getDefault()
 				.getCloudFoundryClientFactory()
-				.getCloudFoundryClient(CloudFoundryTestFixture.VCLOUDLABS.getUsername(),
-						CloudFoundryTestFixture.VCLOUDLABS.getPassword(), CloudFoundryTestFixture.VCLOUDLABS.getUrl());
+				.getCloudFoundryOperations(CloudFoundryTestFixture.VCLOUDLABS.getUsername(),
+						CloudFoundryTestFixture.VCLOUDLABS.getPassword(), url);
 		client.login();
 		client.deleteApplication("dynamic-webapp");
 

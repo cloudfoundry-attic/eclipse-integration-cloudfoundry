@@ -208,7 +208,7 @@ public class ApplicationMasterPart extends SectionPart {
 		toolBarManager.createControl(headerComposite);
 
 		applicationsViewer = new TableViewer(toolkit.createTable(client, SWT.NONE));
-		applicationsViewer.setContentProvider(new ApplicationsMasterPartContentProvider());
+		applicationsViewer.setContentProvider(new TreeContentProvider());
 		applicationsViewer.setLabelProvider(new ServerLabelProvider() {
 			@Override
 			public Image getImage(Object element) {
@@ -312,7 +312,7 @@ public class ApplicationMasterPart extends SectionPart {
 		servicesViewer = new TableViewer(toolkit.createTable(client, SWT.MULTI));
 		new ServiceViewerConfigurator().configureViewer(servicesViewer);
 
-		servicesViewer.setContentProvider(new ApplicationsMasterPartContentProvider());
+		servicesViewer.setContentProvider(new TreeContentProvider());
 		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
 
 			protected Image getColumnImage(CloudService service, ServiceViewColumn column) {

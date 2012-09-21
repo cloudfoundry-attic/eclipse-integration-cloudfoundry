@@ -266,6 +266,17 @@ public class CloudUtil {
 		return false;
 	}
 
+	public static CoreException toCoreException(Exception e) {
+		if (e instanceof CloudFoundryException) {
+			if (((CloudFoundryException) e).getDescription() != null) {
+				return new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind("{0} ({1})",
+						((CloudFoundryException) e).getDescription(), e.getMessage()), e));
+			}
+		}
+		return new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
+				"Communication with server failed: {0}", e.getMessage()), e));
+	}
+
 	// check if error is 403 - take CoreException
 	public static boolean isForbiddenException(CoreException e) {
 		Throwable cause = e.getCause();

@@ -139,7 +139,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	private Text serverNameText;
 
-	private ApplicationsMasterPartContentProvider servicesContentProvider;
+	private TreeContentProvider servicesContentProvider;
 
 	private ServicesViewerDropListener servicesDropListener;
 
@@ -918,7 +918,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		// weights = new int[] { 30, 16, 12, 28, 14 };
 		servicesViewer = createTableViewer(container, columnNames, null, columnWidths);
 
-		servicesContentProvider = new ApplicationsMasterPartContentProvider();
+		servicesContentProvider = new TreeContentProvider();
 		servicesViewer.setContentProvider(servicesContentProvider);
 		servicesViewer.setLabelProvider(new ServicesLabelProvider());
 		servicesViewer.setSorter(new CloudFoundryViewerSorter());

@@ -131,7 +131,7 @@ public class TargetURLDialog extends Dialog {
 			public void run() {
 				url = replaceWildcard(cloudUrl.getUrl(), wildcard, value);
 				try {
-					CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory().getCloudFoundryClient(url).getCloudInfo();
+					CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory().getCloudFoundryOperations(url).getCloudInfo();
 					shouldProceed[0] = true;
 				}
 				catch (Exception e) {

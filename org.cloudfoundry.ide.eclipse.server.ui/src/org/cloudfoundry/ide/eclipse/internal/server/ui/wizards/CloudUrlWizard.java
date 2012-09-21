@@ -121,7 +121,7 @@ public class CloudUrlWizard extends Wizard {
 					protected IStatus run(IProgressMonitor arg0) {
 
 						try {
-							CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory().getCloudFoundryClient(url)
+							CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory().getCloudFoundryOperations(url)
 									.getCloudInfo();
 							shouldProceed[0] = new Boolean(true);
 

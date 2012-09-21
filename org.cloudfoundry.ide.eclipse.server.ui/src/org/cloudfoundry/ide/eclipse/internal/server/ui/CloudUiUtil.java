@@ -21,12 +21,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceServerLookup;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -249,6 +252,53 @@ public class CloudUiUtil {
 		return "Can't validate credentials with server";
 	}
 
+	/**
+	 * Runnable context can be null. If so, default Eclipse progress service
+	 * will be used as a runnable context. Display URL should be true if the
+	 * display URL is passed. If so, and attempt will be made to parse the
+	 * actual URL.
+	 * 
+	 * @param userName must not be null
+	 * @param password must not be null
+	 * @param urlText must not be null. Can be either display or actual URL
+	 * @param displayURL true if URL is display URL
+	 * @param context may be optional
+	 * @param fork if true, an attempt will be made to get the cloud spaces
+	 * asynchronously
+	 * @return spaces descriptor, or null if it couldn't be determined
+	 * @throws CoreException
+	 */
+	public static CloudSpaceDescriptor getCloudSpaces(final String userName, final String password,
+			final String urlText, final boolean displayURL, IRunnableContext context) throws CoreException {
+		try {
+			final CloudSpaceDescriptor[] supportsSpaces = new CloudSpaceDescriptor[1];
+			ICoreRunnable coreRunner = new ICoreRunnable() {
+				public void run(IProgressMonitor monitor) throws CoreException {
+					String url = urlText;
+					if (displayURL) {
+						url = getUrlFromDisplayText(urlText);
+					}
+					supportsSpaces[0] = CloudSpaceServerLookup.getCloudSpaceDescriptor(new CloudCredentials(userName,
+							password), url, monitor);
+				}
+			};
+			if (context != null) {
+				runForked(coreRunner, context);
+			}
+			else {
+				runForked(coreRunner);
+			}
+
+			return supportsSpaces[0];
+		}
+
+		catch (OperationCanceledException e) {
+			new CoreException(CloudFoundryPlugin.getErrorStatus(e));
+		}
+
+		return null;
+	}
+
 	public static String getUrlFromDisplayText(String displayText) {
 		String url = displayText;
 		if (url != null) {
@@ -413,7 +463,8 @@ public class CloudUiUtil {
 		if (serversViewDescriptor != null) {
 
 			// Granular null checks required as any of the workbench components
-			// may not be available at some given point in time (e.g., during start/shutdown)
+			// may not be available at some given point in time (e.g., during
+			// start/shutdown)
 			IWorkbenchWindow activeWorkbenchWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 
 			if (activeWorkbenchWindow != null) {
@@ -422,7 +473,7 @@ public class CloudUiUtil {
 
 				if (activePage != null) {
 					IViewReference[] references = activePage.getViewReferences();
-					
+
 					if (references != null) {
 						IViewPart serversViewPart = null;
 						for (IViewReference reference : references) {

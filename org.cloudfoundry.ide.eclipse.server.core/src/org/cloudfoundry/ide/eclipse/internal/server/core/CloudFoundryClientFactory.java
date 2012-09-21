@@ -17,6 +17,7 @@ import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.HttpProxyConfiguration;
+import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.uaa.UaaAwareCloudFoundryClient;
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
@@ -32,68 +33,64 @@ public class CloudFoundryClientFactory {
 	// services
 	public static final String SPRING_IDE_UAA_BUNDLE_SYMBOLIC_NAME = "org.springframework.ide.eclipse.uaa";
 
-	public CloudFoundryOperations getCloudFoundryClient(boolean isUAAIDEAvailable, String userName, String password,
+	public CloudFoundryOperations getCloudFoundryOperations(boolean isUAAIDEAvailable, String userName,
+			String password, URL url) {
+		return getCloudFoundryOperations(isUAAIDEAvailable, getCredentials(userName, password), url);
+	}
+
+	public CloudFoundryOperations getCloudFoundryOperations(boolean isUAAIDEAvailable, CloudCredentials credentials,
 			URL url) {
-		if (isUAAIDEAvailable) {
-			return new UaaAwareCloudFoundryClientAccessor().getCloudFoundryClient(userName, password, url);
-		}
-		else {
-			return getCloudFoundryOperations(userName, password, url);
-		}
+		return getCloudFoundryOperations(isUAAIDEAvailable, credentials, url, null);
 	}
 
-	public CloudFoundryOperations getCloudFoundryClient(boolean isUAAIDEAvailable, CloudCredentials credentials, URL url) {
+	public CloudFoundryOperations getCloudFoundryOperations(boolean isUAAIDEAvailable, CloudCredentials credentials,
+			URL url, CloudSpace session) {
 		if (isUAAIDEAvailable) {
-			return new UaaAwareCloudFoundryClientAccessor().getCloudFoundryClient(credentials, url);
+			return new UaaAwareCloudFoundryClientAccessor().getCloudFoundryOperations(credentials, url, session);
 		}
 		else {
-			return getCloudFoundryOperations(credentials, url);
+			return getCloudFoundryOperations(credentials, url, session);
 		}
-	}
-
-	public CloudFoundryOperations getCloudFoundryClient(String userName, String password, String url)
-			throws MalformedURLException {
-		return getCloudFoundryOperations(userName, password, new URL(url));
 	}
 
 	public CloudFoundryOperations getCloudFoundryOperations(String userName, String password, URL url) {
-		CloudCredentials credentials = getCredentials(userName, password, url);
-		return getCloudFoundryOperations(credentials, url);
+		CloudCredentials credentials = getCredentials(userName, password);
+		return getCloudFoundryOperations(credentials, url, null);
 	}
 
-	protected static CloudCredentials getCredentials(String userName, String password, URL url) {
+	protected static CloudCredentials getCredentials(String userName, String password) {
 		return new CloudCredentials(userName, password);
 	}
 
-	public CloudFoundryOperations getCloudFoundryClient(String cloudControllerUrl) throws MalformedURLException {
+	public CloudFoundryOperations getCloudFoundryOperations(String cloudControllerUrl) throws MalformedURLException {
 		URL url = new URL(cloudControllerUrl);
 		HttpProxyConfiguration proxyConfiguration = getProxy(url);
 		return new CloudFoundryClient(url, proxyConfiguration);
 	}
 
-	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url) {
+	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, CloudSpace session) {
 		HttpProxyConfiguration proxyConfiguration = getProxy(url);
-		return new CloudFoundryClient(credentials, url, proxyConfiguration);
+		return session != null ? new CloudFoundryClient(credentials, url, proxyConfiguration, session)
+				: new CloudFoundryClient(credentials, url, proxyConfiguration);
 	}
 
 	static class UaaAwareCloudFoundryClientAccessor {
 
-		public CloudFoundryOperations getCloudFoundryClient(String userName, String password, URL url) {
-			try {
-				CloudCredentials credentials = getCredentials(userName, password, url);
-				HttpProxyConfiguration proxyConfiguration = getProxy(url);
-				return new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url, proxyConfiguration);
-			}
-			catch (MalformedURLException e) {
-				CloudFoundryPlugin.logError("Failed to obtain Cloud Foundry operations for " + url.toString(), e);
-			}
-			return null;
+		public CloudFoundryOperations getCloudFoundryOperations(String userName, String password, URL url) {
+			return getCloudFoundryOperations(getCredentials(userName, password), url);
 		}
 
-		public CloudFoundryOperations getCloudFoundryClient(CloudCredentials credentials, URL url) {
+		public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url) {
+			return getCloudFoundryOperations(credentials, url, null);
+		}
+
+		public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url,
+				CloudSpace session) {
 			try {
 				HttpProxyConfiguration proxyConfiguration = getProxy(url);
-				return new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url, proxyConfiguration);
+				return session != null ? new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url,
+						proxyConfiguration, session) : new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(),
+						credentials, url, proxyConfiguration);
 			}
 			catch (MalformedURLException e) {
 				CloudFoundryPlugin.logError("Failed to obtain Cloud Foundry operations for " + url.toString(), e);

@@ -18,11 +18,11 @@ import org.eclipse.jface.viewers.Viewer;
  * @author Terry Denney
  * @author Christian Dupuis
  */
-public class ApplicationsMasterPartContentProvider implements ITreeContentProvider {
+public class TreeContentProvider implements ITreeContentProvider {
 
 	private Object[] elements;
 
-	public ApplicationsMasterPartContentProvider() {
+	public TreeContentProvider() {
 	}
 
 	public void dispose() {

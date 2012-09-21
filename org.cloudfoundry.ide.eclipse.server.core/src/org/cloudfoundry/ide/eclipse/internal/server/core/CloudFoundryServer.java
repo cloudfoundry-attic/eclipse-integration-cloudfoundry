@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,7 +20,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -81,6 +84,14 @@ public class CloudFoundryServer extends ServerDelegate {
 	 */
 	static final String PROP_USERNAME_ID = "org.cloudfoundry.ide.eclipse.username";
 
+	static final String PROP_ORG_ID = "org.cloudfoundry.ide.eclipse.org";
+
+	static final String PROP_ORG_GUID = "org.cloudfoundry.ide.eclipse.org.guid";
+
+	static final String PROP_SPACE_GUID = "org.cloudfoundry.ide.eclipse.space.guid";
+
+	static final String PROP_SPACE_ID = "org.cloudfoundry.ide.eclipse.space";
+
 	private static final String PROPERTY_DEPLOYMENT_NAME = "deployment_name";
 
 	static void updateState(Server server, ApplicationModule appModule) throws CoreException {
@@ -100,6 +111,8 @@ public class CloudFoundryServer extends ServerDelegate {
 	private String initialServerId;
 
 	private String password;
+
+	private CloudFoundrySpace cloudSpace;
 
 	public CloudFoundryServer() {
 		// constructor
@@ -261,6 +274,36 @@ public class CloudFoundryServer extends ServerDelegate {
 		return getAttribute(PROP_SERVER_ID, (String) null);
 	}
 
+	public boolean supportsCloudSpaces() {
+		return getCloudFoundrySpace() != null;
+	}
+
+	public CloudFoundrySpace getCloudFoundrySpace() {
+
+		if (cloudSpace == null) {
+			String orgName = getOrg();
+			String spaceName = getSpace();
+
+			String[] checkValidity = { orgName, spaceName };
+			boolean valid = false;
+			for (String value : checkValidity) {
+				valid = validSpaceValue(value);
+				if (!valid) {
+					break;
+				}
+			}
+			if (valid) {
+				cloudSpace = new CloudFoundrySpace(orgName, spaceName);
+			}
+
+		}
+		return cloudSpace;
+	}
+
+	protected boolean validSpaceValue(String value) {
+		return value != null && value.length() > 0;
+	}
+
 	public boolean isConnected() {
 		return getServer().getServerState() == IServer.STATE_STARTED;
 	}
@@ -359,6 +402,22 @@ public class CloudFoundryServer extends ServerDelegate {
 		getData().setPassword(password);
 	}
 
+	public void setSpace(CloudSpace space) {
+		this.secureStoreDirty = true;
+
+		if (space != null) {
+			this.cloudSpace = new CloudFoundrySpace(space);
+			setOrg(cloudSpace.getOrgName());
+			setSpace(cloudSpace.getSpaceName());
+		}
+		else {
+			setOrg("");
+			setSpace("");
+		}
+
+		updateServerId();
+	}
+
 	public void setUrl(String url) {
 		setAttribute(PROP_URL, url);
 		updateServerId();
@@ -369,8 +428,35 @@ public class CloudFoundryServer extends ServerDelegate {
 		updateServerId();
 	}
 
+	protected void setOrg(String org) {
+		setAttribute(PROP_ORG_ID, org);
+	}
+
+	protected void setSpace(String space) {
+		setAttribute(PROP_SPACE_ID, space);
+	}
+
+	protected String getOrg() {
+		return getAttribute(PROP_ORG_ID, (String) null);
+	}
+
+	protected String getSpace() {
+		return getAttribute(PROP_SPACE_ID, (String) null);
+	}
+
 	private void updateServerId() {
-		setAttribute(PROP_SERVER_ID, getUsername() + "@" + getUrl());
+		StringWriter writer = new StringWriter();
+		writer.append(getUsername());
+		if (supportsCloudSpaces()) {
+			writer.append('_');
+			writer.append(getOrg());
+			writer.append('_');
+			writer.append(getSpace());
+		}
+		writer.append('@');
+		writer.append(getUrl());
+
+		setAttribute(PROP_SERVER_ID, writer.toString());
 	}
 
 	@Override

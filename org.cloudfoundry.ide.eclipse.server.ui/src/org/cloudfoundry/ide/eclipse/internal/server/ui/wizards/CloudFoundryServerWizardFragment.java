@@ -10,10 +10,15 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
+import java.util.List;
+
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart.CloudSpaceListener;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -28,23 +33,24 @@ import org.eclipse.wst.server.core.util.ServerLifecycleAdapter;
 import org.eclipse.wst.server.ui.wizard.IWizardHandle;
 import org.eclipse.wst.server.ui.wizard.WizardFragment;
 
-
 /**
  * @author Christian Dupuis
  * @author Steffen Pingel
  * @author Terry Denney
  */
 @SuppressWarnings("restriction")
-public class CloudFoundryServerWizardFragment extends WizardFragment {
+public class CloudFoundryServerWizardFragment extends WizardFragment implements CloudSpaceListener {
 
 	private CloudFoundryServer cfServer;
 
 	private CloudFoundryCredentialsPart credentialsPart;
 
+	private CloudFoundrySpacesWizardFragment spacesFragment;
+
 	@Override
 	public Composite createComposite(Composite parent, IWizardHandle wizard) {
 		initServer();
-		credentialsPart = new CloudFoundryCredentialsPart(cfServer, wizard);
+		credentialsPart = new CloudFoundryCredentialsPart(cfServer, wizard, this);
 		return credentialsPart.createComposite(parent);
 	}
 
@@ -65,6 +71,14 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 			return false;
 		}
 		return credentialsPart.isComplete();
+	}
+
+	@Override
+	protected void createChildFragments(List<WizardFragment> list) {
+		if (spacesFragment != null) {
+			list.add(spacesFragment);
+		}
+		super.createChildFragments(list);
 	}
 
 	@Override
@@ -112,17 +126,43 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 			if (cf != null && cf.getUsername().equals(originalServer.getUsername())
 					&& cf.getPassword().equals(originalServer.getPassword())
 					&& cf.getUrl().equals(originalServer.getUrl())) {
-				CloudFoundryServerBehaviour behaviour = cf.getBehaviour();
-				if (behaviour != null) {
-					try {
-						behaviour.connect(monitor);
-					}
-					catch (CoreException e) {
-						CloudFoundryServerUiPlugin.getDefault().getLog().log(e.getStatus());
+
+				boolean connect = false;
+
+				if (cf.supportsCloudSpaces() && originalServer.supportsCloudSpaces()) {
+					CloudFoundrySpace originalSpace = originalServer.getCloudFoundrySpace();
+					CloudFoundrySpace space = cf.getCloudFoundrySpace();
+					connect = space.getOrgName().equals(originalSpace.getOrgName())
+							&& space.getSpaceName().equals(originalSpace.getSpaceName());
+				}
+				else if (!cf.supportsCloudSpaces() && !originalServer.supportsCloudSpaces()) {
+					connect = true;
+				}
+
+				if (connect) {
+					CloudFoundryServerBehaviour behaviour = cf.getBehaviour();
+					if (behaviour != null) {
+						try {
+							behaviour.connect(monitor);
+						}
+						catch (CoreException e) {
+							CloudFoundryServerUiPlugin.getDefault().getLog().log(e.getStatus());
+						}
 					}
 				}
+
 			}
 			return Status.OK_STATUS;
+		}
+	}
+
+	public void handleCloudSpaceSelection(CloudSpaceDescriptor spacesDescriptor) {
+		if (spacesDescriptor != null && spacesDescriptor.supportsSpaces()) {
+			initServer();
+			spacesFragment = new CloudFoundrySpacesWizardFragment(spacesDescriptor, cfServer);
+		}
+		else {
+			spacesFragment = null;
 		}
 	}
 

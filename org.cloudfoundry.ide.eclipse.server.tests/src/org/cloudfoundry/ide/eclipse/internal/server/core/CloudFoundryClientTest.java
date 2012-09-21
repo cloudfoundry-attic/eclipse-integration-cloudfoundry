@@ -23,7 +23,7 @@ public class CloudFoundryClientTest extends TestCase {
 
 	public void testConnectToNonSecureUrl() throws Exception {
 		CloudFoundryOperations client = CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory()
-				.getCloudFoundryClient("http://api.cloudfoundry.com");
+				.getCloudFoundryOperations("http://api.cloudfoundry.com");
 
 		CloudInfo cloudInfo = client.getCloudInfo();
 		Assert.assertNotNull(cloudInfo);
@@ -31,7 +31,7 @@ public class CloudFoundryClientTest extends TestCase {
 
 	public void testConnectToSecureUrl() throws Exception {
 		CloudFoundryOperations client = CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory()
-				.getCloudFoundryClient("https://api.cloudfoundry.com");
+				.getCloudFoundryOperations("https://api.cloudfoundry.com");
 		CloudInfo cloudInfo = client.getCloudInfo();
 		Assert.assertNotNull(cloudInfo);
 

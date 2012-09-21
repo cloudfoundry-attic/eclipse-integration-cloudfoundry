@@ -11,8 +11,10 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
 
@@ -29,6 +31,8 @@ public class CloudFoundryCredentialsWizard extends Wizard {
 
 	private final IServerWorkingCopy serverWC;
 
+	private CloudFoundryCloudSpaceWizardpage cloudSpacePage;
+
 	public CloudFoundryCredentialsWizard(CloudFoundryServer server) {
 		serverWC = server.getServer().createWorkingCopy();
 		this.server = (CloudFoundryServer) serverWC.loadAdapter(CloudFoundryServer.class, null);
@@ -39,7 +43,23 @@ public class CloudFoundryCredentialsWizard extends Wizard {
 	@Override
 	public void addPages() {
 		CloudFoundryCredentialsWizardPage page = new CloudFoundryCredentialsWizardPage(server);
+
 		addPage(page);
+
+	}
+
+	@Override
+	public IWizardPage getNextPage(IWizardPage page) {
+		if (page instanceof CloudFoundryCredentialsWizardPage) {
+			CloudFoundryCredentialsWizardPage credentialsPage = (CloudFoundryCredentialsWizardPage) page;
+			CloudSpaceDescriptor spacesDescriptor = credentialsPage.getCloudSpacesDescriptor();
+			if (spacesDescriptor != null && spacesDescriptor.supportsSpaces()) {
+				cloudSpacePage = new CloudFoundryCloudSpaceWizardpage(server, null);
+				cloudSpacePage.setCloudSpacesDescriptor(spacesDescriptor);
+				return cloudSpacePage;
+			}
+		}
+		return super.getNextPage(page);
 	}
 
 	@Override

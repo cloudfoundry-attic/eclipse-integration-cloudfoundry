@@ -13,11 +13,14 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 import java.lang.reflect.InvocationTargetException;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryURLNavigation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.RegisterAccountWizard;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -43,7 +46,6 @@ import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.wst.server.ui.wizard.IWizardHandle;
-
 
 /**
  * @author Andy Clement
@@ -82,9 +84,12 @@ public class CloudFoundryCredentialsPart {
 	private WizardPage wizardPage;
 
 	private Button registerAccountButton;
-	
+
 	private Button cfSignupButton;
 
+	private CloudSpaceDescriptor spacesDescriptor;
+
+	private CloudSpaceListener cloudSpaceListener;
 
 	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, WizardPage wizardPage) {
 		this.cfServer = cfServer;
@@ -114,6 +119,18 @@ public class CloudFoundryCredentialsPart {
 		}
 	}
 
+	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, WizardPage wizardPage,
+			CloudSpaceListener cloudSpaceListener) {
+		this(cfServer, wizardPage);
+		this.cloudSpaceListener = cloudSpaceListener;
+	}
+
+	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, IWizardHandle wizardHandle,
+			CloudSpaceListener cloudSpaceListener) {
+		this(cfServer, wizardHandle);
+		this.cloudSpaceListener = cloudSpaceListener;
+	}
+
 	public Composite createComposite(Composite parent) {
 
 		Composite composite = new Composite(parent, SWT.NONE);
@@ -125,16 +142,29 @@ public class CloudFoundryCredentialsPart {
 		folder.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				update();
+				update(true);
 			}
 		});
 
-		createExistingUserComposite(folder);
-
-		update();
+		try {
+			createExistingUserComposite(folder);
+			update(true);
+		}
+		catch (Throwable e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		return composite;
 
+	}
+
+	public boolean supportsSpaces() {
+		return spacesDescriptor != null && spacesDescriptor.supportsSpaces();
+	}
+
+	public CloudSpaceDescriptor getSpaces() {
+		return spacesDescriptor;
 	}
 
 	public boolean isComplete() {
@@ -168,7 +198,7 @@ public class CloudFoundryCredentialsPart {
 		emailText.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				cfServer.setUsername(emailText.getText());
-				update();
+				update(true);
 			}
 		});
 
@@ -185,7 +215,7 @@ public class CloudFoundryCredentialsPart {
 		passwordText.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				cfServer.setPassword(passwordText.getText());
-				update();
+				update(true);
 			}
 		});
 
@@ -199,11 +229,11 @@ public class CloudFoundryCredentialsPart {
 			public void widgetSelected(SelectionEvent e) {
 				String selection = getURLSelection();
 				if (selection != null) {
-					
+
 					String url = CloudUiUtil.getUrlFromDisplayText(selection);
 					cfServer.setUrl(url);
-			
-					update();
+
+					update(true);
 				}
 			}
 		});
@@ -223,6 +253,16 @@ public class CloudFoundryCredentialsPart {
 				String password = passwordText.getText();
 				String errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, urlText, true,
 						getRunnableContext());
+				try {
+					spacesDescriptor = CloudUiUtil.getCloudSpaces(userName, password, urlText, true,
+							getRunnableContext());
+
+					update(false);
+				}
+				catch (CoreException e) {
+					CloudFoundryPlugin.logError(e);
+					errorMsg = e.getLocalizedMessage();
+				}
 				if (errorMsg == null) {
 					setWizardInformation("Account information is valid.");
 				}
@@ -249,7 +289,7 @@ public class CloudFoundryCredentialsPart {
 				}
 			}
 		});
-		
+
 		cfSignupButton = new Button(validateComposite, SWT.PUSH);
 		cfSignupButton.setText("CloudFoundry.com Signup");
 		cfSignupButton.addSelectionListener(new SelectionAdapter() {
@@ -324,7 +364,7 @@ public class CloudFoundryCredentialsPart {
 		}
 	}
 
-	private void update() {
+	private void update(boolean clearSpaceDescriptor) {
 		isFinished = true;
 		setWizardError(null);
 
@@ -336,7 +376,12 @@ public class CloudFoundryCredentialsPart {
 		else {
 			cfSignupButton.setVisible(false);
 		}
-		
+
+		if (cloudSpaceListener != null) {
+			spacesDescriptor = clearSpaceDescriptor ? null : spacesDescriptor;
+			cloudSpaceListener.handleCloudSpaceSelection(spacesDescriptor);
+		}
+
 		if (folder.getSelectionIndex() == 0) {
 			String message = "";
 			isFinished = false;
@@ -370,6 +415,11 @@ public class CloudFoundryCredentialsPart {
 			setWizardDescription(NLS.bind("Create a new {0} account, then switch to Enter Credentials tab to log in.",
 					service));
 		}
+	}
+
+	public interface CloudSpaceListener {
+
+		public void handleCloudSpaceSelection(CloudSpaceDescriptor spacesDescriptor);
 	}
 
 }
