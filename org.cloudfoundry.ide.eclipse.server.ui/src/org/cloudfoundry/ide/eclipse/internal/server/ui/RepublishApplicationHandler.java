@@ -80,7 +80,7 @@ public class RepublishApplicationHandler {
 			if (descriptor != null) {
 
 				IServer server = cloudServer.getServer();
-				IServerWorkingCopy wc = server.createWorkingCopy();
+
 				IModule[] modules = ServerUtil.getModules(project);
 
 				if (modules != null && modules.length == 1) {
@@ -90,8 +90,9 @@ public class RepublishApplicationHandler {
 					}
 					else {
 						// Delete them first
+						IServerWorkingCopy wc = server.createWorkingCopy();
 						wc.modifyModules(null, modules, monitor);
-
+						wc.save(false, null);
 						// Create new ones
 						modules = ServerUtil.getModules(project);
 						if (modules != null && modules.length == 1) {
@@ -99,6 +100,8 @@ public class RepublishApplicationHandler {
 						}
 					}
 					if (add != null && add.length > 0) {
+						IServerWorkingCopy wc = server.createWorkingCopy();
+						wc = server.createWorkingCopy();
 						IStatus status = wc.canModifyModules(add, null, null);
 						if (status.getSeverity() != IStatus.ERROR) {
 							CloudFoundryPlugin.getModuleCache().getData(wc.getOriginal())
@@ -106,7 +109,7 @@ public class RepublishApplicationHandler {
 
 							// publish the module
 							wc.modifyModules(add, null, monitor);
-
+							wc.save(false, null);
 							republished = true;
 						}
 						else {
@@ -114,8 +117,6 @@ public class RepublishApplicationHandler {
 						}
 					}
 				}
-
-				wc.save(false, null);
 
 			}
 		}

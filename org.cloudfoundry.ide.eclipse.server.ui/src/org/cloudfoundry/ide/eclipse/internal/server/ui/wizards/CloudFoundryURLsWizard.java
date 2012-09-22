@@ -75,7 +75,15 @@ public class CloudFoundryURLsWizard extends Wizard {
 		final IStatus[] result = new IStatus[1];
 		if (shouldRepublish) {
 			final ApplicationModule appModule = getAppModule();
-			if (appModule != null) {
+			// In the republish case, finish the URL wizard whether republish
+			// succeeds or not, as error conditions may result
+			// in the publish wizard opening.
+			if (appModule == null) {
+				String url = page.getURLs() != null && page.getURLs().size() > 0 ? page.getURLs().get(0) : null;
+				result[0] = CloudFoundryPlugin.getErrorStatus("Unable to find application module"
+						+ (url != null ? " for " + url : "") + ". Please republish application manually.");
+			}
+			else {
 				IRunnableWithProgress runnable = new IRunnableWithProgress() {
 
 					public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
@@ -102,6 +110,10 @@ public class CloudFoundryURLsWizard extends Wizard {
 					result[0] = CloudFoundryPlugin.getErrorStatus(e);
 				}
 			}
+			if (result[0] != null) {
+				CloudFoundryPlugin.logError(result[0]);
+			}
+			return true;
 		}
 		else {
 			result[0] = CloudUiUtil.runForked(new ICoreRunnable() {

@@ -26,6 +26,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneFacetHandler;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -543,6 +544,12 @@ public class CloudUtil {
 
 				if (foundSpringLibrary) {
 					return DeploymentConstants.SPRING;
+				}
+
+				// Otherwise check if it is standalone
+				StandaloneFacetHandler facetHandler = new StandaloneFacetHandler(project);
+				if (facetHandler.hasFacet()) {
+					return DeploymentConstants.STANDALONE_FRAMEWORK;
 				}
 			}
 		}
