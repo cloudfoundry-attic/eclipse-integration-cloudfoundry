@@ -14,11 +14,12 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerListener;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -30,7 +31,6 @@ import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerType;
 import org.eclipse.wst.server.core.internal.Server;
 import org.eclipse.wst.server.ui.internal.view.servers.ModuleServer;
-
 
 /**
  * @author Christian Dupuis
@@ -72,7 +72,7 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 					if (module.getLocalModule() != null) {
 						// show local information?
 					}
-					
+
 					CloudApplication application = module.getApplication();
 					// if (application != null) {
 					// decoration.addSuffix(NLS.bind("  [{0}, {1}, {2}]",
@@ -89,7 +89,7 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 					else {
 						decoration.addSuffix(" - Not Deployed");
 					}
-					
+
 					if (module.getErrorMessage() != null) {
 						decoration.addOverlay(CloudFoundryImages.OVERLAY_ERROR, IDecoration.BOTTOM_LEFT);
 					}
@@ -103,10 +103,20 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 				if (cfServer != null && cfServer.getUsername() != null) {
 					// decoration.addSuffix(NLS.bind("  [{0}, {1}]",
 					// cfServer.getUsername(), cfServer.getUrl()));
-					List<CloudURL> cloudUrls = CloudUiUtil.getAllUrls(cfServer.getBehaviour().getServer().getServerType().getId());
+					if (cfServer.supportsCloudSpaces()) {
+						CloudFoundrySpace clSpace = cfServer.getCloudFoundrySpace();
+						if (clSpace != null) {
+							decoration
+									.addSuffix(NLS.bind(" - {0} - {1}", clSpace.getOrgName(), clSpace.getSpaceName()));
+
+						}
+					}
+					List<CloudURL> cloudUrls = CloudUiUtil.getAllUrls(cfServer.getBehaviour().getServer()
+							.getServerType().getId());
 					String url = cfServer.getUrl();
-//					decoration.addSuffix(NLS.bind("  {0}", cfServer.getUsername()));
-					for(CloudURL cloudUrl: cloudUrls) {
+					// decoration.addSuffix(NLS.bind("  {0}",
+					// cfServer.getUsername()));
+					for (CloudURL cloudUrl : cloudUrls) {
 						if (cloudUrl.getUrl().equals(url)) {
 							decoration.addSuffix(NLS.bind(" - {0}", cloudUrl.getUrl()));
 							break;
@@ -131,18 +141,18 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 		return null;
 	}
 
-//	private String getAppStateString(AppState state) {
-//		if (state == AppState.STARTED) {
-//			return "Started";
-//		}
-//		if (state == AppState.STOPPED) {
-//			return "Stopped";
-//		}
-//		if (state == AppState.UPDATING) {
-//			return "Updating";
-//		}
-//		return "unknown";
-//	}
+	// private String getAppStateString(AppState state) {
+	// if (state == AppState.STARTED) {
+	// return "Started";
+	// }
+	// if (state == AppState.STOPPED) {
+	// return "Stopped";
+	// }
+	// if (state == AppState.UPDATING) {
+	// return "Updating";
+	// }
+	// return "unknown";
+	// }
 
 	private boolean isCloudFoundryServerType(IServer server) {
 		IServerType serverType = server.getServerType();
