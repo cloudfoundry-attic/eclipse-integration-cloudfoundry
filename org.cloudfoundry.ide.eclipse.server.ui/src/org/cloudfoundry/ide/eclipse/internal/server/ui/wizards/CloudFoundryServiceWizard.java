@@ -25,7 +25,6 @@ import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.statushandlers.StatusManager;
 
-
 /**
  * @author Steffen Pingel
  * @author Christian Dupuis
@@ -35,7 +34,7 @@ public class CloudFoundryServiceWizard extends Wizard {
 
 	private final CloudFoundryServer cloudServer;
 
-	private CloudFoundryServiceWizardPage page;
+	private AbstractCloudFoundryServiceWizardPage page;
 
 	/**
 	 * Set true if service should not be added during wizard completion.
@@ -66,7 +65,8 @@ public class CloudFoundryServiceWizard extends Wizard {
 
 	@Override
 	public void addPages() {
-		page = new CloudFoundryServiceWizardPage(cloudServer);
+		page = cloudServer.supportsCloudSpaces() ? new CloudFoundryServicePlanWizardPage(cloudServer)
+				: new CloudFoundryServiceWizardPage(cloudServer);
 		addPage(page);
 	}
 
