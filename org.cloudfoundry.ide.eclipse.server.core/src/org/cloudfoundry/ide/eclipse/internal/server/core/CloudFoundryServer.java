@@ -407,12 +407,13 @@ public class CloudFoundryServer extends ServerDelegate {
 
 		if (space != null) {
 			this.cloudSpace = new CloudFoundrySpace(space);
-			setOrg(cloudSpace.getOrgName());
-			setSpace(cloudSpace.getSpaceName());
+			internalSetOrg(cloudSpace.getOrgName());
+			internalSetSpace(cloudSpace.getSpaceName());
 		}
 		else {
-			setOrg("");
-			setSpace("");
+			// Otherwise clear the org and space
+			internalSetOrg(null);
+			internalSetSpace(null);
 		}
 
 		updateServerId();
@@ -428,11 +429,11 @@ public class CloudFoundryServer extends ServerDelegate {
 		updateServerId();
 	}
 
-	protected void setOrg(String org) {
+	protected void internalSetOrg(String org) {
 		setAttribute(PROP_ORG_ID, org);
 	}
 
-	protected void setSpace(String space) {
+	protected void internalSetSpace(String space) {
 		setAttribute(PROP_SPACE_ID, space);
 	}
 

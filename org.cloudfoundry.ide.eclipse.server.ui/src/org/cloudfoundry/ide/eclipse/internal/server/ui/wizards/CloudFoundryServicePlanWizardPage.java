@@ -97,4 +97,16 @@ public class CloudFoundryServicePlanWizardPage extends AbstractCloudFoundryServi
 
 	}
 
+	@Override
+	protected void setCloudService(CloudService service, ServiceConfiguration configuration) {
+
+		service.setVersion(configuration.getVersion());
+
+		CloudServiceOffering offering = configuration.getCloudServiceOffering();
+		if (offering != null) {
+			service.setLabel(offering.getLabel());
+			service.setProvider(offering.getProvider());
+		}
+	}
+
 }

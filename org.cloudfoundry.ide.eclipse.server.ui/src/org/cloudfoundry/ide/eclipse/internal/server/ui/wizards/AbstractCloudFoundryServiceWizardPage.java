@@ -137,9 +137,7 @@ public abstract class AbstractCloudFoundryServiceWizardPage extends WizardPage {
 				int index = typeCombo.getSelectionIndex();
 				if (index != -1) {
 					ServiceConfiguration configuration = configurations.get(index);
-					service.setType(configuration.getType());
-					service.setVendor(configuration.getVendor());
-					service.setVersion(configuration.getVersion());
+					setCloudService(service, configuration);
 				}
 				refreshPlan();
 			}
@@ -368,6 +366,8 @@ public abstract class AbstractCloudFoundryServiceWizardPage extends WizardPage {
 	abstract protected String getValidationErrorMessage();
 
 	abstract protected String getPlanLabel();
+
+	abstract protected void setCloudService(CloudService service, ServiceConfiguration configuration);
 
 	abstract static class ServicePlan {
 

@@ -377,8 +377,13 @@ public class CloudFoundryCredentialsPart {
 			cfSignupButton.setVisible(false);
 		}
 
+		if (clearSpaceDescriptor) {
+			spacesDescriptor = null;
+			if (cfServer != null) {
+				cfServer.setSpace(null);
+			}
+		}
 		if (cloudSpaceListener != null) {
-			spacesDescriptor = clearSpaceDescriptor ? null : spacesDescriptor;
 			cloudSpaceListener.handleCloudSpaceSelection(spacesDescriptor);
 		}
 

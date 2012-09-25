@@ -54,14 +54,14 @@ public class CloudFoundryServiceWizardPage extends AbstractCloudFoundryServiceWi
 		}
 		return plans;
 	}
-	
-	 protected String getValidationErrorMessage() {
-		 return "Select a tier";
-	 }
-	 
-	 protected String getPlanLabel() {
-		 return "Tier";
-	 }
+
+	protected String getValidationErrorMessage() {
+		return "Select a tier";
+	}
+
+	protected String getPlanLabel() {
+		return "Tier";
+	}
 
 	protected void refreshPlanDetails(ServicePlan tier, Composite planDetailsComposite) {
 
@@ -136,6 +136,11 @@ public class CloudFoundryServiceWizardPage extends AbstractCloudFoundryServiceWi
 
 	}
 
-
+	@Override
+	protected void setCloudService(CloudService service, ServiceConfiguration configuration) {
+		service.setType(configuration.getType());
+		service.setVendor(configuration.getVendor());
+		service.setVersion(configuration.getVersion());
+	}
 
 }
