@@ -25,7 +25,6 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.Wizard;
 
-
 /**
  * Creates or edits a Cloud URL. Validation of the URL is also performed as a
  * long running operation. Users have the option of canceling URL validations,
@@ -121,8 +120,8 @@ public class CloudUrlWizard extends Wizard {
 					protected IStatus run(IProgressMonitor arg0) {
 
 						try {
-							CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory().getCloudFoundryOperations(url)
-									.getCloudInfo();
+							CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory()
+									.getCloudFoundryOperations(url).getCloudInfo();
 							shouldProceed[0] = new Boolean(true);
 
 						}
@@ -202,9 +201,14 @@ public class CloudUrlWizard extends Wizard {
 		builder.append("Unable to validate Cloud URL: ");
 		builder.append(url);
 
-		if (exception != null && exception.getLocalizedMessage() != null) {
-			builder.append(" due to ");
-			builder.append(exception.getLocalizedMessage());
+		if (exception != null) {
+			String errorMessage = exception.getMessage() != null ? exception.getMessage() : exception
+					.toString();
+			if (errorMessage != null) {
+				builder.append(" due to ");
+				builder.append(errorMessage);
+			}
+
 		}
 		return builder.toString();
 	}

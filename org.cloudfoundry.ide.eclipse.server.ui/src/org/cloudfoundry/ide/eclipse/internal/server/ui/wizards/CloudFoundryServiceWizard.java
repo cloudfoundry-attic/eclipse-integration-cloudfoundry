@@ -94,10 +94,10 @@ public class CloudFoundryServiceWizard extends Wizard {
 				return true;
 			}
 			catch (InvocationTargetException e) {
-				if (e.getCause() instanceof CoreException) {
+				if (e.getCause() != null) {
 					Status status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
 							"Adding of service failed for {0}: {1}", cloudServer.getServer().getName(), e.getCause()
-									.getMessage()), e);
+									.getMessage() != null ? e.getCause().getMessage() : e.getCause().toString()), e);
 					StatusManager.getManager().handle(status,
 							StatusManager.SHOW | StatusManager.BLOCK | StatusManager.LOG);
 				}
