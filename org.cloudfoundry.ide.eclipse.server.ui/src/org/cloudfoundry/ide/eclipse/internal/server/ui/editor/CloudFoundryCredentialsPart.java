@@ -15,7 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryURLNavigation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
@@ -87,9 +87,9 @@ public class CloudFoundryCredentialsPart {
 
 	private Button cfSignupButton;
 
-	private CloudSpaceDescriptor spacesDescriptor;
+	private CloudSpacesDescriptor spacesDescriptor;
 
-	private CloudSpaceListener cloudSpaceListener;
+	private CloudSpaceChangeNotifier cloudSpaceChangeNotifier;
 
 	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, WizardPage wizardPage) {
 		this.cfServer = cfServer;
@@ -120,15 +120,15 @@ public class CloudFoundryCredentialsPart {
 	}
 
 	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, WizardPage wizardPage,
-			CloudSpaceListener cloudSpaceListener) {
+			CloudSpaceChangeNotifier cloudSpaceResolver) {
 		this(cfServer, wizardPage);
-		this.cloudSpaceListener = cloudSpaceListener;
+		this.cloudSpaceChangeNotifier = cloudSpaceResolver;
 	}
 
 	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, IWizardHandle wizardHandle,
-			CloudSpaceListener cloudSpaceListener) {
+			CloudSpaceChangeNotifier cloudSpaceResolver) {
 		this(cfServer, wizardHandle);
-		this.cloudSpaceListener = cloudSpaceListener;
+		this.cloudSpaceChangeNotifier = cloudSpaceResolver;
 	}
 
 	public Composite createComposite(Composite parent) {
@@ -151,8 +151,7 @@ public class CloudFoundryCredentialsPart {
 			update(true);
 		}
 		catch (Throwable e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			CloudFoundryPlugin.logError(e1);
 		}
 
 		return composite;
@@ -163,7 +162,7 @@ public class CloudFoundryCredentialsPart {
 		return spacesDescriptor != null && spacesDescriptor.supportsSpaces();
 	}
 
-	public CloudSpaceDescriptor getSpaces() {
+	public CloudSpacesDescriptor getSpaces() {
 		return spacesDescriptor;
 	}
 
@@ -254,8 +253,8 @@ public class CloudFoundryCredentialsPart {
 				String errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, urlText, true,
 						getRunnableContext());
 				try {
-					spacesDescriptor = CloudUiUtil.getCloudSpaces(userName, password, urlText, true,
-							getRunnableContext());
+					spacesDescriptor = cloudSpaceChangeNotifier != null ? cloudSpaceChangeNotifier.updateDescriptor(urlText, userName,
+							password, getRunnableContext()) : null;
 
 					update(false);
 				}
@@ -379,12 +378,6 @@ public class CloudFoundryCredentialsPart {
 
 		if (clearSpaceDescriptor) {
 			spacesDescriptor = null;
-			if (cfServer != null) {
-				cfServer.setSpace(null);
-			}
-		}
-		if (cloudSpaceListener != null) {
-			cloudSpaceListener.handleCloudSpaceSelection(spacesDescriptor);
 		}
 
 		if (folder.getSelectionIndex() == 0) {
@@ -412,7 +405,7 @@ public class CloudFoundryCredentialsPart {
 			if (wizardHandle != null) {
 				wizardHandle.update();
 			}
-			else if (getWizardContainer() != null) {
+			else if (getWizardContainer() != null && getWizardContainer().getCurrentPage() != null) {
 				getWizardContainer().updateButtons();
 			}
 		}
@@ -420,11 +413,6 @@ public class CloudFoundryCredentialsPart {
 			setWizardDescription(NLS.bind("Create a new {0} account, then switch to Enter Credentials tab to log in.",
 					service));
 		}
-	}
-
-	public interface CloudSpaceListener {
-
-		public void handleCloudSpaceSelection(CloudSpaceDescriptor spacesDescriptor);
 	}
 
 }

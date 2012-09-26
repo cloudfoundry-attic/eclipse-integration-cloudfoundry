@@ -100,7 +100,7 @@ public abstract class AbstractCloudFoundryServiceWizardPage extends WizardPage {
 		if (banner != null) {
 			setImageDescriptor(banner);
 		}
-		this.service = new CloudService();
+		this.service = createService();
 	}
 
 	public void createControl(Composite parent) {
@@ -168,6 +168,10 @@ public abstract class AbstractCloudFoundryServiceWizardPage extends WizardPage {
 
 		Dialog.applyDialogFont(composite);
 		setControl(composite);
+	}
+
+	protected CloudService createService() {
+		return new CloudService();
 	}
 
 	public CloudService getService() {

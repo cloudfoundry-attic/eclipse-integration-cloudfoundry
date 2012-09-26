@@ -42,7 +42,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryPrope
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceServerLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneApplicationArchive;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneHandler;
@@ -1211,7 +1211,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
-	public CloudSpaceDescriptor getCloudSpaceDescriptor(IProgressMonitor monitor) throws CoreException {
+	public CloudSpacesDescriptor getCloudSpaceDescriptor(IProgressMonitor monitor) throws CoreException {
 		CloudFoundryOperations operations = getClient(monitor);
 		return CloudSpaceServerLookup.getCloudSpaceDescriptor(operations, monitor);
 	}
@@ -1399,6 +1399,32 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			this.label = label;
 		}
 
+		protected boolean shouldAttemptClientLogin(CloudFoundryException exception) {
+			if (exception != null) {
+
+				if (exception.getStatusCode() == HttpStatus.FORBIDDEN) {
+					return true;
+				}
+				else if (exception.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+					// For now, only handle this case if it is a v2 server
+					CloudFoundryServer cloudServer = null;
+					try {
+						cloudServer = getCloudFoundryServer();
+					}
+					catch (CoreException e) {
+						// If no server can be resolved, attempt to determine
+						// based
+						// on the error code
+					}
+					if (cloudServer != null && cloudServer.supportsCloudSpaces()) {
+						return true;
+					}
+
+				}
+			}
+			return false;
+		}
+
 		public T run(IProgressMonitor monitor) throws CoreException {
 			CloudFoundryServer cloudServer = getCloudFoundryServer();
 
@@ -1424,7 +1450,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				}
 				catch (CloudFoundryException e) {
 					// try again in case of a login failure
-					if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
+					if (shouldAttemptClientLogin(e)) {
 						client.login();
 						result = doRun(client, subProgress);
 						succeeded = true;

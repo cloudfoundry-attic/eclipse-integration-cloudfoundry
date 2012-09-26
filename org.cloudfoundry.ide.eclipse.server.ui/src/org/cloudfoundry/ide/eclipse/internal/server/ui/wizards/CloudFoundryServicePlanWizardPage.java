@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.cloudfoundry.client.lib.domain.CloudEntity;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.client.lib.domain.CloudServicePlan;
@@ -107,6 +108,13 @@ public class CloudFoundryServicePlanWizardPage extends AbstractCloudFoundryServi
 			service.setLabel(offering.getLabel());
 			service.setProvider(offering.getProvider());
 		}
+	}
+
+	@Override
+	protected CloudService createService() {
+		CloudService service = new CloudService();
+		service.setMeta(CloudEntity.Meta.defaultV2Meta());
+		return service;
 	}
 
 }

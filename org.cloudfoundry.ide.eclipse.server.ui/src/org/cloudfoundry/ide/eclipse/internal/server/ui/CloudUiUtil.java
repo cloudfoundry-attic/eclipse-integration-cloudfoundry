@@ -29,7 +29,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceServerLookup;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -268,10 +268,10 @@ public class CloudUiUtil {
 	 * @return spaces descriptor, or null if it couldn't be determined
 	 * @throws CoreException
 	 */
-	public static CloudSpaceDescriptor getCloudSpaces(final String userName, final String password,
+	public static CloudSpacesDescriptor getCloudSpaces(final String userName, final String password,
 			final String urlText, final boolean displayURL, IRunnableContext context) throws CoreException {
 		try {
-			final CloudSpaceDescriptor[] supportsSpaces = new CloudSpaceDescriptor[1];
+			final CloudSpacesDescriptor[] supportsSpaces = new CloudSpacesDescriptor[1];
 			ICoreRunnable coreRunner = new ICoreRunnable() {
 				public void run(IProgressMonitor monitor) throws CoreException {
 					String url = urlText;
@@ -298,6 +298,7 @@ public class CloudUiUtil {
 
 		return null;
 	}
+	
 
 	public static String getUrlFromDisplayText(String displayText) {
 		String url = displayText;

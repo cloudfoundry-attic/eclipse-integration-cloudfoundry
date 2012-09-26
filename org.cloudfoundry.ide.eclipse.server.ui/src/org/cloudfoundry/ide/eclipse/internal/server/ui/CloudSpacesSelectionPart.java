@@ -15,9 +15,8 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudEntity;
 import org.cloudfoundry.client.lib.domain.CloudOrganization;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeNotifier;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -32,7 +31,6 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.jface.wizard.WizardPage;
-import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
@@ -47,20 +45,17 @@ public class CloudSpacesSelectionPart {
 
 	private TableViewer spacesTable;
 
-	private CloudSpaceDescriptor spacesDescriptor;
+	private CloudSpaceChangeNotifier spaceChangeNotifier;
 
 	private CloudSpace selectedSpace;
-
-	private final CloudFoundryServer cloudServer;
 
 	protected enum CloudEntityType {
 		ORG, SPACE
 	}
 
-	public CloudSpacesSelectionPart(CloudSpaceDescriptor spacesDescriptor, CloudFoundryServer cloudServer,
+	public CloudSpacesSelectionPart(CloudSpaceChangeNotifier spaceChangeNotifier, CloudFoundryServer cloudServer,
 			WizardPage wizardPage) {
-		this.spacesDescriptor = spacesDescriptor;
-		this.cloudServer = cloudServer;
+		this.spaceChangeNotifier = spaceChangeNotifier;
 
 		String serverTypeId = cloudServer.getServer().getServerType().getId();
 
@@ -72,10 +67,9 @@ public class CloudSpacesSelectionPart {
 		}
 	}
 
-	public CloudSpacesSelectionPart(CloudSpaceDescriptor spacesDescriptor, CloudFoundryServer cloudServer,
+	public CloudSpacesSelectionPart(CloudSpaceChangeNotifier spaceChangeNotifier, CloudFoundryServer cloudServer,
 			IWizardHandle wizardHandle) {
-		this.spacesDescriptor = spacesDescriptor;
-		this.cloudServer = cloudServer;
+		this.spaceChangeNotifier = spaceChangeNotifier;
 
 		String serverTypeId = cloudServer.getServer().getServerType().getId();
 
@@ -145,11 +139,12 @@ public class CloudSpacesSelectionPart {
 	}
 
 	protected void setInput() {
-		if (spacesDescriptor != null && orgsTable != null && spacesTable != null) {
-			List<CloudOrganization> orgInput = spacesDescriptor.getOrgs();
+		if (spaceChangeNotifier != null && orgsTable != null && spacesTable != null) {
+			List<CloudOrganization> orgInput = spaceChangeNotifier.getCurrentSpacesDescriptor() != null ? spaceChangeNotifier
+					.getCurrentSpacesDescriptor().getOrgs() : null;
 			if (orgInput != null && orgInput.size() > 0) {
 				orgsTable.setInput(orgInput);
-				selectedSpace = spacesDescriptor.getDefaultCloudSpace();
+				selectedSpace = spaceChangeNotifier.getCurrentSpacesDescriptor().getDefaultCloudSpace();
 				if (selectedSpace != null) {
 					IStructuredSelection selection = new StructuredSelection(selectedSpace.getOrganization());
 					orgsTable.setSelection(selection);
@@ -162,22 +157,11 @@ public class CloudSpacesSelectionPart {
 		}
 	}
 
-	public void setInput(CloudSpaceDescriptor spacesDescriptor) {
-		this.spacesDescriptor = spacesDescriptor;
-		setInput();
-	}
-
 	protected void setSpaceSelection(CloudSpace selectedSpace) {
 		this.selectedSpace = selectedSpace;
-		cloudServer.setSpace(selectedSpace);
-	}
-
-	public boolean isComplete() {
-		return getSpace() != null;
-	}
-
-	public CloudSpace getSpace() {
-		return selectedSpace;
+		if (spaceChangeNotifier != null) {
+			spaceChangeNotifier.setSelectedSpace(selectedSpace);
+		}
 	}
 
 	protected void refresh(CloudEntityType entityType) {
@@ -190,7 +174,8 @@ public class CloudSpacesSelectionPart {
 					CloudOrganization selectedOrg = (CloudOrganization) ((IStructuredSelection) orgSel)
 							.getFirstElement();
 					if (selectedOrg != null) {
-						List<CloudSpace> selSpaces = spacesDescriptor.getOrgSpaces(selectedOrg.getName());
+						List<CloudSpace> selSpaces = spaceChangeNotifier.getCurrentSpacesDescriptor() != null ? spaceChangeNotifier
+								.getCurrentSpacesDescriptor().getOrgSpaces(selectedOrg.getName()) : null;
 						if (selSpaces != null && selSpaces.size() > 0) {
 							spacesTable.setInput(selSpaces);
 							selCloudSpace = selSpaces.get(0);

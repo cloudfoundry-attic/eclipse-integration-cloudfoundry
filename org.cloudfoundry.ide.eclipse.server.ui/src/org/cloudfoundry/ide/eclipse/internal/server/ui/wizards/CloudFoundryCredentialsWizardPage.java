@@ -11,9 +11,9 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart.CloudSpaceListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeNotifier;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
 
@@ -23,15 +23,16 @@ import org.eclipse.swt.widgets.Composite;
  * @author Steffen Pingel
  * @author Terry Denney
  */
-public class CloudFoundryCredentialsWizardPage extends WizardPage implements CloudSpaceListener {
+public class CloudFoundryCredentialsWizardPage extends WizardPage {
 
 	private final CloudFoundryCredentialsPart credentialsPart;
 
-	private CloudSpaceDescriptor spacesDescriptor;
+	private CloudSpaceChangeNotifier spaceChangeNotifier;
 
 	protected CloudFoundryCredentialsWizardPage(CloudFoundryServer server) {
 		super(server.getServer().getName() + " Credentials");
-		credentialsPart = new CloudFoundryCredentialsPart(server, this);
+		spaceChangeNotifier = new CloudSpaceChangeNotifier(server);
+		credentialsPart = new CloudFoundryCredentialsPart(server, this, spaceChangeNotifier);
 	}
 
 	public void createControl(Composite parent) {
@@ -44,16 +45,19 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage implements Clo
 		return credentialsPart.isComplete();
 	}
 
-	public void handleCloudSpaceSelection(CloudSpaceDescriptor spacesDescriptor) {
-		this.spacesDescriptor = spacesDescriptor;
+	public CloudSpaceChangeNotifier getSpaceChangeNotifer() {
+		return spaceChangeNotifier;
 	}
 
-	public CloudSpaceDescriptor getCloudSpacesDescriptor() {
-		return spacesDescriptor;
+	public boolean supportsSpaces() {
+		return spaceChangeNotifier.getCurrentSpacesDescriptor() != null
+				&& spaceChangeNotifier.getCurrentSpacesDescriptor().supportsSpaces();
 	}
 
 	public boolean canFlipToNextPage() {
-		return getCloudSpacesDescriptor() != null && getCloudSpacesDescriptor().supportsSpaces();
+		// There should only be a next page for the spaces page if there is a
+		// cloud space descriptor set
+		return isPageComplete() && supportsSpaces() && getNextPage() != null;
 	}
 
 }

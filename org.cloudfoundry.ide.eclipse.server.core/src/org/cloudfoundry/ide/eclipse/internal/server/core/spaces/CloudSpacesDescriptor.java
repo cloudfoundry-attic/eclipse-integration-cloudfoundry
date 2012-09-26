@@ -23,10 +23,14 @@ import org.eclipse.core.runtime.CoreException;
 /**
  * Given a list of CloudSpaces, this will retrieve all the orgs in the
  * CloudSpaces, as well as provide mechanisms to find a list of CloudSpaces per
- * organization.
+ * organization.Note that a cloud space descriptor is NOT indicative that the
+ * server supports spaces. A an API is provided to verify that there are indeed
+ * spaces available . It is possible that descriptors may be created for servers
+ * that do not support spaces, in which case the API will return false when
+ * checking if the server supports spaces.
  * 
  */
-public class CloudSpaceDescriptor {
+public class CloudSpacesDescriptor {
 
 	private final List<CloudSpace> spaces;
 
@@ -42,7 +46,7 @@ public class CloudSpaceDescriptor {
 	 * @throws CoreException if given cloud server does not support orgs and
 	 * spaces
 	 */
-	public CloudSpaceDescriptor(List<CloudSpace> spaces, boolean supportsSpaces) {
+	public CloudSpacesDescriptor(List<CloudSpace> spaces, boolean supportsSpaces) {
 		this.spaces = spaces;
 		this.supportsSpaces = supportsSpaces;
 		setValues();

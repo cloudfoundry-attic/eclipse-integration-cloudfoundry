@@ -77,7 +77,7 @@ public class CloudSpaceServerLookup {
 			if (cloudFoundrySpace != null && cloudFoundrySpace.getSpace() == null) {
 				// Do a look-up to determine the actual cloud space
 
-				CloudSpaceDescriptor actualSpaces = getCloudSpaceDescriptor(monitor);
+				CloudSpacesDescriptor actualSpaces = getCloudSpaceDescriptor(monitor);
 
 				if (actualSpaces != null && actualSpaces.supportsSpaces()) {
 					CloudSpace cloudSpace = actualSpaces.getSpace(cloudFoundrySpace.getOrgName(),
@@ -100,12 +100,12 @@ public class CloudSpaceServerLookup {
 		return cloudFoundrySpace;
 	}
 
-	public CloudSpaceDescriptor getCloudSpaceDescriptor(IProgressMonitor monitor) throws CoreException {
+	public CloudSpacesDescriptor getCloudSpaceDescriptor(IProgressMonitor monitor) throws CoreException {
 		String url = cloudServer.getUrl();
 		return getCloudSpaceDescriptor(getCredentials(), url, monitor);
 	}
 
-	public static CloudSpaceDescriptor getCloudSpaceDescriptor(CloudCredentials credentials, String url,
+	public static CloudSpacesDescriptor getCloudSpaceDescriptor(CloudCredentials credentials, String url,
 			IProgressMonitor monitor) throws CoreException {
 		CloudFoundryOperations operations = CloudFoundryServerBehaviour.createClient(url, credentials.getEmail(),
 				credentials.getPassword());
@@ -113,7 +113,7 @@ public class CloudSpaceServerLookup {
 		return getCloudSpaceDescriptor(operations, monitor);
 	}
 
-	public static CloudSpaceDescriptor getCloudSpaceDescriptor(CloudFoundryOperations operations,
+	public static CloudSpacesDescriptor getCloudSpaceDescriptor(CloudFoundryOperations operations,
 			IProgressMonitor monitor) throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor);
 		progress.beginTask("Determining if the cloud server supports organizations and spaces",
@@ -132,7 +132,7 @@ public class CloudSpaceServerLookup {
 				}
 			}
 
-			CloudSpaceDescriptor descriptor = new CloudSpaceDescriptor(actualSpaces, supportsSpaces);
+			CloudSpacesDescriptor descriptor = new CloudSpacesDescriptor(actualSpaces, supportsSpaces);
 			return descriptor;
 
 		}
