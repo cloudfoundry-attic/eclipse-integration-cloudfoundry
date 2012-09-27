@@ -142,20 +142,21 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 		servicesViewer = new CheckboxTableViewer(table);
 
 		servicesViewer.setContentProvider(new TreeContentProvider());
-		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
+		servicesViewer
+				.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer, cloudServer.supportsCloudSpaces()) {
 
-			protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
-				if (column == ServiceViewColumn.Tunnel) {
-					CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
-					if (handler.hasCaldecottTunnel(service.getName())) {
-						return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
+					protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
+						if (column == ServiceViewColumn.Tunnel) {
+							CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+							if (handler.hasCaldecottTunnel(service.getName())) {
+								return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
+							}
+						}
+						return null;
 					}
-				}
-				return null;
-			}
 
-		});
-		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer) {
+				});
+		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer, cloudServer.supportsCloudSpaces()) {
 
 			@Override
 			protected int compare(CloudService service1, CloudService service2, ServiceViewColumn sortColumn) {
@@ -176,7 +177,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 
 		});
 
-		new ServiceViewerConfigurator().enableAutomaticViewerResizing().configureViewer(servicesViewer);
+		new ServiceViewerConfigurator(cloudServer).enableAutomaticViewerResizing().configureViewer(servicesViewer);
 
 		servicesViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 

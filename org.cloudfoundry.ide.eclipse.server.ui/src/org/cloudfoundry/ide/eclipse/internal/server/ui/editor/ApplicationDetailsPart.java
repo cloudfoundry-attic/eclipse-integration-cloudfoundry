@@ -42,6 +42,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateApplication
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateInstanceCountAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AppStatsContentProvider.InstanceStatsAndInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationActionMenuControl.IButtonMenuListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationInstanceServiceColumn.ServiceColumnDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryURLsWizard;
 import org.cloudfoundry.ide.eclipse.server.rse.ConfigureRemoteCloudFoundryAction;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -911,16 +912,33 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		GridLayoutFactory.fillDefaults().applyTo(container);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(container);
 
-		String[] columnNames = new String[] { "Name", "Service", "Vendor", "Version" };
 		// String[] columnNames = new String[] { "Name", "Service", "Vendor",
 		// "Version", "Tier" };
-		int[] columnWidths = new int[] { 125, 100, 100, 75 };
+		String[] columnNames = {};
+		int[] columnWidths = {};
+		ServiceColumnDescriptor columnDescriptor = ApplicationInstanceServiceColumn
+				.getServiceColumnDescriptor(cloudServer);
+		
+		if (columnDescriptor != null && columnDescriptor.getServiceViewColumn() != null) {
+			int length = columnDescriptor.getServiceViewColumn().length;
+			columnNames = new String[length];
+			columnWidths = new int[length];
+			int i = 0;
+			for (ApplicationInstanceServiceColumn descriptor : columnDescriptor.getServiceViewColumn()) {
+				if (i < length) {
+					columnNames[i] = descriptor.name();
+					columnWidths[i] = descriptor.getWidth();
+					i++;
+				}
+			}
+		}
+
 		// weights = new int[] { 30, 16, 12, 28, 14 };
 		servicesViewer = createTableViewer(container, columnNames, null, columnWidths);
 
 		servicesContentProvider = new TreeContentProvider();
 		servicesViewer.setContentProvider(servicesContentProvider);
-		servicesViewer.setLabelProvider(new ServicesLabelProvider());
+		servicesViewer.setLabelProvider(new ServicesLabelProvider(cloudServer.supportsCloudSpaces()));
 		servicesViewer.setSorter(new CloudFoundryViewerSorter());
 		servicesViewer.setInput(new CloudService[0]);
 

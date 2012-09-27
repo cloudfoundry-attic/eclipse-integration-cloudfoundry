@@ -310,23 +310,24 @@ public class ApplicationMasterPart extends SectionPart {
 		toolBarManager.createControl(headerComposite);
 
 		servicesViewer = new TableViewer(toolkit.createTable(client, SWT.MULTI));
-		new ServiceViewerConfigurator().configureViewer(servicesViewer);
+		new ServiceViewerConfigurator(cloudServer).configureViewer(servicesViewer);
 
 		servicesViewer.setContentProvider(new TreeContentProvider());
-		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
+		servicesViewer
+				.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer, cloudServer.supportsCloudSpaces()) {
 
-			protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
-				if (column == ServiceViewColumn.Tunnel) {
-					CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
-					if (handler.hasCaldecottTunnel(service.getName())) {
-						return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
+					protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
+						if (column == ServiceViewColumn.Tunnel) {
+							CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+							if (handler.hasCaldecottTunnel(service.getName())) {
+								return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
+							}
+						}
+						return null;
 					}
-				}
-				return null;
-			}
 
-		});
-		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer) {
+				});
+		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer, cloudServer.supportsCloudSpaces()) {
 
 			@Override
 			protected int compare(CloudService service1, CloudService service2, ServiceViewColumn sortColumn) {

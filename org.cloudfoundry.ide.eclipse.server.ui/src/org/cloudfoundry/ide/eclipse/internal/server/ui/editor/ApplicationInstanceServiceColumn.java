@@ -12,11 +12,13 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 
-public enum ServiceViewColumn {
-	Name(150), Type(100), Vendor(100), Tunnel(80), Plan(50), Provider(100);
+public enum ApplicationInstanceServiceColumn {
+
+	Name(125), Service(100), Vendor(100), Plan(75), Version(75);
+
 	private int width;
 
-	private ServiceViewColumn(int width) {
+	private ApplicationInstanceServiceColumn(int width) {
 		this.width = width;
 	}
 
@@ -24,24 +26,25 @@ public enum ServiceViewColumn {
 		return width;
 	}
 
-	public static ServiceViewColumnDescriptor getServiceViewColumnDescriptor(CloudFoundryServer cloudServer) {
-		return new ServiceViewColumnDescriptor(cloudServer);
+	public static ServiceColumnDescriptor getServiceColumnDescriptor(CloudFoundryServer cloudServer) {
+		return new ServiceColumnDescriptor(cloudServer);
 	}
 
-	public static class ServiceViewColumnDescriptor {
+	public static class ServiceColumnDescriptor {
 
-		private final CloudFoundryServer cloudServer;
+		private CloudFoundryServer cloudServer;
 
-		public ServiceViewColumnDescriptor(CloudFoundryServer cloudServer) {
+		public ServiceColumnDescriptor(CloudFoundryServer cloudServer) {
 			this.cloudServer = cloudServer;
+
 		}
 
-		public ServiceViewColumn[] getServiceViewColumn() {
+		public ApplicationInstanceServiceColumn[] getServiceViewColumn() {
 			if (cloudServer.supportsCloudSpaces()) {
-				return new ServiceViewColumn[] { Name, Vendor, Provider, Plan, Tunnel };
+				return new ApplicationInstanceServiceColumn[] { Name, Vendor, Plan, Version };
 			}
 			else {
-				return new ServiceViewColumn[] { Name, Type, Vendor, Tunnel };
+				return new ApplicationInstanceServiceColumn[] { Name, Service, Vendor, Version };
 			}
 		}
 

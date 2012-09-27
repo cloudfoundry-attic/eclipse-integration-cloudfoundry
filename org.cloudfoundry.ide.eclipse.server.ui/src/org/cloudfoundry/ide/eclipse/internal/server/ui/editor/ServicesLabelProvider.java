@@ -22,6 +22,12 @@ import org.eclipse.swt.graphics.Image;
  */
 public class ServicesLabelProvider extends LabelProvider implements ITableLabelProvider {
 
+	private final boolean supportsSpaces;
+
+	public ServicesLabelProvider(boolean supportsSpaces) {
+		this.supportsSpaces = supportsSpaces;
+	}
+
 	public Image getColumnImage(Object element, int columnIndex) {
 		// TODO Auto-generated method stub
 		return null;
@@ -34,13 +40,13 @@ public class ServicesLabelProvider extends LabelProvider implements ITableLabelP
 			case 0:
 				return service.getName();
 			case 1:
-				return service.getType();
+				return supportsSpaces ? service.getLabel() : service.getType();
 			case 2:
-				return service.getVendor();
+				return supportsSpaces ? service.getPlan() : service.getVendor();
 			case 3:
 				return service.getVersion();
-//			case 4:
-//				return service.getTier();
+				// case 4:
+				// return service.getTier();
 			}
 		}
 		return null;

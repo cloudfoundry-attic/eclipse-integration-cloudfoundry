@@ -26,8 +26,11 @@ public class ServicesTreeLabelProvider extends LabelProvider implements ITableLa
 
 	private final TableViewer viewer;
 
-	public ServicesTreeLabelProvider(TableViewer viewer) {
+	private final boolean supportsSpaces;
+
+	public ServicesTreeLabelProvider(TableViewer viewer, boolean supportsSpaces) {
 		this.viewer = viewer;
+		this.supportsSpaces = supportsSpaces;
 	}
 
 	@Override
@@ -70,18 +73,26 @@ public class ServicesTreeLabelProvider extends LabelProvider implements ITableLa
 	public String getColumnText(Object element, int columnIndex) {
 		String result = null;
 		TableColumn column = viewer.getTable().getColumn(columnIndex);
-		if (column != null) {
+		if (column != null && element instanceof CloudService) {
+			CloudService cloudService = (CloudService) element;
 			ServiceViewColumn serviceColumn = (ServiceViewColumn) column.getData();
+
 			if (serviceColumn != null) {
 				switch (serviceColumn) {
 				case Name:
 					result = getText(element);
 					break;
 				case Type:
-					result = ((CloudService) element).getType();
+					result = cloudService.getType();
 					break;
 				case Vendor:
-					result = ((CloudService) element).getVendor();
+					result = supportsSpaces ? cloudService.getLabel() : cloudService.getVendor();
+					break;
+				case Plan:
+					result = cloudService.getPlan();
+					break;
+				case Provider:
+					result = cloudService.getProvider();
 					break;
 				}
 			}

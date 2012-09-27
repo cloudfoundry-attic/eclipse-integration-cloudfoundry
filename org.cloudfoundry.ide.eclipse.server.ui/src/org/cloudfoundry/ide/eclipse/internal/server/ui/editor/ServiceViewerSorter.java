@@ -19,8 +19,11 @@ import org.eclipse.swt.widgets.TableColumn;
 public class ServiceViewerSorter extends CloudFoundryViewerSorter {
 	private final TableViewer tableViewer;
 
-	public ServiceViewerSorter(TableViewer tableViewer) {
+	private final boolean supportsSpace;
+
+	public ServiceViewerSorter(TableViewer tableViewer, boolean supportsSpaces) {
 		this.tableViewer = tableViewer;
+		this.supportsSpace = supportsSpaces;
 	}
 
 	@Override
@@ -56,10 +59,17 @@ public class ServiceViewerSorter extends CloudFoundryViewerSorter {
 		int result = 0;
 		switch (sortColumn) {
 		case Type:
-			result = service1.getType().compareTo(service2.getType());
+			result = service1.getType() != null ? service1.getType().compareTo(service2.getType()) : 0;
 			break;
 		case Vendor:
-			result = service1.getVendor().compareTo(service2.getVendor());
+			result = supportsSpace ? (service1.getLabel() != null ? service1.getLabel().compareTo(service2.getLabel())
+					: 0) : (service1.getVendor() != null ? service1.getVendor().compareTo(service2.getVendor()) : 0);
+			break;
+		case Plan:
+			result = service1.getPlan() != null ? service1.getPlan().compareTo(service2.getPlan()) : 0;
+			break;
+		case Provider:
+			result = service1.getProvider() != null ? service1.getProvider().compareTo(service2.getProvider()) : 0;
 			break;
 		}
 		return result;
