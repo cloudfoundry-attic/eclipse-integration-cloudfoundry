@@ -11,9 +11,8 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeNotifier;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeListener;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
 
@@ -27,12 +26,12 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 
 	private final CloudFoundryCredentialsPart credentialsPart;
 
-	private CloudSpaceChangeNotifier spaceChangeNotifier;
+	private CloudSpaceChangeListener cloudSpaceChangeListener;
 
 	protected CloudFoundryCredentialsWizardPage(CloudFoundryServer server) {
 		super(server.getServer().getName() + " Credentials");
-		spaceChangeNotifier = new CloudSpaceChangeNotifier(server);
-		credentialsPart = new CloudFoundryCredentialsPart(server, this, spaceChangeNotifier);
+		cloudSpaceChangeListener = new CloudSpaceChangeListener(server);
+		credentialsPart = new CloudFoundryCredentialsPart(server, this, cloudSpaceChangeListener);
 	}
 
 	public void createControl(Composite parent) {
@@ -45,13 +44,13 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 		return credentialsPart.isComplete();
 	}
 
-	public CloudSpaceChangeNotifier getSpaceChangeNotifer() {
-		return spaceChangeNotifier;
+	public CloudSpaceChangeListener getSpaceChangeListener() {
+		return cloudSpaceChangeListener;
 	}
 
 	public boolean supportsSpaces() {
-		return spaceChangeNotifier.getCurrentSpacesDescriptor() != null
-				&& spaceChangeNotifier.getCurrentSpacesDescriptor().supportsSpaces();
+		return cloudSpaceChangeListener.getCurrentSpacesDescriptor() != null
+				&& cloudSpaceChangeListener.getCurrentSpacesDescriptor().supportsSpaces();
 	}
 
 	public boolean canFlipToNextPage() {

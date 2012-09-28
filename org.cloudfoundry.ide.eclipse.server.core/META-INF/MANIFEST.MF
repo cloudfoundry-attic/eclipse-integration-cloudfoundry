@@ -24,14 +24,16 @@ Require-Bundle: org.eclipse.core.runtime,
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
- lib/cloudfoundry-caldecott-lib-0.1.1.jar,
- lib/cloudfoundry-client-lib-0.8.0.BUILD-SNAPSHOT.jar,
  lib/spring-security-config-3.1.0.RELEASE.jar,
  lib/spring-security-core-3.1.0.RELEASE.jar,
  lib/spring-security-crypto-3.1.0.RELEASE.jar,
  lib/spring-security-oauth2-1.0.0.RC1.jar,
  lib/spring-security-web-3.1.0.RELEASE.jar,
- lib/spring-webmvc-3.0.7.RELEASE.jar
+ lib/spring-webmvc-3.0.7.RELEASE.jar,
+ lib/cloudfoundry-caldecott-lib-0.1.2.BUILD-SNAPSHOT.jar,
+ lib/cloudfoundry-client-lib-0.8.0.BUILD-SNAPSHOT.jar,
+ lib/commons-io-2.1.jar,
+ lib/spring-context-support-3.0.7.RELEASE.jar
 Bundle-Activator: org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin
 Export-Package: org.cloudfoundry.caldecott.client,
  org.cloudfoundry.client.lib,

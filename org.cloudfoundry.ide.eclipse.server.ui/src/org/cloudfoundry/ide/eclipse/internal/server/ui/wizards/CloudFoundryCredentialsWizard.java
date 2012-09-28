@@ -79,7 +79,7 @@ public class CloudFoundryCredentialsWizard extends Wizard {
 	public IWizardPage getNextPage(IWizardPage page) {
 		if (page == credentialsPage) {
 			if (supportsSpacesInCredentialsPage()) {
-				cloudSpacePage = new CloudFoundryCloudSpaceWizardpage(server, credentialsPage.getSpaceChangeNotifer());
+				cloudSpacePage = new CloudFoundryCloudSpaceWizardpage(server, credentialsPage.getSpaceChangeListener());
 				cloudSpacePage.setWizard(this);
 			}
 			else {

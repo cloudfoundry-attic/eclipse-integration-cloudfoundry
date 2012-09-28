@@ -54,7 +54,6 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.ServerCore;
 
-
 /**
  * @author Terry Denney
  */
@@ -65,6 +64,8 @@ public class ManageCloudDialog extends Dialog {
 	private List<CloudURL> cloudUrls;
 
 	private Set<IServer> serversToDelete;
+
+	private CloudURL lastAddedEditedURL;
 
 	protected ManageCloudDialog(Shell parentShell, String serverTypeId) {
 		super(parentShell);
@@ -190,7 +191,7 @@ public class ManageCloudDialog extends Dialog {
 			public void widgetSelected(SelectionEvent e) {
 				CloudURL cloudURL = promptForCloudURL(serverTypeId, e.display.getActiveShell(), cloudUrls, null, null);
 				if (cloudURL != null) {
-					cloudUrls.add(cloudURL);
+					addURL(cloudURL);
 					viewer.refresh(true);
 				}
 			}
@@ -217,20 +218,20 @@ public class ManageCloudDialog extends Dialog {
 							if (newUrl != null) {
 
 								if (cloudUrl.getUrl().equals(newUrl.getUrl()) || canUpdateUrl(cloudUrl, newUrl)) {
-									cloudUrls.add(newUrl);
+									addURL(newUrl);
 								}
 								else {
-									cloudUrls.add(cloudUrl);
+									addURL(cloudUrl);
 								}
 							}
 							else {
-								cloudUrls.add(cloudUrl);
+								addURL(cloudUrl);
 							}
 						}
 						else {
 							CloudURL url = CloudUiUtil.getWildcardUrl(cloudUrl, cloudUrls, getShell());
 							if (url != null) {
-								cloudUrls.add(url);
+								addURL(url);
 							}
 						}
 						viewer.refresh(true);
@@ -298,6 +299,17 @@ public class ManageCloudDialog extends Dialog {
 		return composite;
 	}
 
+	protected void addURL(CloudURL urlToAdd) {
+		if (cloudUrls != null) {
+			cloudUrls.add(urlToAdd);
+			lastAddedEditedURL = urlToAdd;
+		}
+	}
+
+	public CloudURL getLastAddedOrEditedURL() {
+		return lastAddedEditedURL;
+	}
+
 	private boolean canUpdateUrl(CloudURL url, CloudURL newUrl) {
 		IServer[] servers = ServerCore.getServers();
 		Set<CloudFoundryServer> matchedServers = new HashSet<CloudFoundryServer>();
@@ -333,7 +345,7 @@ public class ManageCloudDialog extends Dialog {
 					return true;
 				}
 				else {
-					cloudUrls.add(newUrl);
+					addURL(newUrl);
 				}
 			}
 		}

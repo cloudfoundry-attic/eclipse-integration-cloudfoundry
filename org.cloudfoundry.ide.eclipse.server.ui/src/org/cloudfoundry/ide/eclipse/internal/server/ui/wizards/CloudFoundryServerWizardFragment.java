@@ -18,7 +18,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpac
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeNotifier;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeListener;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -47,17 +47,17 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 	private CloudFoundrySpacesWizardFragment spacesFragment;
 
-	private CloudSpaceChangeNotifier cloudSpaceChangeNotifier;
+	private CloudSpaceChangeListener cloudSpaceChangeListener;
 
 	@Override
 	public Composite createComposite(Composite parent, IWizardHandle wizard) {
 		initServer();
 
 		if (cfServer != null) {
-			cloudSpaceChangeNotifier = new WizardFragmentSpaceChangeNotifier(cfServer);
+			cloudSpaceChangeListener = new WizardFragmentSpaceChangeListener(cfServer);
 		}
 
-		credentialsPart = new CloudFoundryCredentialsPart(cfServer, wizard, cloudSpaceChangeNotifier);
+		credentialsPart = new CloudFoundryCredentialsPart(cfServer, wizard, cloudSpaceChangeListener);
 		return credentialsPart.createComposite(parent);
 	}
 
@@ -163,9 +163,9 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		}
 	}
 
-	protected class WizardFragmentSpaceChangeNotifier extends CloudSpaceChangeNotifier {
+	protected class WizardFragmentSpaceChangeListener extends CloudSpaceChangeListener {
 
-		public WizardFragmentSpaceChangeNotifier(CloudFoundryServer cloudServer) {
+		public WizardFragmentSpaceChangeListener(CloudFoundryServer cloudServer) {
 			super(cloudServer);
 		}
 
@@ -173,7 +173,7 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		protected void handleCloudSpaceSelection(CloudSpacesDescriptor spacesDescriptor) {
 			if (spacesDescriptor != null && spacesDescriptor.supportsSpaces()) {
 				initServer();
-				spacesFragment = new CloudFoundrySpacesWizardFragment(cloudSpaceChangeNotifier, cfServer);
+				spacesFragment = new CloudFoundrySpacesWizardFragment(cloudSpaceChangeListener, cfServer);
 			}
 			else {
 				spacesFragment = null;

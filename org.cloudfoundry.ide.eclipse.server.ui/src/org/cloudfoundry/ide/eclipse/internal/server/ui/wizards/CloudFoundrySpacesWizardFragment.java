@@ -12,30 +12,32 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudSpacesSelectionPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeNotifier;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.wst.server.ui.wizard.IWizardHandle;
 import org.eclipse.wst.server.ui.wizard.WizardFragment;
 
 public class CloudFoundrySpacesWizardFragment extends WizardFragment {
 
-	private final CloudSpaceChangeNotifier spaceChangeNotifier;
+	private final CloudSpaceChangeListener cloudSpaceChangeListener;
 
 	private final CloudFoundryServer cloudServer;
 
-	public CloudFoundrySpacesWizardFragment(CloudSpaceChangeNotifier spaceChangeNotifier, CloudFoundryServer cloudServer) {
-		this.spaceChangeNotifier = spaceChangeNotifier;
+	public CloudFoundrySpacesWizardFragment(CloudSpaceChangeListener cloudSpaceChangeListener,
+			CloudFoundryServer cloudServer) {
+		this.cloudSpaceChangeListener = cloudSpaceChangeListener;
 		this.cloudServer = cloudServer;
 	}
 
 	@Override
 	public Composite createComposite(Composite parent, IWizardHandle handle) {
-		CloudSpacesSelectionPart spacesPart = new CloudSpacesSelectionPart(spaceChangeNotifier, cloudServer, handle);
+		CloudSpacesSelectionPart spacesPart = new CloudSpacesSelectionPart(cloudSpaceChangeListener, cloudServer,
+				handle);
 		return spacesPart.createComposite(parent);
 	}
 
 	public boolean isPageComplete() {
-		return spaceChangeNotifier != null && spaceChangeNotifier.hasSetSpace();
+		return cloudSpaceChangeListener != null && cloudSpaceChangeListener.hasSetSpace();
 	}
 
 	@Override

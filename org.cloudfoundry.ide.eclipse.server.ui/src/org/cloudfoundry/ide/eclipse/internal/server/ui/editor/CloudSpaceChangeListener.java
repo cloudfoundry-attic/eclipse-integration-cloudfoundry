@@ -45,13 +45,13 @@ import org.eclipse.osgi.util.NLS;
  * 
  * 
  */
-public class CloudSpaceChangeNotifier {
+public class CloudSpaceChangeListener {
 
 	private final CloudFoundryServer cloudServer;
 
 	private CloudSpacesDescriptor spacesDescriptor;
 
-	public CloudSpaceChangeNotifier(CloudFoundryServer cloudServer) {
+	public CloudSpaceChangeListener(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
 	}
 
@@ -77,6 +77,10 @@ public class CloudSpaceChangeNotifier {
 		internalHandleCloudSpaceSelection(spacesDescriptor);
 
 		return spacesDescriptor;
+	}
+
+	public void clearDescriptor() {
+		internalHandleCloudSpaceSelection(null);
 	}
 
 	protected void validateCredentials(String url, String userName, String password) throws CoreException {

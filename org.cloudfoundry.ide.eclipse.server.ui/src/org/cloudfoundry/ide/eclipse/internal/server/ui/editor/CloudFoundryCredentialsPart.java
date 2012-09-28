@@ -89,7 +89,7 @@ public class CloudFoundryCredentialsPart {
 
 	private CloudSpacesDescriptor spacesDescriptor;
 
-	private CloudSpaceChangeNotifier cloudSpaceChangeNotifier;
+	private CloudSpaceChangeListener cloudSpaceChangeListener;
 
 	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, WizardPage wizardPage) {
 		this.cfServer = cfServer;
@@ -120,15 +120,15 @@ public class CloudFoundryCredentialsPart {
 	}
 
 	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, WizardPage wizardPage,
-			CloudSpaceChangeNotifier cloudSpaceResolver) {
+			CloudSpaceChangeListener cloudSpaceChangeListener) {
 		this(cfServer, wizardPage);
-		this.cloudSpaceChangeNotifier = cloudSpaceResolver;
+		this.cloudSpaceChangeListener = cloudSpaceChangeListener;
 	}
 
 	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, IWizardHandle wizardHandle,
-			CloudSpaceChangeNotifier cloudSpaceResolver) {
+			CloudSpaceChangeListener cloudSpaceChangeListener) {
 		this(cfServer, wizardHandle);
-		this.cloudSpaceChangeNotifier = cloudSpaceResolver;
+		this.cloudSpaceChangeListener = cloudSpaceChangeListener;
 	}
 
 	public Composite createComposite(Composite parent) {
@@ -218,24 +218,29 @@ public class CloudFoundryCredentialsPart {
 			}
 		});
 
-		urlWidget = new CloudUrlWidget(cfServer);
+		urlWidget = new CloudUrlWidget(cfServer) {
+
+			@Override
+			protected void setUpdatedSelectionInServer() {
+
+				String currentServerURL = cfServer.getUrl();
+				String selection = urlWidget.getURLSelection();
+				String selectedURL = selection != null ? CloudUiUtil.getUrlFromDisplayText(selection) : null;
+				boolean shouldClearSpaces = currentServerURL == null || !currentServerURL.equals(selectedURL);
+
+				// Set the selection
+				super.setUpdatedSelectionInServer();
+
+				if (selection != null) {
+					update(shouldClearSpaces);
+				}
+			}
+
+		};
+
 		urlWidget.createControls(topComposite);
 		urlCombo = urlWidget.getUrlCombo();
 
-		urlCombo.addSelectionListener(new SelectionAdapter() {
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				String selection = getURLSelection();
-				if (selection != null) {
-
-					String url = CloudUiUtil.getUrlFromDisplayText(selection);
-					cfServer.setUrl(url);
-
-					update(true);
-				}
-			}
-		});
 		cfServer.setUrl(CloudUiUtil.getUrlFromDisplayText(urlCombo.getItem(urlCombo.getSelectionIndex())));
 
 		final Composite validateComposite = new Composite(composite, SWT.NONE);
@@ -247,14 +252,14 @@ public class CloudFoundryCredentialsPart {
 		validateButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent event) {
-				String urlText = getURLSelection();
+				String urlText = urlWidget.getURLSelection();
 				String userName = emailText.getText();
 				String password = passwordText.getText();
 				String errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, urlText, true,
 						getRunnableContext());
 				try {
-					spacesDescriptor = cloudSpaceChangeNotifier != null ? cloudSpaceChangeNotifier.updateDescriptor(urlText, userName,
-							password, getRunnableContext()) : null;
+					spacesDescriptor = cloudSpaceChangeListener != null ? cloudSpaceChangeListener.updateDescriptor(
+							urlText, userName, password, getRunnableContext()) : null;
 
 					update(false);
 				}
@@ -301,14 +306,6 @@ public class CloudFoundryCredentialsPart {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText("Account Information");
 		item.setControl(composite);
-	}
-
-	protected String getURLSelection() {
-		if (urlCombo != null) {
-			int index = urlCombo.getSelectionIndex();
-			return index < 0 ? null : urlCombo.getItem(index);
-		}
-		return null;
 	}
 
 	protected IRunnableContext getRunnableContext() {
@@ -368,7 +365,7 @@ public class CloudFoundryCredentialsPart {
 		setWizardError(null);
 
 		// CF signup is only available for VMware CF
-		String selection = getURLSelection();
+		String selection = urlWidget.getURLSelection();
 		if (CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(selection)) {
 			cfSignupButton.setVisible(true);
 		}
@@ -378,8 +375,11 @@ public class CloudFoundryCredentialsPart {
 
 		if (clearSpaceDescriptor) {
 			spacesDescriptor = null;
+			// Clear existing space
+			if (cloudSpaceChangeListener != null) {
+				cloudSpaceChangeListener.clearDescriptor();
+			}
 		}
-
 		if (folder.getSelectionIndex() == 0) {
 			String message = "";
 			isFinished = false;

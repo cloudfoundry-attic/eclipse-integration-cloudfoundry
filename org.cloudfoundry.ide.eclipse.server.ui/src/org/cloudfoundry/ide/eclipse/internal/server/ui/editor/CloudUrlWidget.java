@@ -26,26 +26,25 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
-
-
 /**
  * @author Terry Denney
  */
 public class CloudUrlWidget {
 
 	private Combo urlCombo;
-	
+
 	private final String serverTypeId;
 
 	private final CloudFoundryServer cfServer;
-	
+
 	private int comboIndex;
-	
+
 	public CloudUrlWidget(CloudFoundryServer cfServer) {
 		this.cfServer = cfServer;
 		this.serverTypeId = cfServer.getServer().getServerType().getId();
+
 	}
-		
+
 	public void createControls(final Composite parent) {
 		Label urlLabel = new Label(parent, SWT.NONE);
 		urlLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
@@ -57,92 +56,145 @@ public class CloudUrlWidget {
 		urlCompositelayout.marginHeight = 0;
 		urlCompositelayout.marginWidth = 0;
 		urlComposite.setLayout(urlCompositelayout);
-				
+
 		urlCombo = new Combo(urlComposite, SWT.BORDER | SWT.READ_ONLY);
 		urlCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-		
-		updateUrlCombo();
-				
+
+		updateUrlCombo(null);
+
 		urlCombo.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				int index = urlCombo.getSelectionIndex();
-				
+
 				if (index >= 0 && index != comboIndex) {
 					CloudURL cloudUrl = CloudUiUtil.getAllUrls(serverTypeId).get(index);
 					if (cloudUrl.getUrl().contains("{")) {
-						CloudURL newUrl = CloudUiUtil.getWildcardUrl(cloudUrl, CloudUiUtil.getAllUrls(serverTypeId), parent.getShell());
+						CloudURL newUrl = CloudUiUtil.getWildcardUrl(cloudUrl, CloudUiUtil.getAllUrls(serverTypeId),
+								parent.getShell());
 						if (newUrl != null) {
 							List<CloudURL> userDefinedUrls = CloudUiUtil.getUserDefinedUrls(serverTypeId);
 							userDefinedUrls.add(newUrl);
 							CloudUiUtil.storeUserDefinedUrls(serverTypeId, userDefinedUrls);
 							String newUrlName = newUrl.getName();
-							
-							updateUrlCombo();
-							for(int i=0; i<urlCombo.getItemCount(); i++) {
+
+							updateUrlCombo(null);
+							for (int i = 0; i < urlCombo.getItemCount(); i++) {
 								if (urlCombo.getItem(i).startsWith(newUrlName + " - ")) {
 									urlCombo.select(i);
 									comboIndex = i;
 									break;
 								}
 							}
-						} else {
+						}
+						else {
 							urlCombo.select(comboIndex);
 						}
 					}
 				}
+				setUpdatedSelectionInServer();
 			}
 		});
-		
+
 		final Button manageUrlButton = new Button(urlComposite, SWT.PUSH);
 		manageUrlButton.setText("Manage Cloud...");
 		manageUrlButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 		manageUrlButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				int result = new ManageCloudDialog(manageUrlButton.getShell(), serverTypeId).open();
-				if (result == Dialog.OK) {
-					updateUrlCombo();
+				ManageCloudDialog dialog = new ManageCloudDialog(manageUrlButton.getShell(), serverTypeId);
+				if (dialog.open() == Dialog.OK) {
+					CloudURL lastAddedEditedURL = dialog.getLastAddedOrEditedURL();
+					updateUrlCombo(lastAddedEditedURL);
+					setUpdatedSelectionInServer();
 				}
 			}
 		});
 	}
-	
-	private void updateUrlCombo() {
-		String url = null;
+
+	public String getURLSelection() {
+		if (urlCombo != null) {
+			int index = urlCombo.getSelectionIndex();
+			return index < 0 ? null : urlCombo.getItem(index);
+		}
+		return null;
+	}
+
+	protected void updateUrlCombo(CloudURL lastAddedEditedUrl) {
+		String newSelection = null;
+		String oldSelection = null;
+
+		// First grab the old selection before setting the new list of URLs
 		if (urlCombo.getSelectionIndex() >= 0) {
-			url = urlCombo.getItem(urlCombo.getSelectionIndex());
-		} else {
+			oldSelection = urlCombo.getItem(urlCombo.getSelectionIndex());
+		}
+		else {
 			if (cfServer != null && cfServer.getUrl() != null) {
-				url = cfServer.getUrl();
+				oldSelection = cfServer.getUrl();
 			}
 		}
-		
+
+		// Get updated list of URLs
 		List<CloudURL> cloudUrls = CloudUiUtil.getAllUrls(serverTypeId);
-		String[] urls = new String[cloudUrls.size()];
-		
-		int index = -1;
-		for(int i=0; i<cloudUrls.size(); i++) {
+		String[] updatedUrls = new String[cloudUrls.size()];
+
+		// If there is a last edited URL, set that as the selection in the combo
+		if (lastAddedEditedUrl != null) {
+			newSelection = lastAddedEditedUrl.getUrl();
+		}
+
+		int selectionIndex = -1;
+
+		// Get all the updated URLs, and also check if the last added url is
+		// among them.
+		// If so, find it's index to select it in the combo
+		for (int i = 0; i < cloudUrls.size(); i++) {
 			String currUrl = cloudUrls.get(i).getUrl();
-			urls[i] = cloudUrls.get(i).getName() + " - " + currUrl;
-			if (url != null && urls[i].contains(url)) {
-				index = i;
+			updatedUrls[i] = cloudUrls.get(i).getName() + " - " + currUrl;
+			if (newSelection != null && updatedUrls[i].contains(newSelection)) {
+				selectionIndex = i;
 			}
 		}
-		
-		if (index < 0 && cloudUrls.size() > 0) {
-			index = 0;
+
+		// Otherwise, if no last added url is specified, see if the old
+		// selection is still available in the
+		// list of updated URLs
+		if ((newSelection == null || selectionIndex < 0) && oldSelection != null) {
+			for (int i = 0; i < updatedUrls.length; i++) {
+				if (updatedUrls[i].contains(oldSelection)) {
+					selectionIndex = i;
+				}
+			}
 		}
-		
-		urlCombo.setItems(urls);
-		
-		if (index < 0) {
+
+		if (selectionIndex < 0 && cloudUrls.size() > 0) {
+			selectionIndex = 0;
+		}
+
+		urlCombo.setItems(updatedUrls);
+
+		if (selectionIndex < 0) {
 			urlCombo.deselectAll();
-		} else {
-			urlCombo.select(index);
 		}
-		
-		comboIndex = index;
+		else {
+			urlCombo.select(selectionIndex);
+		}
+
+		comboIndex = selectionIndex;
+	}
+
+	/**
+	 * This gets invoked any time there is a URL selection change. It sets the
+	 * newly selected URL in the server, if selected URL is not null.
+	 */
+	protected void setUpdatedSelectionInServer() {
+
+		String url = getURLSelection();
+		if (url != null) {
+			url = CloudUiUtil.getUrlFromDisplayText(url);
+
+			cfServer.setUrl(url);
+		}
 	}
 
 	public Combo getUrlCombo() {
