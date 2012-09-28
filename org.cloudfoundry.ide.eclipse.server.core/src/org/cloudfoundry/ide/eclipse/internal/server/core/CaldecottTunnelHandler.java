@@ -345,7 +345,7 @@ public class CaldecottTunnelHandler {
 		if (services != null) {
 			for (CloudService service : services) {
 				if (serviceName.equals(service.getName())) {
-					return service.getVendor();
+					return cloudServer.supportsCloudSpaces() ? service.getLabel() : service.getVendor();
 				}
 			}
 		}

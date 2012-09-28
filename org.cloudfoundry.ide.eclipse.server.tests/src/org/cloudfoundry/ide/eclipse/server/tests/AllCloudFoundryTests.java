@@ -13,6 +13,7 @@ package org.cloudfoundry.ide.eclipse.server.tests;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConsoleTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviourTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerTest;
@@ -50,9 +51,7 @@ public class AllCloudFoundryTests {
 		suite.addTestSuite(CloudFoundryServicesTest.class);
 		suite.addTestSuite(CloudFoundryConsoleTest.class);
 
-		// Disable for now until Caldecott lib is changed to be compatible with
-		// CF Java client 0.8.0
-		// suite.addTestSuite(CaldecottTunnelTest.class);
+		suite.addTestSuite(CaldecottTunnelTest.class);
 		return suite;
 	}
 
