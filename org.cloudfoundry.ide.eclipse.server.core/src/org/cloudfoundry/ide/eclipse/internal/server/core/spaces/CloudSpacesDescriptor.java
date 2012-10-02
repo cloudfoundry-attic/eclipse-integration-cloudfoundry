@@ -100,7 +100,10 @@ public class CloudSpacesDescriptor {
 	}
 
 	public CloudSpace getDefaultCloudSpace() {
-		if (spaces != null && spaces.size() > 0) {
+		// Only return a default if there is one org and one space. Otherwise,
+		// force the user
+		// to select a space if there is more than one space.
+		if (spaces != null && spaces.size() == 1) {
 			return spaces.get(0);
 		}
 		return null;

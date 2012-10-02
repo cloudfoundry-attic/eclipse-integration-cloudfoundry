@@ -137,15 +137,20 @@ public class CloudSpaceChangeListener {
 
 		// Notify that a new descriptor is available so that the list of spaces
 		// can be presented to a user for selection
-		handleCloudSpaceSelection(spacesDescriptor);
+		handleCloudSpaceDescriptorSelection(spacesDescriptor);
 	}
 
-	protected void handleCloudSpaceSelection(CloudSpacesDescriptor spacesDescriptor) {
+	protected void handleCloudSpaceDescriptorSelection(CloudSpacesDescriptor spacesDescriptor) {
+		// do nothing. Subclasses can override
+	}
+
+	protected void handleCloudSpaceSelection(CloudSpace cloudSpace) {
 		// do nothing. Subclasses can override
 	}
 
 	public void setSelectedSpace(CloudSpace selectedCloudSpace) {
 		cloudServer.setSpace(selectedCloudSpace);
+		handleCloudSpaceSelection(selectedCloudSpace);
 	}
 
 	public boolean hasSetSpace() {

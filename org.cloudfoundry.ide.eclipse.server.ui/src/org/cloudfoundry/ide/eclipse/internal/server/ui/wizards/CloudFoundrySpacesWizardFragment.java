@@ -36,7 +36,7 @@ public class CloudFoundrySpacesWizardFragment extends WizardFragment {
 		return spacesPart.createComposite(parent);
 	}
 
-	public boolean isPageComplete() {
+	public boolean isComplete() {
 		return cloudSpaceChangeListener != null && cloudSpaceChangeListener.hasSetSpace();
 	}
 

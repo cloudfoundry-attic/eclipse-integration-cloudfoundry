@@ -12,6 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import java.util.List;
 
+import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
@@ -54,7 +55,7 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		initServer();
 
 		if (cfServer != null) {
-			cloudSpaceChangeListener = new WizardFragmentSpaceChangeListener(cfServer);
+			cloudSpaceChangeListener = new WizardFragmentSpaceChangeListener(cfServer, wizard);
 		}
 
 		credentialsPart = new CloudFoundryCredentialsPart(cfServer, wizard, cloudSpaceChangeListener);
@@ -74,10 +75,7 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 	@Override
 	public boolean isComplete() {
-		if (credentialsPart == null) {
-			return false;
-		}
-		return credentialsPart.isComplete();
+		return credentialsPart != null && credentialsPart.isComplete();
 	}
 
 	@Override
@@ -165,18 +163,27 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 	protected class WizardFragmentSpaceChangeListener extends CloudSpaceChangeListener {
 
-		public WizardFragmentSpaceChangeListener(CloudFoundryServer cloudServer) {
+		private final IWizardHandle wizardHandle;
+
+		public WizardFragmentSpaceChangeListener(CloudFoundryServer cloudServer, IWizardHandle wizardHandle) {
 			super(cloudServer);
+			this.wizardHandle = wizardHandle;
 		}
 
 		@Override
-		protected void handleCloudSpaceSelection(CloudSpacesDescriptor spacesDescriptor) {
+		protected void handleCloudSpaceDescriptorSelection(CloudSpacesDescriptor spacesDescriptor) {
 			if (spacesDescriptor != null && spacesDescriptor.supportsSpaces()) {
 				initServer();
 				spacesFragment = new CloudFoundrySpacesWizardFragment(cloudSpaceChangeListener, cfServer);
 			}
 			else {
 				spacesFragment = null;
+			}
+		}
+
+		protected void handleCloudSpaceSelection(CloudSpace cloudSpace) {
+			if (wizardHandle != null) {
+				wizardHandle.update();
 			}
 		}
 
