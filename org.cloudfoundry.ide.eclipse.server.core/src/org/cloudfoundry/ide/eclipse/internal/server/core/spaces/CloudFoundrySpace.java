@@ -35,7 +35,6 @@ public class CloudFoundrySpace {
 	public CloudFoundrySpace(String orgName, String spaceName) {
 		this.orgName = orgName;
 		this.spaceName = spaceName;
-
 	}
 
 	public String getOrgName() {

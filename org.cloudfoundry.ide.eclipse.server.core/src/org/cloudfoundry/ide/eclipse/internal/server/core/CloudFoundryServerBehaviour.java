@@ -42,7 +42,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryPrope
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceServerLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneApplicationArchive;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneHandler;
@@ -1209,11 +1208,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				return null;
 			}
 		}.run(monitor);
-	}
-
-	public CloudSpacesDescriptor getCloudSpaceDescriptor(IProgressMonitor monitor) throws CoreException {
-		CloudFoundryOperations operations = getClient(monitor);
-		return CloudSpaceServerLookup.getCloudSpaceDescriptor(operations, monitor);
 	}
 
 	/**

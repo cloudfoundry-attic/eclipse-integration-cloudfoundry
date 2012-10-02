@@ -249,6 +249,22 @@ public class CloudUtil {
 		return "Validation failed";
 	}
 
+	public static String getV2ValidationErrorMessage(CoreException e) {
+		if (isUnauthorisedException(e)) {
+			return "Validation failed: Wrong email or password";
+		}
+		else if (isForbiddenException(e)) {
+			return "Validation failed: Wrong email or password";
+		}
+		else if (isUnknownHostException(e)) {
+			return "Validation failed: Unable to establish connection";
+		}
+		else if (isRestClientException(e)) {
+			return "Validation failed: Unknown URL";
+		}
+		return null;
+	}
+
 	public static boolean isCloudFoundryServer(IServer server) {
 		String serverId = server.getServerType().getId();
 		return serverId.startsWith("org.cloudfoundry.appcloudserver.");
@@ -285,6 +301,18 @@ public class CloudUtil {
 			HttpClientErrorException httpException = (HttpClientErrorException) cause;
 			HttpStatus statusCode = httpException.getStatusCode();
 			return statusCode.equals(HttpStatus.FORBIDDEN);
+
+		}
+		return false;
+	}
+
+	// check 401 error due to invalid credentials
+	public static boolean isUnauthorisedException(CoreException e) {
+		Throwable cause = e.getCause();
+		if (cause instanceof HttpClientErrorException) {
+			HttpClientErrorException httpException = (HttpClientErrorException) cause;
+			HttpStatus statusCode = httpException.getStatusCode();
+			return statusCode.equals(HttpStatus.UNAUTHORIZED);
 		}
 		return false;
 	}

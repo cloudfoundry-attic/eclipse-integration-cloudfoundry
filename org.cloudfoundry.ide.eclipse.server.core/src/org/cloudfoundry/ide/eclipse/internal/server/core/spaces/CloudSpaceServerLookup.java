@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudCredentials;
+import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
@@ -109,11 +110,32 @@ public class CloudSpaceServerLookup {
 			IProgressMonitor monitor) throws CoreException {
 		CloudFoundryOperations operations = CloudFoundryServerBehaviour.createClient(url, credentials.getEmail(),
 				credentials.getPassword());
-		operations.login();
-		return getCloudSpaceDescriptor(operations, monitor);
+		CoreException httpException = null;
+		try {
+			operations.login();
+			return getCloudSpaceDescriptor(operations, monitor);
+		}
+		catch (CloudFoundryException cfe) {
+			httpException = CloudUtil.toCoreException(cfe);
+		}
+		catch (RestClientException e) {
+			httpException = CloudUtil.toCoreException(e);
+		}
+		catch (CoreException ce) {
+			httpException = ce;
+		}
+		// Convert the core exception into user friendly error messages.
+		if (httpException != null) {
+			String validationMessage = CloudUtil.getV2ValidationErrorMessage(httpException);
+			if (validationMessage != null) {
+				httpException = new CoreException(CloudFoundryPlugin.getErrorStatus(validationMessage));
+			}
+			throw httpException;
+		}
+		return null;
 	}
 
-	public static CloudSpacesDescriptor getCloudSpaceDescriptor(CloudFoundryOperations operations,
+	private static CloudSpacesDescriptor getCloudSpaceDescriptor(CloudFoundryOperations operations,
 			IProgressMonitor monitor) throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor);
 		progress.beginTask("Determining if the cloud server supports organizations and spaces",
@@ -135,9 +157,6 @@ public class CloudSpaceServerLookup {
 			CloudSpacesDescriptor descriptor = new CloudSpacesDescriptor(actualSpaces, supportsSpaces);
 			return descriptor;
 
-		}
-		catch (RestClientException e) {
-			throw CloudUtil.toCoreException(e);
 		}
 		catch (RuntimeException e) {
 			if (e.getCause() instanceof IOException) {

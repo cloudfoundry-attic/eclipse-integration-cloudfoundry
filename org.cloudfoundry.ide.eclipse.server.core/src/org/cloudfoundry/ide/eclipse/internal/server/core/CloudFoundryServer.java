@@ -211,6 +211,10 @@ public class CloudFoundryServer extends ServerDelegate {
 	private ServerData getData() {
 		return CloudFoundryPlugin.getModuleCache().getData(getServerOriginal());
 	}
+	
+	public boolean hasValidServerData() {
+		return getServerOriginal() != null && getData() != null;
+	}
 
 	public String getDeploymentName() {
 		return getAttribute(PROPERTY_DEPLOYMENT_NAME, "");
@@ -414,6 +418,7 @@ public class CloudFoundryServer extends ServerDelegate {
 			// Otherwise clear the org and space
 			internalSetOrg(null);
 			internalSetSpace(null);
+			cloudSpace = null;
 		}
 
 		updateServerId();

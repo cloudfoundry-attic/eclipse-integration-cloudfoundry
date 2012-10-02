@@ -270,6 +270,7 @@ public class CloudUiUtil {
 	 */
 	public static CloudSpacesDescriptor getCloudSpaces(final String userName, final String password,
 			final String urlText, final boolean displayURL, IRunnableContext context) throws CoreException {
+
 		try {
 			final CloudSpacesDescriptor[] supportsSpaces = new CloudSpacesDescriptor[1];
 			ICoreRunnable coreRunner = new ICoreRunnable() {
@@ -291,14 +292,11 @@ public class CloudUiUtil {
 
 			return supportsSpaces[0];
 		}
-
 		catch (OperationCanceledException e) {
-			new CoreException(CloudFoundryPlugin.getErrorStatus(e));
+			throw new CoreException(CloudFoundryPlugin.getErrorStatus(e));
 		}
 
-		return null;
 	}
-	
 
 	public static String getUrlFromDisplayText(String displayText) {
 		String url = displayText;

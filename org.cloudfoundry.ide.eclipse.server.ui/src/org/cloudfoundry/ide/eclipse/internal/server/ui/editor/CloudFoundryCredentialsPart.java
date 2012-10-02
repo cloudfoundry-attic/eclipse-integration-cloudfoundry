@@ -191,7 +191,7 @@ public class CloudFoundryCredentialsPart {
 		emailText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		emailText.setEditable(true);
 		emailText.setFocus();
-		if (cfServer.getUsername() != null) {
+		if (cfServer.hasValidServerData() && cfServer.getUsername() != null) {
 			emailText.setText(cfServer.getUsername());
 		}
 		emailText.addModifyListener(new ModifyListener() {
@@ -208,7 +208,7 @@ public class CloudFoundryCredentialsPart {
 		passwordText = new Text(topComposite, SWT.PASSWORD | SWT.BORDER);
 		passwordText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		passwordText.setEditable(true);
-		if (cfServer.getPassword() != null) {
+		if (cfServer.hasValidServerData() && cfServer.getPassword() != null) {
 			passwordText.setText(cfServer.getPassword());
 		}
 		passwordText.addModifyListener(new ModifyListener() {
@@ -264,8 +264,7 @@ public class CloudFoundryCredentialsPart {
 					update(false);
 				}
 				catch (CoreException e) {
-					CloudFoundryPlugin.logError(e);
-					errorMsg = e.getLocalizedMessage();
+					errorMsg = e.getMessage();
 				}
 				if (errorMsg == null) {
 					setWizardInformation("Account information is valid.");
