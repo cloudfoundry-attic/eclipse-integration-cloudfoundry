@@ -26,6 +26,7 @@ import java.util.Set;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
+import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.domain.ApplicationStats;
@@ -68,6 +69,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClientException;
 
 /**
+ * 
+ * Contains many of the calls to the CF Java client. The CF server behaviour
+ * should be the main call point for interacting with the actual cloud server,
+ * with the exception of Caldecott, which is handled in a similar behaviour.
+ * 
+ * It's important to note that almost all Java client calls are wrapped around a
+ * Request object, and it is important to wrap future client calls around a
+ * Request object, as the request object handles automatic client login, server
+ * state verification, and proxy handling.
+ * 
+ * 
  * @author Christian Dupuis
  * @author Leo Dos Santos
  * @author Terry Denney
@@ -981,9 +993,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
-	 * Public for testing only. If credentials are not used, as in the case when
-	 * only a URL is present for a server, null must be passed for the
-	 * credentials.
+	 * Public for testing only. Use alternate public getClient() API for actual
+	 * client operations. If credentials are not used, as in the case when only
+	 * a URL is present for a server, null must be passed for the credentials.
 	 */
 	public synchronized CloudFoundryOperations getClient(CloudCredentials credentials, IProgressMonitor monitor)
 			throws CoreException {
@@ -1001,6 +1013,33 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		}
 		return client;
+	}
+
+	/**
+	 * 
+	 * @return true if there was a proxy update. False any other case.
+	 * @throws CoreException
+	 */
+	protected boolean updateProxyInClient(CloudFoundryOperations client) throws CoreException {
+		if (client != null) {
+
+			String url = getCloudFoundryServer().getUrl();
+			if (url != null) {
+				try {
+					URL actualUrl = new URL(url);
+					HttpProxyConfiguration proxyConfiguration = CloudFoundryClientFactory.getProxy(actualUrl);
+					if (proxyConfiguration != null) {
+						client.updateHttpProxyConfiguration(proxyConfiguration);
+						return true;
+					}
+				}
+				catch (MalformedURLException e) {
+					// Ignore. If URL is incorrect, other
+					// mechanisms exit to prompt user for correct values.
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -1376,7 +1415,16 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * a Cloud Foundry client, and resolves the Cloud Foundry client to be used
 	 * for the operation. All request behaviour is performed in a sub monitor,
 	 * therefore submonitor operations like creating a new child to track
-	 * progress worked should be used.
+	 * progress worked should be used. Additional checks prior to calling a Java
+	 * client API is to perform a login check, and if the client is not
+	 * currently logged in prior to attempting to make the API call, an
+	 * automatic login will be performed. Another check performed on the client
+	 * is whether proxy settings have changed during the same server behaviour
+	 * session.
+	 * 
+	 * It is very important to wrap client calls in a Request object, unless
+	 * specific standalone cases like validating credentials prior to creating a
+	 * server or obtaining a list of orgs and spaces for v2 clients.
 	 * 
 	 * @param <T>
 	 */
@@ -1438,6 +1486,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			boolean succeeded = false;
 			try {
 				CloudFoundryOperations client = getClient(subProgress);
+				
+				// Always check if proxy settings have changed.
+				updateProxyInClient(client);
 				try {
 					result = doRun(client, subProgress);
 					succeeded = true;

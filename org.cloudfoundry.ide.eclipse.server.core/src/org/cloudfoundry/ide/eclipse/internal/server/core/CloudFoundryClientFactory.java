@@ -24,7 +24,15 @@ import org.eclipse.core.net.proxy.IProxyService;
 import org.springframework.ide.eclipse.uaa.UaaPlugin;
 
 /**
- * Create Cloud Foundry clients, including clients that are UAA aware.
+ * Create Cloud Foundry clients, including clients that are UAA aware.Note that
+ * client/operation API should always be called within a specific Request
+ * wrapper, unless performing standalone operations like validating credentials
+ * or getting a list of organisations and spaces. Request wrappers do various
+ * operations prior to invoking client API, including automatic client login and
+ * proxy setting handling.
+ * 
+ * @see org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour.Request
+ * 
  * 
  */
 public class CloudFoundryClientFactory {
@@ -99,7 +107,7 @@ public class CloudFoundryClientFactory {
 		}
 	}
 
-	protected static HttpProxyConfiguration getProxy(URL url) {
+	public static HttpProxyConfiguration getProxy(URL url) {
 
 		IProxyService proxyService = CloudFoundryPlugin.getDefault().getProxyService();
 		IProxyData[] existingProxies = proxyService.getProxyData();

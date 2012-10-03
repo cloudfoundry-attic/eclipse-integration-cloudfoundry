@@ -46,6 +46,13 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  * When creating a tunnel for a service that hasn't been bound, this handler
  * will automatically bind the service first to the Caldecott application before
  * attempting to create a tunnel.
+ * <p/>
+ * NOTE: CloudFoundryOperation should ALWAYS be obtained through a
+ * org.cloudfoundry
+ * .ide.eclipse.internal.server.core.CloudFoundryServerBehaviour.Request object,
+ * as the Request wraps around all client calls. Only exception is if doing
+ * standalone calls to a CF server, like validating credentials or getting a
+ * list of organisations and spaces.
  * 
  */
 public class CaldecottTunnelHandler {
@@ -101,7 +108,7 @@ public class CaldecottTunnelHandler {
 		progress.setTaskName("Starting tunnel application");
 		CloudApplication caldecottApp = getCaldecottApp(client);
 
-		new StartApplicationInWaitOperation(cloudServer).run(progress, client, caldecottApp);
+		new StartApplicationInWaitOperation(cloudServer).run(progress, caldecottApp);
 
 	}
 
@@ -352,7 +359,7 @@ public class CaldecottTunnelHandler {
 		return null;
 	}
 
-	public Map<String, String> getTunnelInfo(final CloudFoundryOperations client, final String serviceName,
+	protected Map<String, String> getTunnelInfo(final CloudFoundryOperations client, final String serviceName,
 			IProgressMonitor monitor) throws CoreException {
 		monitor.setTaskName("Getting tunnel information");
 		int ticks = 5;

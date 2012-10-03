@@ -34,7 +34,7 @@ public abstract class AbstractApplicationInWaitOperation {
 		this.jobName = jobName;
 	}
 
-	public boolean run(IProgressMonitor progress, final CloudFoundryOperations client, CloudApplication cloudApplication)
+	public boolean run(IProgressMonitor progress, CloudApplication cloudApplication)
 			throws CoreException {
 
 		if (cloudApplication == null) {

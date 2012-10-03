@@ -140,7 +140,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	protected void assertStartApplication(CloudApplication cloudApplication) throws Exception {
 
 		boolean started = new StartApplicationInWaitOperation(cloudServer, "Starting test app").run(
-				new NullProgressMonitor(), getClient(), cloudApplication);
+				new NullProgressMonitor(), cloudApplication);
 		serverBehavior.refreshModules(new NullProgressMonitor());
 
 		assertTrue(started);
@@ -148,7 +148,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	}
 
 	protected void assertStopApplication(CloudApplication cloudApplication) throws Exception {
-		boolean stopped = new StopApplicationInWaitOperation(cloudServer).run(new NullProgressMonitor(), getClient(),
+		boolean stopped = new StopApplicationInWaitOperation(cloudServer).run(new NullProgressMonitor(),
 				cloudApplication);
 		serverBehavior.refreshModules(new NullProgressMonitor());
 

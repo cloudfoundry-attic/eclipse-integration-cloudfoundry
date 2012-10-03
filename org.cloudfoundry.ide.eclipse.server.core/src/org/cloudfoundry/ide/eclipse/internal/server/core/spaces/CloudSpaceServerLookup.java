@@ -66,7 +66,8 @@ public class CloudSpaceServerLookup {
 	 * 
 	 * @param monitor
 	 * @return a cloud space descriptor, if a lookup was successful and matched
-	 * the cloud space properties set in the server. Otherwise null is returned.
+	 * the cloud space properties set in the server. Otherwise null is returned,
+	 * including if a server does not support orgs and spaces.
 	 * @throws CoreException
 	 */
 	public CloudFoundrySpace getCloudSpace(IProgressMonitor monitor) throws CoreException {
