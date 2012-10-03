@@ -179,11 +179,7 @@ public class CloudSpacesSelectionPart {
 					setSpaceSelection((CloudSpace) selectedObj);
 				}
 				else if (selectedObj instanceof CloudOrganization) {
-					// For Cloud org selections, do not select the org itself.
-					// Instead, clear the selection, and force the user to
-					// select a space
-					// within the org.
-					tree.deselect(selectedItems[0]);
+					setSpaceSelection(null);
 				}
 			}
 		}
