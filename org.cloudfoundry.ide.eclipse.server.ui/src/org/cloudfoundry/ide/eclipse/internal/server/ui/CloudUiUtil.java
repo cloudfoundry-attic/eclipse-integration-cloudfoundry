@@ -166,6 +166,7 @@ public class CloudUiUtil {
 		String urlString = prefStore.getString(ATTR_USER_DEFINED_URLS + "." + serverTypeId);
 
 		if (urlString != null && urlString.length() > 0) {
+			// Split on "||"
 			String[] urlEntries = urlString.split("\\|\\|");
 			if (urlEntries != null) {
 				for (String entry : urlEntries) {

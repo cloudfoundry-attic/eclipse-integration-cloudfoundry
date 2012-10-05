@@ -85,13 +85,13 @@ public class CloudSpaceChangeListener {
 		if (spacesDescriptor != null && !spacesDescriptor.supportsSpaces()) {
 			spacesDescriptor = null;
 		}
-		updateURLAsV2(spacesDescriptor, actualURL);
+		updateURLSpace(spacesDescriptor, actualURL);
 		internalHandleCloudSpaceSelection(spacesDescriptor);
 
 		return spacesDescriptor;
 	}
 
-	protected void updateURLAsV2(CloudSpacesDescriptor descriptor, String url) {
+	protected void updateURLSpace(CloudSpacesDescriptor descriptor, String url) {
 		String serverId = cloudServer.getServer().getServerType().getId();
 		List<CloudURL> existingURLs = CloudUiUtil.getUserDefinedUrls(serverId);
 		if (existingURLs != null) {

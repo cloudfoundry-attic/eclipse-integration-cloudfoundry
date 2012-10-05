@@ -189,6 +189,16 @@ public class CloudFoundryCredentialsPart {
 		}
 	}
 
+	/**
+	 * Updates V2 spaces ONLY if a previous update was already performed on the
+	 * current credentials and URL, and URL is a V2 URL. In such a case, false
+	 * is returned indicating that spaces shoudl not be cleared on UI update as
+	 * a space is being set. Otherwise, if it is V1 or version cannot be
+	 * determined, true is returned indicating that existing spaces in the
+	 * server will be cleared.
+	 * @param errorMessages
+	 * @return
+	 */
 	protected boolean updateV2SpacesOnUserPasswordChange(List<String> errorMessages) {
 		boolean clearV2Spaces = true;
 		String url = urlWidget.getURLSelection();
@@ -205,6 +215,19 @@ public class CloudFoundryCredentialsPart {
 		return clearV2Spaces;
 	}
 
+	/**
+	 * Update space for given url and credentials ONLY if it is a V2 cloud. If
+	 * version is unknown or its V1, this method will indicate to clear existing
+	 * spaces.
+	 * @param errorMessages
+	 * @param userName
+	 * @param password
+	 * @param url
+	 * @param version
+	 * @return true if existing spaces should be cleared, if no cloud version is
+	 * associated with credentials or url is V1. False if spaces should not be
+	 * cleared if it is V2.
+	 */
 	protected boolean updateV2Spaces(List<String> errorMessages, String userName, String password, String url,
 			CloudVersion version) {
 		// If it is v2, automatically do a space lookup
@@ -220,7 +243,7 @@ public class CloudFoundryCredentialsPart {
 		boolean clearV2Spaces = true;
 		String errorMsg = null;
 		try {
-			if (cloudSpaceChangeListener != null && userName != null && password != null) {
+			if (cloudSpaceChangeListener != null && userName != null && password != null && url != null) {
 				cloudSpaceChangeListener.updateDescriptor(url, userName, password, getRunnableContext());
 
 				// Update the local cache
@@ -315,10 +338,6 @@ public class CloudFoundryCredentialsPart {
 					String userName = emailText.getText();
 					String password = passwordText.getText();
 
-					// Decide whether to do an automatic spaces lookup for v2 if
-					// 1. a username + password + url has been looked up already
-					// successfully
-					// 2. its a v2 URL
 					CloudVersion version = getLocallyTrackedCloudVersion(userName, password, url);
 					if (version == null) {
 						version = CloudUiUtil.getCloudVersion(url, cfServer);
