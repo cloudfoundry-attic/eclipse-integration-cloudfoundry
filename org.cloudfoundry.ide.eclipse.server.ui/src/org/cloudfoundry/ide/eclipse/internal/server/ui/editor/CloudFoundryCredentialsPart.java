@@ -11,11 +11,15 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudVersion;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryURLNavigation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
@@ -87,9 +91,9 @@ public class CloudFoundryCredentialsPart {
 
 	private Button cfSignupButton;
 
-	private CloudSpacesDescriptor spacesDescriptor;
-
 	private CloudSpaceChangeListener cloudSpaceChangeListener;
+
+	private Map<String, CloudVersion> localV2Cache = new HashMap<String, CloudVersion>();
 
 	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, WizardPage wizardPage) {
 		this.cfServer = cfServer;
@@ -158,20 +162,94 @@ public class CloudFoundryCredentialsPart {
 
 	}
 
-	public boolean supportsSpaces() {
-		return spacesDescriptor != null && spacesDescriptor.supportsSpaces();
-	}
-
-	public CloudSpacesDescriptor getSpaces() {
-		return spacesDescriptor;
-	}
-
 	public boolean isComplete() {
 		return isFinished;
 	}
 
 	public void setServer(CloudFoundryServer server) {
 		this.cfServer = server;
+	}
+
+	protected CloudVersion getLocallyTrackedCloudVersion(String userName, String password, String actualURL) {
+		String id = getLocallyTrackedV2ID(userName, password, actualURL);
+		return localV2Cache.get(id);
+	}
+
+	protected String getLocallyTrackedV2ID(String userName, String password, String actualURL) {
+		if (userName == null || password == null || actualURL == null) {
+			return null;
+		}
+		return userName + password + actualURL;
+	}
+
+	protected void addLocallyTrackedV2ID(String userName, String password, String actualURL, CloudVersion version) {
+		String id = getLocallyTrackedV2ID(userName, password, actualURL);
+		if (id != null) {
+			localV2Cache.put(id, version);
+		}
+	}
+
+	protected boolean updateV2SpacesOnUserPasswordChange(List<String> errorMessages) {
+		boolean clearV2Spaces = true;
+		String url = urlWidget.getURLSelection();
+		url = url != null ? CloudUiUtil.getUrlFromDisplayText(url) : null;
+
+		if (url != null) {
+			String userName = emailText.getText();
+			String password = passwordText.getText();
+
+			CloudVersion version = getLocallyTrackedCloudVersion(userName, password, url);
+			clearV2Spaces = updateV2Spaces(errorMessages, userName, password, url, version);
+
+		}
+		return clearV2Spaces;
+	}
+
+	protected boolean updateV2Spaces(List<String> errorMessages, String userName, String password, String url,
+			CloudVersion version) {
+		// If it is v2, automatically do a space lookup
+		boolean clearV2Spaces = true;
+		if (version != null && version.equals(CloudVersion.V2)) {
+			clearV2Spaces = updateV2Spaces(errorMessages, userName, password, url);
+		}
+
+		return clearV2Spaces;
+	}
+
+	protected boolean updateV2Spaces(List<String> errorMessages, String userName, String password, String url) {
+		boolean clearV2Spaces = true;
+		String errorMsg = null;
+		try {
+			if (cloudSpaceChangeListener != null && userName != null && password != null) {
+				cloudSpaceChangeListener.updateDescriptor(url, userName, password, getRunnableContext());
+
+				// Update the local cache
+				CloudVersion version = CloudUiUtil.getCloudVersion(url, cfServer);
+				if (version != null) {
+					addLocallyTrackedV2ID(userName, password, url, version);
+				}
+				// Dont clear the spaces on subsequent update as a new one is
+				// being set
+				clearV2Spaces = false;
+			}
+
+		}
+		catch (CoreException e) {
+			errorMsg = e.getMessage();
+		}
+		if (errorMessages != null && errorMsg != null) {
+			errorMessages.add(errorMsg);
+		}
+		return clearV2Spaces;
+	}
+
+	protected void updateV2SpacesOnUserPasswordChange() {
+		List<String> errorMessages = new ArrayList<String>();
+		boolean clearV2Space = updateV2SpacesOnUserPasswordChange(errorMessages);
+		update(clearV2Space);
+		if (errorMessages.size() > 0) {
+			setWizardError(errorMessages.get(0));
+		}
 	}
 
 	private void createExistingUserComposite(TabFolder folder) {
@@ -194,10 +272,11 @@ public class CloudFoundryCredentialsPart {
 		if (cfServer.hasValidServerData() && cfServer.getUsername() != null) {
 			emailText.setText(cfServer.getUsername());
 		}
+
 		emailText.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				cfServer.setUsername(emailText.getText());
-				update(true);
+				updateV2SpacesOnUserPasswordChange();
 			}
 		});
 
@@ -211,10 +290,11 @@ public class CloudFoundryCredentialsPart {
 		if (cfServer.hasValidServerData() && cfServer.getPassword() != null) {
 			passwordText.setText(cfServer.getPassword());
 		}
+
 		passwordText.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				cfServer.setPassword(passwordText.getText());
-				update(true);
+				updateV2SpacesOnUserPasswordChange();
 			}
 		});
 
@@ -223,16 +303,37 @@ public class CloudFoundryCredentialsPart {
 			@Override
 			protected void setUpdatedSelectionInServer() {
 
-				String currentServerURL = cfServer.getUrl();
-				String selection = urlWidget.getURLSelection();
-				String selectedURL = selection != null ? CloudUiUtil.getUrlFromDisplayText(selection) : null;
-				boolean shouldClearSpaces = currentServerURL == null || !currentServerURL.equals(selectedURL);
-
-				// Set the selection
 				super.setUpdatedSelectionInServer();
+				List<String> errorMessages = new ArrayList<String>();
 
-				if (selection != null) {
-					update(shouldClearSpaces);
+				String url = urlWidget.getURLSelection();
+				url = url != null ? CloudUiUtil.getUrlFromDisplayText(url) : null;
+
+				boolean clearDescriptor = true;
+
+				if (url != null) {
+					String userName = emailText.getText();
+					String password = passwordText.getText();
+
+					// Decide whether to do an automatic spaces lookup for v2 if
+					// 1. a username + password + url has been looked up already
+					// successfully
+					// 2. its a v2 URL
+					CloudVersion version = getLocallyTrackedCloudVersion(userName, password, url);
+					if (version == null) {
+						version = CloudUiUtil.getCloudVersion(url, cfServer);
+					}
+
+					clearDescriptor = updateV2Spaces(errorMessages, userName, password, url, version);
+
+				}
+
+				// Update button first before setting any error messages to
+				// avoid error messages getting wiped
+				update(clearDescriptor);
+
+				if (errorMessages.size() > 0) {
+					setWizardError(errorMessages.get(0));
 				}
 			}
 
@@ -255,17 +356,27 @@ public class CloudFoundryCredentialsPart {
 				String urlText = urlWidget.getURLSelection();
 				String userName = emailText.getText();
 				String password = passwordText.getText();
+
 				String errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, urlText, true,
 						getRunnableContext());
-				try {
-					spacesDescriptor = cloudSpaceChangeListener != null ? cloudSpaceChangeListener.updateDescriptor(
-							urlText, userName, password, getRunnableContext()) : null;
 
-					update(false);
+				boolean clearDescriptor = true;
+
+				CloudVersion version = getLocallyTrackedCloudVersion(userName, password, urlText);
+
+				// Only skip checking for spaces if LOCALLY a URL and
+				// credentials has been marked as V1
+				if (version == null || !version.equals(CloudVersion.V1)) {
+					List<String> errorMessages = new ArrayList<String>();
+
+					clearDescriptor = updateV2Spaces(errorMessages, userName, password, urlText);
+					if (errorMessages.size() > 0) {
+						errorMsg = errorMessages.get(0);
+					}
 				}
-				catch (CoreException e) {
-					errorMsg = e.getMessage();
-				}
+
+				update(clearDescriptor);
+
 				if (errorMsg == null) {
 					setWizardInformation("Account information is valid.");
 				}
@@ -372,13 +483,11 @@ public class CloudFoundryCredentialsPart {
 			cfSignupButton.setVisible(false);
 		}
 
-		if (clearSpaceDescriptor) {
-			spacesDescriptor = null;
+		if (clearSpaceDescriptor && cloudSpaceChangeListener != null) {
 			// Clear existing space
-			if (cloudSpaceChangeListener != null) {
-				cloudSpaceChangeListener.clearDescriptor();
-			}
+			cloudSpaceChangeListener.clearDescriptor();
 		}
+
 		if (folder.getSelectionIndex() == 0) {
 			String message = "";
 			isFinished = false;

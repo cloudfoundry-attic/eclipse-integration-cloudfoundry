@@ -81,70 +81,70 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		}
 	}
 
-//	public void testCreateApplicationInvalidProxyWithoutClientReset() throws Exception {
-//		// ensure valid session
-//		getClient();
-//
-//		harness.createProjectAndAddModule("dynamic-webapp");
-//
-//		IModule[] modules = server.getModules();
-//		assertEquals("Expected dynamic-webapp module, got " + Arrays.toString(modules), 1, modules.length);
-//		int moduleState = server.getModulePublishState(modules);
-//		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
-//
-//		serverBehavior.deployOrStartModule(modules, true, null);
-//		moduleState = server.getModuleState(modules);
-//		assertEquals(IServer.STATE_STARTED, moduleState);
-//		CloudApplication cloudApplication = getCloudApplication(modules[0]);
-//		assertEquals(cloudApplication.getState(), CloudApplication.AppState.STARTED);
-//
-//		// save proxy settings
-//		IProxyService proxyService = CloudFoundryPlugin.getDefault().getProxyService();
-//		boolean systemProxiesEnabled = proxyService.isSystemProxiesEnabled();
-//		boolean proxiesEnabled = proxyService.isProxiesEnabled();
-//		IProxyData[] oldData = proxyService.getProxyData();
-//
-//		try {
-//			// set invalid proxy
-//			proxyService.setSystemProxiesEnabled(false);
-//			proxyService.setProxiesEnabled(true);
-//			IProxyData[] data = proxyService.getProxyData();
-//			data[0].setHost("invalid.proxy.test");
-//			data[0].setPort(8080);
-//			proxyService.setProxyData(data);
-//			try {
-//				// Should fail, as its now going through invalid proxy
-//				serverBehavior.stopModule(modules, null);
-//
-//				moduleState = server.getModuleState(modules);
-//				cloudApplication = getCloudApplication(modules[0]);
-//				fail("Expected invalid.proxy.test failure");
-//
-//			}
-//			catch (Exception e) {
-//				assertTrue(e.getCause().getMessage().contains("invalid.proxy.test"));
-//			}
-//
-//			// Restore proxy settings and try again
-//			proxyService.setSystemProxiesEnabled(systemProxiesEnabled);
-//			proxyService.setProxiesEnabled(proxiesEnabled);
-//			proxyService.setProxyData(oldData);
-//
-//			serverBehavior.stopModule(modules, null);
-//
-//			moduleState = server.getModuleState(modules);
-//			assertEquals(IServer.STATE_STOPPED, moduleState);
-//			cloudApplication = getCloudApplication(modules[0]);
-//			assertEquals(cloudApplication.getState(), CloudApplication.AppState.STOPPED);
-//
-//		}
-//		finally {
-//			// restore proxy settings
-//			proxyService.setSystemProxiesEnabled(systemProxiesEnabled);
-//			proxyService.setProxiesEnabled(proxiesEnabled);
-//			proxyService.setProxyData(oldData);
-//		}
-//	}
+	public void testCreateApplicationInvalidProxyWithoutClientReset() throws Exception {
+		// ensure valid session
+		getClient();
+
+		harness.createProjectAndAddModule("dynamic-webapp");
+
+		IModule[] modules = server.getModules();
+		assertEquals("Expected dynamic-webapp module, got " + Arrays.toString(modules), 1, modules.length);
+		int moduleState = server.getModulePublishState(modules);
+		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
+
+		serverBehavior.deployOrStartModule(modules, true, null);
+		moduleState = server.getModuleState(modules);
+		assertEquals(IServer.STATE_STARTED, moduleState);
+		CloudApplication cloudApplication = getCloudApplication(modules[0]);
+		assertEquals(cloudApplication.getState(), CloudApplication.AppState.STARTED);
+
+		// save proxy settings
+		IProxyService proxyService = CloudFoundryPlugin.getDefault().getProxyService();
+		boolean systemProxiesEnabled = proxyService.isSystemProxiesEnabled();
+		boolean proxiesEnabled = proxyService.isProxiesEnabled();
+		IProxyData[] oldData = proxyService.getProxyData();
+
+		try {
+			// set invalid proxy
+			proxyService.setSystemProxiesEnabled(false);
+			proxyService.setProxiesEnabled(true);
+			IProxyData[] data = proxyService.getProxyData();
+			data[0].setHost("invalid.proxy.test");
+			data[0].setPort(8080);
+			proxyService.setProxyData(data);
+			try {
+				// Should fail, as its now going through invalid proxy
+				serverBehavior.stopModule(modules, null);
+
+				moduleState = server.getModuleState(modules);
+				cloudApplication = getCloudApplication(modules[0]);
+				fail("Expected invalid.proxy.test failure");
+
+			}
+			catch (Exception e) {
+				assertTrue(e.getCause().getMessage().contains("invalid.proxy.test"));
+			}
+
+			// Restore proxy settings and try again
+			proxyService.setSystemProxiesEnabled(systemProxiesEnabled);
+			proxyService.setProxiesEnabled(proxiesEnabled);
+			proxyService.setProxyData(oldData);
+
+			serverBehavior.stopModule(modules, null);
+
+			moduleState = server.getModuleState(modules);
+			assertEquals(IServer.STATE_STOPPED, moduleState);
+			cloudApplication = getCloudApplication(modules[0]);
+			assertEquals(cloudApplication.getState(), CloudApplication.AppState.STOPPED);
+
+		}
+		finally {
+			// restore proxy settings
+			proxyService.setSystemProxiesEnabled(systemProxiesEnabled);
+			proxyService.setProxiesEnabled(proxiesEnabled);
+			proxyService.setProxyData(oldData);
+		}
+	}
 
 	public void testConnect() throws Exception {
 		serverBehavior.connect(null);

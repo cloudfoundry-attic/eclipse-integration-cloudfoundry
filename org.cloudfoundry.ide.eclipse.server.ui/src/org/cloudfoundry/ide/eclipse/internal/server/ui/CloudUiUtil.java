@@ -30,6 +30,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehav
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceServerLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudVersion;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -164,16 +165,31 @@ public class CloudUiUtil {
 		IPreferenceStore prefStore = CloudFoundryServerUiPlugin.getDefault().getPreferenceStore();
 		String urlString = prefStore.getString(ATTR_USER_DEFINED_URLS + "." + serverTypeId);
 
-		while (urlString.length() > 0) {
-			int index = urlString.indexOf(",");
-			String name = urlString.substring(0, index);
+		if (urlString != null && urlString.length() > 0) {
+			String[] urlEntries = urlString.split("\\|\\|");
+			if (urlEntries != null) {
+				for (String entry : urlEntries) {
+					if (entry.length() > 0) {
+						String[] values = entry.split(",");
+						if (values != null) {
+							String name = null;
+							String url = null;
+							String version = null;
+							if (values.length >= 2) {
+								name = values[0];
+								url = values[1];
+							}
+							if (values.length > 2) {
+								version = values[2];
+							}
+							CloudVersion cloudVersion = version != null ? CloudVersion.valueOf(version) : null;
 
-			urlString = urlString.substring(index + 1);
-			index = urlString.indexOf("||");
-			String url = urlString.substring(0, index);
-			urlString = urlString.substring(index + 2);
+							urls.add(new CloudURL(name, url, true, cloudVersion));
+						}
+					}
 
-			urls.add(new CloudURL(name, url, true));
+				}
+			}
 		}
 
 		return urls;
@@ -186,8 +202,14 @@ public class CloudUiUtil {
 		for (CloudURL url : urls) {
 			if (url.getUserDefined()) {
 				builder.append(url.getName());
+
 				builder.append(",");
 				builder.append(url.getUrl());
+				if (url.getCloudVersion() != null) {
+					builder.append(",");
+					builder.append(url.getCloudVersion().name());
+				}
+
 				builder.append("||");
 			}
 		}
@@ -308,6 +330,45 @@ public class CloudUiUtil {
 		}
 
 		return url;
+	}
+
+	/**
+	 * Returns a cloud version, either v1 or v2, for the given URL, or null, if
+	 * cloud version cannot be resolved
+	 * @param displayURLText
+	 * @param cloudServer
+	 * @return
+	 */
+	public static CloudVersion getCloudVersion(String displayURLText, CloudFoundryServer cloudServer) {
+		String serverID = cloudServer != null ? cloudServer.getServer().getServerType().getId() : null;
+		if (serverID != null) {
+			List<CloudURL> allURLs = getAllUrls(serverID);
+			if (allURLs == null) {
+				return null;
+			}
+			String actualURL = getUrlFromDisplayText(displayURLText);
+			CloudVersion version = null;
+
+			if (actualURL != null) {
+				for (CloudURL url : allURLs) {
+					// Iterate through all, as there may be multiple URLs with
+					// the
+					// same actual URL but differ in name, unless the first
+					// encountered URL already has the version
+					// set, as subsequent URLs will also be the same version
+					if (actualURL.equals(url.getUrl())) {
+						version = url.getCloudVersion();
+						if (version != null) {
+							break;
+						}
+					}
+				}
+			}
+			return version;
+		}
+
+		return null;
+
 	}
 
 	public static String getDisplayTextFromUrl(String url, String serverTypeId) {

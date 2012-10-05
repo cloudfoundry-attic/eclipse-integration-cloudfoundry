@@ -1028,10 +1028,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				try {
 					URL actualUrl = new URL(url);
 					HttpProxyConfiguration proxyConfiguration = CloudFoundryClientFactory.getProxy(actualUrl);
-					if (proxyConfiguration != null) {
-						client.updateHttpProxyConfiguration(proxyConfiguration);
-						return true;
-					}
+
+					client.updateHttpProxyConfiguration(proxyConfiguration);
+					return true;
 				}
 				catch (MalformedURLException e) {
 					// Ignore. If URL is incorrect, other
@@ -1486,7 +1485,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			boolean succeeded = false;
 			try {
 				CloudFoundryOperations client = getClient(subProgress);
-				
+
 				// Always check if proxy settings have changed.
 				updateProxyInClient(client);
 				try {

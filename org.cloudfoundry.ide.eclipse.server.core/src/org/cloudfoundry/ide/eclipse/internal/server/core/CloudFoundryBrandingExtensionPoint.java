@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudVersion;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
@@ -28,9 +29,9 @@ import org.eclipse.core.runtime.Platform;
 public class CloudFoundryBrandingExtensionPoint {
 
 	public static String ELEM_DEFAULT_URL = "defaultUrl";
-	
+
 	public static String ELEM_CLOUD_URL = "cloudUrl";
-	
+
 	public static String ELEM_WILDCARD = "wildcard";
 
 	public static String ATTR_REMOTE_SYSTEM_TYPE_ID = "remoteSystemTypeId";
@@ -40,7 +41,7 @@ public class CloudFoundryBrandingExtensionPoint {
 	public static String ATTR_SERVER_TYPE_ID = "serverTypeId";
 
 	public static String ATTR_NAME = "name";
-	
+
 	public static String ATTR_URL = "url";
 
 	public static String ATTR_PROVIDE_SERVICES = "provideServices";
@@ -54,31 +55,46 @@ public class CloudFoundryBrandingExtensionPoint {
 	private static Map<String, IConfigurationElement> brandingDefinitions = new HashMap<String, IConfigurationElement>();
 
 	private static boolean read;
-	
+
 	public static class CloudURL {
-		
-		private String name;
-		
-		private String url;
-		
-		private boolean userDefined;
-		
+
+		private final String name;
+
+		private final String url;
+
+		private final boolean userDefined;
+
+		private final CloudVersion version;
+
 		public CloudURL(String name, String url, boolean userDefined) {
+			this(name, url, userDefined, null);
+		}
+
+		public CloudURL(String name, String url, boolean userDefined, CloudVersion version) {
 			this.name = name;
 			this.url = url;
 			this.userDefined = userDefined;
+			this.version = version;
 		}
-		
+
+		public CloudVersion getCloudVersion() {
+			return version;
+		}
+
 		public String getName() {
 			return name;
 		}
-		
+
 		public String getUrl() {
 			return url;
 		}
-		
+
 		public boolean getUserDefined() {
 			return userDefined;
+		}
+
+		public CloudURL updateVersion(CloudVersion version) {
+			return new CloudURL(getName(), getUrl(), getUserDefined(), version);
 		}
 	}
 
@@ -88,7 +104,7 @@ public class CloudFoundryBrandingExtensionPoint {
 		}
 		return brandingDefinitions.get(serverTypeId);
 	}
-	
+
 	private static List<CloudURL> getUrls(String serverTypeId, String elementType) {
 		if (!read) {
 			readBrandingDefinitions();
@@ -97,38 +113,38 @@ public class CloudFoundryBrandingExtensionPoint {
 		if (config != null) {
 			List<CloudURL> result = new ArrayList<CloudURL>();
 			IConfigurationElement[] defaultUrls = config.getChildren(elementType);
-			for(IConfigurationElement defaultUrl: defaultUrls) {
+			for (IConfigurationElement defaultUrl : defaultUrls) {
 				String urlName = defaultUrl.getAttribute(ATTR_NAME);
 				String url = defaultUrl.getAttribute(ATTR_URL);
-				
+
 				if (urlName != null && urlName.length() > 0 && url != null && url.length() > 0) {
 					IConfigurationElement[] wildcards = defaultUrl.getChildren(ELEM_WILDCARD);
-					for(IConfigurationElement wildcard: wildcards) {
+					for (IConfigurationElement wildcard : wildcards) {
 						String wildcardName = wildcard.getAttribute(ATTR_NAME);
 						url = url.replaceAll(wildcardName, "{" + wildcardName + "}");
 					}
 					result.add(new CloudURL(urlName, url, false));
-				}				
+				}
 			}
 			return result;
 		}
-		
+
 		return null;
 	}
 
 	public static List<CloudURL> getCloudUrls(String serverTypeId) {
 		return getUrls(serverTypeId, ELEM_CLOUD_URL);
 	}
-	
+
 	public static CloudURL getDefaultUrl(String serverTypeId) {
 		List<CloudURL> urls = getUrls(serverTypeId, ELEM_DEFAULT_URL);
 		if (urls != null && urls.size() == 1) {
 			return urls.get(0);
 		}
-		
+
 		return null;
 	}
-	
+
 	public static String getRemoteSystemTypeId(String serverTypeId) {
 		if (!read) {
 			readBrandingDefinitions();
@@ -200,12 +216,12 @@ public class CloudFoundryBrandingExtensionPoint {
 				}
 			}
 		}
-		
+
 		read = true;
 	}
 
 	public static boolean supportsRegistration(String serverTypeId, String url) {
 		return url != null && (url.endsWith("cloudfoundry.me") || url.endsWith("vcap.me"));
 	}
-	
+
 }

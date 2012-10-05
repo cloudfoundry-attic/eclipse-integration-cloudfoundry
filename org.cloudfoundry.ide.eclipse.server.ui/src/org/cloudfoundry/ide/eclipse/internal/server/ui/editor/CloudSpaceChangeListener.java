@@ -10,10 +10,16 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.cloudfoundry.client.lib.domain.CloudSpace;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudVersion;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.operation.IRunnableContext;
@@ -21,9 +27,9 @@ import org.eclipse.osgi.util.NLS;
 
 /**
  * 
- * This allows a new cloud space to be set in a cloud server using a different
- * set of credentials and URL. A check is performed if the credentials used to
- * find the list of spaces matches the current credentials in the server.
+ * This allows a new cloud space to be updated in a cloud server. A check is
+ * performed if the credentials used to find the list of spaces matches the
+ * current credentials in the server.
  * 
  * Handles the following:
  * 
@@ -65,7 +71,7 @@ public class CloudSpaceChangeListener {
 	 * @param password password to user to find list of spaces
 	 * @param context a runnable UI context, like a wizard.
 	 * @return descriptor with list of cloud spaces for the given url and
-	 * credentials, or null if failed to resolve.
+	 * credentials, or null if failed to resolve or url does not support orgs and spaces.
 	 * @throws CoreException if credentials and URL do not match the current
 	 * credentials and URL in the server, or failed to retrieve list of spaces
 	 */
@@ -73,10 +79,35 @@ public class CloudSpaceChangeListener {
 			IRunnableContext context) throws CoreException {
 		String actualURL = CloudUiUtil.getUrlFromDisplayText(urlText);
 		validateCredentials(actualURL, userName, password);
-		spacesDescriptor = CloudUiUtil.getCloudSpaces(userName, password, urlText, true, context);
+		spacesDescriptor = CloudUiUtil.getCloudSpaces(userName, password, actualURL, true, context);
+
+		// If the descriptor does not support spaces, clear any spaces
+		if (spacesDescriptor != null && !spacesDescriptor.supportsSpaces()) {
+			spacesDescriptor = null;
+		}
+		updateURLAsV2(spacesDescriptor, actualURL);
 		internalHandleCloudSpaceSelection(spacesDescriptor);
 
 		return spacesDescriptor;
+	}
+
+	protected void updateURLAsV2(CloudSpacesDescriptor descriptor, String url) {
+		String serverId = cloudServer.getServer().getServerType().getId();
+		List<CloudURL> existingURLs = CloudUiUtil.getUserDefinedUrls(serverId);
+		if (existingURLs != null) {
+			existingURLs = new ArrayList<CloudFoundryBrandingExtensionPoint.CloudURL>(existingURLs);
+			List<CloudURL> allUpdatedURLs = new ArrayList<CloudFoundryBrandingExtensionPoint.CloudURL>();
+			boolean isV2 = descriptor != null && descriptor.supportsSpaces();
+			for (CloudURL cUrl : existingURLs) {
+				if (cUrl.getUrl().equals(url)) {
+					cUrl = cUrl.updateVersion(isV2 ? CloudVersion.V2 : CloudVersion.V1);
+				}
+				allUpdatedURLs.add(cUrl);
+			}
+
+			CloudUiUtil.storeUserDefinedUrls(serverId, allUpdatedURLs);
+		}
+
 	}
 
 	public void clearDescriptor() {
