@@ -145,6 +145,9 @@ public class RepublishApplicationHandler {
 		ApplicationInfo appInfo = appModule.getLastApplicationInfo();
 		if (appInfo == null) {
 			appInfo = new ApplicationInfo(appModule.getApplicationId());
+		}
+
+		if (appInfo.getFramework() == null) {
 			String framework = org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil.getFramework(appModule);
 			appInfo.setFramework(framework);
 		}
@@ -154,9 +157,16 @@ public class RepublishApplicationHandler {
 		DeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
 		if (deploymentInfo == null) {
 			deploymentInfo = new DeploymentInfo();
+		}
+
+		if (deploymentInfo.getDeploymentName() == null) {
 			deploymentInfo.setDeploymentName(appModule.getApplicationId());
+		}
+
+		if (deploymentInfo.getMemory() <= 0) {
 			deploymentInfo.setMemory(CloudUtil.DEFAULT_MEMORY);
 		}
+
 		descriptor.deploymentInfo = deploymentInfo;
 
 		descriptor.staging = appModule.getStaging();

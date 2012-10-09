@@ -502,6 +502,12 @@ public class CloudUtil {
 		return false;
 	}
 
+	/**
+	 * 
+	 * @param module
+	 * @return framework if it can be determined by the local module and
+	 * workspace project, or default is JAVA_WEB. Never returns null
+	 */
 	public static String getFramework(ApplicationModule module) {
 		if (module != null && module.getLocalModule() != null) {
 			IProject project = module.getLocalModule().getProject();
