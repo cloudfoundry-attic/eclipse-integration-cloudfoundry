@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2012 VMware, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     VMware, Inc. - initial API and implementation
+ *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import java.util.List;
@@ -10,6 +20,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -92,7 +103,7 @@ public class RepublishApplicationHandler {
 						// Delete them first
 						IServerWorkingCopy wc = server.createWorkingCopy();
 						wc.modifyModules(null, modules, monitor);
-						wc.save(false, null);
+						wc.save(true, null);
 						// Create new ones
 						modules = ServerUtil.getModules(project);
 						if (modules != null && modules.length == 1) {
@@ -109,7 +120,7 @@ public class RepublishApplicationHandler {
 
 							// publish the module
 							wc.modifyModules(add, null, monitor);
-							wc.save(false, null);
+							wc.save(true, null);
 							republished = true;
 						}
 						else {
@@ -143,7 +154,8 @@ public class RepublishApplicationHandler {
 		DeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
 		if (deploymentInfo == null) {
 			deploymentInfo = new DeploymentInfo();
-			deploymentInfo.setMemory(512);
+			deploymentInfo.setDeploymentName(appModule.getApplicationId());
+			deploymentInfo.setMemory(CloudUtil.DEFAULT_MEMORY);
 		}
 		descriptor.deploymentInfo = deploymentInfo;
 

@@ -217,11 +217,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	}
 
 	protected boolean isValidDescriptor(DeploymentDescriptor descriptor) {
-		if (descriptor == null) {
-			return false;
-		}
-
-		if (descriptor.deploymentMode == null) {
+		if (descriptor == null || descriptor.deploymentMode == null) {
 			return false;
 		}
 
@@ -231,7 +227,8 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		}
 
 		DeploymentInfo deploymentInfo = descriptor.deploymentInfo;
-		if (deploymentInfo == null || deploymentInfo.getDeploymentName() == null
+
+		if (deploymentInfo == null || deploymentInfo.getDeploymentName() == null || deploymentInfo.getMemory() <= 0
 		// If it is not standalone app (not having staging is consider
 		// non-standalone), then URIs must be set to be a valid
 		// descriptor
