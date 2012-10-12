@@ -32,7 +32,7 @@ SECTION 1: BSD-STYLE, MIT-STYLE, OR SIMILAR STYLE LICENSES
 SECTION 2: Apache License, V2.0
 
    >>> spring-context-support-3.0.7.release
-   >>> cloudfoundry-client-lib-0.8.0
+   >>> cloudfoundry-client-lib-0.8.1
    >>> commons-io-2.1
    >>> commons-logging-1.1.1
    >>> jackson-core-1.6.0
@@ -171,7 +171,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 
->>> cloudfoundry-client-lib-0.8.0
+>>> cloudfoundry-client-lib-0.8.1
 
 Copyright 2009-2012 the original author or authors.
 
