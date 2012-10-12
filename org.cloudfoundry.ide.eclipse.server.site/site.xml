@@ -18,7 +18,7 @@
    <feature url="features/org.springframework.ide.eclipse.uaa.feature_0.0.0.jar" id="org.springframework.ide.eclipse.uaa.feature" version="0.0.0">
       <category name="Core / Cloud Foundry Integration"/>
    </feature>
-   <feature url="features/org.cloudfoundry.ide.eclipse.server.sdk_1.3.0.qualifier.jar" id="org.cloudfoundry.ide.eclipse.server.sdk" version="0.0.0">
+   <feature url="features/org.cloudfoundry.ide.eclipse.server.sdk_1.4.0.qualifier.jar" id="org.cloudfoundry.ide.eclipse.server.sdk" version="0.0.0">
       <category name="Resources / Cloud Foundry Integration"/>
    </feature>
    <category-def name="Core / Cloud Foundry Integration" label="Core / Cloud Foundry Integration"/>
