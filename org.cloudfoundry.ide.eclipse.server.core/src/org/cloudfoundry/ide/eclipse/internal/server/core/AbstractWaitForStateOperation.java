@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.eclipse.core.runtime.CoreException;
@@ -24,24 +23,31 @@ import org.eclipse.wst.server.core.IModule;
  * application is already in the expected state, the operation will not perform
  * 
  */
-public abstract class AbstractApplicationInWaitOperation {
+public abstract class AbstractWaitForStateOperation {
 	private final CloudFoundryServer cloudServer;
 
 	private final String jobName;
 
-	public AbstractApplicationInWaitOperation(CloudFoundryServer cloudServer, String jobName) {
-		this.cloudServer = cloudServer;
-		this.jobName = jobName;
+	private int ticks;
+
+	private long sleep;
+
+	public AbstractWaitForStateOperation(CloudFoundryServer cloudServer, String jobName) {
+		this(cloudServer, jobName, 10, 3000);
 	}
 
-	public boolean run(IProgressMonitor progress, CloudApplication cloudApplication)
-			throws CoreException {
+	public AbstractWaitForStateOperation(CloudFoundryServer cloudServer, String jobName, int ticks, long sleep) {
+		this.cloudServer = cloudServer;
+		this.jobName = jobName;
+		this.ticks = ticks;
+		this.sleep = sleep;
+	}
+
+	public boolean run(IProgressMonitor progress, CloudApplication cloudApplication) throws CoreException {
 
 		if (cloudApplication == null) {
 			return false;
 		}
-		int ticks = 10;
-		long sleep = 3000;
 
 		if (jobName != null) {
 			progress.setTaskName(jobName);
@@ -68,7 +74,7 @@ public abstract class AbstractApplicationInWaitOperation {
 					}
 
 				}.run(progress);
-				return result.booleanValue();
+				return result != null ? result.booleanValue() : false;
 			}
 			return false;
 		}

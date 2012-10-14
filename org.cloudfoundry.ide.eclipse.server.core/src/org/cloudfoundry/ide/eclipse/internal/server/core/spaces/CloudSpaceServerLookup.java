@@ -18,6 +18,7 @@ import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryOperationsHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
@@ -111,29 +112,50 @@ public class CloudSpaceServerLookup {
 			IProgressMonitor monitor) throws CoreException {
 		CloudFoundryOperations operations = CloudFoundryServerBehaviour.createClient(url, credentials.getEmail(),
 				credentials.getPassword());
-		CoreException httpException = null;
 		try {
-			operations.login();
-			return getCloudSpaceDescriptor(operations, monitor);
+			final List<CloudSpacesDescriptor> descriptors = new ArrayList<CloudSpacesDescriptor>();
+
+			CloudFoundryOperationsHandler handler = new CloudFoundryOperationsHandler(operations, null) {
+
+				@Override
+				protected void doRun(CloudFoundryOperations operations, SubMonitor progressMonitor)
+						throws CoreException {
+					CoreException httpException = null;
+					try {
+						CloudSpacesDescriptor descriptor = getCloudSpaceDescriptor(operations, progressMonitor);
+						if (descriptor != null) {
+							descriptors.add(descriptor);
+						}
+					}
+					catch (CloudFoundryException cfe) {
+						httpException = CloudUtil.toCoreException(cfe);
+					}
+					catch (RestClientException e) {
+						httpException = CloudUtil.toCoreException(e);
+					}
+
+					if (httpException != null) {
+						throw httpException;
+					}
+
+				}
+
+			};
+			handler.login(monitor);
+			handler.run(monitor);
+			return descriptors.size() > 0 ? descriptors.get(0) : null;
+
 		}
-		catch (CloudFoundryException cfe) {
-			httpException = CloudUtil.toCoreException(cfe);
-		}
-		catch (RestClientException e) {
-			httpException = CloudUtil.toCoreException(e);
-		}
+
 		catch (CoreException ce) {
-			httpException = ce;
-		}
-		// Convert the core exception into user friendly error messages.
-		if (httpException != null) {
-			String validationMessage = CloudUtil.getV2ValidationErrorMessage(httpException);
+			// Translate the cause to a user friendly message
+			String validationMessage = CloudUtil.getV2ValidationErrorMessage(ce);
 			if (validationMessage != null) {
-				httpException = new CoreException(CloudFoundryPlugin.getErrorStatus(validationMessage));
+				ce = new CoreException(CloudFoundryPlugin.getErrorStatus(validationMessage));
 			}
-			throw httpException;
+			throw ce;
 		}
-		return null;
+
 	}
 
 	private static CloudSpacesDescriptor getCloudSpaceDescriptor(CloudFoundryOperations operations,

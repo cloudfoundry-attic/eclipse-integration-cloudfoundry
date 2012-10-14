@@ -15,7 +15,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 
-public class StopApplicationInWaitOperation extends AbstractApplicationInWaitOperation {
+public class StopApplicationInWaitOperation extends AbstractWaitForStateOperation {
 
 	public StopApplicationInWaitOperation(CloudFoundryServer cloudServer) {
 		super(cloudServer, "Stopping application");

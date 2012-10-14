@@ -26,7 +26,6 @@ import java.util.Set;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
-import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.domain.ApplicationStats;
@@ -65,7 +64,6 @@ import org.eclipse.wst.server.core.model.IModuleFile;
 import org.eclipse.wst.server.core.model.IModuleResource;
 import org.eclipse.wst.server.core.model.IModuleResourceDelta;
 import org.eclipse.wst.server.core.model.ServerBehaviourDelegate;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClientException;
 
 /**
@@ -445,15 +443,46 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return new Request<ApplicationStats>(NLS.bind("Getting application statistics for {0}", applicationId)) {
 			@Override
 			protected ApplicationStats doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				// Wait until app has started for v2
+				if (client.supportsSpaces()) {
+					appStarted(applicationId, client, progress);
+				}
 				return client.getApplicationStats(applicationId);
 			}
 		}.run(monitor);
+	}
+
+	protected boolean appStarted(final String applicationId, CloudFoundryOperations operations, IProgressMonitor monitor)
+			throws CoreException {
+		CloudApplication cloudApplication = operations.getApplication(applicationId);
+		if (cloudApplication != null) {
+			AbstractWaitForStateOperation waitForStart = new AbstractWaitForStateOperation(getCloudFoundryServer(),
+					"Waiting for application to start", 2, 1000) {
+
+				@Override
+				protected void doOperation(CloudFoundryServerBehaviour behaviour, IModule module,
+						IProgressMonitor progress) throws CoreException {
+					// Do nothing. Wait for application to start
+				}
+
+				@Override
+				protected boolean isInState(AppState state) {
+					return state.equals(CloudApplication.AppState.STARTED);
+				}
+
+			};
+			return waitForStart.run(monitor, cloudApplication);
+		}
+		return false;
 	}
 
 	public InstancesInfo getInstancesInfo(final String applicationId, IProgressMonitor monitor) throws CoreException {
 		return new Request<InstancesInfo>(NLS.bind("Getting application statistics for {0}", applicationId)) {
 			@Override
 			protected InstancesInfo doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				if (client.supportsSpaces()) {
+					appStarted(applicationId, client, progress);
+				}
 				return client.getApplicationInstances(applicationId);
 			}
 		}.run(monitor);
@@ -1016,32 +1045,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
-	 * 
-	 * @return true if there was a proxy update. False any other case.
-	 * @throws CoreException
-	 */
-	protected boolean updateProxyInClient(CloudFoundryOperations client) throws CoreException {
-		if (client != null) {
-
-			String url = getCloudFoundryServer().getUrl();
-			if (url != null) {
-				try {
-					URL actualUrl = new URL(url);
-					HttpProxyConfiguration proxyConfiguration = CloudFoundryClientFactory.getProxy(actualUrl);
-
-					client.updateHttpProxyConfiguration(proxyConfiguration);
-					return true;
-				}
-				catch (MalformedURLException e) {
-					// Ignore. If URL is incorrect, other
-					// mechanisms exit to prompt user for correct values.
-				}
-			}
-		}
-		return false;
-	}
-
-	/**
 	 * In most cases, the progress monitor can be null, although if available
 	 * 
 	 * @param monitor
@@ -1275,7 +1278,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		progress.beginTask("Connecting", IProgressMonitor.UNKNOWN);
 		try {
 			CloudFoundryOperations client = createClient(location, userName, password);
-			client.login();
+			CloudFoundryOperationsHandler operationsHandler = new CloudFoundryOperationsHandler(client, null);
+			operationsHandler.login(progress);
 		}
 		catch (RestClientException e) {
 			throw CloudUtil.toCoreException(e);
@@ -1440,32 +1444,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			this.label = label;
 		}
 
-		protected boolean shouldAttemptClientLogin(CloudFoundryException exception) {
-			if (exception != null) {
-
-				if (exception.getStatusCode() == HttpStatus.FORBIDDEN) {
-					return true;
-				}
-				else if (exception.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-					// For now, only handle this case if it is a v2 server
-					CloudFoundryServer cloudServer = null;
-					try {
-						cloudServer = getCloudFoundryServer();
-					}
-					catch (CoreException e) {
-						// If no server can be resolved, attempt to determine
-						// based
-						// on the error code
-					}
-					if (cloudServer != null && cloudServer.supportsCloudSpaces()) {
-						return true;
-					}
-
-				}
-			}
-			return false;
-		}
-
 		public T run(IProgressMonitor monitor) throws CoreException {
 			CloudFoundryServer cloudServer = getCloudFoundryServer();
 
@@ -1485,16 +1463,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			boolean succeeded = false;
 			try {
 				CloudFoundryOperations client = getClient(subProgress);
+				String cloudURL = getCloudFoundryServer() != null ? getCloudFoundryServer().getUrl() : null;
+
+				CloudFoundryOperationsHandler handler = new CloudFoundryOperationsHandler(client, cloudURL);
 
 				// Always check if proxy settings have changed.
-				updateProxyInClient(client);
+				handler.updateProxyInClient(client);
 				try {
 					result = doRun(client, subProgress);
 					succeeded = true;
 				}
 				catch (CloudFoundryException e) {
 					// try again in case of a login failure
-					if (shouldAttemptClientLogin(e)) {
+					if (handler.shouldAttemptClientLogin(e)) {
 						client.login();
 						result = doRun(client, subProgress);
 						succeeded = true;

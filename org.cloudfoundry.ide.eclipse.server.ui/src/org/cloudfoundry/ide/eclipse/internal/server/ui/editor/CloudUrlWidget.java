@@ -42,7 +42,6 @@ public class CloudUrlWidget {
 	public CloudUrlWidget(CloudFoundryServer cfServer) {
 		this.cfServer = cfServer;
 		this.serverTypeId = cfServer.getServer().getServerType().getId();
-
 	}
 
 	public void createControls(final Composite parent) {

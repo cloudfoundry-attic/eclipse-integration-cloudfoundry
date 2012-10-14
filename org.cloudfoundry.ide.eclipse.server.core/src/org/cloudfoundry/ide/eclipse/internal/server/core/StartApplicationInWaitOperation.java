@@ -16,7 +16,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 
-public class StartApplicationInWaitOperation extends AbstractApplicationInWaitOperation {
+public class StartApplicationInWaitOperation extends AbstractWaitForStateOperation {
 
 	public StartApplicationInWaitOperation(CloudFoundryServer cloudServer, String operationLabel) {
 		super(cloudServer, operationLabel);

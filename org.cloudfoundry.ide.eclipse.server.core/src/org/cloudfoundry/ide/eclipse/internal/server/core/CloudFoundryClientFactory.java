@@ -109,14 +109,23 @@ public class CloudFoundryClientFactory {
 
 	public static HttpProxyConfiguration getProxy(URL url) {
 
-		IProxyService proxyService = CloudFoundryPlugin.getDefault().getProxyService();
-		IProxyData[] existingProxies = proxyService.getProxyData();
-		if (existingProxies != null && existingProxies.length > 0) {
-			for (IProxyData data : existingProxies) {
-				if (IProxyData.HTTP_PROXY_TYPE.equals(data.getType())) {
-					int proxyPort = existingProxies[0].getPort();
-					String proxyHost = existingProxies[0].getHost();
-					return proxyHost != null ? new HttpProxyConfiguration(proxyHost, proxyPort) : null;
+		// In certain cases, the activator would have stopped and the plugin may
+		// no longer be available. Usually onl happens on shutdown.
+
+		CloudFoundryPlugin plugin = CloudFoundryPlugin.getDefault();
+
+		if (plugin != null) {
+			IProxyService proxyService = plugin.getProxyService();
+			if (proxyService != null) {
+				IProxyData[] existingProxies = proxyService.getProxyData();
+				if (existingProxies != null && existingProxies.length > 0) {
+					for (IProxyData data : existingProxies) {
+						if (IProxyData.HTTP_PROXY_TYPE.equals(data.getType())) {
+							int proxyPort = existingProxies[0].getPort();
+							String proxyHost = existingProxies[0].getHost();
+							return proxyHost != null ? new HttpProxyConfiguration(proxyHost, proxyPort) : null;
+						}
+					}
 				}
 			}
 		}

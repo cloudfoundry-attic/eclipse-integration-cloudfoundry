@@ -339,9 +339,6 @@ public class CloudFoundryCredentialsPart {
 					String password = passwordText.getText();
 
 					CloudVersion version = getLocallyTrackedCloudVersion(userName, password, url);
-					if (version == null) {
-						version = CloudUiUtil.getCloudVersion(url, cfServer);
-					}
 
 					clearDescriptor = updateV2Spaces(errorMessages, userName, password, url, version);
 
