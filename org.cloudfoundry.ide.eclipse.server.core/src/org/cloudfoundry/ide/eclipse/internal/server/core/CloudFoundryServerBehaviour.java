@@ -92,6 +92,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private static final long DEPLOYMENT_TIMEOUT = 10 * 60 * 1000;
 
 	private static final long SHORT_INTERVAL = 5 * 1000;
+	
+	private static final long ONE_SECOND_INTERVAL = 1000;
 
 	private static final long UPLOAD_TIMEOUT = 60 * 1000;
 
@@ -194,7 +196,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public void deleteModules(final IModule[] modules, final boolean deleteServices, IProgressMonitor monitor)
 			throws CoreException {
 		final CloudFoundryServer cloudServer = getCloudFoundryServer();
-		new Request<Void>() {
+		new RequestWithRefreshCallBack<Void>() {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				for (IModule module : modules) {
@@ -1521,6 +1523,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		protected abstract T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException;
 
+	}
+
+	/**
+	 * Runs a client request, and then performs a refresh after 1 second interval
+	 */
+	abstract class RequestWithRefreshCallBack<T> extends Request<T> {
+		public T run(IProgressMonitor monitor) throws CoreException {
+			T result = super.run(monitor);
+			setRefreshInterval(ONE_SECOND_INTERVAL);
+			return result;
+		}
 	}
 
 	/**
