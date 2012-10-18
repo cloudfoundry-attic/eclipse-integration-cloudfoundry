@@ -81,7 +81,6 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 		masterDetailsBlock = new ApplicationMasterDetailsBlock(this, cloudServer);
 		masterDetailsBlock.createContent(mform);
 
-		createRefreshAction();
 		sform.getForm().setImage(CloudFoundryImages.getImage(CloudFoundryImages.OBJ_APPLICATION));
 		refresh(RefreshArea.MASTER, true);
 
@@ -211,18 +210,6 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 	
 	public void setApplicationMemoryChoices(int[] applicationMemoryChoices) {
 		this.applicationMemoryChoices = applicationMemoryChoices;
-	}
-
-	private void createRefreshAction() {
-		IToolBarManager toolBarManager = sform.getToolBarManager();
-
-		if (toolBarManager.getItems().length > 0) {
-			toolBarManager.add(new Separator());
-		}
-
-		toolBarManager.add(new RefreshApplicationEditorAction(this));
-
-		toolBarManager.update(true);
 	}
 
 	private class ServerListener implements CloudServerListener, IServerListener {

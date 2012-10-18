@@ -50,7 +50,9 @@ public class ApplicationMasterDetailsBlock extends MasterDetailsBlock implements
 	@Override
 	public void createContent(IManagedForm managedForm) {
 		super.createContent(managedForm);
-		sashForm.setWeights(new int[] { 40, 60 });
+		// Set the width allocation for both the master and detail parts.
+		// Fix for STS-2995
+		sashForm.setWeights(new int[] { 50, 50 });
 	}
 
 	public IModule getCurrentModule() {

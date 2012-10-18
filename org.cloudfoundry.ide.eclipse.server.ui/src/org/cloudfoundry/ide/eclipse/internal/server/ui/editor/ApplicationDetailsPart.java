@@ -74,6 +74,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
@@ -179,6 +180,10 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	private int memory;
 
 	private boolean isPublished = false;
+
+	// Resize viewer tables on first refresh as to avoid extra space after the
+	// last column
+	private boolean initialTableResized = false;
 
 	// Workaround as there is no restart state in the app server state,
 	// and button refresh should not occur during restart mode
@@ -367,6 +372,9 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	}
 
 	public void refreshUI() {
+
+		resizeTableColumns();
+
 		canUpdate = false;
 		ApplicationModule appModule = getApplication();
 		int state = appModule.getState();
@@ -534,6 +542,55 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		DropTarget dropTarget = new DropTarget(section, ops);
 		dropTarget.setTransfer(transfers);
 		dropTarget.addDropListener(servicesDropListener);
+	}
+
+	protected void resizeTableColumns() {
+		if (initialTableResized) {
+			return;
+		}
+
+		List<TableViewer> tableViewers = new ArrayList<TableViewer>();
+
+		if (servicesViewer != null) {
+			tableViewers.add(servicesViewer);
+		}
+
+		if (instancesViewer != null) {
+			tableViewers.add(instancesViewer);
+		}
+
+		for (TableViewer tableViewer : tableViewers) {
+			Table table = tableViewer.getTable();
+			Composite tableComposite = table.getParent();
+			Rectangle tableCompositeArea = tableComposite.getClientArea();
+			int tableWidth = tableCompositeArea.width;
+			TableColumn[] tableColumns = table.getColumns();
+
+			if (tableColumns.length == 0) {
+				continue;
+			}
+
+			int totalColumnWidths = 0;
+
+			// resize only if there is empty space at the end of the table
+			for (TableColumn column : tableColumns) {
+				totalColumnWidths += column.getWidth();
+			}
+
+			if (totalColumnWidths < tableWidth) {
+
+				// If a successful resize, do not attempt to resize on
+				// subsequent
+				// refreshes.
+				initialTableResized = true;
+
+				// resize the last one column such that the last column width
+				// takes up all the empty space
+				TableColumn lastColumn = tableColumns[tableColumns.length - 1];
+				int newWidth = (tableWidth - totalColumnWidths) + lastColumn.getWidth();
+				lastColumn.setWidth(newWidth);
+			}
+		}
 	}
 
 	private void createGeneralSection(Composite parent) {
@@ -918,7 +975,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		int[] columnWidths = {};
 		ServiceColumnDescriptor columnDescriptor = ApplicationInstanceServiceColumn
 				.getServiceColumnDescriptor(cloudServer);
-		
+
 		if (columnDescriptor != null && columnDescriptor.getServiceViewColumn() != null) {
 			int length = columnDescriptor.getServiceViewColumn().length;
 			columnNames = new String[length];

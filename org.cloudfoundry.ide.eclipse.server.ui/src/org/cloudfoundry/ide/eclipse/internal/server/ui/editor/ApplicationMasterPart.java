@@ -22,6 +22,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DeleteServicesAction;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.RefreshApplicationEditorAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryServiceWizard;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -272,6 +273,9 @@ public class ApplicationMasterPart extends SectionPart {
 			}
 		};
 		toolBarManager.add(addRemoveApplicationAction);
+		
+		// Fix for STS-2996. Moved from CloudFoundryApplicationsEditorPage
+		toolBarManager.add(new RefreshApplicationEditorAction(editorPage));
 		toolBarManager.update(true);
 		section.setTextClient(headerComposite);
 
