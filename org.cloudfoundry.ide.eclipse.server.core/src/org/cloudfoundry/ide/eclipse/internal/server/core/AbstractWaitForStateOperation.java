@@ -60,21 +60,17 @@ public abstract class AbstractWaitForStateOperation {
 			if (appModule != null) {
 				IModule module = appModule.getLocalModule();
 				doOperation(cloudServer.getBehaviour(), module, progress);
-				Boolean result = new WaitWithProgressJob<Boolean>(ticks, sleep) {
+				Boolean result = new WaitWithProgressJob(ticks, sleep) {
 
 					@Override
-					protected Boolean runInWait(IProgressMonitor monitor) throws CoreException {
+					protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
 						CloudApplication updatedCloudApp = cloudServer.getBehaviour().getApplication(appName, monitor);
-						if (updatedCloudApp != null && isInState(updatedCloudApp.getState())) {
-							return true;
-						}
 
-						// wait to check again the state of the app
-						return null;
+						return updatedCloudApp != null && isInState(updatedCloudApp.getState());
 					}
 
 				}.run(progress);
-				return result != null ? result.booleanValue() : false;
+				return result.booleanValue();
 			}
 			return false;
 		}

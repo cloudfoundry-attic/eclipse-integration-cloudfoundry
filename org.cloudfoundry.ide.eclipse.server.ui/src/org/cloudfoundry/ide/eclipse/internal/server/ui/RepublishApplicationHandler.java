@@ -22,6 +22,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.WaitWithProgressJob;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -92,7 +93,7 @@ public class RepublishApplicationHandler {
 
 				IServer server = cloudServer.getServer();
 
-				IModule[] modules = ServerUtil.getModules(project);
+				final IModule[] modules = ServerUtil.getModules(project);
 
 				if (modules != null && modules.length == 1) {
 					IModule[] add = null;
@@ -104,10 +105,27 @@ public class RepublishApplicationHandler {
 						IServerWorkingCopy wc = server.createWorkingCopy();
 						wc.modifyModules(null, modules, monitor);
 						wc.save(true, null);
+						cloudServer.getBehaviour().refreshModules(monitor);
+
+						new WaitWithProgressJob(5, 1000) {
+
+							@Override
+							protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
+								boolean found = cloudServer.getApplication(modules[0]) != null;
+								if (found) {
+									cloudServer.getBehaviour().refreshModules(monitor);
+								}
+								// If the app has been found, try again until it
+								// is not found
+								return !found;
+							}
+
+						}.run(monitor);
+
 						// Create new ones
-						modules = ServerUtil.getModules(project);
-						if (modules != null && modules.length == 1) {
-							add = new IModule[] { modules[0] };
+						IModule[] newModules = ServerUtil.getModules(project);
+						if (newModules != null && newModules.length == 1) {
+							add = new IModule[] { newModules[0] };
 						}
 					}
 					if (add != null && add.length > 0) {

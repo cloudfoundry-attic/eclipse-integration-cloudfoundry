@@ -43,6 +43,7 @@ public class StandaloneHandler {
 
 	private List<RuntimeType> appTypes;
 
+
 	public StandaloneHandler(ApplicationModule appModule, CloudFoundryServer cloudServer) {
 		this.appModule = appModule;
 		this.cloudServer = cloudServer;
@@ -53,6 +54,9 @@ public class StandaloneHandler {
 	}
 
 	protected boolean isStandaloneApp() {
+		if (appModule == null) {
+			return false;
+		}
 		IModule module = appModule.getLocalModule();
 		boolean isStandalone = module != null
 				&& CloudFoundryServer.ID_JAVA_STANDALONE_APP.equals(module.getModuleType().getId());

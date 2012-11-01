@@ -13,7 +13,9 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IInputValidator;
@@ -57,9 +59,15 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 
 	private TableViewer viewer;
 
-	public CloudFoundryURLsWizardPage(CloudFoundryServer cloudServer, List<String> existingURIs) {
+	private StandaloneHandler standaloneHandler;
+
+	public CloudFoundryURLsWizardPage(CloudFoundryServer cloudServer, List<String> existingURIs,
+			ApplicationModule appModule) {
 		super("Mapped URIs");
 
+		if (appModule != null && cloudServer != null) {
+			standaloneHandler = new StandaloneHandler(appModule, cloudServer);
+		}
 		urls = new ArrayList<String>();
 		if (existingURIs != null) {
 			urls.addAll(existingURIs);
@@ -71,6 +79,14 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 		if (banner != null) {
 			setImageDescriptor(banner);
 		}
+	}
+
+	protected boolean isStandaloneApp() {
+		if (standaloneHandler == null) {
+			return false;
+		}
+
+		return standaloneHandler.isSupportedStandalone();
 	}
 
 	public void createControl(Composite parent) {
@@ -191,7 +207,7 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 	}
 
 	public boolean isPageComplete() {
-		return !urls.isEmpty();
+		return isStandaloneApp() || !urls.isEmpty();
 	}
 
 	public List<String> getURLs() {

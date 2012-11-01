@@ -54,17 +54,17 @@ public class CloudFoundryOperationsHandler {
 	}
 
 	protected boolean internalLogin(IProgressMonitor monitor, int tries, long sleep) throws CoreException {
-		Boolean result = new WaitWithProgressJob<Boolean>(tries, sleep) {
+		Boolean result = new WaitWithProgressJob(tries, sleep) {
 
 			@Override
-			protected Boolean runInWait(IProgressMonitor monitor) throws CoreException {
+			protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
 				try {
 					operations.login();
-					return new Boolean(true);
+					return true;
 				}
 				catch (CloudFoundryException cfe) {
 					if (shouldAttemptClientLogin(cfe)) {
-						return null;
+						return false;
 					}
 					else {
 						throw CloudUtil.toCoreException(cfe);
@@ -77,7 +77,7 @@ public class CloudFoundryOperationsHandler {
 			}
 
 		}.run(monitor);
-		return result != null ? result.booleanValue() : false;
+		return result.booleanValue();
 	}
 
 	protected SubMonitor getProgressMonitor(IProgressMonitor progressMonitor) {

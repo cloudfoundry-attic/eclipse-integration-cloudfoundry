@@ -139,7 +139,7 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 	}
 
 	protected ConsoleContent.Result getResult(final ConsoleContent content) throws Exception {
-		return new WaitWithProgressJob<ConsoleContent.Result>(5, 1000) {
+		return new AbstractWaitWithProgressJob<ConsoleContent.Result>(5, 1000) {
 
 			@Override
 			protected Result runInWait(IProgressMonitor monitor) throws CoreException {

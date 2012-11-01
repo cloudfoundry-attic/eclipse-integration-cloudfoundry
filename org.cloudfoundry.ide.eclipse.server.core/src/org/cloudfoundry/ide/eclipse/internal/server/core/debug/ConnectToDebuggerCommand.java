@@ -18,6 +18,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.WaitWithProgressJob;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -33,7 +34,6 @@ import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.wst.server.core.IModule;
-
 
 /**
  * Connects a running app in debug mode to the debugger. The app must be running
@@ -142,38 +142,46 @@ public class ConnectToDebuggerCommand extends DebugCommand {
 		final ILaunchConfiguration launchConfiguration = getLaunchConfiguration(debugIP, debugPort, 5000,
 				getApplicationID(), launchLabel);
 		boolean successful = false;
-
+		IStatus status = Status.OK_STATUS;
 		if (launchConfiguration != null) {
-			successful = new WaitOperation() {
+			try {
+				Boolean result = new WaitWithProgressJob(5, 1000) {
 
-				private boolean firstTry = true;
+					private boolean firstTry = true;
 
-				protected int getWaitTime() {
-					return 1000;
-				}
+					protected boolean internalRunInWait(IProgressMonitor monitor) {
+						// If it is the first try, wait first as it may take a
+						// while
+						// to connect to the JVM.
 
-				protected boolean runInWaitCycle(IProgressMonitor monitor) {
-					// If it is the first try, wait first as it may take a while
-					// to connect to the JVM.
+						if (!firstTry) {
+							DebugUITools.launch(launchConfiguration, ILaunchManager.DEBUG_MODE);
+							return true;
+						}
+						else {
+							firstTry = false;
+						}
 
-					if (!firstTry) {
-						DebugUITools.launch(launchConfiguration, ILaunchManager.DEBUG_MODE);
-						return true;
+						// Failed to connect. Continue retrying.
+						return false;
 					}
-					else {
-						firstTry = false;
-					}
 
-					// Failed to connect. Continue retrying.
-					return false;
-				}
+				}.run(monitor);
 
-			}.doWait(monitor);
+				successful = result.booleanValue();
+			}
+			catch (CoreException e) {
+				successful = false;
+				status = CloudFoundryPlugin.getErrorStatus(e);
+			}
 		}
 
-		return successful ? Status.OK_STATUS : new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-				"Failed to connect to Cloud Foundry server - IP: " + debugIP + " Port: " + debugPort + " Application: "
-						+ getApplicationID());
+		if (!successful && status == null) {
+			status = CloudFoundryPlugin.getErrorStatus("Failed to connect to Cloud Foundry server - IP: " + debugIP
+					+ " Port: " + debugPort + " Application: " + getApplicationID());
+		}
+
+		return status;
 
 	}
 

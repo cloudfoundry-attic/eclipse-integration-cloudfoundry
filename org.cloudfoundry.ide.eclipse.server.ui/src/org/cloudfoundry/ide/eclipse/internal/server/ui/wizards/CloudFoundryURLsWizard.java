@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
@@ -22,8 +21,10 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.RepublishApplicationHandl
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.wizard.Wizard;
+import org.eclipse.ui.statushandlers.StatusManager;
 
 /**
  * @author Terry Denney
@@ -48,7 +49,7 @@ public class CloudFoundryURLsWizard extends Wizard {
 		this.existingURIs = existingURIs;
 
 		setWindowTitle("Modify Mapped URLs");
-		setNeedsProgressMonitor(true);
+		setNeedsProgressMonitor(false);
 	}
 
 	public CloudFoundryURLsWizard(CloudFoundryServer cloudServer, String appName, List<String> existingURIs,
@@ -59,7 +60,7 @@ public class CloudFoundryURLsWizard extends Wizard {
 
 	@Override
 	public void addPages() {
-		page = new CloudFoundryURLsWizardPage(cloudServer, existingURIs);
+		page = new CloudFoundryURLsWizardPage(cloudServer, existingURIs, getAppModule());
 		addPage(page);
 	}
 
@@ -84,36 +85,30 @@ public class CloudFoundryURLsWizard extends Wizard {
 						+ (url != null ? " for " + url : "") + ". Please republish application manually.");
 			}
 			else {
-				IRunnableWithProgress runnable = new IRunnableWithProgress() {
+				// Launch a job to execute the republish after the wizard
+				// completes
+				Job job = new Job("Republishing " + appModule.getApplicationId()) {
 
-					public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
+						IStatus status = null;
 						try {
 							new RepublishApplicationHandler(appModule, page.getURLs(), cloudServer).republish(monitor);
 						}
 						catch (CoreException e) {
-							CloudFoundryPlugin.logError(e);
-							result[0] = CloudFoundryPlugin.getErrorStatus(e);
+							status = CloudFoundryPlugin.getErrorStatus(e);
+							StatusManager.getManager().handle(status, StatusManager.LOG);
 						}
-
+						return status != null ? status : Status.OK_STATUS;
 					}
+
 				};
-				try {
-					// Must both fork and set cancellable to true in order to
-					// enable
-					// cancellation of long-running validations
-					getContainer().run(true, true, runnable);
-				}
-				catch (InvocationTargetException e) {
-					result[0] = CloudFoundryPlugin.getErrorStatus(e);
-				}
-				catch (InterruptedException e) {
-					result[0] = CloudFoundryPlugin.getErrorStatus(e);
-				}
+				job.setSystem(false);
+				job.setPriority(Job.INTERACTIVE);
+				job.schedule();
+
 			}
-			if (result[0] != null) {
-				CloudFoundryPlugin.logError(result[0]);
-			}
-			return true;
+
 		}
 		else {
 			result[0] = CloudUiUtil.runForked(new ICoreRunnable() {
@@ -132,7 +127,8 @@ public class CloudFoundryURLsWizard extends Wizard {
 			return cloudServer.getApplicationModule(appName);
 		}
 		catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
+			IStatus status = CloudFoundryPlugin.getErrorStatus(e);
+			StatusManager.getManager().handle(status, StatusManager.LOG);
 		}
 		return null;
 	}

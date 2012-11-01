@@ -117,7 +117,7 @@ public class CaldecottTunnelHandler {
 		long sleep = 3000;
 
 		progress.setTaskName("Getting tunnel URL");
-		String url = new WaitWithProgressJob<String>(ticks, sleep) {
+		String url = new AbstractWaitWithProgressJob<String>(ticks, sleep) {
 
 			@Override
 			protected String runInWait(IProgressMonitor monitor) throws CoreException {
@@ -365,7 +365,7 @@ public class CaldecottTunnelHandler {
 		int ticks = 5;
 		long sleepTime = 2000;
 
-		Map<String, String> info = new WaitWithProgressJob<Map<String, String>>(ticks, sleepTime) {
+		Map<String, String> info = new AbstractWaitWithProgressJob<Map<String, String>>(ticks, sleepTime) {
 
 			@Override
 			protected Map<String, String> runInWait(IProgressMonitor monitor) {
