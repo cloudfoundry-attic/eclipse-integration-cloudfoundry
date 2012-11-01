@@ -113,7 +113,7 @@ public class CloudFoundryServicePlanWizardPage extends AbstractCloudFoundryServi
 	@Override
 	protected CloudService createService() {
 		CloudService service = new CloudService();
-		service.setMeta(CloudEntity.Meta.defaultV2Meta());
+		service.setMeta(CloudEntity.Meta.defaultMeta());
 		return service;
 	}
 

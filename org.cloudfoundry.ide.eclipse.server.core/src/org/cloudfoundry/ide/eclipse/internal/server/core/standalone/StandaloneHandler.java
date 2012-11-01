@@ -77,7 +77,7 @@ public class StandaloneHandler {
 		if (staging == null) {
 			CloudApplication cloudApp = appModule.getApplication();
 			if (cloudApp != null) {
-				staging = new StagingHandler(cloudApp.getStaging()).getStaging();
+				staging = cloudApp.getStaging();
 			}
 		}
 		return staging;
