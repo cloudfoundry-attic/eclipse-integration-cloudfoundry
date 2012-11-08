@@ -8,17 +8,17 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
+package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -151,7 +151,7 @@ public class TunnelDisplayPart {
 
 		if (servicesWithTunnels != null && !servicesWithTunnels.isEmpty()) {
 			cache = new ArrayList<CaldecottTunnelDescriptor>();
-			CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+			TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
 			for (String serviceName : servicesWithTunnels) {
 				CaldecottTunnelDescriptor descriptor = handler.getCaldecottTunnel(serviceName);
 				if (descriptor != null) {

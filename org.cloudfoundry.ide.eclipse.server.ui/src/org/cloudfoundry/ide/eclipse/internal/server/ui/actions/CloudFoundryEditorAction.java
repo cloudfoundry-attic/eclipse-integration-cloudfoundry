@@ -11,7 +11,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
@@ -106,7 +106,7 @@ public abstract class CloudFoundryEditorAction extends Action {
 						// areas of the editor
 						// refresh the entire editor when an operation is
 						// related to Caldecott
-						if (module != null && CaldecottTunnelHandler.isCaldecottApp(module.getName())) {
+						if (module != null && TunnelBehaviour.isCaldecottApp(module.getName())) {
 							return editorPage.refreshStates(module, RefreshArea.ALL, monitor);
 						}
 						else {

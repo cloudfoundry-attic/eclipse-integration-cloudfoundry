@@ -8,9 +8,10 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
 import org.cloudfoundry.caldecott.client.TunnelServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 
 public class CaldecottTunnelDescriptor {
 
@@ -84,7 +85,7 @@ public class CaldecottTunnelDescriptor {
 				builtURL = new StringBuilder();
 				builtURL.append("jdbc:mysql");
 				builtURL.append("://");
-				builtURL.append(CaldecottTunnelHandler.LOCAL_HOST);
+				builtURL.append(TunnelBehaviour.LOCAL_HOST);
 				builtURL.append(":");
 				builtURL.append(tunnelPort());
 				if (getDatabaseName() != null) {
@@ -111,7 +112,7 @@ public class CaldecottTunnelDescriptor {
 				builtURL = new StringBuilder();
 				builtURL.append("jdbc:postgresql");
 				builtURL.append("://");
-				builtURL.append(CaldecottTunnelHandler.LOCAL_HOST);
+				builtURL.append(TunnelBehaviour.LOCAL_HOST);
 				builtURL.append(":");
 				builtURL.append(tunnelPort());
 				if (getDatabaseName() != null) {

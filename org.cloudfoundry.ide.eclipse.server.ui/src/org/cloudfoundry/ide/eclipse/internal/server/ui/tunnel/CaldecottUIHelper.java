@@ -8,22 +8,23 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
+package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ModifyServicesForApplicationAction;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AddServiceStartCaldecottAction;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CaldecottTunnelInfoDialog;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CaldecottTunnelWizard;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -60,7 +61,7 @@ public class CaldecottUIHelper {
 					if (descriptorsToRemove != null) {
 						for (CaldecottTunnelDescriptor descriptor : descriptorsToRemove) {
 							try {
-								new CaldecottTunnelHandler(cloudServer).stopAndDeleteCaldecottTunnel(
+								new TunnelBehaviour(cloudServer).stopAndDeleteCaldecottTunnel(
 										descriptor.getServiceName(), monitor);
 							}
 							catch (CoreException e) {
@@ -111,7 +112,7 @@ public class CaldecottUIHelper {
 			final CloudFoundryApplicationsEditorPage editorPage) {
 		Collection<String> selectedServices = ModifyServicesForApplicationAction.getServiceNames(selection);
 		List<IAction> actions = new ArrayList<IAction>();
-		final CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+		final TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
 		if (selectedServices != null && !selectedServices.isEmpty()) {
 			final List<String> servicesWithTunnels = new ArrayList<String>();
 			final List<String> servicesToAdd = getServicesWithNoTunnel(selectedServices, handler, servicesWithTunnels);
@@ -135,7 +136,7 @@ public class CaldecottUIHelper {
 		return actions;
 	}
 
-	public List<String> getServicesWithNoTunnel(Collection<String> selectedServices, CaldecottTunnelHandler handler,
+	public List<String> getServicesWithNoTunnel(Collection<String> selectedServices, TunnelBehaviour handler,
 			List<String> servicesWithTunnels) {
 		List<String> filteredInServices = new ArrayList<String>();
 		for (String serviceName : selectedServices) {
@@ -155,10 +156,10 @@ public class CaldecottUIHelper {
 
 		private final List<String> servicesWithTunnels;
 
-		private final CaldecottTunnelHandler handler;
+		private final TunnelBehaviour handler;
 
 		public DisconnectCaldecottTunnelAction(CloudFoundryApplicationsEditorPage editorPage,
-				CaldecottTunnelHandler handler, List<String> servicesWithTunnels) {
+				TunnelBehaviour handler, List<String> servicesWithTunnels) {
 			super(editorPage, RefreshArea.ALL);
 			setText(ACTION_NAME);
 			setImageDescriptor(CloudFoundryImages.DISCONNECT);

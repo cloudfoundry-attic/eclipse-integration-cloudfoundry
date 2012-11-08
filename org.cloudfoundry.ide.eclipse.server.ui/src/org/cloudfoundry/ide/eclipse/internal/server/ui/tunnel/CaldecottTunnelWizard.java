@@ -8,12 +8,12 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
+package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
 import java.util.Set;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.jface.wizard.Wizard;
 
 public class CaldecottTunnelWizard extends Wizard {

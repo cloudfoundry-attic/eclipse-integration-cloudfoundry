@@ -26,6 +26,7 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -55,7 +56,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  * list of organisations and spaces.
  * 
  */
-public class CaldecottTunnelHandler {
+public class TunnelBehaviour {
 
 	public static final String LOCAL_HOST = "127.0.0.1";
 
@@ -65,7 +66,7 @@ public class CaldecottTunnelHandler {
 
 	public static final int MAX_PORT = 49150;
 
-	public CaldecottTunnelHandler(CloudFoundryServer cloudServer) {
+	public TunnelBehaviour(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
 	}
 

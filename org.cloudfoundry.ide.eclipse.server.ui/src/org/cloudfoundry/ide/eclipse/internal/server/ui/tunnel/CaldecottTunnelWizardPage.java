@@ -8,7 +8,7 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
+package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,8 +17,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;

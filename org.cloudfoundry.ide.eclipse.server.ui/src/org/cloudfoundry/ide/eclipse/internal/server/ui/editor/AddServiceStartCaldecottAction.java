@@ -13,7 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
@@ -63,7 +63,7 @@ public class AddServiceStartCaldecottAction extends CloudFoundryEditorAction {
 
 	@Override
 	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
-		CaldecottTunnelHandler handler = new CaldecottTunnelHandler(getBehavior().getCloudFoundryServer());
+		TunnelBehaviour handler = new TunnelBehaviour(getBehavior().getCloudFoundryServer());
 
 		if (services != null && !services.isEmpty()) {
 

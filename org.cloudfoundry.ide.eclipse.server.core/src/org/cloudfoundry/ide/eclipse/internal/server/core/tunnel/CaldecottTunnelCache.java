@@ -8,12 +8,14 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 
 public class CaldecottTunnelCache {
 

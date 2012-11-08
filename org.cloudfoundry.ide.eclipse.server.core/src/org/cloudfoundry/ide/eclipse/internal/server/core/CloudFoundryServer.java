@@ -23,6 +23,7 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServicesServer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -621,6 +622,14 @@ public class CloudFoundryServer extends ServerDelegate {
 			}
 		}
 		return appModule;
+	}
+	
+	public ServicesServer getServicesServer() {
+		return new ServicesServer(getServer().getName());
+	}
+	
+	public void setServicesServer(ServicesServer servicesServer) {
+		
 	}
 
 }

@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
@@ -44,7 +44,7 @@ public class CaldecottDisconnectAllAction extends Action {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
-					new CaldecottTunnelHandler(cloudServer).stopAndDeleteAllTunnels(monitor);
+					new TunnelBehaviour(cloudServer).stopAndDeleteAllTunnels(monitor);
 				}
 				catch (CoreException e) {
 					return CloudFoundryPlugin.getErrorStatus(e);

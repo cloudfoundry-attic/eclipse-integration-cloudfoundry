@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.wst.server.core.IServer;
@@ -33,7 +33,7 @@ public class ServerMenuActionHandler extends MenuActionHandler<IServer> {
 		}
 		List<IAction> actions = new ArrayList<IAction>();
 
-		if (new CaldecottTunnelHandler(cloudFoundryServer).hasCaldecottTunnels()) {
+		if (new TunnelBehaviour(cloudFoundryServer).hasCaldecottTunnels()) {
 			actions.add(new CaldecottTunnelAction(cloudFoundryServer));
 			actions.add(new CaldecottDisconnectAllAction(cloudFoundryServer));
 		}

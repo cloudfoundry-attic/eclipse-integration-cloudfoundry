@@ -13,6 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 import org.cloudfoundry.caldecott.client.TunnelHelper;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.runtime.CoreException;
@@ -197,18 +198,18 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 	}
 
 	protected void stopTunnel(String serviceName) throws CoreException {
-		CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+		TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
 		handler.stopAndDeleteCaldecottTunnel(serviceName, new NullProgressMonitor());
 
 	}
 
 	protected void assertNoTunnel(String serviceName) throws Exception {
-		CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+		TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
 		assertFalse(handler.hasCaldecottTunnel(serviceName));
 	}
 
 	protected void assertTunnel(String serviceName) throws Exception {
-		CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+		TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
 		assertTrue(handler.hasCaldecottTunnel(serviceName));
 	}
 
@@ -237,7 +238,7 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 	}
 
 	protected CaldecottTunnelDescriptor createCaldecottTunnel(String serviceName) throws CoreException {
-		CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+		TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
 		return handler.startCaldecottTunnel(serviceName, new NullProgressMonitor());
 	}
 

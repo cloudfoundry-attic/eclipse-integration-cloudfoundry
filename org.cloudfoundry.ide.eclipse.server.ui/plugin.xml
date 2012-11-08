@@ -291,4 +291,18 @@
             type="java.lang.Object">
       </propertyTester>
    </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            category="org.cloudfoundry.ide.eclipse.server.ui.CloudFoundryPreferencePage"
+            class="org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.ServiceTunnelExternalAppPreferencePage"
+            id="org.cloudfoundry.ide.eclipse.server.ui.ServicesCommandPreferencePage"
+            name="Service Tunnel External Application Commands">
+      </page>
+      <page
+            class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryPreferencePage"
+            id="org.cloudfoundry.ide.eclipse.server.ui.CloudFoundryPreferencePage"
+            name="Cloud Foundry">
+      </page>
+   </extension>
 </plugin>

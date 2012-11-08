@@ -12,6 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CaldecottUIHelper;
 import org.eclipse.jface.action.Action;
 
 public class CaldecottTunnelAction extends Action {

@@ -20,7 +20,7 @@ import java.util.Set;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.TreeContentProvider;
@@ -147,7 +147,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 
 					protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
 						if (column == ServiceViewColumn.Tunnel) {
-							CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+							TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
 							if (handler.hasCaldecottTunnel(service.getName())) {
 								return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
 							}
@@ -161,7 +161,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 			@Override
 			protected int compare(CloudService service1, CloudService service2, ServiceViewColumn sortColumn) {
 				if (sortColumn == ServiceViewColumn.Tunnel) {
-					CaldecottTunnelHandler handler = new CaldecottTunnelHandler(cloudServer);
+					TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
 					if (handler.hasCaldecottTunnel(service1.getName())) {
 						return -1;
 					}
