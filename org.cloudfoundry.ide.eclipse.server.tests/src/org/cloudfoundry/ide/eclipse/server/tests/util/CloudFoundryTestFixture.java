@@ -264,7 +264,7 @@ public class CloudFoundryTestFixture {
 	 * empty if failed to read credentials
 	 * @return
 	 */
-	static CredentialProperties getUserTestCredentials() {
+	public static CredentialProperties getUserTestCredentials() {
 		String propertiesLocation = System.getProperty(CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY);
 		String userEmail = null;
 		String password = null;

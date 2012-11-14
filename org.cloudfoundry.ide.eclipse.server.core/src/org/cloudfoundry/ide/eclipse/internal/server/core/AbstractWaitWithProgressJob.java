@@ -41,6 +41,10 @@ public abstract class AbstractWaitWithProgressJob<T> {
 	 * @return
 	 */
 	abstract protected T runInWait(IProgressMonitor monitor) throws CoreException;
+	
+	protected boolean shouldRetryOnError(Throwable t) {
+		return false;
+	}
 
 	protected boolean isValid(T result) {
 		return result != null;
@@ -55,21 +59,24 @@ public abstract class AbstractWaitWithProgressJob<T> {
 		while (i++ < attempts && !monitor.isCanceled()) {
 			try {
 				result = runInWait(monitor);
+				if (!isValid(result)) {
+
+					try {
+						Thread.sleep(sleepTime);
+					}
+					catch (InterruptedException e) {
+						// Ignore and proceed
+					}
+				}
+				else {
+					break;
+				}
 			}
 			catch (Throwable th) {
 				error = th;
-			}
-			if (!isValid(result)) {
-
-				try {
-					Thread.sleep(sleepTime);
+				if (!shouldRetryOnError(error)) {
+					break;
 				}
-				catch (InterruptedException e) {
-					// Ignore and proceed
-				}
-			}
-			else {
-				break;
 			}
 		}
 

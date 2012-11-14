@@ -63,17 +63,19 @@ public class CloudFoundryOperationsHandler {
 					return true;
 				}
 				catch (CloudFoundryException cfe) {
-					if (shouldAttemptClientLogin(cfe)) {
-						return false;
-					}
-					else {
-						throw CloudUtil.toCoreException(cfe);
-					}
-
+					throw CloudUtil.toCoreException(cfe);
 				}
 				catch (RestClientException rce) {
 					throw CloudUtil.toCoreException(rce);
 				}
+			}
+
+			@Override
+			protected boolean shouldRetryOnError(Throwable t) {
+				if (t instanceof CloudFoundryException && shouldAttemptClientLogin((CloudFoundryException) t)) {
+					return true;
+				}
+				return false;
 			}
 
 		}.run(monitor);
@@ -116,23 +118,16 @@ public class CloudFoundryOperationsHandler {
 		;
 	}
 
-	public boolean shouldAttemptClientLogin(Exception exception) throws CoreException {
-		if (exception instanceof CloudFoundryException) {
-			CloudFoundryException cfe = (CloudFoundryException) exception;
-			if (HttpStatus.FORBIDDEN.equals(cfe.getStatusCode())) {
-				return true;
-			}
-			else if (HttpStatus.UNAUTHORIZED.equals(cfe.getStatusCode()) && operations.supportsSpaces()) {
-				return true;
-			}
-			else {
-				throw CloudUtil.toCoreException(exception);
-			}
+	public boolean shouldAttemptClientLogin(CloudFoundryException cfe) {
+		if (HttpStatus.FORBIDDEN.equals(cfe.getStatusCode())) {
+			return true;
 		}
-		else if (exception instanceof RestClientException) {
-			throw CloudUtil.toCoreException(exception);
+		else if (HttpStatus.UNAUTHORIZED.equals(cfe.getStatusCode()) && operations.supportsSpaces()) {
+			return true;
 		}
-		return false;
+		else {
+			return false;
+		}
 	}
 
 	/**

@@ -14,6 +14,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelTest;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryClientTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConsoleTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviourTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerTest;
@@ -50,7 +51,7 @@ public class AllCloudFoundryTests {
 		suite.addTestSuite(DeploymentURLTest.class);
 		suite.addTestSuite(CloudFoundryServicesTest.class);
 		suite.addTestSuite(CloudFoundryConsoleTest.class);
-
+		suite.addTestSuite(CloudFoundryClientTest.class);
 		suite.addTestSuite(CaldecottTunnelTest.class);
 		return suite;
 	}
