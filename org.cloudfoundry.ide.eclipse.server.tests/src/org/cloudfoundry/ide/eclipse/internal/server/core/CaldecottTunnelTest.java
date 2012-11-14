@@ -14,6 +14,7 @@ import org.cloudfoundry.caldecott.client.TunnelHelper;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
+import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ProxyHandler;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.runtime.CoreException;
@@ -49,6 +50,48 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 
 		deleteService(service);
 		assertServiceNotExist(MYSQL_SERVICE_NAME);
+	}
+
+	public void testCreateTunnelInvalidProxy() throws Exception {
+		CloudService service = getMysqlService();
+		assertServiceExists(MYSQL_SERVICE_NAME);
+
+		final boolean[] ran = { false };
+
+		new ProxyHandler("invalid.proxy.test", 8080) {
+
+			@Override
+			protected void handleProxyChange() throws CoreException {
+				CoreException ce = null;
+				try {
+					CaldecottTunnelDescriptor descriptor = createCaldecottTunnel(MYSQL_SERVICE_NAME);
+
+					assertNull(descriptor);
+				}
+				catch (CoreException e) {
+					ce = e;
+				}
+				assertTrue(ce.getCause().getMessage().contains("I/O error: invalid.proxy.test"));
+				ran[0] = true;
+			}
+
+		}.run();
+
+		assertTrue(ran[0]);
+
+		// Try again, it should work now, as proxy settings would have been
+		// restored.
+		CaldecottTunnelDescriptor descriptor = createCaldecottTunnel(MYSQL_SERVICE_NAME);
+
+		assertNotNull(descriptor);
+		assertTunnel(MYSQL_SERVICE_NAME);
+
+		stopTunnel(MYSQL_SERVICE_NAME);
+		assertNoTunnel(MYSQL_SERVICE_NAME);
+
+		deleteService(service);
+		assertServiceNotExist(MYSQL_SERVICE_NAME);
+
 	}
 
 	public void testCreateMongodbTunnel() throws Exception {

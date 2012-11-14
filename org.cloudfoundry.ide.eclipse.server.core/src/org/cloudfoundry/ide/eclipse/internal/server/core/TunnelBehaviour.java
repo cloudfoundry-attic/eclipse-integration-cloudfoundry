@@ -11,6 +11,8 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -23,6 +25,7 @@ import org.cloudfoundry.caldecott.client.TunnelHelper;
 import org.cloudfoundry.caldecott.client.TunnelServer;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
+import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
@@ -206,7 +209,19 @@ public class TunnelBehaviour {
 					name = info.get("db") != null ? info.get("db") : info.get("name");
 				}
 
-				TunnelFactory tunnelFactory = new HttpTunnelFactory(url, host, port, auth);
+				// Use proxy settings if they exist
+
+				HttpProxyConfiguration proxyConfiguration = null;
+
+				try {
+					URL urlOb = new URL(url);
+					proxyConfiguration = CloudFoundryClientFactory.getProxy(urlOb);
+				}
+				catch (MalformedURLException e) {
+					// Unable to handle proxy URL. Attempt to connect anyway.
+				}
+
+				TunnelFactory tunnelFactory = new HttpTunnelFactory(url, host, port, auth, proxyConfiguration);
 
 				List<TunnelServer> tunnelServers = new ArrayList<TunnelServer>(1);
 				int localPort = getTunnelServer(tunnelFactory, tunnelServers);
