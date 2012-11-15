@@ -118,6 +118,10 @@ public class CloudUrlWidget {
 		}
 		return null;
 	}
+	
+	protected String getComboURLDisplay(CloudURL url) {
+		return url.getName() + " - " + url.getUrl();
+	}
 
 	protected void updateUrlCombo(CloudURL lastAddedEditedUrl) {
 		String newSelection = null;
@@ -139,7 +143,7 @@ public class CloudUrlWidget {
 
 		// If there is a last edited URL, set that as the selection in the combo
 		if (lastAddedEditedUrl != null) {
-			newSelection = lastAddedEditedUrl.getUrl();
+			newSelection = getComboURLDisplay(lastAddedEditedUrl);
 		}
 
 		int selectionIndex = -1;
@@ -148,20 +152,20 @@ public class CloudUrlWidget {
 		// among them.
 		// If so, find it's index to select it in the combo
 		for (int i = 0; i < cloudUrls.size(); i++) {
-			String currUrl = cloudUrls.get(i).getUrl();
-			updatedUrls[i] = cloudUrls.get(i).getName() + " - " + currUrl;
-			if (newSelection != null && updatedUrls[i].contains(newSelection)) {
+			updatedUrls[i] = getComboURLDisplay(cloudUrls.get(i));
+			if (newSelection != null && updatedUrls[i].equals(newSelection)) {
 				selectionIndex = i;
 			}
 		}
 
 		// Otherwise, if no last added url is specified, see if the old
 		// selection is still available in the
-		// list of updated URLs
+		// list of updated URLs. Find the first one that matches.
 		if ((newSelection == null || selectionIndex < 0) && oldSelection != null) {
 			for (int i = 0; i < updatedUrls.length; i++) {
 				if (updatedUrls[i].contains(oldSelection)) {
 					selectionIndex = i;
+					break;
 				}
 			}
 		}
