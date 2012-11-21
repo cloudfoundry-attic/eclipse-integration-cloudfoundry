@@ -10,23 +10,19 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ServiceCommand extends CommandMetaElement {
 
-	private final List<CommandOption> options;
+	private CommandOptions options;
 
 	private final ExternalApplicationLaunchInfo appInfo;
 
 	private final ServiceInfo serviceInfo;
 
-	public ServiceCommand(ExternalApplicationLaunchInfo appInfo, ServiceInfo serviceInfo) {
+	public ServiceCommand(ExternalApplicationLaunchInfo appInfo, ServiceInfo serviceInfo, CommandOptions options) {
 		super("ServiceCommand");
 		this.appInfo = appInfo;
 		this.serviceInfo = serviceInfo;
-
-		options = new ArrayList<CommandOption>();
+		this.options = options;
 	}
 
 	public ExternalApplicationLaunchInfo getExternalApplicationLaunchInfo() {
@@ -37,8 +33,15 @@ public class ServiceCommand extends CommandMetaElement {
 		return serviceInfo;
 	}
 
-	public List<CommandOption> getOptions() {
+	public CommandOptions getOptions() {
 		return options;
+	}
+
+	public ServiceCommand getServiceCommand(String location, String displayName, String options) {
+		CommandOptions commandOptions = new CommandOptions(options);
+		ServiceCommand command = new ServiceCommand(new ExternalApplicationLaunchInfo(displayName, location),
+				serviceInfo, commandOptions);
+		return command;
 	}
 
 	public static class ExternalApplicationLaunchInfo extends CommandMetaElement {

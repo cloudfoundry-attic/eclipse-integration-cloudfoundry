@@ -13,9 +13,9 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommandResolver;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommandResolver;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServicesServer;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -34,11 +34,16 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Tree;
 
 public class ServiceTunnelCommandPart {
+
+	protected enum ControlData {
+		Servers, Commands, Add, Delete, Edit;
+	}
 
 	private TreeViewer serversViewer;
 
@@ -62,14 +67,25 @@ public class ServiceTunnelCommandPart {
 				.setText("Manage commands to launch when creating a tunnel to a specific service in a Cloud Foundry server.");
 
 		Composite generalArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(2).equalWidth(true).applyTo(generalArea);
+		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(generalArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(generalArea);
 
-		createServerArea(generalArea);
-		createServiceAppsArea(generalArea);
+		createViewerArea(generalArea);
+
+		createButtonAreas(generalArea);
 
 		setServerInput();
 		return generalArea;
+	}
+
+	protected void createViewerArea(Composite parent) {
+		Composite viewerArea = new Composite(parent, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(2).equalWidth(true).applyTo(viewerArea);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(viewerArea);
+
+		createServerArea(viewerArea);
+		createServiceAppsArea(viewerArea);
+
 	}
 
 	protected void createServerArea(Composite parent) {
@@ -82,6 +98,8 @@ public class ServiceTunnelCommandPart {
 		serverLabel.setText("Select a service:");
 
 		Tree serverTree = new Tree(serverComposite, SWT.BORDER | SWT.SINGLE);
+
+		serverTree.setData(ControlData.Servers);
 
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(serverTree);
 
@@ -113,11 +131,10 @@ public class ServiceTunnelCommandPart {
 	}
 
 	protected void createTableArea(Composite parent) {
-		Composite tableArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(tableArea);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(tableArea);
 
-		Table table = new Table(tableArea, SWT.BORDER | SWT.SINGLE);
+		Table table = new Table(parent, SWT.BORDER | SWT.SINGLE);
+
+		table.setData(ControlData.Commands);
 
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(table);
 
@@ -134,7 +151,6 @@ public class ServiceTunnelCommandPart {
 			}
 		});
 
-		createButtonAreas(tableArea);
 	}
 
 	protected void createButtonAreas(Composite parent) {
@@ -142,7 +158,14 @@ public class ServiceTunnelCommandPart {
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(buttonArea);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(buttonArea);
 
+		Label filler = new Label(buttonArea, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(filler);
+		filler.setText("");
+
 		addCommandButton = new Button(buttonArea, SWT.PUSH);
+
+		addCommandButton.setData(ControlData.Add);
+
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(addCommandButton);
 		addCommandButton.setText("Add");
 
@@ -155,6 +178,9 @@ public class ServiceTunnelCommandPart {
 		});
 
 		deleteCommandButton = new Button(buttonArea, SWT.PUSH);
+
+		deleteCommandButton.setData(ControlData.Delete);
+
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(deleteCommandButton);
 		deleteCommandButton.setText("Delete");
 
@@ -167,6 +193,9 @@ public class ServiceTunnelCommandPart {
 		});
 
 		editCommandButton = new Button(buttonArea, SWT.PUSH);
+
+		editCommandButton.setData(ControlData.Edit);
+
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(editCommandButton);
 		editCommandButton.setText("Edit");
 
@@ -230,34 +259,42 @@ public class ServiceTunnelCommandPart {
 
 		ServiceCommand selectedCommand = getSelectedCommand();
 		ServerService selectedService = getSelectedService();
-
-		if (eventSource == addCommandButton) {
-
+		
+		if (eventSource instanceof Control) {
+			Control eventControl = (Control) eventSource;
+			Object dataObj = eventControl.getData();
+			if (dataObj instanceof ControlData) {
+				ControlData controlData = (ControlData) dataObj;
+				switch(controlData) {
+				case Add:
+					
+					break;
+				case Delete:
+					
+					break;
+					
+				case Edit:
+					
+					break;
+				}
+			}
 		}
-		else if (eventSource == deleteCommandButton) {
 
+
+		if (selectedCommand != null) {
+			addCommandButton.setEnabled(false);
+			deleteCommandButton.setEnabled(true);
+			editCommandButton.setEnabled(true);
 		}
-		else if (eventSource == editCommandButton) {
-
+		else if (selectedService != null) {
+			addCommandButton.setEnabled(true);
+			deleteCommandButton.setEnabled(false);
+			editCommandButton.setEnabled(false);
 		}
 		else {
-			// refresh the buttons as a selection in either viewers triggered an
-			// event
-			if (selectedCommand != null) {
-				addCommandButton.setEnabled(false);
-				deleteCommandButton.setEnabled(true);
-				editCommandButton.setEnabled(true);
-			}
-			else if (selectedService != null) {
-				addCommandButton.setEnabled(true);
-				deleteCommandButton.setEnabled(false);
-				editCommandButton.setEnabled(false);
-			}
-			else {
-				addCommandButton.setEnabled(false);
-				deleteCommandButton.setEnabled(false);
-				editCommandButton.setEnabled(false);
-			}
+			addCommandButton.setEnabled(false);
+			deleteCommandButton.setEnabled(false);
+			editCommandButton.setEnabled(false);
 		}
 
 	}
