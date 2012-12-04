@@ -13,6 +13,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommandResolver;
@@ -29,6 +31,8 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.jface.window.Window;
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -36,8 +40,10 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Tree;
+import org.eclipse.ui.PlatformUI;
 
 public class ServiceTunnelCommandPart {
 
@@ -105,9 +111,9 @@ public class ServiceTunnelCommandPart {
 
 		serversViewer = new TreeViewer(serverTree);
 
-		serversViewer.setContentProvider(new ServerServiceAppLabelContentProvider());
-		serversViewer.setLabelProvider(new ServerServiceAppLabelProvider());
-		serversViewer.setSorter(new ServerServiceAppSorter());
+		serversViewer.setContentProvider(new ServicesContentProvider());
+		serversViewer.setLabelProvider(new ServicesLabelProvider());
+		serversViewer.setSorter(new ServicesSorter());
 
 		serversViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 
@@ -140,9 +146,9 @@ public class ServiceTunnelCommandPart {
 
 		serviceCommandsViewer = new TableViewer(table);
 
-		serviceCommandsViewer.setContentProvider(new ServerServiceAppLabelContentProvider());
-		serviceCommandsViewer.setLabelProvider(new ServerServiceAppLabelProvider());
-		serviceCommandsViewer.setSorter(new ServerServiceAppSorter());
+		serviceCommandsViewer.setContentProvider(new ServiceCommandsContentProvider());
+		serviceCommandsViewer.setLabelProvider(new ServiceCommandLabelProvider());
+		serviceCommandsViewer.setSorter(new ServiceCommandSorter());
 
 		serviceCommandsViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 
@@ -220,27 +226,52 @@ public class ServiceTunnelCommandPart {
 			serversViewer.setInput(new ArrayList<ServicesServer>(0));
 		}
 
-		setServiceCommandInput();
+		setServiceCommandInput(null);
 
 	}
 
-	protected void setServiceCommandInput() {
-		ServerService serviceCommands = getSelectedService();
+	protected void setServiceCommandInput(ServiceViewerWrapper wrapper) {
 
-		if (serviceCommands != null && serviceCommands.getLaunchCommands() != null) {
-			serviceCommandsViewer.setInput(serviceCommands.getLaunchCommands());
+		if (wrapper != null && wrapper.getService() != null && wrapper.getService().getCommands() != null) {
+			serviceCommandsViewer.setInput(wrapper.getService().getCommands());
 		}
 		else {
 			serviceCommandsViewer.setInput(new ArrayList<ServicesServer>(0));
 		}
 	}
 
-	protected ServerService getSelectedService() {
+	protected CloudFoundryServer getSelectedServer() {
+		ServicesServer server = getSelectedServicesServer();
+
+		if (server != null) {
+			return CloudServerUtil.getCloudServer(server.getServerName());
+		}
+		return null;
+	}
+
+	protected ServicesServer getSelectedServicesServer() {
+		ISelection iSelection = serversViewer.getSelection();
+		ServicesServer server = null;
+		if (iSelection instanceof IStructuredSelection) {
+
+			Object selectObj = ((IStructuredSelection) iSelection).getFirstElement();
+			if (selectObj instanceof ServiceViewerWrapper) {
+				server = ((ServiceViewerWrapper) selectObj).getServer();
+			}
+			else if (selectObj instanceof ServicesServer) {
+				server = ((ServicesServer) selectObj);
+			}
+
+		}
+		return server;
+	}
+
+	protected ServiceViewerWrapper getSelectedService() {
 		ISelection iSelection = serversViewer.getSelection();
 		if (iSelection instanceof IStructuredSelection) {
 			Object selectObj = ((IStructuredSelection) iSelection).getFirstElement();
-			if (selectObj instanceof ServerService) {
-				return (ServerService) selectObj;
+			if (selectObj instanceof ServiceViewerWrapper) {
+				return (ServiceViewerWrapper) selectObj;
 			}
 		}
 		return null;
@@ -255,38 +286,95 @@ public class ServiceTunnelCommandPart {
 		return null;
 	}
 
+	protected Shell getShell() {
+		return PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
+	}
+
+	protected void addOrEditCommand() {
+
+		ServiceCommand serviceCommand = getSelectedCommand();
+		CloudFoundryServer cloudServer = getSelectedServer();
+		ServiceViewerWrapper wrapper = getSelectedService();
+		if (cloudServer != null) {
+			ServiceCommandWizard wizard = new ServiceCommandWizard(cloudServer, serviceCommand);
+			WizardDialog dialog = new WizardDialog(getShell(), wizard);
+			if (dialog.open() == Window.OK) {
+				ServiceCommand newServiceCommand = wizard.getServiceCommand();
+
+				if (newServiceCommand != null) {
+					updateCommandViewerInput(serviceCommand, newServiceCommand, wrapper);
+				}
+			}
+		}
+
+	}
+
+	protected void deleteCommand() {
+		ServiceCommand serviceCommand = getSelectedCommand();
+		ServiceViewerWrapper wrapper = getSelectedService();
+		if (serviceCommand != null && wrapper != null) {
+			updateCommandViewerInput(serviceCommand, null, wrapper);
+		}
+	}
+
+	/**
+	 * 
+	 * @param toDelete to remove from list of existing commands in the given
+	 * wrapper
+	 * @param toAdd to add to the list of existing commands in the given wrapper
+	 * @param wrapper containing the old value, and that should contain the new
+	 * value.
+	 */
+	protected void updateCommandViewerInput(ServiceCommand toDelete, ServiceCommand toAdd, ServiceViewerWrapper wrapper) {
+		if (wrapper != null && (toDelete != null || toAdd != null)) {
+			List<ServiceCommand> commands = wrapper.getService().getCommands();
+			List<ServiceCommand> newCommands = new ArrayList<ServiceCommand>();
+			if (commands != null) {
+				for (ServiceCommand existingCommand : commands) {
+					if (!existingCommand.equals(toDelete)) {
+						newCommands.add(existingCommand);
+					}
+				}
+
+			}
+			if (toAdd != null) {
+				newCommands.add(toAdd);
+			}
+			wrapper.getService().setCommands(newCommands);
+			setServiceCommandInput(wrapper);
+		}
+	}
+
 	protected void handleChange(Object eventSource) {
 
 		ServiceCommand selectedCommand = getSelectedCommand();
-		ServerService selectedService = getSelectedService();
-		
+		ServiceViewerWrapper wrapper = getSelectedService();
+
 		if (eventSource instanceof Control) {
 			Control eventControl = (Control) eventSource;
 			Object dataObj = eventControl.getData();
 			if (dataObj instanceof ControlData) {
 				ControlData controlData = (ControlData) dataObj;
-				switch(controlData) {
+				switch (controlData) {
 				case Add:
-					
+					addOrEditCommand();
 					break;
 				case Delete:
-					
+					deleteCommand();
 					break;
-					
 				case Edit:
-					
+					addOrEditCommand();
 					break;
 				}
 			}
 		}
-
 
 		if (selectedCommand != null) {
 			addCommandButton.setEnabled(false);
 			deleteCommandButton.setEnabled(true);
 			editCommandButton.setEnabled(true);
 		}
-		else if (selectedService != null) {
+		else if (wrapper != null) {
 			addCommandButton.setEnabled(true);
 			deleteCommandButton.setEnabled(false);
 			editCommandButton.setEnabled(false);
@@ -299,9 +387,9 @@ public class ServiceTunnelCommandPart {
 
 	}
 
-	static class ServerServiceAppSorter extends ViewerSorter {
+	static class ServicesSorter extends ViewerSorter {
 
-		public ServerServiceAppSorter() {
+		public ServicesSorter() {
 
 		}
 
@@ -311,9 +399,9 @@ public class ServiceTunnelCommandPart {
 				String name2 = ((ServicesServer) e2).getServerName();
 				return name1.compareTo(name2);
 			}
-			else if (e1 instanceof ServerService && e2 instanceof ServerService) {
-				String name1 = ((ServerService) e1).getServiceName();
-				String name2 = ((ServerService) e2).getServiceName();
+			else if (e1 instanceof ServiceViewerWrapper && e2 instanceof ServiceViewerWrapper) {
+				String name1 = ((ServiceViewerWrapper) e1).getService().getServiceName();
+				String name2 = ((ServiceViewerWrapper) e2).getService().getServiceName();
 				return name1.compareTo(name2);
 			}
 
@@ -322,10 +410,10 @@ public class ServiceTunnelCommandPart {
 
 	}
 
-	static class ServerServiceAppLabelContentProvider implements ITreeContentProvider {
+	static class ServicesContentProvider implements ITreeContentProvider {
 		private Object[] elements;
 
-		public ServerServiceAppLabelContentProvider() {
+		public ServicesContentProvider() {
 		}
 
 		public void dispose() {
@@ -336,7 +424,11 @@ public class ServiceTunnelCommandPart {
 				ServicesServer server = (ServicesServer) parentElement;
 				List<ServerService> services = server.getServices();
 				if (services != null) {
-					return services.toArray();
+					ServiceViewerWrapper[] wrapper = new ServiceViewerWrapper[services.size()];
+					for (int i = 0; i < services.size() && i < wrapper.length; i++) {
+						wrapper[i] = new ServiceViewerWrapper(server, services.get(i));
+					}
+					return wrapper;
 				}
 			}
 			return null;
@@ -361,9 +453,9 @@ public class ServiceTunnelCommandPart {
 		}
 	}
 
-	static class ServerServiceAppLabelProvider extends LabelProvider {
+	static class ServicesLabelProvider extends LabelProvider {
 
-		public ServerServiceAppLabelProvider() {
+		public ServicesLabelProvider() {
 
 		}
 
@@ -371,17 +463,17 @@ public class ServiceTunnelCommandPart {
 			if (element instanceof ServicesServer) {
 				return ((ServicesServer) element).getServerName();
 			}
-			else if (element instanceof ServerService) {
-				return ((ServerService) element).getServiceName();
+			else if (element instanceof ServiceViewerWrapper) {
+				return ((ServiceViewerWrapper) element).getService().getServiceName();
 			}
 			return super.getText(element);
 		}
 
 	}
 
-	static class ServiceAppSorter extends ViewerSorter {
+	static class ServiceCommandSorter extends ViewerSorter {
 
-		public ServiceAppSorter() {
+		public ServiceCommandSorter() {
 
 		}
 
@@ -397,10 +489,10 @@ public class ServiceTunnelCommandPart {
 
 	}
 
-	static class ServiceAppContentProvider implements ITreeContentProvider {
+	static class ServiceCommandsContentProvider implements ITreeContentProvider {
 		private Object[] elements;
 
-		public ServiceAppContentProvider() {
+		public ServiceCommandsContentProvider() {
 		}
 
 		public void dispose() {
@@ -429,9 +521,9 @@ public class ServiceTunnelCommandPart {
 		}
 	}
 
-	static class ServiceAppLabelProvider extends LabelProvider {
+	static class ServiceCommandLabelProvider extends LabelProvider {
 
-		public ServiceAppLabelProvider() {
+		public ServiceCommandLabelProvider() {
 
 		}
 
@@ -441,6 +533,27 @@ public class ServiceTunnelCommandPart {
 				return command.getExternalApplicationLaunchInfo().getExecutableName();
 			}
 			return super.getText(element);
+		}
+
+	}
+
+	static class ServiceViewerWrapper {
+
+		private final ServerService service;
+
+		private final ServicesServer server;
+
+		public ServiceViewerWrapper(ServicesServer server, ServerService service) {
+			this.server = server;
+			this.service = service;
+		}
+
+		public ServerService getService() {
+			return service;
+		}
+
+		public ServicesServer getServer() {
+			return server;
 		}
 
 	}

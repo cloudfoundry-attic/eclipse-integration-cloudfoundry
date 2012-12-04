@@ -24,6 +24,7 @@ import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServicesServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommandHelper;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -92,6 +93,8 @@ public class CloudFoundryServer extends ServerDelegate {
 	static final String PROP_SPACE_GUID = "org.cloudfoundry.ide.eclipse.space.guid";
 
 	static final String PROP_SPACE_ID = "org.cloudfoundry.ide.eclipse.space";
+
+	static final String TUNNEL_SERVICE_COMMANDS_PROPERTY = "org.cloudfoundry.ide.eclipse.tunnel.service.commands";
 
 	private static final String PROPERTY_DEPLOYMENT_NAME = "deployment_name";
 
@@ -212,7 +215,7 @@ public class CloudFoundryServer extends ServerDelegate {
 	private ServerData getData() {
 		return CloudFoundryPlugin.getModuleCache().getData(getServerOriginal());
 	}
-	
+
 	public boolean hasValidServerData() {
 		return getServerOriginal() != null && getData() != null;
 	}
@@ -623,13 +626,39 @@ public class CloudFoundryServer extends ServerDelegate {
 		}
 		return appModule;
 	}
-	
-	public ServicesServer getServicesServer() {
-		return new ServicesServer(getServer().getName());
+
+	public ServicesServer getTunnelServiceCommands() {
+		String commands = internalGetTunnelServiceCommands();
+		ServicesServer server = null;
+		if (commands != null) {
+			return new TunnelServiceCommandHelper().getTunnelServiceCommands(commands);
+		}
+		return server;
+
 	}
-	
-	public void setServicesServer(ServicesServer servicesServer) {
-		
+
+	public void setTunnelServiceCommands(ServicesServer server) throws CoreException {
+		if (server == null) {
+			return;
+		}
+		String json = new TunnelServiceCommandHelper().getTunnelServiceCommands(server);
+		if (json == null) {
+			json = "";
+		}
+		internalSetTunnelServiceCommands(json);
+
+	}
+
+	protected String internalGetTunnelServiceCommands() {
+		return getAttribute(TUNNEL_SERVICE_COMMANDS_PROPERTY, (String) null);
+	}
+
+	protected void internalSetTunnelServiceCommands(String commands) throws CoreException {
+		setAttribute(TUNNEL_SERVICE_COMMANDS_PROPERTY, (String) null);
+
+		if (getServerWorkingCopy() != null) {
+			getServerWorkingCopy().save(true, null);
+		}
 	}
 
 }

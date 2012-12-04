@@ -13,6 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOptions;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand.ExternalApplicationLaunchInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.WizardPage;
@@ -41,18 +42,39 @@ public class ServiceCommandWizardPage extends WizardPage {
 
 	}
 
+	@Override
+	public boolean isPageComplete() {
+		if (displayPart != null) {
+
+			String[] values = { displayPart.getLocation(), displayPart.getOptions(), displayPart.getDisplayName() };
+			for (String value : values) {
+				if (value == null || value.length() == 0) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return super.isPageComplete();
+	}
+
 	public ServiceCommand getServiceCommand() {
 		if (displayPart != null) {
 			String location = displayPart.getLocation();
 			String options = displayPart.getOptions();
 			String displayName = displayPart.getDisplayName();
+			ServiceCommand editedCommand = new ServiceCommand();
 			if (serviceCommand != null) {
-				serviceCommand = serviceCommand.getServiceCommand(location, displayName, options);
+				editedCommand.setServiceInfo(serviceCommand.getServiceInfo());
 			}
-			else {
-				serviceCommand = new ServiceCommand(new ServiceCommand.ExternalApplicationLaunchInfo(displayName,
-						location), null, new CommandOptions(options));
-			}
+			ExternalApplicationLaunchInfo appInfo = new ExternalApplicationLaunchInfo();
+			appInfo.setDisplayName(displayName);
+			appInfo.setExecutableName(location);
+			editedCommand.setExternalApplicationLaunchInfo(appInfo);
+
+			CommandOptions cmOptions = new CommandOptions();
+			cmOptions.setOptions(options);
+			editedCommand.setOptions(cmOptions);
+			serviceCommand = editedCommand;
 		}
 		return serviceCommand;
 	}

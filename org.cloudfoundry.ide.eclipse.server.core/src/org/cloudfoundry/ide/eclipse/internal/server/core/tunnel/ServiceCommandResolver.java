@@ -17,16 +17,19 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerUtil;
 
 public class ServiceCommandResolver {
-	
 
 	public List<ServicesServer> getServerServiceCommands() {
 		List<CloudFoundryServer> cfServers = CloudServerUtil.getCloudServers();
 		List<ServicesServer> servicesServer = new ArrayList<ServicesServer>();
-		
+
 		for (CloudFoundryServer cfServer : cfServers) {
-			servicesServer.add(cfServer.getServicesServer());
+			ServicesServer server = cfServer.getTunnelServiceCommands();
+			if (server != null) {
+				servicesServer.add(server);
+			}
+
 		}
-		
+
 		return servicesServer;
 	}
 

@@ -10,36 +10,33 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
-import java.util.Set;
-
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.eclipse.jface.wizard.Wizard;
 
 public class ServiceCommandWizard extends Wizard {
 	private final CloudFoundryServer cloudServer;
-	
-	private ServiceCommand serviceCommand;
 
-	private CaldecottTunnelWizardPage page;
+	private final ServiceCommand initialServiceCommand;
+
+	private ServiceCommandWizardPage page;
 
 	public ServiceCommandWizard(CloudFoundryServer cloudServer, ServiceCommand serviceCommand) {
 		super();
 		this.cloudServer = cloudServer;
-		this.serviceCommand = serviceCommand;
+		this.initialServiceCommand = serviceCommand;
 
 		setWindowTitle("Configure a command to run:");
 		setNeedsProgressMonitor(true);
 	}
 
 	public void addPages() {
-		page = new CaldecottTunnelWizardPage(cloudServer);
+		page = new ServiceCommandWizardPage(cloudServer, initialServiceCommand);
 		addPage(page);
 	}
-	
-	public Set<CaldecottTunnelDescriptor> getDescriptorsToRemove() {
-		return page != null ? page.getDescriptorsToRemove() : null;
+
+	public ServiceCommand getServiceCommand() {
+		return page != null ? page.getServiceCommand() : initialServiceCommand;
 	}
 
 	@Override

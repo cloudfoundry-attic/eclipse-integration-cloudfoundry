@@ -10,27 +10,36 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class ServerService extends CommandMetaElement {
+/**
+ * Using getters and setters for JSON serialisation.
+ * 
+ */
+public class ServerService {
 
-	private final List<ServiceCommand> commands;
+	private List<ServiceCommand> commands;
 
-	private final String serviceName;
+	private String serviceName;
 
-	public ServerService(String serviceName) {
-		super("ServerService");
-		this.commands = new ArrayList<ServiceCommand>();
-		this.serviceName = serviceName;
+	public ServerService() {
+
 	}
 
 	public String getServiceName() {
 		return serviceName;
 	}
 
-	public List<ServiceCommand> getLaunchCommands() {
+	public List<ServiceCommand> getCommands() {
 		return commands;
+	}
+
+	public void setCommands(List<ServiceCommand> commands) {
+		this.commands = commands;
+	}
+
+	public void setServiceName(String serviceName) {
+		this.serviceName = serviceName;
 	}
 
 }

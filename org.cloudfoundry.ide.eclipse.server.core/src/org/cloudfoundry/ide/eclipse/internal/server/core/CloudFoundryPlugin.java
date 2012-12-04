@@ -175,8 +175,6 @@ public class CloudFoundryPlugin extends Plugin {
 
 	private DeployedResourceCache sha1Cache = new DeployedResourceCache();
 
-	private InstanceScope INSTANCE_SCOPE = new InstanceScope();
-
 	private static CaldecottTunnelCache caldecottCache = new CaldecottTunnelCache();
 
 	public static CaldecottTunnelCache getCaldecottTunnelCache() {
@@ -210,7 +208,7 @@ public class CloudFoundryPlugin extends Plugin {
 	}
 
 	protected IEclipsePreferences getPreferences() {
-		return INSTANCE_SCOPE.getNode(PLUGIN_ID);
+		return InstanceScope.INSTANCE.getNode(PLUGIN_ID);
 	}
 
 	public synchronized DeployedResourceCache getDeployedResourcesCache() {

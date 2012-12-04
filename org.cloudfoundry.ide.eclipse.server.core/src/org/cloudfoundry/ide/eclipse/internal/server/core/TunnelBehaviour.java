@@ -51,7 +51,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  * will automatically bind the service first to the Caldecott application before
  * attempting to create a tunnel.
  * <p/>
- * NOTE: CloudFoundryOperation should ALWAYS be obtained through a
+ * NOTE: CloudFoundryOperation calls should ALWAYS be done through a
  * org.cloudfoundry
  * .ide.eclipse.internal.server.core.CloudFoundryServerBehaviour.Request object,
  * as the Request wraps around all client calls. Only exception is if doing

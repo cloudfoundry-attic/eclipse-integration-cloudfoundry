@@ -13,24 +13,46 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ServicesServer extends CommandMetaElement {
+/**
+ * Using getters and setters for JSON serialisation.
+ * 
+ */
+public class ServicesServer {
 
-	private final List<ServerService> services;
+	private List<ServerService> services;
 
-	private final String serverName;
+	private String serverName;
+	
+	private String serverID;
 
-	public ServicesServer(String serverName) {
-		super("Server");
-		this.serverName = serverName;
-		services = new ArrayList<ServerService>();
+	public ServicesServer() {
+
+		this.services = new ArrayList<ServerService>();
 	}
 
 	public String getServerName() {
 		return serverName;
 	}
+	
+	public String getServerID() {
+		return serverID;
+	}
 
 	public List<ServerService> getServices() {
 		return services;
+	}
+
+	public void setServerName(String serverName) {
+		this.serverName = serverName;
+	}
+	
+	public void setServerID(String serverID) {
+		this.serverID = serverID;
+	}
+
+	public void setServices(List<ServerService> services) {
+		this.services = services;
+
 	}
 
 }

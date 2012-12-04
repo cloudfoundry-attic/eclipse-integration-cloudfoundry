@@ -10,19 +10,20 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
-public class ServiceCommand extends CommandMetaElement {
+/**
+ * Using getters and setters for JSON serialisation.
+ * 
+ */
+public class ServiceCommand {
 
 	private CommandOptions options;
 
-	private final ExternalApplicationLaunchInfo appInfo;
+	private ExternalApplicationLaunchInfo appInfo;
 
-	private final ServiceInfo serviceInfo;
+	private ServiceInfo serviceInfo;
 
-	public ServiceCommand(ExternalApplicationLaunchInfo appInfo, ServiceInfo serviceInfo, CommandOptions options) {
-		super("ServiceCommand");
-		this.appInfo = appInfo;
-		this.serviceInfo = serviceInfo;
-		this.options = options;
+	public ServiceCommand() {
+
 	}
 
 	public ExternalApplicationLaunchInfo getExternalApplicationLaunchInfo() {
@@ -37,22 +38,36 @@ public class ServiceCommand extends CommandMetaElement {
 		return options;
 	}
 
-	public ServiceCommand getServiceCommand(String location, String displayName, String options) {
-		CommandOptions commandOptions = new CommandOptions(options);
-		ServiceCommand command = new ServiceCommand(new ExternalApplicationLaunchInfo(displayName, location),
-				serviceInfo, commandOptions);
-		return command;
+	public void setExternalApplicationLaunchInfo(ExternalApplicationLaunchInfo appInfo) {
+		this.appInfo = appInfo;
 	}
 
-	public static class ExternalApplicationLaunchInfo extends CommandMetaElement {
+	public void setServiceInfo(ServiceInfo serviceInfo) {
+		this.serviceInfo = serviceInfo;
+	}
 
-		private final String displayName;
+	public void setOptions(CommandOptions options) {
+		this.options = options;
+	}
 
-		private final String executableName;
+	/**
+	 * 
+	 */
+	public static class ExternalApplicationLaunchInfo {
 
-		public ExternalApplicationLaunchInfo(String displayName, String executableName) {
-			super("ApplicationInfo");
+		private String displayName;
+
+		private String executableName;
+
+		public ExternalApplicationLaunchInfo() {
+
+		}
+
+		public void setDisplayName(String displayName) {
 			this.displayName = displayName;
+		}
+
+		public void setExecutableName(String executableName) {
 			this.executableName = executableName;
 		}
 
@@ -65,14 +80,21 @@ public class ServiceCommand extends CommandMetaElement {
 		}
 	}
 
-	public static class ServiceInfo extends CommandMetaElement {
-		private final String serviceName;
+	public static class ServiceInfo {
 
-		private final String version;
+		private String serviceName;
 
-		public ServiceInfo(String serviceName, String version) {
-			super("ServiceInfo");
+		private String version;
+
+		public ServiceInfo() {
+
+		}
+
+		public void setServiceName(String serviceName) {
 			this.serviceName = serviceName;
+		}
+
+		public void setVersion(String version) {
 			this.version = version;
 		}
 

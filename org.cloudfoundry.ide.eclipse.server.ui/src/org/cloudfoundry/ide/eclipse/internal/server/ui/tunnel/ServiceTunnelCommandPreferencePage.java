@@ -17,9 +17,9 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
-public class ServiceTunnelExternalAppPreferencePage extends PreferencePage implements IWorkbenchPreferencePage {
+public class ServiceTunnelCommandPreferencePage extends PreferencePage implements IWorkbenchPreferencePage {
 
-	public ServiceTunnelExternalAppPreferencePage() {
+	public ServiceTunnelCommandPreferencePage() {
 		setPreferenceStore(CloudFoundryServerUiPlugin.getDefault().getPreferenceStore());
 //		setDescription("Preferences for Cloud Foundry features.");
 	}

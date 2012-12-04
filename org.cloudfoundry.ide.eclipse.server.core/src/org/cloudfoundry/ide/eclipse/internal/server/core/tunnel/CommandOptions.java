@@ -10,17 +10,24 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
-public class CommandOptions extends CommandMetaElement {
-	
-	private final String options;
+/**
+ * Using getters and setters for JSON serialisation.
+ * 
+ */
+public class CommandOptions {
 
-	public CommandOptions(String options) {
-		super("CommandOption");
-		this.options = options;
+	private String options;
+
+	public CommandOptions() {
+
 	}
-	
+
 	public String getOptions() {
 		return options;
+	}
+
+	public void setOptions(String options) {
+		this.options = options;
 	}
 
 }
