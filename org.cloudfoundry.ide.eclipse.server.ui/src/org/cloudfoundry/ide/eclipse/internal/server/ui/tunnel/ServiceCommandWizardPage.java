@@ -11,19 +11,25 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOptions;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand.ExternalApplicationLaunchInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 
 public class ServiceCommandWizardPage extends WizardPage {
 
 	private ServiceCommand serviceCommand;
 
 	private CommandDisplayPart displayPart;
+
+	private IStatus partStatus;
 
 	protected ServiceCommandWizardPage(CloudFoundryServer cloudServer, ServiceCommand serviceCommand) {
 		super("Command Page");
@@ -38,23 +44,35 @@ public class ServiceCommandWizardPage extends WizardPage {
 
 	public void createControl(Composite parent) {
 		displayPart = new CommandDisplayPart(serviceCommand);
-		displayPart.createPart(parent);
+		displayPart.addPartChangeListener(new IPartChangeListener() {
 
+			public void handleChange(PartChangeEvent event) {
+				if (event != null) {
+					partStatus = event.getStatus();
+					if (partStatus == null || partStatus.isOK()) {
+						setErrorMessage(null);
+						setPageComplete(true);
+					}
+					else {
+						if (ValueValidationUtil.isEmpty(partStatus.getMessage())) {
+							setErrorMessage(null);
+							setPageComplete(false);
+						}
+						else {
+							setErrorMessage(partStatus.getMessage());
+						}
+					}
+				}
+			}
+
+		});
+		Control control = displayPart.createPart(parent);
+		setControl(control);
 	}
 
 	@Override
 	public boolean isPageComplete() {
-		if (displayPart != null) {
-
-			String[] values = { displayPart.getLocation(), displayPart.getOptions(), displayPart.getDisplayName() };
-			for (String value : values) {
-				if (value == null || value.length() == 0) {
-					return false;
-				}
-			}
-			return true;
-		}
-		return super.isPageComplete();
+		return partStatus == null || partStatus.isOK();
 	}
 
 	public ServiceCommand getServiceCommand() {

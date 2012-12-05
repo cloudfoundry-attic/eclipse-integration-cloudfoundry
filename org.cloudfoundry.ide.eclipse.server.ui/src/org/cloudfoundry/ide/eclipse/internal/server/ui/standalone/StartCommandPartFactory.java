@@ -11,7 +11,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.standalone;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.URLNameValidation;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommandType;
 import org.eclipse.core.resources.IProject;
@@ -86,7 +86,7 @@ public class StartCommandPartFactory {
 
 			protected void updateStartCommand() {
 				String value = standaloneStartText.getText();
-				boolean isInvalid = URLNameValidation.isEmpty(value);
+				boolean isInvalid = ValueValidationUtil.isEmpty(value);
 				listener.handleChange(value, !isInvalid);
 
 			}

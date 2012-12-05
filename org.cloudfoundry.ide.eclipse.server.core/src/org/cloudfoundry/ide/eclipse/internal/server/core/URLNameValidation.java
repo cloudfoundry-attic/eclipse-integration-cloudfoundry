@@ -40,20 +40,10 @@ public class URLNameValidation {
 
 	private final Pattern VALID_CHARS = Pattern.compile("[A-Za-z\\$_0-9\\-.]+");
 
-	public static boolean isEmpty(String value) {
-		if (value == null) {
-			return true;
-		}
-		for (int i = 0; i < value.length(); i++) {
-			if (!Character.isWhitespace(value.charAt(i))) {
-				return false;
-			}
-		}
-		return true;
-	}
+
 
 	public boolean hasInvalidCharacters() {
-		if (!isEmpty(value)) {
+		if (!ValueValidationUtil.isEmpty(value)) {
 			Matcher matcher = VALID_CHARS.matcher(value);
 			return !matcher.matches();
 		}

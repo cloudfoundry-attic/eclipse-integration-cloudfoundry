@@ -14,6 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 
+ * This is meant to be a light weight, serialisable representation of a Cloud
+ * Foundry server for the purpose of persisting properties associated with the
+ * server like executable commands for server services when creating a tunnel.
  * Using getters and setters for JSON serialisation.
  * 
  */
@@ -22,7 +26,7 @@ public class ServicesServer {
 	private List<ServerService> services;
 
 	private String serverName;
-	
+
 	private String serverID;
 
 	public ServicesServer() {
@@ -33,7 +37,7 @@ public class ServicesServer {
 	public String getServerName() {
 		return serverName;
 	}
-	
+
 	public String getServerID() {
 		return serverID;
 	}
@@ -45,7 +49,7 @@ public class ServicesServer {
 	public void setServerName(String serverName) {
 		this.serverName = serverName;
 	}
-	
+
 	public void setServerID(String serverID) {
 		this.serverID = serverID;
 	}

@@ -55,7 +55,7 @@ public class DeploymentInfoValidator {
 		// Check URL validity
 		String message = null;
 		boolean isValid = true;
-		if (URLNameValidation.isEmpty(url)) {
+		if (ValueValidationUtil.isEmpty(url)) {
 			if (!isStandAloneApp) {
 				message = EMPTY_URL_ERROR;
 				isValid = false;
@@ -67,7 +67,7 @@ public class DeploymentInfoValidator {
 		}
 
 		// Check standalone app start command
-		if (isValid && isStandAloneApp && URLNameValidation.isEmpty(startCommand)) {
+		if (isValid && isStandAloneApp && ValueValidationUtil.isEmpty(startCommand)) {
 			message = INVALID_START_COMMAND;
 			isValid = false;
 		}

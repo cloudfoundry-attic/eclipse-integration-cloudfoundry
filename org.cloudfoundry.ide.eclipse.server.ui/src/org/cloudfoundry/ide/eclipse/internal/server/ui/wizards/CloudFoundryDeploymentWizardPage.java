@@ -22,7 +22,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentInfoValidator;
-import org.cloudfoundry.ide.eclipse.internal.server.core.URLNameValidation;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StandaloneStartCommandPart;
@@ -402,7 +402,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 		List<String> uris = new ArrayList<String>();
 
 		// Be sure not to add an empty URL if it is a standalone application
-		if (!wizard.isStandaloneApplication() || !URLNameValidation.isEmpty(deploymentUrl)) {
+		if (!wizard.isStandaloneApplication() || !ValueValidationUtil.isEmpty(deploymentUrl)) {
 			uris.add(deploymentUrl);
 		}
 

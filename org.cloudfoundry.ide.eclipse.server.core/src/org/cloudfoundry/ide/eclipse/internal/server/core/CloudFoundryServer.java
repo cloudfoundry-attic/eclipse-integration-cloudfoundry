@@ -627,12 +627,20 @@ public class CloudFoundryServer extends ServerDelegate {
 		return appModule;
 	}
 
-	public ServicesServer getTunnelServiceCommands() {
+	/**
+	 * Returns the commands associated with the current services in the server.
+	 * Changes to services since the last command persistance are also taken
+	 * into account, where new entries for new services are added, and commands
+	 * for non-existing services are removed.
+	 * @param monitor
+	 * @return
+	 * @throws CoreException
+	 */
+	public ServicesServer getTunnelServiceCommands(IProgressMonitor monitor) throws CoreException {
+		// First fetch any commands that have been persisted
 		String commands = internalGetTunnelServiceCommands();
-		ServicesServer server = null;
-		if (commands != null) {
-			return new TunnelServiceCommandHelper().getTunnelServiceCommands(commands);
-		}
+		ServicesServer server = new TunnelServiceCommandHelper(this).parseAndUpdateTunnelServiceCommands(commands,
+				monitor);
 		return server;
 
 	}
@@ -641,7 +649,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		if (server == null) {
 			return;
 		}
-		String json = new TunnelServiceCommandHelper().getTunnelServiceCommands(server);
+		String json = new TunnelServiceCommandHelper(this).serialiseServerServiceCommands(server);
 		if (json == null) {
 			json = "";
 		}
@@ -654,11 +662,11 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	protected void internalSetTunnelServiceCommands(String commands) throws CoreException {
-		setAttribute(TUNNEL_SERVICE_COMMANDS_PROPERTY, (String) null);
+		IServerWorkingCopy wc = getServer().createWorkingCopy();
 
-		if (getServerWorkingCopy() != null) {
-			getServerWorkingCopy().save(true, null);
-		}
+		wc.setAttribute(TUNNEL_SERVICE_COMMANDS_PROPERTY, commands);
+
+		wc.save(true, null);
 	}
 
 }

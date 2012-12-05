@@ -227,7 +227,7 @@ public class DeploymentURLTest extends TestCase {
 	}
 
 	protected boolean isEmpty(String value) {
-		return URLNameValidation.isEmpty(value);
+		return ValueValidationUtil.isEmpty(value);
 	}
 
 	protected boolean isInvalidWithValidator(String value) {

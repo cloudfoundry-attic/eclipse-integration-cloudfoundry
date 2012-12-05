@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.standalone;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.URLNameValidation;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StartCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.IStartCommandPartListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.StartCommandEvent;
@@ -121,7 +121,7 @@ public class JavaStartCommandPart extends AbstractStartCommandPart {
 
 		String mainType = mainTypeText.getText();
 		// Start command must have a main method type, or its not valid
-		boolean isInvalid = URLNameValidation.isEmpty(mainType);
+		boolean isInvalid = ValueValidationUtil.isEmpty(mainType);
 
 		String options = javaOptions.getText();
 
