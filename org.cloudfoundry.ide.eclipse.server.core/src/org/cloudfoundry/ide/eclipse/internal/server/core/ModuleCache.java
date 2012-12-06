@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalToolLaunchCommandsServer;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -46,6 +47,8 @@ public class ModuleCache {
 
 		private IServer server;
 
+		private ExternalToolLaunchCommandsServer cachedExternalToolLaunchCommands;
+
 		/**
 		 * Modules added in this session.
 		 */
@@ -68,6 +71,15 @@ public class ModuleCache {
 			appModule.setCloudApplication(application);
 			add(appModule);
 			return appModule;
+		}
+
+		public synchronized void addExternalToolLaunchCommand(
+				ExternalToolLaunchCommandsServer externalToolLaunchCommandServer) {
+			this.cachedExternalToolLaunchCommands = externalToolLaunchCommandServer;
+		}
+
+		public synchronized ExternalToolLaunchCommandsServer getExternalToolLaunchCommands() {
+			return cachedExternalToolLaunchCommands;
 		}
 
 		public synchronized void updateModule(ApplicationModule module) {

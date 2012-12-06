@@ -19,18 +19,10 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ModifyServicesForApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AddServiceStartCaldecottAction;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
@@ -100,41 +92,6 @@ public class CaldecottUIHelper {
 
 	}
 
-	/**
-	 * Returns a list of applicable Caldecott Actions given the selection, or
-	 * empty list if not actions are applicable.
-	 * @param selection
-	 * @param editorPage
-	 * @return non-null list of actions. May be empty.
-	 */
-	public List<IAction> getCaldecottActions(IStructuredSelection selection,
-			final CloudFoundryApplicationsEditorPage editorPage) {
-		Collection<String> selectedServices = ModifyServicesForApplicationAction.getServiceNames(selection);
-		List<IAction> actions = new ArrayList<IAction>();
-		final TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
-		if (selectedServices != null && !selectedServices.isEmpty()) {
-			final List<String> servicesWithTunnels = new ArrayList<String>();
-			final List<String> servicesToAdd = getServicesWithNoTunnel(selectedServices, handler, servicesWithTunnels);
-
-			if (!servicesToAdd.isEmpty()) {
-				actions.add(new AddServiceStartCaldecottAction(servicesToAdd, cloudServer.getBehaviour(), editorPage,
-						"Open Tunnel"));
-			}
-			else if (!servicesWithTunnels.isEmpty()) {
-
-				actions.add(new DisconnectCaldecottTunnelAction(editorPage, handler, servicesWithTunnels));
-				IAction showCaldecottTunnelInfo = new Action("Show Tunnel Information...",
-						CloudFoundryImages.CONNECT) {
-					public void run() {
-						displayCaldecottTunnels(servicesWithTunnels);
-					}
-				};
-				actions.add(showCaldecottTunnelInfo);
-			}
-		}
-		return actions;
-	}
-
 	public List<String> getServicesWithNoTunnel(Collection<String> selectedServices, TunnelBehaviour handler,
 			List<String> servicesWithTunnels) {
 		List<String> filteredInServices = new ArrayList<String>();
@@ -149,42 +106,6 @@ public class CaldecottUIHelper {
 		return filteredInServices;
 	}
 
-	static class DisconnectCaldecottTunnelAction extends CloudFoundryEditorAction {
 
-		static final String ACTION_NAME = "Disconnect Tunnel";
-
-		private final List<String> servicesWithTunnels;
-
-		private final TunnelBehaviour handler;
-
-		public DisconnectCaldecottTunnelAction(CloudFoundryApplicationsEditorPage editorPage,
-				TunnelBehaviour handler, List<String> servicesWithTunnels) {
-			super(editorPage, RefreshArea.ALL);
-			setText(ACTION_NAME);
-			setImageDescriptor(CloudFoundryImages.DISCONNECT);
-			this.servicesWithTunnels = servicesWithTunnels;
-			this.handler = handler;
-		}
-
-		@Override
-		public String getJobName() {
-			return ACTION_NAME;
-		}
-
-		@Override
-		public IStatus performAction(IProgressMonitor monitor) throws CoreException {
-			for (String serviceName : servicesWithTunnels) {
-				try {
-					handler.stopAndDeleteCaldecottTunnel(serviceName, monitor);
-				}
-				catch (CoreException e) {
-					CloudFoundryPlugin.logError("Failed to close tunnel for service: " + serviceName, e);
-				}
-			}
-
-			return Status.OK_STATUS;
-		}
-
-	}
 
 }

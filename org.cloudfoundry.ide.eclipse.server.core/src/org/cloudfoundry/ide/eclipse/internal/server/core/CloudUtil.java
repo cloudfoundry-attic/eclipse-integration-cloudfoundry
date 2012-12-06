@@ -26,6 +26,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
+import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneFacetHandler;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -588,5 +589,11 @@ public class CloudUtil {
 			}
 		}
 		return null;
+	}
+	
+	public static String getServiceVendor(CloudService cloudService) {
+		// Handle both v1 and v2 services. For v2, vendors are "labels".
+		return cloudService.getLabel() != null ? cloudService.getLabel() : cloudService
+				.getVendor();
 	}
 }

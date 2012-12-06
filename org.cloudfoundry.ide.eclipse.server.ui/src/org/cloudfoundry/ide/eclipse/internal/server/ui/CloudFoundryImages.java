@@ -32,6 +32,8 @@ public class CloudFoundryImages {
 	private final static String OBJ = "obj16/";
 
 	public static final ImageDescriptor EDIT = create(OBJ, "edit.gif");
+	
+	public static final ImageDescriptor TUNNEL_EXTERNAL_TOOLS = create(OBJ, "external_tools.gif");
 
 	public static final ImageDescriptor DISCONNECT = create(OBJ, "disconnect.png");
 

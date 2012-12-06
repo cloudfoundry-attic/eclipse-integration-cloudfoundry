@@ -12,8 +12,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommandHandler;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServicesServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommandHelper;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalToolLaunchCommandsServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.eclipse.core.runtime.CoreException;
@@ -38,7 +38,7 @@ public class ServiceTunnelCommandPreferencePage extends PreferencePage implement
 	@Override
 	protected Control createContents(Composite parent) {
 		try {
-			List<ServicesServer> actualServers = new ServiceCommandHandler().getServerServiceCommands(null);
+			List<ExternalToolLaunchCommandsServer> actualServers = new ServiceCommandHelper().getUpdatedServerServiceCommands(null);
 			part = new ServiceTunnelCommandPart(actualServers);
 			part.addPartChangeListener(new IPartChangeListener() {
 
@@ -78,9 +78,9 @@ public class ServiceTunnelCommandPreferencePage extends PreferencePage implement
 
 	public void handleServerServiceCommandSave() {
 		if (part != null) {
-			List<ServicesServer> updatedServers = part.getUpdatedServers();
+			List<ExternalToolLaunchCommandsServer> updatedServers = part.getUpdatedServers();
 			try {
-				new ServiceCommandHandler().saveServerServiceCommands(updatedServers, null);
+				new ServiceCommandHelper().saveServerServiceCommands(updatedServers, null);
 			}
 			catch (CoreException e) {
 				setErrorMessage("Failed to save command preferences: " + e.getMessage());

@@ -22,7 +22,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 
-public class ServiceCommandHandler {
+public class ServiceCommandHelper {
 
 	/**
 	 * Only returns a list of servers that actually have services. Skips servers
@@ -33,29 +33,29 @@ public class ServiceCommandHandler {
 	 * @return
 	 * @throws CoreException
 	 */
-	public List<ServicesServer> getServerServiceCommands(IProgressMonitor monitor) throws CoreException {
+	public List<ExternalToolLaunchCommandsServer> getUpdatedServerServiceCommands(IProgressMonitor monitor) throws CoreException {
 		List<CloudFoundryServer> cfServers = CloudServerUtil.getCloudServers();
-		List<ServicesServer> servicesServer = new ArrayList<ServicesServer>();
+		List<ExternalToolLaunchCommandsServer> servicesServer = new ArrayList<ExternalToolLaunchCommandsServer>();
 
 		for (CloudFoundryServer cfServer : cfServers) {
-			ServicesServer server = cfServer.getTunnelServiceCommands(monitor);
+			ExternalToolLaunchCommandsServer server = cfServer.getUpdatedTunnelServiceCommands(monitor);
 			if (server != null && server.getServices() != null && !server.getServices().isEmpty()) {
 				servicesServer.add(server);
 			}
-
 		}
 
 		return servicesServer;
 	}
+	
 
 	/**
 	 * 
-	 * This is performed asynchronously as a Job.
+	 * This is performed asynchronously.
 	 * @param servers
 	 * @param monitor
 	 * @throws CoreException
 	 */
-	public void saveServerServiceCommands(final List<ServicesServer> servers, IProgressMonitor monitor)
+	public void saveServerServiceCommands(final List<ExternalToolLaunchCommandsServer> servers, IProgressMonitor monitor)
 			throws CoreException {
 		if (servers == null) {
 			return;
@@ -65,11 +65,11 @@ public class ServiceCommandHandler {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				for (ServicesServer server : servers) {
+				for (ExternalToolLaunchCommandsServer server : servers) {
 					CloudFoundryServer cloudServer = CloudServerUtil.getCloudServer(server.getServerID());
 					if (cloudServer != null) {
 						try {
-							cloudServer.setTunnelServiceCommands(server);
+							cloudServer.saveTunnelServiceCommands(server);
 						}
 						catch (CoreException e) {
 							CloudFoundryPlugin.logError(e);
@@ -81,8 +81,8 @@ public class ServiceCommandHandler {
 
 		};
 
-		job.setSystem(false);
-		job.setPriority(Job.SHORT);
+		job.setSystem(true);
+		job.setPriority(Job.INTERACTIVE);
 		job.schedule();
 
 	}

@@ -15,14 +15,14 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DeleteServicesAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.RefreshApplicationEditorAction;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CaldecottUIHelper;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.TunnelActionProvider;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryServiceWizard;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -418,7 +418,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
 
-		List<IAction> caldecottAction = new CaldecottUIHelper(cloudServer).getCaldecottActions(selection, editorPage);
+		List<IAction> caldecottAction = new TunnelActionProvider(cloudServer).getCaldecottActions(selection, editorPage);
 		for (IAction action : caldecottAction) {
 			manager.add(action);
 		}

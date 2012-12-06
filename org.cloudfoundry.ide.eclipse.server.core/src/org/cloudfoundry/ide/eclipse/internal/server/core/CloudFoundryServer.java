@@ -23,8 +23,10 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServicesServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommandHelper;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalToolLaunchCommandsServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommandParser;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -636,24 +638,66 @@ public class CloudFoundryServer extends ServerDelegate {
 	 * @return
 	 * @throws CoreException
 	 */
-	public ServicesServer getTunnelServiceCommands(IProgressMonitor monitor) throws CoreException {
+	public ExternalToolLaunchCommandsServer getUpdatedTunnelServiceCommands(IProgressMonitor monitor)
+			throws CoreException {
 		// First fetch any commands that have been persisted
 		String commands = internalGetTunnelServiceCommands();
-		ServicesServer server = new TunnelServiceCommandHelper(this).parseAndUpdateTunnelServiceCommands(commands,
-				monitor);
+		ExternalToolLaunchCommandsServer server = new TunnelServiceCommandParser(this)
+				.parseAndUpdateTunnelServiceCommands(commands, monitor);
+		// Cache it outside of the CF Server instance
+		cacheExternalToolLaunchCommands(server);
 		return server;
 
 	}
 
-	public void setTunnelServiceCommands(ServicesServer server) throws CoreException {
+	public ExternalToolLaunchCommandsServer getExternalToolLaunchCommand() {
+		ServerData data = getData();
+		ExternalToolLaunchCommandsServer server = null;
+		if (data != null) {
+			server = data.getExternalToolLaunchCommands();
+		}
+		return server;
+	}
+
+	protected void cacheExternalToolLaunchCommands(ExternalToolLaunchCommandsServer server) {
+		ServerData data = getData();
+		if (data != null) {
+			data.addExternalToolLaunchCommand(server);
+		}
+	}
+
+	public void saveTunnelServiceCommands(ExternalToolLaunchCommandsServer server) throws CoreException {
 		if (server == null) {
 			return;
 		}
-		String json = new TunnelServiceCommandHelper(this).serialiseServerServiceCommands(server);
+
+		String json = new TunnelServiceCommandParser(this).serialiseServerServiceCommands(server);
 		if (json == null) {
 			json = "";
 		}
 		internalSetTunnelServiceCommands(json);
+		cacheExternalToolLaunchCommands(server);
+	}
+
+	public List<ServiceCommand> getCommandsForService(String serviceName) {
+		ExternalToolLaunchCommandsServer server = getExternalToolLaunchCommand();
+		List<ServiceCommand> commands = null;
+		if (server != null && server.getServices() != null) {
+			List<ServerService> services = server.getServices();
+			for (ServerService serv : services) {
+				// TODO: Be sure that the name, vendor and version match, in
+				// case
+				// a client removed a service and added a new one with a
+				// different vendor or version
+				// but the same name.
+				String name = serv.getServiceName();
+				if (name.equals(serviceName)) {
+					commands = serv.getCommands();
+				}
+			}
+
+		}
+		return commands != null ? commands : new ArrayList<ServiceCommand>(0);
 
 	}
 
@@ -667,6 +711,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		wc.setAttribute(TUNNEL_SERVICE_COMMANDS_PROPERTY, commands);
 
 		wc.save(true, null);
+
 	}
 
 }

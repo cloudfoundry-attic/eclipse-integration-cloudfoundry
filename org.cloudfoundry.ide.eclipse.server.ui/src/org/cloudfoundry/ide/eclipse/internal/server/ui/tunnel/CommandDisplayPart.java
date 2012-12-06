@@ -71,24 +71,38 @@ public class CommandDisplayPart extends AbstractPart {
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(main);
 
 		Composite fileSelection = new Composite(main, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(fileSelection);
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(fileSelection);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(fileSelection);
+		
+		
+		/* Display name area */
+		Composite displayComp = new Composite(fileSelection, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(displayComp);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(displayComp);
 
-		Label commandDisplayName = new Label(fileSelection, SWT.NONE);
+		Label commandDisplayName = new Label(displayComp, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).span(2, 0).applyTo(commandDisplayName);
 		commandDisplayName.setText("Display Name:");
 
-		displayName = new Text(fileSelection, SWT.BORDER);
+		displayName = new Text(displayComp, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).span(2, 0).applyTo(displayName);
 
+	
+		
 		Label fileSelectionLabel = new Label(fileSelection, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).span(2, 0).applyTo(fileSelectionLabel);
 		fileSelectionLabel.setText("Enter or browse location of command executable:");
 
-		locationField = new Text(fileSelection, SWT.BORDER);
+		/* Executable location */
+		Composite locationComp = new Composite(fileSelection, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(locationComp);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(locationComp);
+		
+		locationField = new Text(locationComp, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(locationField);
+	
 
-		findApplicationButton = new Button(fileSelection, SWT.PUSH);
+		findApplicationButton = new Button(locationComp, SWT.PUSH);
 
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(findApplicationButton);
 		findApplicationButton.setText("Browse...");

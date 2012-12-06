@@ -21,7 +21,7 @@ import java.util.List;
  * Using getters and setters for JSON serialisation.
  * 
  */
-public class ServicesServer {
+public class ExternalToolLaunchCommandsServer {
 
 	private List<ServerService> services;
 
@@ -29,7 +29,7 @@ public class ServicesServer {
 
 	private String serverID;
 
-	public ServicesServer() {
+	public ExternalToolLaunchCommandsServer() {
 
 		this.services = new ArrayList<ServerService>();
 	}

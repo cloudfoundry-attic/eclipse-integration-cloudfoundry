@@ -19,26 +19,27 @@ import java.util.Map;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
-public class TunnelServiceCommandHelper {
+public class TunnelServiceCommandParser {
 
 	private final static ObjectMapper mapper = new ObjectMapper();
 
 	private final CloudFoundryServer cloudServer;
 
-	public TunnelServiceCommandHelper(CloudFoundryServer cloudServer) {
+	public TunnelServiceCommandParser(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
 	}
 
-	public ServicesServer parseAndUpdateTunnelServiceCommands(String json, IProgressMonitor monitor)
+	public ExternalToolLaunchCommandsServer parseAndUpdateTunnelServiceCommands(String json, IProgressMonitor monitor)
 			throws CoreException {
-		ServicesServer servicesServer = null;
+		ExternalToolLaunchCommandsServer servicesServer = null;
 		if (json != null) {
 			try {
-				servicesServer = mapper.readValue(json, ServicesServer.class);
+				servicesServer = mapper.readValue(json, ExternalToolLaunchCommandsServer.class);
 			}
 			catch (IOException e) {
 
@@ -47,7 +48,7 @@ public class TunnelServiceCommandHelper {
 		}
 
 		if (servicesServer == null) {
-			servicesServer = new ServicesServer();
+			servicesServer = new ExternalToolLaunchCommandsServer();
 			servicesServer.setServerID(cloudServer.getServerId());
 			servicesServer.setServerName(cloudServer.getServer().getName());
 		}
@@ -63,9 +64,8 @@ public class TunnelServiceCommandHelper {
 				ServerService serService = new ServerService();
 				serService.setServiceName(actualService.getName());
 
-				// Handle both v1 and v2 services. For v2, vendors are "labels".
-				serService.setVendor(actualService.getLabel() != null ? actualService.getLabel() : actualService
-						.getVendor());
+				
+				serService.setVendor(CloudUtil.getServiceVendor(actualService));
 				serService.setVersion(actualService.getVersion());
 				updatedServerServices.put(serService.getServiceName(), serService);
 			}
@@ -89,7 +89,7 @@ public class TunnelServiceCommandHelper {
 		return servicesServer;
 	}
 
-	public String serialiseServerServiceCommands(ServicesServer server) throws CoreException {
+	public String serialiseServerServiceCommands(ExternalToolLaunchCommandsServer server) throws CoreException {
 		if (mapper.canSerialize(server.getClass())) {
 			try {
 				return mapper.writeValueAsString(server);

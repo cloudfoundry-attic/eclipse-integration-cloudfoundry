@@ -18,7 +18,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServicesServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalToolLaunchCommandsServer;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.ISelection;
@@ -63,9 +63,9 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 	private Shell derivedShell;
 
-	private List<ServicesServer> serversToUpdate;
+	private List<ExternalToolLaunchCommandsServer> serversToUpdate;
 
-	public ServiceTunnelCommandPart(List<ServicesServer> serversToUpdate) {
+	public ServiceTunnelCommandPart(List<ExternalToolLaunchCommandsServer> serversToUpdate) {
 		this.serversToUpdate = serversToUpdate;
 	}
 
@@ -226,7 +226,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 	protected void setServerInput() {
 
 		if (serversToUpdate == null) {
-			serversToUpdate = new ArrayList<ServicesServer>();
+			serversToUpdate = new ArrayList<ExternalToolLaunchCommandsServer>();
 		}
 
 		serversViewer.setInput(serversToUpdate);
@@ -242,12 +242,12 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 			serviceCommandsViewer.setInput(wrapper.getService().getCommands());
 		}
 		else {
-			serviceCommandsViewer.setInput(new ArrayList<ServicesServer>(0));
+			serviceCommandsViewer.setInput(new ArrayList<ExternalToolLaunchCommandsServer>(0));
 		}
 	}
 
 	protected CloudFoundryServer getSelectedServer() {
-		ServicesServer server = getSelectedServicesServer();
+		ExternalToolLaunchCommandsServer server = getSelectedServicesServer();
 
 		if (server != null) {
 			return CloudServerUtil.getCloudServer(server.getServerName());
@@ -255,17 +255,17 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 		return null;
 	}
 
-	protected ServicesServer getSelectedServicesServer() {
+	protected ExternalToolLaunchCommandsServer getSelectedServicesServer() {
 		ISelection iSelection = serversViewer.getSelection();
-		ServicesServer server = null;
+		ExternalToolLaunchCommandsServer server = null;
 		if (iSelection instanceof IStructuredSelection) {
 
 			Object selectObj = ((IStructuredSelection) iSelection).getFirstElement();
 			if (selectObj instanceof ServiceViewerWrapper) {
 				server = ((ServiceViewerWrapper) selectObj).getServer();
 			}
-			else if (selectObj instanceof ServicesServer) {
-				server = ((ServicesServer) selectObj);
+			else if (selectObj instanceof ExternalToolLaunchCommandsServer) {
+				server = ((ExternalToolLaunchCommandsServer) selectObj);
 			}
 
 		}
@@ -283,7 +283,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 		return null;
 	}
 
-	public List<ServicesServer> getUpdatedServers() {
+	public List<ExternalToolLaunchCommandsServer> getUpdatedServers() {
 		return serversToUpdate;
 	}
 
@@ -427,9 +427,9 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 		}
 
 		public int compare(Viewer viewer, Object e1, Object e2) {
-			if (e1 instanceof ServicesServer && e1 instanceof ServicesServer) {
-				String name1 = ((ServicesServer) e1).getServerName();
-				String name2 = ((ServicesServer) e2).getServerName();
+			if (e1 instanceof ExternalToolLaunchCommandsServer && e1 instanceof ExternalToolLaunchCommandsServer) {
+				String name1 = ((ExternalToolLaunchCommandsServer) e1).getServerName();
+				String name2 = ((ExternalToolLaunchCommandsServer) e2).getServerName();
 				return name1.compareTo(name2);
 			}
 			else if (e1 instanceof ServiceViewerWrapper && e2 instanceof ServiceViewerWrapper) {
@@ -453,8 +453,8 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 		}
 
 		public Object[] getChildren(Object parentElement) {
-			if (parentElement instanceof ServicesServer) {
-				ServicesServer server = (ServicesServer) parentElement;
+			if (parentElement instanceof ExternalToolLaunchCommandsServer) {
+				ExternalToolLaunchCommandsServer server = (ExternalToolLaunchCommandsServer) parentElement;
 				List<ServerService> services = server.getServices();
 				if (services != null) {
 					ServiceViewerWrapper[] wrapper = new ServiceViewerWrapper[services.size()];
@@ -493,8 +493,8 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 		}
 
 		public String getText(Object element) {
-			if (element instanceof ServicesServer) {
-				return ((ServicesServer) element).getServerName();
+			if (element instanceof ExternalToolLaunchCommandsServer) {
+				return ((ExternalToolLaunchCommandsServer) element).getServerName();
 			}
 			else if (element instanceof ServiceViewerWrapper) {
 				return ((ServiceViewerWrapper) element).getService().getServiceName();
@@ -576,9 +576,9 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 		private final ServerService service;
 
-		private final ServicesServer server;
+		private final ExternalToolLaunchCommandsServer server;
 
-		public ServiceViewerWrapper(ServicesServer server, ServerService service) {
+		public ServiceViewerWrapper(ExternalToolLaunchCommandsServer server, ServerService service) {
 			this.server = server;
 			this.service = service;
 		}
@@ -587,7 +587,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 			return service;
 		}
 
-		public ServicesServer getServer() {
+		public ExternalToolLaunchCommandsServer getServer() {
 			return server;
 		}
 
