@@ -31,7 +31,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -40,6 +39,7 @@ import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
+import org.eclipse.ui.progress.UIJob;
 
 public class TunnelActionProvider {
 
@@ -56,7 +56,7 @@ public class TunnelActionProvider {
 	 * @param editorPage
 	 * @return non-null list of actions. May be empty.
 	 */
-	public List<IAction> getCaldecottActions(IStructuredSelection selection,
+	public List<IAction> getTunnelActions(IStructuredSelection selection,
 			final CloudFoundryApplicationsEditorPage editorPage) {
 		Collection<String> selectedServices = ModifyServicesForApplicationAction.getServiceNames(selection);
 		List<IAction> actions = new ArrayList<IAction>();
@@ -73,8 +73,6 @@ public class TunnelActionProvider {
 					actions.add(new AddServiceStartCaldecottAction(servicesToAdd, cloudServer.getBehaviour(),
 							editorPage, "Open Tunnel"));
 				}
-
-				actions.add(new ExternalToolsAction(editorPage, cloudServer));
 
 			}
 
@@ -103,6 +101,7 @@ public class TunnelActionProvider {
 				}
 			}
 		}
+		actions.add(new ExternalToolsAction(editorPage, cloudServer));
 		return actions;
 	}
 
@@ -167,11 +166,11 @@ public class TunnelActionProvider {
 		}
 
 		@Override
-		protected Job getJob() {
-			Job job = new Job(getJobName()) {
+		protected UIJob getUIJob() {
+			UIJob job = new UIJob(getJobName()) {
 
 				@Override
-				protected IStatus run(IProgressMonitor monitor) {
+				public IStatus runInUIThread(IProgressMonitor monitor) {
 					new ExternalToolsLaunchCommand(serviceCommand, descriptor).run(monitor);
 					return Status.OK_STATUS;
 				}
@@ -202,11 +201,11 @@ public class TunnelActionProvider {
 		}
 
 		@Override
-		protected Job getJob() {
-			Job job = new Job("External Tools") {
+		protected UIJob getUIJob() {
+			UIJob job = new UIJob("External Tools") {
 
 				@Override
-				protected IStatus run(IProgressMonitor monitor) {
+				public IStatus runInUIThread(IProgressMonitor monitor) {
 					try {
 						List<ExternalToolLaunchCommandsServer> originalServers = new ServiceCommandHelper()
 								.getUpdatedServerServiceCommands(monitor);
@@ -257,11 +256,11 @@ public class TunnelActionProvider {
 
 		protected abstract String getJobName();
 
-		protected abstract Job getJob();
+		protected abstract UIJob getUIJob();
 
-		public IStatus performAction(IProgressMonitor monitor) throws CoreException {
+		public void run() {
 
-			Job job = getJob();
+			UIJob job = getUIJob();
 
 			IWorkbenchSiteProgressService service = (IWorkbenchSiteProgressService) editorPage.getEditorSite()
 					.getService(IWorkbenchSiteProgressService.class);
@@ -271,7 +270,7 @@ public class TunnelActionProvider {
 			else {
 				job.schedule();
 			}
-			return Status.OK_STATUS;
+
 		}
 	}
 

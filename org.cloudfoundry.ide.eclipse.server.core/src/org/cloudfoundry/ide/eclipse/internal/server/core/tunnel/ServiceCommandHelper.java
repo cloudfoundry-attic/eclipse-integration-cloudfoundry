@@ -28,7 +28,7 @@ public class ServiceCommandHelper {
 	 * Only returns a list of servers that actually have services. Skips servers
 	 * with no services. Returns a new and updated copy of the servers every
 	 * time it is called. Changes to the list will not be reflected until
-	 * explicitly persisted using a persistence or save API.
+	 * explicitly persisted using a persistence or save API. This is a synchronous operation.
 	 * @param monitor
 	 * @return
 	 * @throws CoreException

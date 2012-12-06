@@ -418,7 +418,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
 
-		List<IAction> caldecottAction = new TunnelActionProvider(cloudServer).getCaldecottActions(selection, editorPage);
+		List<IAction> caldecottAction = new TunnelActionProvider(cloudServer).getTunnelActions(selection, editorPage);
 		for (IAction action : caldecottAction) {
 			manager.add(action);
 		}

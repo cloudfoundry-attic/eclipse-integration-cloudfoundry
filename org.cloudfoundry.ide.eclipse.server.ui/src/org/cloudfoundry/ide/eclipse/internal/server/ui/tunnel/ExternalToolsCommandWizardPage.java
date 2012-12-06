@@ -21,11 +21,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
 public class ExternalToolsCommandWizardPage extends WizardPage {
-	private List<ExternalToolLaunchCommandsServer> originalServer;
+	private final List<ExternalToolLaunchCommandsServer> originalServer;
 
 	private ServiceTunnelCommandPart commandPart;
 
-	protected ExternalToolsCommandWizardPage(List<ExternalToolLaunchCommandsServer> actualServers,
+	protected ExternalToolsCommandWizardPage(List<ExternalToolLaunchCommandsServer> originalServer,
 			CloudFoundryServer cloudServer) {
 		super("External Tools Command Page");
 		setTitle("External Tools Commands");
@@ -34,6 +34,7 @@ public class ExternalToolsCommandWizardPage extends WizardPage {
 		if (banner != null) {
 			setImageDescriptor(banner);
 		}
+		this.originalServer = originalServer;
 	}
 
 	public void createControl(Composite parent) {

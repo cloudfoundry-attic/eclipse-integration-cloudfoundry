@@ -73,14 +73,14 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 		derivedShell = parent.getShell();
 
-		Label serverLabel = new Label(parent, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(false, false).applyTo(serverLabel);
-		serverLabel
-				.setText("Manage commands to launch when creating a tunnel to a specific service in a Cloud Foundry server.");
-
 		Composite generalArea = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(generalArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(generalArea);
+
+		Label serverLabel = new Label(parent, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(false, false).span(2, 0).applyTo(serverLabel);
+		serverLabel
+				.setText("Manage commands to launch when creating a tunnel to a specific service in a Cloud Foundry server.");
 
 		createViewerArea(generalArea);
 
@@ -130,6 +130,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 				handleChange(event);
 			}
 		});
+
 	}
 
 	protected void createServiceAppsArea(Composite parent) {
@@ -229,8 +230,10 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 			serversToUpdate = new ArrayList<ExternalToolLaunchCommandsServer>();
 		}
 
-		serversViewer.setInput(serversToUpdate);
+		serversViewer.setInput(serversToUpdate.toArray());
 
+		
+		serversViewer.setExpandedElements(serversToUpdate.toArray());
 		setServiceCommandInput(null);
 		setStatus(null);
 
@@ -482,6 +485,9 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 			if (newInput instanceof List<?>) {
 				elements = ((List<?>) newInput).toArray();
+			}
+			else if (newInput instanceof Object[]) {
+				elements = (Object[]) newInput;
 			}
 		}
 	}
