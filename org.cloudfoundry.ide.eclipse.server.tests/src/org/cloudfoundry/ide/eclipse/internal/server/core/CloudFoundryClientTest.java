@@ -26,11 +26,13 @@ import org.junit.Assert;
  */
 public class CloudFoundryClientTest extends TestCase {
 
-	public static final String VALID_V1_URL = "http://api.cloudfoundry.com";
+	public static final String VALID_V1_HTTP_URL = "http://api.cloudfoundry.com";
+
+	public static final String VALID_V1_HTTPS_URL = "https://api.cloudfoundry.com";
 
 	public void testConnectToNonSecureUrl() throws Exception {
 		CloudFoundryOperations client = CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory()
-				.getCloudFoundryOperations("http://api.cloudfoundry.com");
+				.getCloudFoundryOperations(VALID_V1_HTTP_URL);
 
 		CloudInfo cloudInfo = client.getCloudInfo();
 		Assert.assertNotNull(cloudInfo);
@@ -38,7 +40,7 @@ public class CloudFoundryClientTest extends TestCase {
 
 	public void testConnectToSecureUrl() throws Exception {
 		CloudFoundryOperations client = CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory()
-				.getCloudFoundryOperations("https://api.cloudfoundry.com");
+				.getCloudFoundryOperations(VALID_V1_HTTPS_URL);
 		CloudInfo cloudInfo = client.getCloudInfo();
 		Assert.assertNotNull(cloudInfo);
 
@@ -48,7 +50,7 @@ public class CloudFoundryClientTest extends TestCase {
 
 		CredentialProperties credentials = CloudFoundryTestFixture.getUserTestCredentials();
 
-		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(VALID_V1_URL,
+		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(VALID_V1_HTTP_URL,
 				credentials.getUserEmail(), credentials.getPassword());
 
 		CloudFoundryOperationsHandler operationsHandler = new CloudFoundryOperationsHandler(client, null);
@@ -64,7 +66,7 @@ public class CloudFoundryClientTest extends TestCase {
 
 		String invalidPassword = "invalid password";
 
-		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(VALID_V1_URL,
+		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(VALID_V1_HTTP_URL,
 				credentials.getUserEmail(), invalidPassword);
 
 		CloudFoundryOperationsHandler operationsHandler = new CloudFoundryOperationsHandler(client, null);
@@ -86,7 +88,7 @@ public class CloudFoundryClientTest extends TestCase {
 
 		String invalidUsername = "invalid username";
 
-		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(VALID_V1_URL, invalidUsername,
+		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(VALID_V1_HTTP_URL, invalidUsername,
 				credentials.getPassword());
 
 		CloudFoundryOperationsHandler operationsHandler = new CloudFoundryOperationsHandler(client, null);

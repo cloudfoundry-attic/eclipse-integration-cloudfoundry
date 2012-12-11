@@ -12,7 +12,6 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -20,111 +19,18 @@ import java.util.List;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
-import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ProxyHandler;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
-import org.eclipse.core.net.proxy.IProxyService;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.junit.Assert;
-import org.springframework.web.client.ResourceAccessException;
 
 /**
  * @author Steffen Pingel
  * @author Nieraj Singh
  */
 public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
-
-	public void testCreateApplicationInvalidProxyWithClientReset() throws Exception {
-		// ensure valid session
-		getClient();
-
-		final boolean[] ran = { false };
-		new ProxyHandler("invalid.proxy.test", 8080) {
-
-			@Override
-			protected void handleProxyChange() {
-				serverBehavior.resetClient();
-
-				// Create app. Should fail
-				CloudFoundryOperations client = null;
-				try {
-					List<String> uris = new ArrayList<String>();
-					uris.add("test-proxy-upload.cloudfoundry.com");
-					client = getClient();
-					client.createApplication("test", DeploymentConstants.SPRING, 128, uris, new ArrayList<String>());
-					fail("Expected ResourceAccessException due to invalid proxy configuration");
-				}
-				catch (Exception e) {
-					assertTrue("Expected ResourceAccessException, got: " + e, e instanceof ResourceAccessException);
-					assertEquals("invalid.proxy.test", e.getCause().getMessage());
-					ran[0] = true;
-				}
-
-				assertNull("Expected no client due to invalid proxy", client);
-			}
-
-		}.run();
-
-		assertTrue(ran[0]);
-	}
-
-	public void testCreateApplicationInvalidProxyWithoutClientReset() throws Exception {
-		// ensure valid session
-		getClient();
-
-		harness.createProjectAndAddModule("dynamic-webapp");
-
-		final IModule[] modules = server.getModules();
-		assertEquals("Expected dynamic-webapp module, got " + Arrays.toString(modules), 1, modules.length);
-		int moduleState = server.getModulePublishState(modules);
-		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
-
-		serverBehavior.deployOrStartModule(modules, true, null);
-		moduleState = server.getModuleState(modules);
-		assertEquals(IServer.STATE_STARTED, moduleState);
-		CloudApplication cloudApplication = getCloudApplication(modules[0]);
-		assertEquals(cloudApplication.getState(), CloudApplication.AppState.STARTED);
-
-		final boolean[] ran = { false };
-
-		new ProxyHandler("invalid.proxy.test", 8080) {
-
-			@Override
-			protected void handleProxyChange() throws CoreException {
-				IProxyService proxyService = getProxyService();
-				try {
-					// Should fail, as its now going through invalid proxy
-					serverBehavior.stopModule(modules, null);
-
-					getCloudApplication(modules[0]);
-					fail("Expected invalid.proxy.test failure");
-
-				}
-				catch (Exception e) {
-					assertTrue(e.getCause().getMessage().contains("invalid.proxy.test"));
-					ran[0] = true;
-				}
-
-				// Restore proxy settings and try again
-				proxyService.setSystemProxiesEnabled(getOriginalSystemProxiesEnabled());
-				proxyService.setProxiesEnabled(getOriginalProxiesEnabled());
-				proxyService.setProxyData(getOriginalProxyData());
-
-				serverBehavior.stopModule(modules, null);
-
-				int moduleState = server.getModuleState(modules);
-				assertEquals(IServer.STATE_STOPPED, moduleState);
-				CloudApplication cloudApplication = getCloudApplication(modules[0]);
-				assertEquals(cloudApplication.getState(), CloudApplication.AppState.STOPPED);
-			}
-
-		}.run();
-
-		assertTrue(ran[0]);
-	}
 
 	public void testConnect() throws Exception {
 		serverBehavior.connect(null);

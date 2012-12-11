@@ -107,8 +107,17 @@ public class CloudFoundryClientFactory {
 		}
 	}
 
+	protected static String getNormalisedProtocol(String protocol) {
+		return protocol.toUpperCase();
+	}
+
 	public static HttpProxyConfiguration getProxy(URL url) {
 
+		// URL must be set and have a valid protocol in order to determine
+		// which proxy to use
+		if (url == null || url.getProtocol() == null) {
+			return null;
+		}
 		// In certain cases, the activator would have stopped and the plugin may
 		// no longer be available. Usually onl happens on shutdown.
 
@@ -116,14 +125,41 @@ public class CloudFoundryClientFactory {
 
 		if (plugin != null) {
 			IProxyService proxyService = plugin.getProxyService();
-			if (proxyService != null) {
+
+			// Only set proxies IF proxies are enabled (i.e a user has selected
+			// MANUAL provider configuration in network preferences. If it is
+			// direct,
+			// then skip proxy settings.
+			if (proxyService != null && proxyService.isProxiesEnabled()) {
 				IProxyData[] existingProxies = proxyService.getProxyData();
-				if (existingProxies != null && existingProxies.length > 0) {
-					for (IProxyData data : existingProxies) {
-						if (IProxyData.HTTP_PROXY_TYPE.equals(data.getType())) {
-							int proxyPort = existingProxies[0].getPort();
-							String proxyHost = existingProxies[0].getHost();
-							return proxyHost != null ? new HttpProxyConfiguration(proxyHost, proxyPort) : null;
+
+				if (existingProxies != null) {
+
+					// Now determine the protocol to obtain the correct proxy
+					// type
+					String normalisedURLProtocol = getNormalisedProtocol(url.getProtocol());
+
+					// Resolve the correct proxy data type based on the URL
+					// protocol
+					String[] proxyDataTypes = { IProxyData.HTTP_PROXY_TYPE, IProxyData.HTTPS_PROXY_TYPE,
+							IProxyData.SOCKS_PROXY_TYPE };
+					String matchedProxyData = null;
+					for (String proxyDataType : proxyDataTypes) {
+						String normalised = getNormalisedProtocol(proxyDataType);
+						if (normalised.equals(normalisedURLProtocol)) {
+							matchedProxyData = proxyDataType;
+							break;
+						}
+					}
+
+					if (matchedProxyData != null) {
+						for (IProxyData data : existingProxies) {
+
+							if (matchedProxyData.equals(data.getType())) {
+								int proxyPort = data.getPort();
+								String proxyHost = data.getHost();
+								return proxyHost != null ? new HttpProxyConfiguration(proxyHost, proxyPort) : null;
+							}
 						}
 					}
 				}

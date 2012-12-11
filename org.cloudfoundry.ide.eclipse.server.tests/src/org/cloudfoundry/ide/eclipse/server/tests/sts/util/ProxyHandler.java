@@ -27,9 +27,22 @@ public abstract class ProxyHandler {
 
 	private boolean originalSystemProxiesEnabled;
 
+	private final boolean enableProxies;
+
+	private final String proxyDataType;
+
 	public ProxyHandler(String host, int port) {
 		this.host = host;
 		this.port = port;
+		enableProxies = true;
+		proxyDataType = IProxyData.HTTP_PROXY_TYPE;
+	}
+
+	public ProxyHandler(String host, int port, boolean enableProxies, String proxyDataType) {
+		this.host = host;
+		this.port = port;
+		this.enableProxies = enableProxies;
+		this.proxyDataType = proxyDataType;
 	}
 
 	protected IProxyService getProxyService() {
@@ -58,10 +71,24 @@ public abstract class ProxyHandler {
 		try {
 			// set new proxy
 			proxyService.setSystemProxiesEnabled(false);
-			proxyService.setProxiesEnabled(true);
+			proxyService.setProxiesEnabled(enableProxies);
 			IProxyData[] data = proxyService.getProxyData();
-			data[0].setHost(host);
-			data[0].setPort(port);
+			IProxyData matchedData = null;
+
+			for (IProxyData singleData : data) {
+				if (singleData.getType().equals(proxyDataType)) {
+					matchedData = singleData;
+					break;
+				}
+			}
+
+			if (matchedData == null) {
+				throw new CoreException(CloudFoundryPlugin.getErrorStatus("No matched proxy data type found for: "
+						+ proxyDataType));
+			}
+
+			matchedData.setHost(host);
+			matchedData.setPort(port);
 			proxyService.setProxyData(data);
 
 			handleProxyChange();
