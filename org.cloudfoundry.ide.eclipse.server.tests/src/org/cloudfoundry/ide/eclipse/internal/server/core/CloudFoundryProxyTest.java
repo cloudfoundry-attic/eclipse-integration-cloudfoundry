@@ -248,7 +248,11 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 					// HTTPS proxy -> HTTPS URL)
 					configuration = CloudFoundryClientFactory.getProxy(new URL(VALID_V1_HTTPS_URL));
 
-					assertNull(configuration);
+					// Need to add this code in case the server has a proxy set
+					// for either HTTP or HTTPS
+					if (configuration != null) {
+						assertTrue(!configuration.getProxyHost().equals("invalid.proxy.text"));
+					}
 
 				}
 				catch (MalformedURLException e) {
@@ -278,7 +282,11 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 					// HTTPS proxy -> HTTPS URL)
 					configuration = CloudFoundryClientFactory.getProxy(new URL(VALID_V1_HTTP_URL));
 
-					assertNull(configuration);
+					// Need to add this code in case the server has a proxy set
+					// for either HTTP or HTTPS
+					if (configuration != null) {
+						assertTrue(!configuration.getProxyHost().equals("invalid.proxy.text"));
+					}
 
 				}
 				catch (MalformedURLException e) {
