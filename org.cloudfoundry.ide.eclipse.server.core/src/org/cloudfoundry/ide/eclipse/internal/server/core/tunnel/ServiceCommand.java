@@ -16,7 +16,8 @@ import java.util.List;
 
 /**
  * 
- * Using getters and setters with no-argument constructors for JSON serialisation
+ * Using getters and setters with no-argument constructors for JSON
+ * serialisation
  * 
  */
 public class ServiceCommand {
@@ -63,32 +64,36 @@ public class ServiceCommand {
 	public void setOptions(List<CommandOption> options) {
 		this.options = options;
 	}
-	
+
 	public static String getSerialisedOptions(ServiceCommand command) {
 		List<CommandOption> options = command.getOptions();
 		if (options != null) {
 			StringWriter writer = new StringWriter();
-			for (CommandOption option : options) {
+			for (int i = 0; i < options.size(); i++) {
+				CommandOption option = options.get(i);
 				writer.append(option.getOption());
 				writer.append(' ');
 				writer.append(option.getValue());
+				if (i < options.size() - 1) {
+					writer.append(' ');
+				}
 			}
 			return writer.toString();
 		}
 
 		return null;
 	}
-	
+
 	public static void covertToOptions(ServiceCommand serviceCommand, String optionsValue) {
 		if (optionsValue == null || serviceCommand == null) {
 			return;
 		}
-		
+
 		// Trim trailing and leading white spaces.
 		optionsValue = optionsValue.trim();
 
 		List<CommandOption> optionsList = new ArrayList<CommandOption>();
-		
+
 		// Parse all options using pattern: [option][space][value]
 		StringWriter optionBuffer = null;
 		StringWriter valueBuffer = null;

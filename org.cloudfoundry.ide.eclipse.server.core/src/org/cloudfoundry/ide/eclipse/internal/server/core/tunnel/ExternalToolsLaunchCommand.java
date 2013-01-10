@@ -72,7 +72,8 @@ public class ExternalToolsLaunchCommand {
 
 				if (serviceCommand.getOptions() != null && !serviceCommand.getOptions().isEmpty()) {
 					options.append(' ');
-			
+					String appOptions = ServiceCommand.getSerialisedOptions(serviceCommand);
+					options.append(appOptions);
 				}
 
 				if (options.getBuffer().length() > 0) {

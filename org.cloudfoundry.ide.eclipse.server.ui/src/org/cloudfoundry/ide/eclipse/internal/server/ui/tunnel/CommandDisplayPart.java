@@ -45,11 +45,15 @@ public class CommandDisplayPart extends AbstractPart {
 
 	private Text displayName;
 
+	private Text terminalLocation;
+
 	private String optionsVal;
 
 	private String locationVal;
 
 	private String displayNameVal;
+
+	private String terminalLocationVal;
 
 	private Button findApplicationButton;
 
@@ -79,13 +83,20 @@ public class CommandDisplayPart extends AbstractPart {
 		displayName = new Text(main, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).span(2, 0).applyTo(displayName);
 
+		Label terminalLocationLabel = new Label(main, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(terminalLocationLabel);
+		terminalLocationLabel.setText("External Command Line Terminal:");
+
+		terminalLocation = new Text(main, SWT.BORDER);
+		GridDataFactory.fillDefaults().grab(true, false).span(2, 0).applyTo(terminalLocation);
+
 		Label fileSelectionLabel = new Label(main, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(fileSelectionLabel);
 		fileSelectionLabel.setText("Enter or browse location of command executable:");
 
 		locationField = new Text(main, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(locationField);
-		
+
 		Composite buttonArea = new Composite(main, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(buttonArea);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(buttonArea);
@@ -170,6 +181,14 @@ public class CommandDisplayPart extends AbstractPart {
 			if (optionsVal != null) {
 				options.setText(optionsVal);
 			}
+
+			terminalLocationVal = serviceCommand.getCommandTerminal() != null ? serviceCommand.getCommandTerminal()
+					.getTerminalLaunchCommand() : null;
+					
+			if (terminalLocationVal != null) {
+				terminalLocation.setText(terminalLocationVal);
+			}
+
 		}
 	}
 
@@ -184,10 +203,14 @@ public class CommandDisplayPart extends AbstractPart {
 	public String getOptions() {
 		return optionsVal;
 	}
+	
+	public String getTerminalLocation() {
+		return terminalLocationVal;
+	}
 
 	protected String getOptionsDescription() {
 		StringWriter writer = new StringWriter();
-		writer.append("Use the following variables for options to be automatically filled:");
+		writer.append("Use the following variables for tunnel options to be filled automatically:");
 		writer.append("\n");
 		writer.append("\n");
 		writer.append("$");
@@ -228,6 +251,7 @@ public class CommandDisplayPart extends AbstractPart {
 		locationVal = locationField.getText();
 		displayNameVal = displayName.getText();
 		optionsVal = options.getText();
+		terminalLocationVal = terminalLocation.getText();
 
 		validate(false);
 	}
