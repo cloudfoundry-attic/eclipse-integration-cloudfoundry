@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,10 +10,8 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
-import java.util.List;
-
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommandHelper;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalToolLaunchCommandsServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommandStore;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.eclipse.core.runtime.CoreException;
@@ -38,8 +36,9 @@ public class ServiceTunnelCommandPreferencePage extends PreferencePage implement
 	@Override
 	protected Control createContents(Composite parent) {
 		try {
-			List<ExternalToolLaunchCommandsServer> actualServers = new ServiceCommandHelper().getUpdatedServerServiceCommands(null);
-			part = new ServiceTunnelCommandPart(actualServers);
+			TunnelServiceCommands commands = TunnelServiceCommandStore.getCurrentStore().getTunnelServiceCommands();
+
+			part = new ServiceTunnelCommandPart(commands);
 			part.addPartChangeListener(new IPartChangeListener() {
 
 				public void handleChange(PartChangeEvent event) {
@@ -53,7 +52,6 @@ public class ServiceTunnelCommandPreferencePage extends PreferencePage implement
 							setErrorMessage(null);
 						}
 					}
-
 				}
 			});
 			return part.createControl(parent);
@@ -78,9 +76,9 @@ public class ServiceTunnelCommandPreferencePage extends PreferencePage implement
 
 	public void handleServerServiceCommandSave() {
 		if (part != null) {
-			List<ExternalToolLaunchCommandsServer> updatedServers = part.getUpdatedServers();
+			TunnelServiceCommands updatedCommands = part.getUpdatedCommands();
 			try {
-				new ServiceCommandHelper().saveServerServiceCommands(updatedServers, null);
+				TunnelServiceCommandStore.getCurrentStore().storeServerServiceCommands(updatedCommands);
 			}
 			catch (CoreException e) {
 				setErrorMessage("Failed to save command preferences: " + e.getMessage());

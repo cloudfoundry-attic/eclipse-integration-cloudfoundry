@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,30 +18,28 @@ import java.util.List;
  * Using getters and setters with no-argument constructors for JSON serialisation
  * 
  */
-public class ServerService {
+public class TunnelServiceCommands {
 
-	private List<ServiceCommand> commands;
+	private List<ServerService> services;
 
-	private ServiceInfo serviceInfo;
-
-	public ServerService() {
-
+	public TunnelServiceCommands() {
+		services = new ArrayList<ServerService>(0);
 	}
 
-	public List<ServiceCommand> getCommands() {
-		return commands;
+	/**
+	 * Will never be null.
+	 * @return non-null list of services
+	 */
+	public List<ServerService> getServices() {
+		return services;
 	}
 
-	public void setCommands(List<ServiceCommand> commands) {
-		this.commands = commands;
-	}
-
-	public ServiceInfo getServiceInfo() {
-		return serviceInfo;
-	}
-
-	public void setServiceInfo(ServiceInfo serviceInfo) {
-		this.serviceInfo = serviceInfo;
+	/**
+	 * Setting null will set an empty list of services.
+	 * @param services
+	 */
+	public void setServices(List<ServerService> services) {
+		this.services = services != null ? services : new ArrayList<ServerService>();
 	}
 
 }

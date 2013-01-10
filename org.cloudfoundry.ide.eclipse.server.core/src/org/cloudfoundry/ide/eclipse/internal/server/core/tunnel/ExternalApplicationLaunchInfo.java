@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,23 +11,33 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
 /**
- * Using getters and setters for JSON serialisation.
+ * 
+ * Using getters and setters with no-argument constructors for JSON serialisation
  * 
  */
-public class CommandOptions {
+public class ExternalApplicationLaunchInfo {
 
-	private String options;
+	private String displayName;
 
-	public CommandOptions() {
+	private String executableName;
+
+	public ExternalApplicationLaunchInfo() {
 
 	}
 
-	public String getOptions() {
-		return options;
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
 	}
 
-	public void setOptions(String options) {
-		this.options = options;
+	public void setExecutableName(String executableName) {
+		this.executableName = executableName;
 	}
 
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	public String getExecutableName() {
+		return executableName;
+	}
 }

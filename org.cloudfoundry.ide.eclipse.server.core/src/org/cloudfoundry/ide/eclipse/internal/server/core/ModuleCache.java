@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalToolLaunchCommandsServer;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -47,8 +46,6 @@ public class ModuleCache {
 
 		private IServer server;
 
-		private ExternalToolLaunchCommandsServer cachedExternalToolLaunchCommands;
-
 		/**
 		 * Modules added in this session.
 		 */
@@ -71,15 +68,6 @@ public class ModuleCache {
 			appModule.setCloudApplication(application);
 			add(appModule);
 			return appModule;
-		}
-
-		public synchronized void addExternalToolLaunchCommand(
-				ExternalToolLaunchCommandsServer externalToolLaunchCommandServer) {
-			this.cachedExternalToolLaunchCommands = externalToolLaunchCommandServer;
-		}
-
-		public synchronized ExternalToolLaunchCommandsServer getExternalToolLaunchCommands() {
-			return cachedExternalToolLaunchCommands;
 		}
 
 		public synchronized void updateModule(ApplicationModule module) {

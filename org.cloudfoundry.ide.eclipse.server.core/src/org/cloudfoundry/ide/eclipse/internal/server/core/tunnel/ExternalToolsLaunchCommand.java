@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,12 +10,11 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
+import java.io.StringWriter;
+
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.WaitWithProgressJob;
-import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryDebuggingLaunchConfigDelegate;
 import org.eclipse.core.externaltools.internal.IExternalToolConstants;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -26,18 +25,13 @@ import org.eclipse.debug.core.ILaunchConfigurationType;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.ui.DebugUITools;
-import org.eclipse.debug.ui.IDebugUIConstants;
-import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 
 public class ExternalToolsLaunchCommand {
 
 	private final ServiceCommand serviceCommand;
 
-	private final CaldecottTunnelDescriptor descriptor;
-
-	public ExternalToolsLaunchCommand(ServiceCommand serviceCommand, CaldecottTunnelDescriptor descriptor) {
+	public ExternalToolsLaunchCommand(ServiceCommand serviceCommand) {
 		this.serviceCommand = serviceCommand;
-		this.descriptor = descriptor;
 	}
 
 	protected String getLaunchName() {
@@ -56,16 +50,35 @@ public class ExternalToolsLaunchCommand {
 				ILaunchConfiguration configuration = launchConfigType.newInstance(null, getLaunchName());
 				ILaunchConfigurationWorkingCopy wc = configuration.getWorkingCopy();
 
-				// Convert all to String to make it consistent when reading the
-				// attributes later.
-				wc.setAttribute(IExternalToolConstants.ATTR_LOCATION, serviceCommand.getExternalApplicationLaunchInfo()
-						.getExecutableName());
-
-				if (serviceCommand.getOptions() != null) {
-					wc.setAttribute(IExternalToolConstants.ATTR_TOOL_ARGUMENTS, serviceCommand.getOptions()
-							.getOptions());
+				// If a command needs to be launched in a terminal, the terminal
+				// launch app is the actual executable for the process (it has
+				// to be a file that exists).
+				// the command executable + terminal options are ALL options for
+				// the terminal launch app.
+				String executable = null;
+				StringWriter options = new StringWriter();
+				if (serviceCommand.usesTerminal()) {
+					CommandTerminal terminalCommand = serviceCommand.getCommandTerminal();
+					executable = terminalCommand.getTerminalLaunchCommand();
+					options.append(' ');
+					options.append(serviceCommand.getExternalApplicationLaunchInfo().getExecutableName());
 
 				}
+				else {
+					executable = serviceCommand.getExternalApplicationLaunchInfo().getExecutableName();
+				}
+
+				wc.setAttribute(IExternalToolConstants.ATTR_LOCATION, executable);
+
+				if (serviceCommand.getOptions() != null && !serviceCommand.getOptions().isEmpty()) {
+					options.append(' ');
+			
+				}
+
+				if (options.getBuffer().length() > 0) {
+					wc.setAttribute(IExternalToolConstants.ATTR_TOOL_ARGUMENTS, options.toString());
+				}
+
 				configuration = wc.doSave();
 
 				return configuration;
@@ -114,8 +127,7 @@ public class ExternalToolsLaunchCommand {
 
 		if (!successful && status == null) {
 			status = CloudFoundryPlugin.getErrorStatus("Failed to launch external tool: "
-					+ serviceCommand.getExternalApplicationLaunchInfo().getDisplayName()
-					+ " for the following service: " + serviceCommand.getServiceInfo().getServiceName());
+					+ serviceCommand.getExternalApplicationLaunchInfo().getDisplayName());
 		}
 
 		return status;

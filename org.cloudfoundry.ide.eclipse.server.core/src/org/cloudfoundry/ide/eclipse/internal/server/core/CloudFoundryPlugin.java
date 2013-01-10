@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,7 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelCache;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommandStore;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -178,6 +179,8 @@ public class CloudFoundryPlugin extends Plugin {
 	private InstanceScope INSTANCE_SCOPE = new InstanceScope();
 
 	private static CaldecottTunnelCache caldecottCache = new CaldecottTunnelCache();
+	
+	private TunnelServiceCommandStore serviceCommandsStore;
 
 	public static CaldecottTunnelCache getCaldecottTunnelCache() {
 		return caldecottCache;
@@ -209,7 +212,7 @@ public class CloudFoundryPlugin extends Plugin {
 				DEFAULT_INCREMENTAL_PUBLISH_PREFERENCE_VAL);
 	}
 
-	protected IEclipsePreferences getPreferences() {
+	public IEclipsePreferences getPreferences() {
 		return INSTANCE_SCOPE.getNode(PLUGIN_ID);
 	}
 
@@ -230,6 +233,13 @@ public class CloudFoundryPlugin extends Plugin {
 			moduleCache = new ModuleCache();
 		}
 		return moduleCache;
+	}
+	
+	public synchronized TunnelServiceCommandStore getTunnelCommandsStore() {
+		if (serviceCommandsStore == null) {
+			serviceCommandsStore = new TunnelServiceCommandStore();
+		}
+		return serviceCommandsStore;
 	}
 
 	private final List<CloudServerListener> applicationListeners = new CopyOnWriteArrayList<CloudServerListener>();

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -144,7 +144,7 @@ public class TunnelBehaviour {
 	}
 
 	public synchronized CaldecottTunnelDescriptor startCaldecottTunnel(final String serviceName,
-			IProgressMonitor monitor) throws CoreException {
+			IProgressMonitor monitor, final boolean shouldShowTunnelInformation) throws CoreException {
 
 		final List<CaldecottTunnelDescriptor> tunnel = new ArrayList<CaldecottTunnelDescriptor>(1);
 
@@ -251,7 +251,9 @@ public class TunnelBehaviour {
 
 				// Update any UI that needs to be notified that a tunnel was
 				// created
-				callBack.displayCaldecottTunnelConnections(cloudServer, descriptors);
+				if (shouldShowTunnelInformation) {
+					callBack.displayCaldecottTunnelConnections(cloudServer, descriptors);
+				}
 
 				return descriptor;
 			}

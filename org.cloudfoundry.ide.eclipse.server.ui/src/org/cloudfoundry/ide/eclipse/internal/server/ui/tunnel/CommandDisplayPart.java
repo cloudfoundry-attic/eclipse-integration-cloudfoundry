@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,6 +16,7 @@ import java.util.EventObject;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.ExternalToolUIOptionsHandler.TunnelOptions;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -70,39 +71,26 @@ public class CommandDisplayPart extends AbstractPart {
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(main);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(main);
 
-		Composite fileSelection = new Composite(main, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(fileSelection);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(fileSelection);
-		
-		
 		/* Display name area */
-		Composite displayComp = new Composite(fileSelection, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(displayComp);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(displayComp);
-
-		Label commandDisplayName = new Label(displayComp, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(false, false).span(2, 0).applyTo(commandDisplayName);
+		Label commandDisplayName = new Label(main, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(commandDisplayName);
 		commandDisplayName.setText("Display Name:");
 
-		displayName = new Text(displayComp, SWT.BORDER);
+		displayName = new Text(main, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).span(2, 0).applyTo(displayName);
 
-	
-		
-		Label fileSelectionLabel = new Label(fileSelection, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(false, false).span(2, 0).applyTo(fileSelectionLabel);
+		Label fileSelectionLabel = new Label(main, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(fileSelectionLabel);
 		fileSelectionLabel.setText("Enter or browse location of command executable:");
 
-		/* Executable location */
-		Composite locationComp = new Composite(fileSelection, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(locationComp);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(locationComp);
+		locationField = new Text(main, SWT.BORDER);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(locationField);
 		
-		locationField = new Text(locationComp, SWT.BORDER);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(locationField);
-	
+		Composite buttonArea = new Composite(main, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(buttonArea);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(buttonArea);
 
-		findApplicationButton = new Button(locationComp, SWT.PUSH);
+		findApplicationButton = new Button(buttonArea, SWT.PUSH);
 
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(findApplicationButton);
 		findApplicationButton.setText("Browse...");
@@ -141,6 +129,13 @@ public class CommandDisplayPart extends AbstractPart {
 			}
 		});
 
+		options.addModifyListener(new ModifyListener() {
+
+			public void modifyText(ModifyEvent event) {
+				handleChange(event);
+			}
+		});
+
 		GridDataFactory.fillDefaults().grab(true, true).hint(30, IDialogConstants.ENTRY_FIELD_WIDTH).applyTo(options);
 
 		Text optionsDescription = new Text(main, SWT.MULTI | SWT.BORDER);
@@ -171,8 +166,8 @@ public class CommandDisplayPart extends AbstractPart {
 				displayName.setText(displayNameVal);
 			}
 
-			if (serviceCommand.getOptions() != null) {
-				optionsVal = serviceCommand.getOptions().getOptions();
+			optionsVal = ServiceCommand.getSerialisedOptions(serviceCommand);
+			if (optionsVal != null) {
 				options.setText(optionsVal);
 			}
 		}
@@ -195,15 +190,20 @@ public class CommandDisplayPart extends AbstractPart {
 		writer.append("Use the following variables for options to be automatically filled:");
 		writer.append("\n");
 		writer.append("\n");
-		writer.append("$Username");
+		writer.append("$");
+		writer.append(TunnelOptions.Username.name());
 		writer.append("\n");
-		writer.append("$Password");
+		writer.append("$");
+		writer.append(TunnelOptions.Password.name());
 		writer.append("\n");
-		writer.append("$Url");
+		writer.append("$");
+		writer.append(TunnelOptions.Url.name());
 		writer.append("\n");
-		writer.append("$Databasename");
+		writer.append("$");
+		writer.append(TunnelOptions.Databasename.name());
 		writer.append("\n");
-		writer.append("$Port");
+		writer.append("$");
+		writer.append(TunnelOptions.Port.name());
 		return writer.toString();
 
 	}

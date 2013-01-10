@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,17 +8,14 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
+package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOptions;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalApplicationLaunchInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand.ExternalApplicationLaunchInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CommandDisplayPart;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -31,14 +28,10 @@ public class ServiceCommandWizardPage extends WizardPage {
 
 	private IStatus partStatus;
 
-	protected ServiceCommandWizardPage(CloudFoundryServer cloudServer, ServiceCommand serviceCommand) {
+	protected ServiceCommandWizardPage(ServiceCommand serviceCommand) {
 		super("Command Page");
 		setTitle("Command Definition");
 		setDescription("Define a command to launch on a service tunnel");
-		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(cloudServer.getServer().getServerType().getId());
-		if (banner != null) {
-			setImageDescriptor(banner);
-		}
 		this.serviceCommand = serviceCommand;
 	}
 
@@ -81,17 +74,13 @@ public class ServiceCommandWizardPage extends WizardPage {
 			String options = displayPart.getOptions();
 			String displayName = displayPart.getDisplayName();
 			ServiceCommand editedCommand = new ServiceCommand();
-			if (serviceCommand != null) {
-				editedCommand.setServiceInfo(serviceCommand.getServiceInfo());
-			}
+
 			ExternalApplicationLaunchInfo appInfo = new ExternalApplicationLaunchInfo();
 			appInfo.setDisplayName(displayName);
 			appInfo.setExecutableName(location);
 			editedCommand.setExternalApplicationLaunchInfo(appInfo);
 
-			CommandOptions cmOptions = new CommandOptions();
-			cmOptions.setOptions(options);
-			editedCommand.setOptions(cmOptions);
+			ServiceCommand.covertToOptions(editedCommand, options);
 			serviceCommand = editedCommand;
 		}
 		return serviceCommand;

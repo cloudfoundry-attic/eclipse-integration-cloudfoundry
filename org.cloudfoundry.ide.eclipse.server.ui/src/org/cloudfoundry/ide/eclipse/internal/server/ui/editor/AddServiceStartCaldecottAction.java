@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -63,12 +63,12 @@ public class AddServiceStartCaldecottAction extends CloudFoundryEditorAction {
 
 	@Override
 	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
-		TunnelBehaviour handler = new TunnelBehaviour(getBehavior().getCloudFoundryServer());
 
 		if (services != null && !services.isEmpty()) {
 
 			try {
-				handler.startCaldecottTunnel(services.get(0), monitor);
+				TunnelBehaviour handler = new TunnelBehaviour(getBehavior().getCloudFoundryServer());
+				handler.startCaldecottTunnel(services.get(0), monitor, true);
 			}
 			catch (CoreException e) {
 				return CloudFoundryPlugin.getErrorStatus(e);

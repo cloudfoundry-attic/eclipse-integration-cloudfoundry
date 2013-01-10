@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,37 +10,33 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
-import java.util.List;
-
 /**
  * 
  * Using getters and setters with no-argument constructors for JSON serialisation
  * 
  */
-public class ServerService {
+public enum ServiceInfo {
 
-	private List<ServiceCommand> commands;
+	BLOB_SERVICE("blob"),
 
-	private ServiceInfo serviceInfo;
+	MONGODB_SERVICE("mongodb"),
 
-	public ServerService() {
+	MYSQL_SERVICE("mysql"),
 
+	POSTGRESQL_SERVICE("postgresql"),
+
+	RABBITMQ_SERVICE("rabbitmq"),
+
+	REDIS_SERVICE("redis");
+
+	private final String vendor;
+
+	private ServiceInfo(String vendor) {
+		this.vendor = vendor;
 	}
 
-	public List<ServiceCommand> getCommands() {
-		return commands;
-	}
-
-	public void setCommands(List<ServiceCommand> commands) {
-		this.commands = commands;
-	}
-
-	public ServiceInfo getServiceInfo() {
-		return serviceInfo;
-	}
-
-	public void setServiceInfo(ServiceInfo serviceInfo) {
-		this.serviceInfo = serviceInfo;
+	public String getVendor() {
+		return vendor;
 	}
 
 }

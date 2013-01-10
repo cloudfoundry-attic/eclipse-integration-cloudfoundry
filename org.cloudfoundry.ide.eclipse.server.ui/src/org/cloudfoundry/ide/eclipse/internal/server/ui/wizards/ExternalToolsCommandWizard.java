@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,27 +8,24 @@
  * Contributors:
  *     VMware, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
-
-import java.util.List;
+package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalToolLaunchCommandsServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommands;
 import org.eclipse.jface.wizard.Wizard;
 
 public class ExternalToolsCommandWizard extends Wizard {
 
 	private CloudFoundryServer cloudServer;
 
-	private List<ExternalToolLaunchCommandsServer> originalServers;
+	private TunnelServiceCommands originalCommands;
 
 	private ExternalToolsCommandWizardPage page;
 
-	public ExternalToolsCommandWizard(List<ExternalToolLaunchCommandsServer> originalServers,
-			CloudFoundryServer cloudServer) {
+	public ExternalToolsCommandWizard(TunnelServiceCommands originalCommands, CloudFoundryServer cloudServer) {
 		super();
 		this.cloudServer = cloudServer;
-		this.originalServers = originalServers;
+		this.originalCommands = originalCommands;
 
 		setWindowTitle("External Tools Commands");
 		setNeedsProgressMonitor(true);
@@ -36,12 +33,12 @@ public class ExternalToolsCommandWizard extends Wizard {
 
 	@Override
 	public void addPages() {
-		page = new ExternalToolsCommandWizardPage(originalServers, cloudServer);
+		page = new ExternalToolsCommandWizardPage(originalCommands, cloudServer);
 		addPage(page);
 	}
 
-	public List<ExternalToolLaunchCommandsServer> getExternalToolLaunchCommandsServer() {
-		return page != null ? page.getExtToolLaunchCommandsServer() : originalServers;
+	public TunnelServiceCommands getExternalToolLaunchCommandsServer() {
+		return page != null ? page.getExtToolLaunchCommandsServer() : originalCommands;
 	}
 
 	@Override
