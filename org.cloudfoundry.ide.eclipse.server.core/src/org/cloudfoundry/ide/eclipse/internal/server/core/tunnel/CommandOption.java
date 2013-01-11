@@ -42,7 +42,7 @@ public class CommandOption {
 	}
 	
 	public static boolean isOptionValueSet(CommandOption option) {
-		return option.getValue() != null && option.getValue().trim().startsWith("$");
+		return option.getValue() != null && !option.getValue().trim().startsWith("$");
 	}
 	
 	/**

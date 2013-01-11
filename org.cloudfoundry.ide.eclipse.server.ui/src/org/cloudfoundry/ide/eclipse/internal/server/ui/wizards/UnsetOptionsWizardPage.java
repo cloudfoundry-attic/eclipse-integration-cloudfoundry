@@ -15,6 +15,7 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOption;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.UnsetOptionsPart;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
@@ -23,6 +24,8 @@ import org.eclipse.swt.widgets.Control;
 public class UnsetOptionsWizardPage extends WizardPage {
 
 	private List<CommandOption> unsetOptions;
+	
+	private IStatus status;
 
 	protected UnsetOptionsWizardPage() {
 		super("Unset Options Page");
@@ -40,13 +43,14 @@ public class UnsetOptionsWizardPage extends WizardPage {
 		part.addPartChangeListener(new IPartChangeListener() {
 
 			public void handleChange(PartChangeEvent event) {
-				CommandOption firstUnsetOption = getFirstUnsetOption();
-				if (firstUnsetOption != null) {
-					setErrorMessage("Please enter a value for: " + firstUnsetOption.getOption());
+				status = event.getStatus();
+				if (status != null && !status.isOK()) {
+					setErrorMessage(status.getMessage());
 					setPageComplete(false);
 				}
 				else {
 					setErrorMessage(null);
+					setPageComplete(true);
 				}
 			}
 
@@ -56,21 +60,10 @@ public class UnsetOptionsWizardPage extends WizardPage {
 		setControl(control);
 	}
 
-	protected CommandOption getFirstUnsetOption() {
-		CommandOption unsetOption = null;
-		if (unsetOptions != null) {
-			for (CommandOption option : unsetOptions) {
-				if (!CommandOption.isOptionValueSet(option)) {
-					unsetOption = option;
-					break;
-				}
-			}
-		}
-		return unsetOption;
-	}
+	
 
 	public boolean isPageComplete() {
-		return getFirstUnsetOption() == null;
+		return status == null || status.isOK();
 	}
 
 }

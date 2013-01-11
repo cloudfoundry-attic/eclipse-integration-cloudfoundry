@@ -15,6 +15,8 @@ import java.util.EventObject;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandTerminal;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalApplicationLaunchInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.ExternalToolUIOptionsHandler.TunnelOptions;
 import org.eclipse.core.runtime.IStatus;
@@ -62,7 +64,7 @@ public class CommandDisplayPart extends AbstractPart {
 	private ServiceCommand serviceCommand;
 
 	public CommandDisplayPart(ServiceCommand serviceCommand) {
-		this.serviceCommand = serviceCommand;
+		this.serviceCommand = serviceCommand != null ? serviceCommand : new ServiceCommand();
 	}
 
 	public Control createPart(Composite parent) {
@@ -182,30 +184,29 @@ public class CommandDisplayPart extends AbstractPart {
 				options.setText(optionsVal);
 			}
 
-			terminalLocationVal = serviceCommand.getCommandTerminal() != null ? serviceCommand.getCommandTerminal()
-					.getTerminalLaunchCommand() : null;
-					
-			if (terminalLocationVal != null) {
-				terminalLocation.setText(terminalLocationVal);
+			if (serviceCommand.getCommandTerminal() != null) {
+				terminalLocationVal = serviceCommand.getCommandTerminal().getTerminalLaunchCommand();
+				if (terminalLocationVal != null) {
+					terminalLocation.setText(terminalLocationVal);
+				}
 			}
-
 		}
 	}
 
-	public String getDisplayName() {
-		return displayNameVal;
-	}
+	public ServiceCommand getServiceCommand() {
 
-	public String getLocation() {
-		return locationVal;
-	}
+		if (terminalLocation != null) {
+			CommandTerminal terminal = new CommandTerminal();
+			terminal.setTerminalLaunchCommand(terminalLocationVal);
+			serviceCommand.setCommandTerminal(terminal);
+		}
+		ExternalApplicationLaunchInfo appInfo = new ExternalApplicationLaunchInfo();
+		appInfo.setDisplayName(displayNameVal);
+		appInfo.setExecutableName(locationVal);
+		serviceCommand.setExternalApplicationLaunchInfo(appInfo);
 
-	public String getOptions() {
-		return optionsVal;
-	}
-	
-	public String getTerminalLocation() {
-		return terminalLocationVal;
+		ServiceCommand.covertToOptions(serviceCommand, optionsVal);
+		return serviceCommand;
 	}
 
 	protected String getOptionsDescription() {

@@ -11,8 +11,6 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandTerminal;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalApplicationLaunchInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CommandDisplayPart;
@@ -71,25 +69,7 @@ public class ServiceCommandWizardPage extends WizardPage {
 
 	public ServiceCommand getServiceCommand() {
 		if (displayPart != null) {
-			String location = displayPart.getLocation();
-			String options = displayPart.getOptions();
-			String displayName = displayPart.getDisplayName();
-			String terminalLocation = displayPart.getTerminalLocation();
-
-			ServiceCommand editedCommand = new ServiceCommand();
-
-			if (terminalLocation != null) {
-				CommandTerminal terminal = new CommandTerminal();
-				terminal.setTerminalLaunchCommand(terminalLocation);
-				editedCommand.setCommandTerminal(terminal);
-			}
-			ExternalApplicationLaunchInfo appInfo = new ExternalApplicationLaunchInfo();
-			appInfo.setDisplayName(displayName);
-			appInfo.setExecutableName(location);
-			editedCommand.setExternalApplicationLaunchInfo(appInfo);
-
-			ServiceCommand.covertToOptions(editedCommand, options);
-			serviceCommand = editedCommand;
+			serviceCommand = displayPart.getServiceCommand();
 		}
 		return serviceCommand;
 	}
