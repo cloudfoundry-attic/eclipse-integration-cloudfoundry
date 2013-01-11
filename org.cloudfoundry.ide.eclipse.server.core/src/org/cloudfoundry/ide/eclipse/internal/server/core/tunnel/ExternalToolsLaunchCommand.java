@@ -59,20 +59,34 @@ public class ExternalToolsLaunchCommand {
 				StringWriter options = new StringWriter();
 				if (serviceCommand.usesTerminal()) {
 					CommandTerminal terminalCommand = serviceCommand.getCommandTerminal();
-					executable = terminalCommand.getTerminalLaunchCommand();
+					String terminalCommandValue = terminalCommand.getTerminalLaunchCommand();
+
+					// TODO: temporary fix. Terminal should be a proper command
+					// definition with options
+					int index = terminalCommandValue.indexOf(" ");
+					if (index >= 0) {
+						executable = terminalCommandValue.substring(0, index);
+						options.append(terminalCommandValue.substring(index + 1));
+					}
 					options.append(' ');
 					options.append(serviceCommand.getExternalApplicationLaunchInfo().getExecutableName());
+					options.append(' ');
+
+					// TODO: temporary hack for MacOS X
+					options.append("--args");
 
 				}
-				else {
+
+				if (executable == null) {
 					executable = serviceCommand.getExternalApplicationLaunchInfo().getExecutableName();
 				}
 
 				wc.setAttribute(IExternalToolConstants.ATTR_LOCATION, executable);
 
-				if (serviceCommand.getOptions() != null && !serviceCommand.getOptions().isEmpty()) {
+				String appOptions = ServiceCommand.getSerialisedOptions(serviceCommand);
+
+				if (appOptions != null) {
 					options.append(' ');
-					String appOptions = ServiceCommand.getSerialisedOptions(serviceCommand);
 					options.append(appOptions);
 				}
 

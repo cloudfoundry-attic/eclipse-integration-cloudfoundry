@@ -169,11 +169,13 @@ public class CommandDisplayPart extends AbstractPart {
 
 	protected void setInitialValues() {
 		if (serviceCommand != null) {
-			locationVal = serviceCommand.getExternalApplicationLaunchInfo().getExecutableName();
+			locationVal = serviceCommand.getExternalApplicationLaunchInfo() != null ? serviceCommand
+					.getExternalApplicationLaunchInfo().getExecutableName() : null;
 			if (locationVal != null) {
 				locationField.setText(locationVal);
 			}
-			displayNameVal = serviceCommand.getExternalApplicationLaunchInfo().getDisplayName();
+			displayNameVal = serviceCommand.getExternalApplicationLaunchInfo() != null ? serviceCommand
+					.getExternalApplicationLaunchInfo().getDisplayName() : null;
 
 			if (displayNameVal != null) {
 				displayName.setText(displayNameVal);
