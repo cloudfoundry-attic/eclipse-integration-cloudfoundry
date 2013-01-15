@@ -43,7 +43,7 @@ public class CommandTerminal {
 
 		}
 		else if (Platform.OS_WIN32.equals(os)) {
-
+			terminalCommand = "cmd.exe /c";
 		}
 
 		if (terminalCommand != null) {
