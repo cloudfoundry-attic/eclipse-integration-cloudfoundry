@@ -296,7 +296,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					List<String> services = descriptor.deploymentInfo.getServices() != null ? descriptor.deploymentInfo
 							.getServices() : new ArrayList<String>();
 					client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(), uris,
-							services);
+							services, /*no application plan == free*/null);
+					
 				}
 				else {
 					client.createApplication(applicationId, applicationInfo.getFramework(),
