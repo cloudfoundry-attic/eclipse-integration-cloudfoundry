@@ -10,9 +10,9 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import javax.servlet.http.HttpServletResponse;
+// FIXNS: Commented out because of STS-3159
+//import javax.servlet.http.HttpServletResponse;
 
-import org.cloudfoundry.ide.eclipse.server.tests.server.TestServlet.Response;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.runtime.CoreException;
@@ -45,15 +45,20 @@ public class LocalCloudFoundryServerBehaviourTest extends AbstractCloudFoundryTe
 		}
 	}
 
-	public void testValidateJson() throws Exception {
-		testServlet.addResponse(new Response(HttpServletResponse.SC_OK, null, "{ \"response\" : 503 }"));
-		try {
-			CloudFoundryServerBehaviour.validate(harness.getUrl(), "user", "password", new NullProgressMonitor());
-		}
-		catch (CoreException e) {
-			assertEquals("Expect simple error message", "Unable to communicate with server", e.getMessage());
-		}
-	}
+	// FIXNS: Commented out because of STS-3159
+	// public void testValidateJson() throws Exception {
+	//
+	// testServlet.addResponse(new Response(HttpServletResponse.SC_OK, null,
+	// "{ \"response\" : 503 }"));
+	// try {
+	// CloudFoundryServerBehaviour.validate(harness.getUrl(), "user",
+	// "password", new NullProgressMonitor());
+	// }
+	// catch (CoreException e) {
+	// assertEquals("Expect simple error message",
+	// "Unable to communicate with server", e.getMessage());
+	// }
+	// }
 
 	@Override
 	protected Harness createHarness() {

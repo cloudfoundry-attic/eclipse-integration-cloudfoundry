@@ -49,11 +49,13 @@ public class AllCloudFoundryTests {
 		suite.addTestSuite(ServerCredentialsStoreTest.class);
 		suite.addTestSuite(CloudFoundryServerTest.class);
 
+		// These need to be enabled only if a light-weight http servlet is
+		// included in the build. They have been commented out since CF 1.0.0
+		// 	See STS-3159
 		// XXX suite.addTestSuite(LocalCloudFoundryServerBehaviourTest.class);
+		// suite.addTestSuite(CloudFoundryMockServerTest.class);
 
 		suite.addTestSuite(CloudUtilTest.class);
-
-		// suite.addTestSuite(CloudFoundryMockServerTest.class);
 
 		suite.addTestSuite(DeploymentURLTest.class);
 		suite.addTestSuite(CloudFoundryServicesTest.class);

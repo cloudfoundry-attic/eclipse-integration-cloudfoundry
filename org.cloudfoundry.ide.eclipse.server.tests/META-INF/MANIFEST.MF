@@ -27,5 +27,4 @@ Export-Package: org.cloudfoundry.ide.eclipse.internal.server.core;x-internal:=tr
  org.cloudfoundry.ide.eclipse.server.tests;x-internal:=true,
  org.cloudfoundry.ide.eclipse.server.tests.server;x-internal:=true,
  org.cloudfoundry.ide.eclipse.server.tests.util;x-internal:=true
-Bundle-ClassPath: lib/winstone-0.9.10.jar,
- .
+Bundle-ClassPath: .

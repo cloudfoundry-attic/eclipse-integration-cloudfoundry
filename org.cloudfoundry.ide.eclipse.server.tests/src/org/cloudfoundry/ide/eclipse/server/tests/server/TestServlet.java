@@ -10,20 +10,19 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.tests.server;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Terry Denney
  * @author Steffen Pingel
  */
-public class TestServlet extends HttpServlet {
+public class TestServlet
+
+// FIXNS: Commented out because of STS-3159
+// extends HttpServlet
+
+{
 
 	public static class Response {
 
@@ -58,24 +57,27 @@ public class TestServlet extends HttpServlet {
 	public void addResponse(Response response) {
 		responses.add(response);
 	}
-
-	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-	}
-
-	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
-			IOException {
-		response.setContentType("application/json;charset=utf-8");
-		if (responses.size() > 0) {
-			Response mockReposonse = responses.remove(0);
-			response.sendError(mockReposonse.status, mockReposonse.message);
-			response.getWriter().append(mockReposonse.body);
-		}
-		else {
-			response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-		}
-	}
+	
+	// FIXNS: Commented out because of STS-3159
+	// @Override
+	// protected void doGet(HttpServletRequest request, HttpServletResponse
+	// response) throws ServletException, IOException {
+	// response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+	// }
+	//
+	// @Override
+	// protected void doPost(HttpServletRequest request, HttpServletResponse
+	// response) throws ServletException,
+	// IOException {
+	// response.setContentType("application/json;charset=utf-8");
+	// if (responses.size() > 0) {
+	// Response mockReposonse = responses.remove(0);
+	// response.sendError(mockReposonse.status, mockReposonse.message);
+	// response.getWriter().append(mockReposonse.body);
+	// }
+	// else {
+	// response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+	// }
+	// }
 
 }

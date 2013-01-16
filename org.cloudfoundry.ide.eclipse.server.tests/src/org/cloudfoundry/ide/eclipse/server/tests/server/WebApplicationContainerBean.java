@@ -14,21 +14,20 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
 
 import javax.net.SocketFactory;
 
-import winstone.Launcher;
+//FIXNS: Commented out because of STS-3159
+//import winstone.Launcher;
 
 /**
  * @author Terry Denney
  * @author Steffen Pingel
  */
 public class WebApplicationContainerBean {
-
-	private Launcher winstone;
+	
+	//FIXNS: Commented out because of STS-3159
+	// private Launcher winstone;
 
 	private int port;
 
@@ -42,55 +41,58 @@ public class WebApplicationContainerBean {
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {
-		File webRoot = new File("webapp");
-		WebApplicationContainerBean container = new WebApplicationContainerBean(webRoot);
-		container.start();
-
-		while (System.in.available() == 0) {
-			Thread.sleep(1000);
-		}
-
-		System.in.read();
-		// Thread.sleep(10000000);
-		container.stop();
+		//FIXNS: Commented out because of STS-3159
+		// File webRoot = new File("webapp");
+		// WebApplicationContainerBean container = new
+		// WebApplicationContainerBean(webRoot);
+		// container.start();
+		//
+		// while (System.in.available() == 0) {
+		// Thread.sleep(1000);
+		// }
+		//
+		// System.in.read();
+		// // Thread.sleep(10000000);
+		// container.stop();
 	}
 
 	public int getPort() {
 		return port;
 	}
-
-	public void start() {
-		if (winstone == null) {
-			int i = 0;
-			do {
-				port = 8100 + ++i;
-			} while (!isLocalPortFree(port));
-
-			Logger log = Logger.getLogger(WebApplicationContainerBean.class.getName());
-			log.fine("Starting web container on http://localhost:" + port + "/");
-
-			Map<String, Object> args = new HashMap<String, Object>();
-			try {
-				args.put("webroot", webRoot.getAbsolutePath());
-				args.put("httpPort", String.valueOf(port));
-				args.put("ajp13Port", Integer.toString(port + 1));
-
-				Launcher.initLogger(args);
-				winstone = new Launcher(args);
-
-			}
-			catch (IOException e) {
-				throw new IllegalStateException(e);
-			}
-		}
-	}
-
-	public void stop() {
-		if (winstone != null) {
-			winstone.shutdown();
-			winstone = null;
-		}
-	}
+	//FIXNS: Commented out because of STS-3159
+	// public void start() {
+	// if (winstone == null) {
+	// int i = 0;
+	// do {
+	// port = 8100 + ++i;
+	// } while (!isLocalPortFree(port));
+	//
+	// Logger log =
+	// Logger.getLogger(WebApplicationContainerBean.class.getName());
+	// log.fine("Starting web container on http://localhost:" + port + "/");
+	//
+	// Map<String, Object> args = new HashMap<String, Object>();
+	// try {
+	// args.put("webroot", webRoot.getAbsolutePath());
+	// args.put("httpPort", String.valueOf(port));
+	// args.put("ajp13Port", Integer.toString(port + 1));
+	//
+	// Launcher.initLogger(args);
+	// winstone = new Launcher(args);
+	//
+	// }
+	// catch (IOException e) {
+	// throw new IllegalStateException(e);
+	// }
+	// }
+	// }
+	//
+	// public void stop() {
+	// if (winstone != null) {
+	// winstone.shutdown();
+	// winstone = null;
+	// }
+	// }
 
 	private boolean isLocalPortFree(int port) {
 		try {

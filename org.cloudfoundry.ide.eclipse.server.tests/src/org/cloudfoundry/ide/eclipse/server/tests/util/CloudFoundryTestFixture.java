@@ -105,7 +105,9 @@ public class CloudFoundryTestFixture {
 
 		public void dispose() throws CoreException {
 			if (webContainer != null) {
-				webContainer.stop();
+				
+				//FIXNS: Commented out because of STS-3159
+				// webContainer.stop();
 			}
 
 			if (server != null) {
@@ -148,7 +150,9 @@ public class CloudFoundryTestFixture {
 			URL localURL = FileLocator.toFileURL(resourceUrl);
 			File file = new File(localURL.getFile());
 			webContainer = new WebApplicationContainerBean(file);
-			webContainer.start();
+			
+			//FIXNS: Commented out because of STS-3159
+			// webContainer.start();
 			return getServer();
 		}
 
