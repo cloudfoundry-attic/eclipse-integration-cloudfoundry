@@ -117,11 +117,11 @@ public class TunnelBehaviour {
 	}
 
 	protected String getTunnelUri(final CloudFoundryOperations client, IProgressMonitor progress) throws CoreException {
-		int ticks = 10;
+		int attempts = 10;
 		long sleep = 3000;
 
 		progress.setTaskName("Getting tunnel URL");
-		String url = new AbstractWaitWithProgressJob<String>(ticks, sleep) {
+		String url = new AbstractWaitWithProgressJob<String>(attempts, sleep) {
 
 			@Override
 			protected String runInWait(IProgressMonitor monitor) throws CoreException {
@@ -129,6 +129,11 @@ public class TunnelBehaviour {
 					return TunnelHelper.getTunnelUri((CloudFoundryClient) client);
 				}
 				return null;
+			}
+			
+			protected boolean shouldRetryOnError(Throwable t) {
+				// Try several times in case 404 errors are thrown
+				return true;
 			}
 
 		}.run(progress);
@@ -380,10 +385,10 @@ public class TunnelBehaviour {
 	protected Map<String, String> getTunnelInfo(final CloudFoundryOperations client, final String serviceName,
 			IProgressMonitor monitor) throws CoreException {
 		monitor.setTaskName("Getting tunnel information");
-		int ticks = 5;
+		int attempts = 10;
 		long sleepTime = 2000;
 
-		Map<String, String> info = new AbstractWaitWithProgressJob<Map<String, String>>(ticks, sleepTime) {
+		Map<String, String> info = new AbstractWaitWithProgressJob<Map<String, String>>(attempts, sleepTime) {
 
 			@Override
 			protected Map<String, String> runInWait(IProgressMonitor monitor) {
@@ -391,6 +396,12 @@ public class TunnelBehaviour {
 					return TunnelHelper.getTunnelServiceInfo((CloudFoundryClient) client, serviceName);
 				}
 				return null;
+			}
+
+			@Override
+			protected boolean shouldRetryOnError(Throwable t) {
+				// Try several times in case 404 errors are thrown
+				return true;
 			}
 		}.run(monitor);
 
