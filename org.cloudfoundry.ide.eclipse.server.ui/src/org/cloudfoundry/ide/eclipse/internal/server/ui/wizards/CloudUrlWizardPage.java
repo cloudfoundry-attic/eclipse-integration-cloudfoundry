@@ -109,6 +109,10 @@ public class CloudUrlWizardPage extends WizardPage {
 
 			public void modifyText(ModifyEvent e) {
 				url = urlText.getText();
+				// remove leading and trailing whitespaces
+				if (url != null) {
+					url = url.trim();
+				}
 				update();
 			}
 		});
