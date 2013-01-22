@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,12 +18,14 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationPlan;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentInfoValidator;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ApplicationPlanPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StandaloneStartCommandPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.IStartCommandChangeListener;
@@ -96,6 +98,8 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 	private ApplicationAction deploymentMode;
 
 	private StandaloneStartCommandPart standalonePart;
+
+	private ApplicationPlanPart applicationPlanPart;
 
 	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, ApplicationModule module,
 			CloudFoundryApplicationWizard wizard) {
@@ -263,6 +267,26 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 			}
 		});
 
+		// Set application plan UI, if one exists.
+		List<ApplicationPlan> applicationPlans = server.getBehaviour().getApplicationPlans();
+		if (applicationPlans != null && !applicationPlans.isEmpty()) {
+
+			Label applicationPlanLabel = new Label(topComposite, SWT.NONE);
+			GridDataFactory.fillDefaults().grab(false, false).applyTo(applicationPlanLabel);
+			applicationPlanLabel.setText("Application Plan:");
+			applicationPlanPart = new ApplicationPlanPart(applicationPlans, null);
+
+			Composite planComposite = new Composite(topComposite, SWT.NONE);
+			GridLayoutFactory.fillDefaults().margins(0, 0).numColumns(ApplicationPlan.values().length)
+					.applyTo(planComposite);
+			GridDataFactory.fillDefaults().grab(false, false).applyTo(planComposite);
+
+			List<Button> planButtons = applicationPlanPart.createButtonControls(planComposite);
+			for (Button button : planButtons) {
+				GridDataFactory.fillDefaults().grab(false, false).applyTo(button);
+			}
+		}
+
 		if (wizard.isStandaloneApplication()) {
 			IProject project = module.getProject();
 			if (project == null) {
@@ -413,6 +437,10 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 
 	public ApplicationAction getDeploymentMode() {
 		return deploymentMode;
+	}
+
+	public ApplicationPlan getApplicationPlan() {
+		return applicationPlanPart != null ? applicationPlanPart.getSelectedPlan() : null;
 	}
 
 	@Override

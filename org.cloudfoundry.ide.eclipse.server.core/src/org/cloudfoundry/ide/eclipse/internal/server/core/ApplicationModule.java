@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -72,6 +72,11 @@ public class ApplicationModule extends ExternalModule {
 	private final IServer server;
 
 	private CoreException error;
+	
+	/**
+	 * V2 plan to select between free and paid memory. For V1, this is null.
+	 */
+	private ApplicationPlan applicationPlan;
 
 	public ApplicationModule(IModule module, String name, IServer server) {
 		super(name, name, MODULE_ID, MODULE_VERSION, null);
@@ -101,6 +106,14 @@ public class ApplicationModule extends ExternalModule {
 
 	public Staging getStaging() {
 		return staging;
+	}
+	
+	public synchronized ApplicationPlan getApplicationPlan() {
+		return applicationPlan;
+	}
+
+	public synchronized void setApplicationPlan(ApplicationPlan applicationPlan) {
+		this.applicationPlan = applicationPlan;
 	}
 
 	public String getDefaultLaunchUrl() {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationPlan;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
@@ -29,8 +30,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
@@ -173,6 +172,20 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 					InstancesInfo info = serverBehaviour.getInstancesInfo(appModule.getApplicationId(), monitor);
 					appModule.setApplicationStats(stats);
 					appModule.setInstancesInfo(info);
+					
+					// Check if V2, then set the application plan as well
+					if (cloudServer.supportsCloudSpaces() ) {
+						List<ApplicationPlan> plans = serverBehaviour.getApplicationPlans();
+						
+						//FIXNS: At the moment, the client does not support getting plans for an app
+						// NEEDS TO BE FIXED on the client side
+						if (plans != null && !plans.isEmpty()) {
+							// Set the plan once this is implemented:
+							// ApplicationPlan plan = serverBehavior.getApplicationPlan(appName);
+							// if (plan != null ) {appModule.setApplicationPlan(plan);}
+						}
+						
+					}
 				}
 				else {
 					appModule.setApplicationStats(null);

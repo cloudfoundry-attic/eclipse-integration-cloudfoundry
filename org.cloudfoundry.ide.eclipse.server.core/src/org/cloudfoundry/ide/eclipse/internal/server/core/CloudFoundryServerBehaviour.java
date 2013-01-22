@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -33,7 +33,6 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.client.lib.domain.CloudInfo;
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
 import org.cloudfoundry.client.lib.domain.Staging;
@@ -92,7 +91,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private static final long DEPLOYMENT_TIMEOUT = 10 * 60 * 1000;
 
 	private static final long SHORT_INTERVAL = 5 * 1000;
-	
+
 	private static final long ONE_SECOND_INTERVAL = 1000;
 
 	private static final long UPLOAD_TIMEOUT = 60 * 1000;
@@ -106,6 +105,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private DebugSupportCheck isDebugModeSupported = DebugSupportCheck.UNCHECKED;
 
 	private List<CloudInfo.Runtime> runtimes = null;
+
+	private List<ApplicationPlan> applicationPlans;
 
 	private IServerListener serverListener = new IServerListener() {
 
@@ -295,14 +296,28 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							.getUris() : new ArrayList<String>();
 					List<String> services = descriptor.deploymentInfo.getServices() != null ? descriptor.deploymentInfo
 							.getServices() : new ArrayList<String>();
+
+					ApplicationPlan plan = descriptor.applicationPlan;
 					client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(), uris,
-							services, /*no application plan == free*/null);
-					
+							services, plan != null ? plan.name() : null);
+
 				}
 				else {
-					client.createApplication(applicationId, applicationInfo.getFramework(),
-							descriptor.deploymentInfo.getMemory(), descriptor.deploymentInfo.getUris(),
-							descriptor.deploymentInfo.getServices());
+					ApplicationPlan plan = descriptor.applicationPlan;
+
+					// For V1, there is no plan
+					if (plan == null) {
+						client.createApplication(applicationId, applicationInfo.getFramework(),
+								descriptor.deploymentInfo.getMemory(), descriptor.deploymentInfo.getUris(),
+								descriptor.deploymentInfo.getServices());
+					}
+					else {
+						Staging v1LegacyStagingWrapper = new Staging(applicationInfo.getFramework());
+						client.createApplication(applicationId, v1LegacyStagingWrapper,
+								descriptor.deploymentInfo.getMemory(), descriptor.deploymentInfo.getUris(),
+								descriptor.deploymentInfo.getServices(), plan.name());
+					}
+
 				}
 			}
 			File warFile = applicationInfo.getWarFile();
@@ -928,6 +943,20 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
+	public void updateApplicationPlan(ApplicationModule module, IProgressMonitor monitor) throws CoreException {
+		final ApplicationPlan plan = module.getApplicationPlan();
+		final String appName = module.getApplication().getName();
+		if (plan != null) {
+			new Request<Void>() {
+				@Override
+				protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+					client.updateApplicationPlan(appName, plan.name());
+					return null;
+				}
+			}.run(monitor);
+		}
+	}
+
 	public void updateApplicationUrls(final String appName, final List<String> uris, IProgressMonitor monitor)
 			throws CoreException {
 		new Request<Void>() {
@@ -1239,19 +1268,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return null;
 	}
 
-	public List<CloudSpace> getCloudSpaces(IProgressMonitor monitor) throws CoreException {
-
-		return new Request<List<CloudSpace>>() {
-
-			@Override
-			protected List<CloudSpace> doRun(CloudFoundryOperations operations, SubMonitor progress)
-					throws CoreException {
-				if (operations.supportsSpaces()) {
-					return operations.getSpaces();
-				}
-				return null;
-			}
-		}.run(monitor);
+	public List<ApplicationPlan> getApplicationPlans() {
+		// Initialised on first client request. Should only return the cached
+		// value, as it
+		// should not change during the session
+		return applicationPlans;
 	}
 
 	/**
@@ -1501,6 +1522,24 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						runtimes.addAll(clientRuntimes);
 					}
 				}
+
+				// Get application plans once per server behaviour instance as
+				// they should not change while the instance is used
+				if (applicationPlans == null) {
+					applicationPlans = new ArrayList<ApplicationPlan>(0);
+
+					// Only retrieve applications plans for V2 servers
+					if (client.supportsSpaces() && client.getApplicationPlans() != null) {
+						Set<String> actualPlans = new HashSet<String>(client.getApplicationPlans());
+                        
+						// Resolve the local representation of an Application plan
+						for (ApplicationPlan appPlan : ApplicationPlan.values()) {
+							if (actualPlans.contains(appPlan.name())) {
+								applicationPlans.add(appPlan);
+							}
+						}
+					}
+				}
 			}
 			catch (RestClientException e) {
 				throw CloudUtil.toCoreException(e);
@@ -1527,7 +1566,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
-	 * Runs a client request, and then performs a refresh after 1 second interval
+	 * Runs a client request, and then performs a refresh after 1 second
+	 * interval
 	 */
 	abstract class RequestWithRefreshCallBack<T> extends Request<T> {
 		public T run(IProgressMonitor monitor) throws CoreException {
