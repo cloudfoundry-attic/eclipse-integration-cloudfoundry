@@ -943,8 +943,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
-	public void updateApplicationPlan(ApplicationModule module, IProgressMonitor monitor) throws CoreException {
-		final ApplicationPlan plan = module.getApplicationPlan();
+	public void updateApplicationPlan(ApplicationModule module, ApplicationPlan updatedPlan, IProgressMonitor monitor)
+			throws CoreException {
+		final ApplicationPlan plan = updatedPlan;
 		final String appName = module.getApplication().getName();
 		if (plan != null) {
 			new Request<Void>() {
@@ -1531,8 +1532,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// Only retrieve applications plans for V2 servers
 					if (client.supportsSpaces() && client.getApplicationPlans() != null) {
 						Set<String> actualPlans = new HashSet<String>(client.getApplicationPlans());
-                        
-						// Resolve the local representation of an Application plan
+
+						// Resolve the local representation of an Application
+						// plan
 						for (ApplicationPlan appPlan : ApplicationPlan.values()) {
 							if (actualPlans.contains(appPlan.name())) {
 								applicationPlans.add(appPlan);

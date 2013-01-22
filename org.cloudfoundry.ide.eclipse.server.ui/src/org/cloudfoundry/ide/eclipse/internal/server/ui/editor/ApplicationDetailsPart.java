@@ -714,7 +714,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			createLabel(client, "Application Plan:", SWT.CENTER);
 
 			Composite planComposite = toolkit.createComposite(client);
-			GridLayoutFactory.fillDefaults().margins(0, 0).numColumns(ApplicationPlan.values().length).equalWidth(true).applyTo(planComposite);
+			GridLayoutFactory.fillDefaults().margins(0, 0).numColumns(ApplicationPlan.values().length).equalWidth(true)
+					.applyTo(planComposite);
 			applicationPlanPart = new ApplicationPlanPart(actualPlans, null);
 
 			List<Button> planButtons = applicationPlanPart.createButtonControls(planComposite);
@@ -728,8 +729,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 							if (selectedPlan != null) {
 								ApplicationModule appModule = getApplication();
 								if (appModule != null) {
-									appModule.setApplicationPlan(selectedPlan);
-									new UpdateApplicationPlanAction(editorPage, appModule).run();
+									new UpdateApplicationPlanAction(editorPage, appModule, selectedPlan).run();
 								}
 							}
 						}

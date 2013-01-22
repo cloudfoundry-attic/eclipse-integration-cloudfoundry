@@ -72,11 +72,6 @@ public class ApplicationModule extends ExternalModule {
 	private final IServer server;
 
 	private CoreException error;
-	
-	/**
-	 * V2 plan to select between free and paid memory. For V1, this is null.
-	 */
-	private ApplicationPlan applicationPlan;
 
 	public ApplicationModule(IModule module, String name, IServer server) {
 		super(name, name, MODULE_ID, MODULE_VERSION, null);
@@ -109,12 +104,24 @@ public class ApplicationModule extends ExternalModule {
 	}
 	
 	public synchronized ApplicationPlan getApplicationPlan() {
+		CloudApplication updatedApplication = getApplication();
+		ApplicationPlan applicationPlan = null;
+		if (updatedApplication != null) {
+			String planName = updatedApplication.getPlan();
+
+			if (planName != null) {
+				for (ApplicationPlan pl : ApplicationPlan.values()) {
+					if (pl.name().equals(planName)) {
+						applicationPlan = pl;
+						break;
+					}
+				}
+			}
+		}
 		return applicationPlan;
 	}
 
-	public synchronized void setApplicationPlan(ApplicationPlan applicationPlan) {
-		this.applicationPlan = applicationPlan;
-	}
+
 
 	public String getDefaultLaunchUrl() {
 		return getLaunchUrl(getName());
