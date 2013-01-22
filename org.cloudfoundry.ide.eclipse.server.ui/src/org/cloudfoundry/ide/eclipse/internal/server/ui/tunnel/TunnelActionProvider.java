@@ -104,7 +104,7 @@ public class TunnelActionProvider {
 
 			try {
 				List<ServiceCommand> commands = TunnelServiceCommandStore.getCurrentStore().getCommandsForService(
-						selectedService.getVendor(), true);
+						selectedService, true);
 				if (commands != null && !commands.isEmpty()) {
 					CaldecottTunnelDescriptor descriptor = CloudFoundryPlugin.getCaldecottTunnelCache().getDescriptor(
 							cloudServer, selectedService.getName());

@@ -14,7 +14,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -112,13 +114,14 @@ public class TunnelServiceCommandStore {
 
 	}
 
-	public synchronized List<ServiceCommand> getCommandsForService(String vendor, boolean forceLoad)
+	public synchronized List<ServiceCommand> getCommandsForService(CloudService cloudService, boolean forceLoad)
 			throws CoreException {
 		List<ServiceCommand> commands = new ArrayList<ServiceCommand>();
 		if (forceLoad) {
 			loadCommandsFromStore();
 		}
 		if (cachedCommands != null && cachedCommands.getServices() != null) {
+			String vendor = CloudUtil.getServiceVendor(cloudService);
 			for (ServerService service : cachedCommands.getServices()) {
 				if (service.getServiceInfo().getVendor().equals(vendor)) {
 					commands = service.getCommands();
