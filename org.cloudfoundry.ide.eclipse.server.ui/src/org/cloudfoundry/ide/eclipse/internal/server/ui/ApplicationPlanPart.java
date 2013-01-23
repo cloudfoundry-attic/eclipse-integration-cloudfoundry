@@ -73,19 +73,23 @@ public class ApplicationPlanPart {
 
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					selectedPlan = (ApplicationPlan) runRadioButton.getData();
+
+					if (runRadioButton.getSelection()) {
+						selectedPlan = (ApplicationPlan) runRadioButton.getData();
+					}
 				}
 
 			});
+			buttons.add(runRadioButton);
 
 		}
 		return buttons;
 
 	}
-	
+
 	public void setSelection(ApplicationPlan plan) {
 		if (buttons != null) {
-			for(Button button : buttons) {
+			for (Button button : buttons) {
 				if (!button.isDisposed()) {
 					ApplicationPlan buttonPlan = (ApplicationPlan) button.getData();
 					button.setSelection(buttonPlan != null && buttonPlan.equals(plan));
@@ -97,7 +101,7 @@ public class ApplicationPlanPart {
 	public ApplicationPlan getSelectedPlan() {
 		return selectedPlan;
 	}
-	
+
 	public boolean isEnabled() {
 		return enableControls;
 	}

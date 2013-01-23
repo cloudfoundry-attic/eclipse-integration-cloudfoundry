@@ -725,13 +725,18 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				if (applicationPlanPart.isEnabled()) {
 					button.addSelectionListener(new SelectionAdapter() {
 						public void widgetSelected(SelectionEvent e) {
-							ApplicationPlan selectedPlan = (ApplicationPlan) button.getData();
-							if (selectedPlan != null) {
-								ApplicationModule appModule = getApplication();
-								if (appModule != null) {
-									new UpdateApplicationPlanAction(editorPage, appModule, selectedPlan).run();
+							boolean selected = button.getSelection();
+
+							if (selected) {
+								ApplicationPlan selectedPlan = (ApplicationPlan) button.getData();
+								if (selectedPlan != null) {
+									ApplicationModule appModule = getApplication();
+									if (appModule != null) {
+										new UpdateApplicationPlanAction(editorPage, appModule, selectedPlan).run();
+									}
 								}
 							}
+
 						}
 					});
 				}
