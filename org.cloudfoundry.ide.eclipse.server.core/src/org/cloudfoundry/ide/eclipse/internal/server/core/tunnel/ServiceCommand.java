@@ -145,7 +145,7 @@ public class ServiceCommand {
 				if (variableBuffer.length() > 0) {
 					String variable = variableBuffer.toString();
 					String value = variableToValueMap.get(variable);
-					int endingIndex = dollarSignIndex + variable.length();
+					int endingIndex = dollarSignIndex + variable.length() + 1;
 					if (value != null && dollarSignIndex >= 0 && (endingIndex < resolvedOptions.length())) {
 
 						// delete the variable
