@@ -51,14 +51,22 @@ public class ExternalToolsLaunchCommand {
 	}
 
 	protected boolean addExternalToolCommand(List<String> processCommands) throws IOException {
-
+		String appOptions = serviceCommand.getOptions() != null ? serviceCommand.getOptions().getOptions() : null;
 		if (Platform.OS_MACOSX.equals(PlatformUtil.getOS())) {
 			// For launching Mac OS Terminal, the Terminal.app does not take
 			// arguments for the application that is being launched. It only
 			// takes
 			// in a file name, therefore the external application that should be
 			// launched in Terminal.app needs to be converted to a script file.
-			File scriptFile = getScriptFile();
+			StringWriter optionsWr = new StringWriter();
+
+			optionsWr.append(serviceCommand.getExternalApplicationLaunchInfo().getExecutableName());
+
+			if (appOptions != null) {
+				optionsWr.append(' ');
+				optionsWr.append(appOptions);
+			}
+			File scriptFile = getScriptFile(optionsWr.toString());
 			if (scriptFile != null && scriptFile.exists()) {
 				processCommands.add(scriptFile.getAbsolutePath());
 				return true;
@@ -69,35 +77,29 @@ public class ExternalToolsLaunchCommand {
 			// Otherwise just append the external application and its arguments
 			// directly to the process command
 			processCommands.add(serviceCommand.getExternalApplicationLaunchInfo().getExecutableName());
-			if (serviceCommand.getOptions() != null) {
-				for (CommandOption option : serviceCommand.getOptions()) {
-					processCommands.add(option.getOption());
-				}
+			if (appOptions != null) {
+				processCommands.add(appOptions);
 			}
 			return true;
 		}
 		return false;
 	}
 
-	protected File getScriptFile() throws IOException {
+	protected File getScriptFile(String options) throws IOException {
+
+		if (options == null || options.length() == 0) {
+			return null;
+		}
 		File scriptFile = getTempScriptFile();
 		if (scriptFile != null && scriptFile.exists()) {
-			StringWriter options = new StringWriter();
 
-			options.append(serviceCommand.getExternalApplicationLaunchInfo().getExecutableName());
-			String appOptions = ServiceCommand.getSerialisedOptions(serviceCommand);
-
-			if (appOptions != null) {
-				options.append(' ');
-				options.append(appOptions);
-			}
 			FileOutputStream outStream = null;
 			try {
 				outStream = new FileOutputStream(scriptFile);
 				OutputStreamWriter outWriter = new OutputStreamWriter(outStream);
 
 				BufferedWriter writer = new BufferedWriter(outWriter);
-				writer.write(options.toString());
+				writer.write(options);
 				writer.flush();
 
 				if (!changePermission(scriptFile)) {

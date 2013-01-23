@@ -15,6 +15,7 @@ import java.util.EventObject;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOptions;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandTerminal;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalApplicationLaunchInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
@@ -181,7 +182,7 @@ public class CommandDisplayPart extends AbstractPart {
 				displayName.setText(displayNameVal);
 			}
 
-			optionsVal = ServiceCommand.getSerialisedOptions(serviceCommand);
+			optionsVal = serviceCommand.getOptions() != null ? serviceCommand.getOptions().getOptions() : null;
 			if (optionsVal != null) {
 				options.setText(optionsVal);
 			}
@@ -207,7 +208,12 @@ public class CommandDisplayPart extends AbstractPart {
 		appInfo.setExecutableName(locationVal);
 		serviceCommand.setExternalApplicationLaunchInfo(appInfo);
 
-		ServiceCommand.covertToOptions(serviceCommand, optionsVal);
+		if (optionsVal != null && optionsVal.trim().length() > 0) {
+			CommandOptions options = new CommandOptions();
+			options.setOptions(optionsVal);
+			serviceCommand.setOptions(options);
+		}
+
 		return serviceCommand;
 	}
 

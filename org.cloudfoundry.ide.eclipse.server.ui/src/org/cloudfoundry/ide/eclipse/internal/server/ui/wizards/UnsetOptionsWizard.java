@@ -10,17 +10,16 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import java.util.List;
+import java.util.Map;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOption;
 import org.eclipse.jface.wizard.Wizard;
 
 public class UnsetOptionsWizard extends Wizard {
 
-	private final List<CommandOption> unsetOptions;
+	private final Map<String, String> variableToValue;
 
-	public UnsetOptionsWizard(List<CommandOption> unsetOptions) {
-		this.unsetOptions = unsetOptions;
+	public UnsetOptionsWizard(Map<String, String> variableToValue) {
+		this.variableToValue = variableToValue;
 		setWindowTitle("Set Command Option Values");
 	}
 
@@ -29,8 +28,8 @@ public class UnsetOptionsWizard extends Wizard {
 		addPage(page);
 	}
 
-	public List<CommandOption> getCommandOptions() {
-		return unsetOptions;
+	public Map<String, String> getVariables() {
+		return variableToValue;
 	}
 
 	@Override

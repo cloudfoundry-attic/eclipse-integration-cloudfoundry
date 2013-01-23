@@ -10,9 +10,8 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import java.util.List;
+import java.util.Map;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOption;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.UnsetOptionsPart;
 import org.eclipse.core.runtime.IStatus;
@@ -23,8 +22,8 @@ import org.eclipse.swt.widgets.Control;
 
 public class UnsetOptionsWizardPage extends WizardPage {
 
-	private List<CommandOption> unsetOptions;
-	
+	private Map<String, String> variableToValue;
+
 	private IStatus status;
 
 	protected UnsetOptionsWizardPage() {
@@ -35,17 +34,18 @@ public class UnsetOptionsWizardPage extends WizardPage {
 
 	public void createControl(Composite parent) {
 		IWizard wizard = getWizard();
-		unsetOptions = (wizard instanceof UnsetOptionsWizard) ? ((UnsetOptionsWizard) wizard).getCommandOptions()
-				: null;
+		variableToValue = (wizard instanceof UnsetOptionsWizard) ? ((UnsetOptionsWizard) wizard).getVariables() : null;
 
-		UnsetOptionsPart part = new UnsetOptionsPart(unsetOptions);
+		UnsetOptionsPart part = new UnsetOptionsPart(variableToValue);
 
 		part.addPartChangeListener(new IPartChangeListener() {
 
 			public void handleChange(PartChangeEvent event) {
 				status = event.getStatus();
 				if (status != null && !status.isOK()) {
-					setErrorMessage(status.getMessage());
+					if (status.getMessage() != null && status.getMessage().length() > 0) {
+						setErrorMessage(status.getMessage());
+					}
 					setPageComplete(false);
 				}
 				else {
@@ -59,8 +59,6 @@ public class UnsetOptionsWizardPage extends WizardPage {
 		Control control = part.createControl(parent);
 		setControl(control);
 	}
-
-	
 
 	public boolean isPageComplete() {
 		return status == null || status.isOK();

@@ -10,10 +10,11 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOption;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener.PartChangeEvent;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -28,10 +29,10 @@ import org.eclipse.swt.widgets.Text;
 
 public class UnsetOptionsPart extends AbstractPart {
 
-	private final List<CommandOption> unsetOptions;
+	private final Map<String, String> variableToValue;
 
-	public UnsetOptionsPart(List<CommandOption> unsetOptions) {
-		this.unsetOptions = unsetOptions;
+	public UnsetOptionsPart(Map<String, String> variableToValue) {
+		this.variableToValue = variableToValue;
 	}
 
 	public Composite createControl(Composite parent) {
@@ -40,52 +41,62 @@ public class UnsetOptionsPart extends AbstractPart {
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(generalArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(generalArea);
 
-		if (unsetOptions == null || unsetOptions.isEmpty()) {
+		boolean error = true;
+
+		if (variableToValue != null && !variableToValue.isEmpty()) {
+			for (Entry<String, String> entry : variableToValue.entrySet()) {
+				// Only create variable UI for those that do NOT have set values
+				if (entry.getValue() == null && entry.getKey() != null) {
+					createOptionLabel(entry.getKey(), generalArea);
+
+					// found at least one option to set
+					error = false;
+				}
+			}
+		}
+
+		if (error) {
 			Label serverLabel = new Label(parent, SWT.NONE);
 			GridDataFactory.fillDefaults().grab(false, false).span(2, 0).applyTo(serverLabel);
 			serverLabel.setText("No options found that need to be set");
-
 		}
-		else {
-			for (CommandOption option : unsetOptions) {
-				createOptionLabel(option, generalArea);
-			}
-		}
+		
+		validate(false);
 		return generalArea;
 
 	}
 
-	protected void createOptionLabel(final CommandOption option, Composite parent) {
+	protected void createOptionLabel(final String variable, Composite parent) {
 		Label serverLabel = new Label(parent, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(serverLabel);
-		serverLabel.setText(option.getOption() + ": ");
+		serverLabel.setText(variable + ": ");
 
 		final Text text = new Text(parent, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(text);
 
 		text.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent event) {
-				option.setValue(text.getText());
-				validate();
+				variableToValue.put(variable, text.getText());
+				validate(true);
 			}
 		});
 	}
 
-	protected IStatus validate() {
-		CommandOption unsetOption = null;
+	protected IStatus validate(boolean showError) {
+		String missingValueVariable = null;
 		IStatus status = Status.OK_STATUS;
 
-		if (unsetOptions != null) {
-			for (CommandOption option : unsetOptions) {
-				if (!CommandOption.isOptionValueSet(option)) {
-					unsetOption = option;
+		if (variableToValue != null) {
+			for (Entry<String, String> entry : variableToValue.entrySet()) {
+				if (entry.getValue() == null || ValueValidationUtil.isEmpty(entry.getValue())) {
+					missingValueVariable = entry.getKey();
 					break;
 				}
 			}
 		}
 
-		if (unsetOption != null) {
-			status = CloudFoundryPlugin.getErrorStatus(unsetOption.getOption() + " requires a value.");
+		if (missingValueVariable != null) {
+			status = CloudFoundryPlugin.getErrorStatus(showError ? missingValueVariable + " requires a value." : "");
 		}
 
 		notifyChange(new PartChangeEvent(null, status));

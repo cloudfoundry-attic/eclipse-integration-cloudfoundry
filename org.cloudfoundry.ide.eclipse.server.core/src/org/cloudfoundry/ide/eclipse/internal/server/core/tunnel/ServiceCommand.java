@@ -12,7 +12,9 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -24,7 +26,7 @@ public class ServiceCommand {
 
 	private CommandTerminal commandTerminal;
 
-	private List<CommandOption> options;
+	private CommandOptions options;
 
 	private ExternalApplicationLaunchInfo externalApplicationLaunchInfo;
 
@@ -49,102 +51,122 @@ public class ServiceCommand {
 		return externalApplicationLaunchInfo;
 	}
 
-	/**
-	 * 
-	 * @return a copy of the options, or null if no options are set
-	 */
-	public List<CommandOption> getOptions() {
-		return options != null ? new ArrayList<CommandOption>(options) : null;
+	public CommandOptions getOptions() {
+		return options;
 	}
 
 	public void setExternalApplicationLaunchInfo(ExternalApplicationLaunchInfo appInfo) {
 		this.externalApplicationLaunchInfo = appInfo;
 	}
 
-	public void setOptions(List<CommandOption> options) {
+	public void setOptions(CommandOptions options) {
 		this.options = options;
 	}
 
-	public static String getSerialisedOptions(ServiceCommand command) {
-		List<CommandOption> options = command.getOptions();
-		if (options != null) {
-			StringWriter writer = new StringWriter();
-			for (int i = 0; i < options.size(); i++) {
-				CommandOption option = options.get(i);
-				writer.append(option.getOption());
-				writer.append(' ');
-				writer.append(option.getValue());
-				if (i < options.size() - 1) {
-					writer.append(' ');
-				}
-			}
-			return writer.toString();
-		}
-
-		return null;
-	}
-
-	public static void covertToOptions(ServiceCommand serviceCommand, String optionsValue) {
-		if (optionsValue == null || serviceCommand == null) {
-			return;
+	public static List<String> getOptionVariables(ServiceCommand serviceCommand, String options) {
+		if (options == null || serviceCommand == null) {
+			return Collections.emptyList();
 		}
 
 		// Trim trailing and leading white spaces.
-		optionsValue = optionsValue.trim();
+		options = options.trim();
 
-		List<CommandOption> optionsList = new ArrayList<CommandOption>();
+		List<String> variableList = new ArrayList<String>();
 
-		// Parse all options using pattern: [option][space][value]
-		StringWriter optionBuffer = null;
-		StringWriter valueBuffer = null;
+		// Parse all option values that start with '$'
+		StringWriter variableBuffer = null;
 
-		CommandOption currentOption = null;
-
-		for (int i = 0; i < optionsValue.length(); i++) {
-			if (!Character.isSpaceChar(optionsValue.charAt(i))) {
-				// First parse the option
-				if (optionBuffer == null && valueBuffer == null) {
-					optionBuffer = new StringWriter();
-				}
-
-				if (optionBuffer != null) {
-					optionBuffer.write(optionsValue.charAt(i));
-				}
-				else if (valueBuffer != null) {
-					valueBuffer.write(optionsValue.charAt(i));
-				}
+		for (int i = 0; i < options.length(); i++) {
+			if (options.charAt(i) == '$') {
+				// Start parsing the variable
+				variableBuffer = new StringWriter();
 
 			}
-
-			if (Character.isSpaceChar(optionsValue.charAt(i)) || i == optionsValue.length() - 1) {
-				// If a space has been encountered, flush whichever buffer is
-				// full
-
-				if (optionBuffer != null && optionBuffer.getBuffer().length() > 0) {
-					currentOption = new CommandOption();
-					currentOption.setOption(optionBuffer.toString());
-					optionBuffer = null;
-					valueBuffer = new StringWriter();
+			// Flush the variable if a white space or end of string is
+			// encountered
+			else if ((Character.isSpaceChar(options.charAt(i)) || i == options.length() - 1) && variableBuffer != null) {
+				if (!Character.isSpaceChar(options.charAt(i))) {
+					// append the last character if it is not a whitespace character
+					variableBuffer.append(options.charAt(i));
 				}
-				if (valueBuffer != null && valueBuffer.getBuffer().length() > 0) {
-					if (currentOption != null) {
-						currentOption.setValue(valueBuffer.toString());
+				// Only add variables that have content
+				if (variableBuffer.getBuffer().length() > 0) {
+					variableList.add(variableBuffer.toString());
+				}
+				// Prepare for the next variable
+				variableBuffer = null;
+			}
+			else if (variableBuffer != null) {
+				variableBuffer.append(options.charAt(i));
+			}
+
+		}
+
+		return variableList;
+
+	}
+
+	public static void setOptionVariableValues(ServiceCommand serviceCommand, Map<String, String> variableToValueMap) {
+
+		CommandOptions commandOptions = serviceCommand.getOptions();
+
+		if (commandOptions == null || commandOptions.getOptions() == null) {
+			return;
+		}
+
+		String options = commandOptions.getOptions();
+
+		// Parse all option values that start with '$'
+		StringBuffer variableBuffer = null;
+
+		StringBuffer resolvedOptions = new StringBuffer(options);
+
+		int dollarSignIndex = -1;
+
+		// Note that the resolvedOptions buffer MAY grow therefore length will
+		// vary during each iteration
+		for (int i = 0; i < resolvedOptions.length(); i++) {
+
+			if (resolvedOptions.charAt(i) == '$') {
+				// Start parsing the variable
+				dollarSignIndex = i;
+				variableBuffer = new StringBuffer();
+			}
+			// Flush the variable if a white space or end of string is
+			// encountered
+			else if ((Character.isSpaceChar(resolvedOptions.charAt(i)) || i == resolvedOptions.length() - 1)
+					&& variableBuffer != null) {
+				if (!Character.isSpaceChar(resolvedOptions.charAt(i))) {
+					// append the last character if it is not a whitespace character
+					variableBuffer.append(resolvedOptions.charAt(i));
+				}
+
+				// Look up the value
+				if (variableBuffer.length() > 0) {
+					String variable = variableBuffer.toString();
+					String value = variableToValueMap.get(variable);
+					int endingIndex = dollarSignIndex + variable.length();
+					if (value != null && dollarSignIndex >= 0 && (endingIndex < resolvedOptions.length())) {
+
+						// delete the variable
+						resolvedOptions.replace(dollarSignIndex, endingIndex, "");
+
+						// append the value
+						resolvedOptions.insert(dollarSignIndex, value);
 					}
-					valueBuffer = null;
 				}
-
-				// Only add a complete, well formed option
-				if (currentOption != null && currentOption.getOption() != null && currentOption.getValue() != null) {
-					optionsList.add(currentOption);
-					currentOption = null;
-				}
+				// Prepare for the next variable
+				variableBuffer = null;
+				dollarSignIndex = -1;
+			}
+			else if (variableBuffer != null) {
+				variableBuffer.append(resolvedOptions.charAt(i));
 			}
 
 		}
-
-		if (optionsList.size() > 0) {
-			serviceCommand.setOptions(optionsList);
-		}
+		CommandOptions resolvedOp = new CommandOptions();
+		resolvedOp.setOptions(resolvedOptions.toString());
+		serviceCommand.setOptions(resolvedOp);
 	}
 
 }

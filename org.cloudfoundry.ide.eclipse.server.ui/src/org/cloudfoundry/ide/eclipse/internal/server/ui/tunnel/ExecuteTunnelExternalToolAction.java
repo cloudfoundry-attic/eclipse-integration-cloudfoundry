@@ -98,21 +98,25 @@ public class ExecuteTunnelExternalToolAction extends CloudFoundryEditorAction {
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					Shell shell = PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
-					new ExternalToolUIOptionsHandler(shell, serviceCommand, descriptor).promptForValues();
+					final ServiceCommand resolvedCommand = new ExternalToolUIOptionsHandler(shell, serviceCommand,
+							descriptor).promptForValues();
+					
 					// Once prompted, launch it asynchronously
+					if (resolvedCommand != null) {
+						Job job = new Job("Launching external tool.") {
 
-					Job job = new Job("Launching external tool.") {
-
-						@Override
-						protected IStatus run(IProgressMonitor monitor) {
-							// Finally launch the external tool after options
-							// are filled
-							// in.
-							new ExternalToolsLaunchCommand(serviceCommand).run(monitor);
-							return Status.OK_STATUS;
-						}
-					};
-					job.schedule();
+							@Override
+							protected IStatus run(IProgressMonitor monitor) {
+								// Finally launch the external tool after
+								// options
+								// are filled
+								// in.
+								new ExternalToolsLaunchCommand(resolvedCommand).run(monitor);
+								return Status.OK_STATUS;
+							}
+						};
+						job.schedule();
+					}
 
 					return Status.OK_STATUS;
 				}
