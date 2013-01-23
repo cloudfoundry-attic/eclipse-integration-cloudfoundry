@@ -145,8 +145,10 @@ public class ServiceCommand {
 				if (variableBuffer.length() > 0) {
 					String variable = variableBuffer.toString();
 					String value = variableToValueMap.get(variable);
+					// ending index should be the next index after the last position where the value needs to be inserted
+					// So if the end of the line is reached, the index should be equal to the length of the options buffer.
 					int endingIndex = dollarSignIndex + variable.length() + 1;
-					if (value != null && dollarSignIndex >= 0 && (endingIndex < resolvedOptions.length())) {
+					if (value != null && dollarSignIndex >= 0 && (endingIndex <= resolvedOptions.length())) {
 
 						// delete the variable
 						resolvedOptions.replace(dollarSignIndex, endingIndex, "");
