@@ -84,11 +84,10 @@ public class ServiceCommand {
 			}
 			// Flush the variable if a white space or end of string is
 			// encountered
-			else if ((Character.isSpaceChar(options.charAt(i)) || i == options.length() - 1) && variableBuffer != null) {
-				if (!Character.isSpaceChar(options.charAt(i))) {
-					// append the last character if it is not a whitespace character
-					variableBuffer.append(options.charAt(i));
-				}
+			else if ((options.charAt(i) == '}' || i == options.length() - 1) && variableBuffer != null) {
+				// If the last character is a ending curly brace then it can be
+				// skipped when it comes to adding characters to the
+				// variable name buffer
 				// Only add variables that have content
 				if (variableBuffer.getBuffer().length() > 0) {
 					variableList.add(variableBuffer.toString());
@@ -96,7 +95,7 @@ public class ServiceCommand {
 				// Prepare for the next variable
 				variableBuffer = null;
 			}
-			else if (variableBuffer != null) {
+			else if (variableBuffer != null && options.charAt(i) != '{' && !Character.isWhitespace(options.charAt(i))) {
 				variableBuffer.append(options.charAt(i));
 			}
 
@@ -134,26 +133,25 @@ public class ServiceCommand {
 			}
 			// Flush the variable if a white space or end of string is
 			// encountered
-			else if ((Character.isSpaceChar(resolvedOptions.charAt(i)) || i == resolvedOptions.length() - 1)
+			else if ((resolvedOptions.charAt(i) == '}'|| i == resolvedOptions.length() - 1)
 					&& variableBuffer != null) {
-				if (!Character.isSpaceChar(resolvedOptions.charAt(i))) {
-					// append the last character if it is not a whitespace character
-					variableBuffer.append(resolvedOptions.charAt(i));
-				}
+	
 
 				// Look up the value
 				if (variableBuffer.length() > 0) {
 					String variable = variableBuffer.toString();
 					String value = variableToValueMap.get(variable);
-					// ending index should be the next index after the last position where the value needs to be inserted
-					// So if the end of the line is reached, the index should be equal to the length of the options buffer.
-					int endingIndex = dollarSignIndex + variable.length() + 1;
+					// ending index should be the next index after the last
+					// position where the value needs to be inserted, so in this case the ending '}'
+					// So if the end of the line is reached, the index should be
+					// equal to the length of the options buffer.
+					int endingIndex = i + 1;
 					if (value != null && dollarSignIndex >= 0 && (endingIndex <= resolvedOptions.length())) {
 
 						// delete the variable
 						resolvedOptions.replace(dollarSignIndex, endingIndex, "");
 
-						// append the value
+						// insert the value
 						resolvedOptions.insert(dollarSignIndex, value);
 					}
 				}
@@ -161,7 +159,7 @@ public class ServiceCommand {
 				variableBuffer = null;
 				dollarSignIndex = -1;
 			}
-			else if (variableBuffer != null) {
+			else if (variableBuffer != null && resolvedOptions.charAt(i) != '{' && !Character.isWhitespace(resolvedOptions.charAt(i))) {
 				variableBuffer.append(resolvedOptions.charAt(i));
 			}
 

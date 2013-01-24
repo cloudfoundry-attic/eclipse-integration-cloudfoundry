@@ -241,23 +241,28 @@ public class AddCommandDisplayPart extends AbstractPart {
 
 	protected String getOptionsDescription() {
 		StringWriter writer = new StringWriter();
-		writer.append("Use the following variables for tunnel options to be filled automatically:");
+		writer.append("Use the following variables for service tunnel options to be filled automatically:");
 		writer.append("\n");
 		writer.append("\n");
-		writer.append("$");
+		writer.append("${");
 		writer.append(TunnelOptions.username.name());
+		writer.append("}");
 		writer.append("\n");
-		writer.append("$");
+		writer.append("${");
 		writer.append(TunnelOptions.password.name());
+		writer.append("}");
 		writer.append("\n");
-		writer.append("$");
+		writer.append("${");
 		writer.append(TunnelOptions.url.name());
+		writer.append("}");
 		writer.append("\n");
-		writer.append("$");
+		writer.append("${");
 		writer.append(TunnelOptions.databasename.name());
+		writer.append("}");
 		writer.append("\n");
-		writer.append("$");
+		writer.append("${");
 		writer.append(TunnelOptions.port.name());
+		writer.append("}");
 		return writer.toString();
 
 	}
