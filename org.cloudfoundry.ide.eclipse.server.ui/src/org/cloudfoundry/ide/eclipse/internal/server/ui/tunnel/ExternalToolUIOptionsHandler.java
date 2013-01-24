@@ -25,7 +25,7 @@ import org.eclipse.swt.widgets.Shell;
 public class ExternalToolUIOptionsHandler {
 
 	public enum TunnelOptions {
-		Username, Password, Url, Databasename, Port
+		username, password, url, databasename, port
 	}
 
 	private final ServiceCommand serviceCommand;
@@ -76,19 +76,19 @@ public class ExternalToolUIOptionsHandler {
 
 							switch (tunnelOption) {
 
-							case Username:
+							case username:
 								value = descriptor.getUserName();
 								break;
-							case Password:
+							case password:
 								value = descriptor.getPassword();
 								break;
-							case Url:
+							case url:
 								value = descriptor.getURL();
 								break;
-							case Databasename:
+							case databasename:
 								value = descriptor.getDatabaseName();
 								break;
-							case Port:
+							case port:
 								value = descriptor.tunnelPort() + "";
 								break;
 							}

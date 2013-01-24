@@ -26,6 +26,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
@@ -62,11 +63,11 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 	private TunnelServiceCommands serviceCommands;
 
-	private List<ServerService> commands;
+	private List<ServerService> services;
 
 	public ServiceTunnelCommandPart(TunnelServiceCommands serviceCommands) {
 		this.serviceCommands = serviceCommands;
-		commands = (serviceCommands != null && serviceCommands.getServices() != null) ? new ArrayList<ServerService>(
+		services = (serviceCommands != null && serviceCommands.getServices() != null) ? new ArrayList<ServerService>(
 				serviceCommands.getServices()) : new ArrayList<ServerService>();
 	}
 
@@ -226,16 +227,23 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 	protected void setServerInput() {
 
-		serviceViewer.setInput(commands);
+		serviceViewer.setInput(services);
 
-		setServiceCommandInput(null);
+		if (services != null && !services.isEmpty()) {
+			serviceViewer.setSelection(new StructuredSelection(services.get(0)), true);
+			setServiceCommandInput(services.get(0), null);
+		}
+
 		setStatus(null);
 	}
 
-	protected void setServiceCommandInput(ServerService service) {
+	protected void setServiceCommandInput(ServerService service, ServiceCommand commandToSelect) {
 
 		if (service != null && service.getCommands() != null) {
 			serviceCommandsViewer.setInput(service.getCommands());
+			if (commandToSelect != null) {
+				serviceCommandsViewer.setSelection(new StructuredSelection(commandToSelect), true);
+			}
 		}
 		else {
 			serviceCommandsViewer.setInput(new ArrayList<ServerService>(0));
@@ -256,7 +264,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 	public TunnelServiceCommands getUpdatedCommands() {
 
 		// Set the updated commands
-		serviceCommands.setServices(commands);
+		serviceCommands.setServices(services);
 		return serviceCommands;
 	}
 
@@ -277,13 +285,23 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 		return shell;
 	}
 
-	protected void addOrEditCommand() {
+	/**
+	 * If add is true, it will ignore any currently selected command, and simply
+	 * add a new command. Otherwise it will attempt to edit the currently
+	 * selected command, if one exists. If add is false, and there are no
+	 * selected command, it will add a new command
+	 * @param add true if adding a new command even if there is a currently
+	 * selected command. False will ONLY edit an existing command, if one is
+	 * currently selected. Otherwise it will add a new command.
+	 */
+	protected void addOrEditCommand(boolean add) {
 
-		ServiceCommand serviceCommand = getSelectedCommand();
+		ServiceCommand serviceCommandToEdit = add ? null : getSelectedCommand();
 
 		ServerService service = getSelectedService();
 		if (service != null) {
-			ServiceCommandWizard wizard = new ServiceCommandWizard(serviceCommand);
+			ServiceCommandWizard wizard = add ? new ServiceCommandWizard(service) : new ServiceCommandWizard(service,
+					serviceCommandToEdit);
 			Shell shell = getShell();
 
 			if (shell != null) {
@@ -292,7 +310,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 					ServiceCommand newServiceCommand = wizard.getServiceCommand();
 
 					if (newServiceCommand != null) {
-						updateCommandViewerInput(serviceCommand, newServiceCommand, service);
+						updateCommandViewerInput(serviceCommandToEdit, newServiceCommand, service);
 					}
 				}
 			}
@@ -331,7 +349,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 				newCommands.add(toAdd);
 			}
 			service.setCommands(newCommands);
-			setServiceCommandInput(service);
+			setServiceCommandInput(service, toAdd);
 		}
 	}
 
@@ -346,13 +364,13 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 					ControlData controlData = (ControlData) dataObj;
 					switch (controlData) {
 					case Add:
-						addOrEditCommand();
+						addOrEditCommand(true);
 						break;
 					case Delete:
 						deleteCommand();
 						break;
 					case Edit:
-						addOrEditCommand();
+						addOrEditCommand(false);
 						break;
 
 					}
@@ -360,7 +378,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 			}
 			else if (source == serviceViewer) {
 				ServerService serverService = getSelectedService();
-				setServiceCommandInput(serverService);
+				setServiceCommandInput(serverService, null);
 			}
 		}
 
@@ -375,7 +393,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 		ServerService serviceWrapper = getSelectedService();
 
 		if (selectedCommand != null) {
-			addCommandButton.setEnabled(false);
+			addCommandButton.setEnabled(true);
 			deleteCommandButton.setEnabled(true);
 			editCommandButton.setEnabled(true);
 		}

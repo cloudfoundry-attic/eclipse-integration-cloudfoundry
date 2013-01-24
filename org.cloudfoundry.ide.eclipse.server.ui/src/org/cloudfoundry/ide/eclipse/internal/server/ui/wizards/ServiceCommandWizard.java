@@ -10,26 +10,44 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.eclipse.jface.wizard.Wizard;
 
+/**
+ * Edits or adds a new service command. If no service command is passed to the
+ * constructor, it will assume that a new command is being added. If an existing
+ * command is being passed, it will assume the existing command is being edited.
+ * 
+ */
 public class ServiceCommandWizard extends Wizard {
 
 	private final ServiceCommand initialServiceCommand;
 
+	private final ServerService service;
+
+	private final boolean addNewCommand;
+
 	private ServiceCommandWizardPage page;
 
-	public ServiceCommandWizard(ServiceCommand serviceCommand) {
+	public ServiceCommandWizard(ServerService service, ServiceCommand serviceCommandToEdit) {
 		super();
 
-		this.initialServiceCommand = serviceCommand;
+		this.service = service;
+		this.initialServiceCommand = serviceCommandToEdit;
 
+		// Only add a new command if an existing one was not passed.
+		this.addNewCommand = serviceCommandToEdit == null;
 		setWindowTitle("Configure a command to run:");
 		setNeedsProgressMonitor(true);
 	}
 
+	public ServiceCommandWizard(ServerService service) {
+		this(service, null);
+	}
+
 	public void addPages() {
-		page = new ServiceCommandWizardPage(initialServiceCommand);
+		page = new ServiceCommandWizardPage(service, initialServiceCommand, addNewCommand);
 		addPage(page);
 	}
 

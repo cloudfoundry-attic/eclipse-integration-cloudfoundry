@@ -12,12 +12,14 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
 import java.io.StringWriter;
 import java.util.EventObject;
+import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOptions;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandTerminal;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalApplicationLaunchInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.ExternalToolUIOptionsHandler.TunnelOptions;
 import org.eclipse.core.runtime.IStatus;
@@ -40,7 +42,20 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-public class CommandDisplayPart extends AbstractPart {
+/**
+ * Adds a new command definition for a given service. Required values are a
+ * command display name and the location of a command executable.
+ * 
+ * A check is performed to see if either one of the have valid, non-empty
+ * values. In addition, when adding a new command, if a command already exists
+ * for the given service with the same display name, and error is shown.
+ * 
+ * Display names must be unique.
+ * 
+ * Another command can be used to pre-populate the UI.
+ * 
+ */
+public class AddCommandDisplayPart extends AbstractPart {
 
 	private Text options;
 
@@ -50,22 +65,25 @@ public class CommandDisplayPart extends AbstractPart {
 
 	private Text terminalLocation;
 
-	private String optionsVal;
+	protected String optionsVal;
 
-	private String locationVal;
+	protected String locationVal;
 
-	private String displayNameVal;
+	protected String displayNameVal;
 
-	private String terminalLocationVal;
+	protected String terminalLocationVal;
 
 	private Button findApplicationButton;
+
+	private ServerService service;
 
 	private Shell shell;
 
 	private ServiceCommand serviceCommand;
 
-	public CommandDisplayPart(ServiceCommand serviceCommand) {
+	public AddCommandDisplayPart(ServerService service, ServiceCommand serviceCommand) {
 		this.serviceCommand = serviceCommand != null ? serviceCommand : new ServiceCommand();
+		this.service = service;
 	}
 
 	public Control createPart(Composite parent) {
@@ -217,25 +235,29 @@ public class CommandDisplayPart extends AbstractPart {
 		return serviceCommand;
 	}
 
+	protected ServerService getService() {
+		return service;
+	}
+
 	protected String getOptionsDescription() {
 		StringWriter writer = new StringWriter();
 		writer.append("Use the following variables for tunnel options to be filled automatically:");
 		writer.append("\n");
 		writer.append("\n");
 		writer.append("$");
-		writer.append(TunnelOptions.Username.name());
+		writer.append(TunnelOptions.username.name());
 		writer.append("\n");
 		writer.append("$");
-		writer.append(TunnelOptions.Password.name());
+		writer.append(TunnelOptions.password.name());
 		writer.append("\n");
 		writer.append("$");
-		writer.append(TunnelOptions.Url.name());
+		writer.append(TunnelOptions.url.name());
 		writer.append("\n");
 		writer.append("$");
-		writer.append(TunnelOptions.Databasename.name());
+		writer.append(TunnelOptions.databasename.name());
 		writer.append("\n");
 		writer.append("$");
-		writer.append(TunnelOptions.Port.name());
+		writer.append(TunnelOptions.port.name());
 		return writer.toString();
 
 	}
@@ -265,7 +287,11 @@ public class CommandDisplayPart extends AbstractPart {
 		validate(false);
 	}
 
-	protected void validate(boolean initialValidate) {
+	/**
+	 * Return a non-null message, If and only if there is an error. No errors
+	 * should return null.
+	 */
+	protected String getValidationMessage() {
 		String message = null;
 		if (ValueValidationUtil.isEmpty(locationVal)) {
 			message = "No command executable location specified.";
@@ -273,6 +299,25 @@ public class CommandDisplayPart extends AbstractPart {
 		else if (ValueValidationUtil.isEmpty(displayNameVal)) {
 			message = "No command display name specified.";
 		}
+		else {
+
+			// Verify that another command doesn't already exist
+			List<ServiceCommand> existingCommands = service.getCommands();
+			if (existingCommands != null) {
+				for (ServiceCommand command : existingCommands) {
+					if (command.getExternalApplicationLaunchInfo().getDisplayName().equals(displayNameVal)) {
+						message = "Another command with the same display name already exists. Please select another display name.";
+						break;
+					}
+				}
+			}
+
+		}
+		return message;
+	}
+
+	protected void validate(boolean initialValidate) {
+		String message = getValidationMessage();
 
 		IStatus status = null;
 		if (message != null) {
