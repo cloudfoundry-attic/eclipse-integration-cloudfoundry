@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ITunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommandStore;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.eclipse.core.runtime.CoreException;
@@ -36,7 +36,7 @@ public class ServiceTunnelCommandPreferencePage extends PreferencePage implement
 	@Override
 	protected Control createContents(Composite parent) {
 		try {
-			TunnelServiceCommands commands = TunnelServiceCommandStore.getCurrentStore().getTunnelServiceCommands();
+			ITunnelServiceCommands commands = TunnelServiceCommandStore.getCurrentStore().getTunnelServiceCommands();
 
 			part = new ServiceTunnelCommandPart(commands);
 			part.addPartChangeListener(new IPartChangeListener() {
@@ -76,7 +76,7 @@ public class ServiceTunnelCommandPreferencePage extends PreferencePage implement
 
 	public void handleServerServiceCommandSave() {
 		if (part != null) {
-			TunnelServiceCommands updatedCommands = part.getUpdatedCommands();
+			ITunnelServiceCommands updatedCommands = part.getUpdatedCommands();
 			try {
 				TunnelServiceCommandStore.getCurrentStore().storeServerServiceCommands(updatedCommands);
 			}

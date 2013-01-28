@@ -17,16 +17,13 @@ import java.util.Map;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOptions;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelOptions;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.UnsetOptionsWizard;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
 public class ExternalToolUIOptionsHandler {
-
-	public enum TunnelOptions {
-		username, password, url, databasename, port
-	}
 
 	private final ServiceCommand serviceCommand;
 
@@ -76,7 +73,7 @@ public class ExternalToolUIOptionsHandler {
 
 							switch (tunnelOption) {
 
-							case username:
+							case user:
 								value = descriptor.getUserName();
 								break;
 							case password:

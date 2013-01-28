@@ -22,7 +22,7 @@ public class EditCommandDisplayPart extends AddCommandDisplayPart {
 
 	public EditCommandDisplayPart(ServerService service, ServiceCommand serviceCommand) {
 		super(service, serviceCommand);
-		originalDisplayName = serviceCommand.getExternalApplicationLaunchInfo().getDisplayName();
+		originalDisplayName = serviceCommand.getExternalApplication().getDisplayName();
 	}
 
 	protected String getValidationMessage() {
@@ -43,7 +43,7 @@ public class EditCommandDisplayPart extends AddCommandDisplayPart {
 			List<ServiceCommand> existingCommands = getService().getCommands();
 			if (existingCommands != null) {
 				for (ServiceCommand command : existingCommands) {
-					String otherCommandName = command.getExternalApplicationLaunchInfo().getDisplayName();
+					String otherCommandName = command.getExternalApplication().getDisplayName();
 					if (!otherCommandName.equals(originalDisplayName) && otherCommandName.equals(displayNameVal)) {
 						message = "Another command with the same display name already exists. Please select another display name.";
 						break;

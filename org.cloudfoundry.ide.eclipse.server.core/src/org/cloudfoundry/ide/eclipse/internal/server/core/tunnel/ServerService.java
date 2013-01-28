@@ -14,7 +14,8 @@ import java.util.List;
 
 /**
  * 
- * Using getters and setters with no-argument constructors for JSON serialisation
+ * Using getters and setters with no-argument constructors for JSON
+ * serialisation
  * 
  */
 public class ServerService {

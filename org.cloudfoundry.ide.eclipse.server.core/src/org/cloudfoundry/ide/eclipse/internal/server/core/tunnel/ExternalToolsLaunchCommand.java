@@ -39,7 +39,7 @@ public class ExternalToolsLaunchCommand {
 	}
 
 	protected String getLaunchName() {
-		return serviceCommand.getExternalApplicationLaunchInfo().getDisplayName();
+		return serviceCommand.getExternalApplication().getDisplayName();
 	}
 
 	public IStatus run(IProgressMonitor monitor) {
@@ -60,7 +60,7 @@ public class ExternalToolsLaunchCommand {
 			// launched in Terminal.app needs to be converted to a script file.
 			StringWriter optionsWr = new StringWriter();
 
-			optionsWr.append(serviceCommand.getExternalApplicationLaunchInfo().getExecutableName());
+			optionsWr.append(serviceCommand.getExternalApplication().getExecutableNameAndPath());
 
 			if (appOptions != null) {
 				optionsWr.append(' ');
@@ -76,7 +76,7 @@ public class ExternalToolsLaunchCommand {
 		else {
 			// Otherwise just append the external application and its arguments
 			// directly to the process command
-			processCommands.add(serviceCommand.getExternalApplicationLaunchInfo().getExecutableName());
+			processCommands.add(serviceCommand.getExternalApplication().getExecutableNameAndPath());
 			if (appOptions != null) {
 				processCommands.add(appOptions);
 			}
@@ -199,7 +199,7 @@ public class ExternalToolsLaunchCommand {
 				// Now launch the application in Terminal
 				CommandTerminal terminalCommand = serviceCommand.getCommandTerminal();
 
-				String terminalCommandValue = terminalCommand.getTerminalLaunchCommand();
+				String terminalCommandValue = terminalCommand.getTerminal();
 
 				String[] terminalCommands = terminalCommandValue.split(" ");
 				List<String> cmdArgs = new ArrayList<String>();
@@ -217,7 +217,7 @@ public class ExternalToolsLaunchCommand {
 
 				if (p == null) {
 					CloudFoundryPlugin.logError("Failed to launch "
-							+ serviceCommand.getExternalApplicationLaunchInfo().getExecutableName()
+							+ serviceCommand.getExternalApplication().getExecutableNameAndPath()
 							+ ". No process was created.");
 				}
 				else {

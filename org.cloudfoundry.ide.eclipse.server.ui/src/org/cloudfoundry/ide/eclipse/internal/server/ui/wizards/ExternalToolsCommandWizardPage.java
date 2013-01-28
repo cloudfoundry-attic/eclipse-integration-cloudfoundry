@@ -11,7 +11,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommands;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ITunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.ServiceTunnelCommandPart;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -20,11 +20,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
 public class ExternalToolsCommandWizardPage extends WizardPage {
-	private final TunnelServiceCommands originalCommands;
+	private final ITunnelServiceCommands originalCommands;
 
 	private ServiceTunnelCommandPart commandPart;
 
-	protected ExternalToolsCommandWizardPage(TunnelServiceCommands originalCommands, CloudFoundryServer cloudServer) {
+	protected ExternalToolsCommandWizardPage(ITunnelServiceCommands originalCommands, CloudFoundryServer cloudServer) {
 		super("External Tools Command Page");
 		setTitle("External Tools Commands");
 		setDescription("Add, delete, or edit commands to launch external tools for given services when connected to tunnels.");
@@ -42,7 +42,7 @@ public class ExternalToolsCommandWizardPage extends WizardPage {
 
 	}
 
-	public TunnelServiceCommands getExtToolLaunchCommandsServer() {
+	public ITunnelServiceCommands getExtToolLaunchCommandsServer() {
 		return commandPart != null ? commandPart.getUpdatedCommands() : originalCommands;
 	}
 

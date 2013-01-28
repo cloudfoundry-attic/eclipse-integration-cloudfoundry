@@ -10,37 +10,15 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 
- * Using getters and setters with no-argument constructors for JSON
- * serialisation
- * 
- */
-public class TunnelServiceCommands implements ITunnelServiceCommands {
-
-	private List<ServerService> services;
-
-	public TunnelServiceCommands() {
-		services = new ArrayList<ServerService>(0);
-	}
-
+public interface ITunnelServiceCommands {
 	/**
 	 * Will never be null.
 	 * @return non-null list of services
 	 */
-	public List<ServerService> getServices() {
-		return services;
-	}
-
-	/**
-	 * Setting null will set an empty list of services.
-	 * @param services
-	 */
-	public void setServices(List<ServerService> services) {
-		this.services = services != null ? services : new ArrayList<ServerService>();
-	}
+	public List<ServerService> getServices();
+	
+	public void setServices(List<ServerService> services);
 
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,32 +11,8 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
 /**
- * 
- * Using getters and setters with no-argument constructors for JSON serialisation
- * 
+ * Option variables for service commands reserved for tunnel values.
  */
-public enum ServiceInfo {
-
-	blob("blob"),
-
-	mongodb("mongodb"),
-
-	mysql("mysql"),
-
-	postgresql("postgresql"),
-
-	rabbitmq("rabbitmq"),
-
-	redis("redis");
-
-	private final String vendor;
-
-	private ServiceInfo(String vendor) {
-		this.vendor = vendor;
-	}
-
-	public String getVendor() {
-		return vendor;
-	}
-
+public enum TunnelOptions {
+	user, password, url, databasename, port
 }

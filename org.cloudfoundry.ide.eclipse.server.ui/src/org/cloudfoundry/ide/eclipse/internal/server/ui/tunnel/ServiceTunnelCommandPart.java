@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ITunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ServiceCommandWizard;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -61,11 +61,11 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 	private Shell derivedShell;
 
-	private TunnelServiceCommands serviceCommands;
+	private ITunnelServiceCommands serviceCommands;
 
 	private List<ServerService> services;
 
-	public ServiceTunnelCommandPart(TunnelServiceCommands serviceCommands) {
+	public ServiceTunnelCommandPart(ITunnelServiceCommands serviceCommands) {
 		this.serviceCommands = serviceCommands;
 		services = (serviceCommands != null && serviceCommands.getServices() != null) ? new ArrayList<ServerService>(
 				serviceCommands.getServices()) : new ArrayList<ServerService>();
@@ -261,7 +261,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 		return null;
 	}
 
-	public TunnelServiceCommands getUpdatedCommands() {
+	public ITunnelServiceCommands getUpdatedCommands() {
 
 		// Set the updated commands
 		serviceCommands.setServices(services);
@@ -300,6 +300,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 		ServerService service = getSelectedService();
 		if (service != null) {
+			
 			ServiceCommandWizard wizard = add ? new ServiceCommandWizard(service) : new ServiceCommandWizard(service,
 					serviceCommandToEdit);
 			Shell shell = getShell();
@@ -451,8 +452,8 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 		public int compare(Viewer viewer, Object e1, Object e2) {
 			if (e1 instanceof ServiceCommand && e1 instanceof ServiceCommand) {
-				String name1 = ((ServiceCommand) e1).getExternalApplicationLaunchInfo().getDisplayName();
-				String name2 = ((ServiceCommand) e2).getExternalApplicationLaunchInfo().getDisplayName();
+				String name1 = ((ServiceCommand) e1).getExternalApplication().getDisplayName();
+				String name2 = ((ServiceCommand) e2).getExternalApplication().getDisplayName();
 				return name1.compareTo(name2);
 			}
 
@@ -502,7 +503,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 		public String getText(Object element) {
 			if (element instanceof ServiceCommand) {
 				ServiceCommand command = (ServiceCommand) element;
-				return command.getExternalApplicationLaunchInfo().getDisplayName();
+				return command.getExternalApplication().getDisplayName();
 			}
 			return super.getText(element);
 		}

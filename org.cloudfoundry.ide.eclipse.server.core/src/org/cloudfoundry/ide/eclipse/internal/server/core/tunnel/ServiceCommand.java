@@ -28,7 +28,7 @@ public class ServiceCommand {
 
 	private CommandOptions options;
 
-	private ExternalApplicationLaunchInfo externalApplicationLaunchInfo;
+	private ExternalApplication externalApplicationLaunchInfo;
 
 	public ServiceCommand() {
 		// Set a default terminal for the command
@@ -47,7 +47,7 @@ public class ServiceCommand {
 		return commandTerminal;
 	}
 
-	public ExternalApplicationLaunchInfo getExternalApplicationLaunchInfo() {
+	public ExternalApplication getExternalApplication() {
 		return externalApplicationLaunchInfo;
 	}
 
@@ -55,7 +55,7 @@ public class ServiceCommand {
 		return options;
 	}
 
-	public void setExternalApplicationLaunchInfo(ExternalApplicationLaunchInfo appInfo) {
+	public void setExternalApplication(ExternalApplication appInfo) {
 		this.externalApplicationLaunchInfo = appInfo;
 	}
 
@@ -95,7 +95,7 @@ public class ServiceCommand {
 				// Prepare for the next variable
 				variableBuffer = null;
 			}
-			else if (variableBuffer != null && options.charAt(i) != '{' && !Character.isWhitespace(options.charAt(i))) {
+			else if (variableBuffer != null && options.charAt(i) != '{') {
 				variableBuffer.append(options.charAt(i));
 			}
 
@@ -159,7 +159,7 @@ public class ServiceCommand {
 				variableBuffer = null;
 				dollarSignIndex = -1;
 			}
-			else if (variableBuffer != null && resolvedOptions.charAt(i) != '{' && !Character.isWhitespace(resolvedOptions.charAt(i))) {
+			else if (variableBuffer != null && resolvedOptions.charAt(i) != '{') {
 				variableBuffer.append(resolvedOptions.charAt(i));
 			}
 

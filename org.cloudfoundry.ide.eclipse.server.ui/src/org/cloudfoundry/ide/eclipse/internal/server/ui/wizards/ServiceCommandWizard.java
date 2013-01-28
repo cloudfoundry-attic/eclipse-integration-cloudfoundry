@@ -32,7 +32,6 @@ public class ServiceCommandWizard extends Wizard {
 
 	public ServiceCommandWizard(ServerService service, ServiceCommand serviceCommandToEdit) {
 		super();
-
 		this.service = service;
 		this.initialServiceCommand = serviceCommandToEdit;
 

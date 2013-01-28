@@ -11,18 +11,18 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommands;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ITunnelServiceCommands;
 import org.eclipse.jface.wizard.Wizard;
 
 public class ExternalToolsCommandWizard extends Wizard {
 
 	private CloudFoundryServer cloudServer;
 
-	private TunnelServiceCommands originalCommands;
+	private ITunnelServiceCommands originalCommands;
 
 	private ExternalToolsCommandWizardPage page;
 
-	public ExternalToolsCommandWizard(TunnelServiceCommands originalCommands, CloudFoundryServer cloudServer) {
+	public ExternalToolsCommandWizard(ITunnelServiceCommands originalCommands, CloudFoundryServer cloudServer) {
 		super();
 		this.cloudServer = cloudServer;
 		this.originalCommands = originalCommands;
@@ -37,7 +37,7 @@ public class ExternalToolsCommandWizard extends Wizard {
 		addPage(page);
 	}
 
-	public TunnelServiceCommands getExternalToolLaunchCommandsServer() {
+	public ITunnelServiceCommands getExternalToolLaunchCommandsServer() {
 		return page != null ? page.getExtToolLaunchCommandsServer() : originalCommands;
 	}
 

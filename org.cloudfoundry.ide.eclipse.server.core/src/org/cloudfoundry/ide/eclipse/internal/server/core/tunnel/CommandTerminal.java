@@ -20,17 +20,17 @@ import org.eclipse.core.runtime.Platform;
  */
 public class CommandTerminal {
 
-	private String terminalLaunchCommand;
+	private String terminal;
 
 	public CommandTerminal() {
 	}
 
-	public String getTerminalLaunchCommand() {
-		return terminalLaunchCommand;
+	public String getTerminal() {
+		return terminal;
 	}
 
-	public void setTerminalLaunchCommand(String terminalLaunchCommand) {
-		this.terminalLaunchCommand = terminalLaunchCommand;
+	public void setTerminal(String terminalLaunchCommand) {
+		this.terminal = terminalLaunchCommand;
 	}
 
 	public static CommandTerminal getDefaultOSTerminal() {
@@ -48,7 +48,7 @@ public class CommandTerminal {
 
 		if (terminalCommand != null) {
 			CommandTerminal terminal = new CommandTerminal();
-			terminal.setTerminalLaunchCommand(terminalCommand);
+			terminal.setTerminal(terminalCommand);
 			return terminal;
 		}
 

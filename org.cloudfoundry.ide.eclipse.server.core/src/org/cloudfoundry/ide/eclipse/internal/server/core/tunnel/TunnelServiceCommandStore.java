@@ -38,9 +38,15 @@ public class TunnelServiceCommandStore {
 		//
 	}
 
-	public synchronized TunnelServiceCommands getTunnelServiceCommands() throws CoreException {
+	public synchronized ITunnelServiceCommands getTunnelServiceCommands() throws CoreException {
 		loadCommandsFromStore();
-		return cachedCommands;
+
+		// Cached commands are the serialisable version. Return a subtype with
+		// additional information that is not persisted,
+		// like pre-defined commands
+
+		return cachedCommands != null ? new CommandDefinitionsWithPredefinition(cachedCommands,
+				new PredefinedServiceCommands()) : cachedCommands;
 	}
 
 	protected void loadCommandsFromStore() throws CoreException {
@@ -79,13 +85,23 @@ public class TunnelServiceCommandStore {
 		return commands;
 	}
 
-	public synchronized String storeServerServiceCommands(TunnelServiceCommands services) throws CoreException {
+	public synchronized String storeServerServiceCommands(ITunnelServiceCommands commands) throws CoreException {
+
 		String serialisedCommands = null;
-		cachedCommands = services;
-		if (services != null) {
-			if (mapper.canSerialize(services.getClass())) {
+
+		// Resolve the commands that need to be persisted, in case they are part
+		// of a wrapper
+		// that has information that should not be serialised
+		if (commands instanceof CommandDefinitionsWithPredefinition) {
+			cachedCommands = ((CommandDefinitionsWithPredefinition) commands).getSerialisableCommands();
+		}
+		else if (commands instanceof TunnelServiceCommands) {
+			cachedCommands = (TunnelServiceCommands) commands;
+		}
+		if (cachedCommands != null) {
+			if (mapper.canSerialize(cachedCommands.getClass())) {
 				try {
-					serialisedCommands = mapper.writeValueAsString(services);
+					serialisedCommands = mapper.writeValueAsString(cachedCommands);
 				}
 				catch (IOException e) {
 					throw new CoreException(CloudFoundryPlugin.getErrorStatus(
@@ -94,7 +110,7 @@ public class TunnelServiceCommandStore {
 			}
 			else {
 				throw new CoreException(CloudFoundryPlugin.getErrorStatus("Value of type "
-						+ services.getClass().getName() + " can not be serialized to JSON."));
+						+ cachedCommands.getClass().getName() + " can not be serialized to JSON."));
 			}
 		}
 

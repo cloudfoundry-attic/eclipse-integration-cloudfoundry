@@ -19,9 +19,9 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ITunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommandStore;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ModifyServicesForApplicationAction;
@@ -186,7 +186,7 @@ public class TunnelActionProvider {
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					try {
-						TunnelServiceCommands commands = TunnelServiceCommandStore.getCurrentStore()
+						ITunnelServiceCommands commands = TunnelServiceCommandStore.getCurrentStore()
 								.getTunnelServiceCommands();
 						Shell shell = getShell();
 
