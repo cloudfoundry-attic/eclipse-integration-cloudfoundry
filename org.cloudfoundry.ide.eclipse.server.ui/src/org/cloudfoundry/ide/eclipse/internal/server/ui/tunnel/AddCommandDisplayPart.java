@@ -182,14 +182,26 @@ public class AddCommandDisplayPart extends AbstractPart {
 				public void widgetSelected(SelectionEvent event) {
 					int selectionIndex = predefinedCommands.getSelectionIndex();
 					if (selectionIndex != -1) {
-						setPredefinedCommand(predefined.get(selectionIndex));
+
+						// Account for the additional entry in the combo that
+						// has no mapped entry in the predefined list
+						int predefIndex = selectionIndex - 1;
+
+						ServiceCommand value = predefIndex >= 0 && predefIndex < predefined.size() ? predefined
+								.get(predefIndex) : null;
+						setPredefinedCommand(value);
 					}
 				}
 			});
 
+			// Add a empty value to allow users to clear the predefined command
+			predefinedCommands.add("Select: ");
+
 			for (ServiceCommand option : predefined) {
 				predefinedCommands.add(option.getExternalApplication().getDisplayName());
 			}
+
+			predefinedCommands.select(0);
 
 		}
 
@@ -233,22 +245,23 @@ public class AddCommandDisplayPart extends AbstractPart {
 
 	protected void setPredefinedCommand(ServiceCommand predefinedCommand) {
 
-		if (predefinedCommand != null) {
-			displayNameVal = predefinedCommand.getExternalApplication().getDisplayName();
-			if (displayNameVal != null) {
-				displayName.setText(displayNameVal);
-			}
+		// If no predefined command is set, clear values
 
-			optionsVal = predefinedCommand.getOptions().getOptions() != null ? predefinedCommand.getOptions()
-					.getOptions() : null;
-			if (optionsVal != null) {
-				options.setText(optionsVal);
-			}
-			locationVal = predefinedCommand.getExternalApplication().getExecutableNameAndPath();
-			if (locationVal != null) {
-				locationField.setText(locationVal);
-			}
+		displayNameVal = predefinedCommand != null ? predefinedCommand.getExternalApplication().getDisplayName() : "";
+		if (displayNameVal != null) {
+			displayName.setText(displayNameVal);
+		}
 
+		optionsVal = predefinedCommand != null ? (predefinedCommand.getOptions().getOptions() != null ? predefinedCommand
+				.getOptions().getOptions() : "")
+				: "";
+		if (optionsVal != null) {
+			options.setText(optionsVal);
+		}
+		locationVal = predefinedCommand != null ? predefinedCommand.getExternalApplication().getExecutableNameAndPath()
+				: "";
+		if (locationVal != null) {
+			locationField.setText(locationVal);
 		}
 		validate(true);
 

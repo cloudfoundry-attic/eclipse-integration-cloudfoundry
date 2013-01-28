@@ -57,11 +57,11 @@ public class ServiceCommandWizardPage extends WizardPage {
 					else {
 						if (ValueValidationUtil.isEmpty(partStatus.getMessage())) {
 							setErrorMessage(null);
-							setPageComplete(false);
 						}
 						else {
 							setErrorMessage(partStatus.getMessage());
 						}
+						setPageComplete(false);
 					}
 				}
 			}
