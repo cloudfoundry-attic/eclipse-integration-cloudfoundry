@@ -70,6 +70,12 @@ public class TunnelServiceCommandStore {
 			// initialise commands for the first time
 			commands = new TunnelServiceCommands();
 
+			// Set a default terminal for the command
+			CommandTerminal defaultTerminal = CommandTerminal.getDefaultOSTerminal();
+			if (defaultTerminal != null) {
+				commands.setDefaultTerminal(defaultTerminal);
+			}
+
 			List<ServerService> services = new ArrayList<ServerService>();
 			// Fill in all the default services if creating a clean list of
 			// services

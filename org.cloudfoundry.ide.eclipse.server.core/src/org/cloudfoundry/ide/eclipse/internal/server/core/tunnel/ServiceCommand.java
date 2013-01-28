@@ -31,8 +31,7 @@ public class ServiceCommand {
 	private ExternalApplication externalApplicationLaunchInfo;
 
 	public ServiceCommand() {
-		// Set a default terminal for the command
-		commandTerminal = CommandTerminal.getDefaultOSTerminal();
+
 	}
 
 	public boolean usesTerminal() {
@@ -133,16 +132,15 @@ public class ServiceCommand {
 			}
 			// Flush the variable if a white space or end of string is
 			// encountered
-			else if ((resolvedOptions.charAt(i) == '}'|| i == resolvedOptions.length() - 1)
-					&& variableBuffer != null) {
-	
+			else if ((resolvedOptions.charAt(i) == '}' || i == resolvedOptions.length() - 1) && variableBuffer != null) {
 
 				// Look up the value
 				if (variableBuffer.length() > 0) {
 					String variable = variableBuffer.toString();
 					String value = variableToValueMap.get(variable);
 					// ending index should be the next index after the last
-					// position where the value needs to be inserted, so in this case the ending '}'
+					// position where the value needs to be inserted, so in this
+					// case the ending '}'
 					// So if the end of the line is reached, the index should be
 					// equal to the length of the options buffer.
 					int endingIndex = i + 1;

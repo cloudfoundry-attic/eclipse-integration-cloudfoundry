@@ -57,4 +57,12 @@ public class CommandDefinitionsWithPredefinition implements ITunnelServiceComman
 		original.setServices(services);
 	}
 
+	public CommandTerminal getDefaultTerminal() {
+		return original.getDefaultTerminal();
+	}
+
+	public void setDefaultTerminal(CommandTerminal defaultTerminal) {
+		original.setDefaultTerminal(defaultTerminal);
+	}
+
 }

@@ -30,19 +30,15 @@ public class ServiceCommandWizard extends Wizard {
 
 	private ServiceCommandWizardPage page;
 
-	public ServiceCommandWizard(ServerService service, ServiceCommand serviceCommandToEdit) {
+	public ServiceCommandWizard(ServerService service, ServiceCommand serviceCommandToEdit, boolean addNewCommand) {
 		super();
 		this.service = service;
 		this.initialServiceCommand = serviceCommandToEdit;
 
 		// Only add a new command if an existing one was not passed.
-		this.addNewCommand = serviceCommandToEdit == null;
+		this.addNewCommand = addNewCommand;
 		setWindowTitle("Configure a command to run:");
 		setNeedsProgressMonitor(true);
-	}
-
-	public ServiceCommandWizard(ServerService service) {
-		this(service, null);
 	}
 
 	public void addPages() {
@@ -52,6 +48,10 @@ public class ServiceCommandWizard extends Wizard {
 
 	public ServiceCommand getServiceCommand() {
 		return page != null ? page.getServiceCommand() : initialServiceCommand;
+	}
+
+	public boolean applyTerminalToAllCommands() {
+		return page != null ? page.applyTerminalToAllCommands() : false;
 	}
 
 	@Override

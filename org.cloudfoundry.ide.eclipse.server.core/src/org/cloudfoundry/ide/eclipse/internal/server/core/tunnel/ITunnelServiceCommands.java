@@ -18,7 +18,11 @@ public interface ITunnelServiceCommands {
 	 * @return non-null list of services
 	 */
 	public List<ServerService> getServices();
-	
+
 	public void setServices(List<ServerService> services);
+
+	public CommandTerminal getDefaultTerminal();
+
+	public void setDefaultTerminal(CommandTerminal defaultTerminal);
 
 }

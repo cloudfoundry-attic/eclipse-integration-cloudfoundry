@@ -83,4 +83,8 @@ public class ServiceCommandWizardPage extends WizardPage {
 		return serviceCommand;
 	}
 
+	public boolean applyTerminalToAllCommands() {
+		return displayPart != null ? displayPart.applyTerminalToAllCommands() : false;
+	}
+
 }

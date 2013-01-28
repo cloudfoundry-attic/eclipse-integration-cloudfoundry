@@ -23,8 +23,18 @@ public class TunnelServiceCommands implements ITunnelServiceCommands {
 
 	private List<ServerService> services;
 
+	private CommandTerminal defaultTerminal;
+
 	public TunnelServiceCommands() {
 		services = new ArrayList<ServerService>(0);
+	}
+
+	public CommandTerminal getDefaultTerminal() {
+		return defaultTerminal;
+	}
+
+	public void setDefaultTerminal(CommandTerminal defaultTerminal) {
+		this.defaultTerminal = defaultTerminal;
 	}
 
 	/**

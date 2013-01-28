@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandTerminal;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ITunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
@@ -296,19 +297,32 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 	 */
 	protected void addOrEditCommand(boolean add) {
 
-		ServiceCommand serviceCommandToEdit = add ? null : getSelectedCommand();
+		ServiceCommand serviceCommandToEdit = null;
+
+		// If creating a new service, also add a default terminal if one exists
+		if (add) {
+			serviceCommandToEdit = new ServiceCommand();
+			CommandTerminal defaultTerminal = serviceCommands.getDefaultTerminal();
+			serviceCommandToEdit.setCommandTerminal(defaultTerminal);
+		}
+		else {
+			serviceCommandToEdit = getSelectedCommand();
+		}
 
 		ServerService service = getSelectedService();
 		if (service != null) {
-			
-			ServiceCommandWizard wizard = add ? new ServiceCommandWizard(service) : new ServiceCommandWizard(service,
-					serviceCommandToEdit);
+
+			ServiceCommandWizard wizard = new ServiceCommandWizard(service, serviceCommandToEdit, add);
 			Shell shell = getShell();
 
 			if (shell != null) {
 				WizardDialog dialog = new WizardDialog(getShell(), wizard);
 				if (dialog.open() == Window.OK) {
 					ServiceCommand newServiceCommand = wizard.getServiceCommand();
+					CommandTerminal updatedTerminal = newServiceCommand != null && wizard.applyTerminalToAllCommands() ? newServiceCommand
+							.getCommandTerminal() : null;
+
+					applyTerminalToAllCommands(updatedTerminal);
 
 					if (newServiceCommand != null) {
 						updateCommandViewerInput(serviceCommandToEdit, newServiceCommand, service);
@@ -351,6 +365,23 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 			}
 			service.setCommands(newCommands);
 			setServiceCommandInput(service, toAdd);
+		}
+	}
+
+	protected void applyTerminalToAllCommands(CommandTerminal terminalToUpdate) {
+		if (terminalToUpdate != null) {
+			List<ServerService> services = serviceCommands.getServices();
+			if (services != null) {
+				for (ServerService service : services) {
+					List<ServiceCommand> commands = service.getCommands();
+					if (commands != null) {
+						for (ServiceCommand cmd : commands) {
+							cmd.setCommandTerminal(terminalToUpdate);
+						}
+					}
+				}
+			}
+			serviceCommands.setDefaultTerminal(terminalToUpdate);
 		}
 	}
 

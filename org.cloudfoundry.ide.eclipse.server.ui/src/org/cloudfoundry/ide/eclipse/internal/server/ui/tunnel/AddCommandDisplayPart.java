@@ -77,6 +77,8 @@ public class AddCommandDisplayPart extends AbstractPart {
 
 	private Button findApplicationButton;
 
+	private boolean applyTerminalToAllCommands = false;
+
 	private Combo predefinedCommands;
 
 	private final List<ServiceCommand> predefined;
@@ -115,14 +117,29 @@ public class AddCommandDisplayPart extends AbstractPart {
 		commandDisplayName.setText("Display Name:");
 
 		displayName = new Text(main, SWT.BORDER);
-		GridDataFactory.fillDefaults().grab(true, false).span(2, 0).applyTo(displayName);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(displayName);
 
 		Label terminalLocationLabel = new Label(main, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(terminalLocationLabel);
 		terminalLocationLabel.setText("External Command Line Terminal:");
 
 		terminalLocation = new Text(main, SWT.BORDER);
-		GridDataFactory.fillDefaults().grab(true, false).span(2, 0).applyTo(terminalLocation);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(terminalLocation);
+
+		final Button terminalButton = new Button(main, SWT.CHECK);
+
+		int padding = 20;
+		GridDataFactory.fillDefaults().grab(false, false).indent(padding, SWT.DEFAULT).applyTo(terminalButton);
+		terminalButton.setText("Make terminal default for all commands");
+
+		terminalButton.setSelection(applyTerminalToAllCommands);
+
+		terminalButton.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent event) {
+				applyTerminalToAllCommands = terminalButton.getSelection();
+			}
+
+		});
 
 		Label fileSelectionLabel = new Label(main, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(fileSelectionLabel);
@@ -161,8 +178,7 @@ public class AddCommandDisplayPart extends AbstractPart {
 			}
 		});
 
-		// See if any templates are available
-
+		// See if any predefined commands are available are available
 		if (predefined != null && !predefined.isEmpty()) {
 
 			Label templates = new Label(main, SWT.NONE);
@@ -237,10 +253,16 @@ public class AddCommandDisplayPart extends AbstractPart {
 		optionsDescription.setEditable(false);
 		optionsDescription.setText(getOptionsDescription());
 
+		optionsDescription.setBackground(main.getBackground());
+
 		readValues();
 
 		return main;
 
+	}
+
+	public boolean applyTerminalToAllCommands() {
+		return applyTerminalToAllCommands;
 	}
 
 	protected void setPredefinedCommand(ServiceCommand predefinedCommand) {
