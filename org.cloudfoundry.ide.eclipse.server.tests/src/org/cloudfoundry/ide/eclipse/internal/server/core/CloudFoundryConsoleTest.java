@@ -154,6 +154,12 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 				}
 			}
 
+			// Set it to fix build errors that fail because it takes too long to
+			// get a result
+			protected boolean shouldRetryOnError(Throwable t) {
+				return true;
+			}
+
 		}.run(new NullProgressMonitor());
 	}
 }
