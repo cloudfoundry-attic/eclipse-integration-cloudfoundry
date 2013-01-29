@@ -119,12 +119,24 @@ public class AddCommandDisplayPart extends AbstractPart {
 		displayName = new Text(main, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(displayName);
 
+		displayName.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent event) {
+				handleChange(event);
+			}
+		});
+
 		Label terminalLocationLabel = new Label(main, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(terminalLocationLabel);
 		terminalLocationLabel.setText("External Command Line Terminal:");
 
 		terminalLocation = new Text(main, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(terminalLocation);
+
+		terminalLocation.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent event) {
+				handleChange(event);
+			}
+		});
 
 		final Button terminalButton = new Button(main, SWT.CHECK);
 
@@ -152,6 +164,13 @@ public class AddCommandDisplayPart extends AbstractPart {
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(buttonArea);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(buttonArea);
 
+		locationField.addModifyListener(new ModifyListener() {
+
+			public void modifyText(ModifyEvent event) {
+				handleChange(event);
+			}
+		});
+
 		findApplicationButton = new Button(buttonArea, SWT.PUSH);
 
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(findApplicationButton);
@@ -163,19 +182,6 @@ public class AddCommandDisplayPart extends AbstractPart {
 				handleChange(event);
 			}
 
-		});
-
-		displayName.addModifyListener(new ModifyListener() {
-			public void modifyText(ModifyEvent event) {
-				handleChange(event);
-			}
-		});
-
-		locationField.addModifyListener(new ModifyListener() {
-
-			public void modifyText(ModifyEvent event) {
-				handleChange(event);
-			}
 		});
 
 		// See if any predefined commands are available are available
@@ -330,7 +336,7 @@ public class AddCommandDisplayPart extends AbstractPart {
 
 	public ServiceCommand getServiceCommand() {
 
-		if (terminalLocation != null) {
+		if (terminalLocationVal != null) {
 			CommandTerminal terminal = new CommandTerminal();
 			terminal.setTerminal(terminalLocationVal);
 			serviceCommand.setCommandTerminal(terminal);

@@ -322,10 +322,12 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 					CommandTerminal updatedTerminal = newServiceCommand != null && wizard.applyTerminalToAllCommands() ? newServiceCommand
 							.getCommandTerminal() : null;
 
-					applyTerminalToAllCommands(updatedTerminal);
-
 					if (newServiceCommand != null) {
 						updateCommandViewerInput(serviceCommandToEdit, newServiceCommand, service);
+
+						// Once the commands have been edited, apply the any
+						// changes to the terminal definition to the commands
+						applyTerminalToAllCommands(updatedTerminal);
 					}
 				}
 			}
@@ -370,7 +372,6 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 	protected void applyTerminalToAllCommands(CommandTerminal terminalToUpdate) {
 		if (terminalToUpdate != null) {
-			List<ServerService> services = serviceCommands.getServices();
 			if (services != null) {
 				for (ServerService service : services) {
 					List<ServiceCommand> commands = service.getCommands();
