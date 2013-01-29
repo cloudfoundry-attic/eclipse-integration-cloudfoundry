@@ -76,42 +76,59 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		harness.dispose();
 	}
 
-	protected String getContent(URI uri) throws Exception {
-		Exception lastException = null;
-		for (int i = 0; i < 180; i++) {
-			try {
+	protected String getContent(final URI uri) throws Exception {
+		final Throwable[] lastException = new Throwable[1];
+
+		String value = new AbstractWaitWithProgressJob<String>(5, 1000) {
+
+			@Override
+			protected String runInWait(IProgressMonitor monitor) throws CoreException {
 				// InputStream in = uri.toURL().openStream();
 				CloudFoundryPlugin.trace("Probing " + uri);
-				BufferedReader reader = new BufferedReader(new InputStreamReader(download(uri,
-						new NullProgressMonitor())));
 				try {
-					return reader.readLine();
+					BufferedReader reader = new BufferedReader(new InputStreamReader(download(uri,
+							new NullProgressMonitor())));
+					try {
+						String val = reader.readLine();
+						lastException[0] = null;
+						return val;
+					}
+					finally {
+						if (reader != null) {
+							reader.close();
+						}
+					}
 				}
-				finally {
-					reader.close();
+				catch (Throwable t) {
+					throw new CoreException(CloudFoundryPlugin.getErrorStatus(t));
 				}
 			}
-			catch (FileNotFoundException e) {
-				// ignore
-				lastException = e;
-				CloudFoundryPlugin.trace("Not found: " + uri);
-			}
-			catch (Exception e) {
-				if (e.getCause() instanceof FileNotFoundException) {
+
+			// Set it to fix build errors that fail because it takes too long to
+			// get a result
+			protected boolean shouldRetryOnError(Throwable t) {
+				if (t.getCause() instanceof FileNotFoundException) {
 					// ignore
-					lastException = e;
-					CloudFoundryPlugin.trace("Not found: " + uri);
+					lastException[0] = t;
+
 				}
-				else {
-					throw e;
-				}
+				return true;
 			}
-			Thread.sleep(1000);
+
+		}.run(new NullProgressMonitor());
+
+		if (lastException[0] != null) {
+			// fail
+			AssertionFailedError e = new AssertionFailedError("Failed to download " + uri
+					+ " within 3 min: 404 not found");
+			e.initCause(lastException[0]);
+			CloudFoundryPlugin.trace("Not found: " + uri);
+			throw e;
 		}
-		// fail
-		AssertionFailedError e = new AssertionFailedError("Failed to download " + uri + " within 3 min: 404 not found");
-		e.initCause(lastException);
-		throw e;
+		else {
+			return value;
+		}
+
 	}
 
 	public InputStream download(java.net.URI uri, IProgressMonitor progressMonitor) throws IOException {
