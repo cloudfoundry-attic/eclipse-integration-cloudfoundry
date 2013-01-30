@@ -139,14 +139,14 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 	}
 
 	protected ConsoleContent.Result getResult(final ConsoleContent content) throws Exception {
-		return new AbstractWaitWithProgressJob<ConsoleContent.Result>(5, 1000) {
+		return new AbstractWaitWithProgressJob<ConsoleContent.Result>(10, 2000) {
 
 			@Override
 			protected Result runInWait(IProgressMonitor monitor) throws CoreException {
 				Result result = content.getFileContent(monitor);
 				// if either error or stdout content is obtained, stop waiting
-				if (result.getErrorContent() != null && result.getErrorContent().length() > 0
-						|| result.getOutContent() != null && result.getOutContent().length() > 0) {
+				if ((result.getErrorContent() != null && result.getErrorContent().length() > 0)
+						|| (result.getOutContent() != null && result.getOutContent().length() > 0)) {
 					return result;
 				}
 				else {

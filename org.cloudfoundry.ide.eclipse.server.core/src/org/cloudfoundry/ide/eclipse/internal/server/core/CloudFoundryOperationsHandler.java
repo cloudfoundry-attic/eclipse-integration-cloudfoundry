@@ -72,10 +72,7 @@ public class CloudFoundryOperationsHandler {
 
 			@Override
 			protected boolean shouldRetryOnError(Throwable t) {
-				if (t instanceof CloudFoundryException && shouldAttemptClientLogin((CloudFoundryException) t)) {
-					return true;
-				}
-				return false;
+				return (t instanceof CloudFoundryException) && shouldAttemptClientLogin((CloudFoundryException) t);
 			}
 
 		}.run(monitor);

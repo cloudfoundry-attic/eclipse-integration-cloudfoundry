@@ -41,7 +41,7 @@ public abstract class AbstractWaitWithProgressJob<T> {
 	 * @return
 	 */
 	abstract protected T runInWait(IProgressMonitor monitor) throws CoreException;
-	
+
 	protected boolean shouldRetryOnError(Throwable t) {
 		return false;
 	}
@@ -50,39 +50,56 @@ public abstract class AbstractWaitWithProgressJob<T> {
 		return result != null;
 	}
 
+	/**
+	 * Returns a result, or throws an exception ONLY if the result is invalid
+	 * AND an exception was thrown after all attempts have been exhausted. Will
+	 * only re-throw the last exception that was thrown.
+	 * 
+	 * @param monitor
+	 * @return
+	 * @throws CoreException
+	 */
 	public T run(IProgressMonitor monitor) throws CoreException {
 
-		Throwable error = null;
+		Throwable lastError = null;
 
 		T result = null;
 		int i = 0;
-		while (i++ < attempts && !monitor.isCanceled()) {
+		while (i < attempts && !monitor.isCanceled()) {
+			boolean reattempt = false;
+			// Two conditions which results in a reattempt:
+			// 1. Result is not valid
+			// 2. Exception is thrown and an exception handler decides that a
+			// reattempt should happen based on the given error
+
 			try {
 				result = runInWait(monitor);
-				if (!isValid(result)) {
-
-					try {
-						Thread.sleep(sleepTime);
-					}
-					catch (InterruptedException e) {
-						// Ignore and proceed
-					}
-				}
-				else {
-					break;
-				}
+				reattempt = !isValid(result);
 			}
 			catch (Throwable th) {
-				error = th;
-				if (!shouldRetryOnError(error)) {
-					break;
+				lastError = th;
+				reattempt = shouldRetryOnError(lastError);
+			}
+
+			if (reattempt) {
+				try {
+					Thread.sleep(sleepTime);
+				}
+				catch (InterruptedException e) {
+					// Ignore and proceed
 				}
 			}
+			else {
+				break;
+			}
+			i++;
 		}
 
-		if (!isValid(result) && error != null) {
-			CoreException coreError = error instanceof CoreException ? (CoreException) error : new CoreException(
-					CloudFoundryPlugin.getErrorStatus(error));
+		// Only throw exception if an error was generated and an invalid result
+		// was obtained.
+		if (!isValid(result) && lastError != null) {
+			CoreException coreError = lastError instanceof CoreException ? (CoreException) lastError
+					: new CoreException(CloudFoundryPlugin.getErrorStatus(lastError));
 			throw coreError;
 		}
 		return result;
