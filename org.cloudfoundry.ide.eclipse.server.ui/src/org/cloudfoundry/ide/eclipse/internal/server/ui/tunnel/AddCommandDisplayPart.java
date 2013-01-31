@@ -16,9 +16,7 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOptions;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandTerminal;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerServiceWithPredefinitions;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
@@ -69,7 +67,7 @@ public class AddCommandDisplayPart extends AbstractPart {
 
 	protected String optionsVal;
 
-	protected String locationVal;
+	protected String executableLocationValue;
 
 	protected String displayNameVal;
 
@@ -89,16 +87,29 @@ public class AddCommandDisplayPart extends AbstractPart {
 
 	private ServiceCommand serviceCommand;
 
+	private CommandTerminal defaultTerminal;
+
+	/**
+	 * 
+	 * @param service
+	 * @param serviceCommand . This is what is used to populate the wizard
+	 */
 	public AddCommandDisplayPart(ServerService service, ServiceCommand serviceCommand) {
-		// If an existing service command is not passed, define a new one as the
-		// default values
-		// in a clean service command, for example, the terminal location, will
-		// be used to populate the
-		// UI
-		this.serviceCommand = serviceCommand != null ? serviceCommand : new ServiceCommand();
+		this(service, serviceCommand, null);
+
+	}
+
+	public AddCommandDisplayPart(ServerService service, CommandTerminal defaultTerminal) {
+		this(service, null, defaultTerminal);
+	}
+
+	protected AddCommandDisplayPart(ServerService service, ServiceCommand serviceCommand,
+			CommandTerminal defaultTerminal) {
 		this.predefined = service instanceof ServerServiceWithPredefinitions ? ((ServerServiceWithPredefinitions) service)
 				.getPredefinedCommands() : null;
 		this.service = service;
+		this.serviceCommand = serviceCommand;
+		this.defaultTerminal = defaultTerminal;
 	}
 
 	public Control createPart(Composite parent) {
@@ -110,6 +121,8 @@ public class AddCommandDisplayPart extends AbstractPart {
 		Composite main = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(main);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(main);
+
+		createPredefinedArea(main);
 
 		/* Display name area */
 		Label commandDisplayName = new Label(main, SWT.NONE);
@@ -142,7 +155,7 @@ public class AddCommandDisplayPart extends AbstractPart {
 
 		int padding = 20;
 		GridDataFactory.fillDefaults().grab(false, false).indent(padding, SWT.DEFAULT).applyTo(terminalButton);
-		terminalButton.setText("Make terminal default for all commands");
+		terminalButton.setText("Apply terminal changes to all commands.");
 
 		terminalButton.setSelection(applyTerminalToAllCommands);
 
@@ -183,49 +196,6 @@ public class AddCommandDisplayPart extends AbstractPart {
 			}
 
 		});
-
-		// See if any predefined commands are available are available
-		if (predefined != null && !predefined.isEmpty()) {
-
-			Label templates = new Label(main, SWT.NONE);
-			GridDataFactory.fillDefaults().grab(false, false).applyTo(templates);
-			templates
-					.setText("Select a pre-defined command. Note that the executable location may need to be changed.");
-
-			Composite predefinedArea = new Composite(main, SWT.NONE);
-			GridLayoutFactory.fillDefaults().numColumns(1).applyTo(predefinedArea);
-			GridDataFactory.fillDefaults().grab(false, false).applyTo(predefinedArea);
-
-			predefinedCommands = new Combo(predefinedArea, SWT.BORDER | SWT.READ_ONLY);
-			GridDataFactory.fillDefaults().grab(false, false).applyTo(predefinedCommands);
-			predefinedCommands.setEnabled(true);
-			predefinedCommands.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent event) {
-					int selectionIndex = predefinedCommands.getSelectionIndex();
-					if (selectionIndex != -1) {
-
-						// Account for the additional entry in the combo that
-						// has no mapped entry in the predefined list
-						int predefIndex = selectionIndex - 1;
-
-						ServiceCommand value = predefIndex >= 0 && predefIndex < predefined.size() ? predefined
-								.get(predefIndex) : null;
-						setPredefinedCommand(value);
-					}
-				}
-			});
-
-			// Add a empty value to allow users to clear the predefined command
-			predefinedCommands.add("Select: ");
-
-			for (ServiceCommand option : predefined) {
-				predefinedCommands.add(option.getExternalApplication().getDisplayName());
-			}
-
-			predefinedCommands.select(0);
-
-		}
 
 		Text argsLabel = new Text(main, SWT.MULTI);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(argsLabel);
@@ -271,28 +241,80 @@ public class AddCommandDisplayPart extends AbstractPart {
 		return applyTerminalToAllCommands;
 	}
 
+	protected void createPredefinedArea(Composite parent) {
+		// See if any predefined commands are available are available
+		if (predefined != null && !predefined.isEmpty()) {
+
+			Label templates = new Label(parent, SWT.NONE);
+			GridDataFactory.fillDefaults().grab(false, false).applyTo(templates);
+			templates
+					.setText("Select a pre-defined command. Note that the executable location may need to be changed.");
+
+			Composite predefinedArea = new Composite(parent, SWT.NONE);
+			GridLayoutFactory.fillDefaults().numColumns(1).applyTo(predefinedArea);
+			GridDataFactory.fillDefaults().grab(false, false).applyTo(predefinedArea);
+
+			predefinedCommands = new Combo(predefinedArea, SWT.BORDER | SWT.READ_ONLY);
+			GridDataFactory.fillDefaults().grab(false, false).applyTo(predefinedCommands);
+			predefinedCommands.setEnabled(true);
+			predefinedCommands.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent event) {
+					int selectionIndex = predefinedCommands.getSelectionIndex();
+					if (selectionIndex != -1) {
+
+						// Account for the additional entry in the combo that
+						// has no mapped entry in the predefined list
+						int predefIndex = selectionIndex - 1;
+
+						ServiceCommand value = predefIndex >= 0 && predefIndex < predefined.size() ? predefined
+								.get(predefIndex) : null;
+						setPredefinedCommand(value);
+					}
+				}
+			});
+
+			// Add a clear value to allow users to clear the predefined command
+			predefinedCommands.add("Select:");
+
+			for (ServiceCommand option : predefined) {
+				predefinedCommands.add(option.getDisplayName());
+			}
+
+			predefinedCommands.select(0);
+
+		}
+	}
+
 	protected void setPredefinedCommand(ServiceCommand predefinedCommand) {
 
 		// If no predefined command is set, clear values
+		if (predefinedCommand != null) {
+			displayNameVal = predefinedCommand.getDisplayName();
+			if (displayNameVal != null) {
+				displayName.setText(displayNameVal);
+			}
 
-		displayNameVal = predefinedCommand != null ? predefinedCommand.getExternalApplication().getDisplayName() : "";
-		if (displayNameVal != null) {
-			displayName.setText(displayNameVal);
+			optionsVal = predefinedCommand.getOptions() != null ? predefinedCommand.getOptions().getOptions() : null;
+			if (optionsVal != null) {
+				options.setText(optionsVal);
+			}
+			executableLocationValue = predefinedCommand.getExternalApplication() != null ? predefinedCommand
+					.getExternalApplication().getExecutableNameAndPath() : null;
+			if (executableLocationValue != null) {
+				locationField.setText(executableLocationValue);
+			}
+
+		}
+		else {
+
+			// Clear the values
+			displayName.setText("");
+			options.setText("");
+			locationField.setText("");
 		}
 
-		optionsVal = predefinedCommand != null ? (predefinedCommand.getOptions().getOptions() != null ? predefinedCommand
-				.getOptions().getOptions() : "")
-				: "";
-		if (optionsVal != null) {
-			options.setText(optionsVal);
-		}
-		locationVal = predefinedCommand != null ? predefinedCommand.getExternalApplication().getExecutableNameAndPath()
-				: "";
-		if (locationVal != null) {
-			locationField.setText(locationVal);
-		}
 		validate(true);
-
 	}
 
 	/**
@@ -302,15 +324,14 @@ public class AddCommandDisplayPart extends AbstractPart {
 	 */
 	protected void readValues() {
 		if (serviceCommand != null) {
-			locationVal = serviceCommand.getExternalApplication() != null ? serviceCommand.getExternalApplication()
-					.getExecutableNameAndPath() : null;
+			executableLocationValue = serviceCommand.getExternalApplication() != null ? serviceCommand
+					.getExternalApplication().getExecutableNameAndPath() : null;
 
-			if (locationVal != null) {
-				locationField.setText(locationVal);
+			if (executableLocationValue != null) {
+				locationField.setText(executableLocationValue);
 			}
 
-			displayNameVal = serviceCommand.getExternalApplication() != null ? serviceCommand.getExternalApplication()
-					.getDisplayName() : null;
+			displayNameVal = serviceCommand.getDisplayName();
 
 			if (displayNameVal != null) {
 				displayName.setText(displayNameVal);
@@ -330,29 +351,55 @@ public class AddCommandDisplayPart extends AbstractPart {
 				}
 			}
 
-			validate(false);
 		}
+		else if (defaultTerminal != null) {
+			terminalLocationVal = defaultTerminal.getTerminal();
+
+			if (terminalLocationVal != null) {
+				terminalLocation.setText(terminalLocationVal);
+			}
+		}
+		validate(false);
 	}
 
-	public ServiceCommand getServiceCommand() {
+	public void updateValues(Control eventControl) {
 
-		if (terminalLocationVal != null) {
-			CommandTerminal terminal = new CommandTerminal();
-			terminal.setTerminal(terminalLocationVal);
-			serviceCommand.setCommandTerminal(terminal);
-		}
-		ExternalApplication appInfo = new ExternalApplication();
-		appInfo.setDisplayName(displayNameVal);
-		appInfo.setExecutableNameAndPath(locationVal);
-		serviceCommand.setExternalApplication(appInfo);
-
-		if (optionsVal != null && optionsVal.trim().length() > 0) {
-			CommandOptions options = new CommandOptions();
-			options.setOptions(optionsVal);
-			serviceCommand.setOptions(options);
+		if (eventControl == null || eventControl.isDisposed()) {
+			return;
 		}
 
-		return serviceCommand;
+		if (eventControl == locationField) {
+			executableLocationValue = locationField.getText();
+		}
+		else if (eventControl == displayName) {
+			displayNameVal = displayName.getText();
+		}
+		else if (eventControl == options) {
+			optionsVal = options.getText();
+		}
+		else if (eventControl == terminalLocation) {
+			terminalLocationVal = terminalLocation.getText();
+		}
+		else if (eventControl == findApplicationButton) {
+			handleFileLocationButtonSelected();
+		}
+
+	}
+
+	public String getExecutableLocation() {
+		return executableLocationValue;
+	}
+
+	public String getDisplayName() {
+		return displayNameVal;
+	}
+
+	public String getOptions() {
+		return optionsVal;
+	}
+
+	public String getTerminal() {
+		return terminalLocationVal;
 	}
 
 	protected ServerService getService() {
@@ -401,15 +448,15 @@ public class AddCommandDisplayPart extends AbstractPart {
 
 	protected void handleChange(EventObject event) {
 		Object eventSource = event.getSource();
-		if (eventSource == findApplicationButton) {
-			handleFileLocationButtonSelected();
-		}
-		locationVal = locationField.getText();
-		displayNameVal = displayName.getText();
-		optionsVal = options.getText();
-		terminalLocationVal = terminalLocation.getText();
 
-		validate(true);
+		if (eventSource instanceof Control) {
+			Control eventControl = (Control) eventSource;
+
+			updateValues(eventControl);
+
+			validate(true);
+		}
+
 	}
 
 	/**
@@ -418,7 +465,7 @@ public class AddCommandDisplayPart extends AbstractPart {
 	 */
 	protected String getValidationMessage() {
 		String message = null;
-		if (ValueValidationUtil.isEmpty(locationVal)) {
+		if (ValueValidationUtil.isEmpty(executableLocationValue)) {
 			message = "No command executable location specified.";
 		}
 		else if (ValueValidationUtil.isEmpty(displayNameVal)) {
@@ -427,10 +474,11 @@ public class AddCommandDisplayPart extends AbstractPart {
 		else {
 
 			// Verify that another command doesn't already exist
-			List<ServiceCommand> existingCommands = service.getCommands();
+			List<ServiceCommand> existingCommands = getService().getCommands();
 			if (existingCommands != null) {
 				for (ServiceCommand command : existingCommands) {
-					if (command.getExternalApplication().getDisplayName().equals(displayNameVal)) {
+					String otherCommandName = command.getDisplayName();
+					if ((command != serviceCommand) && otherCommandName.equals(displayNameVal)) {
 						message = "Another command with the same display name already exists. Please select another display name.";
 						break;
 					}

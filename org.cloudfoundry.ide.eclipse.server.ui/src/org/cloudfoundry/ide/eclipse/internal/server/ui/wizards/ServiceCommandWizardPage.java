@@ -11,11 +11,8 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.AddCommandDisplayPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.EditCommandDisplayPart;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
@@ -23,28 +20,23 @@ import org.eclipse.swt.widgets.Control;
 
 public class ServiceCommandWizardPage extends WizardPage {
 
-	private ServiceCommand serviceCommand;
-
 	private AddCommandDisplayPart displayPart;
-
-	private final ServerService service;
-
-	private final boolean addNewCommand;
 
 	private IStatus partStatus;
 
-	protected ServiceCommandWizardPage(ServerService service, ServiceCommand serviceCommand, boolean addNewCommand) {
+	protected ServiceCommandWizardPage() {
 		super("Command Page");
 		setTitle("Command Definition");
 		setDescription("Define a command to launch on a service tunnel");
-		this.serviceCommand = serviceCommand;
-		this.service = service;
-		this.addNewCommand = addNewCommand;
 	}
 
 	public void createControl(Composite parent) {
-		displayPart = addNewCommand ? new AddCommandDisplayPart(service, serviceCommand) : new EditCommandDisplayPart(
-				service, serviceCommand);
+
+		ServiceCommandWizard wizard = (ServiceCommandWizard) getWizard();
+
+		displayPart = wizard.getContextServiceCommand() != null ? new AddCommandDisplayPart(wizard.getService(),
+				wizard.getContextServiceCommand()) : new AddCommandDisplayPart(wizard.getService(), wizard
+				.getCommands().getDefaultTerminal());
 		displayPart.addPartChangeListener(new IPartChangeListener() {
 
 			public void handleChange(PartChangeEvent event) {
@@ -76,15 +68,7 @@ public class ServiceCommandWizardPage extends WizardPage {
 		return partStatus == null || partStatus.isOK();
 	}
 
-	public ServiceCommand getServiceCommand() {
-		if (displayPart != null) {
-			serviceCommand = displayPart.getServiceCommand();
-		}
-		return serviceCommand;
+	public AddCommandDisplayPart getCommandPart() {
+		return displayPart;
 	}
-
-	public boolean applyTerminalToAllCommands() {
-		return displayPart != null ? displayPart.applyTerminalToAllCommands() : false;
-	}
-
 }

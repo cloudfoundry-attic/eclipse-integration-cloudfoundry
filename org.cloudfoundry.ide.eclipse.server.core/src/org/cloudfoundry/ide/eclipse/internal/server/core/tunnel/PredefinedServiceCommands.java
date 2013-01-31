@@ -55,19 +55,19 @@ public class PredefinedServiceCommands {
 								"mongo",
 								"--host localhost --port ${" + TunnelOptions.port.name() + "} -u ${"
 										+ TunnelOptions.user.name() + "} -p ${" + TunnelOptions.password.name()
-										+ "} --db ${" + TunnelOptions.databasename.name() + "}" },
+										+ "} ${" + TunnelOptions.databasename.name() + "}" },
 						{
 								"mongodump",
 								"mongodump",
 								"--host localhost --port ${" + TunnelOptions.port.name() + "} -u ${"
 										+ TunnelOptions.user.name() + "} -p ${" + TunnelOptions.password.name()
-										+ "} --db ${" + TunnelOptions.databasename.name() + "}" },
+										+ "} ${" + TunnelOptions.databasename.name() + "}" },
 						{
 								"mongorestore",
 								"mongorestore",
 								"--host localhost --port ${" + TunnelOptions.port.name() + "} -u ${"
 										+ TunnelOptions.user.name() + "} -p ${" + TunnelOptions.password.name()
-										+ "} --db ${" + TunnelOptions.databasename.name()
+										+ "} ${" + TunnelOptions.databasename.name()
 										+ "} ${Directory or filename to restore from}" },
 
 				};
@@ -108,7 +108,7 @@ public class PredefinedServiceCommands {
 					ServiceCommand command = new ServiceCommand();
 					ExternalApplication app = new ExternalApplication();
 
-					app.setDisplayName(nameAndOption[0]);
+					command.setDisplayName(nameAndOption[0]);
 					app.setExecutableNameAndPath(nameAndOption[1]);
 					command.setExternalApplication(app);
 

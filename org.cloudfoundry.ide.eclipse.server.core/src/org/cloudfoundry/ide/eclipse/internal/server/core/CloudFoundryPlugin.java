@@ -19,6 +19,7 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelCache;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.PredefinedServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommandStore;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
@@ -179,7 +180,7 @@ public class CloudFoundryPlugin extends Plugin {
 	private InstanceScope INSTANCE_SCOPE = new InstanceScope();
 
 	private static CaldecottTunnelCache caldecottCache = new CaldecottTunnelCache();
-	
+
 	private TunnelServiceCommandStore serviceCommandsStore;
 
 	public static CaldecottTunnelCache getCaldecottTunnelCache() {
@@ -234,10 +235,10 @@ public class CloudFoundryPlugin extends Plugin {
 		}
 		return moduleCache;
 	}
-	
+
 	public synchronized TunnelServiceCommandStore getTunnelCommandsStore() {
 		if (serviceCommandsStore == null) {
-			serviceCommandsStore = new TunnelServiceCommandStore();
+			serviceCommandsStore = new TunnelServiceCommandStore(new PredefinedServiceCommands());
 		}
 		return serviceCommandsStore;
 	}

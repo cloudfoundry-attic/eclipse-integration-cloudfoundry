@@ -12,23 +12,31 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ITunnelServiceCommands;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceInfo;
 import org.eclipse.jface.wizard.Wizard;
 
 public class ExternalToolsCommandWizard extends Wizard {
 
-	private CloudFoundryServer cloudServer;
+	private final CloudFoundryServer cloudServer;
 
 	private ITunnelServiceCommands originalCommands;
 
 	private ExternalToolsCommandWizardPage page;
 
-	public ExternalToolsCommandWizard(ITunnelServiceCommands originalCommands, CloudFoundryServer cloudServer) {
+	private final ServiceInfo serviceContext;
+
+	public ExternalToolsCommandWizard(ITunnelServiceCommands originalCommands, CloudFoundryServer cloudServer,
+			ServiceInfo serviceContext) {
 		super();
 		this.cloudServer = cloudServer;
 		this.originalCommands = originalCommands;
-
+		this.serviceContext = serviceContext;
 		setWindowTitle("External Tools Commands");
 		setNeedsProgressMonitor(true);
+	}
+	
+	public ServiceInfo getServiceContext() {
+		return serviceContext;
 	}
 
 	@Override

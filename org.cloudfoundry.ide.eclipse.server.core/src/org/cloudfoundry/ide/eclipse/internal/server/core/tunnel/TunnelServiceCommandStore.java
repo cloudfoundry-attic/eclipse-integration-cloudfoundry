@@ -34,8 +34,10 @@ public class TunnelServiceCommandStore {
 
 	private TunnelServiceCommands cachedCommands;
 
-	public TunnelServiceCommandStore() {
-		//
+	private final PredefinedServiceCommands predefinedCommands;
+
+	public TunnelServiceCommandStore(PredefinedServiceCommands predefinedCommands) {
+		this.predefinedCommands = predefinedCommands;
 	}
 
 	public synchronized ITunnelServiceCommands getTunnelServiceCommands() throws CoreException {
@@ -45,8 +47,8 @@ public class TunnelServiceCommandStore {
 		// additional information that is not persisted,
 		// like pre-defined commands
 
-		return cachedCommands != null ? new CommandDefinitionsWithPredefinition(cachedCommands,
-				new PredefinedServiceCommands()) : cachedCommands;
+		return cachedCommands != null && predefinedCommands != null ? new CommandDefinitionsWithPredefinition(
+				cachedCommands, predefinedCommands) : cachedCommands;
 	}
 
 	protected void loadCommandsFromStore() throws CoreException {
@@ -76,15 +78,12 @@ public class TunnelServiceCommandStore {
 				commands.setDefaultTerminal(defaultTerminal);
 			}
 
-			List<ServerService> services = new ArrayList<ServerService>();
-			// Fill in all the default services if creating a clean list of
-			// services
-			for (ServiceInfo service : ServiceInfo.values()) {
-				ServerService serverService = new ServerService();
-				serverService.setServiceInfo(service);
-				services.add(serverService);
+			ServiceCommandManager manager = new ServiceCommandManager(commands);
+			manager.addServices(ServiceInfo.values());
+
+			if (predefinedCommands != null) {
+				manager.addPredefinedCommands(predefinedCommands);
 			}
-			commands.setServices(services);
 
 		}
 

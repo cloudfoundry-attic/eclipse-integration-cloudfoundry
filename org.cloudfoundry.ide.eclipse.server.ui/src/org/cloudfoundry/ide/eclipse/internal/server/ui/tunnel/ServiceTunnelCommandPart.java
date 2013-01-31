@@ -14,11 +14,15 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandTerminal;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ITunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommandManager;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ServiceCommandWizard;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.ISelection;
@@ -64,10 +68,13 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 	private ITunnelServiceCommands serviceCommands;
 
+	private final ServiceInfo serviceContext;
+
 	private List<ServerService> services;
 
-	public ServiceTunnelCommandPart(ITunnelServiceCommands serviceCommands) {
+	public ServiceTunnelCommandPart(ITunnelServiceCommands serviceCommands, ServiceInfo serviceContext) {
 		this.serviceCommands = serviceCommands;
+		this.serviceContext = serviceContext;
 		services = (serviceCommands != null && serviceCommands.getServices() != null) ? new ArrayList<ServerService>(
 				serviceCommands.getServices()) : new ArrayList<ServerService>();
 	}
@@ -228,11 +235,19 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 	protected void setServerInput() {
 
-		serviceViewer.setInput(services);
-
 		if (services != null && !services.isEmpty()) {
-			serviceViewer.setSelection(new StructuredSelection(services.get(0)), true);
-			setServiceCommandInput(services.get(0), null);
+			serviceViewer.setInput(services);
+			ServerService initialSelection = services.get(0);
+			if (serviceContext != null) {
+				for (ServerService serv : services) {
+					if (serv.getServiceInfo().equals(serviceContext)) {
+						initialSelection = serv;
+						break;
+					}
+				}
+			}
+			serviceViewer.setSelection(new StructuredSelection(initialSelection), true);
+			setServiceCommandInput(initialSelection, null);
 		}
 
 		setStatus(null);
@@ -297,62 +312,54 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 	 */
 	protected void addOrEditCommand(boolean add) {
 
-		ServiceCommand serviceCommandToEdit = null;
-
-		// If creating a new service, also add a default terminal if one exists
-		if (add) {
-			serviceCommandToEdit = new ServiceCommand();
-			CommandTerminal defaultTerminal = serviceCommands.getDefaultTerminal();
-			serviceCommandToEdit.setCommandTerminal(defaultTerminal);
-		}
-		else {
-			serviceCommandToEdit = getSelectedCommand();
-		}
-
 		ServerService service = getSelectedService();
 		if (service != null) {
+			ServiceCommand serviceCommandToEdit = !add ? getSelectedCommand() : null;
 
-			ServiceCommandWizard wizard = new ServiceCommandWizard(service, serviceCommandToEdit, add);
+			ServiceCommandWizard wizard = new ServiceCommandWizard(serviceCommands, service, serviceCommandToEdit);
 			Shell shell = getShell();
 
 			if (shell != null) {
-				WizardDialog dialog = new WizardDialog(getShell(), wizard);
+				WizardDialog dialog = new WizardDialog(shell, wizard);
 				if (dialog.open() == Window.OK) {
-					ServiceCommand newServiceCommand = wizard.getServiceCommand();
-					CommandTerminal updatedTerminal = newServiceCommand != null && wizard.applyTerminalToAllCommands() ? newServiceCommand
-							.getCommandTerminal() : null;
 
-					if (newServiceCommand != null) {
-						updateCommandViewerInput(serviceCommandToEdit, newServiceCommand, service);
+					ServiceCommand editedCommand = wizard.getEditedServiceCommand();
 
-						// Once the commands have been edited, apply the any
-						// changes to the terminal definition to the commands
-						applyTerminalToAllCommands(updatedTerminal);
+					if (editedCommand != null) {
+						// Add the new one
+						boolean added = new ServiceCommandManager(serviceCommands).addCommand(service.getServiceInfo(),
+								editedCommand);
+
+						if (!added) {
+							setStatus(CloudFoundryPlugin.getErrorStatus("Failed to add command: "
+									+ editedCommand.getDisplayName()));
+							return;
+						}
+						else {
+							// Delete the old command
+							if (serviceCommandToEdit != null) {
+								deleteCommand(serviceCommandToEdit);
+							}
+
+							CommandTerminal updatedTerminal = wizard.applyTerminalToAllCommands() ? editedCommand
+									.getCommandTerminal() : null;
+
+							setServiceCommandInput(service, editedCommand);
+							applyTerminalToAllCommands(updatedTerminal);
+						}
+
 					}
+
 				}
 			}
+
 		}
 	}
 
-	protected void deleteCommand() {
-		ServiceCommand serviceCommand = getSelectedCommand();
+	protected void deleteCommand(ServiceCommand toDelete) {
 		ServerService serverService = getSelectedService();
-		if (serviceCommand != null && serverService != null) {
-			updateCommandViewerInput(serviceCommand, null, serverService);
-		}
-	}
-
-	/**
-	 * 
-	 * @param toDelete to remove from list of existing commands in the given
-	 * wrapper
-	 * @param toAdd to add to the list of existing commands in the given wrapper
-	 * @param wrapper containing the old value, and that should contain the new
-	 * value.
-	 */
-	protected void updateCommandViewerInput(ServiceCommand toDelete, ServiceCommand toAdd, ServerService service) {
-		if (service != null && (toDelete != null || toAdd != null)) {
-			List<ServiceCommand> commands = service.getCommands();
+		if (toDelete != null && serverService != null) {
+			List<ServiceCommand> commands = serverService.getCommands();
 			List<ServiceCommand> newCommands = new ArrayList<ServiceCommand>();
 			if (commands != null) {
 				for (ServiceCommand existingCommand : commands) {
@@ -362,11 +369,10 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 				}
 
 			}
-			if (toAdd != null) {
-				newCommands.add(toAdd);
-			}
-			service.setCommands(newCommands);
-			setServiceCommandInput(service, toAdd);
+			serverService.setCommands(newCommands);
+
+			setServiceCommandInput(serverService, null);
+
 		}
 	}
 
@@ -387,6 +393,8 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 	}
 
 	protected void handleChange(EventObject eventSource) {
+		// Clear errors first
+		setStatus(Status.OK_STATUS);
 		if (eventSource != null) {
 			Object source = eventSource.getSource();
 
@@ -400,7 +408,8 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 						addOrEditCommand(true);
 						break;
 					case Delete:
-						deleteCommand();
+						ServiceCommand toDelete = getSelectedCommand();
+						deleteCommand(toDelete);
 						break;
 					case Edit:
 						addOrEditCommand(false);
@@ -484,8 +493,8 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 		public int compare(Viewer viewer, Object e1, Object e2) {
 			if (e1 instanceof ServiceCommand && e1 instanceof ServiceCommand) {
-				String name1 = ((ServiceCommand) e1).getExternalApplication().getDisplayName();
-				String name2 = ((ServiceCommand) e2).getExternalApplication().getDisplayName();
+				String name1 = ((ServiceCommand) e1).getDisplayName();
+				String name2 = ((ServiceCommand) e2).getDisplayName();
 				return name1.compareTo(name2);
 			}
 
@@ -535,7 +544,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 		public String getText(Object element) {
 			if (element instanceof ServiceCommand) {
 				ServiceCommand command = (ServiceCommand) element;
-				return command.getExternalApplication().getDisplayName();
+				return command.getDisplayName();
 			}
 			return super.getText(element);
 		}

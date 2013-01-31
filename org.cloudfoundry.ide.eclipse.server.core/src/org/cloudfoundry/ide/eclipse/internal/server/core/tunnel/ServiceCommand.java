@@ -28,14 +28,20 @@ public class ServiceCommand {
 
 	private CommandOptions options;
 
+	private String displayName;
+
 	private ExternalApplication externalApplicationLaunchInfo;
 
 	public ServiceCommand() {
 
 	}
 
-	public boolean usesTerminal() {
-		return getCommandTerminal() != null;
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
+	}
+
+	public String getDisplayName() {
+		return displayName;
 	}
 
 	public void setCommandTerminal(CommandTerminal terminalCommand) {

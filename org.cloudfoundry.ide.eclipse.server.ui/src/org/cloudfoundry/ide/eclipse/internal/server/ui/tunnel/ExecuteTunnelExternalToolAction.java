@@ -54,9 +54,9 @@ public class ExecuteTunnelExternalToolAction extends CloudFoundryEditorAction {
 	protected ExecuteTunnelExternalToolAction(CloudFoundryApplicationsEditorPage editorPage, CloudService cloudService,
 			CaldecottTunnelDescriptor descriptor, ServiceCommand command, CloudFoundryServer cloudServer) {
 		super(editorPage, RefreshArea.ALL);
-		setText(command.getExternalApplication().getDisplayName());
+		setText(command.getDisplayName());
 		setImageDescriptor(CloudFoundryImages.TUNNEL_EXTERNAL_TOOLS);
-		displayName = command.getExternalApplication().getDisplayName();
+		displayName = command.getDisplayName();
 		this.descriptor = descriptor;
 		this.serviceCommand = command;
 		this.cloudServer = cloudServer;

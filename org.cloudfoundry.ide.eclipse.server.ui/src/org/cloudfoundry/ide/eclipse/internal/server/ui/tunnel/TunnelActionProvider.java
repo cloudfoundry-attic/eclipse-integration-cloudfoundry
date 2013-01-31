@@ -17,10 +17,12 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ITunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommandStore;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction;
@@ -95,11 +97,13 @@ public class TunnelActionProvider {
 		// tools to launch for that service
 		List<CloudService> services = ModifyServicesForApplicationAction.getServices(selection);
 
+		CloudService selectedService = null;
 		// Only show external tools launch actions for ONE selection
 		if (services != null && services.size() == 1) {
+			selectedService = services.get(0);
+		}
 
-			CloudService selectedService = services.get(0);
-
+		if (selectedService != null) {
 			// Check if a tunnel is open, if not, open one
 
 			try {
@@ -121,7 +125,7 @@ public class TunnelActionProvider {
 			}
 		}
 
-		actions.add(new ExternalToolsAction(editorPage, cloudServer));
+		actions.add(new ExternalToolsAction(editorPage, cloudServer, selectedService));
 		return actions;
 	}
 
@@ -167,8 +171,12 @@ public class TunnelActionProvider {
 
 		private final CloudFoundryServer cloudServer;
 
-		protected ExternalToolsAction(CloudFoundryApplicationsEditorPage editorPage, CloudFoundryServer cloudServer) {
+		private final CloudService serviceContext;
+
+		protected ExternalToolsAction(CloudFoundryApplicationsEditorPage editorPage, CloudFoundryServer cloudServer,
+				CloudService serviceContext) {
 			super(editorPage);
+			this.serviceContext = serviceContext;
 			this.cloudServer = cloudServer;
 			setText("External Tools...");
 			setImageDescriptor(CloudFoundryImages.TUNNEL_EXTERNAL_TOOLS);
@@ -191,7 +199,22 @@ public class TunnelActionProvider {
 						Shell shell = getShell();
 
 						if (shell != null) {
-							ExternalToolsCommandWizard wizard = new ExternalToolsCommandWizard(commands, cloudServer);
+							ServiceInfo serviceInfo = null;
+
+							if (serviceContext != null) {
+								String vendor = CloudUtil.getServiceVendor(serviceContext);
+								if (vendor != null) {
+
+									for (ServiceInfo info : ServiceInfo.values()) {
+										if (info.name().equals(vendor)) {
+											serviceInfo = info;
+											break;
+										}
+									}
+								}
+							}
+							ExternalToolsCommandWizard wizard = new ExternalToolsCommandWizard(commands, cloudServer,
+									serviceInfo);
 							WizardDialog dialog = new WizardDialog(getShell(), wizard);
 							if (dialog.open() == Window.OK) {
 								commands = wizard.getExternalToolLaunchCommandsServer();

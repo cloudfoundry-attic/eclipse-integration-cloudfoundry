@@ -12,12 +12,11 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
 /**
  * 
- * Using getters and setters with no-argument constructors for JSON serialisation
+ * Using getters and setters with no-argument constructors for JSON
+ * serialisation
  * 
  */
 public class ExternalApplication {
-
-	private String displayName;
 
 	private String executableNameAndPath;
 
@@ -25,16 +24,8 @@ public class ExternalApplication {
 
 	}
 
-	public void setDisplayName(String displayName) {
-		this.displayName = displayName;
-	}
-
 	public void setExecutableNameAndPath(String executableName) {
 		this.executableNameAndPath = executableName;
-	}
-
-	public String getDisplayName() {
-		return displayName;
 	}
 
 	public String getExecutableNameAndPath() {

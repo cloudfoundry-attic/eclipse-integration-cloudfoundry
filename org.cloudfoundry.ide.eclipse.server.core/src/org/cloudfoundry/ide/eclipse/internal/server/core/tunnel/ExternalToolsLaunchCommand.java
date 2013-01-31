@@ -39,7 +39,7 @@ public class ExternalToolsLaunchCommand {
 	}
 
 	protected String getLaunchName() {
-		return serviceCommand.getExternalApplication().getDisplayName();
+		return serviceCommand.getDisplayName();
 	}
 
 	public IStatus run(IProgressMonitor monitor) {
@@ -191,7 +191,7 @@ public class ExternalToolsLaunchCommand {
 	}
 
 	protected void launchExternalCommand() {
-		if (serviceCommand.usesTerminal()) {
+		if (serviceCommand.getCommandTerminal() != null) {
 
 			Process p = null;
 			try {

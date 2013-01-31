@@ -38,7 +38,7 @@ public class ServiceTunnelCommandPreferencePage extends PreferencePage implement
 		try {
 			ITunnelServiceCommands commands = TunnelServiceCommandStore.getCurrentStore().getTunnelServiceCommands();
 
-			part = new ServiceTunnelCommandPart(commands);
+			part = new ServiceTunnelCommandPart(commands, null);
 			part.addPartChangeListener(new IPartChangeListener() {
 
 				public void handleChange(PartChangeEvent event) {

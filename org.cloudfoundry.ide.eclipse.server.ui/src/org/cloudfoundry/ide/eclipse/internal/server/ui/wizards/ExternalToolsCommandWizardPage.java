@@ -36,7 +36,8 @@ public class ExternalToolsCommandWizardPage extends WizardPage {
 	}
 
 	public void createControl(Composite parent) {
-		commandPart = new ServiceTunnelCommandPart(originalCommands);
+		ExternalToolsCommandWizard wizard = (ExternalToolsCommandWizard) getWizard();
+		commandPart = new ServiceTunnelCommandPart(originalCommands, wizard.getServiceContext());
 		Control control = commandPart.createControl(parent);
 		setControl(control);
 
