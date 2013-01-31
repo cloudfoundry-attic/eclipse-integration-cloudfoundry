@@ -112,7 +112,7 @@ public class CloudFoundryOperationsHandler {
 	}
 
 	protected void doRun(CloudFoundryOperations operations, SubMonitor progressMonitor) throws CoreException {
-		;
+	
 	}
 
 	public boolean shouldAttemptClientLogin(CloudFoundryException cfe) {
