@@ -21,6 +21,8 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
@@ -34,7 +36,23 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 	public void testConnect() throws Exception {
 		serverBehavior.connect(null);
-		assertEquals(IServer.STATE_STARTED, server.getServerState());
+
+		final int[] serverState = new int[1];
+		new WaitWithProgressJob(5, 2000) {
+
+			@Override
+			protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
+				serverState[0] = server.getServerState();
+				return serverState[0] == IServer.STATE_STARTED;
+			}
+
+			protected boolean shouldRetryOnError(Throwable t) {
+				return true;
+			}
+
+		}.run(new NullProgressMonitor());
+
+		assertEquals(IServer.STATE_STARTED, serverState[0]);
 		assertEquals(Collections.emptyList(), Arrays.asList(server.getModules()));
 	}
 
