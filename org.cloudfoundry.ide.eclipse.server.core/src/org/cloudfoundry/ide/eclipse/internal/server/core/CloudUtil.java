@@ -590,15 +590,35 @@ public class CloudUtil {
 		}
 		return null;
 	}
-	
+
 	/**
-	 * Service vendor is set differently depending on whether its a v1 or v2 service.
+	 * Service vendor is set differently depending on whether its a v1 or v2
+	 * service.
 	 * @param cloudService
 	 * @return
 	 */
 	public static String getServiceVendor(CloudService cloudService) {
 		// Handle both v1 and v2 services. For v2, vendors are "labels".
-		return cloudService.getLabel() != null ? cloudService.getLabel() : cloudService
-				.getVendor();
+		return cloudService.getLabel() != null ? cloudService.getLabel() : cloudService.getVendor();
+	}
+
+	public static File createTemporaryFile(String folderName, String fileName) throws IOException {
+		File tempFolder = File.createTempFile(folderName, null);
+		// Delete an existing one
+		tempFolder.delete();
+
+		tempFolder.mkdirs();
+		tempFolder.setExecutable(true);
+
+		File targetFile = new File(tempFolder, fileName);
+
+		// delete existing file
+		targetFile.delete();
+
+		targetFile.createNewFile();
+		targetFile.setExecutable(true);
+		targetFile.setWritable(true);
+
+		return targetFile;
 	}
 }

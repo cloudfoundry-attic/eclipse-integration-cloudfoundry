@@ -10,13 +10,10 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -24,7 +21,10 @@ import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.PlatformUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ProcessLauncher;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -45,229 +45,167 @@ public class ExternalToolsLaunchCommand {
 	public IStatus run(IProgressMonitor monitor) {
 
 		IStatus status = Status.OK_STATUS;
-		launchExternalCommand();
+		try {
+
+			final List<String> cmdArguments = new ArrayList<String>();
+
+			String appOptions = serviceCommand.getOptions() != null ? serviceCommand.getOptions().getOptions() : null;
+
+			CommandTerminal terminalCommand = serviceCommand.getCommandTerminal();
+
+			// First add the terminal as the initial arguments to the process
+			if (terminalCommand != null) {
+				String terminalCommandValue = terminalCommand.getTerminal();
+				
+				StringBuffer value = new StringBuffer(terminalCommandValue);
+				StringBuffer buffer = new StringBuffer();
+				for (int i = 0; i < value.length(); i++) {
+
+					if (!Character.isWhitespace(value.charAt(i))) {
+						if (buffer == null) {
+							buffer = new StringBuffer();
+						}
+						buffer.append(value.charAt(i));
+					}
+					// Flush the buffer on a whitespace char or the last
+					// character
+					if ((Character.isWhitespace(value.charAt(i)) || i == value.length() - 1) && buffer != null
+							&& buffer.length() > 0) {
+						cmdArguments.add(buffer.toString());
+						buffer = null;
+					}
+
+				}
+			}
+
+			// Check platform , as some require a script file to be created
+
+			if (terminalCommand != null && Platform.OS_MACOSX.equals(PlatformUtil.getOS())) {
+
+				// For launching Mac OS Terminal, the Terminal.app does not take
+				// arguments for the application that is being launched. It only
+				// takes
+				// in a file name, therefore the external application that
+				// should be
+				// launched in Terminal.app needs to be converted to a script
+				// file.
+				StringWriter optionsWr = new StringWriter();
+
+				optionsWr.append(serviceCommand.getExternalApplication().getExecutableNameAndPath());
+
+				if (appOptions != null) {
+					optionsWr.append(' ');
+					optionsWr.append(appOptions);
+				}
+				File scriptFile = getScriptFile(optionsWr.toString());
+				if (scriptFile != null && scriptFile.exists()) {
+					cmdArguments.add(scriptFile.getAbsolutePath());
+				}
+				else {
+					throw new CoreException(CloudFoundryPlugin.getErrorStatus("Failed to create script file for: "
+							+ serviceCommand.getDisplayName()));
+				}
+
+			}
+			else {
+				// Otherwise if not using a terminal, or if using a non-Mac
+				// terminal, append
+				// the application and it's options as process arguments
+				cmdArguments.add(serviceCommand.getExternalApplication().getExecutableNameAndPath());
+				if (appOptions != null) {
+					cmdArguments.add(appOptions);
+				}
+			}
+
+			new ProcessLauncher() {
+				protected String getLaunchName() {
+					return serviceCommand.getDisplayName();
+				}
+
+				protected List<String> getCommandArguments() throws CoreException {
+					return cmdArguments;
+				}
+
+			}.run();
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+			return CloudFoundryPlugin.getErrorStatus(e);
+		}
 
 		return status;
 	}
 
-	protected boolean addExternalToolCommand(List<String> processCommands) throws IOException {
-		String appOptions = serviceCommand.getOptions() != null ? serviceCommand.getOptions().getOptions() : null;
-		if (Platform.OS_MACOSX.equals(PlatformUtil.getOS())) {
-			// For launching Mac OS Terminal, the Terminal.app does not take
-			// arguments for the application that is being launched. It only
-			// takes
-			// in a file name, therefore the external application that should be
-			// launched in Terminal.app needs to be converted to a script file.
-			StringWriter optionsWr = new StringWriter();
+	/**
+	 * Creates a script file containing the specified command that exists in the
+	 * file system. Returns null if the file wasn't created.
+	 * @param options
+	 * @return
+	 * @throws CoreException
+	 */
+	protected File getScriptFile(String commandwithOptions) throws CoreException {
 
-			optionsWr.append(serviceCommand.getExternalApplication().getExecutableNameAndPath());
-
-			if (appOptions != null) {
-				optionsWr.append(' ');
-				optionsWr.append(appOptions);
-			}
-			File scriptFile = getScriptFile(optionsWr.toString());
-			if (scriptFile != null && scriptFile.exists()) {
-				processCommands.add(scriptFile.getAbsolutePath());
-				return true;
-			}
-
-		}
-		else {
-			// Otherwise just append the external application and its arguments
-			// directly to the process command
-			processCommands.add(serviceCommand.getExternalApplication().getExecutableNameAndPath());
-			if (appOptions != null) {
-				processCommands.add(appOptions);
-			}
-			return true;
-		}
-		return false;
-	}
-
-	protected File getScriptFile(String options) throws IOException {
-
-		if (options == null || options.length() == 0) {
+		if (commandwithOptions == null || commandwithOptions.length() == 0) {
 			return null;
 		}
-		File scriptFile = getTempScriptFile();
-		if (scriptFile != null && scriptFile.exists()) {
+		File scriptFile = null;
+		FileOutputStream outStream = null;
 
-			FileOutputStream outStream = null;
-			try {
+		try {
+			scriptFile = CloudUtil.createTemporaryFile("tempScriptFileCFTunnelCommands", "tunnelCommand.sh");
+			if (scriptFile != null && scriptFile.exists()) {
+
 				outStream = new FileOutputStream(scriptFile);
 				OutputStreamWriter outWriter = new OutputStreamWriter(outStream);
 
 				BufferedWriter writer = new BufferedWriter(outWriter);
-				writer.write(options);
+				writer.write(commandwithOptions);
 				writer.flush();
-
-				if (!changePermission(scriptFile)) {
-					CloudFoundryPlugin.logError("Failed to make script : " + scriptFile.getAbsolutePath()
-							+ " executable. Unable to launch external tools.");
-					return null;
-				}
-
+				new FilePermissionChangeProcess(scriptFile, serviceCommand.getDisplayName()).run();
 			}
-			catch (IOException e) {
-				CloudFoundryPlugin.logError(e);
-			}
-			finally {
-				if (outStream != null) {
-					IOUtils.closeQuietly(outStream);
-				}
-			}
-
 		}
+		catch (IOException ioe) {
+			throw CloudUtil.toCoreException(ioe);
+		}
+		finally {
+			if (outStream != null) {
+				IOUtils.closeQuietly(outStream);
+			}
+		}
+
 		return scriptFile;
 	}
 
-	protected List<String> handleProcessInput(Process p) throws IOException {
-		List<String> lines;
-		InputStream in = p.getInputStream();
-		try {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-			String line = reader.readLine();
-			lines = new ArrayList<String>();
-			while (line != null) {
+	static class FilePermissionChangeProcess extends ProcessLauncher {
 
-				lines.add(line);
-				line = reader.readLine();
+		private final File file;
+
+		private final String launchName;
+
+		public FilePermissionChangeProcess(File file, String launchName) {
+			this.file = file;
+			this.launchName = launchName;
+		}
+
+		@Override
+		protected String getLaunchName() {
+			return launchName;
+		}
+
+		@Override
+		protected List<String> getCommandArguments() throws CoreException {
+			if (file == null || !file.exists()) {
+				return null;
 			}
-		}
-		finally {
-			IOUtils.closeQuietly(in);
-		}
-		return lines;
-	}
 
-	/**
-	 * 
-	 * @param file
-	 * @return true iff file exists and permission successfully changed. False
-	 * otherwise.
-	 */
-	protected boolean changePermission(File file) throws IOException {
+			List<String> permissionCommand = new ArrayList<String>();
 
-		if (file == null || !file.exists()) {
-			return false;
+			permissionCommand.add("chmod");
+			permissionCommand.add("+x");
+			permissionCommand.add(file.getAbsolutePath());
+			return permissionCommand;
 		}
 
-		List<String> permissionCommand = new ArrayList<String>();
-
-		permissionCommand.add("chmod");
-		permissionCommand.add("+x");
-		permissionCommand.add(file.getAbsolutePath());
-
-		ProcessBuilder builder = new ProcessBuilder(permissionCommand);
-		Process p = builder.start();
-
-		if (p == null) {
-			return false;
-		}
-
-		handleProcessInput(p);
-
-		// Keep the input stream flushed as to not block the process
-
-		try {
-			// Wait for process to finish
-			p.waitFor();
-
-			if (p.exitValue() != 0) {
-				CloudFoundryPlugin.logError("Failed to change script file permission to executable due to: "
-						+ p.exitValue());
-				return false;
-			}
-			else {
-				return true;
-			}
-		}
-		catch (InterruptedException e) {
-			CloudFoundryPlugin.logError(e);
-		}
-		return false;
-
-	}
-
-	protected void launchExternalCommand() {
-		if (serviceCommand.getCommandTerminal() != null) {
-
-			Process p = null;
-			try {
-
-				// Now launch the application in Terminal
-				CommandTerminal terminalCommand = serviceCommand.getCommandTerminal();
-
-				String terminalCommandValue = terminalCommand.getTerminal();
-
-				String[] terminalCommands = terminalCommandValue.split(" ");
-				List<String> cmdArgs = new ArrayList<String>();
-
-				for (String terminalCom : terminalCommands) {
-					cmdArgs.add(terminalCom);
-				}
-
-				if (!addExternalToolCommand(cmdArgs)) {
-					CloudFoundryPlugin.logError("Failed to add external tool to process command");
-					return;
-
-				}
-				p = new ProcessBuilder(cmdArgs).start();
-
-				if (p == null) {
-					CloudFoundryPlugin.logError("Failed to launch "
-							+ serviceCommand.getExternalApplication().getExecutableNameAndPath()
-							+ ". No process was created.");
-				}
-				else {
-
-					handleProcessInput(p);
-
-					p.waitFor();
-
-					if (p.exitValue() != 0) {
-
-						CloudFoundryPlugin.logError("Failed to launch external tool in process due to: "
-								+ p.exitValue());
-					}
-				}
-			}
-			catch (InterruptedException ex) {
-				CloudFoundryPlugin.logError("Command line threw an InterruptedException ", ex);
-			}
-			catch (IOException ioe) {
-
-			}
-			finally {
-
-				if (p != null) {
-					p.destroy();
-				}
-			}
-		}
-	}
-
-	private static File getTempScriptFile() {
-		File targetFile = null;
-		try {
-			File tempFolder = File.createTempFile("tempScriptFileCFTunnelCommands", null);
-			tempFolder.setExecutable(true);
-			tempFolder.delete();
-			tempFolder.mkdirs();
-			targetFile = new File(tempFolder, "tunnelCommand.sh");
-
-			// delete existing files
-			targetFile.delete();
-			targetFile.setExecutable(true);
-			targetFile.setWritable(true);
-			targetFile.createNewFile();
-		}
-		catch (IOException e) {
-			CloudFoundryPlugin.logError(e);
-		}
-
-		return targetFile;
 	}
 
 }

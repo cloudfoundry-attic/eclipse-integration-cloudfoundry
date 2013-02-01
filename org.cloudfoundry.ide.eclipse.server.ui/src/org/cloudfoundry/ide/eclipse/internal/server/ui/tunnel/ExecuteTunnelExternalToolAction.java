@@ -101,7 +101,7 @@ public class ExecuteTunnelExternalToolAction extends CloudFoundryEditorAction {
 					final ServiceCommand resolvedCommand = new ExternalToolUIOptionsHandler(shell, serviceCommand,
 							descriptor).promptForValues();
 					
-					// Once prompted, launch it asynchronously
+					// Once prompted, launch it asynchronously outside the UI thread
 					if (resolvedCommand != null) {
 						Job job = new Job("Launching external tool.") {
 
