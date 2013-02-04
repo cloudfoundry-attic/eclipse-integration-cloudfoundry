@@ -144,6 +144,8 @@ public class ExternalToolsLaunchCommand {
 						windowsArgument.append(' ');
 						windowsArgument.append(appOptions);
 					}
+					
+					processArguments.add(windowsArgument.toString());
 
 				}
 				else {
