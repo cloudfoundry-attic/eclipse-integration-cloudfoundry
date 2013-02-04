@@ -42,33 +42,30 @@ public abstract class ProcessLauncher {
 			List<String> cmdArgs = getCommandArguments();
 
 			if (cmdArgs == null || cmdArgs.isEmpty()) {
-				throw new CoreException(getErrorStatus("No process arguments were found"));
-			}
-
-			p = new ProcessBuilder(cmdArgs).start();
-
-			if (p == null) {
-				throw new CoreException(getErrorStatus("No process was created."));
+				error = new CoreException(getErrorStatus("No process arguments were found"));
 			}
 			else {
+				p = new ProcessBuilder(cmdArgs).start();
 
-				StringBuffer errorBuffer = new StringBuffer();
-				try {
-					// Clear the input and error streams to prevent the process
+				if (p == null) {
+					error = new CoreException(getErrorStatus("No process was created."));
+				}
+				else {
+
+					StringBuffer errorBuffer = new StringBuffer();
+					// Clear the input and error streams to prevent the
+					// process
 					// from blocking
-					handleProcessIO(p, null, errorBuffer);
-				}
-				catch (CoreException e) {
-					error = e;
-				}
-				// Handle errors after the process has exited
-				p.waitFor();
+					handleProcessIOAsynch(p, null, errorBuffer);
 
-				if (errorBuffer.length() > 0) {
-					throw new CoreException(getErrorStatus(errorBuffer.toString()));
-				}
-				else if (p.exitValue() != 0) {
-					throw new CoreException(getErrorStatus("process exit value: " + p.exitValue()));
+					p.waitFor();
+
+					if (errorBuffer.length() > 0) {
+						error = new CoreException(getErrorStatus(errorBuffer.toString()));
+					}
+					else if (p.exitValue() != 0) {
+						error = new CoreException(getErrorStatus("process exit value: " + p.exitValue()));
+					}
 				}
 			}
 		}
@@ -94,53 +91,23 @@ public abstract class ProcessLauncher {
 	}
 
 	/**
-	 * The process IO needs to be handled in order to not block the process
+	 * The process IO needs to be handled in order to not block the process.This
+	 * will cause separate threads to be spawned for each input
 	 * @param p
 	 * @return
 	 * @throws IOException
 	 */
-	protected void handleProcessIO(Process p, StringBuffer inputBuffer, StringBuffer errorBuffer) throws CoreException {
+	protected void handleProcessIOAsynch(Process p, StringBuffer inputBuffer, StringBuffer errorBuffer) {
 
 		InputStream in = p.getInputStream();
 		InputStream error = p.getErrorStream();
-		try {
-			if (in != null) {
-
-				BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-				String line = reader.readLine();
-				while (line != null) {
-					if (inputBuffer != null) {
-						inputBuffer.append(line);
-						inputBuffer.append(' ');
-					}
-					line = reader.readLine();
-				}
-			}
-
-			if (error != null) {
-				BufferedReader reader = new BufferedReader(new InputStreamReader(error));
-				String line = reader.readLine();
-
-				while (line != null) {
-					if (errorBuffer != null) {
-						errorBuffer.append(line);
-						errorBuffer.append(' ');
-					}
-					line = reader.readLine();
-				}
-			}
-
+		StringBuffer ioError = new StringBuffer();
+		if (in != null) {
+			new ProcessStreamHandler(in, inputBuffer, ioError).start();
 		}
-		catch (IOException ioe) {
-			throw new CoreException(getErrorStatus("IO failure when handling process IO stream", ioe));
-		}
-		finally {
-			if (in != null) {
-				IOUtils.closeQuietly(in);
-			}
-			if (error != null) {
-				IOUtils.closeQuietly(error);
-			}
+
+		if (error != null) {
+			new ProcessStreamHandler(error, errorBuffer, ioError).start();
 		}
 
 	}
@@ -158,4 +125,51 @@ public abstract class ProcessLauncher {
 	abstract protected String getLaunchName();
 
 	abstract protected List<String> getCommandArguments() throws CoreException;
+
+	protected static class ProcessStreamHandler implements Runnable {
+
+		private final InputStream processInput;
+
+		private final StringBuffer outputBuffer;
+
+		private final StringBuffer error;
+
+		public ProcessStreamHandler(InputStream processInput, StringBuffer outputBuffer, StringBuffer error) {
+			this.processInput = processInput;
+			this.outputBuffer = outputBuffer;
+			this.error = error;
+		}
+
+		public void run() {
+			BufferedReader reader = new BufferedReader(new InputStreamReader(processInput));
+			try {
+				String line = reader.readLine();
+				while (line != null) {
+					if (outputBuffer != null) {
+						outputBuffer.append(line);
+						outputBuffer.append(' ');
+					}
+					line = reader.readLine();
+				}
+			}
+			catch (IOException e) {
+				if (error != null) {
+					error.append(e.getMessage());
+				}
+			}
+			finally {
+				if (processInput != null) {
+					IOUtils.closeQuietly(processInput);
+				}
+
+			}
+		}
+
+		public void start() {
+			Thread thread = new Thread(this);
+			thread.start();
+		}
+
+	}
+
 }

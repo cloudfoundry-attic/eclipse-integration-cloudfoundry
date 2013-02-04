@@ -15,7 +15,8 @@ import org.eclipse.core.runtime.Platform;
 
 /**
  * 
- * Using getters and setters with no-argument constructors for JSON serialisation
+ * Using getters and setters with no-argument constructors for JSON
+ * serialisation
  * 
  */
 public class CommandTerminal {
@@ -40,10 +41,10 @@ public class CommandTerminal {
 			terminalCommand = "/usr/bin/open -a Terminal";
 		}
 		else if (Platform.OS_LINUX.equals(os)) {
-
+			terminalCommand = "/usr/X11/bin/xterm -e";
 		}
 		else if (Platform.OS_WIN32.equals(os)) {
-			terminalCommand = "cmd.exe /c";
+			terminalCommand = "cmd.exe /c start cmd.exe /k";
 		}
 
 		if (terminalCommand != null) {

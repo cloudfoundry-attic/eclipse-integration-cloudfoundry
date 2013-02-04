@@ -100,8 +100,12 @@ public class ExecuteTunnelExternalToolAction extends CloudFoundryEditorAction {
 					Shell shell = PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
 					final ServiceCommand resolvedCommand = new ExternalToolUIOptionsHandler(shell, serviceCommand,
 							descriptor).promptForValues();
-					
-					// Once prompted, launch it asynchronously outside the UI thread
+
+					// Once prompted, launch it asynchronously outside the UI
+					// thread as it may be a long
+					// running process that may block the thread while waiting
+					// for the user to exist the external
+					// application
 					if (resolvedCommand != null) {
 						Job job = new Job("Launching external tool.") {
 
@@ -115,6 +119,10 @@ public class ExecuteTunnelExternalToolAction extends CloudFoundryEditorAction {
 								return Status.OK_STATUS;
 							}
 						};
+
+						// As this may be a long running process, so set it as a
+						// system job
+						job.setSystem(true);
 						job.schedule();
 					}
 
