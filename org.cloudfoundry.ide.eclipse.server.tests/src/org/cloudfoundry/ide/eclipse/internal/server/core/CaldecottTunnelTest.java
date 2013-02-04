@@ -231,6 +231,34 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 		assertServiceNotExist(MYSQL_SERVICE_NAME);
 	}
 
+	/**
+	 * This should be run LAST to ensure that the Caldecott application is
+	 * removed from the server after all Caldecott tests complete
+	 * @throws Exception
+	 */
+	public void testCaldecottApplicationIsRemoved() throws Exception {
+		CloudService service = getMysqlService();
+		assertServiceExists(MYSQL_SERVICE_NAME);
+
+		CaldecottTunnelDescriptor descriptor = createCaldecottTunnel(MYSQL_SERVICE_NAME);
+		assertNotNull(descriptor);
+		assertTunnel(MYSQL_SERVICE_NAME);
+
+		CloudApplication caldecottApp = getCaldecottApplication();
+		assertNotNull(caldecottApp);
+
+		assertRemoveApplication(caldecottApp);
+
+		assertNoTunnel(MYSQL_SERVICE_NAME);
+
+		deleteService(service);
+		assertServiceNotExist(MYSQL_SERVICE_NAME);
+
+		caldecottApp = getCaldecottApplication();
+		assertNull(caldecottApp);
+
+	}
+
 	/*
 	 * 
 	 * HELPERS
