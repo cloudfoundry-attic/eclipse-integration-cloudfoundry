@@ -204,7 +204,9 @@ public class AddCommandDisplayPart extends AbstractPart {
 				.setText("Enter options below. \nUse ${variablename} for option values that should be prompted when the command is executed.");
 
 		argsLabel.setBackground(main.getBackground());
-		options = new Text(main, SWT.MULTI | SWT.WRAP | SWT.BORDER);
+		argsLabel.setEditable(false);
+		
+		options = new Text(main, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
 		options.addTraverseListener(new TraverseListener() {
 			public void keyTraversed(TraverseEvent event) {
 				if (event.detail == SWT.TRAVERSE_RETURN && (event.stateMask & SWT.MODIFIER_MASK) != 0) {
@@ -220,10 +222,10 @@ public class AddCommandDisplayPart extends AbstractPart {
 			}
 		});
 
-		GridDataFactory.fillDefaults().grab(true, true).hint(30, IDialogConstants.ENTRY_FIELD_WIDTH).applyTo(options);
+		GridDataFactory.fillDefaults().grab(true, false).hint(IDialogConstants.ENTRY_FIELD_WIDTH, 100).applyTo(options);
 
 		Text optionsDescription = new Text(main, SWT.MULTI | SWT.BORDER);
-		GridDataFactory.fillDefaults().grab(true, true).hint(30, IDialogConstants.ENTRY_FIELD_WIDTH)
+		GridDataFactory.fillDefaults().grab(true, true).hint(IDialogConstants.ENTRY_FIELD_WIDTH, 140)
 				.applyTo(optionsDescription);
 
 		optionsDescription.setEditable(false);
