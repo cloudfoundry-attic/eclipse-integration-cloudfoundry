@@ -28,7 +28,7 @@ public abstract class AbstractWaitForStateOperation {
 
 	private final String jobName;
 
-	private int ticks;
+	private int attempts;
 
 	private long sleep;
 
@@ -36,10 +36,10 @@ public abstract class AbstractWaitForStateOperation {
 		this(cloudServer, jobName, 10, 3000);
 	}
 
-	public AbstractWaitForStateOperation(CloudFoundryServer cloudServer, String jobName, int ticks, long sleep) {
+	public AbstractWaitForStateOperation(CloudFoundryServer cloudServer, String jobName, int attempts, long sleep) {
 		this.cloudServer = cloudServer;
 		this.jobName = jobName;
-		this.ticks = ticks;
+		this.attempts = attempts;
 		this.sleep = sleep;
 	}
 
@@ -60,13 +60,18 @@ public abstract class AbstractWaitForStateOperation {
 			if (appModule != null) {
 				IModule module = appModule.getLocalModule();
 				doOperation(cloudServer.getBehaviour(), module, progress);
-				Boolean result = new WaitWithProgressJob(ticks, sleep) {
+				Boolean result = new WaitWithProgressJob(attempts, sleep) {
 
 					@Override
 					protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
 						CloudApplication updatedCloudApp = cloudServer.getBehaviour().getApplication(appName, monitor);
 
 						return updatedCloudApp != null && isInState(updatedCloudApp.getState());
+					}
+
+					@Override
+					protected boolean shouldRetryOnError(Throwable t) {
+						return true;
 					}
 
 				}.run(progress);
