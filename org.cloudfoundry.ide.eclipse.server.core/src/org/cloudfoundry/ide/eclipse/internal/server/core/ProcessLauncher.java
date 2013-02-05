@@ -42,13 +42,13 @@ public abstract class ProcessLauncher {
 			List<String> cmdArgs = getCommandArguments();
 
 			if (cmdArgs == null || cmdArgs.isEmpty()) {
-				error = new CoreException(getErrorStatus("No process arguments were found"));
+				throw new CoreException(getErrorStatus("No process arguments were found"));
 			}
 			else {
 				p = new ProcessBuilder(cmdArgs).start();
 
 				if (p == null) {
-					error = new CoreException(getErrorStatus("No process was created."));
+					throw new CoreException(getErrorStatus("No process was created."));
 				}
 				else {
 
@@ -61,10 +61,10 @@ public abstract class ProcessLauncher {
 					p.waitFor();
 
 					if (errorBuffer.length() > 0) {
-						error = new CoreException(getErrorStatus(errorBuffer.toString()));
+						throw new CoreException(getErrorStatus(errorBuffer.toString()));
 					}
 					else if (p.exitValue() != 0) {
-						error = new CoreException(getErrorStatus("process exit value: " + p.exitValue()));
+						throw new CoreException(getErrorStatus("process exit value: " + p.exitValue()));
 					}
 				}
 			}
@@ -101,13 +101,13 @@ public abstract class ProcessLauncher {
 
 		InputStream in = p.getInputStream();
 		InputStream error = p.getErrorStream();
-		StringBuffer ioError = new StringBuffer();
+
 		if (in != null) {
-			new ProcessStreamHandler(in, inputBuffer, ioError).start();
+			new ProcessStreamHandler(in, inputBuffer, getLaunchName()).start();
 		}
 
 		if (error != null) {
-			new ProcessStreamHandler(error, errorBuffer, ioError).start();
+			new ProcessStreamHandler(error, errorBuffer, getLaunchName()).start();
 		}
 
 	}
@@ -132,12 +132,12 @@ public abstract class ProcessLauncher {
 
 		private final StringBuffer outputBuffer;
 
-		private final StringBuffer error;
+		private final String processName;
 
-		public ProcessStreamHandler(InputStream processInput, StringBuffer outputBuffer, StringBuffer error) {
+		public ProcessStreamHandler(InputStream processInput, StringBuffer outputBuffer, String processName) {
 			this.processInput = processInput;
 			this.outputBuffer = outputBuffer;
-			this.error = error;
+			this.processName = processName;
 		}
 
 		public void run() {
@@ -153,9 +153,7 @@ public abstract class ProcessLauncher {
 				}
 			}
 			catch (IOException e) {
-				if (error != null) {
-					error.append(e.getMessage());
-				}
+				CloudFoundryPlugin.logError("Error while reading input from process for: " + processName, e);
 			}
 			finally {
 				if (processInput != null) {

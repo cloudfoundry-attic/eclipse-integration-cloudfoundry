@@ -191,8 +191,19 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		assertFalse(found);
 	}
 
-	protected CloudApplication getUpdatedApplication(String appName) throws CoreException {
-		return serverBehavior.getApplication(appName, new NullProgressMonitor());
+	/**
+	 * 
+	 * @param appName
+	 * @return Application if found, or null if application is no longer in
+	 * server
+	 */
+	protected CloudApplication getUpdatedApplication(String appName) {
+		try {
+			return serverBehavior.getApplication(appName, new NullProgressMonitor());
+		}
+		catch (CoreException ce) {
+			return null;
+		}
 	}
 
 	protected CloudApplication deployAndStartModule(IModule module) throws CoreException {

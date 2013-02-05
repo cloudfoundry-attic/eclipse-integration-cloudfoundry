@@ -115,7 +115,14 @@ public class ExecuteTunnelExternalToolAction extends CloudFoundryEditorAction {
 								// options
 								// are filled
 								// in.
-								new ExternalToolsLaunchCommand(resolvedCommand).run(monitor);
+								try {
+									new ExternalToolsLaunchCommand(resolvedCommand).run(monitor);
+								}
+								catch (CoreException e) {
+									IStatus errorStatus = CloudFoundryPlugin.getErrorStatus(e);
+									CloudFoundryPlugin.logError(errorStatus);
+									return errorStatus;
+								}
 								return Status.OK_STATUS;
 							}
 						};

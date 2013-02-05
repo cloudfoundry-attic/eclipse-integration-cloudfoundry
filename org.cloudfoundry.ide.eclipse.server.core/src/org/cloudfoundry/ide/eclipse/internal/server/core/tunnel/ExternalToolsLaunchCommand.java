@@ -42,9 +42,13 @@ public class ExternalToolsLaunchCommand {
 		return serviceCommand.getDisplayName();
 	}
 
-	public IStatus run(IProgressMonitor monitor) {
+	/**
+	 * Throws CoreException if an error occurred while launching the external
+	 * application.
+	 * @param monitor
+	 */
+	public void run(IProgressMonitor monitor) throws CoreException {
 
-		IStatus status = Status.OK_STATUS;
 		// For certain OSs, script files are create that contain the application
 		// and options.
 		File scriptFile = null;
@@ -97,14 +101,6 @@ public class ExternalToolsLaunchCommand {
 						optionsWr.append(appOptions);
 					}
 					scriptFile = getScriptFile(optionsWr.toString());
-					if (scriptFile != null && scriptFile.exists()) {
-						processArguments.add(scriptFile.getAbsolutePath());
-					}
-					else {
-						throw new CoreException(CloudFoundryPlugin.getErrorStatus("Failed to create script file for: "
-								+ serviceCommand.getDisplayName()));
-					}
-
 				}
 				else if (Platform.OS_WIN32.equals(PlatformUtil.getOS())) {
 
@@ -144,7 +140,7 @@ public class ExternalToolsLaunchCommand {
 						windowsArgument.append(' ');
 						windowsArgument.append(appOptions);
 					}
-					
+
 					processArguments.add(windowsArgument.toString());
 
 				}
@@ -186,17 +182,11 @@ public class ExternalToolsLaunchCommand {
 				}.run();
 			}
 			else {
-				status = CloudFoundryPlugin
-						.getErrorStatus("Unable to launch process because no process arguments were resolved when launching process for "
-								+ getLaunchName());
-				CloudFoundryPlugin.logError(status);
-
+				throw new CoreException(
+						CloudFoundryPlugin
+								.getErrorStatus("Unable to launch process because no process arguments were resolved when launching process for "
+										+ getLaunchName()));
 			}
-
-		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
-			return CloudFoundryPlugin.getErrorStatus(e);
 		}
 		finally {
 			// Delete any temp script files
@@ -204,8 +194,6 @@ public class ExternalToolsLaunchCommand {
 				scriptFile.deleteOnExit();
 			}
 		}
-
-		return status;
 	}
 
 	protected List<String> parseElement(String value) {
@@ -233,22 +221,18 @@ public class ExternalToolsLaunchCommand {
 	}
 
 	/**
-	 * Creates a script file containing the specified command that exists in the
-	 * file system. Returns null if the file wasn't created.
-	 * @param options
-	 * @return
-	 * @throws CoreException
+	 * Creates a script file containing the specified command. Throws exception
+	 * if it failed to create a File.
+	 * @param options must not be null
+	 * @return created script file
+	 * @throws CoreException if failed to create script file
 	 */
 	protected File getScriptFile(String commandwithOptions) throws CoreException {
 
-		if (commandwithOptions == null || commandwithOptions.length() == 0) {
-			return null;
-		}
-		File scriptFile = null;
 		FileOutputStream outStream = null;
 
 		try {
-			scriptFile = CloudUtil.createTemporaryFile("tempScriptFileCFTunnelCommands", "tunnelCommand.sh");
+			File scriptFile = CloudUtil.createTemporaryFile("tempScriptFileCFTunnelCommands", "tunnelCommand.sh");
 			if (scriptFile != null && scriptFile.exists()) {
 
 				outStream = new FileOutputStream(scriptFile);
@@ -258,6 +242,11 @@ public class ExternalToolsLaunchCommand {
 				writer.write(commandwithOptions);
 				writer.flush();
 				new FilePermissionChangeProcess(scriptFile, serviceCommand.getDisplayName()).run();
+				return scriptFile;
+			}
+			else {
+				throw new CoreException(CloudFoundryPlugin.getErrorStatus("Failed to create script file for: "
+						+ serviceCommand.getDisplayName()));
 			}
 		}
 		catch (IOException ioe) {
@@ -269,7 +258,6 @@ public class ExternalToolsLaunchCommand {
 			}
 		}
 
-		return scriptFile;
 	}
 
 	static class FilePermissionChangeProcess extends ProcessLauncher {

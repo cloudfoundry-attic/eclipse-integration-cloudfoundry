@@ -264,7 +264,13 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 	 * HELPERS
 	 */
 
-	protected CloudApplication getCaldecottApplication() throws CoreException {
+	/**
+	 * 
+	 * @return Application if found, or null if application is no longer in
+	 * server
+	 * @throws CoreException
+	 */
+	protected CloudApplication getCaldecottApplication() {
 		return getUpdatedApplication(TunnelHelper.getTunnelAppName());
 	}
 
