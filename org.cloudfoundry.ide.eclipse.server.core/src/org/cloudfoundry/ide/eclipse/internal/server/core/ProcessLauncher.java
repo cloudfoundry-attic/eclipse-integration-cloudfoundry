@@ -91,8 +91,7 @@ public abstract class ProcessLauncher {
 	}
 
 	/**
-	 * The process IO needs to be handled in order to not block the process.This
-	 * will cause separate threads to be spawned for each input
+	 * The process IO needs to be handled in order to not block the process.
 	 * @param p
 	 * @return
 	 * @throws IOException
@@ -126,7 +125,7 @@ public abstract class ProcessLauncher {
 
 	abstract protected List<String> getCommandArguments() throws CoreException;
 
-	protected static class ProcessStreamHandler implements Runnable {
+	protected static class ProcessStreamHandler {
 
 		private final InputStream processInput;
 
@@ -140,7 +139,7 @@ public abstract class ProcessLauncher {
 			this.processName = processName;
 		}
 
-		public void run() {
+		public void start() {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(processInput));
 			try {
 				String line = reader.readLine();
@@ -159,15 +158,8 @@ public abstract class ProcessLauncher {
 				if (processInput != null) {
 					IOUtils.closeQuietly(processInput);
 				}
-
 			}
 		}
-
-		public void start() {
-			Thread thread = new Thread(this);
-			thread.start();
-		}
-
 	}
 
 }

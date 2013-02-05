@@ -26,9 +26,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.PlatformUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ProcessLauncher;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.Status;
 
 public class ExternalToolsLaunchCommand {
 
@@ -101,6 +99,7 @@ public class ExternalToolsLaunchCommand {
 						optionsWr.append(appOptions);
 					}
 					scriptFile = getScriptFile(optionsWr.toString());
+					processArguments.add(scriptFile.getAbsolutePath());
 				}
 				else if (Platform.OS_WIN32.equals(PlatformUtil.getOS())) {
 
