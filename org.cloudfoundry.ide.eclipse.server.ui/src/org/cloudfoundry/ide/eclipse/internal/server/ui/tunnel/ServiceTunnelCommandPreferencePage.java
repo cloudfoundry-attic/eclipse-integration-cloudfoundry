@@ -54,7 +54,7 @@ public class ServiceTunnelCommandPreferencePage extends PreferencePage implement
 					}
 				}
 			});
-			return part.createControl(parent);
+			return part.createPart(parent);
 		}
 		catch (CoreException e) {
 			setErrorMessage(e.getMessage());

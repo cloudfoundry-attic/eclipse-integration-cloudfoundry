@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.io.IOUtils;
 import org.eclipse.core.runtime.CoreException;
@@ -39,13 +41,27 @@ public abstract class ProcessLauncher {
 		Process p = null;
 		try {
 
-			List<String> cmdArgs = getCommandArguments();
+			List<String> processArguments = getProcessArguments();
 
-			if (cmdArgs == null || cmdArgs.isEmpty()) {
+			if (processArguments == null || processArguments.isEmpty()) {
 				throw new CoreException(getErrorStatus("No process arguments were found"));
 			}
 			else {
-				p = new ProcessBuilder(cmdArgs).start();
+
+				ProcessBuilder processBuilder = new ProcessBuilder(processArguments);
+
+				// Set any environment variables
+				Map<String, String> envVars = getEnvironmentVariables();
+				if (envVars != null) {
+					Map<String, String> actualVars = processBuilder.environment();
+					if (actualVars != null) {
+						for (Entry<String, String> entry : envVars.entrySet()) {
+							actualVars.put(entry.getKey(), entry.getValue());
+						}
+					}
+				}
+
+				p = processBuilder.start();
 
 				if (p == null) {
 					throw new CoreException(getErrorStatus("No process was created."));
@@ -123,7 +139,9 @@ public abstract class ProcessLauncher {
 
 	abstract protected String getLaunchName();
 
-	abstract protected List<String> getCommandArguments() throws CoreException;
+	abstract protected List<String> getProcessArguments() throws CoreException;
+
+	abstract protected Map<String, String> getEnvironmentVariables() throws CoreException;
 
 	protected static class ProcessStreamHandler {
 

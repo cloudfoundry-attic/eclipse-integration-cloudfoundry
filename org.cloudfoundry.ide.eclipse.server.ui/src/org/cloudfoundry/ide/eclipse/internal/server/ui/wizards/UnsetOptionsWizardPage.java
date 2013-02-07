@@ -20,6 +20,9 @@ import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
+/**
+ * Prompts users for unset application options
+ */
 public class UnsetOptionsWizardPage extends WizardPage {
 
 	private Map<String, String> variableToValue;
@@ -56,7 +59,7 @@ public class UnsetOptionsWizardPage extends WizardPage {
 
 		});
 
-		Control control = part.createControl(parent);
+		Control control = part.createPart(parent);
 		setControl(control);
 	}
 

@@ -97,6 +97,19 @@ public class PredefinedServiceCommands {
 
 	}
 
+	protected List<EnvironmentVariable> getEnvironmentVariables(String applicationName) {
+		if ("psql".equals(applicationName)) {
+			EnvironmentVariable envVariable = new EnvironmentVariable();
+			envVariable.setVariable("PGPASSWORD");
+			envVariable.setValue("${" + TunnelOptions.password.name() + "}");
+			List<EnvironmentVariable> variables = new ArrayList<EnvironmentVariable>();
+			variables.add(envVariable);
+
+			return variables;
+		}
+		return null;
+	}
+
 	protected List<ServiceCommand> getCommands(String[][] nameAndOptions) {
 
 		List<ServiceCommand> commands = new ArrayList<ServiceCommand>();
@@ -116,8 +129,13 @@ public class PredefinedServiceCommands {
 					options.setOptions(nameAndOption[2]);
 					command.setOptions(options);
 					commands.add(command);
-				}
 
+					// Get any environment variables
+					List<EnvironmentVariable> envVars = getEnvironmentVariables(command.getDisplayName());
+					if (envVars != null) {
+						command.setEnvironmentVariables(envVars);
+					}
+				}
 			}
 		}
 

@@ -17,7 +17,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
@@ -56,6 +58,7 @@ public class ExternalToolsLaunchCommand {
 		CommandTerminal terminalCommand = serviceCommand.getCommandTerminal();
 
 		final List<String> processArguments = new ArrayList<String>();
+		final Map<String, String> envVars = getEnvironmentVariables();
 
 		try {
 
@@ -91,6 +94,18 @@ public class ExternalToolsLaunchCommand {
 					// script
 					// file.
 					StringWriter optionsWr = new StringWriter();
+					
+					// For Mac OS, any environment variables should be
+					// added as part of the script
+					if (serviceCommand.getEnvironmentVariables() != null) {
+						for (EnvironmentVariable var : serviceCommand.getEnvironmentVariables()) {
+							optionsWr.append("export ");
+							optionsWr.append(var.getVariable());
+							optionsWr.append("=");
+							optionsWr.append(var.getValue());
+							optionsWr.append('\n');
+						}
+					}
 
 					optionsWr.append(serviceCommand.getExternalApplication().getExecutableNameAndPath());
 
@@ -164,34 +179,56 @@ public class ExternalToolsLaunchCommand {
 					processArguments.addAll(optionElements);
 				}
 			}
+			launch(processArguments, envVars);
 
-			// If there are process arguments, launch the process
-			if (!processArguments.isEmpty()) {
-
-				// Launch the process from the same thread
-				new ProcessLauncher() {
-					protected String getLaunchName() {
-						return serviceCommand.getDisplayName();
-					}
-
-					protected List<String> getCommandArguments() throws CoreException {
-						return processArguments;
-					}
-
-				}.run();
-			}
-			else {
-				throw new CoreException(
-						CloudFoundryPlugin
-								.getErrorStatus("Unable to launch process because no process arguments were resolved when launching process for "
-										+ getLaunchName()));
-			}
 		}
 		finally {
 			// Delete any temp script files
 			if (scriptFile != null && scriptFile.exists()) {
 				scriptFile.deleteOnExit();
 			}
+		}
+	}
+
+	protected Map<String, String> getEnvironmentVariables() {
+		List<EnvironmentVariable> envVars = serviceCommand.getEnvironmentVariables();
+		Map<String, String> vars = null;
+		if (envVars != null && !envVars.isEmpty()) {
+			vars = new HashMap<String, String>();
+			for (EnvironmentVariable var : envVars) {
+				vars.put(var.getVariable(), var.getValue());
+			}
+		}
+
+		return vars;
+	}
+
+	protected void launch(final List<String> processArguments, final Map<String, String> enVars) throws CoreException {
+		// If there are process arguments, launch the process
+		if (!processArguments.isEmpty()) {
+
+			// Launch the process from the same thread
+			new ProcessLauncher() {
+				protected String getLaunchName() {
+					return serviceCommand.getDisplayName();
+				}
+
+				protected List<String> getProcessArguments() throws CoreException {
+					return processArguments;
+				}
+
+				@Override
+				protected Map<String, String> getEnvironmentVariables() throws CoreException {
+					return enVars;
+				}
+
+			}.run();
+		}
+		else {
+			throw new CoreException(
+					CloudFoundryPlugin
+							.getErrorStatus("Unable to launch process because no process arguments were resolved when launching process for "
+									+ getLaunchName()));
 		}
 	}
 
@@ -276,7 +313,7 @@ public class ExternalToolsLaunchCommand {
 		}
 
 		@Override
-		protected List<String> getCommandArguments() throws CoreException {
+		protected List<String> getProcessArguments() throws CoreException {
 			if (file == null || !file.exists()) {
 				return null;
 			}
@@ -289,6 +326,12 @@ public class ExternalToolsLaunchCommand {
 			return permissionCommand;
 		}
 
+		@Override
+		protected Map<String, String> getEnvironmentVariables() throws CoreException {
+			return null;
+		}
+
 	}
+	
 
 }

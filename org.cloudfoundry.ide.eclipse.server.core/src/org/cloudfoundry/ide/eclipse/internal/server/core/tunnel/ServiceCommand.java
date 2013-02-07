@@ -30,7 +30,9 @@ public class ServiceCommand {
 
 	private String displayName;
 
-	private ExternalApplication externalApplicationLaunchInfo;
+	private ExternalApplication externalApplication;
+
+	private List<EnvironmentVariable> environmentVariables;
 
 	public ServiceCommand() {
 
@@ -53,19 +55,27 @@ public class ServiceCommand {
 	}
 
 	public ExternalApplication getExternalApplication() {
-		return externalApplicationLaunchInfo;
+		return externalApplication;
+	}
+
+	public void setExternalApplication(ExternalApplication appInfo) {
+		this.externalApplication = appInfo;
+	}
+
+	public void setOptions(CommandOptions options) {
+		this.options = options;
 	}
 
 	public CommandOptions getOptions() {
 		return options;
 	}
 
-	public void setExternalApplication(ExternalApplication appInfo) {
-		this.externalApplicationLaunchInfo = appInfo;
+	public void setEnvironmentVariables(List<EnvironmentVariable> environmentVariables) {
+		this.environmentVariables = environmentVariables;
 	}
 
-	public void setOptions(CommandOptions options) {
-		this.options = options;
+	public List<EnvironmentVariable> getEnvironmentVariables() {
+		return environmentVariables;
 	}
 
 	public static List<String> getOptionVariables(ServiceCommand serviceCommand, String options) {

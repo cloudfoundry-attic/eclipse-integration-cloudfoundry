@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
+import java.io.StringWriter;
+
 /**
  * 
  * Using getters and setters with no-argument constructors for JSON
@@ -30,6 +32,33 @@ public class CommandOptions {
 
 	public void setOptions(String options) {
 		this.options = options;
+	}
+
+	public static String getDefaultTunnelOptionsDescription() {
+		StringWriter writer = new StringWriter();
+		writer.append("Use the following variables for service tunnel options to be filled automatically:");
+		writer.append('\n');
+		writer.append('\n');
+		writer.append("${");
+		writer.append(TunnelOptions.user.name());
+		writer.append("}");
+		writer.append('\n');
+		writer.append("${");
+		writer.append(TunnelOptions.password.name());
+		writer.append("}");
+		writer.append('\n');
+		writer.append("${");
+		writer.append(TunnelOptions.url.name());
+		writer.append("}");
+		writer.append('\n');
+		writer.append("${");
+		writer.append(TunnelOptions.databasename.name());
+		writer.append("}");
+		writer.append('\n');
+		writer.append("${");
+		writer.append(TunnelOptions.port.name());
+		writer.append("}");
+		return writer.toString();
 	}
 
 }

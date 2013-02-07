@@ -46,7 +46,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
-import org.eclipse.ui.PlatformUI;
 
 public class ServiceTunnelCommandPart extends AbstractPart {
 
@@ -79,7 +78,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 				serviceCommands.getServices()) : new ArrayList<ServerService>();
 	}
 
-	public Composite createControl(Composite parent) {
+	public Composite createPart(Composite parent) {
 
 		derivedShell = parent.getShell();
 
@@ -294,7 +293,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 	}
 
 	protected Shell getShell() {
-		Shell shell = PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
+		Shell shell = super.getShell();
 		if (shell == null) {
 			shell = derivedShell;
 		}

@@ -10,17 +10,18 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
-import java.io.StringWriter;
 import java.util.EventObject;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOptions;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandTerminal;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerServiceWithPredefinitions;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelOptions;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -33,11 +34,13 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
@@ -73,6 +76,8 @@ public class AddCommandDisplayPart extends AbstractPart {
 
 	protected String terminalLocationVal;
 
+	protected List<EnvironmentVariable> envVariables;
+
 	private Button findApplicationButton;
 
 	private boolean applyTerminalToAllCommands = false;
@@ -88,6 +93,8 @@ public class AddCommandDisplayPart extends AbstractPart {
 	private ServiceCommand serviceCommand;
 
 	private CommandTerminal defaultTerminal;
+
+	private EnvironmentVariablesPart envVarPart;
 
 	/**
 	 * 
@@ -124,25 +131,58 @@ public class AddCommandDisplayPart extends AbstractPart {
 
 		createPredefinedArea(main);
 
-		/* Display name area */
-		Label commandDisplayName = new Label(main, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(false, false).applyTo(commandDisplayName);
-		commandDisplayName.setText("Display Name:");
+		createAppLocationArea(main);
 
-		displayName = new Text(main, SWT.BORDER);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(displayName);
+		createTerminalLocationArea(main);
 
-		displayName.addModifyListener(new ModifyListener() {
-			public void modifyText(ModifyEvent event) {
-				handleChange(event);
+		createOptionsArea(main);
+
+		createEnvVariablesArea(main);
+
+		createTunnelVariablesArea(main);
+
+		readValues();
+
+		return main;
+
+	}
+
+	protected Composite createGroupComposite(Composite parent, String groupName) {
+		Group group = new Group(parent, SWT.NONE);
+		group.setText(groupName);
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(group);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(group);
+
+		Composite groupComp = new Composite(group, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(1).margins(new Point(10, 10)).applyTo(groupComp);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(groupComp);
+
+		return groupComp;
+	}
+
+	protected void createEnvVariablesArea(Composite parent) {
+
+		parent = createGroupComposite(parent, "Environment Variables");
+
+		envVarPart = new EnvironmentVariablesPart();
+		envVarPart.addPartChangeListener(new IPartChangeListener() {
+
+			public void handleChange(PartChangeEvent event) {
+				envVariables = envVarPart.getVariables();
+				// No need to validate as environment variables are optional
 			}
 		});
+		envVarPart.createPart(parent);
+	}
 
-		Label terminalLocationLabel = new Label(main, SWT.NONE);
+	protected void createTerminalLocationArea(Composite parent) {
+
+		parent = createGroupComposite(parent, "External Terminal");
+		Label terminalLocationLabel = new Label(parent, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(terminalLocationLabel);
 		terminalLocationLabel.setText("External Command Line Terminal:");
 
-		terminalLocation = new Text(main, SWT.BORDER);
+		terminalLocation = new Text(parent, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(terminalLocation);
 
 		terminalLocation.addModifyListener(new ModifyListener() {
@@ -151,10 +191,9 @@ public class AddCommandDisplayPart extends AbstractPart {
 			}
 		});
 
-		final Button terminalButton = new Button(main, SWT.CHECK);
+		final Button terminalButton = new Button(parent, SWT.CHECK);
 
-		int padding = 20;
-		GridDataFactory.fillDefaults().grab(false, false).indent(padding, SWT.DEFAULT).applyTo(terminalButton);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(terminalButton);
 		terminalButton.setText("Apply terminal changes to all commands.");
 
 		terminalButton.setSelection(applyTerminalToAllCommands);
@@ -165,15 +204,34 @@ public class AddCommandDisplayPart extends AbstractPart {
 			}
 
 		});
+	}
 
-		Label fileSelectionLabel = new Label(main, SWT.NONE);
+	protected void createAppLocationArea(Composite parent) {
+
+		// parent = createGroupComposite(parent, "Application");
+
+		/* Display name area */
+		Label commandDisplayName = new Label(parent, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(commandDisplayName);
+		commandDisplayName.setText("Display Name:");
+
+		displayName = new Text(parent, SWT.BORDER);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(displayName);
+
+		displayName.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent event) {
+				handleChange(event);
+			}
+		});
+
+		Label fileSelectionLabel = new Label(parent, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(fileSelectionLabel);
 		fileSelectionLabel.setText("Enter or browse location of command executable:");
 
-		locationField = new Text(main, SWT.BORDER);
+		locationField = new Text(parent, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(locationField);
 
-		Composite buttonArea = new Composite(main, SWT.NONE);
+		Composite buttonArea = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(buttonArea);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(buttonArea);
 
@@ -196,17 +254,18 @@ public class AddCommandDisplayPart extends AbstractPart {
 			}
 
 		});
+	}
 
-		Text argsLabel = new Text(main, SWT.MULTI);
-		GridDataFactory.fillDefaults().grab(false, false).applyTo(argsLabel);
+	protected void createOptionsArea(Composite parent) {
 
-		argsLabel
-				.setText("Enter options below. \nUse ${variablename} for option values that should be prompted when the command is executed.");
+		parent = createGroupComposite(parent, "Application Options");
+		Label optionsLabel = new Label(parent, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(optionsLabel);
 
-		argsLabel.setBackground(main.getBackground());
-		argsLabel.setEditable(false);
-		
-		options = new Text(main, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
+		optionsLabel
+				.setText("Use ${variablename} for option values that should be prompted when the command is executed.");
+
+		options = new Text(parent, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
 		options.addTraverseListener(new TraverseListener() {
 			public void keyTraversed(TraverseEvent event) {
 				if (event.detail == SWT.TRAVERSE_RETURN && (event.stateMask & SWT.MODIFIER_MASK) != 0) {
@@ -224,19 +283,17 @@ public class AddCommandDisplayPart extends AbstractPart {
 
 		GridDataFactory.fillDefaults().grab(true, false).hint(IDialogConstants.ENTRY_FIELD_WIDTH, 100).applyTo(options);
 
-		Text optionsDescription = new Text(main, SWT.MULTI | SWT.BORDER);
+	}
+
+	protected void createTunnelVariablesArea(Composite parent) {
+		Text optionsDescription = new Text(parent, SWT.MULTI | SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, true).hint(IDialogConstants.ENTRY_FIELD_WIDTH, 140)
 				.applyTo(optionsDescription);
 
 		optionsDescription.setEditable(false);
 		optionsDescription.setText(getOptionsDescription());
 
-		optionsDescription.setBackground(main.getBackground());
-
-		readValues();
-
-		return main;
-
+		optionsDescription.setBackground(parent.getBackground());
 	}
 
 	public boolean applyTerminalToAllCommands() {
@@ -293,19 +350,19 @@ public class AddCommandDisplayPart extends AbstractPart {
 		// If no predefined command is set, clear values
 		if (predefinedCommand != null) {
 			displayNameVal = predefinedCommand.getDisplayName();
-			if (displayNameVal != null) {
-				displayName.setText(displayNameVal);
-			}
+			displayName.setText(displayNameVal != null ? displayNameVal : "");
 
 			optionsVal = predefinedCommand.getOptions() != null ? predefinedCommand.getOptions().getOptions() : null;
-			if (optionsVal != null) {
-				options.setText(optionsVal);
-			}
+			options.setText(optionsVal != null ? optionsVal : "");
+
 			executableLocationValue = predefinedCommand.getExternalApplication() != null ? predefinedCommand
 					.getExternalApplication().getExecutableNameAndPath() : null;
-			if (executableLocationValue != null) {
-				locationField.setText(executableLocationValue);
-			}
+
+			locationField.setText(executableLocationValue != null ? executableLocationValue : "");
+
+			envVariables = predefinedCommand.getEnvironmentVariables();
+
+			envVarPart.setInput(envVariables);
 
 		}
 		else {
@@ -314,6 +371,7 @@ public class AddCommandDisplayPart extends AbstractPart {
 			displayName.setText("");
 			options.setText("");
 			locationField.setText("");
+			envVarPart.setInput(null);
 		}
 
 		validate(true);
@@ -352,6 +410,9 @@ public class AddCommandDisplayPart extends AbstractPart {
 					terminalLocation.setText(terminalLocationVal);
 				}
 			}
+
+			envVariables = serviceCommand.getEnvironmentVariables();
+			envVarPart.setInput(envVariables);
 
 		}
 		else if (defaultTerminal != null) {
@@ -408,32 +469,12 @@ public class AddCommandDisplayPart extends AbstractPart {
 		return service;
 	}
 
-	protected String getOptionsDescription() {
-		StringWriter writer = new StringWriter();
-		writer.append("Use the following variables for service tunnel options to be filled automatically:");
-		writer.append("\n");
-		writer.append("\n");
-		writer.append("${");
-		writer.append(TunnelOptions.user.name());
-		writer.append("}");
-		writer.append("\n");
-		writer.append("${");
-		writer.append(TunnelOptions.password.name());
-		writer.append("}");
-		writer.append("\n");
-		writer.append("${");
-		writer.append(TunnelOptions.url.name());
-		writer.append("}");
-		writer.append("\n");
-		writer.append("${");
-		writer.append(TunnelOptions.databasename.name());
-		writer.append("}");
-		writer.append("\n");
-		writer.append("${");
-		writer.append(TunnelOptions.port.name());
-		writer.append("}");
-		return writer.toString();
+	public List<EnvironmentVariable> getEnvironmentVariables() {
+		return envVariables;
+	}
 
+	protected String getOptionsDescription() {
+		return CommandOptions.getDefaultTunnelOptionsDescription();
 	}
 
 	protected void handleFileLocationButtonSelected() {

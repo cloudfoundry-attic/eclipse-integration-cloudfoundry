@@ -14,6 +14,10 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener.PartChangeEvent;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
 
 public abstract class AbstractPart {
 
@@ -45,5 +49,16 @@ public abstract class AbstractPart {
 
 		notifyChange(new PartChangeEvent(null, status));
 	}
+	
+	/**
+	 * Returns the current shell or null.
+	 * @return
+	 */
+	protected Shell getShell() {
+		Shell shell = PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
+		return shell;
+	}
+	
+	abstract public Control createPart(Composite parent);
 
 }

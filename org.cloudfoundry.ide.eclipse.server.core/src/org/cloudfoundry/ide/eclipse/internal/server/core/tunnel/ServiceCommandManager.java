@@ -136,6 +136,11 @@ public class ServiceCommandManager {
 									newCommand.setOptions(options);
 								}
 
+								List<EnvironmentVariable> envVars = predefCommand.getEnvironmentVariables();
+								if (envVars != null) {
+									newCommand.setEnvironmentVariables(envVars);
+								}
+
 								addCommand(service.getServiceInfo(), newCommand);
 							}
 

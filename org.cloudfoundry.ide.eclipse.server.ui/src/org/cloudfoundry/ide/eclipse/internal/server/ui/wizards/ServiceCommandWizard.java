@@ -10,8 +10,11 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
+import java.util.List;
+
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOptions;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandTerminal;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ITunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
@@ -103,19 +106,37 @@ public class ServiceCommandWizard extends Wizard {
 				String optionsVal = part.getOptions();
 				if (optionsVal != null) {
 					optionsVal = optionsVal.trim();
-					if (optionsVal.length() > 0) {
-						CommandOptions options = new CommandOptions();
-						options.setOptions(optionsVal);
-						editedCommand.setOptions(options);
-					}
+				}
+				if (optionsVal != null && optionsVal.length() > 0) {
+					CommandOptions options = new CommandOptions();
+					options.setOptions(optionsVal);
+					editedCommand.setOptions(options);
+				}
+				else {
+					editedCommand.setOptions(null);
 				}
 
 				String terminalLocationVal = part.getTerminal();
 				if (terminalLocationVal != null) {
+					terminalLocationVal = terminalLocationVal.trim();
+				}
+				if (terminalLocationVal != null && terminalLocationVal.length() > 0) {
 					CommandTerminal terminal = new CommandTerminal();
 					terminal.setTerminal(terminalLocationVal);
 					editedCommand.setCommandTerminal(terminal);
 				}
+				else {
+					editedCommand.setCommandTerminal(null);
+				}
+
+				List<EnvironmentVariable> envVars = part.getEnvironmentVariables();
+				if (envVars != null && !envVars.isEmpty()) {
+					editedCommand.setEnvironmentVariables(envVars);
+				}
+				else {
+					editedCommand.setEnvironmentVariables(null);
+				}
+
 			}
 
 		}

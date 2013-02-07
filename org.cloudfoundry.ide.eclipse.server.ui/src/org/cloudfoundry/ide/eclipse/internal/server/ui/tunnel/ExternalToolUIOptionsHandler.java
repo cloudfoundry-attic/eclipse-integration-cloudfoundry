@@ -16,6 +16,7 @@ import java.util.Map;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOptions;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelOptions;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.UnsetOptionsWizard;
@@ -56,82 +57,131 @@ public class ExternalToolUIOptionsHandler {
 	 * most likely due to user canceling the prompt
 	 */
 	public ServiceCommand promptForValues() {
-		CommandOptions options = serviceCommand.getOptions();
-		if (options != null) {
+		Map<String, String> resolvedOptionVars = new HashMap<String, String>();
+		Map<String, String> resolvedEnvVariables = new HashMap<String, String>();
 
-			List<String> variables = ServiceCommand.getOptionVariables(serviceCommand, options.getOptions());
-			boolean shouldPromptForNonTunnel = false;
-			if (variables != null && !variables.isEmpty()) {
+		boolean shouldPromptForNonTunnel = resolveTunnelOptions(resolvedOptionVars);
 
-				Map<String, String> variableToValue = new HashMap<String, String>();
-				for (String variable : variables) {
-					String value = null;
-					// First resolve tunnel variables
-					if (variable != null) {
-						TunnelOptions tunnelOption = getTunnelOption(variable);
-						if (tunnelOption != null) {
+		shouldPromptForNonTunnel |= resolveEnvironmentVariables(resolvedEnvVariables);
 
-							switch (tunnelOption) {
+		// Now prompt for the remaining values
 
-							case user:
-								value = descriptor.getUserName();
-								break;
-							case password:
-								value = descriptor.getPassword();
-								break;
-							case url:
-								value = descriptor.getURL();
-								break;
-							case databasename:
-								value = descriptor.getDatabaseName();
-								break;
-							case port:
-								value = descriptor.tunnelPort() + "";
-								break;
-							}
-
-						}
-						else {
-							// found a non-tunnel variable that needs further
-							// input from user
-							shouldPromptForNonTunnel = true;
-						}
-					}
-					variableToValue.put(variable, value);
-				}
-
-				// Now prompt for the remaining values
-
-				if (shouldPromptForNonTunnel) {
-					variableToValue = promptForUnsetValues(variableToValue);
-					// If user cancelled entering values, return a null service
-					// command to indicate the caller
-					// that the command should not be run
-					if (variableToValue == null) {
-						return null;
-					}
-				}
-
-				// Finally set the resolved values back in the command
-				ServiceCommand.setOptionVariableValues(serviceCommand, variableToValue);
-
+		if (shouldPromptForNonTunnel) {
+			resolvedOptionVars = promptForUnsetValues(resolvedOptionVars, resolvedEnvVariables);
+			// If user cancelled entering values, return a null service
+			// command to indicate the caller
+			// that the command should not be run
+			if (resolvedOptionVars == null) {
+				return null;
 			}
+		}
 
+		// Finally set the resolved values back in the command
+		ServiceCommand.setOptionVariableValues(serviceCommand, resolvedOptionVars);
+		
+		// Set environment variables
+		List<EnvironmentVariable> variables = serviceCommand.getEnvironmentVariables();
+		if (variables != null) {
+			for (EnvironmentVariable var : variables) {
+				String value = resolvedEnvVariables.get(var.getVariable());
+				if (value != null) {
+					var.setValue(value);
+				}
+			}
 		}
 		return serviceCommand;
 	}
 
+	protected boolean resolveTunnelOptions(Map<String, String> variablesToValues) {
+		boolean shouldPromptForNonTunnel = false;
+		CommandOptions options = serviceCommand.getOptions();
+		if (options != null) {
+
+			List<String> variables = ServiceCommand.getOptionVariables(serviceCommand, options.getOptions());
+
+			if (variables != null) {
+
+				for (String variable : variables) {
+					String value = resolveTunnelVariable(variable);
+
+					if (value == null) {
+						// found a non-tunnel variable that needs further
+						// input from user
+						shouldPromptForNonTunnel = true;
+					}
+					variablesToValues.put(variable, value);
+				}
+
+			}
+
+		}
+
+		return shouldPromptForNonTunnel;
+	}
+
+	protected String resolveTunnelVariable(String variable) {
+		if (variable == null) {
+			return null;
+		}
+		TunnelOptions tunnelOption = getTunnelOption(variable);
+		String value = null;
+		if (tunnelOption != null) {
+
+			switch (tunnelOption) {
+
+			case user:
+				value = descriptor.getUserName();
+				break;
+			case password:
+				value = descriptor.getPassword();
+				break;
+			case url:
+				value = descriptor.getURL();
+				break;
+			case databasename:
+				value = descriptor.getDatabaseName();
+				break;
+			case port:
+				value = descriptor.tunnelPort() + "";
+				break;
+			}
+
+		}
+		return value;
+	}
+
+	protected boolean resolveEnvironmentVariables(Map<String, String> envVariables) {
+		List<EnvironmentVariable> vars = serviceCommand.getEnvironmentVariables();
+		boolean shouldPrompt = false;
+		if (vars != null) {
+			for (EnvironmentVariable var : vars) {
+				// Get the name value variable if the value is specified by a
+				// ${varnam}
+				String varName = EnvironmentVariable.getValueVariable(var);
+				String value = resolveTunnelVariable(varName);
+				if (value == null) {
+					shouldPrompt = true;
+				}
+				envVariables.put(var.getVariable(), value);
+			}
+		}
+
+		return shouldPrompt;
+	}
+
 	/**
 	 * 
-	 * @param variableToValue
+	 * @param optionsVariables
 	 * @return resolved values or null if user cancelled entered values for the
 	 * variables
 	 */
-	protected Map<String, String> promptForUnsetValues(Map<String, String> variableToValue) {
-		Map<String, String> resolvedVariables = variableToValue;
-		if (variableToValue != null && !variableToValue.isEmpty()) {
+	protected Map<String, String> promptForUnsetValues(Map<String, String> optionsVariables,
+			Map<String, String> envVariables) {
+		Map<String, String> resolvedVariables = optionsVariables;
+		if ((optionsVariables != null && !optionsVariables.isEmpty())
+				|| (envVariables != null && !envVariables.isEmpty())) {
 
-			UnsetOptionsWizard wizard = new UnsetOptionsWizard(variableToValue);
+			UnsetOptionsWizard wizard = new UnsetOptionsWizard(optionsVariables);
 			WizardDialog dialog = new WizardDialog(shell, wizard);
 			if (dialog.open() == Window.OK) {
 				resolvedVariables = wizard.getVariables();

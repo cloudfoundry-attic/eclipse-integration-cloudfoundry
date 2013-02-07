@@ -27,6 +27,9 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
+/**
+ * Prompt user for unset application options.
+ */
 public class UnsetOptionsPart extends AbstractPart {
 
 	private final Map<String, String> variableToValue;
@@ -35,7 +38,7 @@ public class UnsetOptionsPart extends AbstractPart {
 		this.variableToValue = variableToValue;
 	}
 
-	public Composite createControl(Composite parent) {
+	public Composite createPart(Composite parent) {
 
 		Composite generalArea = new Composite(parent, SWT.NONE | SWT.SCROLL_LINE);
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(generalArea);
