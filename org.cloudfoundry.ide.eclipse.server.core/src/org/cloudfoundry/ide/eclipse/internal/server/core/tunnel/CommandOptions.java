@@ -36,7 +36,7 @@ public class CommandOptions {
 
 	public static String getDefaultTunnelOptionsDescription() {
 		StringWriter writer = new StringWriter();
-		writer.append("Use the following variables for service tunnel options to be filled automatically:");
+		writer.append("Use the following variables for tunnel values that will be filled in automatically:");
 		writer.append('\n');
 		writer.append('\n');
 		writer.append("${");

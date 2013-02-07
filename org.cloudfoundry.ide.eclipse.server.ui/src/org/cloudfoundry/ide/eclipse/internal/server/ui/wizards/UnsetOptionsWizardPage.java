@@ -16,23 +16,20 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.UnsetOptionsPart;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.wizard.IWizard;
-import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
 /**
  * Prompts users for unset application options
  */
-public class UnsetOptionsWizardPage extends WizardPage {
+public class UnsetOptionsWizardPage extends CloudFoundryAwareWizardPage {
 
 	private Map<String, String> variableToValue;
 
 	private IStatus status;
 
 	protected UnsetOptionsWizardPage() {
-		super("Unset Options Page");
-		setTitle("Set Command Options");
-		setDescription("The following command options require values.");
+		super("Unset Options Page", "Set Command Options", "The following command options require values", null);
 	}
 
 	public void createControl(Composite parent) {

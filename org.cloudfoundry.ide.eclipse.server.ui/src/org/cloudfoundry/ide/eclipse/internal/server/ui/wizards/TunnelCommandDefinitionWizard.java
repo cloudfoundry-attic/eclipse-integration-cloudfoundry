@@ -10,38 +10,35 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ITunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceInfo;
 import org.eclipse.jface.wizard.Wizard;
 
-public class ExternalToolsCommandWizard extends Wizard {
+public class TunnelCommandDefinitionWizard extends Wizard {
 
-	private final CloudFoundryServer cloudServer;
+
 
 	private ITunnelServiceCommands originalCommands;
 
-	private ExternalToolsCommandWizardPage page;
+	private TunnelCommandDefinitionWizardPage page;
 
 	private final ServiceInfo serviceContext;
 
-	public ExternalToolsCommandWizard(ITunnelServiceCommands originalCommands, CloudFoundryServer cloudServer,
-			ServiceInfo serviceContext) {
+	public TunnelCommandDefinitionWizard(ITunnelServiceCommands originalCommands, ServiceInfo serviceContext) {
 		super();
-		this.cloudServer = cloudServer;
 		this.originalCommands = originalCommands;
 		this.serviceContext = serviceContext;
-		setWindowTitle("External Tools Commands");
+		setWindowTitle("Service Tunnel Commands");
 		setNeedsProgressMonitor(true);
 	}
-	
+
 	public ServiceInfo getServiceContext() {
 		return serviceContext;
 	}
 
 	@Override
 	public void addPages() {
-		page = new ExternalToolsCommandWizardPage(originalCommands, cloudServer);
+		page = new TunnelCommandDefinitionWizardPage(originalCommands, null);
 		addPage(page);
 	}
 

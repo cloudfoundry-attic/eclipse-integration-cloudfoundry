@@ -17,19 +17,15 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ITunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommandStore;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ModifyServicesForApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AddServiceStartCaldecottAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ExternalToolsCommandWizard;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -37,12 +33,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.window.Window;
-import org.eclipse.jface.wizard.WizardDialog;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
-import org.eclipse.ui.progress.UIJob;
 
 public class TunnelActionProvider {
 
@@ -114,9 +104,9 @@ public class TunnelActionProvider {
 							cloudServer, selectedService.getName());
 
 					for (ServiceCommand command : commands) {
-						actions.add(descriptor != null ? new ExecuteTunnelExternalToolAction(editorPage, descriptor,
-								command, cloudServer) : new ExecuteTunnelExternalToolAction(editorPage,
-								selectedService, command, cloudServer));
+						actions.add(descriptor != null ? new LaunchTunnelCommandAction(editorPage, descriptor, command,
+								cloudServer) : new LaunchTunnelCommandAction(editorPage, selectedService, command,
+								cloudServer));
 					}
 				}
 			}
@@ -125,7 +115,7 @@ public class TunnelActionProvider {
 			}
 		}
 
-		actions.add(new ExternalToolsAction(editorPage, cloudServer, selectedService));
+		actions.add(new CommandDefinitionActions(editorPage, selectedService));
 		return actions;
 	}
 
@@ -165,113 +155,6 @@ public class TunnelActionProvider {
 			return Status.OK_STATUS;
 		}
 
-	}
-
-	static class ExternalToolsAction extends AbstractEditorAction {
-
-		private final CloudFoundryServer cloudServer;
-
-		private final CloudService serviceContext;
-
-		protected ExternalToolsAction(CloudFoundryApplicationsEditorPage editorPage, CloudFoundryServer cloudServer,
-				CloudService serviceContext) {
-			super(editorPage);
-			this.serviceContext = serviceContext;
-			this.cloudServer = cloudServer;
-			setText("External Tools...");
-			setImageDescriptor(CloudFoundryImages.TUNNEL_EXTERNAL_TOOLS);
-		}
-
-		@Override
-		protected String getJobName() {
-			return "External Tools";
-		}
-
-		@Override
-		protected UIJob getUIJob() {
-			UIJob job = new UIJob("External Tools") {
-
-				@Override
-				public IStatus runInUIThread(IProgressMonitor monitor) {
-					try {
-						ITunnelServiceCommands commands = TunnelServiceCommandStore.getCurrentStore()
-								.getTunnelServiceCommands();
-						Shell shell = getShell();
-
-						if (shell != null) {
-							ServiceInfo serviceInfo = null;
-
-							if (serviceContext != null) {
-								String vendor = CloudUtil.getServiceVendor(serviceContext);
-								if (vendor != null) {
-
-									for (ServiceInfo info : ServiceInfo.values()) {
-										if (info.name().equals(vendor)) {
-											serviceInfo = info;
-											break;
-										}
-									}
-								}
-							}
-							ExternalToolsCommandWizard wizard = new ExternalToolsCommandWizard(commands, cloudServer,
-									serviceInfo);
-							WizardDialog dialog = new WizardDialog(getShell(), wizard);
-							if (dialog.open() == Window.OK) {
-								commands = wizard.getExternalToolLaunchCommandsServer();
-
-								try {
-									TunnelServiceCommandStore.getCurrentStore().storeServerServiceCommands(commands);
-								}
-								catch (CoreException e) {
-									CloudFoundryPlugin.logError(e);
-								}
-							}
-						}
-					}
-					catch (CoreException e) {
-						CloudFoundryPlugin.logError(e);
-					}
-					return Status.OK_STATUS;
-				}
-
-			};
-
-			job.setSystem(true);
-			return job;
-		}
-
-		protected Shell getShell() {
-			return PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
-		}
-
-	}
-
-	static abstract class AbstractEditorAction extends Action {
-
-		private final CloudFoundryApplicationsEditorPage editorPage;
-
-		protected AbstractEditorAction(CloudFoundryApplicationsEditorPage editorPage) {
-			this.editorPage = editorPage;
-		}
-
-		protected abstract String getJobName();
-
-		protected abstract UIJob getUIJob();
-
-		public void run() {
-
-			UIJob job = getUIJob();
-
-			IWorkbenchSiteProgressService service = (IWorkbenchSiteProgressService) editorPage.getEditorSite()
-					.getService(IWorkbenchSiteProgressService.class);
-			if (service != null) {
-				service.schedule(job, 0L, true);
-			}
-			else {
-				job.schedule();
-			}
-
-		}
 	}
 
 }

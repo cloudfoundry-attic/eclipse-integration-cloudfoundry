@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -32,7 +32,7 @@ public class CloudFoundryImages {
 	private final static String OBJ = "obj16/";
 
 	public static final ImageDescriptor EDIT = create(OBJ, "edit.gif");
-	
+
 	public static final ImageDescriptor TUNNEL_EXTERNAL_TOOLS = create(OBJ, "external_tools.gif");
 
 	public static final ImageDescriptor DISCONNECT = create(OBJ, "disconnect.png");
@@ -70,6 +70,8 @@ public class CloudFoundryImages {
 	public static final ImageDescriptor MENU_VIEW_DISABLED = create(OBJ, "view_menu_dlcl.gif");
 
 	public static final ImageDescriptor DEBUG = create(OBJ, "debug_exc.gif");
+
+	public static final ImageDescriptor DEFAULT_WIZARD_BANNER = create(OBJ, "default_wizard_banner.png");
 
 	private static ImageRegistry imageRegistry;
 

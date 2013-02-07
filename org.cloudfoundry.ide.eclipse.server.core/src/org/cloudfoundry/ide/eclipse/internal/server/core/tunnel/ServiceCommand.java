@@ -139,14 +139,14 @@ public class ServiceCommand {
 
 		// Note that the resolvedOptions buffer MAY grow therefore length will
 		// vary during each iteration
-		for (int i = 0; i < resolvedOptions.length(); i++) {
-
+		for (int i = 0; i < resolvedOptions.length();) {
+			boolean inserted = false;
 			if (resolvedOptions.charAt(i) == '$') {
 				// Start parsing the variable
 				dollarSignIndex = i;
 				variableBuffer = new StringBuffer();
 			}
-			// Flush the variable if a white space or end of string is
+			// Flush the variable if an ending bracket or end of string is
 			// encountered
 			else if ((resolvedOptions.charAt(i) == '}' || i == resolvedOptions.length() - 1) && variableBuffer != null) {
 
@@ -167,6 +167,10 @@ public class ServiceCommand {
 
 						// insert the value
 						resolvedOptions.insert(dollarSignIndex, value);
+
+						// move the index past the inserted value
+						i = dollarSignIndex + value.length();
+						inserted = true;
 					}
 				}
 				// Prepare for the next variable
@@ -175,6 +179,10 @@ public class ServiceCommand {
 			}
 			else if (variableBuffer != null && resolvedOptions.charAt(i) != '{') {
 				variableBuffer.append(resolvedOptions.charAt(i));
+			}
+
+			if (!inserted) {
+				i++;
 			}
 
 		}

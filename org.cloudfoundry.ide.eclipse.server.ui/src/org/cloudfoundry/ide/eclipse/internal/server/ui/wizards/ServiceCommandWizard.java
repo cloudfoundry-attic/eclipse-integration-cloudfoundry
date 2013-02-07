@@ -54,7 +54,7 @@ public class ServiceCommandWizard extends Wizard {
 		this.contextCommand = serviceCommandToEdit;
 		this.commands = commands;
 
-		setWindowTitle("Configure a command to run:");
+		setWindowTitle("Configure a service tunnel command");
 		setNeedsProgressMonitor(true);
 	}
 

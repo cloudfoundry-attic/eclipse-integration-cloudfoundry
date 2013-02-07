@@ -47,6 +47,10 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 
+/**
+ * Allows editing of commands per service
+ *
+ */
 public class ServiceTunnelCommandPart extends AbstractPart {
 
 	protected enum ControlData {

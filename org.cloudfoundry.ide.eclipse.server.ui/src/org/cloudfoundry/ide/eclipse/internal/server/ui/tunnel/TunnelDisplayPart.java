@@ -15,11 +15,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.TableResizeHelper;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuListener;
@@ -37,11 +38,8 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
-import org.eclipse.swt.events.ControlEvent;
-import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
@@ -82,12 +80,7 @@ public class TunnelDisplayPart {
 		return servicesViewer;
 	}
 
-	protected void resizeTable() {
-		Composite tableComposite = servicesViewer.getTable().getParent();
-		Rectangle tableCompositeArea = tableComposite.getClientArea();
-		int width = tableCompositeArea.width;
-		resizeTableColumns(width, servicesViewer.getTable());
-	}
+
 
 	public Control createControl(Composite parent) {
 
@@ -124,23 +117,13 @@ public class TunnelDisplayPart {
 
 		configureViewer(servicesViewer);
 
-		servicesViewer.getTable().addControlListener(new ControlListener() {
-
-			public void controlResized(ControlEvent e) {
-				resizeTable();
-			}
-
-			public void controlMoved(ControlEvent e) {
-
-			}
-		});
+		new TableResizeHelper(servicesViewer).enableResizing();
 
 		addTableActions();
 
 		setInput();
 
-		resizeTable();
-
+		
 		return tableArea;
 
 	}
@@ -191,28 +174,7 @@ public class TunnelDisplayPart {
 
 	}
 
-	protected void resizeTableColumns(int tableWidth, Table table) {
-		TableColumn[] tableColumns = table.getColumns();
 
-		if (tableColumns.length == 0) {
-			return;
-		}
-
-		int total = 0;
-
-		// resize only if there is empty space at the end of the table
-		for (TableColumn column : tableColumns) {
-			total += column.getWidth();
-		}
-
-		if (total < tableWidth) {
-			// resize the last one
-			TableColumn lastColumn = tableColumns[tableColumns.length - 1];
-			int newWidth = (tableWidth - total) + lastColumn.getWidth();
-			lastColumn.setWidth(newWidth);
-		}
-
-	}
 
 	protected class TreeLabelProvider extends LabelProvider implements ITableLabelProvider {
 

@@ -16,6 +16,8 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.EnvironmentVariable;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.TableResizeHelper;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuListener;
@@ -68,16 +70,15 @@ public class EnvironmentVariablesPart extends AbstractPart {
 	public Control createPart(Composite parent) {
 
 		Composite tableArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(1).spacing(0, 0).applyTo(tableArea);
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(tableArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(tableArea);
 
 		Label viewerLabel = new Label(tableArea, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(viewerLabel);
 		viewerLabel.setText("Right click to edit environment variables:");
 
-		Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI | SWT.V_SCROLL);
-		table.setSize(new Point(400, 400));
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(table);
+		Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI);
+		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).grab(true, true).applyTo(table);
 
 		envVariablesViewer = new TableViewer(table);
 
@@ -103,6 +104,8 @@ public class EnvironmentVariablesPart extends AbstractPart {
 		envVariablesViewer.setLabelProvider(new EnvVarLabelProvider(envVariablesViewer));
 
 		table.setHeaderVisible(true);
+
+		new TableResizeHelper(envVariablesViewer).enableResizing();
 
 		int columnIndex = 0;
 		ViewColumn[] columns = ViewColumn.values();
@@ -199,6 +202,8 @@ public class EnvironmentVariablesPart extends AbstractPart {
 				handleDelete();
 				break;
 			}
+			//Notify listeners that changes were made
+			setStatus(Status.OK_STATUS);
 		}
 	}
 
@@ -249,7 +254,7 @@ public class EnvironmentVariablesPart extends AbstractPart {
 
 			variables = updatedList;
 		}
-		
+
 		if (add != null) {
 			variables.add(add);
 		}
@@ -389,7 +394,7 @@ public class EnvironmentVariablesPart extends AbstractPart {
 			Composite control = (Composite) super.createDialogArea(parent);
 
 			Composite composite = new Composite(control, SWT.NONE);
-			GridDataFactory.fillDefaults().applyTo(composite);
+			GridDataFactory.fillDefaults().grab(false, false).applyTo(composite);
 			GridLayoutFactory.fillDefaults().numColumns(1).applyTo(composite);
 
 			Label nameLabel = new Label(composite, SWT.NONE);
@@ -398,7 +403,7 @@ public class EnvironmentVariablesPart extends AbstractPart {
 					.applyTo(nameLabel);
 
 			name = new Text(composite, SWT.BORDER);
-			GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.FILL).hint(300, SWT.DEFAULT)
+			GridDataFactory.fillDefaults().grab(true, true).align(SWT.FILL, SWT.FILL).hint(300, SWT.DEFAULT)
 					.applyTo(name);
 
 			if (envVar != null && envVar.getVariable() != null) {

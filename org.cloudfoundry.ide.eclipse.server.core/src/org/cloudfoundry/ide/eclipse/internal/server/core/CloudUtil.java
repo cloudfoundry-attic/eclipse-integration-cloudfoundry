@@ -602,6 +602,15 @@ public class CloudUtil {
 		return cloudService.getLabel() != null ? cloudService.getLabel() : cloudService.getVendor();
 	}
 
+	/**
+	 * Creates a temporary folder and file with the given names. It is the
+	 * responsibility of the caller to properly dispose the folder and file
+	 * after it is created
+	 * @param folderName
+	 * @param fileName
+	 * @return
+	 * @throws IOException
+	 */
 	public static File createTemporaryFile(String folderName, String fileName) throws IOException {
 		File tempFolder = File.createTempFile(folderName, null);
 		// Delete an existing one

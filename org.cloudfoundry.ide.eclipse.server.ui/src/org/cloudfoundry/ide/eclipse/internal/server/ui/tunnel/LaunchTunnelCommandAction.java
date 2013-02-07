@@ -15,7 +15,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ExternalToolsLaunchCommand;
+import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.LaunchTunnelCommandManager;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction;
@@ -29,7 +29,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 
-public class ExecuteTunnelExternalToolAction extends CloudFoundryEditorAction {
+public class LaunchTunnelCommandAction extends CloudFoundryEditorAction {
 
 	private final String displayName;
 
@@ -41,17 +41,17 @@ public class ExecuteTunnelExternalToolAction extends CloudFoundryEditorAction {
 
 	private final CloudService cloudService;
 
-	public ExecuteTunnelExternalToolAction(CloudFoundryApplicationsEditorPage editorPage,
+	public LaunchTunnelCommandAction(CloudFoundryApplicationsEditorPage editorPage,
 			CaldecottTunnelDescriptor descriptor, ServiceCommand command, CloudFoundryServer cloudServer) {
 		this(editorPage, null, descriptor, command, cloudServer);
 	}
 
-	public ExecuteTunnelExternalToolAction(CloudFoundryApplicationsEditorPage editorPage, CloudService cloudService,
+	public LaunchTunnelCommandAction(CloudFoundryApplicationsEditorPage editorPage, CloudService cloudService,
 			ServiceCommand command, CloudFoundryServer cloudServer) {
 		this(editorPage, cloudService, null, command, cloudServer);
 	}
 
-	protected ExecuteTunnelExternalToolAction(CloudFoundryApplicationsEditorPage editorPage, CloudService cloudService,
+	protected LaunchTunnelCommandAction(CloudFoundryApplicationsEditorPage editorPage, CloudService cloudService,
 			CaldecottTunnelDescriptor descriptor, ServiceCommand command, CloudFoundryServer cloudServer) {
 		super(editorPage, RefreshArea.ALL);
 		setText(command.getDisplayName());
@@ -98,7 +98,7 @@ public class ExecuteTunnelExternalToolAction extends CloudFoundryEditorAction {
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					Shell shell = PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
-					final ServiceCommand resolvedCommand = new ExternalToolUIOptionsHandler(shell, serviceCommand,
+					final ServiceCommand resolvedCommand = new CommandOptionsUIHandler(shell, serviceCommand,
 							descriptor).promptForValues();
 
 					// Once prompted, launch it asynchronously outside the UI
@@ -116,7 +116,7 @@ public class ExecuteTunnelExternalToolAction extends CloudFoundryEditorAction {
 								// are filled
 								// in.
 								try {
-									new ExternalToolsLaunchCommand(resolvedCommand).run(monitor);
+									new LaunchTunnelCommandManager(resolvedCommand).run(monitor);
 								}
 								catch (CoreException e) {
 									IStatus errorStatus = CloudFoundryPlugin.getErrorStatus(e);

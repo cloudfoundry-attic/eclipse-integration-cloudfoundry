@@ -30,11 +30,18 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 
-public class ExternalToolsLaunchCommand {
+/**
+ * 
+ * Executes commands for launching external applications. This will create a
+ * separate process where the external application are launched. Handling the
+ * external application may vary depending on the underlying operating system.
+ * 
+ */
+public class LaunchTunnelCommandManager {
 
 	private final ServiceCommand serviceCommand;
 
-	public ExternalToolsLaunchCommand(ServiceCommand serviceCommand) {
+	public LaunchTunnelCommandManager(ServiceCommand serviceCommand) {
 		this.serviceCommand = serviceCommand;
 	}
 
@@ -94,7 +101,7 @@ public class ExternalToolsLaunchCommand {
 					// script
 					// file.
 					StringWriter optionsWr = new StringWriter();
-					
+
 					// For Mac OS, any environment variables should be
 					// added as part of the script
 					if (serviceCommand.getEnvironmentVariables() != null) {
@@ -113,6 +120,7 @@ public class ExternalToolsLaunchCommand {
 						optionsWr.append(' ');
 						optionsWr.append(appOptions);
 					}
+
 					scriptFile = getScriptFile(optionsWr.toString());
 					processArguments.add(scriptFile.getAbsolutePath());
 				}
@@ -183,7 +191,7 @@ public class ExternalToolsLaunchCommand {
 
 		}
 		finally {
-			// Delete any temp script files
+
 			if (scriptFile != null && scriptFile.exists()) {
 				scriptFile.deleteOnExit();
 			}
@@ -268,6 +276,7 @@ public class ExternalToolsLaunchCommand {
 		FileOutputStream outStream = null;
 
 		try {
+
 			File scriptFile = CloudUtil.createTemporaryFile("tempScriptFileCFTunnelCommands", "tunnelCommand.sh");
 			if (scriptFile != null && scriptFile.exists()) {
 
@@ -332,6 +341,5 @@ public class ExternalToolsLaunchCommand {
 		}
 
 	}
-	
 
 }

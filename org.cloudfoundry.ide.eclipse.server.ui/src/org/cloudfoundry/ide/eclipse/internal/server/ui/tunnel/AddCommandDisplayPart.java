@@ -177,10 +177,7 @@ public class AddCommandDisplayPart extends AbstractPart {
 
 	protected void createTerminalLocationArea(Composite parent) {
 
-		parent = createGroupComposite(parent, "External Terminal");
-		Label terminalLocationLabel = new Label(parent, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(false, false).applyTo(terminalLocationLabel);
-		terminalLocationLabel.setText("External Command Line Terminal:");
+		parent = createGroupComposite(parent, "External Command Line Terminal");
 
 		terminalLocation = new Text(parent, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(terminalLocation);
@@ -194,7 +191,7 @@ public class AddCommandDisplayPart extends AbstractPart {
 		final Button terminalButton = new Button(parent, SWT.CHECK);
 
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(terminalButton);
-		terminalButton.setText("Apply terminal changes to all commands.");
+		terminalButton.setText("Apply terminal changes to all commands");
 
 		terminalButton.setSelection(applyTerminalToAllCommands);
 
@@ -281,13 +278,13 @@ public class AddCommandDisplayPart extends AbstractPart {
 			}
 		});
 
-		GridDataFactory.fillDefaults().grab(true, false).hint(IDialogConstants.ENTRY_FIELD_WIDTH, 100).applyTo(options);
+		GridDataFactory.fillDefaults().grab(true, false).hint(IDialogConstants.ENTRY_FIELD_WIDTH, 80).applyTo(options);
 
 	}
 
 	protected void createTunnelVariablesArea(Composite parent) {
 		Text optionsDescription = new Text(parent, SWT.MULTI | SWT.BORDER);
-		GridDataFactory.fillDefaults().grab(true, true).hint(IDialogConstants.ENTRY_FIELD_WIDTH, 140)
+		GridDataFactory.fillDefaults().grab(true, true).hint(IDialogConstants.ENTRY_FIELD_WIDTH, 120)
 				.applyTo(optionsDescription);
 
 		optionsDescription.setEditable(false);

@@ -24,7 +24,7 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
-public class ExternalToolUIOptionsHandler {
+public class CommandOptionsUIHandler {
 
 	private final ServiceCommand serviceCommand;
 
@@ -32,7 +32,7 @@ public class ExternalToolUIOptionsHandler {
 
 	private final Shell shell;
 
-	public ExternalToolUIOptionsHandler(Shell shell, ServiceCommand serviceCommand, CaldecottTunnelDescriptor descriptor) {
+	public CommandOptionsUIHandler(Shell shell, ServiceCommand serviceCommand, CaldecottTunnelDescriptor descriptor) {
 		this.serviceCommand = serviceCommand;
 		this.descriptor = descriptor;
 		this.shell = shell;

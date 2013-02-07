@@ -68,7 +68,7 @@ public class PredefinedServiceCommands {
 								"--host localhost --port ${" + TunnelOptions.port.name() + "} -u ${"
 										+ TunnelOptions.user.name() + "} -p ${" + TunnelOptions.password.name()
 										+ "} ${" + TunnelOptions.databasename.name()
-										+ "} ${Directory or filename to restore from}" },
+										+ "} ${Directory or filename}" },
 
 				};
 				break;
