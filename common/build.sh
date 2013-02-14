@@ -21,7 +21,7 @@ ulimit -a
 ARGS=""
 if [ "$BAMBOO" == "1" ]
 then
- ARGS="-Dmaven.repo.local=/opt/bamboo-home/.m2/repository-cloudfoundry -Dhttpclient.retry-max=20 -Dtycho.localArtifacts=ignore"
+ ARGS="-Dmaven.repo.local=/opt/bamboo-home/.m2/repository-cloudfoundry-signed -Dhttpclient.retry-max=20 -Dtycho.localArtifacts=ignore"
 
  if [ "$JAVA_5" == "1" ]
  then
