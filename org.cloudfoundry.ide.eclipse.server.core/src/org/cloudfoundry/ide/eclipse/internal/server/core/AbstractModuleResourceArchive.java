@@ -29,7 +29,9 @@ import org.eclipse.wst.server.core.model.IModuleResource;
 /**
  * Base Cloud Foundry client archive that supports IModuleResource and computes
  * sha1 and input stream entries for module resources. Creates an archive entry
- * for every module resource specified in the this archive. Specialised classes
+ * for every module resource specified in the this archive. 
+ * 
+ * Specialised classes
  * must define two entry types to create when a request is made for a module
  * resource: folder and file entries. These entries allow specialised classes to
  * determine how the sha1 and file sizes are computed for each corresponding
