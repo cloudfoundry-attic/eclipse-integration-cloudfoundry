@@ -13,30 +13,27 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.Map;
 
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.UnsetOptionsPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.SetValueVariablesPart;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
 /**
  * Prompts users for unset application options
  */
-public class UnsetOptionsWizardPage extends CloudFoundryAwareWizardPage {
-
-	private Map<String, String> variableToValue;
+public class SetValueVariablesWizardPage extends CloudFoundryAwareWizardPage {
 
 	private IStatus status;
 
-	protected UnsetOptionsWizardPage() {
-		super("Unset Options Page", "Set Command Options", "The following command options require values", null);
+	protected SetValueVariablesWizardPage() {
+		super("Set Value Variables Page", "Set Values", "The following variables require values:", null);
 	}
 
 	public void createControl(Composite parent) {
-		IWizard wizard = getWizard();
-		variableToValue = (wizard instanceof UnsetOptionsWizard) ? ((UnsetOptionsWizard) wizard).getVariables() : null;
-
-		UnsetOptionsPart part = new UnsetOptionsPart(variableToValue);
+		SetValueVariablesWizard wizard = (SetValueVariablesWizard) getWizard();
+		Map<String, String> variableToValue = wizard.getOptionVariables();
+		Map<String, String> environmentVariables = wizard.getEnvironmentVariables();
+		SetValueVariablesPart part = new SetValueVariablesPart(variableToValue, environmentVariables);
 
 		part.addPartChangeListener(new IPartChangeListener() {
 

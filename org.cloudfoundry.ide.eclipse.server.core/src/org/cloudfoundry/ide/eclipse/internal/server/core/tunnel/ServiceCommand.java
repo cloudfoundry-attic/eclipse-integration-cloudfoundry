@@ -92,14 +92,16 @@ public class ServiceCommand {
 		StringWriter variableBuffer = null;
 
 		for (int i = 0; i < options.length(); i++) {
-			if (options.charAt(i) == '$') {
+			// If char sequence at i and i+1 start with ${ start parsing variable
+			if ((options.charAt(i) == '$') && i + 1 < options.length() && (options.charAt(i + 1) == '{')) {
 				// Start parsing the variable
 				variableBuffer = new StringWriter();
-
+				
+				// Advance by one more to skip the starting bracket: {
+				i++;
 			}
-			// Flush the variable if a white space or end of string is
-			// encountered
-			else if ((options.charAt(i) == '}' || i == options.length() - 1) && variableBuffer != null) {
+			// Flush the variable ending bracket is encountered
+			else if ((options.charAt(i) == '}') && variableBuffer != null) {
 				// If the last character is a ending curly brace then it can be
 				// skipped when it comes to adding characters to the
 				// variable name buffer
@@ -110,7 +112,7 @@ public class ServiceCommand {
 				// Prepare for the next variable
 				variableBuffer = null;
 			}
-			else if (variableBuffer != null && options.charAt(i) != '{') {
+			else if (variableBuffer != null) {
 				variableBuffer.append(options.charAt(i));
 			}
 
@@ -141,14 +143,17 @@ public class ServiceCommand {
 		// vary during each iteration
 		for (int i = 0; i < resolvedOptions.length();) {
 			boolean inserted = false;
-			if (resolvedOptions.charAt(i) == '$') {
+			if ((resolvedOptions.charAt(i) == '$') && i + 1 < resolvedOptions.length() && (resolvedOptions.charAt(i + 1) == '{')) {
 				// Start parsing the variable
 				dollarSignIndex = i;
+				
+				// Advance by one more to skip '{'
+				i++;
 				variableBuffer = new StringBuffer();
 			}
 			// Flush the variable if an ending bracket or end of string is
 			// encountered
-			else if ((resolvedOptions.charAt(i) == '}' || i == resolvedOptions.length() - 1) && variableBuffer != null) {
+			else if ((resolvedOptions.charAt(i) == '}') && variableBuffer != null) {
 
 				// Look up the value
 				if (variableBuffer.length() > 0) {
@@ -177,10 +182,11 @@ public class ServiceCommand {
 				variableBuffer = null;
 				dollarSignIndex = -1;
 			}
-			else if (variableBuffer != null && resolvedOptions.charAt(i) != '{') {
+			else if (variableBuffer != null) {
 				variableBuffer.append(resolvedOptions.charAt(i));
 			}
 
+			// Advance to the next character unless a variable was replaced
 			if (!inserted) {
 				i++;
 			}

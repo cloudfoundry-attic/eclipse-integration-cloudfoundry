@@ -19,11 +19,23 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CommandOptions;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelOptions;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.UnsetOptionsWizard;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.SetValueVariablesWizard;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
+/**
+ * Resolves both command option values as well as command environment variables.
+ * For both command options and environment variables, if their values are
+ * variables themselves using the pattern ${varname} (e.g. -db ${databasename}),
+ * the value variables will first be checked if they are variables reserved for
+ * tunnel values, like user name, database, and password, and will be
+ * substituted automatically.
+ * 
+ * For value variables that are not tunnel values, the user will be prompted for
+ * values.
+ * 
+ */
 public class CommandOptionsUIHandler {
 
 	private final ServiceCommand serviceCommand;
@@ -48,7 +60,7 @@ public class CommandOptionsUIHandler {
 	}
 
 	/**
-	 * Will resolve an option variables for tunnel options like username and
+	 * Will resolve an option variables for tunnel options like user name and
 	 * password, and prompt the user for non-user variables. Returns a service
 	 * command with resolved variables, or null if the user cancelled entering
 	 * values for non-user variables. If not service command is returned, it
@@ -60,25 +72,25 @@ public class CommandOptionsUIHandler {
 		Map<String, String> resolvedOptionVars = new HashMap<String, String>();
 		Map<String, String> resolvedEnvVariables = new HashMap<String, String>();
 
-		boolean shouldPromptForNonTunnel = resolveTunnelOptions(resolvedOptionVars);
+		boolean shouldPromptOptions = resolveTunnelOptions(resolvedOptionVars);
 
-		shouldPromptForNonTunnel |= resolveEnvironmentVariables(resolvedEnvVariables);
+		boolean shouldPromptEnvVariables = resolveEnvironmentVariables(resolvedEnvVariables);
 
 		// Now prompt for the remaining values
 
-		if (shouldPromptForNonTunnel) {
-			resolvedOptionVars = promptForUnsetValues(resolvedOptionVars, resolvedEnvVariables);
+		if (shouldPromptOptions || shouldPromptEnvVariables) {
+			boolean executeCommand = promptForUnsetValues(resolvedOptionVars, resolvedEnvVariables);
 			// If user cancelled entering values, return a null service
 			// command to indicate the caller
 			// that the command should not be run
-			if (resolvedOptionVars == null) {
+			if (!executeCommand) {
 				return null;
 			}
 		}
 
 		// Finally set the resolved values back in the command
 		ServiceCommand.setOptionVariableValues(serviceCommand, resolvedOptionVars);
-		
+
 		// Set environment variables
 		List<EnvironmentVariable> variables = serviceCommand.getEnvironmentVariables();
 		if (variables != null) {
@@ -111,9 +123,7 @@ public class CommandOptionsUIHandler {
 					}
 					variablesToValues.put(variable, value);
 				}
-
 			}
-
 		}
 
 		return shouldPromptForNonTunnel;
@@ -157,10 +167,20 @@ public class CommandOptionsUIHandler {
 			for (EnvironmentVariable var : vars) {
 				// Get the name value variable if the value is specified by a
 				// ${varnam}
-				String varName = EnvironmentVariable.getValueVariable(var);
-				String value = resolveTunnelVariable(varName);
-				if (value == null) {
-					shouldPrompt = true;
+				String valueVar = EnvironmentVariable.getValueVariable(var);
+
+				// Get the value again, in case it is not a value variable
+				String value = var.getValue();
+
+				// Make sure the value is a variable
+				if (valueVar != null) {
+					value = resolveTunnelVariable(valueVar);
+
+					// If null, it means the value is a variable, but not a
+					// tunnel variable, therefore prompt the user
+					if (value == null) {
+						shouldPrompt = true;
+					}
 				}
 				envVariables.put(var.getVariable(), value);
 			}
@@ -170,29 +190,26 @@ public class CommandOptionsUIHandler {
 	}
 
 	/**
-	 * 
-	 * @param optionsVariables
-	 * @return resolved values or null if user cancelled entered values for the
-	 * variables
+	 * Prompts user for missing environment or options Variables. The map
+	 * arguments should be modifiable as they are modified by the UI
+	 * @return true if the user entered missing values. False if user cancelled or there were no values to enter
 	 */
-	protected Map<String, String> promptForUnsetValues(Map<String, String> optionsVariables,
-			Map<String, String> envVariables) {
-		Map<String, String> resolvedVariables = optionsVariables;
+	protected boolean promptForUnsetValues(Map<String, String> optionsVariables, Map<String, String> envVariables) {
 		if ((optionsVariables != null && !optionsVariables.isEmpty())
 				|| (envVariables != null && !envVariables.isEmpty())) {
 
-			UnsetOptionsWizard wizard = new UnsetOptionsWizard(optionsVariables);
+			SetValueVariablesWizard wizard = new SetValueVariablesWizard(optionsVariables, envVariables);
 			WizardDialog dialog = new WizardDialog(shell, wizard);
 			if (dialog.open() == Window.OK) {
-				resolvedVariables = wizard.getVariables();
+				return true;
 			}
 			else {
 				// user cancelled therefore return null;
-				return null;
+				return false;
 			}
 		}
 
-		return resolvedVariables;
+		return false;
 
 	}
 

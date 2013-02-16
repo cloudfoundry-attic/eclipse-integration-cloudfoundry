@@ -14,22 +14,34 @@ import java.util.Map;
 
 import org.eclipse.jface.wizard.Wizard;
 
-public class UnsetOptionsWizard extends Wizard {
+/**
+ * Prompts the user for missing variable values for both command options and
+ * environment variables.
+ * 
+ */
+public class SetValueVariablesWizard extends Wizard {
 
-	private final Map<String, String> variableToValue;
+	private final Map<String, String> optionVariables;
 
-	public UnsetOptionsWizard(Map<String, String> variableToValue) {
-		this.variableToValue = variableToValue;
-		setWindowTitle("Set Command Option Values");
+	private final Map<String, String> envVariables;
+
+	public SetValueVariablesWizard(Map<String, String> variableToValue, Map<String, String> environmentVariables) {
+		this.optionVariables = variableToValue;
+		this.envVariables = environmentVariables;
+		setWindowTitle("Set Variable Values");
 	}
 
 	public void addPages() {
-		UnsetOptionsWizardPage page = new UnsetOptionsWizardPage();
+		SetValueVariablesWizardPage page = new SetValueVariablesWizardPage();
 		addPage(page);
 	}
 
-	public Map<String, String> getVariables() {
-		return variableToValue;
+	public Map<String, String> getOptionVariables() {
+		return optionVariables;
+	}
+
+	public Map<String, String> getEnvironmentVariables() {
+		return envVariables;
 	}
 
 	@Override

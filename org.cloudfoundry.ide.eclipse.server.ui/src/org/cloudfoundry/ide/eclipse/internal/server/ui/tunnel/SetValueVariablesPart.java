@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -28,14 +30,19 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
 /**
- * Prompt user for unset application options.
+ * Prompt user to set both command option and environment value variables e.g.
+ * if an environment variable is defined as HOST=${host}, this will prompt the
+ * user for a value for "host"
  */
-public class UnsetOptionsPart extends AbstractPart {
+public class SetValueVariablesPart extends AbstractPart {
 
-	private final Map<String, String> variableToValue;
+	private final Map<String, String> optionsValueVariables;
 
-	public UnsetOptionsPart(Map<String, String> variableToValue) {
-		this.variableToValue = variableToValue;
+	private final Map<String, String> envVarsValueVariables;
+
+	public SetValueVariablesPart(Map<String, String> variableToValue, Map<String, String> envVarsValueVariables) {
+		this.optionsValueVariables = variableToValue;
+		this.envVarsValueVariables = envVarsValueVariables;
 	}
 
 	public Composite createPart(Composite parent) {
@@ -44,32 +51,52 @@ public class UnsetOptionsPart extends AbstractPart {
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(generalArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(generalArea);
 
-		boolean error = true;
 
-		if (variableToValue != null && !variableToValue.isEmpty()) {
-			for (Entry<String, String> entry : variableToValue.entrySet()) {
-				// Only create variable UI for those that do NOT have set values
-				if (entry.getValue() == null && entry.getKey() != null) {
-					createOptionLabel(entry.getKey(), generalArea);
+		boolean hasOptionsToSet = createValueInputArea(optionsValueVariables, generalArea, "Command options:");
+		boolean hasEnvironmentVariablesToSet = createValueInputArea(envVarsValueVariables, generalArea, "Environment variables:");
 
-					// found at least one option to set
-					error = false;
-				}
-			}
-		}
-
-		if (error) {
+		if (!hasOptionsToSet && !hasEnvironmentVariablesToSet) {
 			Label serverLabel = new Label(parent, SWT.NONE);
 			GridDataFactory.fillDefaults().grab(false, false).span(2, 0).applyTo(serverLabel);
-			serverLabel.setText("No options found that need to be set");
+			serverLabel.setText("No command options or environment variables to set.");
 		}
-		
+
 		validate(false);
 		return generalArea;
 
 	}
 
-	protected void createOptionLabel(final String variable, Composite parent) {
+	protected boolean createValueInputArea(Map<String, String> valueVariableMap, Composite parent, String labelName) {
+
+		if (valueVariableMap == null) {
+			return false;
+		}
+
+		List<String> unsetValues = new ArrayList<String>();
+
+		for (Entry<String, String> entry : valueVariableMap.entrySet()) {
+			// Only create variable UI for those that do NOT have set values
+			if (entry.getValue() == null && entry.getKey() != null) {
+				unsetValues.add(entry.getKey());
+			}
+		}
+
+		if (unsetValues.isEmpty()) {
+			return false;
+		}
+		else {
+			Label label = new Label(parent, SWT.NONE);
+			GridDataFactory.fillDefaults().grab(false, false).span(2, 0).applyTo(label);
+			label.setText(labelName);
+			for (String variable : unsetValues) {
+				createValueVariableControl(variable, parent, valueVariableMap);
+			}
+			return true;
+		}
+	}
+
+	protected void createValueVariableControl(final String variable, Composite parent,
+			final Map<String, String> valueVariables) {
 		Label serverLabel = new Label(parent, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(serverLabel);
 		serverLabel.setText(variable + ": ");
@@ -79,7 +106,7 @@ public class UnsetOptionsPart extends AbstractPart {
 
 		text.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent event) {
-				variableToValue.put(variable, text.getText());
+				valueVariables.put(variable, text.getText());
 				validate(true);
 			}
 		});
@@ -89,8 +116,17 @@ public class UnsetOptionsPart extends AbstractPart {
 		String missingValueVariable = null;
 		IStatus status = Status.OK_STATUS;
 
-		if (variableToValue != null) {
-			for (Entry<String, String> entry : variableToValue.entrySet()) {
+		if (optionsValueVariables != null) {
+			for (Entry<String, String> entry : optionsValueVariables.entrySet()) {
+				if (entry.getValue() == null || ValueValidationUtil.isEmpty(entry.getValue())) {
+					missingValueVariable = entry.getKey();
+					break;
+				}
+			}
+		}
+		
+		if (missingValueVariable == null && envVarsValueVariables != null) {
+			for (Entry<String, String> entry : envVarsValueVariables.entrySet()) {
 				if (entry.getValue() == null || ValueValidationUtil.isEmpty(entry.getValue())) {
 					missingValueVariable = entry.getKey();
 					break;
@@ -99,7 +135,7 @@ public class UnsetOptionsPart extends AbstractPart {
 		}
 
 		if (missingValueVariable != null) {
-			status = CloudFoundryPlugin.getErrorStatus(showError ? missingValueVariable + " requires a value." : "");
+			status = CloudFoundryPlugin.getErrorStatus(showError ? missingValueVariable + " requires a value" : "");
 		}
 
 		notifyChange(new PartChangeEvent(null, status));
