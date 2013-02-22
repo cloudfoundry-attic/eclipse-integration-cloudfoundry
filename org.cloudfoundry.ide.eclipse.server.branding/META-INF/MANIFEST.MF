@@ -4,7 +4,7 @@ Bundle-Name: Cloud Foundry Integration for Eclipse
 Bundle-SymbolicName: org.cloudfoundry.ide.eclipse.server.branding;singleton:=true
 Bundle-Version: 1.4.0.qualifier
 Bundle-Vendor: VMware, Inc.
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
