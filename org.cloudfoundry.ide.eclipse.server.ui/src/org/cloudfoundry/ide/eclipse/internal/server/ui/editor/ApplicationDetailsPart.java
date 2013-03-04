@@ -1115,17 +1115,26 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	private void fillInstancesContextMenu(IMenuManager manager) {
 		IStructuredSelection selection = (IStructuredSelection) instancesViewer.getSelection();
-		if (selection.isEmpty())
+		if (selection.isEmpty()) {
 			return;
-
-		InstanceStats stats = (InstanceStats) selection.getFirstElement();
-		ApplicationModule appModule = getApplication();
-
-		try {
-			manager.add(new ShowConsoleAction(cloudServer, appModule.getApplication(), Integer.parseInt(stats.getId())));
 		}
-		catch (NumberFormatException e) {
-			// ignore
+			
+		Object instanceObject = selection.getFirstElement();
+		
+		if (instanceObject instanceof InstanceStatsAndInfo) {
+			
+			InstanceStats stats = ((InstanceStatsAndInfo) instanceObject).getStats();
+			
+			if (stats != null) {
+				ApplicationModule appModule = getApplication();
+				
+				try {
+					manager.add(new ShowConsoleAction(cloudServer, appModule.getApplication(), Integer.parseInt(stats.getId())));
+				}
+				catch (NumberFormatException e) {
+					// ignore
+				}
+			}
 		}
 	}
 
