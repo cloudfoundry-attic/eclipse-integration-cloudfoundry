@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,7 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeHandler;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
 
@@ -26,12 +26,12 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 
 	private final CloudFoundryCredentialsPart credentialsPart;
 
-	private CloudSpaceChangeListener cloudSpaceChangeListener;
+	private CloudSpaceChangeHandler spaceChangeHandler;
 
 	protected CloudFoundryCredentialsWizardPage(CloudFoundryServer server) {
 		super(server.getServer().getName() + " Credentials");
-		cloudSpaceChangeListener = new CloudSpaceChangeListener(server);
-		credentialsPart = new CloudFoundryCredentialsPart(server, this, cloudSpaceChangeListener);
+		spaceChangeHandler = new CloudSpaceChangeHandler(server);
+		credentialsPart = new CloudFoundryCredentialsPart(server, this, spaceChangeHandler);
 	}
 
 	public void createControl(Composite parent) {
@@ -44,13 +44,13 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 		return credentialsPart.isComplete();
 	}
 
-	public CloudSpaceChangeListener getSpaceChangeListener() {
-		return cloudSpaceChangeListener;
+	public CloudSpaceChangeHandler getSpaceChangeHandler() {
+		return spaceChangeHandler;
 	}
 
 	public boolean supportsSpaces() {
-		return cloudSpaceChangeListener.getCurrentSpacesDescriptor() != null
-				&& cloudSpaceChangeListener.getCurrentSpacesDescriptor().supportsSpaces();
+		return spaceChangeHandler.getCurrentSpacesDescriptor() != null
+				&& spaceChangeHandler.getCurrentSpacesDescriptor().supportsSpaces();
 	}
 
 	public boolean canFlipToNextPage() {

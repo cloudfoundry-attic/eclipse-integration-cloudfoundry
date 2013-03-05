@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,7 +19,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpac
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -48,17 +48,17 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 	private CloudFoundrySpacesWizardFragment spacesFragment;
 
-	private CloudSpaceChangeListener cloudSpaceChangeListener;
+	private CloudSpaceChangeHandler spaceChangeHandler;
 
 	@Override
 	public Composite createComposite(Composite parent, IWizardHandle wizard) {
 		initServer();
 
 		if (cfServer != null) {
-			cloudSpaceChangeListener = new WizardFragmentSpaceChangeListener(cfServer, wizard);
+			spaceChangeHandler = new WizardFragmentSpaceChangeHandler(cfServer, wizard);
 		}
 
-		credentialsPart = new CloudFoundryCredentialsPart(cfServer, wizard, cloudSpaceChangeListener);
+		credentialsPart = new CloudFoundryCredentialsPart(cfServer, wizard, spaceChangeHandler);
 		return credentialsPart.createComposite(parent);
 	}
 
@@ -161,11 +161,11 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		}
 	}
 
-	protected class WizardFragmentSpaceChangeListener extends CloudSpaceChangeListener {
+	protected class WizardFragmentSpaceChangeHandler extends CloudSpaceChangeHandler {
 
 		private final IWizardHandle wizardHandle;
 
-		public WizardFragmentSpaceChangeListener(CloudFoundryServer cloudServer, IWizardHandle wizardHandle) {
+		public WizardFragmentSpaceChangeHandler(CloudFoundryServer cloudServer, IWizardHandle wizardHandle) {
 			super(cloudServer);
 			this.wizardHandle = wizardHandle;
 		}
@@ -174,7 +174,7 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		protected void handleCloudSpaceDescriptorSelection(CloudSpacesDescriptor spacesDescriptor) {
 			if (spacesDescriptor != null && spacesDescriptor.supportsSpaces()) {
 				initServer();
-				spacesFragment = new CloudFoundrySpacesWizardFragment(cloudSpaceChangeListener, cfServer);
+				spacesFragment = new CloudFoundrySpacesWizardFragment(spaceChangeHandler, cfServer);
 			}
 			else {
 				spacesFragment = null;

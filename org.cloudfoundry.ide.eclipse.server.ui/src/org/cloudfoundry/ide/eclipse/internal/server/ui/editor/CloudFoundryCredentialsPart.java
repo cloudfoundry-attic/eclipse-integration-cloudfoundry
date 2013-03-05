@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -91,7 +91,7 @@ public class CloudFoundryCredentialsPart {
 
 	private Button cfSignupButton;
 
-	private CloudSpaceChangeListener cloudSpaceChangeListener;
+	private CloudSpaceChangeHandler spaceChangeHandler;
 
 	private Map<String, CloudVersion> localV2Cache = new HashMap<String, CloudVersion>();
 
@@ -124,15 +124,15 @@ public class CloudFoundryCredentialsPart {
 	}
 
 	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, WizardPage wizardPage,
-			CloudSpaceChangeListener cloudSpaceChangeListener) {
+			CloudSpaceChangeHandler spaceChangeHandler) {
 		this(cfServer, wizardPage);
-		this.cloudSpaceChangeListener = cloudSpaceChangeListener;
+		this.spaceChangeHandler = spaceChangeHandler;
 	}
 
 	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, IWizardHandle wizardHandle,
-			CloudSpaceChangeListener cloudSpaceChangeListener) {
+			CloudSpaceChangeHandler spaceChangeHandler) {
 		this(cfServer, wizardHandle);
-		this.cloudSpaceChangeListener = cloudSpaceChangeListener;
+		this.spaceChangeHandler = spaceChangeHandler;
 	}
 
 	public Composite createComposite(Composite parent) {
@@ -243,8 +243,8 @@ public class CloudFoundryCredentialsPart {
 		boolean clearV2Spaces = true;
 		String errorMsg = null;
 		try {
-			if (cloudSpaceChangeListener != null && userName != null && password != null && url != null) {
-				cloudSpaceChangeListener.updateDescriptor(url, userName, password, getRunnableContext());
+			if (spaceChangeHandler != null && userName != null && password != null && url != null) {
+				spaceChangeHandler.updateDescriptor(url, userName, password, getRunnableContext());
 
 				// Update the local cache
 				CloudVersion version = CloudUiUtil.getCloudVersion(url, cfServer);
@@ -499,9 +499,9 @@ public class CloudFoundryCredentialsPart {
 			cfSignupButton.setVisible(false);
 		}
 
-		if (clearSpaceDescriptor && cloudSpaceChangeListener != null) {
+		if (clearSpaceDescriptor && spaceChangeHandler != null) {
 			// Clear existing space
-			cloudSpaceChangeListener.clearDescriptor();
+			spaceChangeHandler.clearDescriptor();
 		}
 
 		if (folder.getSelectionIndex() == 0) {

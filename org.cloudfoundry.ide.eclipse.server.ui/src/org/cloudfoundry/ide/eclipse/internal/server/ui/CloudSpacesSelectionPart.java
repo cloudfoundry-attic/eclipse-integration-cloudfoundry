@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 - 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,7 +17,7 @@ import org.cloudfoundry.client.lib.domain.CloudOrganization;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeHandler;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -42,11 +42,11 @@ public class CloudSpacesSelectionPart {
 
 	private TreeViewer orgsSpacesViewer;
 
-	private CloudSpaceChangeListener spaceChangeListener;
+	private CloudSpaceChangeHandler spaceChangeHandler;
 
-	public CloudSpacesSelectionPart(CloudSpaceChangeListener spaceChangeListener, CloudFoundryServer cloudServer,
+	public CloudSpacesSelectionPart(CloudSpaceChangeHandler spaceChangeHandler, CloudFoundryServer cloudServer,
 			WizardPage wizardPage) {
-		this.spaceChangeListener = spaceChangeListener;
+		this.spaceChangeHandler = spaceChangeHandler;
 
 		String serverTypeId = cloudServer.getServer().getServerType().getId();
 
@@ -58,9 +58,9 @@ public class CloudSpacesSelectionPart {
 		}
 	}
 
-	public CloudSpacesSelectionPart(CloudSpaceChangeListener spaceChangeListener, CloudFoundryServer cloudServer,
+	public CloudSpacesSelectionPart(CloudSpaceChangeHandler spaceChangeHandler, CloudFoundryServer cloudServer,
 			IWizardHandle wizardHandle) {
-		this.spaceChangeListener = spaceChangeListener;
+		this.spaceChangeHandler = spaceChangeHandler;
 
 		String serverTypeId = cloudServer.getServer().getServerType().getId();
 
@@ -107,8 +107,8 @@ public class CloudSpacesSelectionPart {
 	}
 
 	protected void setInput() {
-		if (spaceChangeListener != null && orgsSpacesViewer != null) {
-			List<CloudOrganization> orgInput = spaceChangeListener.getCurrentSpacesDescriptor() != null ? spaceChangeListener
+		if (spaceChangeHandler != null && orgsSpacesViewer != null) {
+			List<CloudOrganization> orgInput = spaceChangeHandler.getCurrentSpacesDescriptor() != null ? spaceChangeHandler
 					.getCurrentSpacesDescriptor().getOrgs() : null;
 			if (orgInput != null && orgInput.size() > 0) {
 				CloudOrganization[] organizationInput = orgInput.toArray(new CloudOrganization[orgInput.size()]);
@@ -117,7 +117,7 @@ public class CloudSpacesSelectionPart {
 				// Expand all first, so that child elements can be selected
 				orgsSpacesViewer.setExpandedElements(organizationInput);
 
-				CloudSpace selectedSpace = spaceChangeListener.getCurrentSpacesDescriptor().getDefaultCloudSpace();
+				CloudSpace selectedSpace = spaceChangeHandler.getCurrentSpacesDescriptor().getDefaultCloudSpace();
 				if (selectedSpace != null) {
 
 					// First set the default cloud space as the selected space
@@ -162,8 +162,8 @@ public class CloudSpacesSelectionPart {
 	}
 
 	protected void setSpaceSelection(CloudSpace selectedSpace) {
-		if (spaceChangeListener != null) {
-			spaceChangeListener.setSelectedSpace(selectedSpace);
+		if (spaceChangeHandler != null) {
+			spaceChangeHandler.setSelectedSpace(selectedSpace);
 		}
 	}
 
@@ -213,8 +213,8 @@ public class CloudSpacesSelectionPart {
 		}
 
 		public Object[] getChildren(Object parentElement) {
-			if (parentElement instanceof CloudOrganization && spaceChangeListener != null) {
-				CloudSpacesDescriptor spaceDescriptor = spaceChangeListener.getCurrentSpacesDescriptor();
+			if (parentElement instanceof CloudOrganization && spaceChangeHandler != null) {
+				CloudSpacesDescriptor spaceDescriptor = spaceChangeHandler.getCurrentSpacesDescriptor();
 				if (spaceDescriptor != null) {
 					List<CloudSpace> spaces = spaceDescriptor.getOrgSpaces(((CloudOrganization) parentElement)
 							.getName());
