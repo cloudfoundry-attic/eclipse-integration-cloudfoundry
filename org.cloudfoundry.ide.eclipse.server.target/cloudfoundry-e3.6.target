@@ -32,6 +32,11 @@
 <unit id="org.eclipse.datatools.enablement.jdbc.feature.feature.group" version="1.8.2.v201010181125-4-29oB56N5N7L6PAQ"/>
 <unit id="org.eclipse.datatools.enablement.mysql.feature.feature.group" version="1.8.2.v201010181125-546AkF78Y7R9PAX77"/>
 <unit id="org.eclipse.datatools.enablement.postgresql.feature.feature.group" version="1.8.2.v201010181125-542AkF77g7V9N9e77"/>
+<unit id="org.eclipse.datatools.enablement.jdt.feature.feature.group" version="1.8.2.v201010181125-2-07w31211518181A"/>
+<unit id="org.eclipse.datatools.modelbase.feature.feature.group" version="1.8.2.v201010181125-77078CcNBGKBZI_FcRd"/>
+<unit id="org.eclipse.datatools.sqldevtools.feature.feature.group" version="1.8.2.v201010181125-7N7y7JFDrhqbGIFUNhcFodMMD2J0"/>
+<unit id="org.eclipse.datatools.sqldevtools.parsers.feature.feature.group" version="1.8.2.v201010181125-622BgJ9CR9XFcEWLP"/>
+<unit id="org.eclipse.datatools.sqldevtools.sqlbuilder.feature.feature.group" version="1.8.2.v201010181125-79-4EVVFJoFwKcN-L_"/>
 <repository location="http://download.eclipse.org/releases/helios"/>
 </location>
 <location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
