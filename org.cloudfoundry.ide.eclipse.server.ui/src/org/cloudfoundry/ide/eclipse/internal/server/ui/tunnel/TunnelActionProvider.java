@@ -94,14 +94,22 @@ public class TunnelActionProvider {
 		}
 
 		if (selectedService != null) {
-			// Check if a tunnel is open, if not, open one
+			// See if there is an existing tunnel that is open
+			CaldecottTunnelDescriptor descriptor = CloudFoundryPlugin.getCaldecottTunnelCache().getDescriptor(
+					cloudServer, selectedService.getName());
+			
+			IAction dataToolsAction = DataToolsTunnelAction.getAction(editorPage, selectedService, descriptor,
+					cloudServer);
+			
+			// Add connection to Eclipse data tools, if one exists for the given service
+			if (dataToolsAction != null) {
+				actions.add(dataToolsAction);
+			}
 
 			try {
 				List<ServiceCommand> commands = TunnelServiceCommandStore.getCurrentStore().getCommandsForService(
 						selectedService, true);
 				if (commands != null && !commands.isEmpty()) {
-					CaldecottTunnelDescriptor descriptor = CloudFoundryPlugin.getCaldecottTunnelCache().getDescriptor(
-							cloudServer, selectedService.getName());
 
 					for (ServiceCommand command : commands) {
 						actions.add(descriptor != null ? new LaunchTunnelCommandAction(editorPage, descriptor, command,
@@ -116,6 +124,7 @@ public class TunnelActionProvider {
 		}
 
 		actions.add(new CommandDefinitionActions(editorPage, selectedService));
+
 		return actions;
 	}
 
