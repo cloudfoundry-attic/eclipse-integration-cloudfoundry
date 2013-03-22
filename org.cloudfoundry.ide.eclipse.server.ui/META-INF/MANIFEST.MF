@@ -26,9 +26,6 @@ Require-Bundle: org.eclipse.wst.common.project.facet.ui,
  org.eclipse.jdt.ui,
  org.eclipse.jface.text,
  org.eclipse.datatools.connectivity,
- org.eclipse.datatools.connectivity.db.generic,
- org.eclipse.datatools.connectivity.db.generic.ui,
- org.eclipse.datatools.connectivity.dbdefinition.genericJDBC,
  org.eclipse.datatools.connectivity.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy

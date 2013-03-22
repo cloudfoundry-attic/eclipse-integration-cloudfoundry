@@ -27,6 +27,11 @@
 <unit id="org.eclipse.xsd.feature.group" version="0.0.0"/>
 <unit id="org.eclipse.xsd.edit.feature.group" version="0.0.0"/>
 <unit id="org.eclipse.sdk.ide" version="3.6.2.M20110210-1200"/>
+<unit id="org.eclipse.datatools.connectivity.feature.feature.group" version="1.8.2.v201010181125-7C7b8mEt1Zwkn9kfkUHHsoP_3to"/>
+<unit id="org.eclipse.datatools.enablement.feature.feature.group" version="1.8.2.v201010181125-7J8x7UBWwUN6z02z-fiI_w4x4uLf"/>
+<unit id="org.eclipse.datatools.enablement.jdbc.feature.feature.group" version="1.8.2.v201010181125-4-29oB56N5N7L6PAQ"/>
+<unit id="org.eclipse.datatools.enablement.mysql.feature.feature.group" version="1.8.2.v201010181125-546AkF78Y7R9PAX77"/>
+<unit id="org.eclipse.datatools.enablement.postgresql.feature.feature.group" version="1.8.2.v201010181125-542AkF77g7V9N9e77"/>
 <repository location="http://download.eclipse.org/releases/helios"/>
 </location>
 <location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
