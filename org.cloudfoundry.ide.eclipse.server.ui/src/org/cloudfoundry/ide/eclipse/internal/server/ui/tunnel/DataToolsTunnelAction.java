@@ -150,15 +150,7 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 					IStatus status = Status.OK_STATUS;
 
 					if (profile != null) {
-						// Set the password again, as Data Tools framework may
-						// not save the password for the profile
-						Properties properties = profile.getBaseProperties();
-						properties.setProperty(IJDBCConnectionProfileConstants.PASSWORD_PROP_ID,
-								tunnelDescriptor.getPassword());
-
-						profile.setBaseProperties(properties);
 						status = profile.connect();
-
 					}
 					else {
 						status = CloudFoundryPlugin.getErrorStatus("Unable to create Data Tools profile for: "
@@ -184,9 +176,9 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 		// Check if there is an existing profile
 		IConnectionProfile profile = null;
 		IConnectionProfile[] profiles = ProfileManager.getInstance().getProfiles();
-		
+
 		if (profiles != null) {
-			
+
 			// If a profile exists with the same exact name as given by the
 			// CF data source integration, then check credentials. If they
 			// match, use it
@@ -203,30 +195,10 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 					break;
 				}
 			}
-
-			if (profile != null && !matchesProfile(profile, tunnelDescriptor)) {
-				// Different credentials for the same profile, most likely
-				// meaning that a new tunnel was created, and the old profile
-				// has obsolete credentials. Delete the old one.
-				if (profile.getConnectionState() == IConnectionProfile.CONNECTED_STATE) {
-					IStatus status = profile.disconnect();
-					if (!status.isOK()) {
-						CloudFoundryPlugin.logError(status);
-					}
-				}
-				try {
-					ProfileManager.getInstance().deleteProfile(profile);
-				}
-				catch (ConnectionProfileException e) {
-					CloudFoundryPlugin.logError(e);
-				}
-				finally {
-					profile = null;
-				}
-			}
 		}
 
-		// Otherwise create one
+		// Otherwise create one, and if necessary also create a new driver
+		// definition
 		if (profile == null) {
 			DriverInstance driverInstance = null;
 
@@ -256,6 +228,12 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 
 					props.setProperty(IDriverMgmtConstants.PROP_DEFN_TYPE, driverTemplate.getId());
 
+					// Must set the properties as the driver dialogue
+					// throws exceptions if all properties are not set with
+					// values
+					// Properties get set again later regardless if a driver
+					// instance
+					// was created or not
 					setProperties(props, tunnelDescriptor);
 
 					properties.setBaseProperties(props);
@@ -299,6 +277,28 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 						+ CloudUtil.getServiceVendor(descriptor.getCloudService()) + " - "
 						+ tunnelDescriptor.getServiceName());
 			}
+
+		}
+
+		// Check if the profile credentials have changed, which may happen if a
+		// service
+		// in CF server is deleted and then recreated again with the same name
+		if (profile != null && !matchesProfile(profile, tunnelDescriptor)) {
+			// Different credentials for the same profile, most likely
+			// meaning that a new tunnel was created, and the old profile
+			// has obsolete credentials.
+			if (profile.getConnectionState() == IConnectionProfile.CONNECTED_STATE) {
+				IStatus status = profile.disconnect();
+				if (!status.isOK()) {
+					CloudFoundryPlugin.logError(status);
+				}
+			}
+
+			// Change the properties to reflect changes
+			// Set the properties for the tunnel values
+			Properties props = profile.getBaseProperties();
+			setProperties(props, tunnelDescriptor);
+			profile.setBaseProperties(props);
 
 		}
 
@@ -435,9 +435,7 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 			Properties properties = connection.getBaseProperties();
 			String userName = properties.getProperty(IJDBCConnectionProfileConstants.USERNAME_PROP_ID);
 
-			// Skip password as it may not be saved in the connection profile
-			// String password =
-			// properties.getProperty(IJDBCConnectionProfileConstants.PASSWORD_PROP_ID);
+			String password = properties.getProperty(IJDBCConnectionProfileConstants.PASSWORD_PROP_ID);
 
 			String url = properties.getProperty(IJDBCConnectionProfileConstants.URL_PROP_ID);
 
@@ -446,7 +444,8 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 			// For MySQL username, url and database name should not be null in
 			// the tunnel descriptor.
 			return tunnelDescriptor.getUserName().equals(userName) && tunnelDescriptor.getURL().equals(url)
-					&& tunnelDescriptor.getDatabaseName().equals(dataBaseName);
+					&& tunnelDescriptor.getDatabaseName().equals(dataBaseName)
+					&& tunnelDescriptor.getPassword().equals(password);
 		}
 
 	}
