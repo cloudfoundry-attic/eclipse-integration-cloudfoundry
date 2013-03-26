@@ -103,16 +103,16 @@
   <profiles>
 
     <profile>
-      <id>e36</id>
+      <id>e37</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
-        <dist.target>e3.6</dist.target>
-        <dist.platform.name>Helios</dist.platform.name>
-        <dist.platform.id>helios</dist.platform.id>		
-        <dist.platform.version>3.6</dist.platform.version>
-        <package.qualifierPrefix>e36</package.qualifierPrefix>
+        <dist.target>e3.7</dist.target>
+        <dist.platform.name>Indigo</dist.platform.name>
+        <dist.platform.id>indigo</dist.platform.id>		
+        <dist.platform.version>3.7</dist.platform.version>
+        <package.qualifierPrefix>e37</package.qualifierPrefix>
         <version.weaving>1.0.0.R3_6_2</version.weaving>
       </properties>
     </profile>

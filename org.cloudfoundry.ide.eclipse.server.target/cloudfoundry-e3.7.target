@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.6"?>
+<?pde version="3.7"?>
 
 <target name="cloudfoundry-e3.7" sequenceNumber="0">
 <locations>
-<location includeAllPlatforms="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+<location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.emf.codegen.feature.group" version="2.7.0.v20120130-0943"/>
 <unit id="org.eclipse.emf.common.feature.group" version="2.7.0.v20120127-1122"/>
 <unit id="org.eclipse.emf.common.ui.feature.group" version="2.7.0.v20120130-0943"/>
