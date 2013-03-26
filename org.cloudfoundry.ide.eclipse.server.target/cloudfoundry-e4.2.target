@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.6"?>
+
+<target name="cloudfoundry-e4.2" sequenceNumber="0">
+<locations>
+<location includeAllPlatforms="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+<unit id="org.eclipse.emf.ecore.feature.group" version="2.8.3.v20130125-0546"/>
+<unit id="org.eclipse.emf.codegen.feature.group" version="2.8.0.v20130125-0826"/>
+<unit id="org.eclipse.emf.common.feature.group" version="2.8.0.v20130125-0546"/>
+<unit id="org.eclipse.emf.common.ui.feature.group" version="2.7.0.v20130125-0826"/>
+<unit id="org.eclipse.emf.ecore.edit.feature.group" version="2.8.0.v20130125-0826"/>
+<unit id="org.eclipse.emf.edit.feature.group" version="2.8.0.v20130125-0826"/>
+<unit id="org.eclipse.emf.edit.ui.feature.group" version="2.8.0.v20130125-0826"/>
+<unit id="org.eclipse.gef.feature.group" version="3.9.0.201212170307"/>
+<unit id="org.eclipse.jst.common.fproj.enablement.jdt.feature.group" version="3.4.0.v201108231500-377DG8s73543J5H6D66"/>
+<unit id="org.eclipse.jst.enterprise_ui.feature.feature.group" version="3.4.2.v201301240600-7b7JINbFSK2WM3QNAEr799V-TyUp"/>
+<unit id="org.eclipse.jst.server_ui.feature.feature.group" version="3.4.0.v20120503_1042-7A77FHr9xFcC2CFLZBCJMHLg7D64"/>
+<unit id="org.eclipse.jst.web_ui.feature.feature.group" version="3.4.2.v201209272000-7F7DFSpC26SrlX9qoilV1RGQC9ivZy86-bz-IBHe"/>
+<unit id="org.eclipse.rse.feature.group" version="3.4.1.201302122026"/>
+<unit id="org.eclipse.wst.common.fproj.feature.group" version="3.4.0.v201202292300-377F8N8s735555393B7B"/>
+<unit id="org.eclipse.wst.common_ui.feature.feature.group" version="3.4.2.v201212051536-7C7AFeFEdhOaweLhCnQfylKlOxT5UW"/>
+<unit id="org.eclipse.wst.server_ui.feature.feature.group" version="3.3.201.v20120927_1316-7B7AFMXAtMe9qFHLb-MlSZwg8BB2"/>
+<unit id="org.eclipse.wst.web_ui.feature.feature.group" version="3.4.2.v201211061806-7O7MFu3EMkBK01NbrfU9ATE5cdZFz-OoeYjaI4d2"/>
+<unit id="org.eclipse.wst.ws_ui.feature.feature.group" version="3.4.2.v201209271757-7I7CFk_EtEoXHxg84K6n5182xr4K4NEjy79y71IB"/>
+<unit id="org.eclipse.wst.xml_core.feature.feature.group" version="3.4.2.v201211061806-7C7OFm9F7RZHQVHiOz-P0Up"/>
+<unit id="org.eclipse.wst.xml_ui.feature.feature.group" version="3.4.2.v201211061806-7H7GFeJDxumUrsn5qkiQgOEhsz0p60HAmPyU6VX"/>
+<unit id="org.eclipse.xsd.feature.group" version="2.8.1.v20130125-0826"/>
+<unit id="org.eclipse.xsd.edit.feature.group" version="2.7.0.v20130125-0826"/>
+<unit id="org.eclipse.sdk.ide" version="4.2.2.M20130204-1200"/>
+<unit id="org.eclipse.datatools.connectivity.feature.feature.group" version="1.10.2.v201209181447-7C7h9DEt1bxqP9criVgb9XdVJxM"/>
+<unit id="org.eclipse.datatools.enablement.feature.feature.group" version="1.10.2.v201209181447-7J9Q7UBWxiOqR0kgP1dlatUt_Gz-"/>
+<unit id="org.eclipse.datatools.enablement.jdbc.feature.feature.group" version="1.10.2.v201209181447-4-39oB5896KB97JHP"/>
+<unit id="org.eclipse.datatools.enablement.mysql.feature.feature.group" version="1.10.2.v201209181447-5478AkF7AK8X9JCREG"/>
+<unit id="org.eclipse.datatools.enablement.postgresql.feature.feature.group" version="1.10.2.v201209181447-553AkF7AK8PCRBQBP"/>
+<unit id="org.eclipse.datatools.enablement.jdt.feature.feature.group" version="1.10.2.v201209181447-2-07w312218332612"/>
+<unit id="org.eclipse.datatools.modelbase.feature.feature.group" version="1.10.2.v201209181447-7707GCcNBHLDaKTEcRi"/>
+<unit id="org.eclipse.datatools.sqldevtools.feature.feature.group" version="1.10.2.v201209181447-7N8B7WFDri4ohCyg6O43UgSwbFm0"/>
+<unit id="org.eclipse.datatools.sqldevtools.parsers.feature.feature.group" version="1.10.2.v201209181447-623BgJ9EE9ZJRDZLA"/>
+<unit id="org.eclipse.datatools.sqldevtools.sqlbuilder.feature.feature.group" version="1.10.2.v201209181447-79-7DEVVFNQJaPfHz0Uc"/>
+<repository location="http://download.eclipse.org/releases/juno"/>
+</location>
+<location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.aopalliance" version="1.0.0.v201105210816"/>
+<unit id="org.codehaus.jackson.core" version="1.6.0.v20101005-0925"/>
+<unit id="org.codehaus.jackson.mapper" version="1.6.0.v20101005-0925"/>
+<unit id="org.apache.commons.lang" version="2.4.0.v201005080502"/>
+<unit id="org.apache.commons.logging" version="1.1.1.v201101211721"/>
+<unit id="org.apache.commons.codec" version="1.3.0.v201101211617"/>
+<unit id="org.apache.commons.httpclient" version="3.1.0.v201012070820"/>
+<repository location="http://download.eclipse.org/tools/orbit/downloads/drops/R20120119162704/repository/"/>
+</location>
+<location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.springframework.aop" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.asm" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.beans" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.context" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.core" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.expression" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.web" version="3.1.1.RELEASE"/>
+<unit id="org.springframework.ide.eclipse.uaa.feature.feature.group" version="3.0.0.201208090942-RELEASE"/>
+<repository location="http://dist.springsource.com/release/TOOLS/eclipse-integration-commons/3.0.0.RELEASE/"/>
+</location>
+</locations>
+</target>
