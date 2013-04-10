@@ -62,27 +62,27 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 
 	private String serverTypeId;
 
-	private final CloudFoundryServer server;
+	protected final CloudFoundryServer server;
 
-	private final ApplicationModule module;
+	protected final ApplicationModule module;
 
-	private final CloudFoundryDeploymentWizardPage deploymentPage;
+	protected final CloudFoundryDeploymentWizardPage deploymentPage;
 
-	private Map<String, ApplicationRuntime> runtimeByLabels;
+	protected Map<String, ApplicationRuntime> runtimeByLabels;
 
 	private Combo runtimeCombo;
 
 	protected String filePath;
 
-	private Map<String, ApplicationFramework> frameworksByLabel;
+	protected Map<String, ApplicationFramework> frameworksByLabel;
 
 	private Combo frameworkCombo;
 
-	private final ApplicationWizardDescriptor descriptor;
+	protected final ApplicationWizardDescriptor descriptor;
 
-	private ApplicationRuntime selectedRuntime;
+	protected ApplicationRuntime selectedRuntime;
 
-	private ApplicationFramework selectedFramework;
+	protected ApplicationFramework selectedFramework;
 
 	public CloudFoundryApplicationWizardPage(CloudFoundryServer server,
 			CloudFoundryDeploymentWizardPage deploymentPage, ApplicationModule module,
@@ -338,9 +338,9 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 
 		frameworkCombo.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
-			
+
 				selectedFramework = frameworksByLabel.get(frameworkCombo.getText());
-				
+
 				update();
 			}
 		});

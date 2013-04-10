@@ -64,7 +64,6 @@ public class StandaloneApplicationDelegate extends ApplicationDelegate {
 		return null;
 	}
 
-	@Override
 	public List<ApplicationFramework> getSupportedFrameworks() {
 		List<ApplicationFramework> frameworks = new ArrayList<ApplicationFramework>();
 		frameworks.add(new ApplicationFramework(STANDALONE_FRAMEWORK,
@@ -72,25 +71,21 @@ public class StandaloneApplicationDelegate extends ApplicationDelegate {
 		return frameworks;
 	}
 
-	@Override
 	public boolean isSupportedFramework(String frameworkName) {
 		return STANDALONE_FRAMEWORK.equals(frameworkName);
 	}
 
-	@Override
 	public boolean providesApplicationArchive(IModule module) {
 		// Standalone applications are archived differently than .war file based
 		// Web Applications.
 		return true;
 	}
 
-	@Override
 	public boolean requiresURL() {
 		// URLs are optional for Java standalone applications
 		return false;
 	}
 
-	@Override
 	public List<ApplicationRuntime> getRuntimes(CloudFoundryServer activeServer)
 			throws CoreException {
 		List<ApplicationRuntime> runtimes = new JavaRuntimeTypeHelper(

@@ -83,11 +83,14 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	@Override
 	public boolean canFinish() {
-		boolean canFinish = false;
-		IApplicationWizardDelegate wizardDelegate = provider.getWizardDelegate();
-		if (wizardDelegate instanceof AbstractApplicationWizardDelegate) {
-			canFinish = ((AbstractApplicationWizardDelegate) wizardDelegate).isValid(applicationDescriptor);
+		boolean canFinish = super.canFinish();
+		if (canFinish) {
+			IApplicationWizardDelegate wizardDelegate = provider.getWizardDelegate();
+			if (wizardDelegate instanceof AbstractApplicationWizardDelegate) {
+				canFinish = ((AbstractApplicationWizardDelegate) wizardDelegate).isValid(applicationDescriptor);
+			}
 		}
+
 		return canFinish;
 	}
 

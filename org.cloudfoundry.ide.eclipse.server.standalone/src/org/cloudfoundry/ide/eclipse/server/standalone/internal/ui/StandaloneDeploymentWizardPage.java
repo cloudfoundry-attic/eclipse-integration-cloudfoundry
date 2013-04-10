@@ -30,10 +30,10 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 
-public class CloudFoundryStandaloneDeploymentWizardPage extends
+public class StandaloneDeploymentWizardPage extends
 		CloudFoundryDeploymentWizardPage implements ICommandChangeListener {
 
-	public CloudFoundryStandaloneDeploymentWizardPage(
+	public StandaloneDeploymentWizardPage(
 			CloudFoundryServer server, ApplicationModule module,
 			ApplicationWizardDescriptor descriptor) {
 		super(server, module, descriptor);
@@ -89,7 +89,7 @@ public class CloudFoundryStandaloneDeploymentWizardPage extends
 
 	@Override
 	protected void update(boolean updateButtons) {
-		canFinish = true;
+		canFinish = false;
 
 		String startCommand = standalonePart.getStandaloneStartCommand();
 
@@ -98,31 +98,29 @@ public class CloudFoundryStandaloneDeploymentWizardPage extends
 				urlText.getText(), startCommand, true);
 
 		IStatus status = validator.isValid();
-		canFinish = status.getSeverity() == IStatus.OK;
 
-		if (canFinish) {
+		if (status.getSeverity() == IStatus.OK) {
 
 			// Check if there is additional validation on the start command
-			canFinish = standalonePart.isStartCommandValid();
 
-			if (!canFinish) {
+			if (!standalonePart.isStartCommandValid()) {
 				setErrorMessage("Invalid start command entered.");
 			} else {
 
 				// A Staging must exist in order to set the start command
-				Staging staging = descriptor.getStaging();
-
-				if (staging == null) {
-					setErrorMessage("No framework or runtime set. Both are required values.");
-				} else {
-					staging.setCommand(startCommand);
-					setErrorMessage(null);
-				}
+				setErrorMessage(null);
+				canFinish = true;
 			}
 		} else {
 			setErrorMessage(status.getMessage() != null ? status.getMessage()
-					: "Invalid value entered.");
+					: "Invalid URL value entered.");
 		}
+
+		// Set the start command whether valid or not, as the contents of the
+		// descriptor are used to validate whether the wizard can complete or
+		// not
+		Staging staging = descriptor.getStaging();
+		staging.setCommand(startCommand);
 
 		if (updateButtons) {
 			getWizard().getContainer().updateButtons();
@@ -131,7 +129,8 @@ public class CloudFoundryStandaloneDeploymentWizardPage extends
 
 	@Override
 	public void updateUrl() {
-		// Do nothing, as updating URL with the application name is not applicable for Java standalone
+		// Do nothing, as updating URL with the application name is not
+		// applicable for Java standalone
 	}
 
 	public void handleEvent(StartCommandEvent event) {

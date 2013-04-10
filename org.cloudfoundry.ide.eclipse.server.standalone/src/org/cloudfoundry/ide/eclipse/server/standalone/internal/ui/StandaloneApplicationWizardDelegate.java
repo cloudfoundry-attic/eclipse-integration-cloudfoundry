@@ -15,11 +15,10 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.AbstractApplicationWizardDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationServicesWizardPage;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationWizardPage;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryDeploymentWizardPage;
 import org.eclipse.jface.wizard.IWizardPage;
 
 public class StandaloneApplicationWizardDelegate extends
@@ -28,16 +27,15 @@ public class StandaloneApplicationWizardDelegate extends
 	public StandaloneApplicationWizardDelegate() {
 	}
 
-	@Override
 	public List<IWizardPage> getWizardPages(
 			ApplicationWizardDescriptor descriptor,
 			CloudFoundryServer cloudServer, ApplicationModule applicationModule) {
 		List<IWizardPage> defaultPages = new ArrayList<IWizardPage>();
 
-		CloudFoundryDeploymentWizardPage deploymentPage = new CloudFoundryStandaloneDeploymentWizardPage(
+		StandaloneDeploymentWizardPage deploymentPage = new StandaloneDeploymentWizardPage(
 				cloudServer, applicationModule, descriptor);
 
-		CloudFoundryApplicationWizardPage runtimeFrameworkPage = new CloudFoundryApplicationWizardPage(
+		StandaloneApplicationWizardPage runtimeFrameworkPage = new StandaloneApplicationWizardPage(
 				cloudServer, deploymentPage, applicationModule, descriptor);
 
 		defaultPages.add(runtimeFrameworkPage);
@@ -56,6 +54,7 @@ public class StandaloneApplicationWizardDelegate extends
 
 		return super.isValid(applicationDescriptor)
 				&& applicationDescriptor.getStaging() != null
-				&& applicationDescriptor.getStaging().getCommand() != null;
+				&& !ValueValidationUtil.isEmpty(applicationDescriptor
+						.getStaging().getCommand());
 	}
 }
