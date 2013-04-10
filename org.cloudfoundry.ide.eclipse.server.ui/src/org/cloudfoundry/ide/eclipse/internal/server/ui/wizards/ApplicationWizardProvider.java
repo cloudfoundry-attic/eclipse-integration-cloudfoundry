@@ -21,13 +21,11 @@ import org.eclipse.core.runtime.IConfigurationElement;
  *  <p/>
  *  org.cloudfoundry.ide.eclipse.server.ui.applicationWizard
  *  
- *  <p/>
- *  
  */
 public class ApplicationWizardProvider extends AbstractApplicationProvider<IApplicationWizardDelegate> {
 
-	public ApplicationWizardProvider(IConfigurationElement configuration) {
-		super(configuration);
+	public ApplicationWizardProvider(IConfigurationElement configuration, String extensionPointID) {
+		super(configuration, extensionPointID);
 	}
 
 }

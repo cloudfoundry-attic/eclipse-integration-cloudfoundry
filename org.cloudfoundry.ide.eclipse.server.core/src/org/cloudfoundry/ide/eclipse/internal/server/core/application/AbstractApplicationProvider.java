@@ -34,8 +34,11 @@ public abstract class AbstractApplicationProvider<T> {
 
 	private String providerID;
 
-	protected AbstractApplicationProvider(IConfigurationElement configurationElement) {
+	private final String extensionPointID;
+
+	protected AbstractApplicationProvider(IConfigurationElement configurationElement, String extensionPointID) {
 		this.configurationElement = configurationElement;
+		this.extensionPointID = extensionPointID;
 	}
 
 	public String getProviderID() {
@@ -50,10 +53,9 @@ public abstract class AbstractApplicationProvider<T> {
 			try {
 				Object object = configurationElement.createExecutableExtension(CLASS_ELEMENT);
 				if (object == null) {
-					CloudFoundryPlugin.logError("Incorrect Cloud Foundry application provider"
-							+ object.getClass().getCanonicalName() + " must implement "
-							+ delegate.getClass().getCanonicalName());
-
+					CloudFoundryPlugin
+							.logError("No delegate class found. Must implement a delegate class. See extension point: "
+									+ extensionPointID + " for more details.");
 				}
 				else {
 					delegate = (T) object;

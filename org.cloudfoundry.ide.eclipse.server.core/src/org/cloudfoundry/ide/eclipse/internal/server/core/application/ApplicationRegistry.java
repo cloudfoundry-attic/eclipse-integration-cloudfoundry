@@ -170,7 +170,7 @@ public class ApplicationRegistry {
 				for (IConfigurationElement config : extension.getConfigurationElements()) {
 
 					if (APPLICATION_DELEGATE_EXT_ELEMENT.equals(config.getName())) {
-						ApplicationProvider provider = new ApplicationProvider(config);
+						ApplicationProvider provider = new ApplicationProvider(config, EXTENSION_POINT);
 						Priority priority = provider.getPriority();
 						String providerID = provider.getProviderID();
 						if (priority == null || providerID == null) {

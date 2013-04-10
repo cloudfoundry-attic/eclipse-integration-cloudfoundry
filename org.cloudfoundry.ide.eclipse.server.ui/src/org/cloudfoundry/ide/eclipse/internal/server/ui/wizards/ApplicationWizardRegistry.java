@@ -61,7 +61,8 @@ public class ApplicationWizardRegistry {
 				for (IConfigurationElement config : extension.getConfigurationElements()) {
 
 					if (APPLICATION_DELEGATE_EXT_ELEMENT.equals(config.getName())) {
-						ApplicationWizardProvider wizardProvider = new ApplicationWizardProvider(config);
+						ApplicationWizardProvider wizardProvider = new ApplicationWizardProvider(config,
+								EXTENSION_POINT);
 						String providerID = wizardProvider.getProviderID();
 						if (providerID == null) {
 							CloudFoundryPlugin

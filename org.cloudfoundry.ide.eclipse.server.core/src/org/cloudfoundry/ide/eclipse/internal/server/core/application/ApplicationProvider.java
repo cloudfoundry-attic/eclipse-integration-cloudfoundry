@@ -38,8 +38,8 @@ public class ApplicationProvider extends AbstractApplicationProvider<Application
 
 	private List<String> moduleIDs;
 
-	public ApplicationProvider(IConfigurationElement configurationElement) {
-		super(configurationElement);
+	public ApplicationProvider(IConfigurationElement configurationElement, String extensionPointID) {
+		super(configurationElement, extensionPointID);
 	}
 
 	public Priority getPriority() {
