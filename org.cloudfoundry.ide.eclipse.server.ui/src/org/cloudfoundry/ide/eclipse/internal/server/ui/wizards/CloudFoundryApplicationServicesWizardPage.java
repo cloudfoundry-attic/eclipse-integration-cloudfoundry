@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -82,33 +82,20 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 	private final List<CloudService> allServices = new ArrayList<CloudService>();
 
 	private final ApplicationModule module;
+	
+	private final ApplicationWizardDescriptor descriptor;
 
-	protected CloudFoundryApplicationServicesWizardPage(CloudFoundryServer cloudServer, ApplicationModule module) {
+	public CloudFoundryApplicationServicesWizardPage(CloudFoundryServer cloudServer, ApplicationModule module, ApplicationWizardDescriptor descriptor) {
 		super("Services");
 		this.cloudServer = cloudServer;
 		this.serverTypeId = module.getServerTypeId();
 		this.module = module;
+		this.descriptor  = descriptor;
 		populatedServicesFromLastDeployment();
 	}
 
 	public boolean isPageComplete() {
 		return canFinish;
-	}
-
-	/**
-	 * Returns a copy of the selected services to be added to a deployed app
-	 * @return may be empty if no services selected, but never null
-	 */
-	public List<String> getSelectedServicesID() {
-		return new ArrayList<String>(selectedServicesToBind.keySet());
-	}
-
-	/**
-	 * Returns a copy of the newly services to be added to the server
-	 * @return may be empty if nothing new added, but never null
-	 */
-	public List<CloudService> getAddedServices() {
-		return new ArrayList<CloudService>(servicesToAdd);
 	}
 
 	public void createControl(Composite parent) {
@@ -189,6 +176,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 						CloudService service = (CloudService) obj;
 						selectedServicesToBind.put(service.getName(), service);
 					}
+					setServicesToBind();
 				}
 			}
 		});
@@ -233,6 +221,8 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 		servicesToAdd.add(service);
 		allServices.add(service);
 		selectedServicesToBind.put(service.getName(), service);
+		setServicesToBind();
+		setServicesAdded();
 		setSelection();
 	}
 
@@ -261,6 +251,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 				if (selectedServicesToBind.containsKey(service.getName())) {
 					selectedServicesToBind.put(service.getName(), service);
 				}
+				setServicesToBind();
 			}
 			setSelection();
 
@@ -282,6 +273,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 				for (String name : serviceNames) {
 					selectedServicesToBind.put(name, null);
 				}
+				setServicesToBind();
 			}
 		}
 	}
@@ -289,6 +281,14 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 	protected void setSelection() {
 		servicesViewer.setInput(allServices.toArray(new CloudService[] {}));
 		servicesViewer.setCheckedElements(selectedServicesToBind.values().toArray());
+	}
+	
+	protected void setServicesToBind() {
+		descriptor.setSelectedServicesForBinding(new ArrayList<String>(selectedServicesToBind.keySet()));
+	}
+	
+	protected void setServicesAdded() {
+		descriptor.setCreatedCloudServices(new ArrayList<CloudService>(servicesToAdd));
 	}
 
 	public void setErrorText(String newMessage) {

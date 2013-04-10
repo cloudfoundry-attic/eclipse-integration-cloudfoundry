@@ -1,0 +1,183 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.cloudfoundry.ide.eclipse.server.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appInfo>
+         <meta.schema plugin="org.cloudfoundry.ide.eclipse.server.core" id="application" name="Application"/>
+      </appInfo>
+      <documentation>
+         INTERNAL EXTENSION POINT
+
+Contribute an application type like Java standalone or NodeJS into the Cloud Foundry plugin, which would allow that application type to be pushed to a Cloud Foundry server instance from within Eclipse, for example, via drag/dropping the applicaiton project onto a Cloud Foundry server in the Servers view. Additional separate contributions to the Eclipse WST framework like a module factory delegate and a WST project facet definition for that particular application type may also be necessary. See:
+
+org.eclipse.wst.common.project.facet.core.facets
+org.eclipse.wst.server.core.moduleArtifactAdapters
+org.eclipse.wst.server.core.moduleFactories
+
+
+As this is an internal extension point, API for the Java delegate contribution through this extension point may change overtime.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appInfo>
+            <meta.element />
+         </appInfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="applicationDelegate"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appInfo>
+                  <meta.attribute translatable="true"/>
+               </appInfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="applicationDelegate">
+      <annotation>
+         <documentation>
+            Application delegate that determines the frameworks and runtimes, if applicable, for a given application type. In addition, the delegate may also contribute a means to create an archive of all resources in a project of the given application type that need to be pushed to a Cloud Foundry server, which is then used by the Cloud Foundry plugin to generate a payload when pushing the application to a Cloud Foundry server.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="moduleID" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="priority" use="required">
+            <annotation>
+               <documentation>
+                  If multiple delegates support the same application type, the higher delegate will be used.
+               </documentation>
+            </annotation>
+            <simpleType>
+               <restriction base="string">
+                  <enumeration value="Low">
+                  </enumeration>
+                  <enumeration value="Medium">
+                  </enumeration>
+                  <enumeration value="High">
+                  </enumeration>
+               </restriction>
+            </simpleType>
+         </attribute>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  Application delegate that determines the frameworks and runtimes, if applicable, for a given application type. In addition, the delegate may also contribute a means to create an archive of all resources in a project of the given application type that need to be pushed to a Cloud Foundry server, which is then used by the Cloud Foundry plugin to generate a payload when pushing the application to a Cloud Foundry server.
+               </documentation>
+               <appInfo>
+                  <meta.attribute kind="java" basedOn=":org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate"/>
+               </appInfo>
+            </annotation>
+         </attribute>
+         <attribute name="providerID" type="string" use="required">
+            <annotation>
+               <documentation>
+                  A unique ID that identifies the provider for the application delegate. This is used to look up other related contributions through other Cloud Foundry framework extension points like UI pages to the Application deployment wizard for the application type.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="moduleID">
+      <annotation>
+         <documentation>
+            ID which represents the type of application that should be pushed by the Cloud Foundry plugin. This should be the same as the WST module ID associated with the application type. For example, for Dynamic Java Web applications, the module ID defined by the Eclipse WST framework is:
+
+jst.web
+
+A delegate can provide for multiple application types. At least one ID needs to be associated with the delegate.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  ID which represents the application that should be pushed by the Cloud Foundry plugin. This should be the same as the WST module ID associated with the application type. For example, for Dynamic Java Web applications, the module ID defined by the Eclipse WST framework is:
+
+jst.web
+
+A delegate can provide for multiple application types. At least one ID needs to be associated with the delegate.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="since"/>
+      </appInfo>
+      <documentation>
+         1.5.0
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="examples"/>
+      </appInfo>
+      <documentation>
+         [Enter extension point usage example here.]
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="apiinfo"/>
+      </appInfo>
+      <documentation>
+         Internal to Cloud Foundry as of 1.5.0. API may be subject to changes.
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="implementation"/>
+      </appInfo>
+      <documentation>
+         [Enter information about supplied implementation of this extension point.]
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="copyright"/>
+      </appInfo>
+      <documentation>
+         Copyright (c) 2013 VMware, Inc.
+All rights reserved. This program and the accompanying materials
+are made available under the terms of the Eclipse Public License v1.0
+which accompanies this distribution, and is available at
+http://www.eclipse.org/legal/epl-v10.html
+
+Contributors:
+VMware, Inc. - initial API and implementation
+      </documentation>
+   </annotation>
+
+</schema>

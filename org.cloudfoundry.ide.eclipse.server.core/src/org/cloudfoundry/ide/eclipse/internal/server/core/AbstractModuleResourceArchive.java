@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,15 +27,29 @@ import org.eclipse.wst.server.core.model.IModuleFolder;
 import org.eclipse.wst.server.core.model.IModuleResource;
 
 /**
- * Base Cloud Foundry client archive that supports IModuleResource and computes
- * sha1 and input stream entries for module resources. Creates an archive entry
- * for every module resource specified in the this archive. 
+ * An application archive generates input streams for an application's files
+ * when the Cloud Foundry framework is ready to the publish an application to a
+ * Cloud Foundry server. Files are represented by IModuleResource, and the
+ * archive generates an input stream from the IModuleResource.
  * 
- * Specialised classes
- * must define two entry types to create when a request is made for a module
- * resource: folder and file entries. These entries allow specialised classes to
- * determine how the sha1 and file sizes are computed for each corresponding
- * module resource, and whether they are obtained from cache or not.
+ * <p/>
+ * In addition, the application archive is also used to calculate sha1 has codes
+ * for each application file so that the Cloud Foundry server can determine what
+ * resources have changed prior to publishing any changes to the application,
+ * and to generate an input stream for all files that need to be published.
+ * <p/>
+ * For Java Web type applications (Spring, Grails, Java web), it is not
+ * necessary to provide a explicit application archive, as the Cloud Foundry
+ * plugin framework generates .war files for such applications and uses a
+ * built-in default application archive that works on this .war files.
+ * <p/>
+ * However for some other application types like Java standalone, .war files are
+ * not generated, and therefore serialisation of the application files is
+ * performed through an application archive that works on the application
+ * IModuleResource directly
+ * <p/>
+ * This application archive works directly on IModuleResource and computes sha1
+ * and input stream entries for an application from its IModuleResource.
  * 
  */
 public abstract class AbstractModuleResourceArchive implements ApplicationArchive {
@@ -102,6 +116,10 @@ public abstract class AbstractModuleResourceArchive implements ApplicationArchiv
 		return module;
 	}
 
+	/**
+	 * Base folder entry adapter for module resouce folders.
+	 * 
+	 */
 	public abstract class ModuleFolderEntryAdapter extends AbstractModuleResourceEntryAdapter {
 
 		public ModuleFolderEntryAdapter(IModuleFolder moduleResource) {
@@ -118,15 +136,22 @@ public abstract class AbstractModuleResourceArchive implements ApplicationArchiv
 		}
 
 		public byte[] getSha1Digest() {
+			// No sha1 hash code as it's a folder.
 			return null;
 		}
 
 		public InputStream getInputStream() throws IOException {
+			// No input stream needed for folders.
 			return null;
 		}
 
 	}
 
+	/**
+	 * Base file entry adapter that resolves an input stream to a File for each
+	 * module resource file.
+	 * 
+	 */
 	public abstract class ModuleFileEntryAdapter extends AbstractModuleResourceEntryAdapter {
 
 		protected final File file;

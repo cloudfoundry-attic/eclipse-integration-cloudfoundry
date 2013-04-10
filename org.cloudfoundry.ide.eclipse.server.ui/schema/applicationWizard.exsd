@@ -1,0 +1,122 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.cloudfoundry.ide.eclipse.server.ui" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appInfo>
+         <meta.schema plugin="org.cloudfoundry.ide.eclipse.server.ui" id="applicationWizard" name="Application Wizard"/>
+      </appInfo>
+      <documentation>
+         INTERNAL EXTENSION POINT
+
+Contribute pages to the application deployment wizard for an application type. The wizard page provider must contribute a provider ID that matches the provider ID of the related application type contribution through the extension point: 
+
+org.cloudfoundry.ide.eclipse.server.core.application
+
+As this is an internal extension point, API for the Java delegate contribution through this extension point may change overtime.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appInfo>
+            <meta.element />
+         </appInfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="applicationWizardDelegate"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appInfo>
+                  <meta.attribute translatable="true"/>
+               </appInfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="applicationWizardDelegate">
+      <annotation>
+         <documentation>
+            Provide pages to the application deployment wizard for the related application type.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="providerID" type="string" use="required">
+            <annotation>
+               <documentation>
+                  This must match the same provider ID as specified by the related application extension point:
+
+org.cloudfoundry.ide.eclipse.server.core.application
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  Provide pages to the application deployment wizard for the related application type.
+               </documentation>
+               <appInfo>
+                  <meta.attribute kind="java" basedOn=":org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.IApplicationWizardDelegate"/>
+               </appInfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="since"/>
+      </appInfo>
+      <documentation>
+         [Enter the first release in which this extension point appears.]
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="examples"/>
+      </appInfo>
+      <documentation>
+         [Enter extension point usage example here.]
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="apiinfo"/>
+      </appInfo>
+      <documentation>
+         [Enter API information here.]
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="implementation"/>
+      </appInfo>
+      <documentation>
+         [Enter information about supplied implementation of this extension point.]
+      </documentation>
+   </annotation>
+
+
+</schema>

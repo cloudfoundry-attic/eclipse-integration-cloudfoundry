@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -26,6 +26,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CaldecottUIHelper;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardProviderDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardRegistry;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryCredentialsWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.DeleteServicesWizard;
@@ -150,7 +152,19 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 				final DeploymentDescriptor[] depDescriptors = new DeploymentDescriptor[1];
 				Display.getDefault().syncExec(new Runnable() {
 					public void run() {
-						CloudFoundryApplicationWizard wizard = new CloudFoundryApplicationWizard(server, appModule);
+						ApplicationWizardProviderDelegate providerDelegate = ApplicationWizardRegistry
+								.getWizardProvider(appModule.getLocalModule());
+						if (providerDelegate == null) {
+							CloudFoundryPlugin.logError("Failed to open application wizard for: "
+									+ appModule.getApplicationId() + " when attempting to push application to "
+									+ server.getServer().getName()
+									+ ". No application provider found that corresponds to the application type: "
+									+ appModule.getLocalModule().getModuleType().getId());
+							return;
+						}
+
+						CloudFoundryApplicationWizard wizard = new CloudFoundryApplicationWizard(server, appModule,
+								providerDelegate);
 						WizardDialog dialog = new WizardDialog(PlatformUI.getWorkbench().getModalDialogShellProvider()
 								.getShell(), wizard);
 						int status = dialog.open();
@@ -163,9 +177,9 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 							descriptorToUpdate.staging = wizard.getStaging();
 							// First add any new services to the server
-							final List<CloudService> addedServices = wizard.getAddedCloudServices();
+							final List<CloudService> addedServices = wizard.getCreatedCloudServices();
 
-							if (!addedServices.isEmpty()) {
+							if (addedServices != null && !addedServices.isEmpty()) {
 								IProgressMonitor subMonitor = new SubProgressMonitor(monitor, addedServices.size());
 								try {
 									server.getBehaviour().createService(addedServices.toArray(new CloudService[0]),
@@ -183,7 +197,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 							// include
 							// past
 							// deployed services
-							List<String> selectedServices = wizard.getSelectedCloudServicesID();
+							List<String> selectedServices = wizard.getSelectedServicesForBinding();
 
 							descriptorToUpdate.deploymentInfo.setServices(selectedServices);
 							depDescriptors[0] = descriptorToUpdate;

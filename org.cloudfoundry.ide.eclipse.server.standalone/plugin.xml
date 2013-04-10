@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<!--
+/*******************************************************************************
+ * Copyright (c) 2012, 2013 VMware, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     VMware, Inc. - initial API and implementation
+ *******************************************************************************/
+-->
+<plugin>
+   
+    <extension point="org.eclipse.wst.common.project.facet.core.facets">
+
+	  <project-facet id="cloudfoundry.standalone.app"> 
+	    <label>Cloud Foundry Standalone Application</label>
+	    <description>Standalone applications can be deployed to a Cloud Foundry server instance.</description>
+	  </project-facet>
+	
+	  <project-facet-version facet="cloudfoundry.standalone.app" version="1.0">
+	    <action type="INSTALL">
+	          <delegate class="org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandaloneFacetHandler$CFFacetInstallDelegate"/>
+	    </action>
+	    <action type="UNINSTALL">
+	       <delegate class="org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandaloneFacetHandler$CFFacetUninstallDelegate"/>
+	    </action>
+	  </project-facet-version>   
+   </extension>
+   
+      <extension
+         point="org.eclipse.wst.server.core.moduleArtifactAdapters">
+      <moduleArtifactAdapter
+            class="org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandaloneArtifactAdapter"
+            id="org.cloudfoundry.ide.eclipse.server.core.StandaloneArtifactAdapter"
+            priority="1">
+         <enablement>
+            <with variable="selection">
+               <adapt type="org.eclipse.core.resources.IProject">
+               </adapt>
+            </with>
+         </enablement>
+      </moduleArtifactAdapter>
+   </extension>
+   
+    <extension
+         point="org.eclipse.wst.server.core.moduleFactories">
+      <moduleFactory
+            class="org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandAloneModuleFactory"
+            id="org.cloudfoundry.ide.eclipse.server.core.StandAloneModuleFactory"
+            order="1"
+            projects="true">
+         <moduleType
+         	types="cloudfoundry.standalone.app"
+         	versions="1.0"/>
+      </moduleFactory>
+   </extension>
+   
+    <extension
+          point="org.cloudfoundry.ide.eclipse.server.core.application">
+       <applicationDelegate
+             class="org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandaloneApplicationDelegate"
+             priority="Medium"
+             providerID="org.cloudfoundry.ide.eclipse.server.application.standalone">
+          <moduleID
+                id="cloudfoundry.standalone.app">
+          </moduleID>
+       </applicationDelegate>
+    </extension>
+    
+    <extension point="org.eclipse.ui.menus">
+    <menuContribution
+          allPopups="true"
+          class="org.cloudfoundry.ide.eclipse.server.standalone.internal.ui.ProjectExplorerMenuFactory"
+          locationURI="popup:org.eclipse.ui.projectConfigure?endof=additions">
+    </menuContribution>
+	</extension>
+    <extension
+          point="org.cloudfoundry.ide.eclipse.server.ui.applicationWizard">
+       <applicationWizardDelegate
+             class="org.cloudfoundry.ide.eclipse.server.standalone.internal.ui.StandaloneApplicationWizardDelegate"
+             providerID="org.cloudfoundry.ide.eclipse.server.application.standalone">
+       </applicationWizardDelegate>
+    </extension>
+
+</plugin>

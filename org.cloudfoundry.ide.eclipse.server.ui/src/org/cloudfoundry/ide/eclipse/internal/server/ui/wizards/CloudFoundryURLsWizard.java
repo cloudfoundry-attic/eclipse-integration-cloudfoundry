@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,6 +15,8 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.RepublishApplicationHandler;
@@ -25,6 +27,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.statushandlers.StatusManager;
+import org.eclipse.wst.server.core.IModule;
 
 /**
  * @author Terry Denney
@@ -41,20 +44,24 @@ public class CloudFoundryURLsWizard extends Wizard {
 
 	private boolean isPublished = true;
 
+	private ApplicationModule applicationModule;
+
 	private CloudFoundryURLsWizardPage page;
 
-	public CloudFoundryURLsWizard(CloudFoundryServer cloudServer, String appName, List<String> existingURIs) {
+	public CloudFoundryURLsWizard(CloudFoundryServer cloudServer, ApplicationModule applicationModule,
+			List<String> existingURIs) {
 		this.cloudServer = cloudServer;
-		this.appName = appName;
+		this.appName = applicationModule.getApplicationId();
+		this.applicationModule = applicationModule;
 		this.existingURIs = existingURIs;
 
 		setWindowTitle("Modify Mapped URLs");
 		setNeedsProgressMonitor(false);
 	}
 
-	public CloudFoundryURLsWizard(CloudFoundryServer cloudServer, String appName, List<String> existingURIs,
-			boolean isPublished) {
-		this(cloudServer, appName, existingURIs);
+	public CloudFoundryURLsWizard(CloudFoundryServer cloudServer, ApplicationModule applicationModule,
+			List<String> existingURIs, boolean isPublished) {
+		this(cloudServer, applicationModule, existingURIs);
 		this.isPublished = isPublished;
 	}
 
@@ -66,6 +73,21 @@ public class CloudFoundryURLsWizard extends Wizard {
 
 	public List<String> getURLs() {
 		return page.getURLs();
+	}
+
+	public boolean requiresURL() {
+		IModule localModule = applicationModule.getLocalModule();
+
+		if (localModule == null) {
+			return true;
+		}
+
+		ApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(localModule, null);
+		if (delegate == null) {
+			return true;
+		}
+
+		return delegate.requiresURL();
 	}
 
 	@Override

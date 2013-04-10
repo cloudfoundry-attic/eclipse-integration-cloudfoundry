@@ -2,7 +2,7 @@
 <?eclipse version="3.4"?>
 <!--
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -139,22 +139,5 @@
           subsystemConfigurationIds="cloudserver.applications">
     </systemType>
  </extension>
-
- 	<extension point="org.eclipse.wst.common.project.facet.core.facets">
-
-	  <project-facet id="cloudfoundry.standalone.app"> 
-	    <label>Cloud Foundry Standalone Application</label>
-	    <description>Standalone applications can be deployed to a Cloud Foundry server instance.</description>
-	  </project-facet>
-	
-	  <project-facet-version facet="cloudfoundry.standalone.app" version="1.0">
-	    <action type="INSTALL">
-	          <delegate class="org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneFacetHandler$CFFacetInstallDelegate"/>
-	    </action>
-	    <action type="UNINSTALL">
-	       <delegate class="org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneFacetHandler$CFFacetUninstallDelegate"/>
-	    </action>
-	  </project-facet-version>   
-   </extension>
 
 </plugin>

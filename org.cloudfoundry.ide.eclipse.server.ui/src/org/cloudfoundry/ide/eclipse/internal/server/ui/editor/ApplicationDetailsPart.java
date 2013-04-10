@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -635,8 +635,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		editURI.addHyperlinkListener(new HyperlinkAdapter() {
 			@Override
 			public void linkActivated(HyperlinkEvent e) {
-				CloudFoundryURLsWizard wizard = new CloudFoundryURLsWizard(cloudServer, getApplication()
-						.getApplicationId(), URIs, isPublished);
+				CloudFoundryURLsWizard wizard = new CloudFoundryURLsWizard(cloudServer, getApplication(), URIs,
+						isPublished);
 				WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(), wizard);
 				if (dialog.open() == Window.OK) {
 
@@ -716,7 +716,9 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			Composite planComposite = toolkit.createComposite(client);
 			GridLayoutFactory.fillDefaults().margins(0, 0).numColumns(ApplicationPlan.values().length).equalWidth(true)
 					.applyTo(planComposite);
-			applicationPlanPart = new ApplicationPlanPart(actualPlans, null);
+			ApplicationPlan defaultPlan = ApplicationPlan.free;
+			
+			applicationPlanPart = new ApplicationPlanPart(actualPlans, defaultPlan);
 
 			List<Button> planButtons = applicationPlanPart.createButtonControls(planComposite);
 			for (final Button button : planButtons) {
@@ -1118,18 +1120,19 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		if (selection.isEmpty()) {
 			return;
 		}
-			
+
 		Object instanceObject = selection.getFirstElement();
-		
+
 		if (instanceObject instanceof InstanceStatsAndInfo) {
-			
+
 			InstanceStats stats = ((InstanceStatsAndInfo) instanceObject).getStats();
-			
+
 			if (stats != null) {
 				ApplicationModule appModule = getApplication();
-				
+
 				try {
-					manager.add(new ShowConsoleAction(cloudServer, appModule.getApplication(), Integer.parseInt(stats.getId())));
+					manager.add(new ShowConsoleAction(cloudServer, appModule.getApplication(), Integer.parseInt(stats
+							.getId())));
 				}
 				catch (NumberFormatException e) {
 					// ignore

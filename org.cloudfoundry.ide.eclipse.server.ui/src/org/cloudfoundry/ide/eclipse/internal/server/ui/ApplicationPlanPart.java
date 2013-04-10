@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationPlan;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener.PartChangeEvent;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -32,6 +34,8 @@ public class ApplicationPlanPart {
 	private boolean enableControls;
 
 	private ApplicationPlan selectedPlan;
+
+	private IPartChangeListener listener;
 
 	private List<Button> buttons;
 
@@ -76,6 +80,9 @@ public class ApplicationPlanPart {
 
 					if (runRadioButton.getSelection()) {
 						selectedPlan = (ApplicationPlan) runRadioButton.getData();
+						if (listener != null) {
+							listener.handleChange(new PartChangeEvent(selectedPlan, Status.OK_STATUS));
+						}
 					}
 				}
 
@@ -104,6 +111,10 @@ public class ApplicationPlanPart {
 
 	public boolean isEnabled() {
 		return enableControls;
+	}
+
+	public void addPartChangeListener(IPartChangeListener listener) {
+		this.listener = listener;
 	}
 
 }

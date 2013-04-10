@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,12 +17,13 @@ import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.WaitWithProgressJob;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationFramework;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -32,6 +33,7 @@ import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
 import org.eclipse.wst.server.core.ServerUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 
 /**
  * This handles automatic publishing of an app that has an accessible workspace
@@ -166,8 +168,13 @@ public class RepublishApplicationHandler {
 		}
 
 		if (appInfo.getFramework() == null) {
-			String framework = org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil.getFramework(appModule);
-			appInfo.setFramework(framework);
+
+			ApplicationFramework appFramework = ApplicationRegistry.getApplicationFramework(appModule
+					.getLocalModule());
+			if (appFramework != null) {
+				appInfo.setFramework(appFramework.getFramework());
+			}
+
 		}
 
 		descriptor.applicationInfo = appInfo;

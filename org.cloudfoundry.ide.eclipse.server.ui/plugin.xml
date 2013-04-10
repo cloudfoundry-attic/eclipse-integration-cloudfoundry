@@ -13,6 +13,7 @@
  *******************************************************************************/
 -->
 <plugin>
+   <extension-point id="applicationWizard" name="Application Wizard" schema="schema/applicationWizard.exsd"/>
 
 	<extension point="org.eclipse.wst.server.ui.serverImages">
 		<image
@@ -275,11 +276,6 @@
         class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryActionContributionFactory"
         locationURI="popup:org.eclipse.wst.server.ui.ServersView?before=additions">
       </menuContribution>
-    <menuContribution
-          allPopups="true"
-          class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryProjectExplorerMenuFactory"
-          locationURI="popup:org.eclipse.ui.projectConfigure?endof=additions">
-    </menuContribution>
 	</extension>
  
    <extension point="org.eclipse.core.expressions.propertyTesters">
@@ -304,5 +300,12 @@
             id="org.cloudfoundry.ide.eclipse.server.ui.CloudFoundryPreferencePage"
             name="Cloud Foundry">
       </page>
+   </extension>
+   <extension
+         point="org.cloudfoundry.ide.eclipse.server.ui.applicationWizard">
+      <applicationWizardDelegate
+            class="org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.JavaWebApplicationWizardDelegate"
+            providerID="org.cloudfoundry.ide.eclipse.server.application.javaweb">
+      </applicationWizardDelegate>
    </extension>
 </plugin>

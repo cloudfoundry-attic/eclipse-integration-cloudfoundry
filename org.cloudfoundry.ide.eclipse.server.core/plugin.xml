@@ -15,8 +15,9 @@
 <plugin>
    <extension-point id="callback" name="UI Callback" schema="schema/callback.exsd"/>
    <extension-point id="branding" name="Cloud Foundry Service Branding" schema="schema/branding.exsd"/>
+   <extension-point id="application" name="Cloud Foundry Supported Application Type" schema="schema/application.exsd"/>
 	
-	 <extension
+   <extension
 	       point="org.eclipse.wst.server.core.moduleTypes">
 	    <moduleType
 	          id="org.cloudfoundry.ide.eclipse.server.core.CloudFoundryApplicationModule"
@@ -40,30 +41,19 @@
            id="org.cloudfoundry.ide.eclipse.debug.sourcepathcomputer">
      </sourcePathComputer>
   </extension>
-   <extension
-         point="org.eclipse.wst.server.core.moduleArtifactAdapters">
-      <moduleArtifactAdapter
-            class="org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneArtifactAdapter"
-            id="org.cloudfoundry.ide.eclipse.server.core.StandaloneArtifactAdapter"
-            priority="1">
-         <enablement>
-            <with variable="selection">
-               <adapt type="org.eclipse.core.resources.IProject">
-               </adapt>
-            </with>
-         </enablement>
-      </moduleArtifactAdapter>
-   </extension>
-    <extension
-         point="org.eclipse.wst.server.core.moduleFactories">
-      <moduleFactory
-            class="org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandAloneModuleFactory"
-            id="org.cloudfoundry.ide.eclipse.server.core.StandAloneModuleFactory"
-            order="1"
-            projects="true">
-         <moduleType
-         	types="cloudfoundry.standalone.app"
-         	versions="1.0"/>
-      </moduleFactory>
-   </extension>
+  <extension
+        point="org.cloudfoundry.ide.eclipse.server.core.application">
+     <applicationDelegate
+           class="org.cloudfoundry.ide.eclipse.internal.server.core.application.JavaWebApplicationDelegate"
+           priority="Low"
+           providerID="org.cloudfoundry.ide.eclipse.server.application.javaweb">
+        <moduleID
+              id="grails.app">
+        </moduleID>
+        <moduleID
+              id="jst.web">
+        </moduleID>
+     </applicationDelegate>
+  </extension>
+
  </plugin>

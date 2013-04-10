@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -37,13 +37,13 @@ import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceServerLookup;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneApplicationArchive;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneHandler;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -262,12 +262,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
-	protected boolean isStandalone(DeploymentDescriptor descriptor, ApplicationModule appModule) throws CoreException {
-		return (descriptor != null && descriptor.staging != null && CloudApplication.STANDALONE
-				.equals(descriptor.staging.getFramework()))
-				|| new StandaloneHandler(appModule, getCloudFoundryServer()).isSupportedStandalone();
-	}
-
 	private CloudApplication doDeployApplication(CloudFoundryOperations client, final ApplicationModule appModule,
 			final DeploymentDescriptor descriptor, IProgressMonitor monitor) throws CoreException {
 		Assert.isNotNull(descriptor.applicationInfo);
@@ -327,8 +321,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 			else {
 				ApplicationArchive archive = descriptor.applicationArchive;
-				if (archive instanceof ModuleResourceApplicationArchive) {
-					final ModuleResourceApplicationArchive moduleArchive = (ModuleResourceApplicationArchive) archive;
+				if (archive instanceof CachingApplicationArchive) {
+					final CachingApplicationArchive cachingArchive = (CachingApplicationArchive) archive;
 					client.uploadApplication(applicationId, archive, new UploadStatusCallback() {
 
 						public void onProcessMatchedResources(int length) {
@@ -336,7 +330,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						}
 
 						public void onMatchedFileNames(Set<String> matchedFileNames) {
-							moduleArchive.generatePartialWarFile(matchedFileNames);
+							cachingArchive.generatePartialWarFile(matchedFileNames);
 						}
 
 						public void onCheckResources() {
@@ -1678,49 +1672,67 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							started = true;
 						}
 						else {
-							if (isStandalone(descriptor, cloudModule)) {
+							// Determine if an archive is provided for the
+							// application type. Otherwise generated a .war
+							// file.
+							String framework = descriptor.staging != null ? descriptor.staging.getFramework() : null;
+							ApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(
+									cloudModule.getLocalModule(), framework);
 
-								// Get the module resources for the standalone
-								// as provided by the standlaone module factory
+							if (delegate != null && delegate.providesApplicationArchive(cloudModule.getLocalModule())) {
 								IModuleResource[] resources = getResources(modules);
-								if (resources == null || resources.length == 0) {
-									throw new CoreException(
-											CloudFoundryPlugin
-													.getErrorStatus("Unable to deploy standalone Java module. No deployable resources found in target or output folders."));
+
+								try {
+									ApplicationArchive archive = delegate.getApplicationArchive(
+											cloudModule.getLocalModule(), resources);
+									descriptor.applicationArchive = archive;
+								}
+								catch (CoreException e) {
+									// Log the error, but continue anyway to
+									// see
+									// if generating a .war file will work
+									// for
+									// this application type
+									CloudFoundryPlugin.logError(e);
+								}
+							}
+
+							// If no application archive was provided, then
+							// proceed with default creation of a .war file for
+							// the application
+							if (descriptor.applicationArchive == null) {
+								if (descriptor.isIncrementalPublish && !hasChildModules(modules)) {
+									// Determine if an incremental publish
+									// should
+									// occur
+									// For the time being support incremental
+									// publish
+									// only if the app does not have child
+									// modules
+									// To compute incremental deltas locally,
+									// modules must be provided
+									// Computes deltas locally before publishing
+									// to
+									// the server.
+									// Potentially more efficient. Should be
+									// used
+									// only on incremental
+									// builds
+
+									handleIncrementalPublish(descriptor, modules);
 								}
 								else {
-									descriptor.applicationArchive = new StandaloneApplicationArchive(modules[0],
-											Arrays.asList(resources));
+									// Create a full war archive
+									File warFile = CloudUtil.createWarFile(modules, server, progress);
+									if (!warFile.exists()) {
+										throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+												"Unable to create war file"));
+									}
+
+									CloudFoundryPlugin.trace("War file " + warFile.getName() + " created");
+									descriptor.applicationInfo.setWarFile(warFile);
+
 								}
-
-							}
-							else if (descriptor.isIncrementalPublish && !hasChildModules(modules)) {
-								// Determine if an incremental publish should
-								// occur
-								// For the time being support incremental
-								// publish
-								// only if the app does not have child modules
-								// To compute incremental deltas locally,
-								// modules must be provided
-								// Computes deltas locally before publishing to
-								// the server.
-								// Potentially more efficient. Should be used
-								// only on incremental
-								// builds
-
-								handleIncrementalPublish(descriptor, modules);
-							}
-							else {
-								// Create a full war archive
-								File warFile = CloudUtil.createWarFile(modules, server, progress);
-								if (!warFile.exists()) {
-									throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-											"Unable to create war file"));
-								}
-
-								CloudFoundryPlugin.trace("War file " + warFile.getName() + " created");
-								descriptor.applicationInfo.setWarFile(warFile);
-
 							}
 
 							// Tell webtools the module has been published
@@ -1791,8 +1803,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		IModuleResource[] allResources = getResources(modules);
 		IModuleResourceDelta[] deltas = getPublishedResourceDelta(modules);
 		List<IModuleResource> changedResources = getChangedResources(deltas);
-		ApplicationArchive moduleArchive = new ModuleResourceApplicationArchive(Arrays.asList(allResources),
-				changedResources, modules[0], descriptor.applicationInfo.getAppName());
+		ApplicationArchive moduleArchive = new CachingApplicationArchive(Arrays.asList(allResources), changedResources,
+				modules[0], descriptor.applicationInfo.getAppName());
 
 		descriptor.applicationArchive = moduleArchive;
 

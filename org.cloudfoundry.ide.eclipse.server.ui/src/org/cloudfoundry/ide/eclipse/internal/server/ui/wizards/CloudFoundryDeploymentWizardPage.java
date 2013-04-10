@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,20 +17,16 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationPlan;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentInfoValidator;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ApplicationPlanPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StandaloneStartCommandPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.IStartCommandChangeListener;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.standalone.StartCommandPartFactory.StartCommandEvent;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -67,64 +63,63 @@ import org.eclipse.wst.server.core.IModule;
  * @author Nieraj Singh
  */
 @SuppressWarnings("restriction")
-public class CloudFoundryDeploymentWizardPage extends WizardPage implements IStartCommandChangeListener {
+public class CloudFoundryDeploymentWizardPage extends WizardPage {
 
-	private boolean canFinish;
+	protected boolean canFinish;
 
-	private final String serverTypeId;
+	protected final String serverTypeId;
 
-	private Text urlText;
+	protected Text urlText;
 
-	protected final String deploymentName;
-
-	private int memory;
-
-	private final CloudFoundryServer server;
+	protected final CloudFoundryServer server;
 
 	protected DeploymentConfiguration deploymentConfiguration;
 
-	private Combo memoryCombo;
+	protected Combo memoryCombo;
 
-	private Composite runDebugOptions;
+	protected Composite runDebugOptions;
 
-	private Button regularStartOnDeploymentButton;
+	protected Button regularStartOnDeploymentButton;
 
-	private final CloudFoundryApplicationWizard wizard;
+	protected CloudFoundryApplicationWizard wizard;
 
-	private final ApplicationModule module;
+	protected final ApplicationModule module;
 
-	private String deploymentUrl;
+	protected ApplicationPlanPart applicationPlanPart;
 
-	private ApplicationAction deploymentMode;
-
-	private StandaloneStartCommandPart standalonePart;
-
-	private ApplicationPlanPart applicationPlanPart;
+	protected final ApplicationWizardDescriptor descriptor;
 
 	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, ApplicationModule module,
-			CloudFoundryApplicationWizard wizard) {
+			ApplicationWizardDescriptor descriptor) {
 		super("deployment");
 		this.server = server;
 		this.module = module;
-		this.wizard = wizard;
+		this.descriptor = descriptor;
 		this.serverTypeId = module.getServerTypeId();
 
-		DeploymentInfo deploymentInfo = null;
-		if (module != null) {
-			deploymentInfo = module.getLastDeploymentInfo();
-		}
+		initDeploymentInfoInDescriptor();
 
-		if (deploymentInfo != null) {
-			this.deploymentName = deploymentInfo.getDeploymentName();
-		}
-		else {
-			this.deploymentName = getDeploymentNameFromModule(module);
-		}
+	}
 
-		this.memory = CloudUtil.DEFAULT_MEMORY;
+	protected void initDeploymentInfoInDescriptor() {
+		// Create a new deployment info, and populate it from existing or
+		// default values, as well as user input
+		DeploymentInfo info = new DeploymentInfo();
+		descriptor.setDeploymentInfo(info);
+
+		DeploymentInfo lastInfo = (module != null) ? module.getLastDeploymentInfo() : null;
+
+		String deploymentName = (lastInfo != null) ? lastInfo.getDeploymentName() : getDeploymentNameFromModule(module);
+
+		info.setDeploymentName(deploymentName);
+
+		int memory = CloudUtil.DEFAULT_MEMORY;
+		info.setMemory(memory);
 
 		// Default should be to start in regular mode upon deployment
-		deploymentMode = ApplicationAction.START;
+		ApplicationAction deploymentMode = ApplicationAction.START;
+
+		setDeploymentMode(deploymentMode);
 	}
 
 	private String getDeploymentNameFromModule(ApplicationModule module) {
@@ -161,6 +156,8 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 	protected void refresh() {
 		if (updateConfiguration()) {
 			memoryCombo.removeAll();
+			int memory = 0;
+			// Select the default memory first
 			for (int option : deploymentConfiguration.getMemoryOptions()) {
 				memoryCombo.add(option + "M");
 				if (option == deploymentConfiguration.getDefaultMemory()) {
@@ -170,16 +167,42 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 					memory = option;
 				}
 			}
+			// If no default memory is found, select the first memory option
 			if (memory == 0 && deploymentConfiguration.getMemoryOptions().length > 0) {
 				memoryCombo.select(0);
 				memory = deploymentConfiguration.getMemoryOptions()[0];
 			}
 			memoryCombo.setEnabled(true);
+			setMemory(memory);
 		}
 	}
 
 	protected Point getRunDebugControlIndentation() {
 		return new Point(15, 5);
+	}
+
+	protected void setMemory(int memory) {
+		descriptor.getDeploymentInfo().setMemory(memory);
+	}
+
+	protected void setDeploymentMode(ApplicationAction deploymentMode) {
+		descriptor.setStartDeploymentMode(deploymentMode);
+	}
+
+	protected void setApplicationPlan(ApplicationPlan plan) {
+		if (descriptor instanceof CCNGV2ApplicationWizardDescriptor) {
+			((CCNGV2ApplicationWizardDescriptor) descriptor).setApplicationPlan(plan);
+		}
+	}
+
+	protected void setURL() {
+		String url = urlText != null && !urlText.isDisposed() ? urlText.getText() : null;
+
+		if (url != null) {
+			List<String> urls = new ArrayList<String>();
+			urls.add(url);
+			descriptor.getDeploymentInfo().setUris(urls);
+		}
 	}
 
 	protected boolean updateConfiguration() {
@@ -223,6 +246,8 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 			setImageDescriptor(banner);
 		}
 
+		this.wizard = (CloudFoundryApplicationWizard) getWizard();
+
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -232,28 +257,48 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 		topComposite.setLayout(topLayout);
 		topComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
-		Label label = new Label(topComposite, SWT.NONE);
+		createAreas(topComposite);
+
+		setControl(composite);
+
+		update(false);
+	}
+
+	protected void createAreas(Composite parent) {
+		createURLArea(parent);
+
+		createMemoryArea(parent);
+
+		createCCNGPlanArea(parent);
+
+		createStartOrDebugOptions(parent);
+	}
+
+	protected void createURLArea(Composite parent) {
+		Label label = new Label(parent, SWT.NONE);
 		label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 		label.setText("Deployed URL:");
 		label.setFocus();
 
-		urlText = new Text(topComposite, SWT.BORDER);
+		urlText = new Text(parent, SWT.BORDER);
 		urlText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		urlText.setEditable(true);
 		updateUrl();
 
 		urlText.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
-				deploymentUrl = urlText.getText();
+				setURL();
 				update();
 			}
 		});
+	}
 
-		label = new Label(topComposite, SWT.NONE);
+	protected void createMemoryArea(Composite parent) {
+		Label label = new Label(parent, SWT.NONE);
 		label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 		label.setText("Memory Reservation:");
 
-		memoryCombo = new Combo(topComposite, SWT.BORDER | SWT.READ_ONLY);
+		memoryCombo = new Combo(parent, SWT.BORDER | SWT.READ_ONLY);
 		memoryCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		memoryCombo.setEnabled(false);
 		memoryCombo.addSelectionListener(new SelectionAdapter() {
@@ -262,21 +307,28 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 				// should always parse correctly
 				int selectionIndex = memoryCombo.getSelectionIndex();
 				if (selectionIndex != -1) {
-					memory = deploymentConfiguration.getMemoryOptions()[selectionIndex];
+					int memory = deploymentConfiguration.getMemoryOptions()[selectionIndex];
+					setMemory(memory);
 				}
 			}
 		});
+	}
 
-		// Set application plan UI, if one exists.
-		List<ApplicationPlan> applicationPlans = server.getBehaviour().getApplicationPlans();
+	protected void createCCNGPlanArea(Composite parent) {
+		// Set application plan UI, the server supports application plans
+		List<ApplicationPlan> applicationPlans = getWizard() instanceof CloudFoundryApplicationWizard ? ((CloudFoundryApplicationWizard) getWizard())
+				.getV2ApplicationPlans() : null;
 		if (applicationPlans != null && !applicationPlans.isEmpty()) {
 
-			Label applicationPlanLabel = new Label(topComposite, SWT.NONE);
+			Label applicationPlanLabel = new Label(parent, SWT.NONE);
 			GridDataFactory.fillDefaults().grab(false, false).applyTo(applicationPlanLabel);
 			applicationPlanLabel.setText("Application Plan:");
-			applicationPlanPart = new ApplicationPlanPart(applicationPlans, null);
 
-			Composite planComposite = new Composite(topComposite, SWT.NONE);
+			ApplicationPlan defaultPlan = ApplicationPlan.free;
+			setApplicationPlan(defaultPlan);
+			applicationPlanPart = new ApplicationPlanPart(applicationPlans, defaultPlan);
+
+			Composite planComposite = new Composite(parent, SWT.NONE);
 			GridLayoutFactory.fillDefaults().margins(0, 0).numColumns(ApplicationPlan.values().length)
 					.applyTo(planComposite);
 			GridDataFactory.fillDefaults().grab(false, false).applyTo(planComposite);
@@ -286,42 +338,21 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 				GridDataFactory.fillDefaults().grab(false, false).applyTo(button);
 			}
 		}
-
-		if (wizard.isStandaloneApplication()) {
-			IProject project = module.getProject();
-			if (project == null) {
-				project = module.getLocalModule().getProject();
-			}
-			standalonePart = new StandaloneStartCommandPart(wizard.getStandaloneHandler().getStartCommand(), this,
-					project);
-			standalonePart.createPart(topComposite);
-		}
-
-		createStartOrDebugOptions(topComposite);
-
-		setControl(composite);
-
-		update(false);
-	}
-
-	public String getStandaloneStartCommand() {
-		if (standalonePart != null) {
-			return standalonePart.getStandaloneStartCommand();
-		}
-		return null;
 	}
 
 	protected void createStartOrDebugOptions(Composite parent) {
 
-		String startLabelText = (isServerDebugModeAllowed() && wizard.isStandaloneApplication()) ? "Start application:"
-				: "Start application on deployment";
+		String startLabelText = "Start application on deployment";
 
 		regularStartOnDeploymentButton = new Button(parent, SWT.CHECK);
 		regularStartOnDeploymentButton.setText(startLabelText);
+		ApplicationAction deploymentMode = descriptor.getStartDeploymentMode();
+
 		regularStartOnDeploymentButton.setSelection(deploymentMode == ApplicationAction.START);
+
 		GridData buttonData = new GridData(SWT.FILL, SWT.FILL, false, false);
 
-		if (!isServerDebugModeAllowed() || !wizard.isStandaloneApplication()) {
+		if (!isServerDebugModeAllowed()) {
 			buttonData.horizontalSpan = 2;
 			buttonData.verticalIndent = 10;
 		}
@@ -332,6 +363,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 
 			public void widgetSelected(SelectionEvent e) {
 				boolean start = regularStartOnDeploymentButton.getSelection();
+				ApplicationAction deploymentMode = null;
 				if (isServerDebugModeAllowed()) {
 					// delegate to the run or debug controls to decide which
 					// mode to select
@@ -343,6 +375,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 				else {
 					deploymentMode = start ? ApplicationAction.START : null;
 				}
+				setDeploymentMode(deploymentMode);
 
 			}
 		});
@@ -350,14 +383,8 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 		if (isServerDebugModeAllowed()) {
 			runDebugOptions = new Composite(parent, SWT.NONE);
 
-			if (wizard.isStandaloneApplication()) {
-				GridLayoutFactory.fillDefaults().numColumns(2).applyTo(runDebugOptions);
-			}
-			else {
-				GridLayoutFactory.fillDefaults().margins(getRunDebugControlIndentation()).numColumns(1)
-						.applyTo(runDebugOptions);
-			}
-
+			GridLayoutFactory.fillDefaults().margins(getRunDebugControlIndentation()).numColumns(1)
+					.applyTo(runDebugOptions);
 			GridDataFactory.fillDefaults().grab(false, false).applyTo(runDebugOptions);
 
 			final Button runRadioButton = new Button(runDebugOptions, SWT.RADIO);
@@ -368,9 +395,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 			runRadioButton.addSelectionListener(new SelectionAdapter() {
 
 				public void widgetSelected(SelectionEvent e) {
-
-					deploymentMode = ApplicationAction.START;
-
+					setDeploymentMode(ApplicationAction.START);
 				}
 			});
 
@@ -382,9 +407,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 			debugRadioButton.addSelectionListener(new SelectionAdapter() {
 
 				public void widgetSelected(SelectionEvent e) {
-
-					deploymentMode = ApplicationAction.DEBUG;
-
+					setDeploymentMode(ApplicationAction.DEBUG);
 				}
 			});
 
@@ -412,35 +435,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 			// Recalculate layout if run debug options are excluded
 			runDebugOptions.getParent().layout(true, true);
 
-			if (wizard.isStandaloneApplication()) {
-				String label = makeVisible ? "Start application:" : "Start application ";
-				regularStartOnDeploymentButton.setText(label);
-			}
 		}
-	}
-
-	public DeploymentInfo getDeploymentInfo() {
-		DeploymentInfo info = new DeploymentInfo();
-		info.setDeploymentName(deploymentName);
-		info.setMemory(memory);
-		List<String> uris = new ArrayList<String>();
-
-		// Be sure not to add an empty URL if it is a standalone application
-		if (!wizard.isStandaloneApplication() || !ValueValidationUtil.isEmpty(deploymentUrl)) {
-			uris.add(deploymentUrl);
-		}
-
-		info.setUris(uris);
-
-		return info;
-	}
-
-	public ApplicationAction getDeploymentMode() {
-		return deploymentMode;
-	}
-
-	public ApplicationPlan getApplicationPlan() {
-		return applicationPlanPart != null ? applicationPlanPart.getSelectedPlan() : null;
 	}
 
 	@Override
@@ -452,25 +447,16 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 		update(true);
 	}
 
-	private void update(boolean updateButtons) {
+	protected void update(boolean updateButtons) {
 		canFinish = true;
 
-		DeploymentInfoValidator validator = new DeploymentInfoValidator(urlText.getText(), getStandaloneStartCommand(),
-				wizard.isStandaloneApplication());
+		DeploymentInfoValidator validator = new DeploymentInfoValidator(urlText.getText(), null, false);
 
 		IStatus status = validator.isValid();
 		canFinish = status.getSeverity() == IStatus.OK;
 
 		if (canFinish) {
-			if (wizard.isStandaloneApplication() && standalonePart != null) {
-				canFinish = standalonePart.isStartCommandValid();
-			}
-			if (!canFinish) {
-				setErrorMessage("Invalid start command entered.");
-			}
-			else {
-				setErrorMessage(null);
-			}
+			setErrorMessage(null);
 		}
 		else {
 			setErrorMessage(status.getMessage() != null ? status.getMessage() : "Invalid value entered.");
@@ -483,25 +469,16 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage implements ISta
 
 	public void updateUrl() {
 
-		if (!wizard.isStandaloneApplication()) {
-			String appName = wizard.getApplicationInfo().getAppName();
-			if (appName != null) {
-				deploymentUrl = module.getLaunchUrl(appName);
-			}
-			else {
-				deploymentUrl = module.getDefaultLaunchUrl();
-			}
+		ApplicationInfo appInfo = descriptor.getApplicationInfo();
+		if (appInfo != null) {
+			String appName = appInfo.getAppName();
+			String deploymentUrl = (appName != null) ? module.getLaunchUrl(appName) : module.getDefaultLaunchUrl();
 
 			if (urlText != null) {
 				urlText.setText(deploymentUrl);
+				setURL();
 			}
 		}
-	}
 
-	public void handleEvent(StartCommandEvent event) {
-		if (event.equals(StartCommandEvent.UPDATE)) {
-			update(true);
-		}
 	}
-
 }

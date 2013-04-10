@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -23,6 +23,11 @@ import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.internal.ExternalModule;
 
 /**
+ * 
+ * Representation of an application published to a Cloud Foundry server,
+ * containing addition information like last deployment and application
+ * information.
+ * 
  * @author Christian Dupuis
  * @author Terry Denney
  * @author Leo Dos Santos
@@ -102,7 +107,7 @@ public class ApplicationModule extends ExternalModule {
 	public Staging getStaging() {
 		return staging;
 	}
-	
+
 	public synchronized ApplicationPlan getApplicationPlan() {
 		CloudApplication updatedApplication = getApplication();
 		ApplicationPlan applicationPlan = null;
@@ -120,8 +125,6 @@ public class ApplicationModule extends ExternalModule {
 		}
 		return applicationPlan;
 	}
-
-
 
 	public String getDefaultLaunchUrl() {
 		return getLaunchUrl(getName());

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,6 +22,7 @@ import java.util.Set;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -54,14 +55,6 @@ public class CloudFoundryServer extends ServerDelegate {
 			return Boolean.TRUE;
 		}
 	};
-
-	private static final String ID_GRAILS_APP = "grails.app";
-
-	private static final String ID_WEB_MODULE = "jst.web";
-
-	public static final String ID_JAVA_STANDALONE_APP = "cloudfoundry.standalone.app";
-
-	public static final String ID_JAVA_STANDALONE_APP_VERSION = "1.0";
 
 	/**
 	 * Attribute key for the a unique server ID used to store credentials in the
@@ -130,11 +123,10 @@ public class CloudFoundryServer extends ServerDelegate {
 			int size = add.length;
 			for (int i = 0; i < size; i++) {
 				IModule module = add[i];
-				if (!(ID_WEB_MODULE.equals(module.getModuleType().getId())
-						|| ID_JAVA_STANDALONE_APP.equals(module.getModuleType().getId()) || ID_GRAILS_APP.equals(module
-						.getModuleType().getId()))) {
+				if (!ApplicationRegistry.isSupportedModule(module)) {
 					return new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, 0,
-							"This server only supports running J2EE Web modules.", null);
+							"This server does not support applications of type: " + module.getModuleType().getId(),
+							null);
 				}
 
 				IStatus status;
@@ -249,8 +241,7 @@ public class CloudFoundryServer extends ServerDelegate {
 
 	@Override
 	public IModule[] getRootModules(IModule module) throws CoreException {
-		final String typeId = module.getModuleType().getId();
-		if (ID_WEB_MODULE.equals(typeId) || ID_GRAILS_APP.equals(typeId) || ID_JAVA_STANDALONE_APP.equals(typeId)) {
+		if (ApplicationRegistry.isSupportedModule(module)) {
 			IStatus status = canModifyModules(new IModule[] { module }, null);
 			if (status == null || !status.isOK()) {
 				throw new CoreException(status);

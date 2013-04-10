@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,7 +15,6 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.standalone.StandaloneHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IInputValidator;
@@ -59,15 +58,10 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 
 	private TableViewer viewer;
 
-	private StandaloneHandler standaloneHandler;
-
 	public CloudFoundryURLsWizardPage(CloudFoundryServer cloudServer, List<String> existingURIs,
 			ApplicationModule appModule) {
 		super("Mapped URIs");
 
-		if (appModule != null && cloudServer != null) {
-			standaloneHandler = new StandaloneHandler(appModule, cloudServer);
-		}
 		urls = new ArrayList<String>();
 		if (existingURIs != null) {
 			urls.addAll(existingURIs);
@@ -79,14 +73,6 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 		if (banner != null) {
 			setImageDescriptor(banner);
 		}
-	}
-
-	protected boolean isStandaloneApp() {
-		if (standaloneHandler == null) {
-			return false;
-		}
-
-		return standaloneHandler.isSupportedStandalone();
 	}
 
 	public void createControl(Composite parent) {
@@ -207,7 +193,7 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 	}
 
 	public boolean isPageComplete() {
-		return isStandaloneApp() || !urls.isEmpty();
+		return !((CloudFoundryURLsWizard) getWizard()).requiresURL() || !urls.isEmpty();
 	}
 
 	public List<String> getURLs() {
