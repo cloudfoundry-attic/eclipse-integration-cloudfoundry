@@ -86,6 +86,7 @@
           locationURI="popup:org.eclipse.ui.projectConfigure?endof=additions">
     </menuContribution>
 	</extension>
+	
     <extension
           point="org.cloudfoundry.ide.eclipse.server.ui.applicationWizard">
        <applicationWizardDelegate

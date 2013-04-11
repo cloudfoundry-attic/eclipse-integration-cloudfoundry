@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -34,6 +35,7 @@ import org.eclipse.wst.common.project.facet.core.IFacetedProject;
 import org.eclipse.wst.common.project.facet.core.IProjectFacet;
 import org.eclipse.wst.common.project.facet.core.ProjectFacetsManager;
 import org.eclipse.wst.server.core.IModule;
+import org.eclipse.wst.server.core.model.IModuleResource;
 
 /**
  * Java Web applications are the standard type of applications supported on
@@ -41,7 +43,7 @@ import org.eclipse.wst.server.core.IModule;
  * <p/>
  * This application delegate supports the above Java Web frameworks.
  */
-public class JavaWebApplicationDelegate extends ApplicationDelegate {
+public class JavaWebApplicationDelegate implements IApplicationDelegate {
 
 	private static final Map<String, String> JAVA_WEB_SUPPORTED_FRAMEWORKS = getJavaWebSupportedFrameworks();
 
@@ -201,12 +203,6 @@ public class JavaWebApplicationDelegate extends ApplicationDelegate {
 
 	}
 
-	public boolean providesApplicationArchive(IModule module) {
-		// No need for application archive as Java Web applications
-		// require a .war file created by the CF plugin framework
-		return false;
-	}
-
 	public boolean requiresURL() {
 		// All Java Web applications require a URL when pushed to a CF server
 		return true;
@@ -214,5 +210,18 @@ public class JavaWebApplicationDelegate extends ApplicationDelegate {
 
 	public List<ApplicationRuntime> getRuntimes(CloudFoundryServer activeServer) throws CoreException {
 		return new JavaRuntimeTypeHelper(activeServer).getRuntimeTypes();
+	}
+
+	public boolean providesApplicationArchive(IModule module) {
+		// No need for application archive as Java Web applications
+		// require a .war file created by the CF plugin framework
+		return false;
+	}
+
+	public ApplicationArchive getApplicationArchive(IModule module, IModuleResource[] moduleResources)
+			throws CoreException {
+		// No need for application archive, as the CF plugin framework generates
+		// .war files for Java Web applications.
+		return null;
 	}
 }

@@ -75,12 +75,6 @@ public class StandaloneApplicationDelegate extends ApplicationDelegate {
 		return STANDALONE_FRAMEWORK.equals(frameworkName);
 	}
 
-	public boolean providesApplicationArchive(IModule module) {
-		// Standalone applications are archived differently than .war file based
-		// Web Applications.
-		return true;
-	}
-
 	public boolean requiresURL() {
 		// URLs are optional for Java standalone applications
 		return false;

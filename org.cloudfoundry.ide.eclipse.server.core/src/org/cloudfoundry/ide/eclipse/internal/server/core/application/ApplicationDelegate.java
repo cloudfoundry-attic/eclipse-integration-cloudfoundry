@@ -28,7 +28,11 @@ public abstract class ApplicationDelegate implements IApplicationDelegate {
 	public ApplicationDelegate() {
 
 	}
-
+	
+	public boolean providesApplicationArchive(IModule module) {
+		return true;
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
