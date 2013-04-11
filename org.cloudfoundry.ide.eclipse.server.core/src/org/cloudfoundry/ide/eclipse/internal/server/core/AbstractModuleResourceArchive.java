@@ -31,6 +31,7 @@ import org.eclipse.wst.server.core.model.IModuleResource;
  * when the Cloud Foundry framework is ready to the publish an application to a
  * Cloud Foundry server. Files are represented by IModuleResource, and the
  * archive generates an input stream from the IModuleResource.
+ * 
  * <p/>
  * In addition, the application archive is also used to calculate sha1 has codes
  * for each application file so that the Cloud Foundry server can determine what
