@@ -71,6 +71,14 @@
        </applicationDelegate>
     </extension>
     
+    <extension
+         point="org.eclipse.wst.server.core.moduleTypes">
+      <moduleType
+            id="cloudfoundry.standalone.app"
+            name="Cloud Foundry Standalone Application">
+      </moduleType>
+   </extension>
+    
     <extension point="org.eclipse.ui.menus">
     <menuContribution
           allPopups="true"

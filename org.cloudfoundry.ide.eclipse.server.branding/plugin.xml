@@ -28,14 +28,6 @@
 		</runtimeType>
 	</extension>
 
-	<extension
-         point="org.eclipse.wst.server.core.moduleTypes">
-      <moduleType
-            id="cloudfoundry.standalone.app"
-            name="Cloud Foundry Standalone Application">
-      </moduleType>
-   </extension>
-
 	<extension point="org.eclipse.wst.server.core.serverTypes">
 		<serverType
 	        behaviourClass="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour"
