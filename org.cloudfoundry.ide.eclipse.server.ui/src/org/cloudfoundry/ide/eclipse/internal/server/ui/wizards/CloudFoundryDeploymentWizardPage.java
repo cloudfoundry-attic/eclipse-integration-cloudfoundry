@@ -252,12 +252,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-		Composite topComposite = new Composite(composite, SWT.NONE);
-		GridLayout topLayout = new GridLayout(2, false);
-		topComposite.setLayout(topLayout);
-		topComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-
-		createAreas(topComposite);
+		createAreas(composite);
 
 		setControl(composite);
 
@@ -265,11 +260,16 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 	}
 
 	protected void createAreas(Composite parent) {
-		createURLArea(parent);
+		
+		Composite topComposite = new Composite(parent, SWT.NONE);
+		GridLayout topLayout = new GridLayout(2, false);
+		topComposite.setLayout(topLayout);
+		topComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		createURLArea(topComposite);
 
-		createMemoryArea(parent);
+		createMemoryArea(topComposite);
 
-		createCCNGPlanArea(parent);
+		createCCNGPlanArea(topComposite);
 
 		createStartOrDebugOptions(parent);
 	}

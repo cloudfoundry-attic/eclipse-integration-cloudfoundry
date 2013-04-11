@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 
 public class StandaloneDeploymentWizardPage extends
@@ -43,20 +44,25 @@ public class StandaloneDeploymentWizardPage extends
 
 	@Override
 	protected void createAreas(Composite parent) {
-		createURLArea(parent);
+		
+		Composite topComposite = new Composite(parent, SWT.NONE);
+		GridLayout topLayout = new GridLayout(2, false);
+		topComposite.setLayout(topLayout);
+		topComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		
+		createURLArea(topComposite);
 
-		createMemoryArea(parent);
+		createMemoryArea(topComposite);
 
-		createCCNGPlanArea(parent);
+		createCCNGPlanArea(topComposite);
 
 		IProject project = module.getLocalModule().getProject();
 
 		standalonePart = new StandaloneStartCommandPart(new JavaStartCommand(),
 				this, project);
-		standalonePart.createPart(parent);
+		standalonePart.createPart(topComposite);
 
-		createStartOrDebugOptions(parent);
-
+		createStartOrDebugOptions(topComposite);
 	}
 
 	@Override
@@ -64,8 +70,7 @@ public class StandaloneDeploymentWizardPage extends
 		super.createStartOrDebugOptions(parent);
 
 		if (isServerDebugModeAllowed()) {
-			// Change the indentation for standalone if debug option is present
-			// Use default indentation
+			regularStartOnDeploymentButton.setText("Start application:");
 			GridData buttonData = new GridData(SWT.FILL, SWT.FILL, false, false);
 			regularStartOnDeploymentButton.setLayoutData(buttonData);
 
