@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -203,11 +203,16 @@ public class StsTestUtil {
 
 	public static void deleteAllProjects() throws CoreException {
 		IProject[] allProjects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		boolean deleted = false;
 		for (IProject project : allProjects) {
 			project.refreshLocal(IResource.DEPTH_INFINITE, null);
 			deleteProject(project, true);
+			deleted = true;
 		}
-		getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, null);
+
+		if (deleted) {
+			getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, null);
+		}
 	}
 
 	public static void deleteProject(IProject project, boolean force) throws CoreException {

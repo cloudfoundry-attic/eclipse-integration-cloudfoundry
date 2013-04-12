@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,8 +16,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
+import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
@@ -103,10 +106,55 @@ public class CloudFoundryTestFixture {
 			}
 		}
 
+		protected CloudFoundryServerBehaviour getBehaviour() {
+			return (CloudFoundryServerBehaviour) server.loadAdapter(CloudFoundryServerBehaviour.class, null);
+		}
+
+		public void setup() throws CoreException {
+			// Clean up all projects from workspace
+			StsTestUtil.cleanUpProjects();
+
+			// Perform clean up on existing published apps and services
+			if (server != null) {
+				CloudFoundryServerBehaviour serverBehavior = getBehaviour();
+				// Delete all applications
+				serverBehavior.deleteAllApplications(null);
+
+				// Delete all services
+				deleteAllServices();
+			}
+		}
+
+		public void deleteService(CloudService serviceToDelete) throws CoreException {
+			CloudFoundryServerBehaviour serverBehavior = getBehaviour();
+
+			String serviceName = serviceToDelete.getName();
+			List<String> services = new ArrayList<String>();
+			services.add(serviceName);
+
+			serverBehavior.deleteServices(services, new NullProgressMonitor());
+		}
+
+		public void deleteAllServices() throws CoreException {
+			List<CloudService> services = getAllServices();
+			for (CloudService service : services) {
+				deleteService(service);
+				CloudFoundryTestUtil.waitIntervals(1000);
+			}
+		}
+
+		public List<CloudService> getAllServices() throws CoreException {
+			List<CloudService> services = getBehaviour().getServices(new NullProgressMonitor());
+			if (services == null) {
+				services = new ArrayList<CloudService>(0);
+			}
+			return services;
+		}
+
 		public void dispose() throws CoreException {
 			if (webContainer != null) {
-				
-				//FIXNS: Commented out because of STS-3159
+
+				// FIXNS: Commented out because of STS-3159
 				// webContainer.stop();
 			}
 
@@ -150,8 +198,8 @@ public class CloudFoundryTestFixture {
 			URL localURL = FileLocator.toFileURL(resourceUrl);
 			File file = new File(localURL.getFile());
 			webContainer = new WebApplicationContainerBean(file);
-			
-			//FIXNS: Commented out because of STS-3159
+
+			// FIXNS: Commented out because of STS-3159
 			// webContainer.start();
 			return getServer();
 		}

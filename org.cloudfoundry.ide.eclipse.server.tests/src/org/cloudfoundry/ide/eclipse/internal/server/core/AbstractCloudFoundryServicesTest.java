@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,22 +18,13 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
-import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
 public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		// Make sure services used in this test are deleted first.
-		List<CloudService> services = getAllServices();
-		for (CloudService service : services) {
-			deleteService(service);
-			CloudFoundryTestUtil.waitIntervals(2000);
-		}
-
+	protected void deleteService(CloudService service) throws CoreException {
+		harness.deleteService(service);
 	}
 
 	@Override
@@ -122,14 +113,6 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 		serverBehavior.createService(new CloudService[] { service }, new NullProgressMonitor());
 	}
 
-	protected void deleteService(CloudService serviceToDelete) throws CoreException {
-		String serviceName = serviceToDelete.getName();
-		List<String> services = new ArrayList<String>();
-		services.add(serviceName);
-
-		serverBehavior.deleteServices(services, new NullProgressMonitor());
-	}
-
 	protected void assertServiceExists(CloudService expectedService) throws Exception {
 		String expectedServicename = expectedService.getName();
 		CloudService foundService = getCloudService(expectedServicename);
@@ -155,14 +138,6 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 			}
 		}
 		return foundService;
-	}
-
-	protected List<CloudService> getAllServices() throws CoreException {
-		List<CloudService> services = serverBehavior.getServices(new NullProgressMonitor());
-		if (services == null) {
-			services = new ArrayList<CloudService>(0);
-		}
-		return services;
 	}
 
 	protected void assertServiceNotExist(String expectedServicename) throws Exception {
