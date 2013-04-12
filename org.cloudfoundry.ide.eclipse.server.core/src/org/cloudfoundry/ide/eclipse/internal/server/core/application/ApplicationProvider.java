@@ -26,7 +26,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
  * configuration element
  * 
  */
-public class ApplicationProvider extends AbstractApplicationProvider<ApplicationDelegate> {
+public class ApplicationProvider extends AbstractApplicationProvider<IApplicationDelegate> {
 
 	private static final String MODULE_ID_ELEMENT = "moduleID";
 

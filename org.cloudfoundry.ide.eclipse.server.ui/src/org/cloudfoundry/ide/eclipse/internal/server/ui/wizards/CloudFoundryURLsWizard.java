@@ -15,8 +15,8 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.RepublishApplicationHandler;
@@ -82,7 +82,7 @@ public class CloudFoundryURLsWizard extends Wizard {
 			return true;
 		}
 
-		ApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(localModule, null);
+		IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(localModule, null);
 		if (delegate == null) {
 			return true;
 		}

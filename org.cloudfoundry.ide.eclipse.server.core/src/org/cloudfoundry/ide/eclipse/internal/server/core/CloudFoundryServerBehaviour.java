@@ -37,8 +37,8 @@ import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
@@ -1676,7 +1676,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							// application type. Otherwise generated a .war
 							// file.
 							String framework = descriptor.staging != null ? descriptor.staging.getFramework() : null;
-							ApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(
+							IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(
 									cloudModule.getLocalModule(), framework);
 
 							if (delegate != null && delegate.providesApplicationArchive(cloudModule.getLocalModule())) {

@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationProvider;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
@@ -35,7 +35,7 @@ public class ApplicationWizardRegistry {
 		// See if there is a corresponding application delegate
 		ApplicationProvider applicationProvider = ApplicationRegistry.getApplicationProvider(module);
 		String providerID = applicationProvider.getProviderID();
-		ApplicationDelegate delegate = applicationProvider.getDelegate();
+		IApplicationDelegate delegate = applicationProvider.getDelegate();
 		if (delegate != null) {
 			if (wizardProviders == null) {
 				load();

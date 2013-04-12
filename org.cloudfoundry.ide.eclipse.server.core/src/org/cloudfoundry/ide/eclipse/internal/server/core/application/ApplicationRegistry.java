@@ -46,7 +46,7 @@ public class ApplicationRegistry {
 	public static String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.core.application";
 
 	public static ApplicationFramework getApplicationFramework(IModule module) {
-		ApplicationDelegate delegate = getApplicationDelegate(module, null);
+		IApplicationDelegate delegate = getApplicationDelegate(module, null);
 		if (delegate != null) {
 			try {
 				return delegate.getFramework(module);
@@ -60,10 +60,10 @@ public class ApplicationRegistry {
 		return null;
 	}
 
-	public static ApplicationDelegate getApplicationDelegate(IModule module, String framework) {
+	public static IApplicationDelegate getApplicationDelegate(IModule module, String framework) {
 		ApplicationProvider provider = getApplicationProvider(module);
 		if (provider != null) {
-			ApplicationDelegate delegate = provider.getDelegate();
+			IApplicationDelegate delegate = provider.getDelegate();
 
 			try {
 				if ((module != null && delegate.getFramework(module) != null)
