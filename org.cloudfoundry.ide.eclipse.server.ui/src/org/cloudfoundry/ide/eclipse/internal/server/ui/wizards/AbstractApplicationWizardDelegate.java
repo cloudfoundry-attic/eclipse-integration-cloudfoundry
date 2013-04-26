@@ -14,13 +14,22 @@ public abstract class AbstractApplicationWizardDelegate implements IApplicationW
 
 	public boolean isValid(ApplicationWizardDescriptor applicationDescriptor) {
 		boolean canFinish = applicationDescriptor.getApplicationInfo() != null
-				&& applicationDescriptor.getDeploymentInfo() != null && applicationDescriptor.getStaging() != null
-				&& applicationDescriptor.getStaging().getFramework() != null
-				&& applicationDescriptor.getStaging().getRuntime() != null;
+				&& applicationDescriptor.getDeploymentInfo() != null;
 
-		if (canFinish && applicationDescriptor instanceof CCNGV2ApplicationWizardDescriptor) {
-			canFinish = ((CCNGV2ApplicationWizardDescriptor) applicationDescriptor).getApplicationPlan() != null;
+		if (canFinish) {
+			if (applicationDescriptor instanceof CCNGV2ApplicationWizardDescriptor) {
+				canFinish = ((CCNGV2ApplicationWizardDescriptor) applicationDescriptor).getApplicationPlan() != null;
+			}
+			else {
+				// Only "legacy" V1 servers require staging, framework and a
+				// runtime
+				canFinish = applicationDescriptor.getStaging() != null
+						&& applicationDescriptor.getStaging().getFramework() != null
+						&& applicationDescriptor.getStaging().getRuntime() != null;
+			}
+
 		}
+
 		return canFinish;
 	}
 

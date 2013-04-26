@@ -62,11 +62,15 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 		v2ApplicationPlans = server != null ? server.getBehaviour().getApplicationPlans() : null;
 
-		applicationDescriptor = v2ApplicationPlans != null && !v2ApplicationPlans.isEmpty() ? new CCNGV2ApplicationWizardDescriptor()
+		applicationDescriptor = isCCNGServer() && v2ApplicationPlans != null && !v2ApplicationPlans.isEmpty() ? new CCNGV2ApplicationWizardDescriptor()
 				: new ApplicationWizardDescriptor();
 
 		loadApplicationOptions();
 		setWindowTitle("Application");
+	}
+
+	public boolean isCCNGServer() {
+		return server.getBehaviour().supportsSpaces();
 	}
 
 	public List<ApplicationFramework> getFrameworks() {

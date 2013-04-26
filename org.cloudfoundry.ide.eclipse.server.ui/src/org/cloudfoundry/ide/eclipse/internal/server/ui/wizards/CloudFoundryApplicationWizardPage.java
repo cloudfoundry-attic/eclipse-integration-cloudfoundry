@@ -96,7 +96,6 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 	}
 
 	protected void initialiseFromLastDeployment() {
-		initRuntimesAndFrameworks();
 
 		ApplicationInfo lastApplicationInfo = null;
 
@@ -108,15 +107,9 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 
 		if (lastApplicationInfo == null) {
 			appName = getAppName(module);
-
 		}
 		else {
 			appName = lastApplicationInfo.getAppName();
-			// Use the framework from the previous application info
-			String lastFramework = lastApplicationInfo.getFramework();
-			if (lastFramework != null) {
-				selectedFramework = frameworksByLabel.get(lastFramework);
-			}
 		}
 
 		// Set the application info based on information from the previous
@@ -172,6 +165,17 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 			selectedFramework = frameworksByLabel.size() > 0 ? frameworksByLabel.values().iterator().next() : null;
 			selectedRuntime = runtimeByLabels.size() > 0 ? runtimeByLabels.values().iterator().next() : null;
 			setStaging();
+		}
+
+		// Override the default framework value with the one in the last
+		// application info, if available
+		ApplicationInfo lastApplicationInfo = module.getLastApplicationInfo();
+		if (lastApplicationInfo != null) {
+			// Use the framework from the previous application info
+			String lastFramework = lastApplicationInfo.getFramework();
+			if (lastFramework != null) {
+				selectedFramework = frameworksByLabel.get(lastFramework);
+			}
 		}
 
 	}
@@ -307,8 +311,15 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 			}
 		});
 
-		createRuntimeArea(composite);
-		createFrameworkArea(composite);
+		// Show framework and runtime if it is not a CCNG server that supports
+		// buildpacks, organisations and spaces
+		if (!(getWizard() instanceof CloudFoundryApplicationWizard)
+				|| !((CloudFoundryApplicationWizard) getWizard()).isCCNGServer()) {
+
+			initRuntimesAndFrameworks();
+			createFrameworkArea(composite);
+			createRuntimeArea(composite);
+		}
 
 		return composite;
 

@@ -34,9 +34,8 @@ import org.eclipse.swt.widgets.Composite;
 public class StandaloneDeploymentWizardPage extends
 		CloudFoundryDeploymentWizardPage implements ICommandChangeListener {
 
-	public StandaloneDeploymentWizardPage(
-			CloudFoundryServer server, ApplicationModule module,
-			ApplicationWizardDescriptor descriptor) {
+	public StandaloneDeploymentWizardPage(CloudFoundryServer server,
+			ApplicationModule module, ApplicationWizardDescriptor descriptor) {
 		super(server, module, descriptor);
 	}
 
@@ -44,12 +43,13 @@ public class StandaloneDeploymentWizardPage extends
 
 	@Override
 	protected void createAreas(Composite parent) {
-		
+
 		Composite topComposite = new Composite(parent, SWT.NONE);
 		GridLayout topLayout = new GridLayout(2, false);
 		topComposite.setLayout(topLayout);
-		topComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		
+		topComposite
+				.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
 		createURLArea(topComposite);
 
 		createMemoryArea(topComposite);
@@ -125,6 +125,10 @@ public class StandaloneDeploymentWizardPage extends
 		// descriptor are used to validate whether the wizard can complete or
 		// not
 		Staging staging = descriptor.getStaging();
+		if (staging == null) {
+			staging = new Staging(null);
+			descriptor.setStaging(staging);
+		}
 		staging.setCommand(startCommand);
 
 		if (updateButtons) {

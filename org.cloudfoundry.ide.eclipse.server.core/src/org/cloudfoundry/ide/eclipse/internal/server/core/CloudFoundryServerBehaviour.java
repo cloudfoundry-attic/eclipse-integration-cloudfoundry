@@ -306,10 +306,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 								descriptor.deploymentInfo.getServices());
 					}
 					else {
-						Staging v1LegacyStagingWrapper = new Staging(applicationInfo.getFramework());
-						client.createApplication(applicationId, v1LegacyStagingWrapper,
-								descriptor.deploymentInfo.getMemory(), descriptor.deploymentInfo.getUris(),
-								descriptor.deploymentInfo.getServices(), plan.name());
+						// For V2 CCNG, there is no need of framework
+						client.createApplication(applicationId, null, descriptor.deploymentInfo.getMemory(),
+								descriptor.deploymentInfo.getUris(), descriptor.deploymentInfo.getServices(),
+								plan.name());
 					}
 
 				}
@@ -983,18 +983,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return services;
 	}
 
-	public boolean supportsSpaces(IProgressMonitor monitor) throws CoreException {
-
-		if (supportsSpaces == null) {
-			supportsSpaces = new Request<Boolean>() {
-
-				protected Boolean doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-					return client.supportsSpaces();
-				}
-
-			}.run(monitor);
-		}
-
+	/**
+	 * True for servers that support organisations and spaces, as well as
+	 * buildpacks. False otherwise
+	 */
+	public boolean supportsSpaces() {
 		return supportsSpaces != null && supportsSpaces.booleanValue();
 	}
 
@@ -1516,6 +1509,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					if (clientRuntimes != null) {
 						runtimes.addAll(clientRuntimes);
 					}
+				}
+
+				if (supportsSpaces == null) {
+					supportsSpaces = client.supportsSpaces();
 				}
 
 				// Get application plans once per server behaviour instance as

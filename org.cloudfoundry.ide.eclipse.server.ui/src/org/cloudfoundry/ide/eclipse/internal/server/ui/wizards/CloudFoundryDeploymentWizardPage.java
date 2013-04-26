@@ -260,7 +260,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 	}
 
 	protected void createAreas(Composite parent) {
-		
+
 		Composite topComposite = new Composite(parent, SWT.NONE);
 		GridLayout topLayout = new GridLayout(2, false);
 		topComposite.setLayout(topLayout);
@@ -419,6 +419,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 	}
 
 	protected boolean isServerDebugModeAllowed() {
+
 		return CloudFoundryProperties.isDebugEnabled.testProperty(new IModule[] { module }, server);
 	}
 
