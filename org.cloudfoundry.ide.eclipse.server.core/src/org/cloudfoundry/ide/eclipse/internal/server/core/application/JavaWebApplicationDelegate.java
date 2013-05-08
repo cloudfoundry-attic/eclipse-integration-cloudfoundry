@@ -63,7 +63,7 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 
 	public ApplicationFramework getFramework(IModule module) throws CoreException {
 		IProject project = module != null ? module.getProject() : null;
-		// Determine if it is Grails, Spring or Lift
+		// Determine if it is Grails, Spring, Lift or Java EE
 		String framework = getFramework(project);
 
 		// Otherwise determine if it is a Java Web module.
@@ -177,6 +177,11 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 				if (foundSpringLibrary) {
 					return DeploymentConstants.SPRING;
 				}
+				
+				if (project.isAccessible() && project.getFile("src/main/resources/META-INF/persistence.xml").exists()) {
+					return DeploymentConstants.JAVA_EE;
+				}
+				
 			}
 		}
 		return null;
