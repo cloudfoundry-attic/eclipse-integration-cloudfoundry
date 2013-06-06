@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,9 +11,9 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationMasterDetailsBlock;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
@@ -161,18 +161,18 @@ public abstract class CloudFoundryEditorAction extends Action {
 									}
 								}
 							}
-							editorPage.setMessage(status.getMessage(), IMessageProvider.ERROR);
+							setErrorInPage(status);
 						}
 						else {
 							IModule currentModule = editorPage.getMasterDetailsBlock().getCurrentModule();
 							if (currentModule != null) {
 								ApplicationModule appModule = editorPage.getCloudServer().getApplication(currentModule);
 								if (appModule != null && appModule.getErrorMessage() != null) {
-									editorPage.setMessage(appModule.getErrorMessage(), IMessageProvider.ERROR);
+									setErrorInPage(appModule.getErrorMessage());
 									return;
 								}
 							}
-							editorPage.setMessage(null, IMessageProvider.NONE);
+							setErrorInPage((String) null);
 						}
 					}
 				});
@@ -181,8 +181,25 @@ public abstract class CloudFoundryEditorAction extends Action {
 		return job;
 	}
 
+	/**
+	 * Default behaviour is to display the error from the status. Subclasses can
+	 * override to show other messages.
+	 */
 	protected void display404Error(IStatus status) {
-		editorPage.setMessage(status.getMessage(), IMessageProvider.ERROR);
+		setErrorInPage(status);
+	}
+
+	protected void setErrorInPage(IStatus status) {
+		setErrorInPage(status.getMessage());
+	}
+
+	protected void setErrorInPage(String message) {
+		if (message == null) {
+			editorPage.setMessage(null, IMessageProvider.NONE);
+		}
+		else {
+			editorPage.setMessage(message, IMessageProvider.ERROR);
+		}
 	}
 
 	public void setUserAction(boolean userAction) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 VMware, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -43,7 +43,6 @@ import org.eclipse.wst.server.core.IServerListener;
 import org.eclipse.wst.server.core.ServerEvent;
 import org.eclipse.wst.server.ui.editor.ServerEditorPart;
 
-
 /**
  * @author Terry Denney
  * @author Leo Dos Santos
@@ -65,6 +64,8 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 	private ScrolledForm sform;
 
 	private int[] applicationMemoryChoices;
+
+	private final int MAX_ERROR_MESSAGE = 100;
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -111,7 +112,7 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 	public List<CloudService> getServices() {
 		return services;
 	}
-	
+
 	public int[] getApplicationMemoryChoices() {
 		return applicationMemoryChoices;
 	}
@@ -142,27 +143,29 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 		if (cloudServer == null) {
 			return Status.CANCEL_STATUS;
 		}
-		
+
 		CloudFoundryServerBehaviour serverBehaviour = cloudServer.getBehaviour();
-		
+
 		if (area == RefreshArea.MASTER || area == RefreshArea.ALL) {
 			// refresh applications
 			serverBehaviour.refreshModules(monitor);
-	
+
 			// refresh services
 			setServices(serverBehaviour.getServices(monitor));
-			
+
 			setApplicationMemoryChoices(serverBehaviour.getApplicationMemoryChoices());
 		}
-		
-		if (area == RefreshArea.DETAIL || area == RefreshArea.ALL) {	
+
+		if (area == RefreshArea.DETAIL || area == RefreshArea.ALL) {
 			if (module != null) {
 				ApplicationModule appModule = cloudServer.getApplication(module);
 
 				try {
-					CloudApplication application = serverBehaviour.getApplication(appModule.getApplicationId(), monitor);
+					CloudApplication application = serverBehaviour
+							.getApplication(appModule.getApplicationId(), monitor);
 					appModule.setCloudApplication(application);
-				} catch (CoreException e) {
+				}
+				catch (CoreException e) {
 					// application is not deployed to server yet
 				}
 
@@ -172,19 +175,22 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 					InstancesInfo info = serverBehaviour.getInstancesInfo(appModule.getApplicationId(), monitor);
 					appModule.setApplicationStats(stats);
 					appModule.setInstancesInfo(info);
-					
+
 					// Check if V2, then set the application plan as well
-					if (cloudServer.supportsCloudSpaces() ) {
+					if (cloudServer.supportsCloudSpaces()) {
 						List<ApplicationPlan> plans = serverBehaviour.getApplicationPlans();
-						
-						//FIXNS: At the moment, the client does not support getting plans for an app
+
+						// FIXNS: At the moment, the client does not support
+						// getting plans for an app
 						// NEEDS TO BE FIXED on the client side
 						if (plans != null && !plans.isEmpty()) {
 							// Set the plan once this is implemented:
-							// ApplicationPlan plan = serverBehavior.getApplicationPlan(appName);
-							// if (plan != null ) {appModule.setApplicationPlan(plan);}
+							// ApplicationPlan plan =
+							// serverBehavior.getApplicationPlan(appName);
+							// if (plan != null )
+							// {appModule.setApplicationPlan(plan);}
 						}
-						
+
 					}
 				}
 				else {
@@ -209,18 +215,37 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 	}
 
 	public void setMessage(String message, int messageType) {
-		if (message == null) {
+		String messageToDisplay = message;
+		if (messageToDisplay == null) {
 			sform.setMessage(null, IMessageProvider.NONE);
 		}
 		else {
-			sform.setMessage(message, messageType);
+			// First replace all return carriages, or new lines with spaces
+			StringBuffer buffer = new StringBuffer(messageToDisplay);
+			for (int i = 0; i < buffer.length(); i++) {
+				char ch = buffer.charAt(i);
+				if (ch == '\r' || ch == '\n') {
+					buffer.replace(i, i + 1, " ");
+				}
+			}
+
+			if (buffer.length() > MAX_ERROR_MESSAGE) {
+				String endingSegment = "... (see error log)";
+
+				messageToDisplay = buffer.substring(0, MAX_ERROR_MESSAGE).trim() + endingSegment;
+				CloudFoundryPlugin.logError(message);
+			} else {
+				messageToDisplay = buffer.toString();
+			}
+
+			sform.setMessage(messageToDisplay, messageType);
 		}
 	}
 
 	public void setServices(List<CloudService> services) {
 		this.services = services;
 	}
-	
+
 	public void setApplicationMemoryChoices(int[] applicationMemoryChoices) {
 		this.applicationMemoryChoices = applicationMemoryChoices;
 	}
@@ -236,25 +261,25 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 					// FIXME: error handling
 				}
 			}
-			
-			// ignore EVENT_UPDATE_INSTANCES as refresh will be called after instances are updated
+
+			// ignore EVENT_UPDATE_INSTANCES as refresh will be called after
+			// instances are updated
 			if (event.getType() != CloudServerEvent.EVENT_UPDATE_INSTANCES) {
 				refresh();
 			}
 		}
 
 		public void serverChanged(ServerEvent event) {
-			// refresh when server is saved, e.g. due to add/remove of modules 
+			// refresh when server is saved, e.g. due to add/remove of modules
 			if (event.getKind() == ServerEvent.SERVER_CHANGE) {
-				refresh();	
+				refresh();
 			}
 		}
 
 		private void refresh() {
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
-					if (mform != null && mform.getForm() != null
-							&& !mform.getForm().isDisposed()) {
+					if (mform != null && mform.getForm() != null && !mform.getForm().isDisposed()) {
 						masterDetailsBlock.refreshUI(RefreshArea.ALL);
 					}
 				}
