@@ -20,6 +20,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 
@@ -90,7 +91,12 @@ public class TestCallback extends CloudFoundryCallback {
 			descriptor.deploymentInfo.setUris(Collections.singletonList(url));
 		}
 		else {
-			descriptor.deploymentInfo.setUris(Collections.singletonList(module.getDefaultLaunchUrl()));
+			try {
+				descriptor.deploymentInfo.setUris(Collections.singletonList(module.getDefaultLaunchUrl()));
+			}
+			catch (CoreException e) {
+				throw new Error(e);
+			}
 		}
 
 		return descriptor;

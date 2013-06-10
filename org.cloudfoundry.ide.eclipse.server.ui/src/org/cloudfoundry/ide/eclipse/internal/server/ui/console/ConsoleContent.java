@@ -11,18 +11,19 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.FileContent;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.console.MessageConsole;
-import org.springframework.http.HttpStatus;
 
 /**
  * Gets console content from the stderror and stdout log files for a given
@@ -41,17 +42,9 @@ public class ConsoleContent {
 
 	protected final CloudFoundryServer cloudServer;
 
-	protected final CloudApplication app;
+	protected final List<FileContentHandler> standardOutputContent = new ArrayList<FileContentHandler>();
 
-	protected final int instanceIndex;
-
-	protected int stderrOffset = 0;
-
-	protected String stderrPath = "logs/stderr.log";
-
-	protected int stdoutOffset = 0;
-
-	protected String stdoutPath = "logs/stdout.log";
+	protected final List<FileContentHandler> errorOutputContent = new ArrayList<FileContentHandler>();
 
 	protected final MessageConsole console;
 
@@ -60,8 +53,7 @@ public class ConsoleContent {
 		this.stdOut = console.newOutputStream();
 		this.stdError = console.newOutputStream();
 		this.cloudServer = cloudServer;
-		this.app = app;
-		this.instanceIndex = instanceIndex;
+
 		this.console = console;
 
 		if (stdError != null) {
@@ -71,6 +63,28 @@ public class ConsoleContent {
 				}
 			});
 		}
+
+		List<FileContent> fileContent = cloudServer.getBehaviour().getFileContent();
+
+		// Regardless of how many contents there are, there are only two streams
+		// available
+		// to send the content to the console: either use the error stream, or
+		// the standard out stream.
+		for (FileContent content : fileContent) {
+			if (content.isError()) {
+				errorOutputContent
+						.add(getFileContentHandler(content, getStdErrorStream(), app.getName(), instanceIndex));
+			}
+			else {
+				standardOutputContent.add(getFileContentHandler(content, getStdOutStream(), app.getName(),
+						instanceIndex));
+			}
+		}
+	}
+
+	protected FileContentHandler getFileContentHandler(FileContent content, OutputStream outStream, String appName,
+			int instanceIndex) {
+		return new FileContentHandler(content, outStream, appName, instanceIndex);
 	}
 
 	protected IOConsoleOutputStream getStdErrorStream() {
@@ -82,9 +96,15 @@ public class ConsoleContent {
 	}
 
 	public void reset() {
-		stderrOffset = 0;
-		stdoutOffset = 0;
+		resetFileContent(standardOutputContent);
+		resetFileContent(errorOutputContent);
 		console.clearConsole();
+	}
+
+	protected void resetFileContent(List<FileContentHandler> contents) {
+		for (FileContentHandler contentUI : contents) {
+			contentUI.reset();
+		}
 	}
 
 	/**
@@ -97,56 +117,36 @@ public class ConsoleContent {
 	 * @throws IOException
 	 */
 	public Result getFileContent(IProgressMonitor monitor) throws CoreException {
-		String errorContent = getStdErrorContent(monitor);
-		String outContent = getStdOurContent(monitor);
-		return new Result(errorContent, outContent, stderrOffset, stdoutOffset);
+		String errorContent = getContent(errorOutputContent, monitor);
+		int totalErrorCount = getTotalOffset(errorOutputContent);
+		int totalStdCount = getTotalOffset(standardOutputContent);
+		String outContent = getContent(standardOutputContent, monitor);
+		return new Result(errorContent, outContent, totalErrorCount, totalStdCount);
 	}
 
-	protected String getStdErrorContent(IProgressMonitor monitor) throws CoreException {
-		String content = getContent(stdError, stderrPath, stderrOffset, monitor);
-		if (content != null) {
-			stderrOffset += content.length();
-		}
-		return content;
-	}
-
-	protected String getStdOurContent(IProgressMonitor monitor) throws CoreException {
-		String content = getContent(stdOut, stdoutPath, stdoutOffset, monitor);
-		if (content != null) {
-			stdoutOffset += content.length();
-		}
-		return content;
-	}
-
-	protected String getAndWriteContentFromServer(IOConsoleOutputStream stream, String path, int offset,
-			IProgressMonitor monitor) throws CoreException, IOException {
-		String content = cloudServer.getBehaviour().getFile(app.getName(), instanceIndex, path, offset, monitor);
-		if (stream != null && content != null && content.length() > 0) {
-			stream.write(content);
-		}
-		return content;
-	}
-
-	protected String getContent(IOConsoleOutputStream stream, String path, int offset, IProgressMonitor monitor)
-			throws CoreException {
-		String content = null;
-		try {
-			content = getAndWriteContentFromServer(stream, path, offset, monitor);
-		}
-		catch (CoreException e) {
-			Throwable t = e.getCause();
-			// Ignore errors due to specified start position being past the
-			// content length (i.e there is no new content). Otherwise rethrow
-			// error
-			if (t == null || !(t instanceof CloudFoundryException)
-					|| !HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE.equals(((CloudFoundryException) t).getStatusCode())) {
-				throw e;
+	protected String getContent(List<FileContentHandler> content, IProgressMonitor monitor) throws CoreException {
+		StringBuffer results = new StringBuffer();
+		for (FileContentHandler ct : content) {
+			String result = ct.getContent(monitor);
+			if (result != null) {
+				// If there already is previous content, seperate the new
+				// content with a newline
+				if (results.length() > 0) {
+					results.append("\n");
+				}
+				results.append(result);
 			}
 		}
-		catch (IOException ioe) {
-			throw new CoreException(CloudFoundryPlugin.getErrorStatus(ioe));
+
+		return results.length() > 0 ? results.toString() : null;
+	}
+
+	protected int getTotalOffset(List<FileContentHandler> content) {
+		int count = 0;
+		for (FileContentHandler ct : content) {
+			count += ct.getOffset();
 		}
-		return content;
+		return count;
 	}
 
 	public static class Result {

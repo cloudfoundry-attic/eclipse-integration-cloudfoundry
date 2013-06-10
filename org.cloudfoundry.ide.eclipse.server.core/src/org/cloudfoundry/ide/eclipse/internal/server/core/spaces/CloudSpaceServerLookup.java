@@ -146,7 +146,6 @@ public class CloudSpaceServerLookup {
 			return descriptors.size() > 0 ? descriptors.get(0) : null;
 
 		}
-
 		catch (CoreException ce) {
 			// Translate the cause to a user friendly message
 			String validationMessage = CloudUtil.getV2ValidationErrorMessage(ce);

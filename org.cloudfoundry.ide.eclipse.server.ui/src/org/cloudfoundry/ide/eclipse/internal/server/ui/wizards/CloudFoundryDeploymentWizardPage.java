@@ -31,6 +31,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -473,11 +474,20 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 		ApplicationInfo appInfo = descriptor.getApplicationInfo();
 		if (appInfo != null) {
 			String appName = appInfo.getAppName();
-			String deploymentUrl = (appName != null) ? module.getLaunchUrl(appName) : module.getDefaultLaunchUrl();
 
-			if (urlText != null) {
-				urlText.setText(deploymentUrl);
-				setURL();
+			try {
+				String deploymentUrl = (appName != null) ? module.getLaunchUrl(appName) : module.getDefaultLaunchUrl();
+
+				if (urlText != null) {
+					urlText.setText(deploymentUrl);
+					setURL();
+				}
+			}
+			catch (CoreException ce) {
+				String errorMessage = ce.getMessage() != null ? ce.getMessage()
+						: "Unable to resolve an application launch URL.";
+				errorMessage += " Please manually enter a URL.";
+				setMessage(errorMessage, DialogPage.WARNING);
 			}
 		}
 

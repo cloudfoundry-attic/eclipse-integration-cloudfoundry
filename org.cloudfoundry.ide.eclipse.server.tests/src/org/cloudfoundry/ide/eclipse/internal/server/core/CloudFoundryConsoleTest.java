@@ -10,15 +10,17 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
+import java.io.OutputStream;
 import java.util.Arrays;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContent.Result;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.FileContentHandler;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
-import org.cloudfoundry.ide.eclipse.server.tests.util.FullFileConsoleContent;
+import org.cloudfoundry.ide.eclipse.server.tests.util.FullFileContentHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -124,7 +126,12 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 		CloudApplication app = getCloudApplication(module);
 		MessageConsole console = ConsoleManager.getOrCreateConsole(server, app, instanceIndex);
 
-		return new FullFileConsoleContent(cloudServer, console, app, instanceIndex);
+		return new ConsoleContent(cloudServer, console, app, instanceIndex) {
+			protected FileContentHandler getFileContentHandler(FileContent content, OutputStream stream,
+					String appName, int instanceIndex) {
+				return new FullFileContentHandler(content, stream, appName, instanceIndex);
+			}
+		};
 
 	}
 

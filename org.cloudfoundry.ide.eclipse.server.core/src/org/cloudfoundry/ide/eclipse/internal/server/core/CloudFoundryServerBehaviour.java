@@ -31,6 +31,7 @@ import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.domain.ApplicationStats;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
+import org.cloudfoundry.client.lib.domain.CloudDomain;
 import org.cloudfoundry.client.lib.domain.CloudInfo;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
@@ -107,6 +108,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private List<CloudInfo.Runtime> runtimes = null;
 
 	private List<ApplicationPlan> applicationPlans;
+
+	private List<CloudDomain> domainFromOrgs;
 
 	private IServerListener serverListener = new IServerListener() {
 
@@ -192,6 +195,52 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		}.run(monitor);
 		CloudFoundryPlugin.getDefault().fireServicesUpdated(getCloudFoundryServer());
+	}
+
+	public synchronized String getLaunchURL(String applicationName, CloudDomain domain) throws CoreException {
+
+		if (supportsSpaces()) {
+
+			if (domain == null) {
+				CloudFoundryServer cloudServer = getCloudFoundryServer();
+				CloudFoundrySpace space = cloudServer.getCloudFoundrySpace();
+
+				if (space == null) {
+					throw new CoreException(
+							CloudFoundryPlugin
+									.getErrorStatus("No organization and space selected. Unable to generate application launch URL based on organization domain for: "
+											+ applicationName));
+				}
+
+				if (domainFromOrgs == null || domainFromOrgs.isEmpty()) {
+					throw new CoreException(CloudFoundryPlugin.getErrorStatus("No domains found for: "
+							+ space.getOrgName() + " - " + space.getSpaceName()));
+				}
+
+				// Retrieve the first domain
+				domain = domainFromOrgs.get(0);
+			}
+
+			String url = domain.getName();
+			url = url.replace("http://", "");
+
+			// For V2 servers, simply append the application name to the domain.
+			// Do not remove the prefix, unlike V1.
+			url = applicationName + "." + url;
+			return url;
+		}
+		else {
+			// Still support V1 for older cloud foundry servers
+			Server server = (Server) getCloudFoundryServer().getServerOriginal();
+			applicationName = applicationName.toLowerCase();
+			String url = server.getAttribute(CloudFoundryServer.PROP_URL, "");
+			url = url.replace("http://", "");
+
+			// Remove the "api" prefix from the URL and replace it with the app
+			// name
+			String prefix = url.split("\\.")[0];
+			return url.replace(prefix, applicationName);
+		}
 	}
 
 	public void deleteModules(final IModule[] modules, final boolean deleteServices, IProgressMonitor monitor)
@@ -987,7 +1036,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * True for servers that support organisations and spaces, as well as
 	 * buildpacks. False otherwise
 	 */
-	public boolean supportsSpaces() {
+	public synchronized boolean supportsSpaces() {
 		return supportsSpaces != null && supportsSpaces.booleanValue();
 	}
 
@@ -1226,6 +1275,36 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public synchronized boolean isServerDebugModeAllowed() {
 		return isDebugModeSupported == DebugSupportCheck.SUPPORTED;
+	}
+
+	/**
+	 * Return a list of File contents that should be shown to the user, like
+	 * console logs. The list determines the order in which they appear to the
+	 * user.
+	 * @return list of File content to show to the user. Return empty list if
+	 * there is not content to show to the user.
+	 */
+	public List<FileContent> getFileContent() {
+		List<FileContent> content = new ArrayList<FileContent>();
+
+		try {
+			CloudFoundryServer server = getCloudFoundryServer();
+
+			// Show the staging log first for V2
+			if (supportsSpaces()) {
+				content.add(new FileContent("logs/staging_task.log", false, server));
+			}
+
+			content.add(new FileContent(FileContent.STD_ERROR_LOG, true, server));
+			content.add(new FileContent(FileContent.STD_OUT_LOG, false, server));
+
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+
+		return content;
+
 	}
 
 	/**
@@ -1513,6 +1592,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				if (supportsSpaces == null) {
 					supportsSpaces = client.supportsSpaces();
+				}
+
+				if (client.supportsSpaces() && domainFromOrgs == null) {
+					domainFromOrgs = client.getDomainsForOrg();
 				}
 
 				// Get application plans once per server behaviour instance as

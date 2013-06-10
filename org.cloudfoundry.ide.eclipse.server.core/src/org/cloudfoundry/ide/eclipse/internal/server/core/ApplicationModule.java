@@ -126,17 +126,13 @@ public class ApplicationModule extends ExternalModule {
 		return applicationPlan;
 	}
 
-	public String getDefaultLaunchUrl() {
+	public String getDefaultLaunchUrl() throws CoreException {
 		return getLaunchUrl(getName());
 	}
 
-	public String getLaunchUrl(String appName) {
-		// replace first segment of server url with app name
-		appName = appName.toLowerCase();
-		String url = server.getAttribute(CloudFoundryServer.PROP_URL, "");
-		url = url.replace("http://", "");
-		String prefix = url.split("\\.")[0];
-		return url.replace(prefix, appName);
+	public String getLaunchUrl(String appName) throws CoreException {
+		CloudFoundryServer cloudServer = (CloudFoundryServer) server.getAdapter(CloudFoundryServer.class);
+		return cloudServer.getBehaviour().getLaunchURL(appName, null);
 	}
 
 	public synchronized int getInstanceCount() {
