@@ -28,6 +28,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 public abstract class CloudFoundryCallback {
 
 	public abstract void applicationStarted(CloudFoundryServer server, ApplicationModule cloudModule);
+	
+	public abstract void applicationStarting(CloudFoundryServer server, ApplicationModule cloudModule);
 
 	public abstract void applicationStopping(CloudFoundryServer server, ApplicationModule cloudModule);
 

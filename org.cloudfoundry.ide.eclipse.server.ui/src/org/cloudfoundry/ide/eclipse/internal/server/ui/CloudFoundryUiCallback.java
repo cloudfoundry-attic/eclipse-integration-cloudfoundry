@@ -22,8 +22,11 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.FileContent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleStreamContent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardProviderDelegate;
@@ -51,7 +54,24 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	@Override
 	public void applicationStarted(CloudFoundryServer server, ApplicationModule cloudModule) {
 		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
-			ConsoleManager.getInstance().startConsole(server, cloudModule.getApplication(), i, i == 0);
+			ConsoleContent content = new ConsoleContent(server.getBehaviour().getLogFileContents());
+			ConsoleManager.getInstance().startConsole(server, content, cloudModule.getApplication(), i, i == 0);
+		}
+	}
+	
+	@Override
+	public void applicationStarting(CloudFoundryServer server, ApplicationModule cloudModule) {
+		// Only show staging for v2 servers
+		
+		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
+			if (server.getBehaviour().supportsSpaces()) {
+				List<FileContent> content = new ArrayList<FileContent>();
+				content.add(new FileContent("tmp/staging/logs/staging_task.log", false, server));
+				
+				ConsoleContent consoleContent = new ConsoleContent(content);
+				
+				ConsoleManager.getInstance().startConsole(server, consoleContent, cloudModule.getApplication(), i, i == 0);
+			}
 		}
 	}
 
@@ -254,4 +274,6 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 		return true;
 	}
+
+
 }

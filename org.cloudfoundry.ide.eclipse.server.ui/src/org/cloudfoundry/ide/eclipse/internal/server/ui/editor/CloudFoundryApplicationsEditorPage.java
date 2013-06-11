@@ -12,12 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
 import java.util.List;
 
-import org.cloudfoundry.client.lib.domain.ApplicationStats;
-import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.client.lib.domain.InstancesInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationPlan;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
@@ -41,6 +36,7 @@ import org.eclipse.ui.forms.widgets.ScrolledForm;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServerListener;
 import org.eclipse.wst.server.core.ServerEvent;
+import org.eclipse.wst.server.core.internal.ServerListener;
 import org.eclipse.wst.server.ui.editor.ServerEditorPart;
 
 /**
@@ -157,46 +153,7 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 		}
 
 		if (area == RefreshArea.DETAIL || area == RefreshArea.ALL) {
-			if (module != null) {
-				ApplicationModule appModule = cloudServer.getApplication(module);
-
-				try {
-					CloudApplication application = serverBehaviour
-							.getApplication(appModule.getApplicationId(), monitor);
-					appModule.setCloudApplication(application);
-				}
-				catch (CoreException e) {
-					// application is not deployed to server yet
-				}
-
-				if (appModule.getApplication() != null) {
-					// refresh application stats
-					ApplicationStats stats = serverBehaviour.getApplicationStats(appModule.getApplicationId(), monitor);
-					InstancesInfo info = serverBehaviour.getInstancesInfo(appModule.getApplicationId(), monitor);
-					appModule.setApplicationStats(stats);
-					appModule.setInstancesInfo(info);
-
-					// Check if V2, then set the application plan as well
-					if (cloudServer.supportsCloudSpaces()) {
-						List<ApplicationPlan> plans = serverBehaviour.getApplicationPlans();
-
-						// FIXNS: At the moment, the client does not support
-						// getting plans for an app
-						// NEEDS TO BE FIXED on the client side
-						if (plans != null && !plans.isEmpty()) {
-							// Set the plan once this is implemented:
-							// ApplicationPlan plan =
-							// serverBehavior.getApplicationPlan(appName);
-							// if (plan != null )
-							// {appModule.setApplicationPlan(plan);}
-						}
-
-					}
-				}
-				else {
-					appModule.setApplicationStats(null);
-				}
-			}
+			serverBehaviour.refreshApplicationInstanceStats(module, monitor);
 		}
 
 		return Status.OK_STATUS;
@@ -234,7 +191,8 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 
 				messageToDisplay = buffer.substring(0, MAX_ERROR_MESSAGE).trim() + endingSegment;
 				CloudFoundryPlugin.logError(message);
-			} else {
+			}
+			else {
 				messageToDisplay = buffer.toString();
 			}
 

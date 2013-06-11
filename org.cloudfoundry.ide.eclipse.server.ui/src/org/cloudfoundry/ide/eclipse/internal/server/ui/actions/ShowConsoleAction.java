@@ -12,6 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.eclipse.jface.action.Action;
 
@@ -36,7 +37,8 @@ public class ShowConsoleAction extends Action {
 
 	@Override
 	public void run() {
-		ConsoleManager.getInstance().startConsole(server, app, instanceIndex, true);
+		ConsoleContent content = new ConsoleContent(server.getBehaviour().getLogFileContents());
+		ConsoleManager.getInstance().startConsole(server, content, app, instanceIndex, true);
 	}
 
 }

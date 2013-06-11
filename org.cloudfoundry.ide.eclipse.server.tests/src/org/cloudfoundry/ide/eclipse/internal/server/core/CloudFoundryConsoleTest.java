@@ -15,8 +15,9 @@ import java.util.Arrays;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContent;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContent.Result;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleStreamContent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleStreamContent.Result;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.FileContentHandler;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
@@ -46,10 +47,10 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 		moduleState = server.getModuleState(modules);
 		assertEquals(IServer.STATE_STARTED, moduleState);
 
-		ConsoleContent content = getRangeFileConsoleContent(modules[0]);
+		ConsoleStreamContent content = getRangeFileConsoleContent(modules[0]);
 		assertNotNull(content);
 
-		ConsoleContent.Result result = getResult(content);
+		ConsoleStreamContent.Result result = getResult(content);
 		assertNotNull(result);
 
 		String errorContent = result.getErrorContent();
@@ -71,10 +72,10 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 		moduleState = server.getModuleState(modules);
 		assertEquals(IServer.STATE_STARTED, moduleState);
 
-		ConsoleContent content = getFullFileConsoleContent(modules[0]);
+		ConsoleStreamContent content = getFullFileConsoleContent(modules[0]);
 		assertNotNull(content);
 
-		ConsoleContent.Result result = getResult(content);
+		ConsoleStreamContent.Result result = getResult(content);
 		assertNotNull(result);
 
 		String errorContent = result.getErrorContent();
@@ -96,10 +97,10 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 		moduleState = server.getModuleState(modules);
 		assertEquals(IServer.STATE_STARTED, moduleState);
 
-		ConsoleContent content = getFullFileConsoleContent(modules[0]);
+		ConsoleStreamContent content = getFullFileConsoleContent(modules[0]);
 		assertNotNull(content);
 
-		ConsoleContent.Result fullResult = getResult(content);
+		ConsoleStreamContent.Result fullResult = getResult(content);
 		assertNotNull(fullResult);
 
 		content.reset();
@@ -107,7 +108,7 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 		content = getRangeFileConsoleContent(modules[0]);
 		assertNotNull(content);
 
-		ConsoleContent.Result rangedResult = getResult(content);
+		ConsoleStreamContent.Result rangedResult = getResult(content);
 		assertNotNull(rangedResult);
 
 		assertEquals(fullResult.getErrorContent(), rangedResult.getErrorContent());
@@ -120,13 +121,14 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 	/*
 	 * HELPER METHODS
 	 */
-	protected ConsoleContent getFullFileConsoleContent(IModule module) throws CoreException {
+	protected ConsoleStreamContent getFullFileConsoleContent(IModule module) throws CoreException {
 
 		int instanceIndex = 0;
 		CloudApplication app = getCloudApplication(module);
 		MessageConsole console = ConsoleManager.getOrCreateConsole(server, app, instanceIndex);
 
-		return new ConsoleContent(cloudServer, console, app, instanceIndex) {
+		return new ConsoleStreamContent(new ConsoleContent(cloudServer.getBehaviour().getLogFileContents()), console, app,
+				instanceIndex) {
 			protected FileContentHandler getFileContentHandler(FileContent content, OutputStream stream,
 					String appName, int instanceIndex) {
 				return new FullFileContentHandler(content, stream, appName, instanceIndex);
@@ -135,18 +137,19 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 
 	}
 
-	protected ConsoleContent getRangeFileConsoleContent(IModule module) throws CoreException {
+	protected ConsoleStreamContent getRangeFileConsoleContent(IModule module) throws CoreException {
 
 		int instanceIndex = 0;
 		CloudApplication app = getCloudApplication(module);
 		MessageConsole console = ConsoleManager.getOrCreateConsole(server, app, instanceIndex);
 
-		return new ConsoleContent(cloudServer, console, app, instanceIndex);
+		return new ConsoleStreamContent(new ConsoleContent(cloudServer.getBehaviour().getLogFileContents()), console, app,
+				instanceIndex);
 
 	}
 
-	protected ConsoleContent.Result getResult(final ConsoleContent content) throws Exception {
-		return new AbstractWaitWithProgressJob<ConsoleContent.Result>(10, 2000) {
+	protected ConsoleStreamContent.Result getResult(final ConsoleStreamContent content) throws Exception {
+		return new AbstractWaitWithProgressJob<ConsoleStreamContent.Result>(10, 2000) {
 
 			@Override
 			protected Result runInWait(IProgressMonitor monitor) throws CoreException {

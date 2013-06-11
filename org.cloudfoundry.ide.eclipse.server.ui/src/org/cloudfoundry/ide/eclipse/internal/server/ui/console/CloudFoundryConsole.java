@@ -13,7 +13,6 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 import java.io.IOException;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -37,7 +36,7 @@ class CloudFoundryConsole extends Job {
 
 	private int failureCount;
 
-	private final ConsoleContent content;
+	private final ConsoleStreamContent content;
 
 	/** How frequently to check for log changes; defaults to 1 seconds */
 	private long sampleInterval = 5000;
@@ -47,13 +46,13 @@ class CloudFoundryConsole extends Job {
 
 	private final MessageConsole console;
 
-	public CloudFoundryConsole(CloudFoundryServer server, CloudApplication app, int instanceIndex,
+	public CloudFoundryConsole(ConsoleStreamContent content, CloudApplication app, int instanceIndex,
 			MessageConsole console) {
 		super(getConsoleName(app));
 
 		this.console = console;
 
-		content = new ConsoleContent(server, console, app, instanceIndex);
+		this.content = content;
 
 		setSystem(true);
 	}

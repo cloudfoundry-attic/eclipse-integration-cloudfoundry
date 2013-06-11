@@ -156,6 +156,12 @@ public class CloudFoundryPlugin extends Plugin {
 			// ignore
 		}
 
+		@Override
+		public void applicationStarting(CloudFoundryServer server, ApplicationModule cloudModule) {
+			// TODO Auto-generated method stub
+			
+		}
+
 	}
 
 	// public static final String CLOUD_CONTROLLER_DEFAULT_URL_ATTRIBUTE =

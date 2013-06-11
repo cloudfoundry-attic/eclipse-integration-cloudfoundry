@@ -1167,6 +1167,46 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return false;
 	}
 
+	protected boolean waitForStaging(CloudFoundryOperations client, ApplicationModule appModule,
+			IProgressMonitor monitor) throws CoreException {
+		long timeLeft = DEPLOYMENT_TIMEOUT;
+		while (timeLeft > 0) {
+			CloudFoundryException error = null;
+			try {
+				ApplicationStats stats = getApplicationStats(appModule.getApplicationId(), monitor);
+				InstancesInfo info = getInstancesInfo(appModule.getApplicationId(), monitor);
+				appModule.setApplicationStats(stats);
+				appModule.setInstancesInfo(info);
+				return true;
+			}
+			catch (CoreException e) {
+				if (e.getCause() instanceof CloudFoundryException) {
+					error = (CloudFoundryException) e.getCause();
+				}
+				else {
+					// Some other error occurred.
+					throw e;
+				}
+			}
+			catch (CloudFoundryException cfe) {
+				error = cfe;
+			}
+
+			// Determine from the error if the application
+			if (error != null) {
+				try {
+					Thread.sleep(SHORT_INTERVAL);
+				}
+				catch (InterruptedException e) {
+					// Ignore, continue with the next iteration
+				}
+			}
+
+			timeLeft -= SHORT_INTERVAL;
+		}
+		return false;
+	}
+
 	private CloudApplication waitForUpload(CloudFoundryOperations client, String applicationId, IProgressMonitor monitor)
 			throws InterruptedException {
 		long timeLeft = UPLOAD_TIMEOUT;
@@ -1284,16 +1324,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @return list of File content to show to the user. Return empty list if
 	 * there is not content to show to the user.
 	 */
-	public List<FileContent> getFileContent() {
+	public List<FileContent> getLogFileContents() {
 		List<FileContent> content = new ArrayList<FileContent>();
 
 		try {
 			CloudFoundryServer server = getCloudFoundryServer();
-
-			// Show the staging log first for V2
-			if (supportsSpaces()) {
-				content.add(new FileContent("logs/staging_task.log", false, server));
-			}
 
 			content.add(new FileContent(FileContent.STD_ERROR_LOG, true, server));
 			content.add(new FileContent(FileContent.STD_OUT_LOG, false, server));
@@ -1350,8 +1385,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param client
 	 * @param restartOrDebugAction either debug mode or regular start/restart
 	 */
-	protected void restartOrDebugApplicationInClient(String applicationId, CloudFoundryOperations client,
-			ApplicationAction restartOrDebugAction) {
+	protected void restartOrDebugApplicationInClient(String applicationId, ApplicationModule cloudModule,
+			CloudFoundryOperations client, ApplicationAction restartOrDebugAction) {
 		switch (restartOrDebugAction) {
 		case DEBUG:
 			// Only launch in Suspend mode
@@ -1360,6 +1395,100 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		default:
 			client.restartApplication(applicationId);
 			break;
+		}
+
+	}
+
+	protected void performRestartInClient(final String applicationId, final ApplicationModule cloudModule,
+			final CloudFoundryOperations client, final ApplicationAction restartOrDebugAction) {
+		// If it is V2, launch asynchronously as staging takes a while.
+		if (supportsSpaces()) {
+			Job job = new Job("Starting application " + applicationId) {
+
+				@Override
+				protected IStatus run(IProgressMonitor arg0) {
+					restartOrDebugApplicationInClient(applicationId, cloudModule, client, restartOrDebugAction);
+					return Status.OK_STATUS;
+				}
+			};
+			job.setPriority(Job.INTERACTIVE);
+			job.schedule();
+
+			// Perform a starting call back
+
+			try {
+				if (waitForStart(client, applicationId, null)) {
+					CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(), cloudModule);
+				}
+
+			}
+			catch (CoreException e) {
+				CloudFoundryPlugin.logError(e);
+			}
+			catch (InterruptedException ie) {
+				CloudFoundryPlugin.logError(ie);
+			}
+
+		}
+		else {
+			restartOrDebugApplicationInClient(applicationId, cloudModule, client, restartOrDebugAction);
+		}
+
+	}
+
+	/**
+	 * Given a WTP module, the corresponding CF application module will have its
+	 * app instance stats refreshed. As the application module also has a
+	 * reference to the actual cloud application, an updated cloud application
+	 * will be retrieved as well.
+	 * @param module whos applicaiton instances and stats should be refreshed
+	 * @param monitor
+	 * @throws CoreException
+	 */
+	public void refreshApplicationInstanceStats(IModule module, IProgressMonitor monitor) throws CoreException {
+		if (module != null) {
+			ApplicationModule appModule = getCloudFoundryServer().getApplication(module);
+
+			try {
+				CloudApplication application = getApplication(appModule.getApplicationId(), monitor);
+				appModule.setCloudApplication(application);
+			}
+			catch (CoreException e) {
+				// application is not deployed to server yet
+			}
+
+			if (appModule.getApplication() != null) {
+				// refresh application stats
+
+				if (supportsSpaces()) {
+
+					if (waitForStaging(client, appModule, monitor)) {
+						List<ApplicationPlan> plans = getApplicationPlans();
+
+						// FIXNS: At the moment, the client does not support
+						// getting plans for an app
+						// NEEDS TO BE FIXED on the client side
+						if (plans != null && !plans.isEmpty()) {
+							// Set the plan once this is implemented:
+							// ApplicationPlan plan =
+							// serverBehavior.getApplicationPlan(appName);
+							// if (plan != null )
+							// {appModule.setApplicationPlan(plan);}
+						}
+					}
+
+				}
+				else {
+					ApplicationStats stats = getApplicationStats(appModule.getApplicationId(), monitor);
+					InstancesInfo info = getInstancesInfo(appModule.getApplicationId(), monitor);
+					appModule.setApplicationStats(stats);
+					appModule.setInstancesInfo(info);
+				}
+
+			}
+			else {
+				appModule.setApplicationStats(null);
+			}
 		}
 	}
 
@@ -1747,7 +1876,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						final String applicationId = descriptor.applicationInfo.getAppName();
 
 						if (modules[0].isExternal()) {
-							restartOrDebugApplicationInClient(applicationId, client, descriptor.deploymentMode);
+							performRestartInClient(applicationId, cloudModule, client, descriptor.deploymentMode);
+
 							CloudFoundryPlugin.trace("Application " + applicationId + " restarted");
 							started = true;
 						}
@@ -1841,7 +1971,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							// start application in either regular or debug mode
 							if (descriptor.deploymentMode != null) {
 								CloudFoundryPlugin.trace("Application " + applicationId + " starting");
-								restartOrDebugApplicationInClient(applicationId, client, descriptor.deploymentMode);
+								restartOrDebugApplicationInClient(applicationId, cloudModule, client,
+										descriptor.deploymentMode);
 								started = true;
 							}
 							else {
@@ -1943,7 +2074,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						boolean started = false;
 						String applicationId = descriptor.applicationInfo.getAppName();
 
-						restartOrDebugApplicationInClient(applicationId, client, descriptor.deploymentMode);
+						performRestartInClient(applicationId, cloudModule, client, descriptor.deploymentMode);
 						CloudFoundryPlugin.trace("Application " + applicationId + " restarted");
 						started = true;
 

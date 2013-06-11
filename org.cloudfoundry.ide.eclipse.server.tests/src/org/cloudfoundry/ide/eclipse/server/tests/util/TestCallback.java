@@ -128,4 +128,10 @@ public class TestCallback extends CloudFoundryCallback {
 		// ignore
 	}
 
+	@Override
+	public void applicationStarting(CloudFoundryServer server, ApplicationModule cloudModule) {
+		// TODO Auto-generated method stub
+
+	}
+
 }
