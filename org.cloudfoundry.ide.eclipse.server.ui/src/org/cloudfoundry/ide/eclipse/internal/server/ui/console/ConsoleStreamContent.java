@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.FileContent;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -45,10 +46,12 @@ public class ConsoleStreamContent {
 
 	protected final MessageConsole console;
 
-	public ConsoleStreamContent(ConsoleContent contents, MessageConsole console, CloudApplication app, int instanceIndex) {
+	protected final ConsoleContent content;
+
+	public ConsoleStreamContent(ConsoleContent content, MessageConsole console, CloudApplication app, int instanceIndex) {
 		this.stdOut = console.newOutputStream();
 		this.stdError = console.newOutputStream();
-
+		this.content = content;
 		this.console = console;
 
 		if (stdError != null) {
@@ -59,21 +62,37 @@ public class ConsoleStreamContent {
 			});
 		}
 
-		List<FileContent> fileContent = contents.getFileContents();
+		List<FileContent> fileContents = content.getFileContents();
 
 		// Regardless of how many contents there are, there are only two streams
 		// available
 		// to send the content to the console: either use the error stream, or
 		// the standard out stream.
-		for (FileContent content : fileContent) {
-			if (content.isError()) {
-				errorOutputContent
-						.add(getFileContentHandler(content, getStdErrorStream(), app.getName(), instanceIndex));
-			}
-			else {
-				standardOutputContent.add(getFileContentHandler(content, getStdOutStream(), app.getName(),
+		for (FileContent fileContent : fileContents) {
+			if (fileContent.isError()) {
+				errorOutputContent.add(getFileContentHandler(fileContent, getStdErrorStream(), app.getName(),
 						instanceIndex));
 			}
+			else {
+				standardOutputContent.add(getFileContentHandler(fileContent, getStdOutStream(), app.getName(),
+						instanceIndex));
+			}
+		}
+	}
+
+	public void displayInitialContent() {
+		// Show initial content
+		String initialContent = content.getInitialContent();
+		if (initialContent != null && stdOut != null) {
+
+			try {
+				stdOut.write(initialContent);
+			}
+			catch (IOException ioe) {
+				CloudFoundryPlugin.logError(ioe);
+			}
+			// No need to close it, as the output stream is managed by the
+			// console itself.
 		}
 	}
 
@@ -112,6 +131,7 @@ public class ConsoleStreamContent {
 	 * @throws IOException
 	 */
 	public Result getFileContent(IProgressMonitor monitor) throws CoreException {
+
 		String errorContent = getContent(errorOutputContent, monitor);
 		int totalErrorCount = getTotalOffset(errorOutputContent);
 		int totalStdCount = getTotalOffset(standardOutputContent);

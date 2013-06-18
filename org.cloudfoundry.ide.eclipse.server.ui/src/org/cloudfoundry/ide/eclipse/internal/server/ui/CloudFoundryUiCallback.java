@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
@@ -22,11 +22,9 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.FileContent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContent;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleStreamContent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardProviderDelegate;
@@ -54,25 +52,26 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	@Override
 	public void applicationStarted(CloudFoundryServer server, ApplicationModule cloudModule) {
 		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
-			ConsoleContent content = new ConsoleContent(server.getBehaviour().getLogFileContents());
+			ConsoleContent content = ConsoleContent.getConsoleContent(server, cloudModule.getApplication());
 			ConsoleManager.getInstance().startConsole(server, content, cloudModule.getApplication(), i, i == 0);
 		}
 	}
-	
+
 	@Override
 	public void applicationStarting(CloudFoundryServer server, ApplicationModule cloudModule) {
 		// Only show staging for v2 servers
-		
-		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
-			if (server.getBehaviour().supportsSpaces()) {
-				List<FileContent> content = new ArrayList<FileContent>();
-				content.add(new FileContent("tmp/staging/logs/staging_task.log", false, server));
-				
-				ConsoleContent consoleContent = new ConsoleContent(content);
-				
-				ConsoleManager.getInstance().startConsole(server, consoleContent, cloudModule.getApplication(), i, i == 0);
-			}
-		}
+
+//		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
+//			if (server.getBehaviour().supportsSpaces()) {
+//				String initialContent = ConsoleContent.getStagingInitialContent(cloudModule.getApplication(), server);
+//				ConsoleContent consoleContent = ConsoleContent.getConsoleContent(
+//						Arrays.asList(new FileContent("/tmp/staged/logs/staging_task.log", true, server, true)),
+//						initialContent);
+//
+//				ConsoleManager.getInstance().startConsole(server, consoleContent, cloudModule.getApplication(), i,
+//						i == 0);
+//			}
+//		}
 	}
 
 	@Override
@@ -274,6 +273,5 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 		return true;
 	}
-
 
 }

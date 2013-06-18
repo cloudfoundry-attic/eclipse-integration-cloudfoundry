@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2013 VMware, Inc.
+ * Copyright (c) 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -26,6 +26,8 @@ public class FileContent {
 
 	private final String path;
 
+	private final boolean shouldWaitForFile;
+
 	private final boolean isError;
 
 	private final CloudFoundryServer server;
@@ -35,29 +37,55 @@ public class FileContent {
 	public static final String STD_ERROR_LOG = "logs/stderr.log";
 
 	public FileContent(String path, boolean isError, CloudFoundryServer server) {
+		this(path, isError, server, false);
+	}
+
+	public FileContent(String path, boolean isError, CloudFoundryServer server, boolean shouldWaitForFile) {
 		this.path = path;
 		this.isError = isError;
 		this.server = server;
+		this.shouldWaitForFile = shouldWaitForFile;
 	}
 
 	public String getPath() {
 		return path;
 	}
-	
+
 	public CloudFoundryServer getServer() {
 		return server;
 	}
 
 	/**
 	 * 
-	 * @return true if the file content should be displayed as error content in the console.
-	 * False otherwise.
+	 * @return true if the file content should be displayed as error content in
+	 * the console. False otherwise.
 	 */
 	public boolean isError() {
 		return isError;
 	}
 
-	public String getContent(String appName, int instanceIndex, OutputStream stream, int offset,
+	public String getContent(final String appName, final int instanceIndex, final OutputStream stream, final int offset,
+			final IProgressMonitor monitor) throws CoreException {
+		if (shouldWaitForFile) {
+			return new AbstractWaitWithProgressJob<String>(5, 500) {
+
+				@Override
+				protected String runInWait(IProgressMonitor monitor) throws CoreException {
+					return performGetContent(appName, instanceIndex, stream, offset, monitor);
+				}
+				
+				protected boolean shouldRetryOnError(Throwable t) {
+					return true;
+				}
+				
+			}.run(monitor);
+		} else {
+			return performGetContent(appName, instanceIndex, stream, offset, monitor);
+		}
+
+	}
+
+	protected String performGetContent(String appName, int instanceIndex, OutputStream stream, int offset,
 			IProgressMonitor monitor) throws CoreException {
 		String content = null;
 		try {
@@ -78,6 +106,9 @@ public class FileContent {
 		}
 		catch (IOException ioe) {
 			throw new CoreException(CloudFoundryPlugin.getErrorStatus(ioe));
+		}
+		catch (CloudFoundryException cfe) {
+			throw new CoreException(CloudFoundryPlugin.getErrorStatus(cfe));
 		}
 		return content;
 	}

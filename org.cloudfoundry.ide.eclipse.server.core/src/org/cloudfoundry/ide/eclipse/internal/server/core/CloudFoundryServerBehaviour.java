@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -90,6 +90,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private static final long DEFAULT_INTERVAL = 60 * 1000;
 
 	private static final long DEPLOYMENT_TIMEOUT = 10 * 60 * 1000;
+
+	private static final long STAGING_TIMEOUT = 6 * 1000;
 
 	private static final long SHORT_INTERVAL = 5 * 1000;
 
@@ -1167,46 +1169,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return false;
 	}
 
-	protected boolean waitForStaging(CloudFoundryOperations client, ApplicationModule appModule,
-			IProgressMonitor monitor) throws CoreException {
-		long timeLeft = DEPLOYMENT_TIMEOUT;
-		while (timeLeft > 0) {
-			CloudFoundryException error = null;
-			try {
-				ApplicationStats stats = getApplicationStats(appModule.getApplicationId(), monitor);
-				InstancesInfo info = getInstancesInfo(appModule.getApplicationId(), monitor);
-				appModule.setApplicationStats(stats);
-				appModule.setInstancesInfo(info);
-				return true;
-			}
-			catch (CoreException e) {
-				if (e.getCause() instanceof CloudFoundryException) {
-					error = (CloudFoundryException) e.getCause();
-				}
-				else {
-					// Some other error occurred.
-					throw e;
-				}
-			}
-			catch (CloudFoundryException cfe) {
-				error = cfe;
-			}
-
-			// Determine from the error if the application
-			if (error != null) {
-				try {
-					Thread.sleep(SHORT_INTERVAL);
-				}
-				catch (InterruptedException e) {
-					// Ignore, continue with the next iteration
-				}
-			}
-
-			timeLeft -= SHORT_INTERVAL;
-		}
-		return false;
-	}
-
 	private CloudApplication waitForUpload(CloudFoundryOperations client, String applicationId, IProgressMonitor monitor)
 			throws InterruptedException {
 		long timeLeft = UPLOAD_TIMEOUT;
@@ -1318,31 +1280,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
-	 * Return a list of File contents that should be shown to the user, like
-	 * console logs. The list determines the order in which they appear to the
-	 * user.
-	 * @return list of File content to show to the user. Return empty list if
-	 * there is not content to show to the user.
-	 */
-	public List<FileContent> getLogFileContents() {
-		List<FileContent> content = new ArrayList<FileContent>();
-
-		try {
-			CloudFoundryServer server = getCloudFoundryServer();
-
-			content.add(new FileContent(FileContent.STD_ERROR_LOG, true, server));
-			content.add(new FileContent(FileContent.STD_OUT_LOG, false, server));
-
-		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
-		}
-
-		return content;
-
-	}
-
-	/**
 	 * Obtains the debug mode type of the given module. Note that the module
 	 * need not be started. It could be stopped, and still have a debug mode
 	 * associated with it.
@@ -1400,7 +1337,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	protected void performRestartInClient(final String applicationId, final ApplicationModule cloudModule,
-			final CloudFoundryOperations client, final ApplicationAction restartOrDebugAction) {
+			final CloudFoundryOperations client, final ApplicationAction restartOrDebugAction) throws CoreException {
 		// If it is V2, launch asynchronously as staging takes a while.
 		if (supportsSpaces()) {
 			Job job = new Job("Starting application " + applicationId) {
@@ -1414,20 +1351,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			job.setPriority(Job.INTERACTIVE);
 			job.schedule();
 
-			// Perform a starting call back
+			CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(), cloudModule);
 
-			try {
-				if (waitForStart(client, applicationId, null)) {
-					CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(), cloudModule);
-				}
-
-			}
-			catch (CoreException e) {
-				CloudFoundryPlugin.logError(e);
-			}
-			catch (InterruptedException ie) {
-				CloudFoundryPlugin.logError(ie);
-			}
 
 		}
 		else {
@@ -1459,32 +1384,25 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			if (appModule.getApplication() != null) {
 				// refresh application stats
-
+				ApplicationStats stats = getApplicationStats(appModule.getApplicationId(), monitor);
+				InstancesInfo info = getInstancesInfo(appModule.getApplicationId(), monitor);
+				appModule.setApplicationStats(stats);
+				appModule.setInstancesInfo(info);
 				if (supportsSpaces()) {
 
-					if (waitForStaging(client, appModule, monitor)) {
-						List<ApplicationPlan> plans = getApplicationPlans();
+					List<ApplicationPlan> plans = getApplicationPlans();
 
-						// FIXNS: At the moment, the client does not support
-						// getting plans for an app
-						// NEEDS TO BE FIXED on the client side
-						if (plans != null && !plans.isEmpty()) {
-							// Set the plan once this is implemented:
-							// ApplicationPlan plan =
-							// serverBehavior.getApplicationPlan(appName);
-							// if (plan != null )
-							// {appModule.setApplicationPlan(plan);}
-						}
+					// FIXNS: At the moment, the client does not support
+					// getting plans for an app
+					// NEEDS TO BE FIXED on the client side
+					if (plans != null && !plans.isEmpty()) {
+						// Set the plan once this is implemented:
+						// ApplicationPlan plan =
+						// serverBehavior.getApplicationPlan(appName);
+						// if (plan != null )
+						// {appModule.setApplicationPlan(plan);}
 					}
-
 				}
-				else {
-					ApplicationStats stats = getApplicationStats(appModule.getApplicationId(), monitor);
-					InstancesInfo info = getInstancesInfo(appModule.getApplicationId(), monitor);
-					appModule.setApplicationStats(stats);
-					appModule.setInstancesInfo(info);
-				}
-
 			}
 			else {
 				appModule.setApplicationStats(null);
@@ -1690,14 +1608,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// Always check if proxy settings have changed.
 				handler.updateProxyInClient(client);
 				try {
-					result = doRun(client, subProgress);
+					result = performRunWithWait(client, subProgress);
 					succeeded = true;
 				}
 				catch (CloudFoundryException e) {
 					// try again in case of a login failure
 					if (handler.shouldAttemptClientLogin(e)) {
 						client.login();
-						result = doRun(client, subProgress);
+						result = performRunWithWait(client, subProgress);
 						succeeded = true;
 					}
 					else {
@@ -1764,6 +1682,60 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			// server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
 
 			return result;
+		}
+
+		protected T performRunWithWait(CloudFoundryOperations client, SubMonitor progress) throws CoreException,
+				CloudFoundryException {
+
+			// FOr now only do it for v2. Check the client directly, as the
+			// support spaces flag may not have been set yet
+			if (client.supportsSpaces()) {
+				long timeLeft = STAGING_TIMEOUT;
+				Exception error = null;
+				while (timeLeft > 0) {
+
+					try {
+						return doRun(client, progress);
+					}
+					catch (CoreException e) {
+						error = e;
+					}
+					catch (CloudFoundryException cfe) {
+						error = cfe;
+					}
+
+					// Determine from the error if the application being in
+					// stopped state.
+					if (CloudUtil.isAppStoppedStateError(error)) {
+						try {
+							Thread.sleep(ONE_SECOND_INTERVAL);
+						}
+						catch (InterruptedException e) {
+							// Ignore, continue with the next iteration
+						}
+					}
+					else {
+						break;
+					}
+
+					timeLeft -= ONE_SECOND_INTERVAL;
+				}
+
+				if (error instanceof CoreException) {
+					throw (CoreException) error;
+				}
+				else if (error instanceof CloudFoundryException) {
+					throw (CloudFoundryException) error;
+				}
+				else {
+					throw new CoreException(CloudFoundryPlugin.getErrorStatus(error));
+				}
+
+			}
+			else {
+				return doRun(client, progress);
+			}
+
 		}
 
 		protected abstract T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException;

@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
@@ -76,11 +76,14 @@ public class ConsoleManager {
 	 * Start console if show is true, otherwise reset and start only if console
 	 * was previously created already
 	 */
-	public void startConsole(CloudFoundryServer server, ConsoleContent contents, CloudApplication app, int instanceIndex, boolean show) {
+	public void startConsole(CloudFoundryServer server, ConsoleContent contents, CloudApplication app,
+			int instanceIndex, boolean show) {
 		String appUrl = getConsoleId(server.getServer(), app, instanceIndex);
 		CloudFoundryConsole serverLogTail = consoleByUri.get(appUrl);
 		if (serverLogTail == null && show) {
+
 			MessageConsole appConsole = getOrCreateConsole(server.getServer(), app, instanceIndex);
+
 			ConsoleStreamContent streamContent = new ConsoleStreamContent(contents, appConsole, app, instanceIndex);
 			serverLogTail = new CloudFoundryConsole(streamContent, app, instanceIndex, appConsole);
 			consoleByUri.put(getConsoleId(server.getServer(), app, instanceIndex), serverLogTail);

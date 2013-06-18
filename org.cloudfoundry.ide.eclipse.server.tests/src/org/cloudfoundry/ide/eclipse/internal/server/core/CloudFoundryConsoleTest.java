@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -127,8 +127,7 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 		CloudApplication app = getCloudApplication(module);
 		MessageConsole console = ConsoleManager.getOrCreateConsole(server, app, instanceIndex);
 
-		return new ConsoleStreamContent(new ConsoleContent(cloudServer.getBehaviour().getLogFileContents()), console, app,
-				instanceIndex) {
+		return new ConsoleStreamContent(ConsoleContent.getConsoleContent(cloudServer, app), console, app, instanceIndex) {
 			protected FileContentHandler getFileContentHandler(FileContent content, OutputStream stream,
 					String appName, int instanceIndex) {
 				return new FullFileContentHandler(content, stream, appName, instanceIndex);
@@ -143,8 +142,7 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 		CloudApplication app = getCloudApplication(module);
 		MessageConsole console = ConsoleManager.getOrCreateConsole(server, app, instanceIndex);
 
-		return new ConsoleStreamContent(new ConsoleContent(cloudServer.getBehaviour().getLogFileContents()), console, app,
-				instanceIndex);
+		return new ConsoleStreamContent(ConsoleContent.getConsoleContent(cloudServer, app), console, app, instanceIndex);
 
 	}
 
@@ -153,6 +151,7 @@ public class CloudFoundryConsoleTest extends AbstractCloudFoundryTest {
 
 			@Override
 			protected Result runInWait(IProgressMonitor monitor) throws CoreException {
+
 				Result result = content.getFileContent(monitor);
 				// if either error or stdout content is obtained, stop waiting
 				if ((result.getErrorContent() != null && result.getErrorContent().length() > 0)
