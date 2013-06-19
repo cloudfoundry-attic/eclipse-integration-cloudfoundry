@@ -17,6 +17,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.application;
  * 
  */
 public class ApplicationFramework {
+
 	private final String framework;
 
 	private final String displayName;
@@ -72,6 +73,11 @@ public class ApplicationFramework {
 			return false;
 		}
 		return true;
+	}
+	
+	@Override
+	public String toString() {
+		return "ApplicationFramework " + framework;
 	}
 
 }

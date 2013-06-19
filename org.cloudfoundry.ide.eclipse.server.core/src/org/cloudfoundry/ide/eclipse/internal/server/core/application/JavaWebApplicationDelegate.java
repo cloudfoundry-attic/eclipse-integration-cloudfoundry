@@ -57,12 +57,13 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 		valuesByLabel.put(DeploymentConstants.GRAILS, "Grails");
 		valuesByLabel.put(DeploymentConstants.LIFT, "Lift");
 		valuesByLabel.put(DeploymentConstants.JAVA_WEB, "Java Web");
+		valuesByLabel.put(DeploymentConstants.JAVA_EE, "Java EE");
 		return valuesByLabel;
 	}
 
 	public ApplicationFramework getFramework(IModule module) throws CoreException {
 		IProject project = module != null ? module.getProject() : null;
-		// Determine if it is Grails, Spring or Lift
+		// Determine if it is Grails, Spring, Lift or Java EE
 		String framework = getFramework(project);
 
 		// Otherwise determine if it is a Java Web module.
@@ -176,6 +177,11 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 				if (foundSpringLibrary) {
 					return DeploymentConstants.SPRING;
 				}
+				
+				if (project.isAccessible() && project.getFile("src/main/resources/META-INF/persistence.xml").exists()) {
+					return DeploymentConstants.JAVA_EE;
+				}
+				
 			}
 		}
 		return null;
@@ -198,9 +204,7 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 	}
 
 	public boolean isSupportedFramework(String frameworkName) {
-		return DeploymentConstants.SPRING.equals(frameworkName) || DeploymentConstants.GRAILS.equals(frameworkName)
-				|| DeploymentConstants.LIFT.equals(frameworkName) || DeploymentConstants.JAVA_WEB.equals(frameworkName);
-
+		return JAVA_WEB_SUPPORTED_FRAMEWORKS.containsKey(frameworkName);
 	}
 
 	public boolean requiresURL() {

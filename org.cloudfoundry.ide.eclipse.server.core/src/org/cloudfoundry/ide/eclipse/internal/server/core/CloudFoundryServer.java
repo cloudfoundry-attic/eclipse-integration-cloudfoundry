@@ -10,7 +10,14 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,8 +29,10 @@ import java.util.Set;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationFramework;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -49,6 +58,8 @@ import org.eclipse.wst.server.core.model.ServerDelegate;
  */
 @SuppressWarnings("restriction")
 public class CloudFoundryServer extends ServerDelegate {
+
+	private final static ObjectMapper mapper = new ObjectMapper();
 
 	private static ThreadLocal<Boolean> deleteServicesOnModuleRemove = new ThreadLocal<Boolean>() {
 		protected Boolean initialValue() {
@@ -614,5 +625,42 @@ public class CloudFoundryServer extends ServerDelegate {
 			}
 		}
 		return appModule;
+	}
+
+	public List<ApplicationFramework> getAPISupportedFrameworks(List<ApplicationFramework> frameworks) {
+		
+		try {
+			// Get /info API url, doesn't need to be secured
+			URL url = new URL(getUrl().replace("https://", "http://") + "/info");
+			URLConnection connection = url.openConnection();
+			InputStream stream = connection.getInputStream();
+
+			// Get all frameworks from API
+			Map<String, Object> jsonData = mapper.readValue(stream, Map.class);
+			Map<String, Object> frameworksData = (Map<String, Object>) jsonData.get("frameworks");
+			Set<String> apiSupportedFrameworks = frameworksData.keySet();
+
+			// Get all frameworks from both the input list and the API
+			List<ApplicationFramework> result = new ArrayList<ApplicationFramework>();
+			for (ApplicationFramework f : frameworks) {
+				if (apiSupportedFrameworks.contains(f.getFramework())) {
+					result.add(f);
+				}
+			}
+
+			return result;
+		}
+		catch (MalformedURLException e) {
+			// Programmer error, can't happen to client
+			throw new RuntimeException(e);
+		}
+		catch (IOException e) {
+			CloudFoundryPlugin
+					.getDefault()
+					.getLog()
+					.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+							"Unexpected error while calling the server's API", e));
+			return null;
+		}
 	}
 }
