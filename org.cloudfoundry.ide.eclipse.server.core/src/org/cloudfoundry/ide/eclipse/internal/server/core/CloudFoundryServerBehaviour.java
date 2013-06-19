@@ -1163,8 +1163,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			if (AppState.STARTED.equals(deploymentDetails.getState()) && isApplicationReady(deploymentDetails)) {
 				return true;
 			}
-			Thread.sleep(SHORT_INTERVAL);
-			timeLeft -= SHORT_INTERVAL;
+			Thread.sleep(ONE_SECOND_INTERVAL);
+			timeLeft -= ONE_SECOND_INTERVAL;
 		}
 		return false;
 	}
