@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.uaa;
 
@@ -28,6 +28,7 @@ import java.util.TreeMap;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryClient;
 import org.cloudfoundry.client.lib.HttpProxyConfiguration;
+import org.cloudfoundry.client.lib.StartingInfo;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.domain.ApplicationStats;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
@@ -611,10 +612,10 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 	}
 
 	@Override
-	public void startApplication(String appName) {
+	public StartingInfo startApplication(String appName) {
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
-			super.startApplication(appName);
+			return super.startApplication(appName);
 		}
 		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
