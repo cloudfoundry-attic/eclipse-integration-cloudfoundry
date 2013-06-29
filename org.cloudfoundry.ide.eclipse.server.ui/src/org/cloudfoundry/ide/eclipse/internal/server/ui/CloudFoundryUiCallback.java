@@ -11,6 +11,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
@@ -22,6 +23,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.FileContent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContent;
@@ -60,18 +62,23 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	@Override
 	public void applicationStarting(CloudFoundryServer server, ApplicationModule cloudModule) {
 		// Only show staging for v2 servers
+		String stagingLogURL = cloudModule.getStartingInfo() != null ? cloudModule.getStartingInfo().getStagingFile() : null;
+		
+		if (stagingLogURL != null) {
+			for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
+				if (server.getBehaviour().supportsSpaces()) {
+					String initialContent = ConsoleContent.getStagingInitialContent(cloudModule.getApplication(), server);
+					ConsoleContent consoleContent = ConsoleContent.getConsoleContent(
+							Arrays.asList(new FileContent(stagingLogURL, true, server, true)),
+							initialContent);
 
-//		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
-//			if (server.getBehaviour().supportsSpaces()) {
-//				String initialContent = ConsoleContent.getStagingInitialContent(cloudModule.getApplication(), server);
-//				ConsoleContent consoleContent = ConsoleContent.getConsoleContent(
-//						Arrays.asList(new FileContent("/tmp/staged/logs/staging_task.log", true, server, true)),
-//						initialContent);
-//
-//				ConsoleManager.getInstance().startConsole(server, consoleContent, cloudModule.getApplication(), i,
-//						i == 0);
-//			}
-//		}
+					ConsoleManager.getInstance().startConsole(server, consoleContent, cloudModule.getApplication(), i,
+							i == 0);
+				}
+			}
+		}
+
+
 	}
 
 	@Override

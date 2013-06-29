@@ -26,6 +26,7 @@ import java.util.Set;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
+import org.cloudfoundry.client.lib.StartingInfo;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.domain.ApplicationStats;
@@ -1330,7 +1331,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			client.debugApplication(applicationId, DebugModeType.SUSPEND.getDebugMode());
 			break;
 		default:
-			client.restartApplication(applicationId);
+			if (client.supportsSpaces()) {
+				client.stopApplication(applicationId);
+				StartingInfo info = client.startApplication(applicationId);
+				cloudModule.setStartingInfo(info);
+				if (info == null) {
+					CloudFoundryPlugin.logError("No staging log header found when staging "
+							+ cloudModule.getApplicationId());
+				}
+			}
+			else {
+				client.restartApplication(applicationId);
+			}
+
 			break;
 		}
 
@@ -1338,26 +1351,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	protected void performRestartInClient(final String applicationId, final ApplicationModule cloudModule,
 			final CloudFoundryOperations client, final ApplicationAction restartOrDebugAction) throws CoreException {
-		// If it is V2, launch asynchronously as staging takes a while.
-		if (supportsSpaces()) {
-			Job job = new Job("Starting application " + applicationId) {
-
-				@Override
-				protected IStatus run(IProgressMonitor arg0) {
-					restartOrDebugApplicationInClient(applicationId, cloudModule, client, restartOrDebugAction);
-					return Status.OK_STATUS;
-				}
-			};
-			job.setPriority(Job.INTERACTIVE);
-			job.schedule();
-
-			CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(), cloudModule);
-
-
-		}
-		else {
-			restartOrDebugApplicationInClient(applicationId, cloudModule, client, restartOrDebugAction);
-		}
+		restartOrDebugApplicationInClient(applicationId, cloudModule, client, restartOrDebugAction);
+		// CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(),
+		// cloudModule);
 
 	}
 
@@ -1943,8 +1939,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							// start application in either regular or debug mode
 							if (descriptor.deploymentMode != null) {
 								CloudFoundryPlugin.trace("Application " + applicationId + " starting");
-								restartOrDebugApplicationInClient(applicationId, cloudModule, client,
-										descriptor.deploymentMode);
+								performRestartInClient(applicationId, cloudModule, client, descriptor.deploymentMode);
 								started = true;
 							}
 							else {

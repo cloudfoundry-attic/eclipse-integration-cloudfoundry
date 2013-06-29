@@ -21,7 +21,7 @@
 			vendor="Pivotal" 
 			class="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerRuntime">
 			<moduleType types="wst.web" versions="1.0" />
-			<moduleType types="jst.web" versions="2.2,2.3,2.4,2.5" />
+			<moduleType types="jst.web" versions="2.2,2.3,2.4,2.5,3.0" />
 			<moduleType types="jst.utility" versions="1.0"/>
 			<moduleType types="grails.app" versions="1.0"/>
             <moduleType types="cloudfoundry.standalone.app" versions="1.0"/> 
@@ -65,7 +65,7 @@
 	    </adapter>
 		<supported>
 			<runtime-component id="org.cloudfoundry.appcloudserver" version="1.0" />
-			<facet id="jst.web" version="2.2,2.3,2.4,2.5" />
+			<facet id="jst.web" version="2.2,2.3,2.4,2.5,3.0" />
 			<facet id="jst.utility" version="1.0"/>
 			<facet id="grails.app" version="1.0"/>
 			<facet id="cloudfoundry.standalone.app" version="1.0"/>
