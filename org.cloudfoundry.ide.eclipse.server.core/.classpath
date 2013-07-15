@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-client-lib-0.8.4.BUILD-SNAPSHOT.jar" sourcepath="/cloudfoundry-client-lib/src/main/java"/>
+	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-client-lib-0.8.5.BUILD-SNAPSHOT.jar" sourcepath="/cloudfoundry-client-lib/src/main/java"/>
 	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-caldecott-lib-0.1.4.BUILD-SNAPSHOT.jar" sourcepath="/cloudfoundry-caldecott-lib/src/main/java"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-io-2.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/spring-context-support-3.0.7.RELEASE.jar"/>

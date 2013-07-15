@@ -197,7 +197,7 @@
     <page
           class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage"
           id="org.cloudfoundry.ide.eclipse.server.editor.applications"
-          name="Applications"
+          name="Applications and Services"
           order="1"
           typeIds="org.cloudfoundry.appcloudserver.*">
     </page>

@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
@@ -34,7 +34,7 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
 		super(application, serverBehaviour, editorPage);
 
-		setText("Remove from Application");
+		setText("Unbind from Application");
 		setImageDescriptor(CloudFoundryImages.REMOVE);
 
 		services = getServiceNames(selection);
@@ -42,7 +42,7 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 
 	@Override
 	public String getJobName() {
-		return "Removing services";
+		return "Unbinding services";
 	}
 
 	@Override
