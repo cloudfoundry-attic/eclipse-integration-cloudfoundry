@@ -60,9 +60,9 @@ public class ConsoleContent {
 	public static ConsoleContent getConsoleContent(CloudFoundryServer cloudServer, CloudApplication app) {
 		List<FileContent> content = new ArrayList<FileContent>();
 
-		if (cloudServer.getBehaviour().supportsSpaces()) {
-			content.add(new FileContent("logs/staging_task.log", true, cloudServer));
-		}
+//		if (cloudServer.getBehaviour().supportsSpaces()) {
+//			content.add(new FileContent("logs/staging_task.log", false, cloudServer));
+//		}
 
 		content.add(new FileContent(FileContent.STD_ERROR_LOG, true, cloudServer));
 		content.add(new FileContent(FileContent.STD_OUT_LOG, false, cloudServer));

@@ -1,19 +1,19 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -68,7 +68,7 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 						return;
 
 					}
-					ApplicationModule module = server.getApplication(modules[0]);
+					CloudFoundryApplicationModule module = server.getApplication(modules[0]);
 					if (module.getLocalModule() != null) {
 						// show local information?
 					}

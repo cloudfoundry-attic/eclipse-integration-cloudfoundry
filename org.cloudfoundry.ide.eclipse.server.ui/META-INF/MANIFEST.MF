@@ -33,4 +33,5 @@ Export-Package: org.cloudfoundry.ide.eclipse.internal.server.ui,
  org.cloudfoundry.ide.eclipse.internal.server.ui.actions,
  org.cloudfoundry.ide.eclipse.internal.server.ui.console,
  org.cloudfoundry.ide.eclipse.internal.server.ui.editor,
- org.cloudfoundry.ide.eclipse.internal.server.ui.wizards
+ org.cloudfoundry.ide.eclipse.internal.server.ui.wizards,
+ org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.v1

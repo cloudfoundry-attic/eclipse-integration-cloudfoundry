@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -89,7 +89,7 @@ public class CloudFoundryServer extends ServerDelegate {
 
 	private static final String PROPERTY_DEPLOYMENT_NAME = "deployment_name";
 
-	static void updateState(Server server, ApplicationModule appModule) throws CoreException {
+	static void updateState(Server server, CloudFoundryApplicationModule appModule) throws CoreException {
 		IModule localModule = appModule.getLocalModule();
 		server.setModuleState(new IModule[] { localModule }, appModule.getState());
 		if (server.getModulePublishState(new IModule[] { localModule }) == IServer.PUBLISH_STATE_UNKNOWN) {
@@ -113,7 +113,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		// constructor
 	}
 
-	public void updateApplication(ApplicationModule module) {
+	public void updateApplication(CloudFoundryApplicationModule module) {
 		getData().updateModule(module);
 	}
 
@@ -159,21 +159,21 @@ public class CloudFoundryServer extends ServerDelegate {
 				.getName()), e);
 	}
 
-	public ApplicationModule getApplication(IModule module) {
-		if (module instanceof ApplicationModule) {
-			return (ApplicationModule) module;
+	public CloudFoundryApplicationModule getApplication(IModule module) {
+		if (module instanceof CloudFoundryApplicationModule) {
+			return (CloudFoundryApplicationModule) module;
 		}
 		return getData().getOrCreateApplicationModule(module);
 	}
 
-	public ApplicationModule getApplication(IModule[] modules) {
+	public CloudFoundryApplicationModule getApplication(IModule[] modules) {
 		if (modules != null && modules.length > 0) {
 			return getApplication(modules[0]);
 		}
 		return null;
 	}
 
-	public Collection<ApplicationModule> getApplications() {
+	public Collection<CloudFoundryApplicationModule> getApplications() {
 		return getData().getApplications();
 	}
 
@@ -317,7 +317,7 @@ public class CloudFoundryServer extends ServerDelegate {
 			}
 			catch (CoreException e) {
 				// ignore deletion of applications that didn't exist
-				if (!CloudUtil.isNotFoundException(e)) {
+				if (!CloudErrorUtil.isNotFoundException(e)) {
 					throw e;
 				}
 			}
@@ -331,7 +331,7 @@ public class CloudFoundryServer extends ServerDelegate {
 
 			// callback to disable auto deploy when testing
 			if (CloudFoundryPlugin.getCallback().isAutoDeployEnabled()) {
-				Job deployModules = new Job("Deploy Modules") {
+				Job deployModules = new Job("Deploying application to Cloud Foundry") {
 					@Override
 					protected IStatus run(IProgressMonitor monitor2) {
 						Set<IModule> pending = new HashSet<IModule>(Arrays.asList(add));
@@ -470,14 +470,14 @@ public class CloudFoundryServer extends ServerDelegate {
 	void updateModules(Map<String, CloudApplication> applicationByName) throws CoreException {
 		Server server = (Server) getServer();
 
-		final Set<ApplicationModule> allModules = new HashSet<ApplicationModule>();
-		List<ApplicationModule> externalModules = new ArrayList<ApplicationModule>();
+		final Set<CloudFoundryApplicationModule> allModules = new HashSet<CloudFoundryApplicationModule>();
+		List<CloudFoundryApplicationModule> externalModules = new ArrayList<CloudFoundryApplicationModule>();
 		final Set<IModule> deletedModules = new HashSet<IModule>();
 
 		synchronized (this) {
 			// check for existing modules and remove them from applicationByName
 			for (IModule module : server.getModules()) {
-				ApplicationModule appModule = getApplication(module);
+				CloudFoundryApplicationModule appModule = getApplication(module);
 				CloudApplication application = applicationByName.remove(appModule.getApplicationId());
 				appModule.setCloudApplication(application);
 				if (application != null) {
@@ -499,7 +499,7 @@ public class CloudFoundryServer extends ServerDelegate {
 
 			// create modules for new applications
 			for (CloudApplication application : applicationByName.values()) {
-				ApplicationModule appModule = getData().createModule(application);
+				CloudFoundryApplicationModule appModule = getData().createModule(application);
 				externalModules.add(appModule);
 				allModules.add(appModule);
 			}
@@ -508,7 +508,7 @@ public class CloudFoundryServer extends ServerDelegate {
 			server.setExternalModules(externalModules.toArray(new IModule[0]));
 
 			for (IModule module : server.getModules()) {
-				ApplicationModule appModule = getApplication(module);
+				CloudFoundryApplicationModule appModule = getApplication(module);
 				updateState(server, appModule);
 			}
 
@@ -534,7 +534,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		deleteJob.schedule();
 	}
 
-	public void removeApplication(ApplicationModule cloudModule) {
+	public void removeApplication(CloudFoundryApplicationModule cloudModule) {
 		getData().remove(cloudModule);
 	}
 
@@ -601,12 +601,12 @@ public class CloudFoundryServer extends ServerDelegate {
 		}
 	}
 
-	public ApplicationModule getApplicationModule(String appName) throws CoreException {
+	public CloudFoundryApplicationModule getApplicationModule(String appName) throws CoreException {
 
-		ApplicationModule appModule = null;
-		Collection<ApplicationModule> modules = getApplications();
+		CloudFoundryApplicationModule appModule = null;
+		Collection<CloudFoundryApplicationModule> modules = getApplications();
 		if (modules != null) {
-			for (ApplicationModule module : modules) {
+			for (CloudFoundryApplicationModule module : modules) {
 				if (appName.equals(module.getApplicationId())) {
 					appModule = module;
 					break;

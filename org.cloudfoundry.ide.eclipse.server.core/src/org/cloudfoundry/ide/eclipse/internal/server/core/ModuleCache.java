@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -39,7 +39,7 @@ public class ModuleCache {
 
 	public static class ServerData {
 
-		private final List<ApplicationModule> applications = new ArrayList<ApplicationModule>();
+		private final List<CloudFoundryApplicationModule> applications = new ArrayList<CloudFoundryApplicationModule>();
 
 		/** Cached password in case secure store fails. */
 		private String password;
@@ -63,14 +63,14 @@ public class ModuleCache {
 			applications.clear();
 		}
 
-		public synchronized ApplicationModule createModule(CloudApplication application) {
-			ApplicationModule appModule = new ApplicationModule(null, application.getName(), server);
+		public synchronized CloudFoundryApplicationModule createModule(CloudApplication application) {
+			CloudFoundryApplicationModule appModule = new CloudFoundryApplicationModule(null, application.getName(), server);
 			appModule.setCloudApplication(application);
 			add(appModule);
 			return appModule;
 		}
 
-		public synchronized void updateModule(ApplicationModule module) {
+		public synchronized void updateModule(CloudFoundryApplicationModule module) {
 			Map<String, String> mapping = getModuleIdToApplicationId();
 			if (module.getLocalModule() != null) {
 				mapping.put(module.getLocalModule().getId(), module.getApplicationId());
@@ -78,8 +78,8 @@ public class ModuleCache {
 			}
 		}
 
-		public synchronized Collection<ApplicationModule> getApplications() {
-			return new ArrayList<ApplicationModule>(applications);
+		public synchronized Collection<CloudFoundryApplicationModule> getApplications() {
+			return new ArrayList<CloudFoundryApplicationModule>(applications);
 		}
 
 		public synchronized String getPassword() {
@@ -90,7 +90,7 @@ public class ModuleCache {
 			return undeployedModules.contains(module);
 		}
 
-		public synchronized void remove(ApplicationModule module) {
+		public synchronized void remove(CloudFoundryApplicationModule module) {
 			applications.remove(module);
 			Map<String, String> mapping = getModuleIdToApplicationId();
 			if (module.getLocalModule() != null) {
@@ -99,13 +99,13 @@ public class ModuleCache {
 			}
 		}
 
-		public synchronized void removeObsoleteModules(Set<ApplicationModule> allModules) {
-			HashSet<ApplicationModule> deletedModules = new HashSet<ApplicationModule>(applications);
+		public synchronized void removeObsoleteModules(Set<CloudFoundryApplicationModule> allModules) {
+			HashSet<CloudFoundryApplicationModule> deletedModules = new HashSet<CloudFoundryApplicationModule>(applications);
 			deletedModules.removeAll(allModules);
 			if (deletedModules.size() > 0) {
 				Map<String, String> mapping = getModuleIdToApplicationId();
 				boolean mappingModified = false;
-				for (ApplicationModule deletedModule : deletedModules) {
+				for (CloudFoundryApplicationModule deletedModule : deletedModules) {
 					if (deletedModule.getLocalModule() != null) {
 						mappingModified |= mapping.remove(deletedModule.getLocalModule().getId()) != null;
 					}
@@ -136,7 +136,7 @@ public class ModuleCache {
 			return automaticRepublishModules.remove(module.getName());
 		}
 
-		private void add(ApplicationModule module) {
+		private void add(CloudFoundryApplicationModule module) {
 			applications.add(module);
 		}
 
@@ -172,8 +172,8 @@ public class ModuleCache {
 			return convertStringToMap(string);
 		}
 
-		private ApplicationModule getModuleByApplicationId(String applicationId) {
-			for (ApplicationModule module : applications) {
+		private CloudFoundryApplicationModule getModuleByApplicationId(String applicationId) {
+			for (CloudFoundryApplicationModule module : applications) {
 				if (applicationId.equals(module.getApplicationId())) {
 					return module;
 				}
@@ -181,8 +181,8 @@ public class ModuleCache {
 			return null;
 		}
 
-		private ApplicationModule getModuleByModuleName(String moduleName) {
-			for (ApplicationModule module : applications) {
+		private CloudFoundryApplicationModule getModuleByModuleName(String moduleName) {
+			for (CloudFoundryApplicationModule module : applications) {
 				if (moduleName.equals(module.getName())) {
 					return module;
 				}
@@ -211,8 +211,8 @@ public class ModuleCache {
 			}
 		}
 
-		synchronized ApplicationModule getOrCreateApplicationModule(IModule module) {
-			ApplicationModule appModule = getModuleByModuleName(module.getName());
+		synchronized CloudFoundryApplicationModule getOrCreateApplicationModule(IModule module) {
+			CloudFoundryApplicationModule appModule = getModuleByModuleName(module.getName());
 			if (appModule != null) {
 				return appModule;
 			}
@@ -231,7 +231,7 @@ public class ModuleCache {
 			}
 
 			// no mapping found, create new module
-			appModule = new ApplicationModule(module, module.getName(), server);
+			appModule = new CloudFoundryApplicationModule(module, module.getName(), server);
 			appModule.setApplicationId(applicationId);
 			add(appModule);
 			return appModule;

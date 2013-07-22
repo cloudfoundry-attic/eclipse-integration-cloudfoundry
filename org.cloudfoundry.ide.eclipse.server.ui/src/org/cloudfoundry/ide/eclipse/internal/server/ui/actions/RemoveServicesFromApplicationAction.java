@@ -13,7 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
@@ -30,7 +30,7 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 
 	private final List<String> services;
 
-	public RemoveServicesFromApplicationAction(IStructuredSelection selection, ApplicationModule application,
+	public RemoveServicesFromApplicationAction(IStructuredSelection selection, CloudFoundryApplicationModule application,
 			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
 		super(application, serverBehaviour, editorPage);
 
@@ -55,7 +55,7 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 		return services;
 	}
 
-	protected void updateServices(IProgressMonitor monitor, ApplicationModule appModule,
+	protected void updateServices(IProgressMonitor monitor, CloudFoundryApplicationModule appModule,
 			CloudFoundryServerBehaviour serverBehaviour, List<String> updatedServices) throws CoreException {
 		serverBehaviour.updateServicesAndCloseCaldecottTunnels(appModule.getApplicationId(), updatedServices, monitor);
 	}

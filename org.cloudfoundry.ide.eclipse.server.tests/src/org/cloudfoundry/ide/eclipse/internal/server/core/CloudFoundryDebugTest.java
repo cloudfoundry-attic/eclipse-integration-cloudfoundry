@@ -1,10 +1,20 @@
+/*******************************************************************************
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     GoPivotal, Inc. - initial API and implementation
+ *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
@@ -155,7 +165,7 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 			int moduleState = server.getModuleState(modules);
 			assertEquals(IServer.STATE_STARTED, moduleState);
 
-			ApplicationModule appModule = cloudServer.getApplication(modules[0]);
+			CloudFoundryApplicationModule appModule = cloudServer.getApplication(modules[0]);
 			List<String> uris = appModule.getApplication().getUris();
 			assertEquals(Collections.singletonList(harness.getUrl("dynamic-webapp")), uris);
 

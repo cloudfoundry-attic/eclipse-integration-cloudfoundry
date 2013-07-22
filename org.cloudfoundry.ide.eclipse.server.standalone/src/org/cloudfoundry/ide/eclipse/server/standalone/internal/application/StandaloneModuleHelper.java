@@ -1,18 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.Staging;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.eclipse.wst.server.core.IModule;
 
 /**
@@ -20,11 +20,11 @@ import org.eclipse.wst.server.core.IModule;
  */
 public class StandaloneModuleHelper {
 
-	private final ApplicationModule appModule;
+	private final CloudFoundryApplicationModule appModule;
 
 	private final IModule module;
 
-	public StandaloneModuleHelper(ApplicationModule appModule) {
+	public StandaloneModuleHelper(CloudFoundryApplicationModule appModule) {
 		this.appModule = appModule;
 		this.module = appModule.getLocalModule();
 	}

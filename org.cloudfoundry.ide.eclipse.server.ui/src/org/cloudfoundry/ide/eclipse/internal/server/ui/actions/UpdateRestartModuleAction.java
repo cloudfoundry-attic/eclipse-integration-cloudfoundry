@@ -1,16 +1,16 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
@@ -73,7 +73,7 @@ public class UpdateRestartModuleAction extends AbstractCloudFoundryServerAction 
 
 	protected void serverSelectionChanged(IAction action) {
 		if (selectedServer != null && (selectedServer.getServerState() == IServer.STATE_STARTED)) {
-			ApplicationModule cloudModule = getSelectedCloudAppModule();
+			CloudFoundryApplicationModule cloudModule = getSelectedCloudAppModule();
 			if (cloudModule != null) {
 				int state = cloudModule.getState();
 				// Do not enable the action if the associated module project is

@@ -1,17 +1,17 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
@@ -31,14 +31,14 @@ public class StartStopApplicationAction extends CloudFoundryEditorAction {
 
 	private final ApplicationAction action;
 
-	private final ApplicationModule application;
+	private final CloudFoundryApplicationModule application;
 
 	private final IModule module;
 
 	private final CloudFoundryServerBehaviour serverBehaviour;
 
 	public StartStopApplicationAction(CloudFoundryApplicationsEditorPage editorPage, ApplicationAction action,
-			ApplicationModule application, CloudFoundryServerBehaviour serverBehaviour, IModule module) {
+			CloudFoundryApplicationModule application, CloudFoundryServerBehaviour serverBehaviour, IModule module) {
 		super(editorPage, RefreshArea.DETAIL);
 		this.action = action;
 		this.application = application;

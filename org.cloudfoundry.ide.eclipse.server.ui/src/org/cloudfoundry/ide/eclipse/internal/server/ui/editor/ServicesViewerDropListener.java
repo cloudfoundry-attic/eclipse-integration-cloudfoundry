@@ -1,17 +1,17 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.AddServicesToApplicationAction;
 import org.eclipse.jface.util.LocalSelectionTransfer;
@@ -34,7 +34,7 @@ public class ServicesViewerDropListener extends ViewerDropAdapter {
 
 	private final CloudFoundryApplicationsEditorPage editorPage;
 
-	private ApplicationModule appModule;
+	private CloudFoundryApplicationModule appModule;
 
 	private final CloudFoundryServerBehaviour serverBehaviour;
 
@@ -61,7 +61,7 @@ public class ServicesViewerDropListener extends ViewerDropAdapter {
 		return true;
 	}
 
-	public void setModule(ApplicationModule module) {
+	public void setModule(CloudFoundryApplicationModule module) {
 		this.appModule = module;
 		
 //		if (module == null) {

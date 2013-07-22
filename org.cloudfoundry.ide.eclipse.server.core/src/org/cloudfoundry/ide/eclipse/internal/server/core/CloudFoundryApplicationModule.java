@@ -26,8 +26,13 @@ import org.eclipse.wst.server.core.internal.ExternalModule;
 /**
  * 
  * Representation of an application published to a Cloud Foundry server,
- * containing addition information like last deployment and application
- * information.
+ * containing addition Cloud Foundry information like last deployment and
+ * application information. Note that the application ID of this CF aware module
+ * may differ from the module name of its corresponding WTP IModule. The reason
+ * is that the module name of the WTP IModule is typically the associated
+ * workspace project, while the application ID in the CF Application Module is
+ * the user-specified CF app name, which may be different.
+ * 
  * 
  * @author Christian Dupuis
  * @author Terry Denney
@@ -35,7 +40,7 @@ import org.eclipse.wst.server.core.internal.ExternalModule;
  * @author Steffen Pingel
  */
 @SuppressWarnings("restriction")
-public class ApplicationModule extends ExternalModule {
+public class CloudFoundryApplicationModule extends ExternalModule {
 
 	public static String APPLICATION_STATE_DEPLOYABLE = "Deployable";
 
@@ -72,7 +77,7 @@ public class ApplicationModule extends ExternalModule {
 	private DeploymentInfo lastDeploymentInfo;
 
 	private Staging staging;
-	
+
 	private StartingInfo startingInfo;
 
 	private IModule localModule;
@@ -81,7 +86,7 @@ public class ApplicationModule extends ExternalModule {
 
 	private CoreException error;
 
-	public ApplicationModule(IModule module, String name, IServer server) {
+	public CloudFoundryApplicationModule(IModule module, String name, IServer server) {
 		super(name, name, MODULE_ID, MODULE_VERSION, null);
 		Assert.isNotNull(name);
 		Assert.isNotNull(server);
@@ -95,6 +100,13 @@ public class ApplicationModule extends ExternalModule {
 		return application;
 	}
 
+	/**
+	 * The Cloud Foundry application name. This may not necessarily be the same
+	 * as the associated WTP IModule name or workspace project name, as users
+	 * are allowed to enter a different name for the application when pushing
+	 * the application to a Cloud Foundry server.
+	 * @return Cloud Foundry application name.
+	 */
 	public synchronized String getApplicationId() {
 		return applicationId;
 	}
@@ -102,11 +114,11 @@ public class ApplicationModule extends ExternalModule {
 	public ApplicationStats getApplicationStats() {
 		return applicationStats;
 	}
-	
+
 	public StartingInfo getStartingInfo() {
 		return startingInfo;
 	}
-	
+
 	public void setStartingInfo(StartingInfo startingInfo) {
 		this.startingInfo = startingInfo;
 	}

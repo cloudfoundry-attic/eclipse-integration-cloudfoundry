@@ -1,18 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2013 VMware, Inc.
+ * Copyright (c) 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.jface.wizard.IWizardPage;
 
@@ -54,6 +54,6 @@ public interface IApplicationWizardDelegate {
 	 * used.
 	 */
 	public List<IWizardPage> getWizardPages(ApplicationWizardDescriptor descriptor, CloudFoundryServer cloudServer,
-			ApplicationModule applicationModule);
+			CloudFoundryApplicationModule applicationModule);
 
 }

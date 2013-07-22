@@ -1,18 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
@@ -44,11 +44,11 @@ public class CloudFoundryURLsWizard extends Wizard {
 
 	private boolean isPublished = true;
 
-	private ApplicationModule applicationModule;
+	private CloudFoundryApplicationModule applicationModule;
 
 	private CloudFoundryURLsWizardPage page;
 
-	public CloudFoundryURLsWizard(CloudFoundryServer cloudServer, ApplicationModule applicationModule,
+	public CloudFoundryURLsWizard(CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule,
 			List<String> existingURIs) {
 		this.cloudServer = cloudServer;
 		this.appName = applicationModule.getApplicationId();
@@ -59,7 +59,7 @@ public class CloudFoundryURLsWizard extends Wizard {
 		setNeedsProgressMonitor(false);
 	}
 
-	public CloudFoundryURLsWizard(CloudFoundryServer cloudServer, ApplicationModule applicationModule,
+	public CloudFoundryURLsWizard(CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule,
 			List<String> existingURIs, boolean isPublished) {
 		this(cloudServer, applicationModule, existingURIs);
 		this.isPublished = isPublished;
@@ -97,7 +97,7 @@ public class CloudFoundryURLsWizard extends Wizard {
 
 		final IStatus[] result = new IStatus[1];
 		if (shouldRepublish) {
-			final ApplicationModule appModule = getAppModule();
+			final CloudFoundryApplicationModule appModule = getAppModule();
 			// In the republish case, finish the URL wizard whether republish
 			// succeeds or not, as error conditions may result
 			// in the publish wizard opening.
@@ -143,7 +143,7 @@ public class CloudFoundryURLsWizard extends Wizard {
 		return result[0] != null ? result[0].isOK() : true;
 	}
 
-	public ApplicationModule getAppModule() {
+	public CloudFoundryApplicationModule getAppModule() {
 
 		try {
 			return cloudServer.getApplicationModule(appName);

@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -27,11 +27,11 @@ import org.eclipse.core.runtime.IProgressMonitor;
  */
 public abstract class CloudFoundryCallback {
 
-	public abstract void applicationStarted(CloudFoundryServer server, ApplicationModule cloudModule);
+	public abstract void applicationStarted(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
 	
-	public abstract void applicationStarting(CloudFoundryServer server, ApplicationModule cloudModule);
+	public abstract void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
 
-	public abstract void applicationStopping(CloudFoundryServer server, ApplicationModule cloudModule);
+	public abstract void applicationStopping(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
 
 	public abstract void disconnecting(CloudFoundryServer server);
 
@@ -40,7 +40,7 @@ public abstract class CloudFoundryCallback {
 	public abstract void displayCaldecottTunnelConnections(CloudFoundryServer server,
 			List<CaldecottTunnelDescriptor> descriptors);
 
-	public abstract DeploymentDescriptor prepareForDeployment(CloudFoundryServer server, ApplicationModule module,
+	public abstract DeploymentDescriptor prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			IProgressMonitor monitor);
 
 	public static class DeploymentDescriptor {
@@ -63,7 +63,7 @@ public abstract class CloudFoundryCallback {
 
 	public abstract void deleteServices(List<String> services, CloudFoundryServer cloudServer);
 
-	public abstract void deleteApplication(ApplicationModule cloudModule, CloudFoundryServer cloudServer);
+	public abstract void deleteApplication(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer);
 
 	public boolean isAutoDeployEnabled() {
 		return true;

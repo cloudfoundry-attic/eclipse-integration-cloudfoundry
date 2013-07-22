@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
@@ -19,7 +19,7 @@ import java.util.Set;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
@@ -81,11 +81,11 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 	 */
 	private final List<CloudService> allServices = new ArrayList<CloudService>();
 
-	private final ApplicationModule module;
+	private final CloudFoundryApplicationModule module;
 	
 	private final ApplicationWizardDescriptor descriptor;
 
-	public CloudFoundryApplicationServicesWizardPage(CloudFoundryServer cloudServer, ApplicationModule module, ApplicationWizardDescriptor descriptor) {
+	public CloudFoundryApplicationServicesWizardPage(CloudFoundryServer cloudServer, CloudFoundryApplicationModule module, ApplicationWizardDescriptor descriptor) {
 		super("Services");
 		this.cloudServer = cloudServer;
 		this.serverTypeId = module.getServerTypeId();

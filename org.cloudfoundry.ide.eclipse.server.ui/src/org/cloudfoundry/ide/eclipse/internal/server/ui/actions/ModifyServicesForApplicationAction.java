@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
@@ -16,9 +16,9 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -35,11 +35,11 @@ import org.eclipse.jface.viewers.IStructuredSelection;
  */
 public abstract class ModifyServicesForApplicationAction extends CloudFoundryEditorAction {
 
-	private ApplicationModule appModule;
+	private CloudFoundryApplicationModule appModule;
 
 	private final CloudFoundryServerBehaviour serverBehaviour;
 
-	public ModifyServicesForApplicationAction(ApplicationModule appModule, CloudFoundryServerBehaviour serverBehaviour,
+	public ModifyServicesForApplicationAction(CloudFoundryApplicationModule appModule, CloudFoundryServerBehaviour serverBehaviour,
 			CloudFoundryApplicationsEditorPage editorPage) {
 		super(editorPage, RefreshArea.DETAIL);
 
@@ -51,7 +51,7 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 
 	abstract public List<String> getServicesToRemove();
 
-	protected void setApplicationModule(ApplicationModule appModule) {
+	protected void setApplicationModule(CloudFoundryApplicationModule appModule) {
 		this.appModule = appModule;
 	}
 
@@ -109,17 +109,13 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 		return Status.OK_STATUS;
 	}
 
-	protected abstract void updateServices(IProgressMonitor monitor, ApplicationModule appModule,
+	protected abstract void updateServices(IProgressMonitor monitor, CloudFoundryApplicationModule appModule,
 			CloudFoundryServerBehaviour serverBehaviour, List<String> updatedServices) throws CoreException;
 
-	@Override
-	protected void display404Error(IStatus status) {
-		// FIXME: do we ever want to show 404?
-	}
 
 	@Override
 	protected boolean shouldLogException(CoreException e) {
-		return !CloudUtil.isNotFoundException(e);
+		return !CloudErrorUtil.isNotFoundException(e);
 	}
 
 	public static List<String> getServiceNames(IStructuredSelection selection) {

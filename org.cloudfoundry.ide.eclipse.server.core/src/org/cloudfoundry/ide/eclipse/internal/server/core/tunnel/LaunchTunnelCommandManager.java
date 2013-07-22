@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.PlatformUtil;
@@ -295,7 +296,7 @@ public class LaunchTunnelCommandManager {
 			}
 		}
 		catch (IOException ioe) {
-			throw CloudUtil.toCoreException(ioe);
+			throw CloudErrorUtil.toCoreException(ioe);
 		}
 		finally {
 			if (outStream != null) {

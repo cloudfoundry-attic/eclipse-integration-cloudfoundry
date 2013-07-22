@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.spaces;
 
@@ -18,11 +18,11 @@ import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryOperationsHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -128,10 +128,10 @@ public class CloudSpaceServerLookup {
 						}
 					}
 					catch (CloudFoundryException cfe) {
-						httpException = CloudUtil.toCoreException(cfe);
+						httpException = CloudErrorUtil.toCoreException(cfe);
 					}
 					catch (RestClientException e) {
-						httpException = CloudUtil.toCoreException(e);
+						httpException = CloudErrorUtil.toCoreException(e);
 					}
 
 					if (httpException != null) {
@@ -148,7 +148,7 @@ public class CloudSpaceServerLookup {
 		}
 		catch (CoreException ce) {
 			// Translate the cause to a user friendly message
-			String validationMessage = CloudUtil.getV2ValidationErrorMessage(ce);
+			String validationMessage = CloudErrorUtil.getV2ValidationErrorMessage(ce);
 			if (validationMessage != null) {
 				ce = new CoreException(CloudFoundryPlugin.getErrorStatus(validationMessage));
 			}

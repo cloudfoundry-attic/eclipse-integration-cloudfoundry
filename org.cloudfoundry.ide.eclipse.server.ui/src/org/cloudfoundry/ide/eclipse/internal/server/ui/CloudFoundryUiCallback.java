@@ -11,7 +11,6 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
@@ -19,11 +18,10 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.FileContent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContent;
@@ -36,12 +34,15 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryCrede
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.DeleteServicesWizard;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.progress.UIJob;
 import org.eclipse.wst.server.core.IModule;
 
 /**
@@ -52,37 +53,53 @@ import org.eclipse.wst.server.core.IModule;
 public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
-	public void applicationStarted(CloudFoundryServer server, ApplicationModule cloudModule) {
-		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
-			ConsoleContent content = ConsoleContent.getConsoleContent(server, cloudModule.getApplication());
-			ConsoleManager.getInstance().startConsole(server, content, cloudModule.getApplication(), i, i == 0);
-		}
-	}
+	public void applicationStarted(final CloudFoundryServer server, final CloudFoundryApplicationModule cloudModule) {
+		// RUn this in the UI thread as it may be invoked by a worker thread
+		UIJob job = new UIJob("Updating Cloud Foundry console") {
 
-	@Override
-	public void applicationStarting(CloudFoundryServer server, ApplicationModule cloudModule) {
-		// Only show staging for v2 servers
-		String stagingLogURL = cloudModule.getStartingInfo() != null ? cloudModule.getStartingInfo().getStagingFile() : null;
-		
-		if (stagingLogURL != null) {
-			for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
-				if (server.getBehaviour().supportsSpaces()) {
-					String initialContent = ConsoleContent.getStagingInitialContent(cloudModule.getApplication(), server);
-					ConsoleContent consoleContent = ConsoleContent.getConsoleContent(
-							Arrays.asList(new FileContent(stagingLogURL, true, server, true)),
-							initialContent);
-
-					ConsoleManager.getInstance().startConsole(server, consoleContent, cloudModule.getApplication(), i,
-							i == 0);
+			@Override
+			public IStatus runInUIThread(IProgressMonitor arg0) {
+				for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
+					ConsoleContent content = ConsoleContent.getConsoleContent(server, cloudModule.getApplication());
+					ConsoleManager.getInstance().startConsole(server, content, cloudModule.getApplication(), i, i == 0);
 				}
+				return Status.OK_STATUS;
 			}
-		}
-
+		};
+		job.setSystem(true);
+		job.schedule();
 
 	}
 
 	@Override
-	public void deleteApplication(ApplicationModule cloudModule, CloudFoundryServer cloudServer) {
+	public void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
+		// Only show staging for v2 servers
+		// String stagingLogURL = cloudModule.getStartingInfo() != null ?
+		// cloudModule.getStartingInfo().getStagingFile()
+		// : null;
+		//
+		// if (stagingLogURL != null) {
+		// for (int i = 0; i < cloudModule.getApplication().getInstances(); i++)
+		// {
+		// if (server.getBehaviour().supportsSpaces()) {
+		// String initialContent =
+		// ConsoleContent.getStagingInitialContent(cloudModule.getApplication(),
+		// server);
+		// ConsoleContent consoleContent = ConsoleContent.getConsoleContent(
+		// Arrays.asList(new FileContent(stagingLogURL, true, server, true)),
+		// initialContent);
+		//
+		// ConsoleManager.getInstance().startConsole(server, consoleContent,
+		// cloudModule.getApplication(), i,
+		// i == 0);
+		// }
+		// }
+		// }
+
+	}
+
+	@Override
+	public void deleteApplication(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
 		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
 			ConsoleManager.getInstance().stopConsole(cloudServer.getServer(), cloudModule.getApplication(), i);
 		}
@@ -102,7 +119,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public void applicationStopping(CloudFoundryServer server, ApplicationModule cloudModule) {
+	public void applicationStopping(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 		// CloudApplication application = cloudModule.getApplication();
 		// if (application != null) {
 		// consoleManager.stopConsole(application);
@@ -134,7 +151,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
 	public DeploymentDescriptor prepareForDeployment(final CloudFoundryServer server,
-			final ApplicationModule appModule, final IProgressMonitor monitor) {
+			final CloudFoundryApplicationModule appModule, final IProgressMonitor monitor) {
 
 		DeploymentDescriptor descriptor = null;
 		CloudApplication existingApp = appModule.getApplication();

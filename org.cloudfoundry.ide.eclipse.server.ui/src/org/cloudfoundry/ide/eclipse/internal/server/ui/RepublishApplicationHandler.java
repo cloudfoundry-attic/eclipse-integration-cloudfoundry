@@ -16,7 +16,7 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
@@ -45,13 +45,13 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.De
  */
 public class RepublishApplicationHandler {
 
-	private final ApplicationModule appModule;
+	private final CloudFoundryApplicationModule appModule;
 
 	private final List<String> uris;
 
 	private final CloudFoundryServer cloudServer;
 
-	public RepublishApplicationHandler(ApplicationModule appModule, List<String> uris, CloudFoundryServer cloudServer) {
+	public RepublishApplicationHandler(CloudFoundryApplicationModule appModule, List<String> uris, CloudFoundryServer cloudServer) {
 		this.appModule = appModule;
 		this.uris = uris;
 		this.cloudServer = cloudServer;
@@ -71,7 +71,7 @@ public class RepublishApplicationHandler {
 		return existingApp;
 	}
 
-	protected IProject getProject(ApplicationModule appModule) {
+	protected IProject getProject(CloudFoundryApplicationModule appModule) {
 		IProject project = appModule.getLocalModule() != null ? appModule.getLocalModule().getProject() : null;
 		if (project == null) {
 			project = ResourcesPlugin.getWorkspace().getRoot().getProject(appModule.getApplicationId());

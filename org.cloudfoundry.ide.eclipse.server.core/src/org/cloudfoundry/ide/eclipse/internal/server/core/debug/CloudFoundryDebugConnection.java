@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.debug;
 
@@ -15,7 +15,7 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.InstanceInfo;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.WaitWithProgressJob;
 import org.eclipse.core.runtime.CoreException;
@@ -45,7 +45,7 @@ public class CloudFoundryDebugConnection {
 				protected boolean internalRunInWait(IProgressMonitor monitor) {
 					List<DebugConnectionDescriptor> descriptors = null;
 					try {
-						ApplicationModule appModule = cloudFoundryServer.getApplication(modules);
+						CloudFoundryApplicationModule appModule = cloudFoundryServer.getApplication(modules);
 						InstancesInfo instancesInfo = cloudFoundryServer.getBehaviour().getInstancesInfo(
 								appModule.getApplicationId(), monitor);
 

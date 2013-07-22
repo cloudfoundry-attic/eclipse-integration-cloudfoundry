@@ -1,18 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationMasterDetailsBlock;
@@ -115,12 +115,16 @@ public abstract class CloudFoundryEditorAction extends Action {
 					}
 				}
 				catch (CoreException e) {
+					IStatus errorStatus = null;
 					if (shouldLogException(e)) {
+						errorStatus = new Status(Status.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
+								e.getMessage(), e);
 						StatusManager.getManager().handle(
-								new Status(Status.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
-										"Failed to perform server editor action", e), StatusManager.LOG);
+								errorStatus, StatusManager.LOG);
+					} else {
+						errorStatus = new Status(Status.CANCEL, CloudFoundryServerUiPlugin.PLUGIN_ID, e.getMessage(), e);
 					}
-					return new Status(Status.CANCEL, CloudFoundryServerUiPlugin.PLUGIN_ID, e.getMessage(), e);
+					return errorStatus;
 				}
 				return status;
 			}
@@ -146,11 +150,11 @@ public abstract class CloudFoundryEditorAction extends Action {
 						}
 						if (exception != null) {
 							if (exception instanceof CoreException) {
-								if (CloudUtil.isNotFoundException((CoreException) exception)) {
+								if (CloudErrorUtil.isNotFoundException((CoreException) exception)) {
 									display404Error(status);
 									return;
 								}
-								if (userAction && CloudUtil.isWrongCredentialsException((CoreException) exception)) {
+								if (userAction && CloudErrorUtil.isWrongCredentialsException((CoreException) exception)) {
 									CloudFoundryCredentialsWizard wizard = new CloudFoundryCredentialsWizard(editorPage
 											.getCloudServer());
 									WizardDialog dialog = new WizardDialog(Display.getDefault().getActiveShell(),
@@ -166,7 +170,7 @@ public abstract class CloudFoundryEditorAction extends Action {
 						else {
 							IModule currentModule = editorPage.getMasterDetailsBlock().getCurrentModule();
 							if (currentModule != null) {
-								ApplicationModule appModule = editorPage.getCloudServer().getApplication(currentModule);
+								CloudFoundryApplicationModule appModule = editorPage.getCloudServer().getApplication(currentModule);
 								if (appModule != null && appModule.getErrorMessage() != null) {
 									setErrorInPage(appModule.getErrorMessage());
 									return;

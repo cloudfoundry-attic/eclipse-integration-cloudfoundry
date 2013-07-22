@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
@@ -18,7 +18,7 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationPlan;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
@@ -84,13 +84,13 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 
 	protected CloudFoundryApplicationWizard wizard;
 
-	protected final ApplicationModule module;
+	protected final CloudFoundryApplicationModule module;
 
 	protected ApplicationPlanPart applicationPlanPart;
 
 	protected final ApplicationWizardDescriptor descriptor;
 
-	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, ApplicationModule module,
+	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor) {
 		super("deployment");
 		this.server = server;
@@ -123,7 +123,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 		setDeploymentMode(deploymentMode);
 	}
 
-	private String getDeploymentNameFromModule(ApplicationModule module) {
+	private String getDeploymentNameFromModule(CloudFoundryApplicationModule module) {
 		if (module != null) {
 			CloudApplication app = module.getApplication();
 			if (app != null && app.getName() != null) {
@@ -191,9 +191,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 	}
 
 	protected void setApplicationPlan(ApplicationPlan plan) {
-		if (descriptor instanceof CCNGV2ApplicationWizardDescriptor) {
-			((CCNGV2ApplicationWizardDescriptor) descriptor).setApplicationPlan(plan);
-		}
+		descriptor.setApplicationPlan(plan);
 	}
 
 	protected void setURL() {
@@ -317,17 +315,14 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 
 	protected void createCCNGPlanArea(Composite parent) {
 		// Set application plan UI, the server supports application plans
-		List<ApplicationPlan> applicationPlans = getWizard() instanceof CloudFoundryApplicationWizard ? ((CloudFoundryApplicationWizard) getWizard())
-				.getV2ApplicationPlans() : null;
+		List<ApplicationPlan> applicationPlans = wizard.getV2ApplicationPlans();
 		if (applicationPlans != null && !applicationPlans.isEmpty()) {
 
 			Label applicationPlanLabel = new Label(parent, SWT.NONE);
 			GridDataFactory.fillDefaults().grab(false, false).applyTo(applicationPlanLabel);
 			applicationPlanLabel.setText("Application Plan:");
 
-			ApplicationPlan defaultPlan = ApplicationPlan.free;
-			setApplicationPlan(defaultPlan);
-			applicationPlanPart = new ApplicationPlanPart(applicationPlans, defaultPlan);
+			applicationPlanPart = new ApplicationPlanPart(applicationPlans, descriptor.getApplicationPlan());
 
 			Composite planComposite = new Composite(parent, SWT.NONE);
 			GridLayoutFactory.fillDefaults().margins(0, 0).numColumns(ApplicationPlan.values().length)

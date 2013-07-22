@@ -14,10 +14,11 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DeleteServicesAction;
@@ -217,7 +218,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 				if (element instanceof IModule) {
 					IModule module = (IModule) element;
-					ApplicationModule appModule = editorPage.getCloudServer().getApplication(module);
+					CloudFoundryApplicationModule appModule = editorPage.getCloudServer().getApplication(module);
 					if (appModule.getErrorMessage() != null) {
 						return CloudFoundryImages.getImage(new DecorationOverlayIcon(image,
 								CloudFoundryImages.OVERLAY_ERROR, IDecoration.BOTTOM_LEFT));
@@ -226,6 +227,50 @@ public class ApplicationMasterPart extends SectionPart {
 
 				return image;
 			}
+
+			@Override
+			public String getText(Object element) {
+				// This is the WTP module name (usually, it's the workspace
+				// project name)
+				String moduleName = super.getText(element);
+
+				// However, the user has the option to specify a different name
+				// when pushing an app, which is used as the cf app name. If
+				// they are different, and the
+				// corresponding workspace project is accessible, show both.
+				// Otherwise, show the cf app name.
+
+				if (element instanceof IModule) {
+
+					IModule module = (IModule) element;
+
+					// Find the corresponding Cloud Foundry-aware application Module.
+					CloudFoundryApplicationModule appModule = cloudServer.getApplication((IModule) element);
+
+					if (appModule != null) {
+						String cfAppName = appModule.getApplicationId();
+						
+						if (cfAppName != null) {
+
+							// Be sure not to show a null WTP module name,
+							// although
+							// that should not be encountered
+							if (moduleName != null
+									&& !cfAppName.equals(moduleName)
+									&& CloudFoundryProperties.isModuleProjectAccessible.testProperty(
+											new IModule[] { module }, cloudServer)) {
+								moduleName = cfAppName + " (" + moduleName + ")";
+							}
+							else {
+								moduleName = cfAppName;
+							}
+						}
+					}
+				}
+
+				return moduleName;
+			}
+
 		});
 		applicationsViewer.setInput(new CloudApplication[0]);
 		applicationsViewer.setSorter(new CloudFoundryViewerSorter());
@@ -273,7 +318,7 @@ public class ApplicationMasterPart extends SectionPart {
 			}
 		};
 		toolBarManager.add(addRemoveApplicationAction);
-		
+
 		// Fix for STS-2996. Moved from CloudFoundryApplicationsEditorPage
 		toolBarManager.add(new RefreshApplicationEditorAction(editorPage));
 		toolBarManager.update(true);

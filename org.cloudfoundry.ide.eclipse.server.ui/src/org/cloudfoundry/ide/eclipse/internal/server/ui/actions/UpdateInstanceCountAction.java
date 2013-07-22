@@ -1,16 +1,16 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -30,12 +30,12 @@ public class UpdateInstanceCountAction extends CloudFoundryEditorAction {
 
 	private final int instanceCount;
 
-	private final ApplicationModule module;
+	private final CloudFoundryApplicationModule module;
 
 	private final Spinner instanceSpinner;
 
 	public UpdateInstanceCountAction(CloudFoundryApplicationsEditorPage editorPage, Spinner instanceSpinner,
-			ApplicationModule module) {
+			CloudFoundryApplicationModule module) {
 		super(editorPage, RefreshArea.DETAIL);
 		this.instanceSpinner = instanceSpinner;
 		this.instanceCount = instanceSpinner.getSelection();

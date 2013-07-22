@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2013 VMware, Inc.
+ * Copyright (c) 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
@@ -52,6 +52,7 @@ public interface IApplicationDelegate {
 	 * if it is not applicable.
 	 * @throws CoreException if error occurred while determining framework from
 	 * module.
+	 * @deprecated Frameworks are no longer supported in V2 CF servers
 	 */
 	public ApplicationFramework getFramework(IModule module) throws CoreException;
 
@@ -66,6 +67,7 @@ public interface IApplicationDelegate {
 	 * by this delegate.
 	 * @throws CoreException if error occurred while determining runtimes for
 	 * the given active server
+	 * @deprecated Runtimes are no longer used for V2 CF servers
 	 */
 	public List<ApplicationRuntime> getRuntimes(CloudFoundryServer activeServer) throws CoreException;
 
@@ -74,6 +76,7 @@ public interface IApplicationDelegate {
 	 * 
 	 * @return Non-null list of all application frameworks provided by this
 	 * application delegate.
+	 * @deprecated Frameworks are no longer used for V2 CF servers
 	 */
 	public List<ApplicationFramework> getSupportedFrameworks();
 
@@ -83,6 +86,7 @@ public interface IApplicationDelegate {
 	 * 
 	 * @param frameworkName
 	 * @return true if supported. False otherwise
+	 * @deprecated Frameworks are no longer supported in V2 servers
 	 */
 	public boolean isSupportedFramework(String frameworkName);
 

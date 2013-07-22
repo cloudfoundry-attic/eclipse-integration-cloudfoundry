@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.tests.util;
 
@@ -16,7 +16,7 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
@@ -49,12 +49,12 @@ public class TestCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public void applicationStarted(CloudFoundryServer server, ApplicationModule cloudModule) {
+	public void applicationStarted(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 		// ignore
 	}
 
 	@Override
-	public void applicationStopping(CloudFoundryServer server, ApplicationModule cloudModule) {
+	public void applicationStopping(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 		// ignore
 	}
 
@@ -69,7 +69,7 @@ public class TestCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public DeploymentDescriptor prepareForDeployment(CloudFoundryServer server, ApplicationModule module,
+	public DeploymentDescriptor prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			IProgressMonitor monitor) {
 		DeploymentDescriptor descriptor = new DeploymentDescriptor();
 		String appName;
@@ -119,7 +119,7 @@ public class TestCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public void deleteApplication(ApplicationModule cloudModule, CloudFoundryServer cloudServer) {
+	public void deleteApplication(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
 		// ignore
 	}
 
@@ -129,7 +129,7 @@ public class TestCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public void applicationStarting(CloudFoundryServer server, ApplicationModule cloudModule) {
+	public void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 		// TODO Auto-generated method stub
 
 	}

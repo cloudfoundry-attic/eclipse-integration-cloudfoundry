@@ -16,7 +16,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.cloudfoundry.client.lib.CloudCredentials;
-import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.StartingInfo;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
@@ -88,18 +86,6 @@ import org.springframework.web.client.RestClientException;
 @SuppressWarnings("restriction")
 public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
-	private static final long DEFAULT_INTERVAL = 60 * 1000;
-
-	private static final long DEPLOYMENT_TIMEOUT = 10 * 60 * 1000;
-
-	private static final long STAGING_TIMEOUT = 6 * 1000;
-
-	private static final long SHORT_INTERVAL = 5 * 1000;
-
-	private static final long ONE_SECOND_INTERVAL = 1000;
-
-	private static final long UPLOAD_TIMEOUT = 60 * 1000;
-
 	private CloudFoundryOperations client;
 
 	private RefreshJob refreshJob;
@@ -108,7 +94,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private DebugSupportCheck isDebugModeSupported = DebugSupportCheck.UNCHECKED;
 
-	private List<CloudInfo.Runtime> runtimes = null;
+	private List<CloudInfo.Runtime> runtimes = new ArrayList<CloudInfo.Runtime>(0);
 
 	private List<ApplicationPlan> applicationPlans;
 
@@ -253,7 +239,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				for (IModule module : modules) {
-					final ApplicationModule appModule = cloudServer.getApplication(module);
+					final CloudFoundryApplicationModule appModule = cloudServer.getApplication(module);
 
 					List<String> servicesToDelete = new ArrayList<String>();
 
@@ -268,7 +254,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							// services.
 							List<String> actualServices = application.getServices();
 							if (actualServices != null) {
-								servicesToDelete.addAll(actualServices);
+								// This has to be used instead of addAll(..), as
+								// there is a chance the list is non-empty but
+								// contains null entries
+								for (String serviceName : actualServices) {
+									if (serviceName != null) {
+										servicesToDelete.add(serviceName);
+									}
+								}
 							}
 
 							// Close any Caldecott tunnels before deleting app
@@ -314,8 +307,24 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
-	private CloudApplication doDeployApplication(CloudFoundryOperations client, final ApplicationModule appModule,
-			final DeploymentDescriptor descriptor, IProgressMonitor monitor) throws CoreException {
+	/**
+	 * This performs the primary operation of creating an application and then
+	 * pushing the application contents to the server. These are performed in
+	 * separate requests via the CF client. If the application does not exist,
+	 * it is first created through an initial request. Once the application is
+	 * created, or if it already exists, the next step is to upload (push) the
+	 * application archive containing the application's resources. This is
+	 * performed in a second separate request.
+	 * @param client
+	 * @param appModule
+	 * @param descriptor
+	 * @param monitor
+	 * @return
+	 * @throws CoreException
+	 */
+	protected CloudApplication pushApplication(CloudFoundryOperations client,
+			final CloudFoundryApplicationModule appModule, final DeploymentDescriptor descriptor,
+			IProgressMonitor monitor) throws CoreException {
 		Assert.isNotNull(descriptor.applicationInfo);
 
 		ApplicationInfo applicationInfo = descriptor.applicationInfo;
@@ -324,7 +333,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		appModule.setLastApplicationInfo(applicationInfo);
 		appModule.setLastDeploymentInfo(descriptor.deploymentInfo);
 
-		// publish application
 		try {
 			List<CloudApplication> existingApps = client.getApplications();
 			boolean found = false;
@@ -335,39 +343,25 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				}
 			}
 
+			// 1. Create the application if it doesn't already exist
 			if (!found) {
 				Staging staging = descriptor.staging;
-				if (staging != null) {
-					List<String> uris = descriptor.deploymentInfo.getUris() != null ? descriptor.deploymentInfo
-							.getUris() : new ArrayList<String>();
-					List<String> services = descriptor.deploymentInfo.getServices() != null ? descriptor.deploymentInfo
-							.getServices() : new ArrayList<String>();
+				List<String> uris = descriptor.deploymentInfo.getUris() != null ? descriptor.deploymentInfo.getUris()
+						: new ArrayList<String>(0);
+				List<String> services = descriptor.deploymentInfo.getServices() != null ? descriptor.deploymentInfo
+						.getServices() : new ArrayList<String>(0);
+				ApplicationPlan plan = descriptor.applicationPlan;
 
-					ApplicationPlan plan = descriptor.applicationPlan;
-					client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(), uris,
-							services, plan != null ? plan.name() : null);
-
+				if (staging == null) {
+					// Even for v2, a non-null staging is required.
+					staging = new Staging(null);
 				}
-				else {
-					ApplicationPlan plan = descriptor.applicationPlan;
-
-					// For V1, there is no plan
-					if (plan == null) {
-						client.createApplication(applicationId, applicationInfo.getFramework(),
-								descriptor.deploymentInfo.getMemory(), descriptor.deploymentInfo.getUris(),
-								descriptor.deploymentInfo.getServices());
-					}
-					else {
-						// For V2 CCNG, there is no need of framework
-						client.createApplication(applicationId, null, descriptor.deploymentInfo.getMemory(),
-								descriptor.deploymentInfo.getUris(), descriptor.deploymentInfo.getServices(),
-								plan.name());
-					}
-
-				}
+				client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(), uris, services,
+						plan.name());
 			}
 			File warFile = applicationInfo.getWarFile();
 
+			// 2. Now push the application content.
 			if (warFile != null) {
 				client.uploadApplication(applicationId, warFile);
 			}
@@ -449,12 +443,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		CloudFoundryServer cloudServer = getCloudFoundryServer();
 
-		Set<ApplicationModule> deletedModules = new HashSet<ApplicationModule>(cloudServer.getApplications());
+		Set<CloudFoundryApplicationModule> deletedModules = new HashSet<CloudFoundryApplicationModule>(
+				cloudServer.getApplications());
 		cloudServer.clearApplications();
 
 		// update state for cloud applications
 		server.setExternalModules(new IModule[0]);
-		for (ApplicationModule module : deletedModules) {
+		for (CloudFoundryApplicationModule module : deletedModules) {
 			server.setModuleState(new IModule[] { module.getLocalModule() }, IServer.STATE_UNKNOWN);
 		}
 
@@ -507,10 +502,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return new Request<ApplicationStats>(NLS.bind("Getting application statistics for {0}", applicationId)) {
 			@Override
 			protected ApplicationStats doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-				// Wait until app has started for v2
-				if (client.supportsSpaces()) {
-					appStarted(applicationId, client, progress);
-				}
 				return client.getApplicationStats(applicationId);
 			}
 		}.run(monitor);
@@ -544,9 +535,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return new Request<InstancesInfo>(NLS.bind("Getting application statistics for {0}", applicationId)) {
 			@Override
 			protected InstancesInfo doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-				if (client.supportsSpaces()) {
-					appStarted(applicationId, client, progress);
-				}
 				return client.getApplicationInstances(applicationId);
 			}
 		}.run(monitor);
@@ -641,7 +629,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		CloudFoundryPlugin.getDefault().fireServerRefreshed(cloudServer);
 
-		setRefreshInterval(DEFAULT_INTERVAL);
+		setRefreshInterval(CloudFoundryClientRequest.DEFAULT_INTERVAL);
 	}
 
 	/**
@@ -674,7 +662,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		CloudFoundryPlugin.getDefault().fireServerRefreshed(cloudServer);
 
-		setRefreshInterval(DEFAULT_INTERVAL);
+		setRefreshInterval(CloudFoundryClientRequest.DEFAULT_INTERVAL);
 	}
 
 	public void resetClient() {
@@ -687,7 +675,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		IModule module = modules[0];
 
 		CloudFoundryServer cloudServer = getCloudFoundryServer();
-		ApplicationModule cloudModule = cloudServer.getApplication(module);
+		CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(module);
 		// prompt user for missing details
 
 		DeploymentDescriptor descriptor = CloudFoundryPlugin.getCallback().prepareForDeployment(cloudServer,
@@ -704,7 +692,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @return
 	 * @throws CoreException
 	 */
-	public ApplicationModule debugModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
+	public CloudFoundryApplicationModule debugModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
 		return doDebugModule(modules, true, monitor);
 	}
 
@@ -720,8 +708,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @return
 	 * @throws CoreException
 	 */
-	protected ApplicationModule doDebugModule(IModule[] modules, boolean incrementalPublish, IProgressMonitor monitor)
-			throws CoreException {
+	protected CloudFoundryApplicationModule doDebugModule(IModule[] modules, boolean incrementalPublish,
+			IProgressMonitor monitor) throws CoreException {
 		// This flag allows modules to be updated after the app is deployed in
 		// debug mode
 		// This is necessary to make sure the app module is updated with the
@@ -747,14 +735,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @return
 	 * @throws CoreException
 	 */
-	public ApplicationModule deployOrStartModule(final IModule[] modules, boolean waitForDeployment,
+	public CloudFoundryApplicationModule deployOrStartModule(final IModule[] modules, boolean waitForDeployment,
 			IProgressMonitor monitor) throws CoreException {
 		return doDeployOrStartModule(modules, waitForDeployment, false, monitor, false);
 	}
 
-	public ApplicationModule deployOrStartModule(final IModule[] modules, boolean waitForDeployment,
+	public CloudFoundryApplicationModule deployOrStartModule(final IModule[] modules, boolean waitForDeployment,
 			IProgressMonitor monitor, DeploymentDescriptor descriptor) throws CoreException {
-		ApplicationModule appModule = new StartOrDeployAction(waitForDeployment, modules, descriptor)
+		CloudFoundryApplicationModule appModule = new StartOrDeployAction(waitForDeployment, modules, descriptor)
 				.deployModule(monitor);
 
 		return appModule;
@@ -769,10 +757,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @return
 	 * @throws CoreException
 	 */
-	protected ApplicationModule doDeployOrStartModule(final IModule[] modules, boolean waitForDeployment,
+	protected CloudFoundryApplicationModule doDeployOrStartModule(final IModule[] modules, boolean waitForDeployment,
 			boolean isIncremental, IProgressMonitor monitor, boolean debug) throws CoreException {
 
-		ApplicationModule appModule = null;
+		CloudFoundryApplicationModule appModule = null;
 
 		DeploymentDescriptor descriptor = getDeploymentDescriptor(modules, monitor);
 
@@ -839,7 +827,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			server.setModuleState(modules, IServer.STATE_STOPPING);
 
 			CloudFoundryServer cloudServer = getCloudFoundryServer();
-			final ApplicationModule cloudModule = cloudServer.getApplication(modules[0]);
+			final CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(modules[0]);
 
 			CloudFoundryPlugin.getCallback().applicationStopping(getCloudFoundryServer(), cloudModule);
 			new Request<Void>() {
@@ -877,7 +865,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @return
 	 * @throws CoreException
 	 */
-	public ApplicationModule updateRestartDebugModule(IModule[] modules, boolean isIncrementalPublishing,
+	public CloudFoundryApplicationModule updateRestartDebugModule(IModule[] modules, boolean isIncrementalPublishing,
 			IProgressMonitor monitor) throws CoreException {
 		stopModule(modules, monitor);
 		return doDebugModule(modules, isIncrementalPublishing, monitor);
@@ -951,8 +939,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		new RestartAction(modules, descriptor).deployModule(monitor);
 	}
 
-	public void updateApplicationInstances(ApplicationModule module, final int instanceCount, IProgressMonitor monitor)
-			throws CoreException {
+	public void updateApplicationInstances(CloudFoundryApplicationModule module, final int instanceCount,
+			IProgressMonitor monitor) throws CoreException {
 		final String appName = module.getApplication().getName();
 		new Request<Void>() {
 			@Override
@@ -977,7 +965,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
-	public void updateApplicationMemory(ApplicationModule module, final int memory, IProgressMonitor monitor)
+	public void updateApplicationMemory(CloudFoundryApplicationModule module, final int memory, IProgressMonitor monitor)
 			throws CoreException {
 		final String appName = module.getApplication().getName();
 		new Request<Void>() {
@@ -989,8 +977,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
-	public void updateApplicationPlan(ApplicationModule module, ApplicationPlan updatedPlan, IProgressMonitor monitor)
-			throws CoreException {
+	public void updateApplicationPlan(CloudFoundryApplicationModule module, ApplicationPlan updatedPlan,
+			IProgressMonitor monitor) throws CoreException {
 		final ApplicationPlan plan = updatedPlan;
 		final String appName = module.getApplication().getName();
 		if (plan != null) {
@@ -1158,28 +1146,28 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private boolean waitForStart(CloudFoundryOperations client, String deploymentId, IProgressMonitor monitor)
 			throws InterruptedException {
-		long timeLeft = DEPLOYMENT_TIMEOUT;
+		long timeLeft = CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT;
 		while (timeLeft > 0) {
 			CloudApplication deploymentDetails = client.getApplication(deploymentId);
 			if (AppState.STARTED.equals(deploymentDetails.getState()) && isApplicationReady(deploymentDetails)) {
 				return true;
 			}
-			Thread.sleep(ONE_SECOND_INTERVAL);
-			timeLeft -= ONE_SECOND_INTERVAL;
+			Thread.sleep(CloudFoundryClientRequest.ONE_SECOND_INTERVAL);
+			timeLeft -= CloudFoundryClientRequest.ONE_SECOND_INTERVAL;
 		}
 		return false;
 	}
 
 	private CloudApplication waitForUpload(CloudFoundryOperations client, String applicationId, IProgressMonitor monitor)
 			throws InterruptedException {
-		long timeLeft = UPLOAD_TIMEOUT;
+		long timeLeft = CloudFoundryClientRequest.UPLOAD_TIMEOUT;
 		while (timeLeft > 0) {
 			CloudApplication application = client.getApplication(applicationId);
 			if (applicationId.equals(application.getName())) {
 				return application;
 			}
-			Thread.sleep(SHORT_INTERVAL);
-			timeLeft -= SHORT_INTERVAL;
+			Thread.sleep(CloudFoundryClientRequest.SHORT_INTERVAL);
+			timeLeft -= CloudFoundryClientRequest.SHORT_INTERVAL;
 		}
 		return null;
 	}
@@ -1252,7 +1240,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		// module
 		if (deltaKind == REMOVED) {
 			final CloudFoundryServer cloudServer = getCloudFoundryServer();
-			final ApplicationModule cloudModule = cloudServer.getApplication(module[0]);
+			final CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(module[0]);
 			if (cloudModule.getApplication() != null) {
 				new Request<Void>() {
 					@Override
@@ -1291,7 +1279,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public DebugModeType getDebugModeType(IModule module, IProgressMonitor monitor) {
 		try {
 			CloudFoundryServer cloudServer = getCloudFoundryServer();
-			ApplicationModule cloudModule = cloudServer.getApplication(module);
+			CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(module);
 
 			// Check if a cloud application exists (i.e., it is deployed) before
 			// determining if it is deployed in debug mode
@@ -1323,7 +1311,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param client
 	 * @param restartOrDebugAction either debug mode or regular start/restart
 	 */
-	protected void restartOrDebugApplicationInClient(String applicationId, ApplicationModule cloudModule,
+	protected void restartOrDebugApplicationInClient(String applicationId, CloudFoundryApplicationModule cloudModule,
 			CloudFoundryOperations client, ApplicationAction restartOrDebugAction) {
 		switch (restartOrDebugAction) {
 		case DEBUG:
@@ -1335,10 +1323,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				client.stopApplication(applicationId);
 				StartingInfo info = client.startApplication(applicationId);
 				cloudModule.setStartingInfo(info);
-				if (info == null) {
-					CloudFoundryPlugin.logError("No staging log header found when staging "
-							+ cloudModule.getApplicationId());
-				}
 			}
 			else {
 				client.restartApplication(applicationId);
@@ -1349,7 +1333,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	}
 
-	protected void performRestartInClient(final String applicationId, final ApplicationModule cloudModule,
+	protected void performRestartInClient(final String applicationId, final CloudFoundryApplicationModule cloudModule,
 			final CloudFoundryOperations client, final ApplicationAction restartOrDebugAction) throws CoreException {
 		restartOrDebugApplicationInClient(applicationId, cloudModule, client, restartOrDebugAction);
 		// CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(),
@@ -1368,7 +1352,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public void refreshApplicationInstanceStats(IModule module, IProgressMonitor monitor) throws CoreException {
 		if (module != null) {
-			ApplicationModule appModule = getCloudFoundryServer().getApplication(module);
+			CloudFoundryApplicationModule appModule = getCloudFoundryServer().getApplication(module);
 
 			try {
 				CloudApplication application = getApplication(appModule.getApplicationId(), monitor);
@@ -1384,21 +1368,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				InstancesInfo info = getInstancesInfo(appModule.getApplicationId(), monitor);
 				appModule.setApplicationStats(stats);
 				appModule.setInstancesInfo(info);
-				if (supportsSpaces()) {
-
-					List<ApplicationPlan> plans = getApplicationPlans();
-
-					// FIXNS: At the moment, the client does not support
-					// getting plans for an app
-					// NEEDS TO BE FIXED on the client side
-					if (plans != null && !plans.isEmpty()) {
-						// Set the plan once this is implemented:
-						// ApplicationPlan plan =
-						// serverBehavior.getApplicationPlan(appName);
-						// if (plan != null )
-						// {appModule.setApplicationPlan(plan);}
-					}
-				}
 			}
 			else {
 				appModule.setApplicationStats(null);
@@ -1416,7 +1385,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			operationsHandler.login(progress);
 		}
 		catch (RestClientException e) {
-			throw CloudUtil.toCoreException(e);
+			throw CloudErrorUtil.toCoreException(e);
 		}
 		catch (RuntimeException e) {
 			// try to guard against IOException in parsing response
@@ -1447,7 +1416,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			client.register(userName, password);
 		}
 		catch (RestClientException e) {
-			throw CloudUtil.toCoreException(e);
+			throw CloudErrorUtil.toCoreException(e);
 		}
 		catch (RuntimeException e) {
 			// try to guard against IOException in parsing response
@@ -1559,9 +1528,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * is whether proxy settings have changed during the same server behaviour
 	 * session.
 	 * 
-	 * It is very important to wrap client calls in a Request object, unless
-	 * specific standalone cases like validating credentials prior to creating a
-	 * server or obtaining a list of orgs and spaces for v2 clients.
+	 * It is very important to wrap client calls in a Request object as it
+	 * contains common error handling applicable to many client calls.
 	 * 
 	 * @param <T>
 	 */
@@ -1569,13 +1537,21 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		private final String label;
 
+		private final long requestTimeOut;
+
 		public Request() {
 			this("");
+
 		}
 
 		public Request(String label) {
+			this(label, CloudFoundryClientRequest.MEDIUM_TIMEOUT);
+		}
+
+		public Request(String label, long requestTimeOut) {
 			Assert.isNotNull(label);
 			this.label = label;
+			this.requestTimeOut = requestTimeOut;
 		}
 
 		public T run(IProgressMonitor monitor) throws CoreException {
@@ -1603,65 +1579,61 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				// Always check if proxy settings have changed.
 				handler.updateProxyInClient(client);
+				result = new CloudFoundryClientRequest<T>(requestTimeOut) {
+
+					@Override
+					protected T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+						return Request.this.doRun(client, progress);
+					}
+
+				}.run(client, handler, subProgress);
+
+				succeeded = true;
+
 				try {
-					result = performRunWithWait(client, subProgress);
-					succeeded = true;
-				}
-				catch (CloudFoundryException e) {
-					// try again in case of a login failure
-					if (handler.shouldAttemptClientLogin(e)) {
-						client.login();
-						result = performRunWithWait(client, subProgress);
-						succeeded = true;
+
+					// Now retrieve information that should be done once per
+					// connection session,
+					// including whether the server supports debug, list of
+					// application plans, and domains for the org.
+					// Since request succeeded, at this stage determine
+					// if the server supports debugging.
+					requestAllowDebug(client);
+
+					if (supportsSpaces == null) {
+						supportsSpaces = client.supportsSpaces();
 					}
-					else {
-						throw e;
+
+					if (domainFromOrgs == null) {
+						domainFromOrgs = client.getDomainsForOrg();
 					}
-				}
 
-				// Since request succeeded, at this stage determine
-				// if the server supports debugging.
-				requestAllowDebug(client);
+					// Get application plans once per server behaviour instance
+					// as
+					// they should not change while the instance is used
+					if (applicationPlans == null) {
+						applicationPlans = new ArrayList<ApplicationPlan>(0);
 
-				// Check runtimes as well once per server behaviour instance
-				if (runtimes == null) {
-					runtimes = new ArrayList<CloudInfo.Runtime>();
+						List<String> existingPlans = client.getApplicationPlans();
 
-					Collection<CloudInfo.Runtime> clientRuntimes = client.getCloudInfo().getRuntimes();
-					if (clientRuntimes != null) {
-						runtimes.addAll(clientRuntimes);
-					}
-				}
+						if (existingPlans != null) {
+							Set<String> actualPlans = new HashSet<String>(existingPlans);
 
-				if (supportsSpaces == null) {
-					supportsSpaces = client.supportsSpaces();
-				}
-
-				if (client.supportsSpaces() && domainFromOrgs == null) {
-					domainFromOrgs = client.getDomainsForOrg();
-				}
-
-				// Get application plans once per server behaviour instance as
-				// they should not change while the instance is used
-				if (applicationPlans == null) {
-					applicationPlans = new ArrayList<ApplicationPlan>(0);
-
-					// Only retrieve applications plans for V2 servers
-					if (client.supportsSpaces() && client.getApplicationPlans() != null) {
-						Set<String> actualPlans = new HashSet<String>(client.getApplicationPlans());
-
-						// Resolve the local representation of an Application
-						// plan
-						for (ApplicationPlan appPlan : ApplicationPlan.values()) {
-							if (actualPlans.contains(appPlan.name())) {
-								applicationPlans.add(appPlan);
+							// Resolve the local representation of an
+							// Application
+							// plan
+							for (ApplicationPlan appPlan : ApplicationPlan.values()) {
+								if (actualPlans.contains(appPlan.name())) {
+									applicationPlans.add(appPlan);
+								}
 							}
 						}
 					}
 				}
-			}
-			catch (RestClientException e) {
-				throw CloudUtil.toCoreException(e);
+				catch (RestClientException e) {
+					throw CloudErrorUtil.toCoreException(e);
+				}
+
 			}
 			finally {
 				if (!succeeded) {
@@ -1680,74 +1652,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			return result;
 		}
 
-		protected T performRunWithWait(CloudFoundryOperations client, SubMonitor progress) throws CoreException,
-				CloudFoundryException {
-
-			// FOr now only do it for v2. Check the client directly, as the
-			// support spaces flag may not have been set yet
-			if (client.supportsSpaces()) {
-				long timeLeft = STAGING_TIMEOUT;
-				Exception error = null;
-				while (timeLeft > 0) {
-
-					try {
-						return doRun(client, progress);
-					}
-					catch (CoreException e) {
-						error = e;
-					}
-					catch (CloudFoundryException cfe) {
-						error = cfe;
-					}
-
-					// Determine from the error if the application being in
-					// stopped state.
-					if (CloudUtil.isAppStoppedStateError(error)) {
-						try {
-							Thread.sleep(ONE_SECOND_INTERVAL);
-						}
-						catch (InterruptedException e) {
-							// Ignore, continue with the next iteration
-						}
-					}
-					else {
-						break;
-					}
-
-					timeLeft -= ONE_SECOND_INTERVAL;
-				}
-
-				if (error instanceof CoreException) {
-					throw (CoreException) error;
-				}
-				else if (error instanceof CloudFoundryException) {
-					throw (CloudFoundryException) error;
-				}
-				else {
-					throw new CoreException(CloudFoundryPlugin.getErrorStatus(error));
-				}
-
-			}
-			else {
-				return doRun(client, progress);
-			}
-
-		}
-
 		protected abstract T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException;
 
-	}
-
-	/**
-	 * Runs a client request, and then performs a refresh after 1 second
-	 * interval
-	 */
-	abstract class RequestWithRefreshCallBack<T> extends Request<T> {
-		public T run(IProgressMonitor monitor) throws CoreException {
-			T result = super.run(monitor);
-			setRefreshInterval(ONE_SECOND_INTERVAL);
-			return result;
-		}
 	}
 
 	/**
@@ -1767,12 +1673,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			this.descriptor = descriptor;
 		}
 
-		public ApplicationModule deployModule(IProgressMonitor monitor) throws CoreException {
+		public CloudFoundryApplicationModule deployModule(IProgressMonitor monitor) throws CoreException {
 
 			try {
 				CloudFoundryServer cloudServer = getCloudFoundryServer();
 
-				ApplicationModule deployedModule = performDeployment(monitor, descriptor);
+				CloudFoundryApplicationModule deployedModule = performDeployment(monitor, descriptor);
 
 				if (descriptor.deploymentMode == ApplicationAction.DEBUG) {
 					new DebugCommandBuilder(modules, cloudServer).getDebugCommand(
@@ -1794,8 +1700,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			return null;
 		}
 
-		protected abstract ApplicationModule performDeployment(IProgressMonitor monitor, DeploymentDescriptor descriptor)
-				throws CoreException;
+		protected abstract CloudFoundryApplicationModule performDeployment(IProgressMonitor monitor,
+				DeploymentDescriptor descriptor) throws CoreException;
 	}
 
 	protected boolean hasChildModules(IModule[] modules) {
@@ -1803,7 +1709,39 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return webModule != null && webModule.getModules() != null && webModule.getModules().length > 0;
 	}
 
-	protected class StartOrDeployAction extends DeployAction {
+	/**
+	 * This action is the primary operation for pushing an application to a CF
+	 * server. <br/>
+	 * Several primary steps are performed when deploying an application:
+	 * <p/>
+	 * 1. Create an archive file containing the application's resources.
+	 * Incremental publishing is may be used here to create an archive
+	 * containing only those files that have been changed.
+	 * <p/>
+	 * 2. Check if the application exists in the server. If not, create it.
+	 * <p/>
+	 * 3. Once the application is verified to exist, push the archive of the
+	 * application to the server.
+	 * <p/>
+	 * 4. Set local WTP module states to indicate the an application's contents
+	 * have been pushed (i.e. "published")
+	 * <p/>
+	 * 5. Start the application, in either debug or run mode, based on the
+	 * application's descriptor, in the server.
+	 * <p/>
+	 * 6. Set local WTP module states to indicate whether an application has
+	 * started, or is stopped if an error occurred while starting it.
+	 * <p/>
+	 * 7. Invoke callbacks to notify listeners that an application has been
+	 * started. This usually performs UI refreshes, which may invoke additional
+	 * calls by the listener to fetch application instance stats and other
+	 * information.
+	 * <p/>
+	 * Note that ALL client calls need to be wrapped around a Request operation,
+	 * as the Request operation performs additional checks prior to invoking the
+	 * call, as well as handles errors.
+	 */
+	protected class StartOrDeployAction extends RestartAction {
 
 		final protected boolean waitForDeployment;
 
@@ -1812,14 +1750,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			this.waitForDeployment = waitForDeployment;
 		}
 
-		protected ApplicationModule performDeployment(IProgressMonitor monitor, final DeploymentDescriptor descriptor)
-				throws CoreException {
+		protected CloudFoundryApplicationModule performDeployment(IProgressMonitor monitor,
+				final DeploymentDescriptor descriptor) throws CoreException {
 			final Server server = (Server) getServer();
 			final CloudFoundryServer cloudServer = getCloudFoundryServer();
 			final IModule module = modules[0];
-			final ApplicationModule cloudModule = cloudServer.getApplication(module);
+			final CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(module);
 
 			try {
+
+				// Update the local cloud module representing the application
+				// first.
 				cloudModule.setErrorStatus(null);
 
 				// update mapping
@@ -1829,27 +1770,44 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				cloudModule.setStaging(descriptor.staging);
 
 				server.setModuleState(modules, IServer.STATE_STARTING);
-				setRefreshInterval(SHORT_INTERVAL);
 
-				boolean started = new Request<Boolean>() {
-					@Override
-					protected Boolean doRun(final CloudFoundryOperations client, SubMonitor progress)
-							throws CoreException {
-						if (descriptor.applicationInfo == null) {
-							throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-									"Unable to deploy module"));
-						}
+				setRefreshInterval(CloudFoundryClientRequest.MEDIUM_INTERVAL);
 
-						boolean started = false;
-						final String applicationId = descriptor.applicationInfo.getAppName();
+				final String applicationId = descriptor.applicationInfo.getAppName();
 
-						if (modules[0].isExternal()) {
-							performRestartInClient(applicationId, cloudModule, client, descriptor.deploymentMode);
+				// This request does three things:
+				// 1. Checks if the application external or mapped to a local
+				// project. If mapped to a local project
+				// it creates an archive of the application's content
+				// 2. If an archive file was created, it pushes the archive
+				// file.
+				// 3. While pushing the archive file, a check is made to see if
+				// the application exists remotely. If not, the application is
+				// created in the
+				// CF server.
 
-							CloudFoundryPlugin.trace("Application " + applicationId + " restarted");
-							started = true;
-						}
-						else {
+				if (!modules[0].isExternal()) {
+
+					new Request<Void>("Pushing and starting application " + applicationId,
+							CloudFoundryClientRequest.STAGING_TIMEOUT) {
+						@Override
+						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
+								throws CoreException {
+
+							if (descriptor.applicationInfo == null) {
+								throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+										"Unable to push application: " + applicationId
+												+ " due to missing application descriptor."));
+							}
+
+							// If the module is not external (meaning that it is
+							// mapped to a local, accessible workspace project),
+							// create an
+							// archive file containing changes to the
+							// application's
+							// resources. Use incremental publishing if
+							// possible.
+
 							// Determine if an archive is provided for the
 							// application type. Otherwise generated a .war
 							// file.
@@ -1904,7 +1862,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 									File warFile = CloudUtil.createWarFile(modules, server, progress);
 									if (!warFile.exists()) {
 										throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-												"Unable to create war file"));
+												"Unable to create war file for application: " + applicationId));
 									}
 
 									CloudFoundryPlugin.trace("War file " + warFile.getName() + " created");
@@ -1924,48 +1882,33 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 								if (modulePublishState == IServer.PUBLISH_STATE_INCREMENTAL
 										|| modulePublishState == IServer.PUBLISH_STATE_FULL) {
 									allSynched = false;
-
 								}
 							}
+
 							if (allSynched) {
 								server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
 							}
 
-							doDeployApplication(client, cloudModule, descriptor, progress);
-							CloudFoundryPlugin.trace("Application " + applicationId + " deployed");
+							pushApplication(client, cloudModule, descriptor, progress);
+
+							CloudFoundryPlugin.trace("Application " + applicationId
+									+ " pushed to Cloud Foundry server.");
 
 							cloudServer.tagAsDeployed(module);
 
-							// start application in either regular or debug mode
-							if (descriptor.deploymentMode != null) {
-								CloudFoundryPlugin.trace("Application " + applicationId + " starting");
-								performRestartInClient(applicationId, cloudModule, client, descriptor.deploymentMode);
-								started = true;
-							}
-							else {
-								server.setModuleState(modules, IServer.STATE_STOPPED);
-							}
+							return null;
 						}
 
-						if (started) {
-							refreshAfterDeployment(started, client, cloudModule, cloudServer, applicationId, progress);
-						}
+					}.run(monitor);
 
-						return started;
-					}
-
-				}.run(monitor);
-
-				if (started) {
-					server.setModuleState(modules, IServer.STATE_STARTED);
 				}
 
-				setRefreshInterval(DEFAULT_INTERVAL);
-				CloudFoundryPlugin.getDefault().fireServerRefreshed(cloudServer);
+				// If reached here it means the application creation and content
+				// pushing probably succeeded without errors, therefore attempt
+				// to
+				// start the application
+				super.performDeployment(monitor, descriptor);
 
-				if (started && cloudModule != null && cloudModule.getApplication() != null) {
-					CloudFoundryPlugin.getCallback().applicationStarted(getCloudFoundryServer(), cloudModule);
-				}
 				return cloudServer.getApplication(modules[0]);
 
 			}
@@ -1988,38 +1931,27 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	}
 
-	protected void refreshAfterDeployment(boolean waitForDeployment, CloudFoundryOperations client,
-			ApplicationModule cloudModule, CloudFoundryServer cloudServer, String applicationId,
-			IProgressMonitor progress) throws CoreException {
-		if (waitForDeployment) {
-			try {
-				if (!waitForStart(client, cloudModule.getApplicationId(), progress)) {
-					throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-							"Deployment of {0} timed out", cloudModule.getName())));
-				}
-			}
-			catch (InterruptedException e) {
-				throw new OperationCanceledException();
-			}
-
-			CloudFoundryPlugin.trace("Application " + applicationId + " started");
-			doRefreshModules(cloudServer, client, progress);
-		}
-	}
-
+	/**
+	 * 
+	 * Attempts to start an application. It does not create an application, or
+	 * incrementally or fully push the application's resources. It simply starts
+	 * the application in the server with the application's currently published
+	 * resources, regardless of local changes have occurred or not.
+	 * 
+	 */
 	protected class RestartAction extends DeployAction {
 
 		public RestartAction(IModule[] modules, DeploymentDescriptor descriptor) {
 			super(modules, descriptor);
 		}
 
-		protected ApplicationModule performDeployment(IProgressMonitor monitor, final DeploymentDescriptor descriptor)
-				throws CoreException {
+		protected CloudFoundryApplicationModule performDeployment(IProgressMonitor monitor,
+				final DeploymentDescriptor descriptor) throws CoreException {
 			final Server server = (Server) getServer();
 			final CloudFoundryServer cloudServer = getCloudFoundryServer();
 			final IModule module = modules[0];
-			final ApplicationModule cloudModule = cloudServer.getApplication(module);
-			final boolean waitForDeployment = true;
+			final CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(module);
+
 			try {
 				cloudModule.setErrorStatus(null);
 
@@ -2027,41 +1959,87 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				cloudModule.setApplicationId(descriptor.applicationInfo.getAppName());
 
 				server.setModuleState(modules, IServer.STATE_STARTING);
-				setRefreshInterval(SHORT_INTERVAL);
 
-				boolean started = new Request<Boolean>() {
+				final String applicationId = descriptor.applicationInfo.getAppName();
+
+				new Request<Void>("Starting application " + applicationId, CloudFoundryClientRequest.STAGING_TIMEOUT) {
 					@Override
-					protected Boolean doRun(final CloudFoundryOperations client, SubMonitor progress)
-							throws CoreException {
+					protected Void doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+
 						if (descriptor.applicationInfo == null) {
-							throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-									"Unable to deploy module"));
+							server.setModuleState(modules, IServer.STATE_STOPPED);
+
+							throw new CoreException(
+									new Status(
+											IStatus.ERROR,
+											CloudFoundryPlugin.PLUGIN_ID,
+											"Unable to start application: "
+													+ applicationId
+													+ ". Missing application information in application client operation descriptor."));
 						}
 
-						boolean started = false;
-						String applicationId = descriptor.applicationInfo.getAppName();
+						// start application in either regular or debug mode
+						if (descriptor.deploymentMode != null) {
+							CloudFoundryPlugin.trace("Application " + applicationId + " starting");
 
-						performRestartInClient(applicationId, cloudModule, client, descriptor.deploymentMode);
-						CloudFoundryPlugin.trace("Application " + applicationId + " restarted");
-						started = true;
+							performRestartInClient(applicationId, cloudModule, client, descriptor.deploymentMode);
 
-						refreshAfterDeployment(waitForDeployment, client, cloudModule, cloudServer, applicationId,
-								progress);
+							CloudFoundryPlugin.trace("Application " + applicationId + " restarted");
 
-						return started;
+							// Now verify that the application did start
+							try {
+								if (!waitForStart(client, applicationId, progress)) {
+									server.setModuleState(modules, IServer.STATE_STOPPED);
+
+									throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+											NLS.bind("Starting of {0} timed out", cloudModule.getName())));
+								}
+							}
+							catch (InterruptedException e) {
+								throw new OperationCanceledException();
+							}
+
+							InstancesInfo info = client.getApplicationInstances(applicationId);
+
+							// If instances info for the application can be
+							// resolved, it
+							// means the application
+							// has started and is past staging phase
+							if (info != null) {
+								server.setModuleState(modules, IServer.STATE_STARTED);
+
+								CloudFoundryPlugin.trace("Application " + applicationId + " started");
+
+								if (cloudModule != null && cloudModule.getApplication() != null) {
+									CloudFoundryPlugin.getCallback().applicationStarted(getCloudFoundryServer(),
+											cloudModule);
+								}
+							}
+							else {
+								server.setModuleState(modules, IServer.STATE_STOPPED);
+							}
+						}
+						else {
+							// Missing a deployment mode is acceptable, as the
+							// user may have elected
+							// to push the application but not run it.
+							server.setModuleState(modules, IServer.STATE_STOPPED);
+						}
+
+						// Refresh the list of modules regardless of whether the
+						// application
+						// started or not, as a user may have created a new
+						// application or pushed
+						// new content, but not wished to start the app
+						doRefreshModules(cloudServer, client, progress);
+
+						setRefreshInterval(CloudFoundryClientRequest.DEFAULT_INTERVAL);
+						CloudFoundryPlugin.getDefault().fireServerRefreshed(cloudServer);
+
+						return null;
 					}
 				}.run(monitor);
 
-				if (started) {
-					server.setModuleState(modules, IServer.STATE_STARTED);
-				}
-
-				setRefreshInterval(DEFAULT_INTERVAL);
-				CloudFoundryPlugin.getDefault().fireServerRefreshed(cloudServer);
-
-				if (started && cloudModule != null && cloudModule.getApplication() != null) {
-					CloudFoundryPlugin.getCallback().applicationStarted(getCloudFoundryServer(), cloudModule);
-				}
 				return cloudModule;
 			}
 			catch (CoreException e) {
@@ -2071,6 +2049,18 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		}
 
+	}
+
+	/**
+	 * Runs a client request, and then performs a refresh after 1 second
+	 * interval
+	 */
+	abstract class RequestWithRefreshCallBack<T> extends Request<T> {
+		public T run(IProgressMonitor monitor) throws CoreException {
+			T result = super.run(monitor);
+			setRefreshInterval(CloudFoundryClientRequest.ONE_SECOND_INTERVAL);
+			return result;
+		}
 	}
 
 }

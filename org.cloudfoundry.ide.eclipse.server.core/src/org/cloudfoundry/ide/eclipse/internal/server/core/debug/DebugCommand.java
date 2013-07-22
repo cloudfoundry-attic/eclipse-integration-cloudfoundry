@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.debug;
 
@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
@@ -86,7 +86,7 @@ public abstract class DebugCommand {
 		idBuffer.append(server.getUrl());
 		idBuffer.append(server.getUsername());
 
-		ApplicationModule appModule = server.getApplication(modules);
+		CloudFoundryApplicationModule appModule = server.getApplication(modules);
 		if (appModule != null) {
 			idBuffer.append(appModule.getApplicationId());
 		}
@@ -107,14 +107,14 @@ public abstract class DebugCommand {
 
 	public String getApplicationID() {
 
-		ApplicationModule appModule = getApplicationModule();
+		CloudFoundryApplicationModule appModule = getApplicationModule();
 		if (appModule != null) {
 			return appModule.getApplicationId();
 		}
 		return null;
 	}
 
-	public ApplicationModule getApplicationModule() {
+	public CloudFoundryApplicationModule getApplicationModule() {
 		return getCloudFoundryServer().getApplication(modules[0]);
 	}
 

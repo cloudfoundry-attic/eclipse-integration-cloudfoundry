@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
@@ -22,7 +22,7 @@ import org.cloudfoundry.client.lib.domain.InstanceInfo;
 import org.cloudfoundry.client.lib.domain.InstanceStats;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationPlan;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -223,7 +223,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	}
 
 	protected void refreshDebugButtons() {
-		ApplicationModule appModule = getApplication();
+		CloudFoundryApplicationModule appModule = getApplication();
 		int state = appModule.getState();
 
 		if (isDebugAllowed()) {
@@ -270,7 +270,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	protected void refreshApplicationDeploymentButtons() {
 
-		ApplicationModule appModule = getApplication();
+		CloudFoundryApplicationModule appModule = getApplication();
 		int state = appModule.getState();
 
 		// Don't refresh if the restart buttons were selected
@@ -341,7 +341,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		buttonComposite.layout(true, true);
 	}
 
-	private void updateServerNameDisplay(ApplicationModule application) {
+	private void updateServerNameDisplay(CloudFoundryApplicationModule application) {
 		if (application.getApplication() == null) {
 			serverNameText.setText(NLS.bind("{0} [Not Deployed]", application.getApplicationId()));
 			return;
@@ -381,7 +381,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		resizeTableColumns();
 
 		canUpdate = false;
-		ApplicationModule appModule = getApplication();
+		CloudFoundryApplicationModule appModule = getApplication();
 		int state = appModule.getState();
 
 		refreshPublishState();
@@ -732,7 +732,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 							if (selected) {
 								ApplicationPlan selectedPlan = (ApplicationPlan) button.getData();
 								if (selectedPlan != null) {
-									ApplicationModule appModule = getApplication();
+									CloudFoundryApplicationModule appModule = getApplication();
 									if (appModule != null) {
 										new UpdateApplicationPlanAction(editorPage, appModule, selectedPlan).run();
 									}
@@ -1128,7 +1128,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			InstanceStats stats = ((InstanceStatsAndInfo) instanceObject).getStats();
 
 			if (stats != null) {
-				ApplicationModule appModule = getApplication();
+				CloudFoundryApplicationModule appModule = getApplication();
 
 				try {
 					manager.add(new ShowConsoleAction(cloudServer, appModule.getApplication(), Integer.parseInt(stats
@@ -1141,7 +1141,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		}
 	}
 
-	private ApplicationModule getApplication() {
+	private CloudFoundryApplicationModule getApplication() {
 		return cloudServer.getApplication(module);
 	}
 

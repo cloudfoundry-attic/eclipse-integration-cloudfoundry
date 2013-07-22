@@ -1,18 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.eclipse.jface.action.IAction;
@@ -36,7 +36,7 @@ public class OpenHomePageAction implements IObjectActionDelegate {
 	private IServer selectedServer;
 
 	public void run(IAction action) {
-		ApplicationModule cloudApp = getSelectedCloudAppModule();
+		CloudFoundryApplicationModule cloudApp = getSelectedCloudAppModule();
 		open(cloudApp);
 	}
 
@@ -64,7 +64,7 @@ public class OpenHomePageAction implements IObjectActionDelegate {
 		}
 
 		if (selectedServer != null && (selectedServer.getServerState() == IServer.STATE_STARTED)) {
-			ApplicationModule cloudModule = getSelectedCloudAppModule();
+			CloudFoundryApplicationModule cloudModule = getSelectedCloudAppModule();
 			if (cloudModule != null) {
 				int state = cloudModule.getState();
 				if (state == IServer.STATE_STARTED) {
@@ -79,13 +79,13 @@ public class OpenHomePageAction implements IObjectActionDelegate {
 	public void setActivePart(IAction action, IWorkbenchPart targetPart) {
 	}
 
-	private ApplicationModule getSelectedCloudAppModule() {
+	private CloudFoundryApplicationModule getSelectedCloudAppModule() {
 		CloudFoundryServer cloudServer = (CloudFoundryServer) selectedServer
 				.loadAdapter(CloudFoundryServer.class, null);
 		return cloudServer.getApplication(selectedModule);
 	}
 
-	public static boolean open(ApplicationModule cloudApp) {
+	public static boolean open(CloudFoundryApplicationModule cloudApp) {
 		// verify that URIs are set, as it may be a standalone application with
 		// no URI
 		List<String> uris = cloudApp.getApplication().getUris();
