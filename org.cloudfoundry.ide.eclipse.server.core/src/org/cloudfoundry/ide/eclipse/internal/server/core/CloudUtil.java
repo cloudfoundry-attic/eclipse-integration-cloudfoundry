@@ -356,14 +356,12 @@ public class CloudUtil {
 	}
 
 	/**
-	 * Service vendor is set differently depending on whether its a v1 or v2
-	 * service.
 	 * @param cloudService
 	 * @return
 	 */
 	public static String getServiceVendor(CloudService cloudService) {
 		// Handle both v1 and v2 services. For v2, vendors are "labels".
-		return cloudService.getLabel() != null ? cloudService.getLabel() : cloudService.getVendor();
+		return cloudService.getLabel();
 	}
 
 	/**

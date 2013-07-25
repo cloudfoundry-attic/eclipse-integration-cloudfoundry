@@ -375,7 +375,7 @@ public class TunnelBehaviour {
 		if (services != null) {
 			for (CloudService service : services) {
 				if (serviceName.equals(service.getName())) {
-					return cloudServer.supportsCloudSpaces() ? service.getLabel() : service.getVendor();
+					return service.getLabel();
 				}
 			}
 		}

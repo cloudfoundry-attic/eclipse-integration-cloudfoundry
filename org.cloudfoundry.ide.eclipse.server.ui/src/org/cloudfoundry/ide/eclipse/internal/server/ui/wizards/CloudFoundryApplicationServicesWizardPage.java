@@ -130,7 +130,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 
 		servicesViewer.setContentProvider(new TreeContentProvider());
 		servicesViewer
-				.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer, cloudServer.supportsCloudSpaces()) {
+				.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
 
 					protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
 						if (column == ServiceViewColumn.Tunnel) {
@@ -164,7 +164,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 
 		});
 
-		new ServiceViewerConfigurator(cloudServer).enableAutomaticViewerResizing().configureViewer(servicesViewer);
+		new ServiceViewerConfigurator().enableAutomaticViewerResizing().configureViewer(servicesViewer);
 
 		servicesViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 

@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewColumn.ServiceViewColumnDescriptor;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
@@ -32,11 +31,9 @@ public class ServiceViewerConfigurator {
 
 	private boolean addAutomaticViewerResizing;
 
-	private final CloudFoundryServer cloudServer;
-
-	public ServiceViewerConfigurator(CloudFoundryServer cloudServer) {
+	public ServiceViewerConfigurator() {
 		this.addAutomaticViewerResizing = false;
-		this.cloudServer = cloudServer;
+
 	}
 
 	public ServiceViewerConfigurator enableAutomaticViewerResizing() {
@@ -54,7 +51,7 @@ public class ServiceViewerConfigurator {
 		table.setHeaderVisible(true);
 
 		int columnIndex = 0;
-		ServiceViewColumnDescriptor descriptor = ServiceViewColumn.getServiceViewColumnDescriptor(cloudServer);
+		ServiceViewColumnDescriptor descriptor = ServiceViewColumn.getServiceViewColumnDescriptor();
 
 		ServiceViewColumn[] columns = descriptor != null ? descriptor.getServiceViewColumn() : null;
 

@@ -22,8 +22,8 @@ import org.cloudfoundry.client.lib.domain.InstanceInfo;
 import org.cloudfoundry.client.lib.domain.InstanceStats;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationPlan;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
@@ -45,7 +45,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateApplication
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateInstanceCountAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AppStatsContentProvider.InstanceStatsAndInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationActionMenuControl.IButtonMenuListener;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationInstanceServiceColumn.ServiceColumnDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryURLsWizard;
 import org.cloudfoundry.ide.eclipse.server.rse.ConfigureRemoteCloudFoundryAction;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -1025,15 +1024,15 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		// "Version", "Tier" };
 		String[] columnNames = {};
 		int[] columnWidths = {};
-		ServiceColumnDescriptor columnDescriptor = ApplicationInstanceServiceColumn
-				.getServiceColumnDescriptor(cloudServer);
+		ServicesLabelProvider labelProvider = new ServicesLabelProvider();
+		ApplicationInstanceServiceColumn[] columnDescriptor = labelProvider.getServiceViewColumn();
 
-		if (columnDescriptor != null && columnDescriptor.getServiceViewColumn() != null) {
-			int length = columnDescriptor.getServiceViewColumn().length;
+		if (columnDescriptor != null ) {
+			int length = columnDescriptor.length;
 			columnNames = new String[length];
 			columnWidths = new int[length];
 			int i = 0;
-			for (ApplicationInstanceServiceColumn descriptor : columnDescriptor.getServiceViewColumn()) {
+			for (ApplicationInstanceServiceColumn descriptor : columnDescriptor) {
 				if (i < length) {
 					columnNames[i] = descriptor.name();
 					columnWidths[i] = descriptor.getWidth();
@@ -1047,7 +1046,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		servicesContentProvider = new TreeContentProvider();
 		servicesViewer.setContentProvider(servicesContentProvider);
-		servicesViewer.setLabelProvider(new ServicesLabelProvider(cloudServer.supportsCloudSpaces()));
+		servicesViewer.setLabelProvider(labelProvider);
 		servicesViewer.setSorter(new CloudFoundryViewerSorter());
 		servicesViewer.setInput(new CloudService[0]);
 

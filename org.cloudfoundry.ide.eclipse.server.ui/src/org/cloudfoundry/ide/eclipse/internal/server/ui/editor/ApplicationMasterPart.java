@@ -359,11 +359,11 @@ public class ApplicationMasterPart extends SectionPart {
 		toolBarManager.createControl(headerComposite);
 
 		servicesViewer = new TableViewer(toolkit.createTable(client, SWT.MULTI));
-		new ServiceViewerConfigurator(cloudServer).configureViewer(servicesViewer);
+		new ServiceViewerConfigurator().configureViewer(servicesViewer);
 
 		servicesViewer.setContentProvider(new TreeContentProvider());
 		servicesViewer
-				.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer, cloudServer.supportsCloudSpaces()) {
+				.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
 
 					protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
 						if (column == ServiceViewColumn.Tunnel) {

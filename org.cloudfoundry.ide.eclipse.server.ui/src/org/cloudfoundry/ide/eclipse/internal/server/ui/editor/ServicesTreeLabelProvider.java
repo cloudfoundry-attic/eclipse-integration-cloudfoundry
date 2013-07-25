@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
@@ -26,11 +26,8 @@ public class ServicesTreeLabelProvider extends LabelProvider implements ITableLa
 
 	private final TableViewer viewer;
 
-	private final boolean supportsSpaces;
-
-	public ServicesTreeLabelProvider(TableViewer viewer, boolean supportsSpaces) {
+	public ServicesTreeLabelProvider(TableViewer viewer) {
 		this.viewer = viewer;
-		this.supportsSpaces = supportsSpaces;
 	}
 
 	@Override
@@ -82,11 +79,11 @@ public class ServicesTreeLabelProvider extends LabelProvider implements ITableLa
 				case Name:
 					result = getText(element);
 					break;
-				case Type:
-					result = cloudService.getType();
+				case Version:
+					result = cloudService.getVersion();
 					break;
 				case Vendor:
-					result = supportsSpaces ? cloudService.getLabel() : cloudService.getVendor();
+					result = cloudService.getLabel();
 					break;
 				case Plan:
 					result = cloudService.getPlan();

@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -33,17 +33,12 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 	}
 
 	protected CloudService createCloudService(String name, String vendor) throws CoreException {
-		ServiceConfiguration serviceConfiguration = getServiceConfigration(vendor);
+		ServiceConfiguration serviceConfiguration = getServiceConfiguration(vendor);
 		if (serviceConfiguration != null) {
 			CloudService service = new CloudService();
 			service.setName(name);
-			service.setType(serviceConfiguration.getType());
-			service.setVendor(vendor);
+			service.setLabel(vendor);
 			service.setVersion(serviceConfiguration.getVersion());
-			List<ServiceConfiguration.Tier> tiers = serviceConfiguration.getTiers();
-			if (tiers != null && !tiers.isEmpty()) {
-				service.setTier(tiers.get(0).getType());
-			}
 
 			createService(service);
 			return service;
@@ -51,12 +46,12 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 		return null;
 	}
 
-	protected ServiceConfiguration getServiceConfigration(String vendor) throws CoreException {
+	protected ServiceConfiguration getServiceConfiguration(String vendor) throws CoreException {
 		List<ServiceConfiguration> serviceConfigurations = serverBehavior
 				.getServiceConfigurations(new NullProgressMonitor());
 		if (serviceConfigurations != null) {
 			for (ServiceConfiguration serviceConfiguration : serviceConfigurations) {
-				if (vendor.equals(serviceConfiguration.getVendor())) {
+				if (vendor.equals(serviceConfiguration.getCloudServiceOffering().getLabel())) {
 					return serviceConfiguration;
 				}
 			}
@@ -149,8 +144,7 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 
 	protected void assertServiceEquals(CloudService expectedService, CloudService actualService) throws Exception {
 		assertEquals(actualService.getName(), expectedService.getName());
-		assertEquals(actualService.getType(), expectedService.getType());
-		assertEquals(actualService.getVendor(), expectedService.getVendor());
+		assertEquals(actualService.getLabel(), expectedService.getLabel());
 	}
 
 }

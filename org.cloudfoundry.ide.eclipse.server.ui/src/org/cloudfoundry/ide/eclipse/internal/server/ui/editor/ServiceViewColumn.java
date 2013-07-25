@@ -10,10 +10,9 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 
 public enum ServiceViewColumn {
-	Name(150), Type(100), Vendor(100), Tunnel(80), Plan(50), Provider(100);
+	Name(150), Version(100), Vendor(100), Tunnel(80), Plan(50), Provider(100);
 	private int width;
 
 	private ServiceViewColumn(int width) {
@@ -24,25 +23,18 @@ public enum ServiceViewColumn {
 		return width;
 	}
 
-	public static ServiceViewColumnDescriptor getServiceViewColumnDescriptor(CloudFoundryServer cloudServer) {
-		return new ServiceViewColumnDescriptor(cloudServer);
+	public static ServiceViewColumnDescriptor getServiceViewColumnDescriptor() {
+		return new ServiceViewColumnDescriptor();
 	}
 
 	public static class ServiceViewColumnDescriptor {
 
-		private final CloudFoundryServer cloudServer;
-
-		public ServiceViewColumnDescriptor(CloudFoundryServer cloudServer) {
-			this.cloudServer = cloudServer;
+		public ServiceViewColumnDescriptor() {
 		}
 
 		public ServiceViewColumn[] getServiceViewColumn() {
-			if (cloudServer.supportsCloudSpaces()) {
-				return new ServiceViewColumn[] { Name, Vendor, Provider, Plan, Tunnel };
-			}
-			else {
-				return new ServiceViewColumn[] { Name, Type, Vendor, Tunnel };
-			}
+			return new ServiceViewColumn[] { Name, Vendor, Provider, Version, Plan, Tunnel };
+
 		}
 
 	}
