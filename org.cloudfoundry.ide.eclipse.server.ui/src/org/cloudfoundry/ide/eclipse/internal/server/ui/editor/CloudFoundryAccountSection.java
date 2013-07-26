@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
@@ -130,6 +130,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		emailLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
 		emailText = toolkit.createText(topComposite, "");
+		emailText.setEditable(false);
 		emailText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		emailText.setData(FormToolkit.KEY_DRAW_BORDER, FormToolkit.TEXT_BORDER);
 		if (cfServer.getUsername() != null) {
@@ -142,6 +143,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		passwordLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
 		passwordText = toolkit.createText(topComposite, "", SWT.PASSWORD);
+		passwordText.setEditable(false);
 		passwordText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		passwordText.setData(FormToolkit.KEY_DRAW_BORDER, FormToolkit.TEXT_BORDER);
 		if (cfServer.getPassword() != null) {
@@ -162,31 +164,28 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 					.getId()));
 		}
 
-		if (cfServer.supportsCloudSpaces()) {
+		Label orgLabel = toolkit.createLabel(topComposite, "Organization:", SWT.NONE);
+		orgLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
+		orgLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
-			Label orgLabel = toolkit.createLabel(topComposite, "Organization:", SWT.NONE);
-			orgLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
-			orgLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+		orgText = toolkit.createText(topComposite, "", SWT.NONE);
+		orgText.setEditable(false);
+		orgText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		orgText.setData(FormToolkit.KEY_DRAW_BORDER, Boolean.FALSE);
+		if (cfServer.getCloudFoundrySpace() != null && cfServer.getCloudFoundrySpace().getOrgName() != null) {
+			orgText.setText(cfServer.getCloudFoundrySpace().getOrgName());
+		}
 
-			orgText = toolkit.createText(topComposite, "", SWT.NONE);
-			orgText.setEditable(false);
-			orgText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-			orgText.setData(FormToolkit.KEY_DRAW_BORDER, Boolean.FALSE);
-			if (cfServer.getCloudFoundrySpace() != null && cfServer.getCloudFoundrySpace().getOrgName() != null) {
-				orgText.setText(cfServer.getCloudFoundrySpace().getOrgName());
-			}
+		Label spaceLabel = toolkit.createLabel(topComposite, "Space:", SWT.NONE);
+		spaceLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
+		spaceLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
-			Label spaceLabel = toolkit.createLabel(topComposite, "Space:", SWT.NONE);
-			spaceLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
-			spaceLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-
-			spaceText = toolkit.createText(topComposite, "", SWT.NONE);
-			spaceText.setEditable(false);
-			spaceText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-			spaceText.setData(FormToolkit.KEY_DRAW_BORDER, Boolean.FALSE);
-			if (cfServer.getCloudFoundrySpace() != null && cfServer.getCloudFoundrySpace().getSpaceName() != null) {
-				spaceText.setText(cfServer.getCloudFoundrySpace().getSpaceName());
-			}
+		spaceText = toolkit.createText(topComposite, "", SWT.NONE);
+		spaceText.setEditable(false);
+		spaceText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		spaceText.setData(FormToolkit.KEY_DRAW_BORDER, Boolean.FALSE);
+		if (cfServer.getCloudFoundrySpace() != null && cfServer.getCloudFoundrySpace().getSpaceName() != null) {
+			spaceText.setText(cfServer.getCloudFoundrySpace().getSpaceName());
 		}
 
 		// urlWidget = new CloudUrlWidget(cfServer);
