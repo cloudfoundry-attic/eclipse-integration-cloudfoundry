@@ -19,6 +19,7 @@ import java.util.List;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ProxyHandler;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
@@ -52,7 +53,7 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 					List<String> uris = new ArrayList<String>();
 					uris.add("test-proxy-upload.cloudfoundry.com");
 					client = getClient();
-					client.createApplication("test", DeploymentConstants.SPRING, 128, uris, new ArrayList<String>());
+					client.createApplication("test", new Staging(), 128, uris, new ArrayList<String>());
 					fail("Expected ResourceAccessException due to invalid proxy configuration");
 				}
 				catch (Exception e) {

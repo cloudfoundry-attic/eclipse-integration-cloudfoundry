@@ -1,26 +1,25 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
+import org.cloudfoundry.client.lib.domain.DeploymentInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConstants;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
@@ -31,9 +30,6 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.wst.common.project.facet.core.IFacetedProject;
-import org.eclipse.wst.common.project.facet.core.IProjectFacet;
-import org.eclipse.wst.common.project.facet.core.ProjectFacetsManager;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.IModuleResource;
 
@@ -60,63 +56,13 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 		return valuesByLabel;
 	}
 
-	public ApplicationFramework getFramework(IModule module) throws CoreException {
-		IProject project = module != null ? module.getProject() : null;
-		// Determine if it is Grails, Spring or Lift
-		String framework = getFramework(project);
-
-		// Otherwise determine if it is a Java Web module.
-		if (framework == null) {
-			// Determine from the module type
-			if (module != null) {
-				String moduleType = module.getModuleType() != null ? module.getModuleType().getId() : null;
-				if (DeploymentConstants.ID_WEB_MODULE.equals(moduleType)) {
-					framework = DeploymentConstants.JAVA_WEB;
-				}
-			}
-			else {
-				// Attempt to determine from the project facet
-				try {
-					IFacetedProject facetedProject = ProjectFacetsManager.create(project);
-					IProjectFacet facet = ProjectFacetsManager.getProjectFacet(DeploymentConstants.ID_WEB_MODULE);
-					if (facetedProject != null && facet != null && facetedProject.hasProjectFacet(facet)) {
-						framework = DeploymentConstants.JAVA_WEB;
-					}
-				}
-				catch (CoreException e) {
-					// Ignore the exception for now
-				}
-			}
-
-		}
-		if (framework != null) {
-
-			String displayName = JAVA_WEB_SUPPORTED_FRAMEWORKS.get(framework);
-			if (displayName == null) {
-				displayName = framework;
-			}
-			return new ApplicationFramework(framework, displayName);
-		}
-		else {
-			return null;
-		}
-
-	}
-
-	public List<ApplicationFramework> getSupportedFrameworks() {
-		List<ApplicationFramework> supportedFrameworks = new ArrayList<ApplicationFramework>();
-
-		for (Entry<String, String> entry : JAVA_WEB_SUPPORTED_FRAMEWORKS.entrySet()) {
-			supportedFrameworks.add(new ApplicationFramework(entry.getKey(), entry.getValue()));
-		}
-		return supportedFrameworks;
-	}
-
 	/**
 	 * Attempts to determine the framework based on the contents and nature of
 	 * the project. Returns null if no framework was determined.
 	 * @param project
 	 * @return Framework type or null if framework was not determined.
+	 * @deprecated kept for reference as application type is being determined by
+	 * checking properties of a Java project
 	 */
 	protected String getFramework(IProject project) {
 		if (project != null) {
@@ -197,19 +143,9 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 		return false;
 	}
 
-	public boolean isSupportedFramework(String frameworkName) {
-		return DeploymentConstants.SPRING.equals(frameworkName) || DeploymentConstants.GRAILS.equals(frameworkName)
-				|| DeploymentConstants.LIFT.equals(frameworkName) || DeploymentConstants.JAVA_WEB.equals(frameworkName);
-
-	}
-
 	public boolean requiresURL() {
 		// All Java Web applications require a URL when pushed to a CF server
 		return true;
-	}
-
-	public List<ApplicationRuntime> getRuntimes(CloudFoundryServer activeServer) throws CoreException {
-		return new JavaRuntimeTypeHelper(activeServer).getRuntimeTypes();
 	}
 
 	public boolean providesApplicationArchive(IModule module) {
@@ -223,5 +159,22 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 		// No need for application archive, as the CF plugin framework generates
 		// .war files for Java Web applications.
 		return null;
+	}
+
+	public boolean isValidDescriptor(DeploymentDescriptor descriptor) {
+		if (descriptor == null || descriptor.deploymentMode == null) {
+			return false;
+		}
+
+		ApplicationInfo info = descriptor.applicationInfo;
+		if (info == null || info.getAppName() == null) {
+			return false;
+		}
+
+		DeploymentInfo deploymentInfo = descriptor.deploymentInfo;
+
+		return deploymentInfo != null && deploymentInfo.getDeploymentName() != null && deploymentInfo.getMemory() > 0
+				&& deploymentInfo.getUris() != null && !deploymentInfo.getUris().isEmpty();
+
 	}
 }

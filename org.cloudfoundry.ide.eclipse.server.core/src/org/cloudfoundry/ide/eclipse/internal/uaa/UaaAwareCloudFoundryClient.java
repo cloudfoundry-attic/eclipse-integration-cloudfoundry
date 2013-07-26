@@ -34,10 +34,10 @@ import org.cloudfoundry.client.lib.domain.ApplicationStats;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudInfo;
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.client.lib.domain.CrashesInfo;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
-import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
 import org.json.simple.JSONObject;
 import org.springframework.uaa.client.TransmissionAwareUaaService;
 import org.springframework.uaa.client.TransmissionEventListener;
@@ -237,38 +237,6 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 	// }
 
 	@Override
-	public void createApplication(String appName, String framework, int memory, List<String> uris,
-			List<String> serviceNames, boolean checkExists) {
-		int resultCode = HTTP_SUCCESS_CODE;
-		try {
-			super.createApplication(appName, framework, memory, uris, serviceNames, checkExists);
-		}
-		catch (HttpStatusCodeException he) {
-			resultCode = he.getStatusCode().value();
-			throw he;
-		}
-		finally {
-			recordHttpResult("createApplication", resultCode, appName);
-		}
-	}
-
-	@Override
-	public void createApplication(String appName, String framework, int memory, List<String> uris,
-			List<String> serviceNames) {
-		int resultCode = HTTP_SUCCESS_CODE;
-		try {
-			super.createApplication(appName, framework, memory, uris, serviceNames);
-		}
-		catch (HttpStatusCodeException he) {
-			resultCode = he.getStatusCode().value();
-			throw he;
-		}
-		finally {
-			recordHttpResult("createApplication", resultCode, appName);
-		}
-	}
-
-	@Override
 	public void createService(CloudService service) {
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
@@ -464,21 +432,6 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 	}
 
 	@Override
-	public int getDefaultApplicationMemory(String framework) {
-		int resultCode = HTTP_SUCCESS_CODE;
-		try {
-			return super.getDefaultApplicationMemory(framework);
-		}
-		catch (HttpStatusCodeException he) {
-			resultCode = he.getStatusCode().value();
-			throw he;
-		}
-		finally {
-			recordHttpResult("getDefaultApplicationMemory", resultCode);
-		}
-	}
-
-	@Override
 	public String getFile(String appName, int instanceIndex, String filePath) {
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
@@ -509,17 +462,17 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 	}
 
 	@Override
-	public List<ServiceConfiguration> getServiceConfigurations() {
+	public List<CloudServiceOffering> getServiceOfferings() {
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
-			return super.getServiceConfigurations();
+			return super.getServiceOfferings();
 		}
 		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
 			throw he;
 		}
 		finally {
-			recordHttpResult("getServiceConfigurations", resultCode);
+			recordHttpResult("getServiceOfferings", resultCode);
 		}
 	}
 

@@ -18,8 +18,6 @@ import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationPlan;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationFramework;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRuntime;
 
 /**
  * 
@@ -77,11 +75,6 @@ public class ApplicationWizardDescriptor {
 
 	public void setStaging(Staging staging) {
 		this.staging = staging;
-	}
-
-	public void setStaging(ApplicationFramework framework, ApplicationRuntime runtime) {
-		staging = new Staging(framework.getFramework());
-		staging.setRuntime(runtime.getRuntime());
 	}
 
 	/**

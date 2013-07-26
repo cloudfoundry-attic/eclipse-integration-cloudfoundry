@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2013 VMware, Inc.
+ * Copyright (c) 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
@@ -45,36 +44,10 @@ public class ApplicationRegistry {
 
 	public static String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.core.application";
 
-	public static ApplicationFramework getApplicationFramework(IModule module) {
-		IApplicationDelegate delegate = getApplicationDelegate(module, null);
-		if (delegate != null) {
-			try {
-				return delegate.getFramework(module);
-			}
-			catch (CoreException e) {
-				CloudFoundryPlugin.logError(
-						"Failed to load Cloud Foundry application framework for " + module.getName()
-								+ " of module type: " + module.getModuleType().getId(), e);
-			}
-		}
-		return null;
-	}
-
-	public static IApplicationDelegate getApplicationDelegate(IModule module, String framework) {
+	public static IApplicationDelegate getApplicationDelegate(IModule module) {
 		ApplicationProvider provider = getApplicationProvider(module);
 		if (provider != null) {
-			IApplicationDelegate delegate = provider.getDelegate();
-
-			try {
-				if ((module != null && delegate.getFramework(module) != null)
-						|| (framework != null && delegate.isSupportedFramework(framework))) {
-					return delegate;
-				}
-			}
-			catch (CoreException e) {
-				CloudFoundryPlugin.logError("Failed to load Cloud Foundry application delegate for " + module.getName()
-						+ " of module type: " + module.getModuleType().getId(), e);
-			}
+			return provider.getDelegate();
 		}
 
 		return null;
@@ -111,6 +84,9 @@ public class ApplicationRegistry {
 	}
 
 	public static boolean isSupportedModule(IModule module) {
+
+		// Check module ID first to prevent unnecessary loading of delegates for
+		// incompatible modules.
 		String moduleID = module != null && module.getModuleType() != null ? module.getModuleType().getId() : null;
 
 		if (moduleID == null) {

@@ -22,7 +22,6 @@ import org.cloudfoundry.client.lib.domain.CloudEntity;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.client.lib.domain.CloudServicePlan;
-import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.core.databinding.DataBindingContext;
@@ -72,7 +71,7 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 
 	private final CloudFoundryServer cloudServer;
 
-	private List<ServiceConfiguration> configurations;
+	private List<CloudServiceOffering> serviceOfferings;
 
 	protected WritableMap map;
 
@@ -140,7 +139,7 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 			public void widgetSelected(SelectionEvent event) {
 				int index = typeCombo.getSelectionIndex();
 				if (index != -1) {
-					ServiceConfiguration configuration = configurations.get(index);
+					CloudServiceOffering configuration = serviceOfferings.get(index);
 					setCloudService(service, configuration);
 				}
 				refreshPlan();
@@ -181,7 +180,7 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 	@Override
 	public void setVisible(boolean visible) {
 		super.setVisible(visible);
-		if (visible && configurations == null) {
+		if (visible && serviceOfferings == null) {
 			// delay until dialog is actually visible
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
@@ -200,8 +199,8 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 	protected void refresh() {
 		if (updateConfiguration()) {
 			typeCombo.removeAll();
-			for (ServiceConfiguration configuration : configurations) {
-				typeCombo.add(configuration.getDescription());
+			for (CloudServiceOffering offering : serviceOfferings) {
+				typeCombo.add(offering.getDescription());
 			}
 			refreshPlan();
 		}
@@ -222,7 +221,7 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 			for (Control control : planGroup.getChildren()) {
 				control.dispose();
 			}
-			ServiceConfiguration configuration = configurations.get(index);
+			CloudServiceOffering configuration = serviceOfferings.get(index);
 			List<CloudServicePlan> servicePlans = getPlans(configuration);
 
 			if (servicePlans.size() > 1) {
@@ -292,13 +291,13 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 			getContainer().run(true, false, new IRunnableWithProgress() {
 				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 					try {
-						configurations = cloudServer.getBehaviour().getServiceConfigurations(monitor);
-						Collections.sort(configurations, new Comparator<ServiceConfiguration>() {
-							public int compare(ServiceConfiguration o1, ServiceConfiguration o2) {
+						serviceOfferings = cloudServer.getBehaviour().getServiceOfferings(monitor);
+						Collections.sort(serviceOfferings, new Comparator<CloudServiceOffering>() {
+							public int compare(CloudServiceOffering o1, CloudServiceOffering o2) {
 								return o1.getDescription().compareTo(o2.getDescription());
 							}
 						});
-						sortServicePlans(configurations);
+						sortServicePlans(serviceOfferings);
 
 					}
 					catch (CoreException e) {
@@ -360,31 +359,25 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 
 	}
 
-	protected void sortServicePlans(List<ServiceConfiguration> configurations) {
+	protected void sortServicePlans(List<CloudServiceOffering> configurations) {
 
-		for (ServiceConfiguration configuration : configurations) {
-			CloudServiceOffering offering = configuration.getCloudServiceOffering();
-			if (offering != null) {
-				Collections.sort(offering.getCloudServicePlans(), new Comparator<CloudServicePlan>() {
-					public int compare(CloudServicePlan o1, CloudServicePlan o2) {
-						return o1.getName().compareTo(o2.getName());
-					}
-				});
-			}
+		for (CloudServiceOffering offering : configurations) {
+			Collections.sort(offering.getCloudServicePlans(), new Comparator<CloudServicePlan>() {
+				public int compare(CloudServicePlan o1, CloudServicePlan o2) {
+					return o1.getName().compareTo(o2.getName());
+				}
+			});
 		}
 	}
 
-	protected List<CloudServicePlan> getPlans(ServiceConfiguration configuration) {
+	protected List<CloudServicePlan> getPlans(CloudServiceOffering offering) {
 		List<CloudServicePlan> plans = new ArrayList<CloudServicePlan>();
 
-		CloudServiceOffering offering = configuration.getCloudServiceOffering();
-		if (offering != null) {
-			List<CloudServicePlan> cloudPlans = offering.getCloudServicePlans();
+		List<CloudServicePlan> cloudPlans = offering.getCloudServicePlans();
 
-			if (cloudPlans != null) {
-				for (CloudServicePlan plan : cloudPlans) {
-					plans.add(plan);
-				}
+		if (cloudPlans != null) {
+			for (CloudServicePlan plan : cloudPlans) {
+				plans.add(plan);
 			}
 		}
 		return plans;
@@ -399,15 +392,12 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 		return "Plan";
 	}
 
-	protected void setCloudService(CloudService service, ServiceConfiguration configuration) {
+	protected void setCloudService(CloudService service, CloudServiceOffering offering) {
 
-		service.setVersion(configuration.getVersion());
+		service.setVersion(offering.getVersion());
+		service.setLabel(offering.getLabel());
+		service.setProvider(offering.getProvider());
 
-		CloudServiceOffering offering = configuration.getCloudServiceOffering();
-		if (offering != null) {
-			service.setLabel(offering.getLabel());
-			service.setProvider(offering.getProvider());
-		}
 	}
 
 	protected CloudService createService() {

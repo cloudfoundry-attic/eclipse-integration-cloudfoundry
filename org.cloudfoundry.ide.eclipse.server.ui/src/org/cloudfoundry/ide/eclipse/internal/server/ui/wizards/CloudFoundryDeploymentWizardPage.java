@@ -209,8 +209,7 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 			getContainer().run(true, false, new IRunnableWithProgress() {
 				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 					try {
-						deploymentConfiguration = server.getBehaviour().getDeploymentConfiguration(
-								CloudUtil.DEFAULT_FRAMEWORK, monitor);
+						deploymentConfiguration = server.getBehaviour().getDeploymentConfiguration(monitor);
 					}
 					catch (CoreException e) {
 						throw new InvocationTargetException(e);

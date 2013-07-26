@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
@@ -17,13 +17,12 @@ import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.WaitWithProgressJob;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationFramework;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -33,7 +32,6 @@ import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
 import org.eclipse.wst.server.core.ServerUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 
 /**
  * This handles automatic publishing of an app that has an accessible workspace
@@ -51,7 +49,8 @@ public class RepublishApplicationHandler {
 
 	private final CloudFoundryServer cloudServer;
 
-	public RepublishApplicationHandler(CloudFoundryApplicationModule appModule, List<String> uris, CloudFoundryServer cloudServer) {
+	public RepublishApplicationHandler(CloudFoundryApplicationModule appModule, List<String> uris,
+			CloudFoundryServer cloudServer) {
 		this.appModule = appModule;
 		this.uris = uris;
 		this.cloudServer = cloudServer;
@@ -165,16 +164,6 @@ public class RepublishApplicationHandler {
 		ApplicationInfo appInfo = appModule.getLastApplicationInfo();
 		if (appInfo == null) {
 			appInfo = new ApplicationInfo(appModule.getApplicationId());
-		}
-
-		if (appInfo.getFramework() == null) {
-
-			ApplicationFramework appFramework = ApplicationRegistry.getApplicationFramework(appModule
-					.getLocalModule());
-			if (appFramework != null) {
-				appInfo.setFramework(appFramework.getFramework());
-			}
-
 		}
 
 		descriptor.applicationInfo = appInfo;

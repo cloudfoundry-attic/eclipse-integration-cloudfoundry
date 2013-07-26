@@ -15,7 +15,7 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
+import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.runtime.CoreException;
@@ -33,7 +33,7 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 	}
 
 	protected CloudService createCloudService(String name, String vendor) throws CoreException {
-		ServiceConfiguration serviceConfiguration = getServiceConfiguration(vendor);
+		CloudServiceOffering serviceConfiguration = getServiceConfiguration(vendor);
 		if (serviceConfiguration != null) {
 			CloudService service = new CloudService();
 			service.setName(name);
@@ -46,12 +46,12 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 		return null;
 	}
 
-	protected ServiceConfiguration getServiceConfiguration(String vendor) throws CoreException {
-		List<ServiceConfiguration> serviceConfigurations = serverBehavior
-				.getServiceConfigurations(new NullProgressMonitor());
+	protected CloudServiceOffering getServiceConfiguration(String vendor) throws CoreException {
+		List<CloudServiceOffering> serviceConfigurations = serverBehavior
+				.getServiceOfferings(new NullProgressMonitor());
 		if (serviceConfigurations != null) {
-			for (ServiceConfiguration serviceConfiguration : serviceConfigurations) {
-				if (vendor.equals(serviceConfiguration.getCloudServiceOffering().getLabel())) {
+			for (CloudServiceOffering serviceConfiguration : serviceConfigurations) {
+				if (vendor.equals(serviceConfiguration.getLabel())) {
 					return serviceConfiguration;
 				}
 			}

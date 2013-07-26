@@ -35,7 +35,8 @@ public class StandaloneDeploymentWizardPage extends
 		CloudFoundryDeploymentWizardPage implements ICommandChangeListener {
 
 	public StandaloneDeploymentWizardPage(CloudFoundryServer server,
-			CloudFoundryApplicationModule module, ApplicationWizardDescriptor descriptor) {
+			CloudFoundryApplicationModule module,
+			ApplicationWizardDescriptor descriptor) {
 		super(server, module, descriptor);
 	}
 
@@ -125,11 +126,11 @@ public class StandaloneDeploymentWizardPage extends
 		// descriptor are used to validate whether the wizard can complete or
 		// not
 		Staging staging = descriptor.getStaging();
-		if (staging == null) {
-			staging = new Staging(null);
-			descriptor.setStaging(staging);
-		}
-		staging.setCommand(startCommand);
+		String buildPackURL = staging != null ? staging.getBuildpackUrl()
+				: null;
+
+		staging = new Staging(startCommand, buildPackURL);
+		descriptor.setStaging(staging);
 
 		if (updateButtons) {
 			getWizard().getContainer().updateButtons();

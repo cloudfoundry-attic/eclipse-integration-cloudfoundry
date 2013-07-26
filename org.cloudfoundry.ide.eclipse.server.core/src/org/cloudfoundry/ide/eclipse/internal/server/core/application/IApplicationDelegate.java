@@ -10,10 +10,8 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
-import java.util.List;
-
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.IModuleResource;
@@ -40,55 +38,6 @@ import org.eclipse.wst.server.core.model.IModuleResource;
  * 
  */
 public interface IApplicationDelegate {
-
-	/**
-	 * Given a module for an application that should be pushed to a Cloud
-	 * Foundry server, determine if it corresponds to a support application
-	 * framework and if so, return the application's framework. Examples of
-	 * application frameworks are Spring, Grails, and Java Web.
-	 * @param module to determine if it corresponds to a supported application
-	 * framework.
-	 * @return ApplicationFramework if applicable to the given module, or null
-	 * if it is not applicable.
-	 * @throws CoreException if error occurred while determining framework from
-	 * module.
-	 * @deprecated Frameworks are no longer supported in V2 CF servers
-	 */
-	public ApplicationFramework getFramework(IModule module) throws CoreException;
-
-	/**
-	 * Return the list of runtimes that are applicable to the application type
-	 * represented by this delegate for the current active server. Should never
-	 * be null. The current active server can also change during a runtime
-	 * session, so it shouldn't be assumed to be referencing the same instance
-	 * all the time.
-	 * @param active cloud foundry server instance.
-	 * @return Non-null list of runtimes for the application types represented
-	 * by this delegate.
-	 * @throws CoreException if error occurred while determining runtimes for
-	 * the given active server
-	 * @deprecated Runtimes are no longer used for V2 CF servers
-	 */
-	public List<ApplicationRuntime> getRuntimes(CloudFoundryServer activeServer) throws CoreException;
-
-	/**
-	 * List of all supported frameworks provided by this application delegate.
-	 * 
-	 * @return Non-null list of all application frameworks provided by this
-	 * application delegate.
-	 * @deprecated Frameworks are no longer used for V2 CF servers
-	 */
-	public List<ApplicationFramework> getSupportedFrameworks();
-
-	/**
-	 * Determine if the given framework name is one of the frameworks that this
-	 * application type supports.
-	 * 
-	 * @param frameworkName
-	 * @return true if supported. False otherwise
-	 * @deprecated Frameworks are no longer supported in V2 servers
-	 */
-	public boolean isSupportedFramework(String frameworkName);
 
 	/**
 	 * 
@@ -156,4 +105,6 @@ public interface IApplicationDelegate {
 	 */
 	public ApplicationArchive getApplicationArchive(IModule module, IModuleResource[] moduleResources)
 			throws CoreException;
+
+	public boolean isValidDescriptor(DeploymentDescriptor descriptor);
 }

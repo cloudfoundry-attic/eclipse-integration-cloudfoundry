@@ -82,7 +82,7 @@ public class CloudFoundryURLsWizard extends Wizard {
 			return true;
 		}
 
-		IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(localModule, null);
+		IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(localModule);
 		if (delegate == null) {
 			return true;
 		}

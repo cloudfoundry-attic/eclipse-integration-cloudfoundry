@@ -42,14 +42,7 @@ public class StandaloneModuleHelper {
 		boolean isStandalone = module != null
 				&& StandaloneFacetHandler.ID_MODULE_STANDALONE.equals(module
 						.getModuleType().getId());
-		// If standalone app cannot be determined by the local module, check the
-		// staging
-		if (!isStandalone) {
-			Staging staging = getStaging();
-			isStandalone = staging != null
-					&& CloudApplication.STANDALONE.equals(staging
-							.getFramework());
-		}
+
 		return isStandalone;
 	}
 

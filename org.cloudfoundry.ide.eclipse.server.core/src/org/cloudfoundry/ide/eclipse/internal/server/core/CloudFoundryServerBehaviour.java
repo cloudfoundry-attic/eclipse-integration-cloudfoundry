@@ -31,10 +31,9 @@ import org.cloudfoundry.client.lib.domain.ApplicationStats;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.client.lib.domain.CloudDomain;
-import org.cloudfoundry.client.lib.domain.CloudInfo;
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
-import org.cloudfoundry.client.lib.domain.ServiceConfiguration;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
@@ -93,8 +92,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private Boolean supportsSpaces = null;
 
 	private DebugSupportCheck isDebugModeSupported = DebugSupportCheck.UNCHECKED;
-
-	private List<CloudInfo.Runtime> runtimes = new ArrayList<CloudInfo.Runtime>(0);
 
 	private List<ApplicationPlan> applicationPlans;
 
@@ -157,10 +154,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			isDebugModeSupported = client.getCloudInfo().getAllowDebug() ? DebugSupportCheck.SUPPORTED
 					: DebugSupportCheck.UNSUPPORTED;
 		}
-	}
-
-	public List<CloudInfo.Runtime> getRuntimes() {
-		return runtimes;
 	}
 
 	/**
@@ -354,7 +347,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				if (staging == null) {
 					// Even for v2, a non-null staging is required.
-					staging = new Staging(null);
+					staging = new Staging();
 				}
 				client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(), uris, services,
 						plan.name());
@@ -567,29 +560,26 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return new int[0];
 	}
 
-	public DeploymentConfiguration getDeploymentConfiguration(final String framework, IProgressMonitor monitor)
-			throws CoreException {
+	public DeploymentConfiguration getDeploymentConfiguration(IProgressMonitor monitor) throws CoreException {
 		return new Request<DeploymentConfiguration>("Getting available service options") {
 			@Override
 			protected DeploymentConfiguration doRun(CloudFoundryOperations client, SubMonitor progress)
 					throws CoreException {
-				DeploymentConfiguration configuration = new DeploymentConfiguration();
+				DeploymentConfiguration configuration = new DeploymentConfiguration(getApplicationMemoryChoices());
 				// XXX make bogus call that triggers login if needed to work
 				// around NPE in client.getApplicationMemoryChoices()
 				client.getServices();
-				configuration.setMemoryOptions(getApplicationMemoryChoices());
-				configuration.setDefaultMemory(client.getDefaultApplicationMemory(framework));
 				return configuration;
 			}
 		}.run(monitor);
 	}
 
-	public List<ServiceConfiguration> getServiceConfigurations(IProgressMonitor monitor) throws CoreException {
-		return new Request<List<ServiceConfiguration>>("Getting available service options") {
+	public List<CloudServiceOffering> getServiceOfferings(IProgressMonitor monitor) throws CoreException {
+		return new Request<List<CloudServiceOffering>>("Getting available service options") {
 			@Override
-			protected List<ServiceConfiguration> doRun(CloudFoundryOperations client, SubMonitor progress)
+			protected List<CloudServiceOffering> doRun(CloudFoundryOperations client, SubMonitor progress)
 					throws CoreException {
-				return client.getServiceConfigurations();
+				return client.getServiceOfferings();
 			}
 		}.run(monitor);
 	}
@@ -643,8 +633,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				try {
-					getClient(progress).createApplication(appName, DeploymentConstants.SPRING, memory, uris,
-							serviceNames);
+					getClient(progress).createApplication(appName, new Staging(), memory, uris, serviceNames);
 					getClient(progress).uploadApplication(appName, warFile);
 					getClient(progress).startApplication(appName);
 					// getClient().createAndUploadAndStartApplication(appName,
@@ -1811,9 +1800,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							// Determine if an archive is provided for the
 							// application type. Otherwise generated a .war
 							// file.
-							String framework = descriptor.staging != null ? descriptor.staging.getFramework() : null;
-							IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(
-									cloudModule.getLocalModule(), framework);
+
+							IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(cloudModule
+									.getLocalModule());
 
 							if (delegate != null && delegate.providesApplicationArchive(cloudModule.getLocalModule())) {
 								IModuleResource[] resources = getResources(modules);

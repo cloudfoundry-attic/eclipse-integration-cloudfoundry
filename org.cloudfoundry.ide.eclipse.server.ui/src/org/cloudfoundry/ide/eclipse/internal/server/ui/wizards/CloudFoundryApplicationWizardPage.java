@@ -135,12 +135,7 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 
 	protected void setApplicationInfo() {
 		ApplicationInfo info = new ApplicationInfo(appName);
-		// Backward compatibility. Also set the framework in the application
-		// info, although the staging is the primary
-		// way of setting a framework for an application
-		if (descriptor.getStaging() != null) {
-			info.setFramework(descriptor.getStaging().getFramework());
-		}
+
 		descriptor.setApplicationInfo(info);
 	}
 

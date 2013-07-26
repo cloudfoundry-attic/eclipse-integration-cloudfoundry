@@ -62,8 +62,6 @@ public class CloudUtil {
 
 	public static final int DEFAULT_MEMORY = 512;
 
-	public static final String DEFAULT_FRAMEWORK = DeploymentConstants.SPRING;
-
 	private static final IStatus[] EMPTY_STATUS = new IStatus[0];
 
 	public static IWebModule getWebModule(IModule[] modules) {
@@ -392,7 +390,7 @@ public class CloudUtil {
 
 		return targetFile;
 	}
-	
+
 	public static void merge(List<IStatus> result, IStatus[] status) {
 		if (result == null || status == null || status.length == 0) {
 			return;

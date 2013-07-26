@@ -23,6 +23,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
@@ -177,7 +179,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 					.untagForAutomaticRepublish(module);
 
 			// First check if the module is set for automatic republish. This is
-			// different that a
+			// different than a
 			// start or update restart, as the latter two require the module to
 			// already be published.
 			// Automatic republish are for modules that are configured for
@@ -191,7 +193,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 				descriptor = repModule.getDeploymentDescriptor();
 			}
 
-			if (!isValidDescriptor(descriptor)) {
+			if (!isValidDescriptor(descriptor, module)) {
 				final DeploymentDescriptor[] depDescriptors = new DeploymentDescriptor[1];
 				Display.getDefault().syncExec(new Runnable() {
 					public void run() {
@@ -257,6 +259,17 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		return descriptor;
 	}
 
+	protected boolean isValidDescriptor(DeploymentDescriptor descriptor, IModule module) {
+		if (descriptor == null) {
+			return false;
+		}
+		IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(module);
+		if (delegate != null) {
+			return delegate.isValidDescriptor(descriptor);
+		}
+		return false;
+	}
+
 	@Override
 	public void deleteServices(final List<String> services, final CloudFoundryServer cloudServer) {
 		if (services == null || services.isEmpty()) {
@@ -272,30 +285,6 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			}
 
 		});
-	}
-
-	protected boolean isValidDescriptor(DeploymentDescriptor descriptor) {
-		if (descriptor == null || descriptor.deploymentMode == null) {
-			return false;
-		}
-
-		ApplicationInfo info = descriptor.applicationInfo;
-		if (info == null || info.getAppName() == null || info.getFramework() == null) {
-			return false;
-		}
-
-		DeploymentInfo deploymentInfo = descriptor.deploymentInfo;
-
-		if (deploymentInfo == null || deploymentInfo.getDeploymentName() == null || deploymentInfo.getMemory() <= 0
-		// If it is not standalone app (not having staging is consider
-		// non-standalone), then URIs must be set to be a valid
-		// descriptor
-				|| ((descriptor.staging == null || !CloudApplication.STANDALONE.equals(descriptor.staging
-						.getFramework())) && (deploymentInfo.getUris() == null || deploymentInfo.getUris().isEmpty()))) {
-			return false;
-		}
-
-		return true;
 	}
 
 }
