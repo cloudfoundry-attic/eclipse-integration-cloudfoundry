@@ -20,9 +20,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.client.RestClientException;
 
-public class CloudFoundryOperationsHandler {
+public class CloudFoundryLoginHandler {
 
 	private final CloudFoundryOperations operations;
 
@@ -37,20 +36,26 @@ public class CloudFoundryOperationsHandler {
 	 * @param operations must not be null
 	 * @param cloudServer can be null if no server has been created yet
 	 */
-	public CloudFoundryOperationsHandler(CloudFoundryOperations operations, String cloudURL) {
+	public CloudFoundryLoginHandler(CloudFoundryOperations operations, String cloudURL) {
 		this.operations = operations;
 		this.cloudURL = cloudURL;
 	}
 
-	public boolean login(IProgressMonitor monitor) throws CoreException {
-		return login(monitor, 1, 0);
+	/**
+	 * Attempts to log in once. If login fails, Core exception is thrown
+	 * @throws CoreException if login failed. The reason for the login failure is contained in the core exception's
+	 */
+	public void login(IProgressMonitor monitor) throws CoreException {
+		login(monitor, 1, 0);
 	}
 
-	public boolean login(IProgressMonitor monitor, int tries, long sleep) throws CoreException {
-
-		updateProxyInClient(operations);
-		return internalLogin(monitor, tries, sleep);
-
+	/**
+	 * Attempts a log in for the specified amount of attempts, and waits by the
+	 * specified sleep time between each attempt. If at the end of the attempts,
+	 * login has failed, Core exception is thrown.
+	 */
+	public void login(IProgressMonitor monitor, int tries, long sleep) throws CoreException {
+		internalLogin(monitor, tries, sleep);
 	}
 
 	protected boolean internalLogin(IProgressMonitor monitor, int tries, long sleep) throws CoreException {
@@ -58,16 +63,12 @@ public class CloudFoundryOperationsHandler {
 
 			@Override
 			protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
-				try {
-					operations.login();
-					return true;
-				}
-				catch (CloudFoundryException cfe) {
-					throw CloudErrorUtil.toCoreException(cfe);
-				}
-				catch (RestClientException rce) {
-					throw CloudErrorUtil.toCoreException(rce);
-				}
+				// Do not wrap CloudFoundryException or RestClientException in a
+				// CoreException.
+				// as they are uncaught exceptions and can be inspected diretly
+				// by the shouldRetryOnError(..) method.
+				operations.login();
+				return true;
 			}
 
 			@Override
@@ -84,48 +85,8 @@ public class CloudFoundryOperationsHandler {
 				progressMonitor, DEFAULT_PROGRESS_LABEL, DEFAULT_PROGRESS_TICKS);
 	}
 
-	public boolean run(IProgressMonitor progressMonitor) throws CoreException {
-		SubMonitor subMonitor = getProgressMonitor(progressMonitor);
-		// Always check if proxy settings have changed.
-		updateProxyInClient(operations);
-
-		boolean succeeded = false;
-		try {
-			doRun(operations, subMonitor);
-		}
-		catch (CloudFoundryException e) {
-			// try again in case of a login failure
-			if (shouldAttemptClientLogin(e)) {
-				int tries = 2;
-				long wait = 500;
-				internalLogin(progressMonitor, tries, wait);
-				doRun(operations, subMonitor);
-			}
-			else {
-				throw CloudErrorUtil.toCoreException(e);
-			}
-		}
-		catch (RestClientException rce) {
-			throw CloudErrorUtil.toCoreException(rce);
-		}
-		return succeeded;
-	}
-
-	protected void doRun(CloudFoundryOperations operations, SubMonitor progressMonitor) throws CoreException {
-		// Optional. Do nothing by default. Subclasses can override with
-		// additional behaviour.
-	}
-
 	public boolean shouldAttemptClientLogin(CloudFoundryException cfe) {
-		if (HttpStatus.FORBIDDEN.equals(cfe.getStatusCode())) {
-			return true;
-		}
-		else if (HttpStatus.UNAUTHORIZED.equals(cfe.getStatusCode()) && operations.supportsSpaces()) {
-			return true;
-		}
-		else {
-			return false;
-		}
+		return HttpStatus.UNAUTHORIZED.equals(cfe.getStatusCode()) || HttpStatus.FORBIDDEN.equals(cfe.getStatusCode());
 	}
 
 	/**

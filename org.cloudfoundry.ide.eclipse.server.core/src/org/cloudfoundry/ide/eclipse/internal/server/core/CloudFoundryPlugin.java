@@ -130,13 +130,18 @@ public class CloudFoundryPlugin extends Plugin {
 		}
 
 		@Override
+		public void applicationStopped(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
+
+		}
+
+		@Override
 		public void getCredentials(CloudFoundryServer server) {
 			throw new OperationCanceledException();
 		}
 
 		@Override
-		public DeploymentDescriptor prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
-				IProgressMonitor monitor) {
+		public DeploymentDescriptor prepareForDeployment(CloudFoundryServer server,
+				CloudFoundryApplicationModule module, IProgressMonitor monitor) {
 			throw new OperationCanceledException();
 		}
 
@@ -159,7 +164,7 @@ public class CloudFoundryPlugin extends Plugin {
 		@Override
 		public void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 			// TODO Auto-generated method stub
-			
+
 		}
 
 	}

@@ -53,10 +53,11 @@ public class CloudFoundryClientTest extends TestCase {
 		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(VALID_V1_HTTP_URL,
 				credentials.getUserEmail(), credentials.getPassword());
 
-		CloudFoundryOperationsHandler operationsHandler = new CloudFoundryOperationsHandler(client, null);
-		boolean succeeded = operationsHandler.login(new NullProgressMonitor());
+		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client, null);
 
-		Assert.assertTrue(succeeded);
+		// Throws exception if it failed login. Let junit detect the exception
+		// as an error.
+		operationsHandler.login(new NullProgressMonitor());
 
 	}
 
@@ -69,7 +70,7 @@ public class CloudFoundryClientTest extends TestCase {
 		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(VALID_V1_HTTP_URL,
 				credentials.getUserEmail(), invalidPassword);
 
-		CloudFoundryOperationsHandler operationsHandler = new CloudFoundryOperationsHandler(client, null);
+		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client, null);
 		CoreException error = null;
 
 		try {
@@ -91,7 +92,7 @@ public class CloudFoundryClientTest extends TestCase {
 		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(VALID_V1_HTTP_URL, invalidUsername,
 				credentials.getPassword());
 
-		CloudFoundryOperationsHandler operationsHandler = new CloudFoundryOperationsHandler(client, null);
+		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client, null);
 		CoreException error = null;
 
 		try {

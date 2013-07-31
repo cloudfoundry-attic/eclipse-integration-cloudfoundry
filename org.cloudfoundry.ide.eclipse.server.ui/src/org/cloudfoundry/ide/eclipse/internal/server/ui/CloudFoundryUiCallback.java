@@ -26,7 +26,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContents;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardProviderDelegate;
@@ -62,8 +62,10 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			@Override
 			public IStatus runInUIThread(IProgressMonitor arg0) {
 				for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
-					ConsoleContent content = ConsoleContent.getConsoleContent(server, cloudModule.getApplication());
-					ConsoleManager.getInstance().startConsole(server, content, cloudModule.getApplication(), i, i == 0);
+					ConsoleContents content = ConsoleContents.getStandardLogContent(server,
+							cloudModule.getApplication(), i);
+					ConsoleManager.getInstance().startConsole(server, content, cloudModule.getApplication(), i, i == 0,
+							true);
 				}
 				return Status.OK_STATUS;
 			}
@@ -71,6 +73,19 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		job.setSystem(true);
 		job.schedule();
 
+	}
+
+	public static String getStagingInitialContent(CloudApplication cloudModule, CloudFoundryServer cloudServer) {
+		StringBuffer initialContent = new StringBuffer();
+		initialContent.append("Staging application ");
+		initialContent.append(cloudModule.getName());
+		initialContent.append(' ');
+		initialContent.append("in server ");
+		initialContent.append(cloudServer.getDeploymentName());
+		initialContent.append('\n');
+		initialContent.append("Please wait while staging completes...");
+		initialContent.append('\n');
+		return initialContent.toString();
 	}
 
 	@Override
@@ -102,6 +117,10 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
 	public void deleteApplication(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
+		applicationStopped(cloudModule, cloudServer);
+	}
+
+	public void applicationStopped(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
 		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
 			ConsoleManager.getInstance().stopConsole(cloudServer.getServer(), cloudModule.getApplication(), i);
 		}
@@ -122,10 +141,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
 	public void applicationStopping(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
-		// CloudApplication application = cloudModule.getApplication();
-		// if (application != null) {
-		// consoleManager.stopConsole(application);
-		// }
+
 	}
 
 	@Override

@@ -54,6 +54,11 @@ public class TestCallback extends CloudFoundryCallback {
 	}
 
 	@Override
+	public void applicationStopped(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
+		// ignore
+	}
+
+	@Override
 	public void applicationStopping(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 		// ignore
 	}

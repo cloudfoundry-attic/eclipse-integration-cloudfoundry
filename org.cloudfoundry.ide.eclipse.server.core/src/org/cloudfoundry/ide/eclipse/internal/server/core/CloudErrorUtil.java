@@ -119,6 +119,20 @@ public class CloudErrorUtil {
 		return message;
 	}
 
+	public static boolean isFileNotFoundForInstance(Exception e) {
+		HttpClientErrorException badRequestException = getBadRequestException(e);
+		if (badRequestException != null) {
+			String message = getHttpErrorMessage(badRequestException);
+
+			if (message != null) {
+				message = message.toLowerCase();
+				return message.contains("file error") && message.contains("request failed")
+						&& message.contains("as the instance is not found");
+			}
+		}
+		return false;
+	}
+
 	public static boolean isAppStaging(Exception e) {
 		HttpClientErrorException badRequestException = getBadRequestException(e);
 		if (badRequestException != null) {
@@ -163,7 +177,7 @@ public class CloudErrorUtil {
 		return null;
 	}
 
-	public static CoreException toCoreException(Exception e) {
+	public static CoreException toCoreException(Throwable e) {
 		if (e instanceof CloudFoundryException) {
 			if (((CloudFoundryException) e).getDescription() != null) {
 				return new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind("{0} ({1})",

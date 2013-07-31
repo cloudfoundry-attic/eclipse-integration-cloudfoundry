@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 GoPivotal, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,7 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContents;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.eclipse.jface.action.Action;
 
@@ -37,8 +37,8 @@ public class ShowConsoleAction extends Action {
 
 	@Override
 	public void run() {
-		ConsoleContent content = ConsoleContent.getConsoleContent(server, app);
-		ConsoleManager.getInstance().startConsole(server, content, app, instanceIndex, true);
+		ConsoleContents content = ConsoleContents.getStandardLogContent(server, app, instanceIndex);
+		ConsoleManager.getInstance().startConsole(server, content, app, instanceIndex, true, true);
 	}
 
 }

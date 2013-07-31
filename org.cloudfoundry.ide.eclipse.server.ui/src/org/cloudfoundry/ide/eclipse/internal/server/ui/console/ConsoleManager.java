@@ -76,22 +76,23 @@ public class ConsoleManager {
 	 * Start console if show is true, otherwise reset and start only if console
 	 * was previously created already
 	 */
-	public void startConsole(CloudFoundryServer server, ConsoleContent contents, CloudApplication app,
-			int instanceIndex, boolean show) {
+	public void startConsole(CloudFoundryServer server, ConsoleContents contents, CloudApplication app,
+			int instanceIndex, boolean show, boolean clear) {
 		String appUrl = getConsoleId(server.getServer(), app, instanceIndex);
 		CloudFoundryConsole serverLogTail = consoleByUri.get(appUrl);
 		if (serverLogTail == null && show) {
 
 			MessageConsole appConsole = getOrCreateConsole(server.getServer(), app, instanceIndex);
 
-			ConsoleStreamContent streamContent = new ConsoleStreamContent(contents, appConsole, app, instanceIndex);
-			serverLogTail = new CloudFoundryConsole(streamContent, app, instanceIndex, appConsole);
+			serverLogTail = new CloudFoundryConsole(app, appConsole);
 			consoleByUri.put(getConsoleId(server.getServer(), app, instanceIndex), serverLogTail);
 		}
 
 		if (serverLogTail != null) {
-			serverLogTail.resetConsole();
-			serverLogTail.startTailing();
+			if (clear) {
+				serverLogTail.getConsole().clearConsole();
+			}
+			serverLogTail.startTailing(contents);
 		}
 
 		if (show && serverLogTail != null) {

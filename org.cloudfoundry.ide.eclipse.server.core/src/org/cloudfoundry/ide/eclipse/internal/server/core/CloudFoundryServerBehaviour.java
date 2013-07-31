@@ -535,7 +535,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public String getFile(final String applicationId, final int instanceIndex, final String path,
 			IProgressMonitor monitor) throws CoreException {
-		return new Request<String>("Retrieving file") {
+		return new FileRequest<String>() {
 			@Override
 			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getFile(applicationId, instanceIndex, path);
@@ -545,7 +545,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public String getFile(final String applicationId, final int instanceIndex, final String filePath,
 			final int startPosition, IProgressMonitor monitor) throws CoreException {
-		return new Request<String>("Retrieving file") {
+		return new FileRequest<String>() {
 			@Override
 			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getFile(applicationId, instanceIndex, filePath, startPosition);
@@ -771,6 +771,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	@Override
 	public void stop(boolean force) {
+		// This stops the server locally, it does NOT stop the remotely running
+		// applications
 		setServerState(IServer.STATE_STOPPED);
 		closeCaldecottTunnelsAsynch();
 	}
@@ -829,6 +831,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			server.setModuleState(modules, IServer.STATE_STOPPED);
 			succeeded = true;
+			CloudFoundryPlugin.getCallback().applicationStopped(cloudModule, cloudServer);
 
 			// If succeeded, stop all Caldecott tunnels if the app is the
 			// Caldecott app
@@ -1112,7 +1115,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		 * (response.contains("B29 ROUTER: 404 - FILE NOT FOUND")) { return
 		 * false; }
 		 */
-		return true;
+		return AppState.STARTED.equals(application.getState());
 	}
 
 	private void setRefreshInterval(long interval) {
@@ -1135,10 +1138,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private boolean waitForStart(CloudFoundryOperations client, String deploymentId, IProgressMonitor monitor)
 			throws InterruptedException {
-		long timeLeft = CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT;
+		long initialInterval = CloudFoundryClientRequest.SHORT_INTERVAL;
+		Thread.sleep(initialInterval);
+		long timeLeft = CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT - initialInterval;
 		while (timeLeft > 0) {
 			CloudApplication deploymentDetails = client.getApplication(deploymentId);
-			if (AppState.STARTED.equals(deploymentDetails.getState()) && isApplicationReady(deploymentDetails)) {
+			if (isApplicationReady(deploymentDetails)) {
 				return true;
 			}
 			Thread.sleep(CloudFoundryClientRequest.ONE_SECOND_INTERVAL);
@@ -1308,14 +1313,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			client.debugApplication(applicationId, DebugModeType.SUSPEND.getDebugMode());
 			break;
 		default:
-			if (client.supportsSpaces()) {
-				client.stopApplication(applicationId);
-				StartingInfo info = client.startApplication(applicationId);
-				cloudModule.setStartingInfo(info);
-			}
-			else {
-				client.restartApplication(applicationId);
-			}
+			client.stopApplication(applicationId);
+			StartingInfo info = client.startApplication(applicationId);
+			// ApplicationStartingInfo startingInfo = null;
+			// if (info != null) {
+			// List<String> stagingLog = client.getStagingLogs(info);
+			// startingInfo = new ApplicationStartingInfo(stagingLog, info);
+			//
+			// }
+			// cloudModule.setStartingInfo(startingInfo);
+			//
+			// // Inform through callbacks that application has started
+			// CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(),
+			// cloudModule);
 
 			break;
 		}
@@ -1370,7 +1380,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		progress.beginTask("Connecting", IProgressMonitor.UNKNOWN);
 		try {
 			CloudFoundryOperations client = createClient(location, userName, password);
-			CloudFoundryOperationsHandler operationsHandler = new CloudFoundryOperationsHandler(client, null);
+			CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client, null);
 			operationsHandler.login(progress);
 		}
 		catch (RestClientException e) {
@@ -1534,7 +1544,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 
 		public Request(String label) {
-			this(label, CloudFoundryClientRequest.MEDIUM_TIMEOUT);
+			// By default time out after 10 seconds if the request can't be
+			// completed due to errors
+			this(label, 10 * 1000);
 		}
 
 		public Request(String label, long requestTimeOut) {
@@ -1561,21 +1573,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			T result;
 			boolean succeeded = false;
 			try {
+
 				CloudFoundryOperations client = getClient(subProgress);
-				String cloudURL = getCloudFoundryServer() != null ? getCloudFoundryServer().getUrl() : null;
 
-				CloudFoundryOperationsHandler handler = new CloudFoundryOperationsHandler(client, cloudURL);
-
-				// Always check if proxy settings have changed.
-				handler.updateProxyInClient(client);
-				result = new CloudFoundryClientRequest<T>(requestTimeOut) {
+				// Execute the request through a client request handler that
+				// handles errors as well as proxy checks
+				result = new CloudFoundryClientRequest<T>(client, getCloudFoundryServer(), requestTimeOut) {
 
 					@Override
 					protected T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 						return Request.this.doRun(client, progress);
 					}
 
-				}.run(client, handler, subProgress);
+				}.run(subProgress);
 
 				succeeded = true;
 
@@ -1973,8 +1983,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 							performRestartInClient(applicationId, cloudModule, client, descriptor.deploymentMode);
 
-							CloudFoundryPlugin.trace("Application " + applicationId + " restarted");
-
 							// Now verify that the application did start
 							try {
 								if (!waitForStart(client, applicationId, progress)) {
@@ -1985,28 +1993,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 								}
 							}
 							catch (InterruptedException e) {
+								server.setModuleState(modules, IServer.STATE_STOPPED);
 								throw new OperationCanceledException();
 							}
 
-							InstancesInfo info = client.getApplicationInstances(applicationId);
+							server.setModuleState(modules, IServer.STATE_STARTED);
 
-							// If instances info for the application can be
-							// resolved, it
-							// means the application
-							// has started and is past staging phase
-							if (info != null) {
-								server.setModuleState(modules, IServer.STATE_STARTED);
+							CloudFoundryPlugin.trace("Application " + applicationId + " started");
 
-								CloudFoundryPlugin.trace("Application " + applicationId + " started");
-
-								if (cloudModule != null && cloudModule.getApplication() != null) {
-									CloudFoundryPlugin.getCallback().applicationStarted(getCloudFoundryServer(),
-											cloudModule);
-								}
-							}
-							else {
-								server.setModuleState(modules, IServer.STATE_STOPPED);
-							}
+							CloudFoundryPlugin.getCallback().applicationStarted(getCloudFoundryServer(), cloudModule);
 						}
 						else {
 							// Missing a deployment mode is acceptable, as the
@@ -2047,9 +2042,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	abstract class RequestWithRefreshCallBack<T> extends Request<T> {
 		public T run(IProgressMonitor monitor) throws CoreException {
 			T result = super.run(monitor);
-			setRefreshInterval(CloudFoundryClientRequest.ONE_SECOND_INTERVAL);
+			setRefreshInterval(100);
 			return result;
 		}
+	}
+
+	abstract class FileRequest<T> extends Request<T> {
+
+		FileRequest() {
+			super("Retrieving file", CloudFoundryClientRequest.SHORT_INTERVAL);
+		}
+
 	}
 
 }

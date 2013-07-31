@@ -17,40 +17,56 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.springframework.web.client.RestClientException;
 
 /**
- * Performs a CF client call, and times out if the call fails due to errors.
- * Also handles any errors thrown when calling the client.
+ * Performs a CF client call, and times out if the call fails due to errors, as
+ * well as proxy checks prior to sending the request. Also handles any errors
+ * thrown when calling the client.
  */
 public abstract class CloudFoundryClientRequest<T> {
 
+	/*
+	 * Intervals are how long a thread should sleep before moving to the next
+	 * iteration, or how long a refresh operation should wait before refreshing
+	 * the deployed apps.
+	 */
 	public static final long DEFAULT_INTERVAL = 60 * 1000;
 
 	public static final long SHORT_INTERVAL = 5 * 1000;
 
-	public static final long MEDIUM_INTERVAL = 25 * 1000;
+	public static final long MEDIUM_INTERVAL = 10 * 1000;
 
-	public static final long DEPLOYMENT_TIMEOUT = 10 * 60 * 1000;
+	public static final long ONE_SECOND_INTERVAL = 1000;
 
 	// Set very high as we do not want to give up on staging. Eventually, either
 	// staging will complete, or the server will notify with another error that
 	// staging failed
 	public static final long STAGING_TIMEOUT = 6 * 1000 * 1000;
 
-	public static final long MEDIUM_TIMEOUT = 10 * 1000;
-
-	public static final long ONE_SECOND_INTERVAL = 1000;
+	public static final long DEPLOYMENT_TIMEOUT = 10 * 60 * 1000;
 
 	public static final long UPLOAD_TIMEOUT = 60 * 1000;
 
+	private final CloudFoundryOperations client;
+
+	private final CloudFoundryServer server;
+
 	private long timeLeft;
 
-	public CloudFoundryClientRequest(long requestTimeOut) {
+	public CloudFoundryClientRequest(CloudFoundryOperations client, CloudFoundryServer server, long requestTimeOut) {
 		this.timeLeft = requestTimeOut;
+		this.client = client;
+		this.server = server;
 	}
 
 	abstract protected T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException;
 
-	public T run(CloudFoundryOperations client, CloudFoundryOperationsHandler handler, SubMonitor progress)
-			throws CoreException {
+	public T run(SubMonitor progress) throws CoreException {
+
+		String cloudURL = server.getUrl();
+
+		CloudFoundryLoginHandler handler = new CloudFoundryLoginHandler(client, cloudURL);
+
+		// Always check if proxy settings have changed.
+		handler.updateProxyInClient(client);
 
 		Exception error = null;
 		while (timeLeft > 0) {
@@ -68,20 +84,16 @@ public abstract class CloudFoundryClientRequest<T> {
 				error = rce;
 			}
 
-			// Client may not be logged in. Log in and try again after 1
-			// second
+			// Client may not be logged in. Log in and try again
 			long timeTaken = ONE_SECOND_INTERVAL;
 			if (error instanceof CloudFoundryException
 					&& handler.shouldAttemptClientLogin((CloudFoundryException) error)) {
-				client.login();
-			}
-			else if (CloudErrorUtil.isAppStoppedStateError(error)) {
-				timeTaken = ONE_SECOND_INTERVAL * 2;
+				handler.login(progress);
 			}
 			else if (CloudErrorUtil.isAppStaging(error)) {
-				timeTaken = ONE_SECOND_INTERVAL * 4;
+				timeTaken = ONE_SECOND_INTERVAL * 2;
 			}
-			else {
+			else if (!CloudErrorUtil.isAppStoppedStateError(error)) {
 				// Some other error encountered should
 				// stop any further
 				// retries

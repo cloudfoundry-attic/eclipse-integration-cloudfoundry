@@ -28,10 +28,12 @@ import org.eclipse.core.runtime.IProgressMonitor;
 public abstract class CloudFoundryCallback {
 
 	public abstract void applicationStarted(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
-	
+
 	public abstract void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
 
 	public abstract void applicationStopping(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
+
+	public abstract void applicationStopped(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer);
 
 	public abstract void disconnecting(CloudFoundryServer server);
 
@@ -40,8 +42,8 @@ public abstract class CloudFoundryCallback {
 	public abstract void displayCaldecottTunnelConnections(CloudFoundryServer server,
 			List<CaldecottTunnelDescriptor> descriptors);
 
-	public abstract DeploymentDescriptor prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
-			IProgressMonitor monitor);
+	public abstract DeploymentDescriptor prepareForDeployment(CloudFoundryServer server,
+			CloudFoundryApplicationModule module, IProgressMonitor monitor);
 
 	public static class DeploymentDescriptor {
 
@@ -54,9 +56,9 @@ public abstract class CloudFoundryCallback {
 		public ApplicationArchive applicationArchive;
 
 		public boolean isIncrementalPublish;
-		
+
 		public Staging staging;
-		
+
 		public ApplicationPlan applicationPlan;
 
 	}

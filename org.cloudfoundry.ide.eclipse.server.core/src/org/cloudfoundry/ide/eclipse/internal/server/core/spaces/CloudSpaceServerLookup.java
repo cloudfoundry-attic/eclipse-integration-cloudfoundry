@@ -19,7 +19,7 @@ import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryOperationsHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryLoginHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
@@ -113,36 +113,28 @@ public class CloudSpaceServerLookup {
 		CloudFoundryOperations operations = CloudFoundryServerBehaviour.createClient(url, credentials.getEmail(),
 				credentials.getPassword());
 		try {
-			final List<CloudSpacesDescriptor> descriptors = new ArrayList<CloudSpacesDescriptor>();
+			List<CloudSpacesDescriptor> descriptors = new ArrayList<CloudSpacesDescriptor>();
 
-			CloudFoundryOperationsHandler handler = new CloudFoundryOperationsHandler(operations, null) {
+			CloudFoundryLoginHandler handler = new CloudFoundryLoginHandler(operations, url);
+			handler.updateProxyInClient(operations);
+			
+			// Attempt to log in
+			handler.login(monitor, 5, 5000);
 
-				@Override
-				protected void doRun(CloudFoundryOperations operations, SubMonitor progressMonitor)
-						throws CoreException {
-					CoreException httpException = null;
-					try {
-						CloudSpacesDescriptor descriptor = getCloudSpaceDescriptor(operations, progressMonitor);
-						if (descriptor != null) {
-							descriptors.add(descriptor);
-						}
-					}
-					catch (CloudFoundryException cfe) {
-						httpException = CloudErrorUtil.toCoreException(cfe);
-					}
-					catch (RestClientException e) {
-						httpException = CloudErrorUtil.toCoreException(e);
-					}
 
-					if (httpException != null) {
-						throw httpException;
-					}
-
+			try {
+				CloudSpacesDescriptor descriptor = getCloudSpaceDescriptor(operations, monitor);
+				if (descriptor != null) {
+					descriptors.add(descriptor);
 				}
+			}
+			catch (CloudFoundryException cfe) {
+				throw CloudErrorUtil.toCoreException(cfe);
+			}
+			catch (RestClientException e) {
+				throw CloudErrorUtil.toCoreException(e);
+			}
 
-			};
-			handler.login(monitor);
-			handler.run(monitor);
 			return descriptors.size() > 0 ? descriptors.get(0) : null;
 
 		}
