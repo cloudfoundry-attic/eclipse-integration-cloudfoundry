@@ -125,7 +125,7 @@ public class CloudSpaceChangeHandler {
 	 * @param password
 	 * @return
 	 */
-	public boolean isDescriptorAlreadySet(String urlText, String userName, String password) {
+	public boolean matchesCurrentDescriptor(String urlText, String userName, String password) {
 		String actualURL = CloudUiUtil.getUrlFromDisplayText(urlText);
 
 		String cachedDescriptorID = CloudSpacesDescriptor.getDescriptorID(userName, password, actualURL);

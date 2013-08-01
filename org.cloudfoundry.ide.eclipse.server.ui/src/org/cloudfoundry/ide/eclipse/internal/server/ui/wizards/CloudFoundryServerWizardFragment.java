@@ -161,6 +161,16 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		}
 	}
 
+	/**
+	 * Add or removes the orgs and spaces wizard page based on whether a cloud
+	 * space descriptor, which contains a list of orgs and spaces, is changed or
+	 * not. If the changed descriptor is null, the spaces wizard page is removed.
+	 * Otherwise, it is added. Changes in user credentials, and validation of
+	 * the credentials typically trigger spaces descriptor changes, which
+	 * affects whether the spaces page is shown or not in the New CF Server
+	 * wizard.
+	 * 
+	 */
 	protected class WizardFragmentSpaceChangeHandler extends CloudSpaceChangeHandler {
 
 		private final IWizardHandle wizardHandle;
@@ -173,7 +183,16 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		@Override
 		protected void handleCloudSpaceDescriptorSelection(CloudSpacesDescriptor spacesDescriptor) {
 			initServer();
-			spacesFragment = new CloudFoundrySpacesWizardFragment(spaceChangeHandler, cfServer);
+			// Add the spaces page if passed a valid descriptor
+			// Clear the org and spaces page if there the descriptor is null
+			// (i.e. there is no list of orgs and spaces), to avoid showing a
+			// blank spaces page
+			if (spacesDescriptor == null) {
+				spacesFragment = null;
+			}
+			else {
+				spacesFragment = new CloudFoundrySpacesWizardFragment(spaceChangeHandler, cfServer);
+			}
 		}
 
 		protected void handleCloudSpaceSelection(CloudSpace cloudSpace) {

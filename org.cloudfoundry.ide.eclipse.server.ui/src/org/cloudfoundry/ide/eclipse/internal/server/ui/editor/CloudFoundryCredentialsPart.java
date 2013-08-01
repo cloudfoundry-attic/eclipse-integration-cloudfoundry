@@ -59,6 +59,8 @@ public class CloudFoundryCredentialsPart {
 
 	private static final String DEFAULT_DESCRIPTION = "Register or log in to {0} account.";
 
+	private static final String VALID_ACCOUNT_MESSAGE = "Account information is valid. Click 'Next' to chose a cloud space, or 'Finish' to use the default space.";
+
 	private CloudFoundryServer cfServer;
 
 	private Text emailText;
@@ -347,11 +349,15 @@ public class CloudFoundryCredentialsPart {
 		String userName = emailText.getText();
 		String password = passwordText.getText();
 
-		if (spaceChangeHandler != null && !spaceChangeHandler.isDescriptorAlreadySet(urlText, userName, password)) {
-			spaceChangeHandler.clearSetDescriptor();
-		}
-
+		// First check if values have been entered correctly in the
+		// widgets. Note that this doesn't not necessarily mean
+		// they are valid credentials or URL. It only checks if the control
+		// widgets have valid values, but not yet validated against
+		// the remote server. Validation of credentials is only performed on an
+		// explicit validation request (i.e. a user clicks the "Validate"
+		// button) to avoid frequent network I/O.
 		if (folder.getSelectionIndex() == 0) {
+			// The first tab in the folder is the account credential tab
 			String message = "";
 			isFinished = false;
 
@@ -374,52 +380,74 @@ public class CloudFoundryCredentialsPart {
 					urlCombo.getText()));
 			setWizardDescription(message);
 
-			if (wizardHandle != null) {
-				wizardHandle.update();
-			}
-			else if (getWizardContainer() != null && getWizardContainer().getCurrentPage() != null) {
-				getWizardContainer().updateButtons();
-			}
 		}
 		else if (folder.getSelectionIndex() == 1) {
+			// FIX: Should not reach here, as only one tab is normally added to
+			// the
+			// folder. Remove when verified that reaching here does not occur.
 			setWizardDescription(NLS.bind("Create a new {0} account, then switch to Enter Credentials tab to log in.",
 					service));
+			isFinished = false;
 		}
 
-		if (isFinished && validateCredentials) {
-			String errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, urlText, true,
-					getRunnableContext());
+		// If the required fields have been entered correctly, they still may
+		// need to be validated against the remote server (validation is not
+		// automatic on each change of credentials to avoid frequent network
+		// I/O. It needs to be triggered by
+		// the validation button)
+		if (isFinished) {
 
-			if (errorMsg == null) {
-				// Now resolve spaces.
-				if (spaceChangeHandler != null) {
+			if (validateCredentials) {
+				String errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, urlText, true,
+						getRunnableContext());
+
+				// No credential errors, so now do a orgs and spaces lookup for
+				// the newly validated credentials.
+				if (errorMsg == null) {
+
 					try {
 						CloudSpacesDescriptor descriptor = spaceChangeHandler.getUpdatedDescriptor(urlText, userName,
 								password, getRunnableContext());
 						if (descriptor == null) {
-							setWizardError("Failed to resolve organizations and spaces for given valid credentials. Please contact server administration.");
+							setWizardError("Failed to resolve organizations and spaces for the given credentials. Please contact Cloud Foundry support.");
 							isFinished = false;
 						}
 						else {
-							setWizardInformation("Account information is valid.");
+							setWizardInformation(VALID_ACCOUNT_MESSAGE);
 						}
 					}
 					catch (CoreException e) {
 						isFinished = false;
-						setWizardError("Failed to resolve organization and spaces." + e.getMessage() != null ? " due to "
+						setWizardError("Failed to resolve organization and spaces " + (e.getMessage() != null ? " due to "
 								+ e.getMessage()
-								: " Unknown error occurred while requesting list of spaces from the server.");
+								: ". Unknown error occurred while requesting list of spaces from the server")  + ". Please contact Cloud Foundry support.");
 					}
 				}
 				else {
 					isFinished = false;
-					setWizardError("Missing organization and spaces lookup component. Please contact support.");
+					setWizardError(errorMsg);
 				}
-
 			}
 			else {
-				setWizardError(errorMsg);
+				// If no validation request is made, check that there is a
+				// spaces descriptor set and matches the current credentials.
+
+				if (!spaceChangeHandler.matchesCurrentDescriptor(urlText, userName, password)) {
+					spaceChangeHandler.clearSetDescriptor();
+					isFinished = false;
+					setWizardInformation("Please validate your credentials.");
+				}
+				else {
+					setWizardInformation(VALID_ACCOUNT_MESSAGE);
+				}
 			}
+		}
+
+		if (wizardHandle != null) {
+			wizardHandle.update();
+		}
+		else if (getWizardContainer() != null && getWizardContainer().getCurrentPage() != null) {
+			getWizardContainer().updateButtons();
 		}
 	}
 
