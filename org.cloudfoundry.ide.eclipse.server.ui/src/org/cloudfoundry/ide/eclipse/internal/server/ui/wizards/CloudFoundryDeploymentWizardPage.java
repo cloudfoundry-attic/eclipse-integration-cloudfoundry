@@ -19,13 +19,11 @@ import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationPlan;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentInfoValidator;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.ApplicationPlanPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -85,8 +83,6 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 	protected CloudFoundryApplicationWizard wizard;
 
 	protected final CloudFoundryApplicationModule module;
-
-	protected ApplicationPlanPart applicationPlanPart;
 
 	protected final ApplicationWizardDescriptor descriptor;
 
@@ -190,10 +186,6 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 		descriptor.setStartDeploymentMode(deploymentMode);
 	}
 
-	protected void setApplicationPlan(ApplicationPlan plan) {
-		descriptor.setApplicationPlan(plan);
-	}
-
 	protected void setURL() {
 		String url = urlText != null && !urlText.isDisposed() ? urlText.getText() : null;
 
@@ -267,8 +259,6 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 
 		createMemoryArea(topComposite);
 
-		createCCNGPlanArea(topComposite);
-
 		createStartOrDebugOptions(parent);
 	}
 
@@ -310,29 +300,6 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 				}
 			}
 		});
-	}
-
-	protected void createCCNGPlanArea(Composite parent) {
-		// Set application plan UI, the server supports application plans
-		List<ApplicationPlan> applicationPlans = wizard.getV2ApplicationPlans();
-		if (applicationPlans != null && !applicationPlans.isEmpty()) {
-
-			Label applicationPlanLabel = new Label(parent, SWT.NONE);
-			GridDataFactory.fillDefaults().grab(false, false).applyTo(applicationPlanLabel);
-			applicationPlanLabel.setText("Application Plan:");
-
-			applicationPlanPart = new ApplicationPlanPart(applicationPlans, descriptor.getApplicationPlan());
-
-			Composite planComposite = new Composite(parent, SWT.NONE);
-			GridLayoutFactory.fillDefaults().margins(0, 0).numColumns(ApplicationPlan.values().length)
-					.applyTo(planComposite);
-			GridDataFactory.fillDefaults().grab(false, false).applyTo(planComposite);
-
-			List<Button> planButtons = applicationPlanPart.createButtonControls(planComposite);
-			for (Button button : planButtons) {
-				GridDataFactory.fillDefaults().grab(false, false).applyTo(button);
-			}
-		}
 	}
 
 	protected void createStartOrDebugOptions(Composite parent) {

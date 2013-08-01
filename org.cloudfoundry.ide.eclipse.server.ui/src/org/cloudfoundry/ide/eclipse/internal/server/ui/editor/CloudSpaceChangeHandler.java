@@ -1,35 +1,42 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.cloudfoundry.client.lib.domain.CloudSpace;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudOrgsAndSpaces;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudVersion;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.osgi.util.NLS;
 
 /**
+ * Resolves a list of orgs and spaces give a set of credentials and cloud server
+ * URL. This is returned in the form of a cloud spaces descriptor.
  * 
- * This allows a new cloud space to be updated in a cloud server. A check is
- * performed if the credentials used to find the list of spaces matches the
- * current credentials in the server.
+ * Descriptors are cached per credentials and cloud server URL to prevent
+ * frequent org/spaces request to the server.
+ * 
+ * To obtain an updated list of descriptors, always create a new
+ * CloudSpaceChangeHandler instance.
+ * 
+ * 
+ * This handler allows a new cloud space to be updated in a cloud server. A
+ * check is performed if the credentials used to find the list of spaces matches
+ * the current credentials in the server.
  * 
  * Handles the following:
  * 
@@ -47,6 +54,8 @@ import org.eclipse.osgi.util.NLS;
  * <p>
  * 3. Once a cloud space is selected , provides API to set the cloud space in
  * the server
+ * </p>
+ * Note that
  * 
  * 
  * 
@@ -57,13 +66,23 @@ public class CloudSpaceChangeHandler {
 
 	private CloudSpacesDescriptor spacesDescriptor;
 
+	/**
+	 * 
+	 * Local cache to prevent frequent cloud space descriptor lookups
+	 */
+	private Map<String, CloudSpacesDescriptor> cachedDescriptors = new HashMap<String, CloudSpacesDescriptor>();
+
 	public CloudSpaceChangeHandler(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
 	}
 
 	/**
-	 * If specified credentials or URL do not match the current credentials and
-	 * URL in server, exception is thrown.
+	 * Returns a cloud space descriptor which contains all the orgs and spaces
+	 * for the given set of credentials and cloud URL. Note that cloud space
+	 * descriptors are cached per each session of this Cloud Space change
+	 * handler, in order to prevent frequent requests for orgs and spaces for
+	 * credentials that have already been processed. To obtain a clean updated
+	 * list of descriptors, create a new cloud space change handler.
 	 * 
 	 * @param urlText either correct URL or display version of the URL. If
 	 * display URL, attempt will be made to resolve the actual URL>
@@ -71,47 +90,55 @@ public class CloudSpaceChangeHandler {
 	 * @param password password to user to find list of spaces
 	 * @param context a runnable UI context, like a wizard.
 	 * @return descriptor with list of cloud spaces for the given url and
-	 * credentials, or null if failed to resolve or url does not support orgs and spaces.
+	 * credentials, or null if failed to resolve
 	 * @throws CoreException if credentials and URL do not match the current
-	 * credentials and URL in the server, or failed to retrieve list of spaces
+	 * credentials and URL in the server, are invalid, or failed to retrieve
+	 * list of spaces
 	 */
-	public CloudSpacesDescriptor updateDescriptor(String urlText, String userName, String password,
+	public CloudSpacesDescriptor getUpdatedDescriptor(String urlText, String userName, String password,
 			IRunnableContext context) throws CoreException {
 		String actualURL = CloudUiUtil.getUrlFromDisplayText(urlText);
-		validateCredentials(actualURL, userName, password);
-		spacesDescriptor = CloudUiUtil.getCloudSpaces(userName, password, actualURL, true, context);
 
-		// If the descriptor does not support spaces, clear any spaces
-		if (spacesDescriptor != null && !spacesDescriptor.supportsSpaces()) {
-			spacesDescriptor = null;
+		validateCredentials(actualURL, userName, password);
+
+		String cachedDescriptorID = CloudSpacesDescriptor.getDescriptorID(userName, password, actualURL);
+		spacesDescriptor = cachedDescriptors.get(cachedDescriptorID);
+		if (spacesDescriptor == null) {
+			CloudOrgsAndSpaces orgsAndSpaces = CloudUiUtil.getCloudSpaces(userName, password, actualURL, true, context);
+
+			if (orgsAndSpaces != null) {
+				spacesDescriptor = new CloudSpacesDescriptor(orgsAndSpaces, userName, password, actualURL);
+				cachedDescriptors.put(cachedDescriptorID, spacesDescriptor);
+			}
 		}
-		updateURLSpace(spacesDescriptor, actualURL);
+
 		internalHandleCloudSpaceSelection(spacesDescriptor);
 
 		return spacesDescriptor;
 	}
 
-	protected void updateURLSpace(CloudSpacesDescriptor descriptor, String url) {
-		String serverId = cloudServer.getServer().getServerType().getId();
-		List<CloudURL> existingURLs = CloudUiUtil.getUserDefinedUrls(serverId);
-		if (existingURLs != null) {
-			existingURLs = new ArrayList<CloudFoundryBrandingExtensionPoint.CloudURL>(existingURLs);
-			List<CloudURL> allUpdatedURLs = new ArrayList<CloudFoundryBrandingExtensionPoint.CloudURL>();
-			boolean isV2 = descriptor != null && descriptor.supportsSpaces();
-			for (CloudURL cUrl : existingURLs) {
-				if (cUrl.getUrl().equals(url)) {
-					cUrl = cUrl.updateVersion(isV2 ? CloudVersion.V2 : CloudVersion.V1);
-				}
-				allUpdatedURLs.add(cUrl);
-			}
+	/**
+	 * True if there is already a descriptor set for the given set of
+	 * credentials that contains a list of orgs and spaces. False otherwise
+	 * @param urlText
+	 * @param userName
+	 * @param password
+	 * @return
+	 */
+	public boolean isDescriptorAlreadySet(String urlText, String userName, String password) {
+		String actualURL = CloudUiUtil.getUrlFromDisplayText(urlText);
 
-			CloudUiUtil.storeUserDefinedUrls(serverId, allUpdatedURLs);
-		}
+		String cachedDescriptorID = CloudSpacesDescriptor.getDescriptorID(userName, password, actualURL);
 
+		// If there are no changes in credentials and URL, and a descriptor is
+		// already present, do not do a lookup or notify listeners of changes.
+		return spacesDescriptor != null && spacesDescriptor.getID() != null
+				&& spacesDescriptor.getID().equals(cachedDescriptorID);
 	}
 
-	public void clearDescriptor() {
-		internalHandleCloudSpaceSelection(null);
+	public void clearSetDescriptor() {
+		spacesDescriptor = null;
+		internalHandleCloudSpaceSelection(spacesDescriptor);
 	}
 
 	protected void validateCredentials(String url, String userName, String password) throws CoreException {
@@ -123,7 +150,7 @@ public class CloudSpaceChangeHandler {
 		String[][] valuesToCheck = { { url, actualURL }, { userName, actualUserName }, { password, actualPassword } };
 		for (String[] value : valuesToCheck) {
 
-			if (value.length != 2 || !areValid(value[0], value[1])) {
+			if (!areValid(value[0], value[1])) {
 				isValid = false;
 				break;
 			}
@@ -144,12 +171,8 @@ public class CloudSpaceChangeHandler {
 	 * @return true if valid, false otherwise.
 	 */
 	protected boolean areValid(String expected, String actual) {
-		if (actual != null) {
-			return actual.equals(expected);
-		}
-		else {
-			return false;
-		}
+		return actual != null ? actual.equals(expected) : false;
+
 	}
 
 	public CloudSpacesDescriptor getCurrentSpacesDescriptor() {
@@ -162,7 +185,7 @@ public class CloudSpaceChangeHandler {
 
 		// Set a default space, if one is available
 		if (spacesDescriptor != null) {
-			CloudSpace defaultCloudSpace = spacesDescriptor.getDefaultCloudSpace();
+			CloudSpace defaultCloudSpace = spacesDescriptor.getOrgsAndSpaces().getDefaultCloudSpace();
 			cloudServer.setSpace(defaultCloudSpace);
 		}
 
@@ -187,6 +210,5 @@ public class CloudSpaceChangeHandler {
 	public boolean hasSetSpace() {
 		return cloudServer.supportsCloudSpaces();
 	}
-
 
 }

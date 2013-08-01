@@ -107,10 +107,7 @@
               name="Pivotal Cloud Foundry Hosted Developer Edition"
               url="https://api.run.pivotal.io">
         </defaultUrl>
-         <cloudUrl
-              name="VMware Cloud Foundry"
-              url="https://api.cloudfoundry.com">
-        </cloudUrl>
+<!-- Renable when V2 MCF and local clouds are available
         <cloudUrl
               name="Microcloud"
               url="http://api.mycloud.cloudfoundry.me">
@@ -122,6 +119,7 @@
               name="Local cloud"
               url="http://api.vcap.me">
         </cloudUrl>
+        -->
     </service>
      </extension>
     <extension

@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudVersion;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
@@ -64,21 +63,10 @@ public class CloudFoundryBrandingExtensionPoint {
 
 		private final boolean userDefined;
 
-		private final CloudVersion version;
-
 		public CloudURL(String name, String url, boolean userDefined) {
-			this(name, url, userDefined, null);
-		}
-
-		public CloudURL(String name, String url, boolean userDefined, CloudVersion version) {
 			this.name = name;
 			this.url = url;
 			this.userDefined = userDefined;
-			this.version = version;
-		}
-
-		public CloudVersion getCloudVersion() {
-			return version;
 		}
 
 		public String getName() {
@@ -93,9 +81,6 @@ public class CloudFoundryBrandingExtensionPoint {
 			return userDefined;
 		}
 
-		public CloudURL updateVersion(CloudVersion version) {
-			return new CloudURL(getName(), getUrl(), getUserDefined(), version);
-		}
 	}
 
 	public static IConfigurationElement getConfigurationElement(String serverTypeId) {

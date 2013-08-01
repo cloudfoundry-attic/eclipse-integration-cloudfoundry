@@ -130,24 +130,6 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 		return staging;
 	}
 
-	public synchronized ApplicationPlan getApplicationPlan() {
-		CloudApplication updatedApplication = getApplication();
-		ApplicationPlan applicationPlan = null;
-		if (updatedApplication != null) {
-			String planName = updatedApplication.getPlan();
-
-			if (planName != null) {
-				for (ApplicationPlan pl : ApplicationPlan.values()) {
-					if (pl.name().equals(planName)) {
-						applicationPlan = pl;
-						break;
-					}
-				}
-			}
-		}
-		return applicationPlan;
-	}
-
 	public String getDefaultLaunchUrl() throws CoreException {
 		return getLaunchUrl(getName());
 	}

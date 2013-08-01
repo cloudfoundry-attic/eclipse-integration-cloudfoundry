@@ -22,7 +22,6 @@ import org.cloudfoundry.client.lib.domain.InstanceInfo;
 import org.cloudfoundry.client.lib.domain.InstanceStats;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationPlan;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -32,7 +31,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.ICloudFoundryDebuggerListener;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.ApplicationPlanPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
@@ -41,7 +39,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.RemoveServicesFro
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ShowConsoleAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.StartStopApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateApplicationMemoryAction;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateApplicationPlanAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateInstanceCountAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AppStatsContentProvider.InstanceStatsAndInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationActionMenuControl.IButtonMenuListener;
@@ -160,8 +157,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	private Button connectToDebugger;
 
 	private Combo memoryCombo;
-
-	private ApplicationPlanPart applicationPlanPart;
 
 	/**
 	 * This must NOT be set directly. Use appropriate setter
@@ -441,14 +436,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			servicesViewer.setInput(services.toArray(new CloudService[services.size()]));
 		}
 
-		// Refresh application plan setting only for V2 clouds
-		if (applicationPlanPart != null) {
-			ApplicationPlan plan = appModule.getApplicationPlan();
-			if (plan != null) {
-				applicationPlanPart.setSelection(plan);
-			}
-		}
-
 		memoryCombo.setEnabled(cloudApplication != null);
 		if (cloudApplication != null) {
 			int appMemory = appModule.getApplication().getMemory();
@@ -704,45 +691,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		// FIXNS: Uncomment when CF client supports staging updates
 		// createStandaloneCommandArea(client);
-
-		// Show Application plans only for V2 clouds. V1 plans should return an
-		// empty list of plans
-		List<ApplicationPlan> actualPlans = cloudServer.getBehaviour().getApplicationPlans();
-		if (actualPlans != null && !actualPlans.isEmpty()) {
-
-			createLabel(client, "Application Plan:", SWT.CENTER);
-
-			Composite planComposite = toolkit.createComposite(client);
-			GridLayoutFactory.fillDefaults().margins(0, 0).numColumns(ApplicationPlan.values().length).equalWidth(true)
-					.applyTo(planComposite);
-			ApplicationPlan defaultPlan = ApplicationPlan.free;
-			
-			applicationPlanPart = new ApplicationPlanPart(actualPlans, defaultPlan);
-
-			List<Button> planButtons = applicationPlanPart.createButtonControls(planComposite);
-			for (final Button button : planButtons) {
-				GridDataFactory.fillDefaults().grab(false, false).applyTo(button);
-				// Add listeners to change the plan
-				if (applicationPlanPart.isEnabled()) {
-					button.addSelectionListener(new SelectionAdapter() {
-						public void widgetSelected(SelectionEvent e) {
-							boolean selected = button.getSelection();
-
-							if (selected) {
-								ApplicationPlan selectedPlan = (ApplicationPlan) button.getData();
-								if (selectedPlan != null) {
-									CloudFoundryApplicationModule appModule = getApplication();
-									if (appModule != null) {
-										new UpdateApplicationPlanAction(editorPage, appModule, selectedPlan).run();
-									}
-								}
-							}
-
-						}
-					});
-				}
-			}
-		}
 
 		buttonComposite = toolkit.createComposite(client);
 		GridDataFactory.fillDefaults().span(2, 1).applyTo(buttonComposite);
@@ -1027,7 +975,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		ServicesLabelProvider labelProvider = new ServicesLabelProvider();
 		ApplicationInstanceServiceColumn[] columnDescriptor = labelProvider.getServiceViewColumn();
 
-		if (columnDescriptor != null ) {
+		if (columnDescriptor != null) {
 			int length = columnDescriptor.length;
 			columnNames = new String[length];
 			columnWidths = new int[length];

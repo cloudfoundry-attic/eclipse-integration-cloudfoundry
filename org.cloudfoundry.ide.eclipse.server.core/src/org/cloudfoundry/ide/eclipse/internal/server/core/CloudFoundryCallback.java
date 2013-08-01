@@ -59,8 +59,6 @@ public abstract class CloudFoundryCallback {
 
 		public Staging staging;
 
-		public ApplicationPlan applicationPlan;
-
 	}
 
 	public abstract void deleteServices(List<String> services, CloudFoundryServer cloudServer);

@@ -89,11 +89,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private RefreshJob refreshJob;
 
-	private Boolean supportsSpaces = null;
-
-	private DebugSupportCheck isDebugModeSupported = DebugSupportCheck.UNCHECKED;
-
-	private List<ApplicationPlan> applicationPlans;
+	/*
+	 * FIXNS: Until V2 MCF is released, disable debugging support for V2, as public clouds also indicate they support debug.
+	 */
+	private DebugSupportCheck isDebugModeSupported = DebugSupportCheck.UNSUPPORTED;
 
 	private List<CloudDomain> domainFromOrgs;
 
@@ -181,48 +180,50 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public synchronized String getLaunchURL(String applicationName, CloudDomain domain) throws CoreException {
 
-		if (supportsSpaces()) {
+		if (domain == null) {
+			CloudFoundryServer cloudServer = getCloudFoundryServer();
+			CloudFoundrySpace space = cloudServer.getCloudFoundrySpace();
 
-			if (domain == null) {
-				CloudFoundryServer cloudServer = getCloudFoundryServer();
-				CloudFoundrySpace space = cloudServer.getCloudFoundrySpace();
-
-				if (space == null) {
-					throw new CoreException(
-							CloudFoundryPlugin
-									.getErrorStatus("No organization and space selected. Unable to generate application launch URL based on organization domain for: "
-											+ applicationName));
-				}
-
-				if (domainFromOrgs == null || domainFromOrgs.isEmpty()) {
-					throw new CoreException(CloudFoundryPlugin.getErrorStatus("No domains found for: "
-							+ space.getOrgName() + " - " + space.getSpaceName()));
-				}
-
-				// Retrieve the first domain
-				domain = domainFromOrgs.get(0);
+			if (space == null) {
+				throw new CoreException(
+						CloudFoundryPlugin
+								.getErrorStatus("No organization and space selected. Unable to generate application launch URL based on organization domain for: "
+										+ applicationName));
 			}
 
-			String url = domain.getName();
-			url = url.replace("http://", "");
+			if (domainFromOrgs == null || domainFromOrgs.isEmpty()) {
+				throw new CoreException(CloudFoundryPlugin.getErrorStatus("No domains found for: " + space.getOrgName()
+						+ " - " + space.getSpaceName()));
+			}
 
-			// For V2 servers, simply append the application name to the domain.
-			// Do not remove the prefix, unlike V1.
-			url = applicationName + "." + url;
-			return url;
+			// Retrieve the first domain
+			domain = domainFromOrgs.get(0);
 		}
-		else {
-			// Still support V1 for older cloud foundry servers
-			Server server = (Server) getCloudFoundryServer().getServerOriginal();
-			applicationName = applicationName.toLowerCase();
-			String url = server.getAttribute(CloudFoundryServer.PROP_URL, "");
-			url = url.replace("http://", "");
 
-			// Remove the "api" prefix from the URL and replace it with the app
-			// name
-			String prefix = url.split("\\.")[0];
-			return url.replace(prefix, applicationName);
-		}
+		String url = domain.getName();
+		url = url.replace("http://", "");
+
+		// For V2 servers, simply append the application name to the domain.
+		// Do not remove the prefix, unlike V1.
+		url = applicationName + "." + url;
+		return url;
+
+		// // Old V1 way of calculating the URL. Kept as a reference only. Not
+		// used for V2 (orgs/spaces)
+		// if (!supportsSpaces()) {
+		// // Still support V1 for older cloud foundry servers
+		// Server server = (Server) getCloudFoundryServer().getServerOriginal();
+		// applicationName = applicationName.toLowerCase();
+		// String url = server.getAttribute(CloudFoundryServer.PROP_URL, "");
+		// url = url.replace("http://", "");
+		//
+		// // Remove the "api" prefix from the URL and replace it with the app
+		// // name
+		// String prefix = url.split("\\.")[0];
+		// return url.replace(prefix, applicationName);
+		//
+		// }
+
 	}
 
 	public void deleteModules(final IModule[] modules, final boolean deleteServices, IProgressMonitor monitor)
@@ -343,14 +344,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						: new ArrayList<String>(0);
 				List<String> services = descriptor.deploymentInfo.getServices() != null ? descriptor.deploymentInfo
 						.getServices() : new ArrayList<String>(0);
-				ApplicationPlan plan = descriptor.applicationPlan;
 
 				if (staging == null) {
 					// Even for v2, a non-null staging is required.
 					staging = new Staging();
 				}
-				client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(), uris, services,
-						plan.name());
+				client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(), uris, services);
 			}
 			File warFile = applicationInfo.getWarFile();
 
@@ -969,21 +968,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
-	public void updateApplicationPlan(CloudFoundryApplicationModule module, ApplicationPlan updatedPlan,
-			IProgressMonitor monitor) throws CoreException {
-		final ApplicationPlan plan = updatedPlan;
-		final String appName = module.getApplication().getName();
-		if (plan != null) {
-			new Request<Void>() {
-				@Override
-				protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-					client.updateApplicationPlan(appName, plan.name());
-					return null;
-				}
-			}.run(monitor);
-		}
-	}
-
 	public void updateApplicationUrls(final String appName, final List<String> uris, IProgressMonitor monitor)
 			throws CoreException {
 		new Request<Void>() {
@@ -1013,14 +997,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		}
 		return services;
-	}
-
-	/**
-	 * True for servers that support organisations and spaces, as well as
-	 * buildpacks. False otherwise
-	 */
-	public synchronized boolean supportsSpaces() {
-		return supportsSpaces != null && supportsSpaces.booleanValue();
 	}
 
 	public void updateServices(String appName, List<String> services, IProgressMonitor monitor) throws CoreException {
@@ -1288,13 +1264,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			CloudFoundryPlugin.logError(e);
 		}
 		return null;
-	}
-
-	public List<ApplicationPlan> getApplicationPlans() {
-		// Initialised on first client request. Should only return the cached
-		// value, as it
-		// should not change during the session
-		return applicationPlans;
 	}
 
 	/**
@@ -1599,34 +1568,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// if the server supports debugging.
 					requestAllowDebug(client);
 
-					if (supportsSpaces == null) {
-						supportsSpaces = client.supportsSpaces();
-					}
-
 					if (domainFromOrgs == null) {
 						domainFromOrgs = client.getDomainsForOrg();
-					}
-
-					// Get application plans once per server behaviour instance
-					// as
-					// they should not change while the instance is used
-					if (applicationPlans == null) {
-						applicationPlans = new ArrayList<ApplicationPlan>(0);
-
-						List<String> existingPlans = client.getApplicationPlans();
-
-						if (existingPlans != null) {
-							Set<String> actualPlans = new HashSet<String>(existingPlans);
-
-							// Resolve the local representation of an
-							// Application
-							// plan
-							for (ApplicationPlan appPlan : ApplicationPlan.values()) {
-								if (actualPlans.contains(appPlan.name())) {
-									applicationPlans.add(appPlan);
-								}
-							}
-						}
 					}
 				}
 				catch (RestClientException e) {

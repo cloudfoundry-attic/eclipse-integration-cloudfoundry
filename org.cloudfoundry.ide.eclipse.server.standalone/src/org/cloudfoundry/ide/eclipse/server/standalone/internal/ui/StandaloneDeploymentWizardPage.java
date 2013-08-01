@@ -55,8 +55,6 @@ public class StandaloneDeploymentWizardPage extends
 
 		createMemoryArea(topComposite);
 
-		createCCNGPlanArea(topComposite);
-
 		IProject project = module.getLocalModule().getProject();
 
 		standalonePart = new StandaloneStartCommandPart(new JavaStartCommand(),

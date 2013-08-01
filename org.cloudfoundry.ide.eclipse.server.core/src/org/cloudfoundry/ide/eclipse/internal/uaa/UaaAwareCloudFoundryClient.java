@@ -82,12 +82,17 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 
 	public UaaAwareCloudFoundryClient(UaaService _uaaService, CloudCredentials credentials, URL cloudControllerUrl,
 			HttpProxyConfiguration proxyConfiguration) throws MalformedURLException {
-		this(_uaaService, credentials, cloudControllerUrl, proxyConfiguration, null);
+		super(credentials, cloudControllerUrl, proxyConfiguration);
+		this.uaaService = _uaaService;
+		this.cloudControllerUrl = cloudControllerUrl;
+		if (uaaService instanceof TransmissionAwareUaaService) {
+			((TransmissionAwareUaaService) uaaService).addTransmissionEventListener(this);
+		}
 	}
 
 	public UaaAwareCloudFoundryClient(UaaService _uaaService, CloudCredentials credentials, URL cloudControllerUrl,
-			HttpProxyConfiguration proxyConfiguration, CloudSpace session) throws MalformedURLException {
-		super(credentials, cloudControllerUrl, proxyConfiguration, session);
+			CloudSpace session) throws MalformedURLException {
+		super(credentials, cloudControllerUrl, session);
 		this.uaaService = _uaaService;
 		this.cloudControllerUrl = cloudControllerUrl;
 		if (uaaService instanceof TransmissionAwareUaaService) {

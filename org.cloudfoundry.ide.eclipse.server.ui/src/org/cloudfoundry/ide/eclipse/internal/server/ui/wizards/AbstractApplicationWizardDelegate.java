@@ -13,7 +13,6 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 public abstract class AbstractApplicationWizardDelegate implements IApplicationWizardDelegate {
 
 	public boolean isValid(ApplicationWizardDescriptor applicationDescriptor) {
-		return applicationDescriptor.getApplicationInfo() != null && applicationDescriptor.getDeploymentInfo() != null
-				&& applicationDescriptor.getApplicationPlan() != null;
+		return applicationDescriptor.getApplicationInfo() != null && applicationDescriptor.getDeploymentInfo() != null;
 	}
 }

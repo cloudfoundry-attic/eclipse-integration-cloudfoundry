@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -72,14 +72,24 @@ public class CloudFoundryClientFactory {
 
 	public CloudFoundryOperations getCloudFoundryOperations(String cloudControllerUrl) throws MalformedURLException {
 		URL url = new URL(cloudControllerUrl);
+		// Proxies are always updated on each client call by the
+		// CloudFoundryServerBehaviour Request as well as the client login
+		// handler
+		// therefore it is not critical to set the proxy in the client on client
+		// creation
 		HttpProxyConfiguration proxyConfiguration = getProxy(url);
 		return new CloudFoundryClient(url, proxyConfiguration);
 	}
 
 	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, CloudSpace session) {
+		// Proxies are always updated on each client call by the
+		// CloudFoundryServerBehaviour Request as well as the client login
+		// handler
+		// therefore it is not critical to set the proxy in the client on client
+		// creation
 		HttpProxyConfiguration proxyConfiguration = getProxy(url);
-		return session != null ? new CloudFoundryClient(credentials, url, proxyConfiguration, session)
-				: new CloudFoundryClient(credentials, url, proxyConfiguration);
+		return session != null ? new CloudFoundryClient(credentials, url, session) : new CloudFoundryClient(
+				credentials, url, proxyConfiguration);
 	}
 
 	static class UaaAwareCloudFoundryClientAccessor {
@@ -96,9 +106,12 @@ public class CloudFoundryClientFactory {
 				CloudSpace session) {
 			try {
 				HttpProxyConfiguration proxyConfiguration = getProxy(url);
+				// If proxy is not updated now, it will still be updated on each
+				// client request, so setting the proxy right now is not
+				// critical
 				return session != null ? new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url,
-						proxyConfiguration, session) : new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(),
-						credentials, url, proxyConfiguration);
+						session) : new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url,
+						proxyConfiguration);
 			}
 			catch (MalformedURLException e) {
 				CloudFoundryPlugin.logError("Failed to obtain Cloud Foundry operations for " + url.toString(), e);

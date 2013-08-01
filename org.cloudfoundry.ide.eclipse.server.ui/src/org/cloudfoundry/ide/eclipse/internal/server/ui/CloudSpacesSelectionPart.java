@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
@@ -109,7 +109,8 @@ public class CloudSpacesSelectionPart {
 	protected void setInput() {
 		if (spaceChangeHandler != null && orgsSpacesViewer != null) {
 			List<CloudOrganization> orgInput = spaceChangeHandler.getCurrentSpacesDescriptor() != null ? spaceChangeHandler
-					.getCurrentSpacesDescriptor().getOrgs() : null;
+					.getCurrentSpacesDescriptor().getOrgsAndSpaces().getOrgs()
+					: null;
 			if (orgInput != null && orgInput.size() > 0) {
 				CloudOrganization[] organizationInput = orgInput.toArray(new CloudOrganization[orgInput.size()]);
 				orgsSpacesViewer.setInput(organizationInput);
@@ -117,7 +118,8 @@ public class CloudSpacesSelectionPart {
 				// Expand all first, so that child elements can be selected
 				orgsSpacesViewer.setExpandedElements(organizationInput);
 
-				CloudSpace selectedSpace = spaceChangeHandler.getCurrentSpacesDescriptor().getDefaultCloudSpace();
+				CloudSpace selectedSpace = spaceChangeHandler.getCurrentSpacesDescriptor().getOrgsAndSpaces()
+						.getDefaultCloudSpace();
 				if (selectedSpace != null) {
 
 					// First set the default cloud space as the selected space
@@ -216,8 +218,8 @@ public class CloudSpacesSelectionPart {
 			if (parentElement instanceof CloudOrganization && spaceChangeHandler != null) {
 				CloudSpacesDescriptor spaceDescriptor = spaceChangeHandler.getCurrentSpacesDescriptor();
 				if (spaceDescriptor != null) {
-					List<CloudSpace> spaces = spaceDescriptor.getOrgSpaces(((CloudOrganization) parentElement)
-							.getName());
+					List<CloudSpace> spaces = spaceDescriptor.getOrgsAndSpaces().getOrgSpaces(
+							((CloudOrganization) parentElement).getName());
 					if (spaces != null) {
 						return spaces.toArray(new CloudSpace[spaces.size()]);
 					}

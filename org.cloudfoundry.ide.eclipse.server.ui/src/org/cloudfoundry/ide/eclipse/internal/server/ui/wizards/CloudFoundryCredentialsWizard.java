@@ -1,17 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
@@ -62,30 +63,25 @@ public class CloudFoundryCredentialsWizard extends Wizard {
 	@Override
 	public boolean canFinish() {
 
-		boolean canFinish = super.canFinish() && credentialsPage != null && credentialsPage.isPageComplete();
-		if (canFinish && supportsSpacesInCredentialsPage()
-				&& (cloudSpacePage == null || !cloudSpacePage.isPageComplete())) {
-			canFinish = false;
+		if (cloudSpacePage == null || !cloudSpacePage.isPageComplete()) {
+			return false;
 		}
 
-		return canFinish;
-	}
-
-	protected boolean supportsSpacesInCredentialsPage() {
-		return credentialsPage != null && credentialsPage.supportsSpaces();
+		return super.canFinish() && credentialsPage != null && credentialsPage.isPageComplete();
 	}
 
 	@Override
 	public IWizardPage getNextPage(IWizardPage page) {
 		if (page == credentialsPage) {
-			if (supportsSpacesInCredentialsPage()) {
-				cloudSpacePage = new CloudFoundryCloudSpaceWizardpage(server, credentialsPage.getSpaceChangeHandler());
+			// Only create the page if there is a cloud space descriptor set
+			// that has a list of orgs and spaces to choose from
+			CloudSpaceChangeHandler handler = credentialsPage.getSpaceChangeHandler();
+			if (handler != null && handler.getCurrentSpacesDescriptor() != null) {
+				cloudSpacePage = new CloudFoundryCloudSpaceWizardpage(server, handler);
 				cloudSpacePage.setWizard(this);
+				return cloudSpacePage;
 			}
-			else {
-				cloudSpacePage = null;
-			}
-			return cloudSpacePage;
+
 		}
 		return super.getNextPage(page);
 	}

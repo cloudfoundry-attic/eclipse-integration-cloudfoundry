@@ -28,9 +28,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExt
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudOrgsAndSpaces;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceServerLookup;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudVersion;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -175,17 +174,13 @@ public class CloudUiUtil {
 						if (values != null) {
 							String name = null;
 							String url = null;
-							String version = null;
+
 							if (values.length >= 2) {
 								name = values[0];
 								url = values[1];
 							}
-							if (values.length > 2) {
-								version = values[2];
-							}
-							CloudVersion cloudVersion = version != null ? CloudVersion.valueOf(version) : null;
 
-							urls.add(new CloudURL(name, url, true, cloudVersion));
+							urls.add(new CloudURL(name, url, true));
 						}
 					}
 
@@ -206,10 +201,6 @@ public class CloudUiUtil {
 
 				builder.append(",");
 				builder.append(url.getUrl());
-				if (url.getCloudVersion() != null) {
-					builder.append(",");
-					builder.append(url.getCloudVersion().name());
-				}
 
 				builder.append("||");
 			}
@@ -291,18 +282,18 @@ public class CloudUiUtil {
 	 * @return spaces descriptor, or null if it couldn't be determined
 	 * @throws CoreException
 	 */
-	public static CloudSpacesDescriptor getCloudSpaces(final String userName, final String password,
-			final String urlText, final boolean displayURL, IRunnableContext context) throws CoreException {
+	public static CloudOrgsAndSpaces getCloudSpaces(final String userName, final String password, final String urlText,
+			final boolean displayURL, IRunnableContext context) throws CoreException {
 
 		try {
-			final CloudSpacesDescriptor[] supportsSpaces = new CloudSpacesDescriptor[1];
+			final CloudOrgsAndSpaces[] supportsSpaces = new CloudOrgsAndSpaces[1];
 			ICoreRunnable coreRunner = new ICoreRunnable() {
 				public void run(IProgressMonitor monitor) throws CoreException {
 					String url = urlText;
 					if (displayURL) {
 						url = getUrlFromDisplayText(urlText);
 					}
-					supportsSpaces[0] = CloudSpaceServerLookup.getCloudSpaceDescriptor(new CloudCredentials(userName,
+					supportsSpaces[0] = CloudSpaceServerLookup.getCloudOrgsAndSpaces(new CloudCredentials(userName,
 							password), url, monitor);
 				}
 			};
@@ -331,45 +322,6 @@ public class CloudUiUtil {
 		}
 
 		return url;
-	}
-
-	/**
-	 * Returns a cloud version, either v1 or v2, for the given URL, or null, if
-	 * cloud version cannot be resolved
-	 * @param displayURLText
-	 * @param cloudServer
-	 * @return
-	 */
-	public static CloudVersion getCloudVersion(String displayURLText, CloudFoundryServer cloudServer) {
-		String serverID = cloudServer != null ? cloudServer.getServer().getServerType().getId() : null;
-		if (serverID != null) {
-			List<CloudURL> allURLs = getAllUrls(serverID);
-			if (allURLs == null) {
-				return null;
-			}
-			String actualURL = getUrlFromDisplayText(displayURLText);
-			CloudVersion version = null;
-
-			if (actualURL != null) {
-				for (CloudURL url : allURLs) {
-					// Iterate through all, as there may be multiple URLs with
-					// the
-					// same actual URL but differ in name, unless the first
-					// encountered URL already has the version
-					// set, as subsequent URLs will also be the same version
-					if (actualURL.equals(url.getUrl())) {
-						version = url.getCloudVersion();
-						if (version != null) {
-							break;
-						}
-					}
-				}
-			}
-			return version;
-		}
-
-		return null;
-
 	}
 
 	public static String getDisplayTextFromUrl(String url, String serverTypeId) {

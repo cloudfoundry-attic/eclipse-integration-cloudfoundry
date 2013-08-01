@@ -18,15 +18,12 @@ import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationPlan;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
 
 public class CloudFoundryApplicationWizard extends Wizard {
-
-	private List<ApplicationPlan> v2ApplicationPlans;
 
 	protected final CloudFoundryApplicationModule module;
 
@@ -44,18 +41,9 @@ public class CloudFoundryApplicationWizard extends Wizard {
 		this.module = module;
 		this.provider = provider;
 
-		v2ApplicationPlans = server != null ? server.getBehaviour().getApplicationPlans() : null;
-
 		applicationDescriptor = new ApplicationWizardDescriptor();
 
-		// Set a default application plan
-		applicationDescriptor.setApplicationPlan(ApplicationPlan.free);
-
 		setWindowTitle("Application");
-	}
-
-	public List<ApplicationPlan> getV2ApplicationPlans() {
-		return v2ApplicationPlans;
 	}
 
 	@Override
@@ -100,10 +88,6 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	public ApplicationInfo getApplicationInfo() {
 		return applicationDescriptor.getApplicationInfo();
-	}
-
-	public ApplicationPlan getApplicationPlan() {
-		return applicationDescriptor.getApplicationPlan();
 	}
 
 	public DeploymentInfo getDeploymentInfo() {

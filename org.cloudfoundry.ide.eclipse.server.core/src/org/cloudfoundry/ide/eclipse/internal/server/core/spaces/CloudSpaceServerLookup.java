@@ -80,9 +80,9 @@ public class CloudSpaceServerLookup {
 			if (cloudFoundrySpace != null && cloudFoundrySpace.getSpace() == null) {
 				// Do a look-up to determine the actual cloud space
 
-				CloudSpacesDescriptor actualSpaces = getCloudSpaceDescriptor(monitor);
+				CloudOrgsAndSpaces actualSpaces = getCloudOrgsAndSpaces(monitor);
 
-				if (actualSpaces != null && actualSpaces.supportsSpaces()) {
+				if (actualSpaces != null) {
 					CloudSpace cloudSpace = actualSpaces.getSpace(cloudFoundrySpace.getOrgName(),
 							cloudFoundrySpace.getSpaceName());
 					// Return null if no cloudspace was found.
@@ -103,30 +103,26 @@ public class CloudSpaceServerLookup {
 		return cloudFoundrySpace;
 	}
 
-	public CloudSpacesDescriptor getCloudSpaceDescriptor(IProgressMonitor monitor) throws CoreException {
+	public CloudOrgsAndSpaces getCloudOrgsAndSpaces(IProgressMonitor monitor) throws CoreException {
 		String url = cloudServer.getUrl();
-		return getCloudSpaceDescriptor(getCredentials(), url, monitor);
+		return getCloudOrgsAndSpaces(getCredentials(), url, monitor);
 	}
 
-	public static CloudSpacesDescriptor getCloudSpaceDescriptor(CloudCredentials credentials, String url,
+	public static CloudOrgsAndSpaces getCloudOrgsAndSpaces(CloudCredentials credentials, String url,
 			IProgressMonitor monitor) throws CoreException {
 		CloudFoundryOperations operations = CloudFoundryServerBehaviour.createClient(url, credentials.getEmail(),
 				credentials.getPassword());
 		try {
-			List<CloudSpacesDescriptor> descriptors = new ArrayList<CloudSpacesDescriptor>();
-
+			CloudOrgsAndSpaces orgsSpaces = null;
 			CloudFoundryLoginHandler handler = new CloudFoundryLoginHandler(operations, url);
 			handler.updateProxyInClient(operations);
-			
+
 			// Attempt to log in
 			handler.login(monitor, 5, 5000);
 
-
 			try {
-				CloudSpacesDescriptor descriptor = getCloudSpaceDescriptor(operations, monitor);
-				if (descriptor != null) {
-					descriptors.add(descriptor);
-				}
+				orgsSpaces = getCloudSpace(operations, monitor);
+
 			}
 			catch (CloudFoundryException cfe) {
 				throw CloudErrorUtil.toCoreException(cfe);
@@ -135,7 +131,7 @@ public class CloudSpaceServerLookup {
 				throw CloudErrorUtil.toCoreException(e);
 			}
 
-			return descriptors.size() > 0 ? descriptors.get(0) : null;
+			return orgsSpaces;
 
 		}
 		catch (CoreException ce) {
@@ -149,27 +145,22 @@ public class CloudSpaceServerLookup {
 
 	}
 
-	private static CloudSpacesDescriptor getCloudSpaceDescriptor(CloudFoundryOperations operations,
-			IProgressMonitor monitor) throws CoreException {
+	private static CloudOrgsAndSpaces getCloudSpace(CloudFoundryOperations operations, IProgressMonitor monitor)
+			throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor);
 		progress.beginTask("Determining if the cloud server supports organizations and spaces",
 				IProgressMonitor.UNKNOWN);
 
-		boolean supportsSpaces = false;
-		List<CloudSpace> actualSpaces = new ArrayList<CloudSpace>();
-
 		try {
 
-			supportsSpaces = operations.supportsSpaces();
-			if (supportsSpaces) {
-				List<CloudSpace> foundSpaces = operations.getSpaces();
-				if (foundSpaces != null) {
-					actualSpaces.addAll(foundSpaces);
-				}
+			List<CloudSpace> foundSpaces = operations.getSpaces();
+			if (foundSpaces != null && !foundSpaces.isEmpty()) {
+				List<CloudSpace> actualSpaces = new ArrayList<CloudSpace>(foundSpaces);
+				CloudOrgsAndSpaces orgsAndSpaces = new CloudOrgsAndSpaces(actualSpaces);
+				return orgsAndSpaces;
 			}
 
-			CloudSpacesDescriptor descriptor = new CloudSpacesDescriptor(actualSpaces, supportsSpaces);
-			return descriptor;
+			return null;
 
 		}
 		catch (RuntimeException e) {
