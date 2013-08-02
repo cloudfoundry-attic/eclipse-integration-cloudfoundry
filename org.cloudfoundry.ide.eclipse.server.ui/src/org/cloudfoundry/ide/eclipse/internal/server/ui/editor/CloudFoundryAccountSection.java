@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
@@ -259,7 +260,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 
 		// Create signup button only if the server is not local or micro
 		if (CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(cfServer)) {
-			Button cfSignup = toolkit.createButton(validateComposite, "CloudFoundry.com Signup", SWT.PUSH);
+			Button cfSignup = toolkit.createButton(validateComposite, CloudFoundryConstants.PUBLIC_CF_SERVER_SIGNUP_LABEL, SWT.PUSH);
 			cfSignup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 			cfSignup.addSelectionListener(new SelectionAdapter() {
 

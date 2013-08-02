@@ -73,12 +73,14 @@
             id="org.cloudfoundry.ide.eclipse.server.ui.changepassword"
             label="Update Password">
       </action>
+      <!-- disabled for CF 1.5.0 V2 until Insight support is available again in the future
       <action
              class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.GoToSpringInsightAction"
              enablesFor="1"
              id="org.cloudfoundry.ide.eclipse.server.ui.action.gotoinsight"
              label="Go to Spring Insight">
        </action>
+       -->
     </objectContribution>
     <objectContribution
           adaptable="true"
@@ -160,6 +162,7 @@
          	typeIds="org.cloudfoundry.appcloudserver.*"
          	class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryServerStatusSection">
       	</section>
+      	<!-- Removed for CF 1.5.0 
       	<section
 			id="org.cloudfoundry.ide.eclipse.server.editor.insight"
          	order="3"
@@ -167,6 +170,7 @@
          	typeIds="org.cloudfoundry.appcloudserver.*"
          	class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.SpringInsightSection">
       	</section>
+      	-->
   <section
         class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.DisablePublishSection"
         id="org.cloudfoundry.ide.eclipse.server.editor.disable.publish"

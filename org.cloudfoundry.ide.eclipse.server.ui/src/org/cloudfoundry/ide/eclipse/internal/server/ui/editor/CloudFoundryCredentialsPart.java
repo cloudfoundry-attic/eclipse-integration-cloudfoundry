@@ -13,6 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 import java.lang.reflect.InvocationTargetException;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
@@ -264,7 +265,7 @@ public class CloudFoundryCredentialsPart {
 		});
 
 		cfSignupButton = new Button(validateComposite, SWT.PUSH);
-		cfSignupButton.setText("CloudFoundry.com Signup");
+		cfSignupButton.setText(CloudFoundryConstants.PUBLIC_CF_SERVER_SIGNUP_LABEL);
 		cfSignupButton.addSelectionListener(new SelectionAdapter() {
 
 			public void widgetSelected(SelectionEvent event) {
@@ -418,9 +419,10 @@ public class CloudFoundryCredentialsPart {
 					}
 					catch (CoreException e) {
 						isFinished = false;
-						setWizardError("Failed to resolve organization and spaces " + (e.getMessage() != null ? " due to "
-								+ e.getMessage()
-								: ". Unknown error occurred while requesting list of spaces from the server")  + ". Please contact Cloud Foundry support.");
+						setWizardError("Failed to resolve organization and spaces "
+								+ (e.getMessage() != null ? " due to " + e.getMessage()
+										: ". Unknown error occurred while requesting list of spaces from the server")
+								+ ". Please contact Cloud Foundry support.");
 					}
 				}
 				else {

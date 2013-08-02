@@ -20,7 +20,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConstants;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -49,10 +49,10 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 
 	protected static Map<String, String> getJavaWebSupportedFrameworks() {
 		Map<String, String> valuesByLabel = new LinkedHashMap<String, String>();
-		valuesByLabel.put(DeploymentConstants.SPRING, "Spring");
-		valuesByLabel.put(DeploymentConstants.GRAILS, "Grails");
-		valuesByLabel.put(DeploymentConstants.LIFT, "Lift");
-		valuesByLabel.put(DeploymentConstants.JAVA_WEB, "Java Web");
+		valuesByLabel.put(CloudFoundryConstants.SPRING, "Spring");
+		valuesByLabel.put(CloudFoundryConstants.GRAILS, "Grails");
+		valuesByLabel.put(CloudFoundryConstants.LIFT, "Lift");
+		valuesByLabel.put(CloudFoundryConstants.JAVA_WEB, "Java Web");
 		return valuesByLabel;
 	}
 
@@ -68,15 +68,15 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 		if (project != null) {
 			IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(project);
 			if (javaProject != null) {
-				if (CloudFoundryProjectUtil.hasNature(project, DeploymentConstants.GRAILS_NATURE)) {
-					return DeploymentConstants.GRAILS;
+				if (CloudFoundryProjectUtil.hasNature(project, CloudFoundryConstants.GRAILS_NATURE)) {
+					return CloudFoundryConstants.GRAILS;
 				}
 
 				// in case user has Grails projects without the nature
 				// attached
 				if (project.isAccessible() && project.getFolder("grails-app").exists()
 						&& project.getFile("application.properties").exists()) {
-					return DeploymentConstants.GRAILS;
+					return CloudFoundryConstants.GRAILS;
 				}
 
 				IClasspathEntry[] entries;
@@ -86,7 +86,7 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 					for (IClasspathEntry entry : entries) {
 						if (entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
 							if (isLiftLibrary(entry)) {
-								return DeploymentConstants.LIFT;
+								return CloudFoundryConstants.LIFT;
 							}
 							if (isSpringLibrary(entry)) {
 								foundSpringLibrary = true;
@@ -98,7 +98,7 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 							if (container != null) {
 								for (IClasspathEntry childEntry : container.getClasspathEntries()) {
 									if (isLiftLibrary(childEntry)) {
-										return DeploymentConstants.LIFT;
+										return CloudFoundryConstants.LIFT;
 									}
 									if (isSpringLibrary(childEntry)) {
 										foundSpringLibrary = true;
@@ -116,11 +116,11 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 				}
 
 				if (CloudFoundryProjectUtil.isSpringProject(project)) {
-					return DeploymentConstants.SPRING;
+					return CloudFoundryConstants.SPRING;
 				}
 
 				if (foundSpringLibrary) {
-					return DeploymentConstants.SPRING;
+					return CloudFoundryConstants.SPRING;
 				}
 			}
 		}
