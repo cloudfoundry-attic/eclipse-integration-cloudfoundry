@@ -200,7 +200,9 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 		if (updateConfiguration()) {
 			typeCombo.removeAll();
 			for (CloudServiceOffering offering : serviceOfferings) {
-				typeCombo.add(offering.getDescription());
+				String label = offering.getLabel() != null ? offering.getLabel() + " - "
+						+ offering.getDescription() : offering.getDescription();
+				typeCombo.add(label);
 			}
 			refreshPlan();
 		}
