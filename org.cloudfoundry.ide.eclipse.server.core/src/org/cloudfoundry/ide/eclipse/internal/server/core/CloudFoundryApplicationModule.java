@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
+import org.cloudfoundry.client.lib.StartingInfo;
 import org.cloudfoundry.client.lib.domain.ApplicationStats;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
@@ -77,7 +78,7 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 
 	private Staging staging;
 
-	private ApplicationStartingInfo startingInfo;
+	private StartingInfo startingInfo;
 
 	private IModule localModule;
 
@@ -114,11 +115,11 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 		return applicationStats;
 	}
 
-	public ApplicationStartingInfo getStartingInfo() {
+	public StartingInfo getStartingInfo() {
 		return startingInfo;
 	}
 
-	public void setStartingInfo(ApplicationStartingInfo startingInfo) {
+	public void setStartingInfo(StartingInfo startingInfo) {
 		this.startingInfo = startingInfo;
 	}
 

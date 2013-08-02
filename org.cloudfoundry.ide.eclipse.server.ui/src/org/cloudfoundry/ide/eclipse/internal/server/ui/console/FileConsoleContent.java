@@ -8,6 +8,13 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.springframework.http.HttpStatus;
 
+
+/**
+ * Streams file content to the Cloud Foundry console. It continues to
+ * check for new content indefinitely, until the Cloud Foundry manager
+ * decided to terminate any further streaming (e.g., application is deleted
+ * or stopped, or enough errors have been encountered)
+ */
 public class FileConsoleContent implements IConsoleContent {
 
 	private final String path;
@@ -18,7 +25,7 @@ public class FileConsoleContent implements IConsoleContent {
 
 	private final int instanceIndex;
 
-	private CloudFoundryServer server;
+	private final CloudFoundryServer server;
 
 	/**
 	 * 
@@ -40,15 +47,13 @@ public class FileConsoleContent implements IConsoleContent {
 	}
 
 	public ICloudFoundryConsoleOutputStream getOutputStream(IOConsoleOutputStream outStream) {
-		ICloudFoundryConsoleOutputStream cfOutStream = new FileConsoleOutputStream(outStream, path, server, swtColour,
+		FileConsoleOutputStream cfOutStream = new FileConsoleOutputStream(outStream, path, server, swtColour,
 				appName, instanceIndex);
-		if (cfOutStream instanceof AbstractConsoleOutputStream) {
-			((AbstractConsoleOutputStream) cfOutStream).initialiseStream();
-		}
+		cfOutStream.initialiseStream();
 		return cfOutStream;
 	}
 
-	public static class FileConsoleOutputStream extends AbstractConsoleOutputStream {
+	public static class FileConsoleOutputStream extends ConsoleOutputStream {
 
 		private final String path;
 

@@ -28,6 +28,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicatio
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContents;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.PreApplicationStartConsoleContent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.StagingLogConsoleContent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardProviderDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardRegistry;
@@ -36,15 +38,12 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryCrede
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.DeleteServicesWizard;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.progress.UIJob;
 import org.eclipse.wst.server.core.IModule;
 
 /**
@@ -56,62 +55,46 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
 	public void applicationStarted(final CloudFoundryServer server, final CloudFoundryApplicationModule cloudModule) {
-		// RUn this in the UI thread as it may be invoked by a worker thread
-		UIJob job = new UIJob("Updating Cloud Foundry console") {
-
-			@Override
-			public IStatus runInUIThread(IProgressMonitor arg0) {
-				for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
-					ConsoleContents content = ConsoleContents.getStandardLogContent(server,
-							cloudModule.getApplication(), i);
-					ConsoleManager.getInstance().startConsole(server, content, cloudModule.getApplication(), i, i == 0,
-							true);
-				}
-				return Status.OK_STATUS;
-			}
-		};
-		job.setSystem(true);
-		job.schedule();
+		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
+			// Do not clear the console as pre application start information may have been already sent to the console
+			// output
+			boolean shouldClearConsole = false;
+			ConsoleContents content = ConsoleContents.getStandardLogContent(server, cloudModule.getApplication(), i);
+			ConsoleManager.getInstance().startConsole(server, content, cloudModule.getApplication(), i, i == 0,
+					shouldClearConsole);
+		}
 
 	}
 
-	public static String getStagingInitialContent(CloudApplication cloudModule, CloudFoundryServer cloudServer) {
-		StringBuffer initialContent = new StringBuffer();
-		initialContent.append("Staging application ");
-		initialContent.append(cloudModule.getName());
-		initialContent.append(' ');
-		initialContent.append("in server ");
-		initialContent.append(cloudServer.getDeploymentName());
-		initialContent.append('\n');
-		initialContent.append("Please wait while staging completes...");
-		initialContent.append('\n');
-		return initialContent.toString();
+	public void applicationAboutToStart(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
+		// Not necessary to show staging
+		// for instances that are not shown in the console, so just show the first instance.
+		if (cloudModule.getApplication().getInstances() > 0) {
+
+			boolean clearConsole = true;
+			PreApplicationStartConsoleContent content = new PreApplicationStartConsoleContent();
+			ConsoleManager.getInstance().startConsole(server, new ConsoleContents(content),
+					cloudModule.getApplication(), 0, true, clearConsole);
+
+		}
 	}
 
 	@Override
-	public void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
-		// Only show staging for v2 servers
-		// String stagingLogURL = cloudModule.getStartingInfo() != null ?
-		// cloudModule.getStartingInfo().getStagingFile()
-		// : null;
-		//
-		// if (stagingLogURL != null) {
-		// for (int i = 0; i < cloudModule.getApplication().getInstances(); i++)
-		// {
-		// if (server.getBehaviour().supportsSpaces()) {
-		// String initialContent =
-		// ConsoleContent.getStagingInitialContent(cloudModule.getApplication(),
-		// server);
-		// ConsoleContent consoleContent = ConsoleContent.getConsoleContent(
-		// Arrays.asList(new FileContent(stagingLogURL, true, server, true)),
-		// initialContent);
-		//
-		// ConsoleManager.getInstance().startConsole(server, consoleContent,
-		// cloudModule.getApplication(), i,
-		// i == 0);
-		// }
-		// }
-		// }
+	public void applicationStarting(final CloudFoundryServer server, final CloudFoundryApplicationModule cloudModule) {
+
+		// Only show the starting info for the first instance that is shown.
+		// Not necessary to show staging
+		// for instances that are not shown in the console.
+		if (cloudModule.getStartingInfo() != null && cloudModule.getStartingInfo().getStagingFile() != null
+				&& cloudModule.getApplication().getInstances() > 0) {
+
+			boolean clearConsole = false;
+			StagingLogConsoleContent stagingContent = new StagingLogConsoleContent(cloudModule.getStartingInfo(),
+					server);
+			ConsoleManager.getInstance().startConsole(server, new ConsoleContents(stagingContent),
+					cloudModule.getApplication(), 0, true, clearConsole);
+
+		}
 
 	}
 

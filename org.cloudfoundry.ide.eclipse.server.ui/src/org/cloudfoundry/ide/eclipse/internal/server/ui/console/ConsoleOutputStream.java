@@ -21,16 +21,18 @@ import org.eclipse.ui.console.IOConsoleOutputStream;
 
 /**
  * Performs general stream initialisation (like setting up the text code in the
- * output stream) as well as writing to the console outputstram if content was
+ * output stream) as well as writing to the console output stream if content was
  * obtained.
  */
-public abstract class AbstractConsoleOutputStream implements ICloudFoundryConsoleOutputStream {
+public abstract class ConsoleOutputStream implements ICloudFoundryConsoleOutputStream {
 
 	protected final CloudFoundryServer server;
 
 	private final IOConsoleOutputStream outputStream;
 
-	public AbstractConsoleOutputStream(IOConsoleOutputStream outputStream, CloudFoundryServer server) {
+	private boolean shouldCloseStream = false;
+
+	public ConsoleOutputStream(IOConsoleOutputStream outputStream, CloudFoundryServer server) {
 
 		this.server = server;
 		this.outputStream = outputStream;
@@ -70,6 +72,14 @@ public abstract class AbstractConsoleOutputStream implements ICloudFoundryConsol
 	}
 
 	abstract protected String getContent(IProgressMonitor monitor) throws CoreException;
+
+	protected void  requestStreamClose(boolean close) {
+		shouldCloseStream = close;
+	}
+	
+	public boolean shouldCloseStream() {
+		return shouldCloseStream;
+	}
 
 	/**
 	 * Return an SWT constant for a particular colour

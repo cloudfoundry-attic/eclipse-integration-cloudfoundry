@@ -90,7 +90,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private RefreshJob refreshJob;
 
 	/*
-	 * FIXNS: Until V2 MCF is released, disable debugging support for V2, as public clouds also indicate they support debug.
+	 * FIXNS: Until V2 MCF is released, disable debugging support for V2, as
+	 * public clouds also indicate they support debug.
 	 */
 	private DebugSupportCheck isDebugModeSupported = DebugSupportCheck.UNSUPPORTED;
 
@@ -900,6 +901,18 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		new RestartAction(modules, descriptor).deployModule(monitor);
 	}
 
+	public String getStagingLogs(final StartingInfo info, final int offset, IProgressMonitor monitor)
+			throws CoreException {
+		return new FileRequest<String>() {
+
+			@Override
+			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				return client.getStagingLogs(info, offset);
+			}
+
+		}.run(monitor);
+	}
+
 	/**
 	 * Update restart republishes redeploys the application with changes. This
 	 * is not the same as restarting an application which simply restarts the
@@ -1275,7 +1288,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param restartOrDebugAction either debug mode or regular start/restart
 	 */
 	protected void restartOrDebugApplicationInClient(String applicationId, CloudFoundryApplicationModule cloudModule,
-			CloudFoundryOperations client, ApplicationAction restartOrDebugAction) {
+			CloudFoundryOperations client, ApplicationAction restartOrDebugAction) throws CoreException {
 		switch (restartOrDebugAction) {
 		case DEBUG:
 			// Only launch in Suspend mode
@@ -1283,29 +1296,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			break;
 		default:
 			client.stopApplication(applicationId);
+			CloudFoundryPlugin.getCallback().applicationAboutToStart(getCloudFoundryServer(), cloudModule);
 			StartingInfo info = client.startApplication(applicationId);
-			// ApplicationStartingInfo startingInfo = null;
-			// if (info != null) {
-			// List<String> stagingLog = client.getStagingLogs(info);
-			// startingInfo = new ApplicationStartingInfo(stagingLog, info);
-			//
-			// }
-			// cloudModule.setStartingInfo(startingInfo);
-			//
-			// // Inform through callbacks that application has started
-			// CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(),
-			// cloudModule);
+			if (info != null) {
+
+				cloudModule.setStartingInfo(info);
+
+				// Inform through callbacks that application has started
+				CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(), cloudModule);
+
+			}
 
 			break;
 		}
-
-	}
-
-	protected void performRestartInClient(final String applicationId, final CloudFoundryApplicationModule cloudModule,
-			final CloudFoundryOperations client, final ApplicationAction restartOrDebugAction) throws CoreException {
-		restartOrDebugApplicationInClient(applicationId, cloudModule, client, restartOrDebugAction);
-		// CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(),
-		// cloudModule);
 
 	}
 
@@ -1924,7 +1927,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						if (descriptor.deploymentMode != null) {
 							CloudFoundryPlugin.trace("Application " + applicationId + " starting");
 
-							performRestartInClient(applicationId, cloudModule, client, descriptor.deploymentMode);
+							restartOrDebugApplicationInClient(applicationId, cloudModule, client,
+									descriptor.deploymentMode);
 
 							// Now verify that the application did start
 							try {

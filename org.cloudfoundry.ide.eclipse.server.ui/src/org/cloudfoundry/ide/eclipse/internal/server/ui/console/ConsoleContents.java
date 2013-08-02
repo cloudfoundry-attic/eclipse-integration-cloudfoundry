@@ -11,6 +11,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
@@ -27,6 +28,10 @@ public class ConsoleContents {
 
 	public ConsoleContents(List<IConsoleContent> content) {
 		this.content = content;
+	}
+
+	public ConsoleContents(IConsoleContent singleContent) {
+		this.content = Arrays.asList(singleContent);
 	}
 
 	public List<IConsoleContent> getContents() {

@@ -103,17 +103,18 @@ class CloudFoundryConsole extends Job {
 	 * @param contents to stream to the console
 	 */
 	public synchronized void startTailing(ConsoleContents contents) {
-		// Stop any current tailing that wasn't explicitly stopped already(e.g.
-		// if a
-		// user clicks "Restart", which does
-		// not perform an application stop)
-		stopTailing();
+
 
 		if (contents != null) {
 			List<IConsoleContent> consoleContents = contents.getContents();
 			if (consoleContents != null && !consoleContents.isEmpty()) {
 
-				activeStreams = new LinkedHashMap<ICloudFoundryConsoleOutputStream, Integer>();
+				// THere may be other streams started prior to the current request (e.g. staging logs), so simply
+				// add to the list of active streams.
+				if (activeStreams == null) {
+					activeStreams = new LinkedHashMap<ICloudFoundryConsoleOutputStream, Integer>();
+				}
+				
 				for (IConsoleContent content : consoleContents) {
 					IOConsoleOutputStream stream = console.newOutputStream();
 					if (stream != null) {
@@ -181,24 +182,30 @@ class CloudFoundryConsole extends Job {
 				for (Entry<ICloudFoundryConsoleOutputStream, Integer> entry : copy.entrySet()) {
 					int count = entry.getValue();
 					ICloudFoundryConsoleOutputStream stream = entry.getKey();
-					boolean ioexception = false;
-					try {
-						stream.write(monitor);
-					}
-					catch (CoreException e) {
+					boolean forceClose = false;
 
-						Throwable t = e.getCause();
-						// If IOException encountered, terminate right away
-						// rather than trying again
-						if (t instanceof IOException) {
-							ioexception = true;
+					if (!stream.shouldCloseStream()) {
+						try {
+							stream.write(monitor);
 						}
-						count++;
+						catch (CoreException e) {
+
+							Throwable t = e.getCause();
+							// If IOException encountered, terminate right away
+							// rather than trying again
+							if (t instanceof IOException) {
+								forceClose = true;
+							}
+							count++;
+						}
+					}
+					else {
+						forceClose = true;
 					}
 
 					activeStreams.remove(stream);
 
-					if (ioexception || count > 5) {
+					if (forceClose || count > 5) {
 						try {
 							stream.close();
 						}

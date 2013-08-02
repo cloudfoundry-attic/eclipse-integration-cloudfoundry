@@ -44,6 +44,10 @@ public abstract class CloudFoundryCallback {
 
 	public abstract DeploymentDescriptor prepareForDeployment(CloudFoundryServer server,
 			CloudFoundryApplicationModule module, IProgressMonitor monitor);
+	
+	public void applicationAboutToStart(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
+		
+	}
 
 	public static class DeploymentDescriptor {
 
