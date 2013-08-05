@@ -93,8 +93,8 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 					.getId()));
 		}
 		if (cfServer.supportsCloudSpaces()) {
-			if (cfServer.getCloudFoundrySpace() != null && cfServer.getCloudFoundrySpace().getOrgName() != null && orgText != null
-					&& !cfServer.getCloudFoundrySpace().getOrgName().equals(orgText.getText())) {
+			if (cfServer.getCloudFoundrySpace() != null && cfServer.getCloudFoundrySpace().getOrgName() != null
+					&& orgText != null && !cfServer.getCloudFoundrySpace().getOrgName().equals(orgText.getText())) {
 				orgText.setText(cfServer.getCloudFoundrySpace().getOrgName());
 			}
 			if (cfServer.getCloudFoundrySpace() != null && cfServer.getCloudFoundrySpace().getSpaceName() != null
@@ -202,6 +202,11 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		validateLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
 		final Button changePasswordButton = toolkit.createButton(validateComposite, "Change Password...", SWT.PUSH);
+
+		//Pivotal Tracker: 54644658 - Disable for CF 1.5.0 until fixed. 
+		changePasswordButton.setEnabled(false);
+		
+		
 		changePasswordButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 		changePasswordButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -260,7 +265,8 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 
 		// Create signup button only if the server is not local or micro
 		if (CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(cfServer)) {
-			Button cfSignup = toolkit.createButton(validateComposite, CloudFoundryConstants.PUBLIC_CF_SERVER_SIGNUP_LABEL, SWT.PUSH);
+			Button cfSignup = toolkit.createButton(validateComposite,
+					CloudFoundryConstants.PUBLIC_CF_SERVER_SIGNUP_LABEL, SWT.PUSH);
 			cfSignup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 			cfSignup.addSelectionListener(new SelectionAdapter() {
 
