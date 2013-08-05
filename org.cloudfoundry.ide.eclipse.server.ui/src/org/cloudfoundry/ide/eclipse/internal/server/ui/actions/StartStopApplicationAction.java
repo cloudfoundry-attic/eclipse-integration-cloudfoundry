@@ -27,7 +27,7 @@ import org.eclipse.wst.server.core.IModule;
  * @author Steffen Pingel
  * @author Christian Dupuis
  */
-public class StartStopApplicationAction extends CloudFoundryEditorAction {
+public class StartStopApplicationAction extends RefreshInstancesEditorAction {
 
 	private final ApplicationAction action;
 

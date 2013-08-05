@@ -47,6 +47,8 @@ public abstract class CloudFoundryClientRequest<T> {
 
 	public static final long UPLOAD_TIMEOUT = 60 * 1000;
 
+	public static final long DEFAULT_CF_CLIENT_REQUEST_TIMEOUT = 15 * 1000;
+
 	private final CloudFoundryOperations client;
 
 	private final CloudFoundryServer server;

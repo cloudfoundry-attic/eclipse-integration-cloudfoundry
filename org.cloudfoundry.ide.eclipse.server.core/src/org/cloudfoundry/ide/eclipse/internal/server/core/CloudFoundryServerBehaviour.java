@@ -1317,7 +1317,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * app instance stats refreshed. As the application module also has a
 	 * reference to the actual cloud application, an updated cloud application
 	 * will be retrieved as well.
-	 * @param module whos applicaiton instances and stats should be refreshed
+	 * @param module whos application instances and stats should be refreshed
 	 * @param monitor
 	 * @throws CoreException
 	 */
@@ -1516,15 +1516,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 
 		public Request(String label) {
-			// By default time out after 10 seconds if the request can't be
-			// completed due to errors
-			this(label, 10 * 1000);
+			this(label, CloudFoundryClientRequest.DEFAULT_CF_CLIENT_REQUEST_TIMEOUT);
 		}
 
 		public Request(String label, long requestTimeOut) {
 			Assert.isNotNull(label);
 			this.label = label;
-			this.requestTimeOut = requestTimeOut;
+			this.requestTimeOut = requestTimeOut >= 0 ? requestTimeOut
+					: CloudFoundryClientRequest.DEFAULT_CF_CLIENT_REQUEST_TIMEOUT;
 		}
 
 		public T run(IProgressMonitor monitor) throws CoreException {

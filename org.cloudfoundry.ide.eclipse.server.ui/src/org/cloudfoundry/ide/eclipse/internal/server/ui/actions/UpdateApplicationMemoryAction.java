@@ -22,7 +22,7 @@ import org.eclipse.core.runtime.Status;
 /**
  * @author Terry Denney
  */
-public class UpdateApplicationMemoryAction extends CloudFoundryEditorAction {
+public class UpdateApplicationMemoryAction extends RefreshInstancesEditorAction {
 
 	private final int memory;
 

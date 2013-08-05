@@ -93,6 +93,26 @@ public abstract class CloudFoundryEditorAction extends Action {
 		}
 	}
 
+	protected IStatus refreshApplication(IModule module, RefreshArea area, IProgressMonitor monitor)
+			throws CoreException {
+		// Do not refresh instances stats
+		return doRefreshApplication(module, area, false, monitor);
+	}
+
+	protected IStatus doRefreshApplication(IModule module, RefreshArea area, boolean refreshInstances,
+			IProgressMonitor monitor) throws CoreException {
+		// Since Caldecott related operations affect multiple
+		// areas of the editor
+		// refresh the entire editor when an operation is
+		// related to Caldecott
+		if (module != null && TunnelBehaviour.isCaldecottApp(module.getName())) {
+			return editorPage.refreshModules(module, RefreshArea.ALL, refreshInstances, monitor);
+		}
+		else {
+			return editorPage.refreshModules(module, area, refreshInstances, monitor);
+		}
+	}
+
 	protected Job getJob() {
 		Job job = new Job(getJobName()) {
 			@Override
@@ -102,26 +122,16 @@ public abstract class CloudFoundryEditorAction extends Action {
 					IModule module = editorPage.getMasterDetailsBlock().getCurrentModule();
 					status = performAction(monitor);
 					if (status != null && status.isOK()) {
-						// Since Caldecott related operations affect multiple
-						// areas of the editor
-						// refresh the entire editor when an operation is
-						// related to Caldecott
-						if (module != null && TunnelBehaviour.isCaldecottApp(module.getName())) {
-							return editorPage.refreshStates(module, RefreshArea.ALL, monitor);
-						}
-						else {
-							return editorPage.refreshStates(module, area, monitor);
-						}
+						return refreshApplication(module, area, monitor);
 					}
 				}
 				catch (CoreException e) {
 					IStatus errorStatus = null;
 					if (shouldLogException(e)) {
-						errorStatus = new Status(Status.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
-								e.getMessage(), e);
-						StatusManager.getManager().handle(
-								errorStatus, StatusManager.LOG);
-					} else {
+						errorStatus = new Status(Status.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, e.getMessage(), e);
+						StatusManager.getManager().handle(errorStatus, StatusManager.LOG);
+					}
+					else {
 						errorStatus = new Status(Status.CANCEL, CloudFoundryServerUiPlugin.PLUGIN_ID, e.getMessage(), e);
 					}
 					return errorStatus;
@@ -170,7 +180,8 @@ public abstract class CloudFoundryEditorAction extends Action {
 						else {
 							IModule currentModule = editorPage.getMasterDetailsBlock().getCurrentModule();
 							if (currentModule != null) {
-								CloudFoundryApplicationModule appModule = editorPage.getCloudServer().getApplication(currentModule);
+								CloudFoundryApplicationModule appModule = editorPage.getCloudServer().getApplication(
+										currentModule);
 								if (appModule != null && appModule.getErrorMessage() != null) {
 									setErrorInPage(appModule.getErrorMessage());
 									return;

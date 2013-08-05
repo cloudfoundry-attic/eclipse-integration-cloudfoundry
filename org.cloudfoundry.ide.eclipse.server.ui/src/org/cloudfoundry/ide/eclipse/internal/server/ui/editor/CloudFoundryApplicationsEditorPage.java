@@ -36,7 +36,6 @@ import org.eclipse.ui.forms.widgets.ScrolledForm;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServerListener;
 import org.eclipse.wst.server.core.ServerEvent;
-import org.eclipse.wst.server.core.internal.ServerListener;
 import org.eclipse.wst.server.ui.editor.ServerEditorPart;
 
 /**
@@ -134,7 +133,8 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 	 * @param module
 	 * @throws CoreException
 	 */
-	public IStatus refreshStates(IModule module, RefreshArea area, IProgressMonitor monitor) throws CoreException {
+	public IStatus refreshModules(IModule module, RefreshArea area, boolean refreshInstances, IProgressMonitor monitor)
+			throws CoreException {
 		// cloudServer is not set up yet, don't refresh
 		if (cloudServer == null) {
 			return Status.CANCEL_STATUS;
@@ -152,7 +152,7 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 			setApplicationMemoryChoices(serverBehaviour.getApplicationMemoryChoices());
 		}
 
-		if (area == RefreshArea.DETAIL || area == RefreshArea.ALL) {
+		if (refreshInstances && (area == RefreshArea.DETAIL || area == RefreshArea.ALL)) {
 			serverBehaviour.refreshApplicationInstanceStats(module, monitor);
 		}
 

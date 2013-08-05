@@ -26,7 +26,7 @@ import org.eclipse.swt.widgets.Spinner;
  * @author Steffen Pingel
  * @author Christian Dupuis
  */
-public class UpdateInstanceCountAction extends CloudFoundryEditorAction {
+public class UpdateInstanceCountAction extends RefreshInstancesEditorAction {
 
 	private final int instanceCount;
 

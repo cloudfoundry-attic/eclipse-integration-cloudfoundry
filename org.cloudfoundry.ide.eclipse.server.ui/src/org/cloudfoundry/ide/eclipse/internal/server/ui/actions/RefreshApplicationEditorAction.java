@@ -27,7 +27,7 @@ import org.eclipse.wst.server.core.IModule;
  * @author Steffen Pingel
  * @author Christian Dupuis
  */
-public class RefreshApplicationEditorAction extends CloudFoundryEditorAction {
+public class RefreshApplicationEditorAction extends RefreshInstancesEditorAction {
 
 	public RefreshApplicationEditorAction(CloudFoundryApplicationsEditorPage editorPage) {
 		this(editorPage, RefreshArea.ALL);
