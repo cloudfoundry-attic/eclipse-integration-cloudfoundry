@@ -49,9 +49,9 @@ public class PreApplicationStartConsoleContent implements IConsoleContent {
 
 	public static String getStagingInitialContent() {
 		StringBuffer initialContent = new StringBuffer();
-		initialContent.append("Staging application");
+		initialContent.append("Starting application");
 		initialContent.append('\n');
-		initialContent.append("Please wait while staging completes...");
+		initialContent.append("Please wait while starting process completes...");
 		initialContent.append('\n');
 		initialContent.append('\n');
 

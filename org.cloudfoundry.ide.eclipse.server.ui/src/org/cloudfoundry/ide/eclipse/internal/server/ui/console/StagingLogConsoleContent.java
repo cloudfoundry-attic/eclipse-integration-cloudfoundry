@@ -99,14 +99,7 @@ public class StagingLogConsoleContent implements IConsoleContent {
 
 			// Reaching here means some error condition was encountered,
 			// therefore close the stream.
-
-			if (!shouldCloseStream()) {
-				requestStreamClose(true);
-				// If the stream hasn't been closed yet, return a new line to
-				// seperate the last bit of staging
-				// content with any other console output that will follow it.
-				return "\n";
-			}
+			requestStreamClose(true);
 
 			// Do not log error if file is not found for instance
 			if (cfe != null && !HttpStatus.NOT_FOUND.equals(cfe.getStatusCode())) {
