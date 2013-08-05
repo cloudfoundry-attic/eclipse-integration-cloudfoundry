@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2013 VMware, Inc.
+ * Copyright (c) 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
@@ -56,11 +56,18 @@ public class LaunchTunnelCommandAction extends CloudFoundryEditorAction {
 		super(editorPage, RefreshArea.ALL);
 		setText(command.getDisplayName());
 		setImageDescriptor(CloudFoundryImages.TUNNEL_EXTERNAL_TOOLS);
+
 		displayName = command.getDisplayName();
 		this.descriptor = descriptor;
 		this.serviceCommand = command;
 		this.cloudServer = cloudServer;
 		this.cloudService = cloudService;
+		
+		/**
+		 * FIXNS: Disabled for CF 1.5.0 until tunnel support at client level are updated.
+		 */
+		setEnabled(false);
+		setToolTipText(TunnelActionProvider.DISABLED_V2_TOOLTIP_MESSAGE);
 	}
 
 	public String getJobName() {
