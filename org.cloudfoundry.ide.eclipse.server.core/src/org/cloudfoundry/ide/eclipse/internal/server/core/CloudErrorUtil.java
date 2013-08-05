@@ -133,19 +133,6 @@ public class CloudErrorUtil {
 		return false;
 	}
 
-	public static boolean isAppStaging(Exception e) {
-		HttpClientErrorException badRequestException = getBadRequestException(e);
-		if (badRequestException != null) {
-			String message = getHttpErrorMessage(badRequestException);
-
-			if (message != null) {
-				message = message.toLowerCase();
-				return message.contains("app has not finished staging");
-			}
-		}
-		return false;
-	}
-
 	/**
 	 * 
 	 * @param e to check if it is a Bad Request 400 HTTP Error.

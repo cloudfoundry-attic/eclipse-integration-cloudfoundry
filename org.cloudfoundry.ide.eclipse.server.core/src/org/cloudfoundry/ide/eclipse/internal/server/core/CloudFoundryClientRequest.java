@@ -12,6 +12,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
+import org.cloudfoundry.client.lib.NotFinishedStagingException;
+import org.cloudfoundry.client.lib.StagingErrorException;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.SubMonitor;
 import org.springframework.web.client.RestClientException;
@@ -71,33 +73,56 @@ public abstract class CloudFoundryClientRequest<T> {
 		Exception error = null;
 		while (timeLeft > 0) {
 
+			long timeTaken = ONE_SECOND_INTERVAL;
+			CloudFoundryException cloudException = null;
 			try {
 				return doRun(client, progress);
 			}
-			catch (CoreException e) {
-				error = e;
-			}
-			catch (CloudFoundryException cfe) {
-				error = cfe;
-			}
-			catch (RestClientException rce) {
-				error = rce;
-			}
-
-			// Client may not be logged in. Log in and try again
-			long timeTaken = ONE_SECOND_INTERVAL;
-			if (error instanceof CloudFoundryException
-					&& handler.shouldAttemptClientLogin((CloudFoundryException) error)) {
-				handler.login(progress);
-			}
-			else if (CloudErrorUtil.isAppStaging(error)) {
+			catch (NotFinishedStagingException notFinishedError) {
+				// Continue trying
+				error = notFinishedError;
 				timeTaken = ONE_SECOND_INTERVAL * 2;
 			}
-			else if (!CloudErrorUtil.isAppStoppedStateError(error)) {
-				// Some other error encountered should
-				// stop any further
-				// retries
+			catch (StagingErrorException stagingError) {
+				// Most likely cannot continue if error occurred during staging,
+				// so quit.
+				error = stagingError;
 				break;
+			}
+			catch (CoreException e) {
+
+				if (e.getCause() instanceof CloudFoundryException) {
+					cloudException = (CloudFoundryException) e.getCause();
+				}
+				else {
+					error = e;
+					break;
+				}
+			}
+			catch (CloudFoundryException cfe) {
+				cloudException = cfe;
+			}
+			catch (RestClientException rce) {
+				// Although CloudFoundryException is subtype of
+				// RestClientException,
+				// Catch any RCE that aren't CFE, and quit any further attempts.
+				error = rce;
+				break;
+			}
+
+			if (cloudException != null) {
+				// Client may not be logged in. Log in and try again
+				error = cloudException;
+				if (handler.shouldAttemptClientLogin(cloudException)) {
+					handler.login(progress);
+					timeTaken = ONE_SECOND_INTERVAL * 2;
+				}
+				else if (!CloudErrorUtil.isAppStoppedStateError(cloudException)) {
+					// Some other error encountered should
+					// stop any further
+					// retries
+					break;
+				}
 			}
 
 			timeLeft -= timeTaken;
