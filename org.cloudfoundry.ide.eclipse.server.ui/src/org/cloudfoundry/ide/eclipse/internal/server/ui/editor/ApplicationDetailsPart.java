@@ -412,7 +412,19 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				deploymentInfo = new DeploymentInfo();
 				appModule.setLastDeploymentInfo(deploymentInfo);
 				if (cloudApplication != null) {
-					serviceNames = cloudApplication.getServices();
+					List<String> existingServices = cloudApplication.getServices();
+					serviceNames = new ArrayList<String>();
+
+					// Must iterate to filter out any potential null values in
+					// existing services
+					if (existingServices != null) {
+						for (String existingService : existingServices) {
+							if (existingService != null) {
+								serviceNames.add(existingService);
+							}
+						}
+					}
+
 					deploymentInfo.setServices(serviceNames);
 				}
 			}

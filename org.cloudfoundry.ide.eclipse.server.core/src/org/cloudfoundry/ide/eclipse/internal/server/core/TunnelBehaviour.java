@@ -80,7 +80,12 @@ public class TunnelBehaviour {
 		List<String> updateCaldecottServices = new ArrayList<String>();
 		List<String> existingServices = caldecottApp.getServices();
 		if (existingServices != null) {
-			updateCaldecottServices.addAll(existingServices);
+			// Must iterate to filter out possible null service names
+			for (String existing : existingServices) {
+				if (existing != null) {
+					updateCaldecottServices.add(existing);
+				}
+			}
 		}
 
 		IModule caldecottModule = getCaldecottModule(monitor.newChild(1));
@@ -130,7 +135,7 @@ public class TunnelBehaviour {
 				}
 				return null;
 			}
-			
+
 			protected boolean shouldRetryOnError(Throwable t) {
 				// Try several times in case 404 errors are thrown
 				return true;

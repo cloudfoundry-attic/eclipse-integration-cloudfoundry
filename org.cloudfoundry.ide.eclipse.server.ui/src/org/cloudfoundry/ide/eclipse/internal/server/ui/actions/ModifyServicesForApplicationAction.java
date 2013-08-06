@@ -39,8 +39,8 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 
 	private final CloudFoundryServerBehaviour serverBehaviour;
 
-	public ModifyServicesForApplicationAction(CloudFoundryApplicationModule appModule, CloudFoundryServerBehaviour serverBehaviour,
-			CloudFoundryApplicationsEditorPage editorPage) {
+	public ModifyServicesForApplicationAction(CloudFoundryApplicationModule appModule,
+			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
 		super(editorPage, RefreshArea.DETAIL);
 
 		this.appModule = appModule;
@@ -58,7 +58,8 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 	@Override
 	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
 		CloudApplication cloudApplication = appModule.getApplication();
-		List<String> existingServices = new ArrayList<String>();
+		List<String> existingServices = null;
+
 		List<String> updatedServices = new ArrayList<String>();
 
 		DeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
@@ -73,8 +74,15 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 			existingServices = deploymentInfo.getServices();
 		}
 
+		// Must iterate rather than passing to constructor or using
+		// addAll, as some
+		// of the entries in existing services may be null.
 		if (existingServices != null) {
-			updatedServices.addAll(existingServices);
+			for (String existingService : existingServices) {
+				if (existingService != null) {
+					updatedServices.add(existingService);
+				}
+			}
 		}
 
 		// This leads to duplicate services, as a user could drop an existing
@@ -112,7 +120,6 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 	protected abstract void updateServices(IProgressMonitor monitor, CloudFoundryApplicationModule appModule,
 			CloudFoundryServerBehaviour serverBehaviour, List<String> updatedServices) throws CoreException;
 
-
 	@Override
 	protected boolean shouldLogException(CoreException e) {
 		return !CloudErrorUtil.isNotFoundException(e);
@@ -129,7 +136,7 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 		}
 		return services;
 	}
-	
+
 	public static List<CloudService> getServices(IStructuredSelection selection) {
 		Object[] objects = selection.toArray();
 		List<CloudService> services = new ArrayList<CloudService>();
@@ -140,7 +147,7 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 			}
 		}
 		return services;
-		
+
 	}
 
 }

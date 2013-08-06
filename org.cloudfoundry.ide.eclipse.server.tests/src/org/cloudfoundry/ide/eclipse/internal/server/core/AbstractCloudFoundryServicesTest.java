@@ -68,7 +68,16 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 	protected void unbindServiceToApp(CloudApplication application, CloudService service) throws Exception {
 		CloudApplication updatedApplication = getUpdatedApplication(application.getName());
 		List<String> boundServices = updatedApplication.getServices();
-		List<String> servicesToUpdate = new ArrayList<String>(boundServices);
+		List<String> servicesToUpdate = new ArrayList<String>();
+
+		// Must iterate rather than passing to constructor or using
+		// addAll, as some
+		// of the entries in existing services may be null
+		for (String existingService : boundServices) {
+			if (existingService != null) {
+				servicesToUpdate.add(existingService);
+			}
+		}
 
 		if (servicesToUpdate.contains(service.getName())) {
 			servicesToUpdate.remove(service.getName());

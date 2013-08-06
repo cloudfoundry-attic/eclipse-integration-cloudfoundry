@@ -1000,7 +1000,16 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		if (caldecottApp != null) {
 			List<String> existingServices = caldecottApp.getServices();
 			if (existingServices != null) {
-				Set<String> possibleDeletedServices = new HashSet<String>(existingServices);
+				Set<String> possibleDeletedServices = new HashSet<String>();
+				// Must iterate rather than passing to constructor or using
+				// addAll, as some
+				// of the entries in existing services may be null
+				for (String existingService : existingServices) {
+					if (existingService != null) {
+						possibleDeletedServices.add(existingService);
+					}
+				}
+
 				for (String updatedService : servicesToUpdate) {
 					if (possibleDeletedServices.contains(updatedService)) {
 						possibleDeletedServices.remove(updatedService);
