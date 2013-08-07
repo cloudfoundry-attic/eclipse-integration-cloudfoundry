@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.SubMonitor;
@@ -47,8 +46,19 @@ public abstract class CloudFoundryClientRequest<T> {
 
 	private long timeLeft;
 
-	public CloudFoundryClientRequest(CloudFoundryOperations client, CloudFoundryServer server, long requestTimeOut) {
+	public CloudFoundryClientRequest(CloudFoundryOperations client, long requestTimeOut) {
 		this.timeLeft = requestTimeOut;
+		this.client = client;
+	}
+
+	/**
+	 * Calling this constructor means a client operation will only be performed
+	 * once when the run command is invoked. No waiting and re-attempts will be
+	 * made in case of failure.
+	 * @param client
+	 */
+	public CloudFoundryClientRequest(CloudFoundryOperations client) {
+		this.timeLeft = 0;
 		this.client = client;
 	}
 
@@ -71,7 +81,9 @@ public abstract class CloudFoundryClientRequest<T> {
 			}
 
 			interval = getWaitInterval(error, progress);
-			if (interval > 0) {
+			timeLeft -= interval;
+
+			if (interval > 0 && timeLeft >= 0) {
 
 				try {
 					Thread.sleep(interval);
@@ -80,8 +92,7 @@ public abstract class CloudFoundryClientRequest<T> {
 					// Ignore, continue with the next iteration
 				}
 
-				timeLeft -= interval;
-				reattempt = timeLeft > 0;
+				reattempt = true;
 			}
 			else {
 				break;
@@ -108,19 +119,24 @@ public abstract class CloudFoundryClientRequest<T> {
 
 	/**
 	 * Given an error, determine how long the operation should wait before
-	 * trying again. Return -1 if the operation should stop trying and handle
-	 * the last error that was caught, or throw CoreException. By default it
-	 * returns -1, meaning that the request is attempted only once, and any
-	 * exceptions thrown will not result in reattempts. Subclasses can override
-	 * to determine different reattempt conditions.
-	 * @param exception to determine how long to wait until the attempt to run
-	 * the operation.
+	 * trying again before timeout is reached. Return -1 if the operation should
+	 * stop trying and handle the last error that was caught, or throw
+	 * CoreException if further errors occurred while determining the wait
+	 * interval.
+	 * 
+	 * <p/>
+	 * 
+	 * By default it returns -1, meaning that the request is attempted only
+	 * once, and any exceptions thrown will not result in reattempts. Subclasses
+	 * can override to determine different reattempt conditions.
+	 * @param exception to determine how long to wait until another attempt is
+	 * made to run the operation. Note that if timeout is sooner than the
+	 * interval, no further attempts will be made.
 	 * @param monitor
 	 * @return interval to wait , or -1 if operation should terminate right away
 	 * without attempting again.
 	 * @throw CoreException if failed to determine interval. A CoreException
-	 * will be treated as a fatal error and no further attempts on the operation
-	 * will be made.
+	 * will result in no further attempts.
 	 */
 	protected long getWaitInterval(Throwable exception, SubMonitor monitor) throws CoreException {
 		return -1;

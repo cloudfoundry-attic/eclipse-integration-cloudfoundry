@@ -19,8 +19,8 @@ import org.eclipse.core.runtime.SubMonitor;
 
 public abstract class StagingAwareClientRequest<T> extends CloudFoundryClientRequest<T> {
 
-	public StagingAwareClientRequest(CloudFoundryOperations client, CloudFoundryServer server, long requestTimeOut) {
-		super(client, server, requestTimeOut);
+	public StagingAwareClientRequest(CloudFoundryOperations client, long requestTimeOut) {
+		super(client, requestTimeOut);
 	}
 
 	protected long getWaitInterval(Throwable exception, SubMonitor monitor) throws CoreException {

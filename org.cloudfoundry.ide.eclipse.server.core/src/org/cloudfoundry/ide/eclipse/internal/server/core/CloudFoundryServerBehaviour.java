@@ -537,7 +537,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public String getFile(final String applicationId, final int instanceIndex, final String path,
 			IProgressMonitor monitor) throws CoreException {
-		return new StagingAwareRequest<String>() {
+		return new FileRequest<String>() {
 			@Override
 			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getFile(applicationId, instanceIndex, path);
@@ -547,7 +547,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public String getFile(final String applicationId, final int instanceIndex, final String filePath,
 			final int startPosition, IProgressMonitor monitor) throws CoreException {
-		return new StagingAwareRequest<String>() {
+		return new FileRequest<String>() {
 			@Override
 			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getFile(applicationId, instanceIndex, filePath, startPosition);
@@ -905,7 +905,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public String getStagingLogs(final StartingInfo info, final int offset, IProgressMonitor monitor)
 			throws CoreException {
-		return new StagingAwareRequest<String>("Reading staging logs") {
+		return new FileRequest<String>("Reading staging logs") {
 
 			@Override
 			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
@@ -1466,43 +1466,48 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	// }
 
 	/**
-	 * A request checks server state prior to performing a server operation via
-	 * a Cloud Foundry client, and resolves the Cloud Foundry client to be used
-	 * for the operation. All request behaviour is performed in a sub monitor,
-	 * therefore submonitor operations like creating a new child to track
-	 * progress worked should be used. Additional checks prior to calling a Java
-	 * client API is to perform a login check, and if the client is not
-	 * currently logged in prior to attempting to make the API call, an
-	 * automatic login will be performed. Another check performed on the client
-	 * is whether proxy settings have changed during the same server behaviour
-	 * session.
-	 * 
-	 * It is very important to wrap client calls in a Request object as it
-	 * contains common error handling applicable to many client calls.
+	 * A Request performs a CF request via the cloudfoundry-client-lib API. It
+	 * performs various error handling that are generally common to most client
+	 * requests, and therefore any client request should be wrapped around a
+	 * Request.
+	 * <p/>
+	 * By default, the set of client calls in the Request is made twice, the
+	 * first time it is executed immediate. If it fails due to
+	 * unauthorisation/forbidden error, it will attempt a second time. If it
+	 * still fails, it will no longer attempt and propagate a client error to
+	 * the caller in the form of a CoreException
+	 * <p/>
+	 * Subtypes can modify this behaviour and add conditions that will result in
+	 * further retries aside from unauthorised/forbidden errors given an
+	 * exception thrown while invoking a client API.
+	 * <p/>
+	 * In addition, all requests are performed in a sub monitor, therefore
+	 * submonitor operations like creating a new child to track progress worked
+	 * should be used.
 	 * 
 	 * @param <T>
+	 * 
 	 */
 	abstract class Request<T> {
 
 		private final String label;
-
-		protected final long requestTimeOut;
 
 		public Request() {
 			this("");
 		}
 
 		public Request(String label) {
-			this(label, CloudFoundryClientRequest.DEFAULT_CF_CLIENT_REQUEST_TIMEOUT);
-		}
-
-		public Request(String label, long requestTimeOut) {
 			Assert.isNotNull(label);
 			this.label = label;
-			this.requestTimeOut = requestTimeOut > 0 ? requestTimeOut
-					: CloudFoundryClientRequest.DEFAULT_CF_CLIENT_REQUEST_TIMEOUT;
 		}
 
+		/**
+		 * 
+		 * @param monitor
+		 * @return result of client operation
+		 * @throws CoreException if failure occurred while attempting to execute
+		 * the client operation.
+		 */
 		public T run(IProgressMonitor monitor) throws CoreException {
 			CloudFoundryServer cloudServer = getCloudFoundryServer();
 
@@ -1613,7 +1618,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 
 		protected T runAsClientRequest(CloudFoundryOperations client, SubMonitor subProgress) throws CoreException {
-			return new CloudFoundryClientRequest<T>(client, getCloudFoundryServer(), requestTimeOut) {
+			return new CloudFoundryClientRequest<T>(client) {
 
 				@Override
 				protected T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
@@ -1631,30 +1636,44 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * 
 	 * Request that is aware of potential staging related errors and may attempt
 	 * the request again on certain types of staging errors like Staging Not
-	 * Finished errors. Note that this should only be used on certain types of
-	 * operations performed on a app that is already started, like fetching the
-	 * staging logs, or app instances stats, as re-attempts on these operations
-	 * due to staging related errors (e.g. staging not finished yet) is
-	 * permissable. However, operations not related to particular application
+	 * Finished errors.
+	 * <p/>
+	 * Because the set of client operations wrapped around this Request may be
+	 * attempted again on certain types of errors, it's best to keep the set of
+	 * client operations as minimal as possible, to avoid performing client
+	 * operations again that had no errors.
+	 * 
+	 * <p/>
+	 * Note that this should only be used around certain types of operations
+	 * performed on a app that is already started, like fetching the staging
+	 * logs, or app instances stats, as re-attempts on these operations due to
+	 * staging related errors (e.g. staging not finished yet) is permissable.
+	 * 
+	 * <p/>
+	 * However, operations not related an application being in a running state
 	 * (e.g. creating a service, getting list of all apps), should not use this
 	 * request.
 	 */
 	abstract class StagingAwareRequest<T> extends Request<T> {
 
+		protected final long requestTimeOut;
+
 		public StagingAwareRequest() {
-			super();
+			this("");
 		}
 
 		public StagingAwareRequest(String label) {
-			super(label, CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT);
+			this(label, CloudFoundryClientRequest.DEFAULT_CF_CLIENT_REQUEST_TIMEOUT);
 		}
 
 		public StagingAwareRequest(String label, long requestTimeOut) {
-			super(label, requestTimeOut);
+			super(label);
+			this.requestTimeOut = requestTimeOut > 0 ? requestTimeOut
+					: CloudFoundryClientRequest.DEFAULT_CF_CLIENT_REQUEST_TIMEOUT;
 		}
 
 		protected T runAsClientRequest(CloudFoundryOperations client, SubMonitor subProgress) throws CoreException {
-			return new StagingAwareClientRequest<T>(client, getCloudFoundryServer(), requestTimeOut) {
+			return new StagingAwareClientRequest<T>(client, requestTimeOut) {
 
 				@Override
 				protected T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
@@ -1800,106 +1819,31 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				if (!modules[0].isExternal()) {
 
-					new Request<Void>("Pushing and starting application " + applicationId,
-							CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT) {
+					generateApplicationArchiveFile(descriptor, cloudModule, modules, server, monitor);
+
+					// Tell webtools the module has been published
+					setModulePublishState(modules, IServer.PUBLISH_STATE_NONE);
+
+					// update server publish status
+					IModule[] serverModules = server.getModules();
+					boolean allSynched = true;
+					for (IModule serverModule : serverModules) {
+						int modulePublishState = server.getModulePublishState(new IModule[] { serverModule });
+						if (modulePublishState == IServer.PUBLISH_STATE_INCREMENTAL
+								|| modulePublishState == IServer.PUBLISH_STATE_FULL) {
+							allSynched = false;
+						}
+					}
+
+					if (allSynched) {
+						server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
+					}
+
+					// Now push the application resources to the server
+					new Request<Void>("Pushing the application: " + applicationId) {
 						@Override
 						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
 								throws CoreException {
-
-							if (descriptor.applicationInfo == null) {
-								throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-										"Unable to push application: " + applicationId
-												+ " due to missing application descriptor."));
-							}
-
-							// If the module is not external (meaning that it is
-							// mapped to a local, accessible workspace project),
-							// create an
-							// archive file containing changes to the
-							// application's
-							// resources. Use incremental publishing if
-							// possible.
-
-							// Determine if an archive is provided for the
-							// application type. Otherwise generated a .war
-							// file.
-
-							IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(cloudModule
-									.getLocalModule());
-
-							if (delegate != null && delegate.providesApplicationArchive(cloudModule.getLocalModule())) {
-								IModuleResource[] resources = getResources(modules);
-
-								try {
-									ApplicationArchive archive = delegate.getApplicationArchive(
-											cloudModule.getLocalModule(), resources);
-									descriptor.applicationArchive = archive;
-								}
-								catch (CoreException e) {
-									// Log the error, but continue anyway to
-									// see
-									// if generating a .war file will work
-									// for
-									// this application type
-									CloudFoundryPlugin.logError(e);
-								}
-							}
-
-							// If no application archive was provided, then
-							// proceed with default creation of a .war file for
-							// the application
-							if (descriptor.applicationArchive == null) {
-								if (descriptor.isIncrementalPublish && !hasChildModules(modules)) {
-									// Determine if an incremental publish
-									// should
-									// occur
-									// For the time being support incremental
-									// publish
-									// only if the app does not have child
-									// modules
-									// To compute incremental deltas locally,
-									// modules must be provided
-									// Computes deltas locally before publishing
-									// to
-									// the server.
-									// Potentially more efficient. Should be
-									// used
-									// only on incremental
-									// builds
-
-									handleIncrementalPublish(descriptor, modules);
-								}
-								else {
-									// Create a full war archive
-									File warFile = CloudUtil.createWarFile(modules, server, progress);
-									if (!warFile.exists()) {
-										throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-												"Unable to create war file for application: " + applicationId));
-									}
-
-									CloudFoundryPlugin.trace("War file " + warFile.getName() + " created");
-									descriptor.applicationInfo.setWarFile(warFile);
-
-								}
-							}
-
-							// Tell webtools the module has been published
-							setModulePublishState(modules, IServer.PUBLISH_STATE_NONE);
-
-							// update server publish status
-							IModule[] serverModules = server.getModules();
-							boolean allSynched = true;
-							for (IModule serverModule : serverModules) {
-								int modulePublishState = server.getModulePublishState(new IModule[] { serverModule });
-								if (modulePublishState == IServer.PUBLISH_STATE_INCREMENTAL
-										|| modulePublishState == IServer.PUBLISH_STATE_FULL) {
-									allSynched = false;
-								}
-							}
-
-							if (allSynched) {
-								server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
-							}
 
 							pushApplication(client, cloudModule, descriptor, progress);
 
@@ -1932,6 +1876,103 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 	}
 
+	/**
+	 * 
+	 * @param descriptor that contains the application information, and that
+	 * also will be updated with an archive containing the application resources
+	 * to be deployed to the Cloud Foundry Server
+	 * @param cloudModule the Cloud Foundry wrapper around the application
+	 * module to be pushed to the server
+	 * @param modules list of WTP modules.
+	 * @param cloudServer cloud server where app should be pushed to
+	 * @param monitor
+	 * @throws CoreException if failure occurred while generated an archive file
+	 * containing the application's payload
+	 */
+	protected void generateApplicationArchiveFile(DeploymentDescriptor descriptor,
+			CloudFoundryApplicationModule cloudModule, IModule[] modules, Server server, IProgressMonitor monitor)
+			throws CoreException {
+		final String applicationId = descriptor.applicationInfo.getAppName();
+
+		if (descriptor.applicationInfo == null) {
+			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+					"Unable to push application: " + applicationId + " due to missing application descriptor."));
+		}
+
+		// Perform local operations like building an archive file
+		// and payload for the application
+		// resources prior to pushing it to the server.
+
+		// If the module is not external (meaning that it is
+		// mapped to a local, accessible workspace project),
+		// create an
+		// archive file containing changes to the
+		// application's
+		// resources. Use incremental publishing if
+		// possible.
+
+		// Determine if an archive is provided for the
+		// application type. Otherwise generated a .war
+		// file.
+
+		IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(cloudModule.getLocalModule());
+
+		if (delegate != null && delegate.providesApplicationArchive(cloudModule.getLocalModule())) {
+			IModuleResource[] resources = getResources(modules);
+
+			try {
+				ApplicationArchive archive = delegate.getApplicationArchive(cloudModule.getLocalModule(), resources);
+				descriptor.applicationArchive = archive;
+			}
+			catch (CoreException e) {
+				// Log the error, but continue anyway to
+				// see
+				// if generating a .war file will work
+				// for
+				// this application type
+				CloudFoundryPlugin.logError(e);
+			}
+		}
+
+		// If no application archive was provided, then
+		// proceed with default creation of a .war file for
+		// the application
+		if (descriptor.applicationArchive == null) {
+			if (descriptor.isIncrementalPublish && !hasChildModules(modules)) {
+				// Determine if an incremental publish
+				// should
+				// occur
+				// For the time being support incremental
+				// publish
+				// only if the app does not have child
+				// modules
+				// To compute incremental deltas locally,
+				// modules must be provided
+				// Computes deltas locally before publishing
+				// to
+				// the server.
+				// Potentially more efficient. Should be
+				// used
+				// only on incremental
+				// builds
+
+				handleIncrementalPublish(descriptor, modules);
+			}
+			else {
+				// Create a full war archive
+				File warFile = CloudUtil.createWarFile(modules, server, monitor);
+				if (warFile == null || !warFile.exists()) {
+					throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+							"Unable to create war file for application: " + applicationId));
+				}
+
+				CloudFoundryPlugin.trace("War file " + warFile.getName() + " created");
+				descriptor.applicationInfo.setWarFile(warFile);
+
+			}
+		}
+	}
+
 	protected void handleIncrementalPublish(final DeploymentDescriptor descriptor, IModule[] modules) {
 		IModuleResource[] allResources = getResources(modules);
 		IModuleResourceDelta[] deltas = getPublishedResourceDelta(modules);
@@ -1940,7 +1981,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				modules[0], descriptor.applicationInfo.getAppName());
 
 		descriptor.applicationArchive = moduleArchive;
-
 	}
 
 	/**
@@ -1992,8 +2032,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 					CloudFoundryPlugin.getCallback().applicationAboutToStart(getCloudFoundryServer(), cloudModule);
 
-					new Request<Void>("Starting application " + applicationId,
-							CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT) {
+					new Request<Void>("Starting application " + applicationId) {
 						@Override
 						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
 								throws CoreException {
@@ -2012,7 +2051,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 									cloudModule.setStartingInfo(info);
 
-									// Inform through callbacks that application
+									// Inform through callback that application
 									// has started
 									CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(),
 											cloudModule);
@@ -2069,7 +2108,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// started or not, as a user may have created a new
 				// application or pushed
 				// new content, but not wished to start the app
-				new Request<Void>("Refreshing list of applications", CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT) {
+				new Request<Void>("Refreshing list of applications") {
 					@Override
 					protected Void doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 
@@ -2105,10 +2144,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 	}
 
-	abstract class FileRequest<T> extends Request<T> {
+	abstract class FileRequest<T> extends StagingAwareRequest<T> {
 
 		FileRequest() {
-			super("Retrieving file", CloudFoundryClientRequest.SHORT_INTERVAL);
+			super("Retrieving file");
+		}
+
+		FileRequest(String label) {
+			super(label, CloudFoundryClientRequest.SHORT_INTERVAL);
 		}
 
 	}
