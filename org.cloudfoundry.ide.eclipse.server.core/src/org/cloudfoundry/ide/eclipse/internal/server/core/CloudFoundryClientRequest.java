@@ -12,11 +12,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
-import org.cloudfoundry.client.lib.NotFinishedStagingException;
-import org.cloudfoundry.client.lib.StagingErrorException;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.SubMonitor;
-import org.springframework.web.client.RestClientException;
 
 /**
  * Performs a CF client call, and times out if the call fails due to errors, as
@@ -38,10 +35,7 @@ public abstract class CloudFoundryClientRequest<T> {
 
 	public static final long ONE_SECOND_INTERVAL = 1000;
 
-	// Set very high as we do not want to give up on staging. Eventually, either
-	// staging will complete, or the server will notify with another error that
-	// staging failed
-	public static final long STAGING_TIMEOUT = 6 * 1000 * 1000;
+	public static final long LOGIN_INTERVAL = 2000;
 
 	public static final long DEPLOYMENT_TIMEOUT = 10 * 60 * 1000;
 
@@ -51,89 +45,46 @@ public abstract class CloudFoundryClientRequest<T> {
 
 	private final CloudFoundryOperations client;
 
-	private final CloudFoundryServer server;
-
 	private long timeLeft;
 
 	public CloudFoundryClientRequest(CloudFoundryOperations client, CloudFoundryServer server, long requestTimeOut) {
 		this.timeLeft = requestTimeOut;
 		this.client = client;
-		this.server = server;
 	}
 
 	abstract protected T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException;
 
 	public T run(SubMonitor progress) throws CoreException {
 
-		String cloudURL = server.getUrl();
+		Throwable error = null;
 
-		CloudFoundryLoginHandler handler = new CloudFoundryLoginHandler(client, cloudURL);
+		boolean reattempt = true;
+		while (reattempt) {
 
-		// Always check if proxy settings have changed.
-		handler.updateProxyInClient(client);
+			long interval = -1;
 
-		Exception error = null;
-		while (timeLeft > 0) {
-
-			long timeTaken = ONE_SECOND_INTERVAL;
-			CloudFoundryException cloudException = null;
 			try {
 				return doRun(client, progress);
 			}
-			catch (NotFinishedStagingException notFinishedError) {
-				// Continue trying
-				error = notFinishedError;
-				timeTaken = ONE_SECOND_INTERVAL * 2;
+			catch (Throwable e) {
+				error = e;
 			}
-			catch (StagingErrorException stagingError) {
-				// Most likely cannot continue if error occurred during staging,
-				// so quit.
-				error = stagingError;
+
+			interval = getWaitInterval(error, progress);
+			if (interval > 0) {
+
+				try {
+					Thread.sleep(interval);
+				}
+				catch (InterruptedException e) {
+					// Ignore, continue with the next iteration
+				}
+
+				timeLeft -= interval;
+				reattempt = timeLeft > 0;
+			}
+			else {
 				break;
-			}
-			catch (CoreException e) {
-
-				if (e.getCause() instanceof CloudFoundryException) {
-					cloudException = (CloudFoundryException) e.getCause();
-				}
-				else {
-					error = e;
-					break;
-				}
-			}
-			catch (CloudFoundryException cfe) {
-				cloudException = cfe;
-			}
-			catch (RestClientException rce) {
-				// Although CloudFoundryException is subtype of
-				// RestClientException,
-				// Catch any RCE that aren't CFE, and quit any further attempts.
-				error = rce;
-				break;
-			}
-
-			if (cloudException != null) {
-				// Client may not be logged in. Log in and try again
-				error = cloudException;
-				if (handler.shouldAttemptClientLogin(cloudException)) {
-					handler.login(progress);
-					timeTaken = ONE_SECOND_INTERVAL * 2;
-				}
-				else if (!CloudErrorUtil.isAppStoppedStateError(cloudException)) {
-					// Some other error encountered should
-					// stop any further
-					// retries
-					break;
-				}
-			}
-
-			timeLeft -= timeTaken;
-
-			try {
-				Thread.sleep(timeTaken);
-			}
-			catch (InterruptedException e) {
-				// Ignore, continue with the next iteration
 			}
 		}
 
@@ -153,6 +104,26 @@ public abstract class CloudFoundryClientRequest<T> {
 		else {
 			throw CloudErrorUtil.toCoreException(error);
 		}
+	}
+
+	/**
+	 * Given an error, determine how long the operation should wait before
+	 * trying again. Return -1 if the operation should stop trying and handle
+	 * the last error that was caught, or throw CoreException. By default it
+	 * returns -1, meaning that the request is attempted only once, and any
+	 * exceptions thrown will not result in reattempts. Subclasses can override
+	 * to determine different reattempt conditions.
+	 * @param exception to determine how long to wait until the attempt to run
+	 * the operation.
+	 * @param monitor
+	 * @return interval to wait , or -1 if operation should terminate right away
+	 * without attempting again.
+	 * @throw CoreException if failed to determine interval. A CoreException
+	 * will be treated as a fatal error and no further attempts on the operation
+	 * will be made.
+	 */
+	protected long getWaitInterval(Throwable exception, SubMonitor monitor) throws CoreException {
+		return -1;
 	}
 
 }

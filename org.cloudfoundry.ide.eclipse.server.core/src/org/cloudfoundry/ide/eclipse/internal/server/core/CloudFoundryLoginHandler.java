@@ -65,7 +65,7 @@ public class CloudFoundryLoginHandler {
 			protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
 				// Do not wrap CloudFoundryException or RestClientException in a
 				// CoreException.
-				// as they are uncaught exceptions and can be inspected diretly
+				// as they are uncaught exceptions and can be inspected directly
 				// by the shouldRetryOnError(..) method.
 				operations.login();
 				return true;

@@ -12,6 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
 import java.util.List;
 
+import org.cloudfoundry.client.lib.NotFinishedStagingException;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -152,8 +153,14 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 			setApplicationMemoryChoices(serverBehaviour.getApplicationMemoryChoices());
 		}
 
-		if (refreshInstances && (area == RefreshArea.DETAIL || area == RefreshArea.ALL)) {
-			serverBehaviour.refreshApplicationInstanceStats(module, monitor);
+		try {
+			if (refreshInstances && (area == RefreshArea.DETAIL || area == RefreshArea.ALL)) {
+				serverBehaviour.refreshApplicationInstanceStats(module, monitor);
+			}
+		}
+		catch (NotFinishedStagingException e) {
+			CloudFoundryPlugin.logError(
+					"Unable to retrieve app instances. Please restart your application and try again.", e);
 		}
 
 		return Status.OK_STATUS;

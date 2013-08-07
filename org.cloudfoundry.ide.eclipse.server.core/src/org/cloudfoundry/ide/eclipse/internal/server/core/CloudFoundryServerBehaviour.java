@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.cloudfoundry.client.lib.CloudCredentials;
+import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.StartingInfo;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
@@ -492,7 +493,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public ApplicationStats getApplicationStats(final String applicationId, IProgressMonitor monitor)
 			throws CoreException {
-		return new Request<ApplicationStats>(NLS.bind("Getting application statistics for {0}", applicationId)) {
+		return new StagingAwareRequest<ApplicationStats>(NLS.bind("Getting application statistics for {0}",
+				applicationId)) {
 			@Override
 			protected ApplicationStats doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getApplicationStats(applicationId);
@@ -525,7 +527,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	public InstancesInfo getInstancesInfo(final String applicationId, IProgressMonitor monitor) throws CoreException {
-		return new Request<InstancesInfo>(NLS.bind("Getting application statistics for {0}", applicationId)) {
+		return new StagingAwareRequest<InstancesInfo>(NLS.bind("Getting application statistics for {0}", applicationId)) {
 			@Override
 			protected InstancesInfo doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getApplicationInstances(applicationId);
@@ -535,7 +537,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public String getFile(final String applicationId, final int instanceIndex, final String path,
 			IProgressMonitor monitor) throws CoreException {
-		return new FileRequest<String>() {
+		return new StagingAwareRequest<String>() {
 			@Override
 			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getFile(applicationId, instanceIndex, path);
@@ -545,7 +547,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public String getFile(final String applicationId, final int instanceIndex, final String filePath,
 			final int startPosition, IProgressMonitor monitor) throws CoreException {
-		return new FileRequest<String>() {
+		return new StagingAwareRequest<String>() {
 			@Override
 			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getFile(applicationId, instanceIndex, filePath, startPosition);
@@ -903,7 +905,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public String getStagingLogs(final StartingInfo info, final int offset, IProgressMonitor monitor)
 			throws CoreException {
-		return new FileRequest<String>() {
+		return new StagingAwareRequest<String>("Reading staging logs") {
 
 			@Override
 			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
@@ -946,7 +948,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public void updateApplicationInstances(CloudFoundryApplicationModule module, final int instanceCount,
 			IProgressMonitor monitor) throws CoreException {
 		final String appName = module.getApplication().getName();
-		new Request<Void>() {
+		new StagingAwareRequest<Void>() {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.updateApplicationInstances(appName, instanceCount);
@@ -972,7 +974,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public void updateApplicationMemory(CloudFoundryApplicationModule module, final int memory, IProgressMonitor monitor)
 			throws CoreException {
 		final String appName = module.getApplication().getName();
-		new Request<Void>() {
+		new StagingAwareRequest<Void>() {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.updateApplicationMemory(appName, memory);
@@ -983,7 +985,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public void updateApplicationUrls(final String appName, final List<String> uris, IProgressMonitor monitor)
 			throws CoreException {
-		new Request<Void>() {
+		new StagingAwareRequest<Void>() {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.updateApplicationUris(appName, uris);
@@ -1033,7 +1035,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	protected void updateServices(final String appName, final List<String> services,
 			final boolean closeRelatedCaldecottTunnels, IProgressMonitor monitor) throws CoreException {
-		new Request<Void>() {
+		new StagingAwareRequest<Void>() {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				// Prior to updating the services, obtain the current list of
@@ -1289,39 +1291,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
-	 * Invokes the appropriate Java client API for either restarting an
-	 * application in regular mode or debug mode. If debug mode is not
-	 * specified, then by default it will always restart in regular mode
-	 * @param applicationId
-	 * @param client
-	 * @param restartOrDebugAction either debug mode or regular start/restart
-	 */
-	protected void restartOrDebugApplicationInClient(String applicationId, CloudFoundryApplicationModule cloudModule,
-			CloudFoundryOperations client, ApplicationAction restartOrDebugAction) throws CoreException {
-		switch (restartOrDebugAction) {
-		case DEBUG:
-			// Only launch in Suspend mode
-			client.debugApplication(applicationId, DebugModeType.SUSPEND.getDebugMode());
-			break;
-		default:
-			client.stopApplication(applicationId);
-			CloudFoundryPlugin.getCallback().applicationAboutToStart(getCloudFoundryServer(), cloudModule);
-			StartingInfo info = client.startApplication(applicationId);
-			if (info != null) {
-
-				cloudModule.setStartingInfo(info);
-
-				// Inform through callbacks that application has started
-				CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(), cloudModule);
-
-			}
-
-			break;
-		}
-
-	}
-
-	/**
 	 * Given a WTP module, the corresponding CF application module will have its
 	 * app instance stats refreshed. As the application module also has a
 	 * reference to the actual cloud application, an updated cloud application
@@ -1517,11 +1486,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		private final String label;
 
-		private final long requestTimeOut;
+		protected final long requestTimeOut;
 
 		public Request() {
 			this("");
-
 		}
 
 		public Request(String label) {
@@ -1531,7 +1499,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		public Request(String label, long requestTimeOut) {
 			Assert.isNotNull(label);
 			this.label = label;
-			this.requestTimeOut = requestTimeOut >= 0 ? requestTimeOut
+			this.requestTimeOut = requestTimeOut > 0 ? requestTimeOut
 					: CloudFoundryClientRequest.DEFAULT_CF_CLIENT_REQUEST_TIMEOUT;
 		}
 
@@ -1557,27 +1525,28 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				CloudFoundryOperations client = getClient(subProgress);
 
 				// Execute the request through a client request handler that
-				// handles errors as well as proxy checks
-				result = new CloudFoundryClientRequest<T>(client, getCloudFoundryServer(), requestTimeOut) {
-
-					@Override
-					protected T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-						return Request.this.doRun(client, progress);
-					}
-
-				}.run(subProgress);
+				// handles errors as well as proxy checks, and reattempts the
+				// request once
+				// if unauthorised/forbidden exception is thrown, and client
+				// login is
+				// attempted again.
+				result = runAsClientRequestCheckConnection(client, cloudServer, subProgress);
 
 				succeeded = true;
 
 				try {
-
+					// At this stage, the client is connected, otherwise the
+					// client request would have failed.
 					// Now retrieve information that should be done once per
 					// connection session,
 					// including whether the server supports debug, list of
 					// application plans, and domains for the org.
 					// Since request succeeded, at this stage determine
 					// if the server supports debugging.
-					requestAllowDebug(client);
+
+					// FIXNS: Disabled for CF 1.5.0 until V2 MCF is released
+					// that supports debug.
+					// requestAllowDebug(client);
 
 					if (domainFromOrgs == null) {
 						domainFromOrgs = client.getDomainsForOrg();
@@ -1603,6 +1572,96 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			// server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
 
 			return result;
+		}
+
+		/**
+		 * Attempts to execute the client request by first checking proxy
+		 * settings, and if unauthorised/forbidden exceptions thrown the first
+		 * time, will attempt to log in. If that succeeds, it will attempt one
+		 * more time. Otherwise it will fail and not attempt the request any
+		 * further.
+		 * @param client
+		 * @param cloudServer
+		 * @param subProgress
+		 * @return
+		 * @throws CoreException if attempt to execute failed, even after a
+		 * second attempt after a client login.
+		 */
+		protected T runAsClientRequestCheckConnection(CloudFoundryOperations client, CloudFoundryServer cloudServer,
+				SubMonitor subProgress) throws CoreException {
+			// Check that a user is logged in and proxy is updated
+			String cloudURL = cloudServer.getUrl();
+			CloudFoundryLoginHandler handler = new CloudFoundryLoginHandler(client, cloudURL);
+
+			// Always check if proxy settings have changed.
+			handler.updateProxyInClient(client);
+
+			try {
+				return runAsClientRequest(client, subProgress);
+			}
+			catch (CoreException ce) {
+				CloudFoundryException cfe = ce.getCause() instanceof CloudFoundryException ? (CloudFoundryException) ce
+						.getCause() : null;
+				if (cfe != null && handler.shouldAttemptClientLogin(cfe)) {
+					handler.login(subProgress, 3, CloudFoundryClientRequest.LOGIN_INTERVAL);
+					return runAsClientRequest(client, subProgress);
+				}
+				else {
+					throw ce;
+				}
+			}
+		}
+
+		protected T runAsClientRequest(CloudFoundryOperations client, SubMonitor subProgress) throws CoreException {
+			return new CloudFoundryClientRequest<T>(client, getCloudFoundryServer(), requestTimeOut) {
+
+				@Override
+				protected T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+					return Request.this.doRun(client, progress);
+				}
+
+			}.run(subProgress);
+		}
+
+		protected abstract T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException;
+
+	}
+
+	/**
+	 * 
+	 * Request that is aware of potential staging related errors and may attempt
+	 * the request again on certain types of staging errors like Staging Not
+	 * Finished errors. Note that this should only be used on certain types of
+	 * operations performed on a app that is already started, like fetching the
+	 * staging logs, or app instances stats, as re-attempts on these operations
+	 * due to staging related errors (e.g. staging not finished yet) is
+	 * permissable. However, operations not related to particular application
+	 * (e.g. creating a service, getting list of all apps), should not use this
+	 * request.
+	 */
+	abstract class StagingAwareRequest<T> extends Request<T> {
+
+		public StagingAwareRequest() {
+			super();
+		}
+
+		public StagingAwareRequest(String label) {
+			super(label, CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT);
+		}
+
+		public StagingAwareRequest(String label, long requestTimeOut) {
+			super(label, requestTimeOut);
+		}
+
+		protected T runAsClientRequest(CloudFoundryOperations client, SubMonitor subProgress) throws CoreException {
+			return new StagingAwareClientRequest<T>(client, getCloudFoundryServer(), requestTimeOut) {
+
+				@Override
+				protected T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+					return StagingAwareRequest.this.doRun(client, progress);
+				}
+
+			}.run(subProgress);
 		}
 
 		protected abstract T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException;
@@ -1742,7 +1801,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				if (!modules[0].isExternal()) {
 
 					new Request<Void>("Pushing and starting application " + applicationId,
-							CloudFoundryClientRequest.STAGING_TIMEOUT) {
+							CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT) {
 						@Override
 						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
 								throws CoreException {
@@ -1915,28 +1974,64 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				final String applicationId = descriptor.applicationInfo.getAppName();
 
-				new Request<Void>("Starting application " + applicationId, CloudFoundryClientRequest.STAGING_TIMEOUT) {
-					@Override
-					protected Void doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				if (descriptor.applicationInfo == null) {
+					server.setModuleState(modules, IServer.STATE_STOPPED);
 
-						if (descriptor.applicationInfo == null) {
-							server.setModuleState(modules, IServer.STATE_STOPPED);
+					throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+							"Unable to start application: " + applicationId
+									+ ". Missing application information in application client operation descriptor."));
+				}
 
-							throw new CoreException(
-									new Status(
-											IStatus.ERROR,
-											CloudFoundryPlugin.PLUGIN_ID,
-											"Unable to start application: "
-													+ applicationId
-													+ ". Missing application information in application client operation descriptor."));
-						}
+				if (descriptor.deploymentMode != null) {
+					// Start the application. Use a regular request rather than
+					// a staging-aware request, as any staging errors should not
+					// result in a reattempt, unlike other cases (e.g. get the
+					// staging
+					// logs or refreshing app instance stats after an app has
+					// started).
 
-						// start application in either regular or debug mode
-						if (descriptor.deploymentMode != null) {
+					CloudFoundryPlugin.getCallback().applicationAboutToStart(getCloudFoundryServer(), cloudModule);
+
+					new Request<Void>("Starting application " + applicationId,
+							CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT) {
+						@Override
+						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
+								throws CoreException {
 							CloudFoundryPlugin.trace("Application " + applicationId + " starting");
 
-							restartOrDebugApplicationInClient(applicationId, cloudModule, client,
-									descriptor.deploymentMode);
+							switch (descriptor.deploymentMode) {
+							case DEBUG:
+								// Only launch in Suspend mode
+								client.debugApplication(applicationId, DebugModeType.SUSPEND.getDebugMode());
+								break;
+							default:
+								client.stopApplication(applicationId);
+
+								StartingInfo info = client.startApplication(applicationId);
+								if (info != null) {
+
+									cloudModule.setStartingInfo(info);
+
+									// Inform through callbacks that application
+									// has started
+									CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(),
+											cloudModule);
+								}
+
+								break;
+							}
+							return null;
+						}
+					}.run(monitor);
+
+					// This should be staging aware, in order to reattempt on
+					// staging related issues when checking if an app has
+					// started or not
+					new StagingAwareRequest<Void>("Waiting for application to start: " + applicationId,
+							CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT) {
+						@Override
+						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
+								throws CoreException {
 
 							// Now verify that the application did start
 							try {
@@ -1957,19 +2052,27 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							CloudFoundryPlugin.trace("Application " + applicationId + " started");
 
 							CloudFoundryPlugin.getCallback().applicationStarted(getCloudFoundryServer(), cloudModule);
-						}
-						else {
-							// Missing a deployment mode is acceptable, as the
-							// user may have elected
-							// to push the application but not run it.
-							server.setModuleState(modules, IServer.STATE_STOPPED);
-						}
 
-						// Refresh the list of modules regardless of whether the
-						// application
-						// started or not, as a user may have created a new
-						// application or pushed
-						// new content, but not wished to start the app
+							return null;
+						}
+					}.run(monitor);
+				}
+				else {
+					// Missing a deployment mode is acceptable, as the
+					// user may have elected
+					// to push the application but not start it.
+					server.setModuleState(modules, IServer.STATE_STOPPED);
+				}
+
+				// Refresh the list of modules regardless of whether the
+				// application
+				// started or not, as a user may have created a new
+				// application or pushed
+				// new content, but not wished to start the app
+				new Request<Void>("Refreshing list of applications", CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT) {
+					@Override
+					protected Void doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+
 						doRefreshModules(cloudServer, client, progress);
 
 						setRefreshInterval(CloudFoundryClientRequest.DEFAULT_INTERVAL);
