@@ -75,7 +75,7 @@ public abstract class AbstractWaitForStateOperation {
 					}
 
 				}.run(progress);
-				return result.booleanValue();
+				return result != null ? result.booleanValue() : false;
 			}
 			return false;
 		}

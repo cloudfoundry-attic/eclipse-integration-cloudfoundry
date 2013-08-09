@@ -231,7 +231,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public void deleteModules(final IModule[] modules, final boolean deleteServices, IProgressMonitor monitor)
 			throws CoreException {
 		final CloudFoundryServer cloudServer = getCloudFoundryServer();
-		new RequestWithRefreshCallBack<Void>() {
+		new Request<Void>() {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				for (IModule module : modules) {
@@ -285,6 +285,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				return null;
 			}
 		}.run(monitor);
+		// If succeeded, refresh module list right away
+		restartRefreshJob(CloudFoundryClientRequest.DEFAULT_INTERVAL);
 	}
 
 	public void deleteServices(final List<String> services, IProgressMonitor monitor) throws CoreException {
@@ -608,6 +610,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
+	/**
+	 * Refresh the application modules and reschedules the app module refresh
+	 * job to execute at certain intervals.
+	 * @param monitor
+	 * @throws CoreException
+	 */
 	public void refreshModules(IProgressMonitor monitor) throws CoreException {
 		final CloudFoundryServer cloudServer = getCloudFoundryServer();
 
@@ -621,11 +629,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		CloudFoundryPlugin.getDefault().fireServerRefreshed(cloudServer);
 
-		setRefreshInterval(CloudFoundryClientRequest.DEFAULT_INTERVAL);
+		restartRefreshJob(CloudFoundryClientRequest.DEFAULT_INTERVAL);
+
 	}
 
 	/**
 	 * This method is API used by CloudFoundry Code.
+	 * @deprecated Use start API with deployment mode set to null to just deploy
+	 * the app and not run it
 	 */
 	public void deployApplication(final String appName, final int memory, final File warFile, final List<String> uris,
 			final List<String> serviceNames, final IProgressMonitor monitor) throws CoreException {
@@ -1118,6 +1129,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return AppState.STARTED.equals(application.getState());
 	}
 
+	/**
+	 * Reschedules the refresh job to start after waiting for the specified
+	 * amount of time. All subsequent iterations of the refresh job also wait
+	 * for the specified interval time before running.
+	 */
 	private void setRefreshInterval(long interval) {
 		if (refreshJob == null) {
 			try {
@@ -1132,8 +1148,29 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				return;
 			}
 		}
-		refreshJob.setInterval(interval);
-		refreshJob.reschedule();
+		refreshJob.reschedule(interval);
+	}
+
+	/**
+	 * Schedules the refresh job to run as soon as possible the first time, and
+	 * any subsequent executions continue to occur after the specified interval.
+	 * @param interval to wait between each job run
+	 */
+	private void restartRefreshJob(long interval) {
+		if (refreshJob == null) {
+			try {
+				refreshJob = new RefreshJob(getCloudFoundryServer());
+			}
+			catch (CoreException e) {
+				CloudFoundryPlugin
+						.getDefault()
+						.getLog()
+						.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
+								"Failed to start automatic refresh: {0}", e.getMessage()), e));
+				return;
+			}
+		}
+		refreshJob.runAndReschedule(interval);
 	}
 
 	private boolean waitForStart(CloudFoundryOperations client, String deploymentId, IProgressMonitor monitor)
@@ -1706,6 +1743,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		public CloudFoundryApplicationModule deployModule(IProgressMonitor monitor) throws CoreException {
 
+			// Disable automatic module refresh until operation completes
+			setRefreshInterval(-1);
+
 			try {
 				CloudFoundryServer cloudServer = getCloudFoundryServer();
 
@@ -1727,6 +1767,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			catch (OperationCanceledException e) {
 				// ignore so webtools does not show an exception
 				((Server) getServer()).setModuleState(modules, IServer.STATE_UNKNOWN);
+			}
+			finally {
+				// Restart the refresh job
+				restartRefreshJob(CloudFoundryClientRequest.DEFAULT_INTERVAL);
 			}
 			return null;
 		}
@@ -1801,8 +1845,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				cloudModule.setStaging(descriptor.staging);
 
 				server.setModuleState(modules, IServer.STATE_STARTING);
-
-				setRefreshInterval(CloudFoundryClientRequest.MEDIUM_INTERVAL);
 
 				final String applicationId = descriptor.applicationInfo.getAppName();
 
@@ -2114,7 +2156,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 						doRefreshModules(cloudServer, client, progress);
 
-						setRefreshInterval(CloudFoundryClientRequest.DEFAULT_INTERVAL);
 						CloudFoundryPlugin.getDefault().fireServerRefreshed(cloudServer);
 
 						return null;
@@ -2130,18 +2171,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		}
 
-	}
-
-	/**
-	 * Runs a client request, and then performs a refresh after 1 second
-	 * interval
-	 */
-	abstract class RequestWithRefreshCallBack<T> extends Request<T> {
-		public T run(IProgressMonitor monitor) throws CoreException {
-			T result = super.run(monitor);
-			setRefreshInterval(100);
-			return result;
-		}
 	}
 
 	abstract class FileRequest<T> extends StagingAwareRequest<T> {

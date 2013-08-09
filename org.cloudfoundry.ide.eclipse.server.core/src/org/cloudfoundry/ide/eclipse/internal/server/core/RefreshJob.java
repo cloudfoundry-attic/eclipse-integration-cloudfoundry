@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -39,20 +39,25 @@ public class RefreshJob extends Job {
 		this.interval = DEFAULT_INTERVAL;
 	}
 
-	public long getInterval() {
-		return interval;
-	}
-
-	public void reschedule() {
+	public void reschedule(long interval) {
 		// schedule, if not already running or scheduled
+		this.interval = interval;
 		cancel();
 		if (interval > 0) {
 			schedule(interval);
 		}
 	}
 
-	public void setInterval(long interval) {
+	/**
+	 * Initially runs the job without additional delay (aside from the job
+	 * scheduler delays), and subsequent runs after the first run are executed
+	 * after the specified interval.
+	 * @param interval
+	 */
+	public void runAndReschedule(long interval) {
 		this.interval = interval;
+		cancel();
+		schedule();
 	}
 
 	@Override
@@ -65,8 +70,8 @@ public class RefreshJob extends Job {
 			}
 		}
 		catch (CoreException e) {
-			CloudFoundryPlugin.getDefault().getLog().log(
-					new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, "Refresh of server failed", e));
+			CloudFoundryPlugin.getDefault().getLog()
+					.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, "Refresh of server failed", e));
 		}
 
 		return Status.OK_STATUS;

@@ -148,7 +148,7 @@ public class CloudSpaceServerLookup {
 	private static CloudOrgsAndSpaces getCloudSpace(CloudFoundryOperations operations, IProgressMonitor monitor)
 			throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor);
-		progress.beginTask("Determining if the cloud server supports organizations and spaces",
+		progress.beginTask("Resolving list of Cloud Foundry organizations and spaces",
 				IProgressMonitor.UNKNOWN);
 
 		try {

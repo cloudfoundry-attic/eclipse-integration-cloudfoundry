@@ -168,7 +168,7 @@ public class ConnectToDebuggerCommand extends DebugCommand {
 
 				}.run(monitor);
 
-				successful = result.booleanValue();
+				successful = result != null ? result.booleanValue() : false;
 			}
 			catch (CoreException e) {
 				successful = false;

@@ -43,7 +43,8 @@ public class CloudFoundryLoginHandler {
 
 	/**
 	 * Attempts to log in once. If login fails, Core exception is thrown
-	 * @throws CoreException if login failed. The reason for the login failure is contained in the core exception's
+	 * @throws CoreException if login failed. The reason for the login failure
+	 * is contained in the core exception's
 	 */
 	public void login(IProgressMonitor monitor) throws CoreException {
 		login(monitor, 1, 0);
@@ -77,7 +78,7 @@ public class CloudFoundryLoginHandler {
 			}
 
 		}.run(monitor);
-		return result.booleanValue();
+		return result != null ? result.booleanValue() : false;
 	}
 
 	protected SubMonitor getProgressMonitor(IProgressMonitor progressMonitor) {

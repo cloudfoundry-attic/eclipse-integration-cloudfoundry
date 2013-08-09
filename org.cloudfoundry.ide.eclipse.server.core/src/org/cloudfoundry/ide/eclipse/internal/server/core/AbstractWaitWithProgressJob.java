@@ -53,7 +53,8 @@ public abstract class AbstractWaitWithProgressJob<T> {
 	/**
 	 * Returns a result, or throws an exception ONLY if the result is invalid
 	 * AND an exception was thrown after all attempts have been exhausted. Will
-	 * only re-throw the last exception that was thrown.
+	 * only re-throw the last exception that was thrown. Note that the result
+	 * may still be null.
 	 * 
 	 * @param monitor
 	 * @return
@@ -98,8 +99,8 @@ public abstract class AbstractWaitWithProgressJob<T> {
 		// Only throw exception if an error was generated and an invalid result
 		// was obtained.
 		if (!isValid(result) && lastError != null) {
-			CoreException coreError = lastError instanceof CoreException ? (CoreException) lastError
-					: CloudErrorUtil.toCoreException(lastError);
+			CoreException coreError = lastError instanceof CoreException ? (CoreException) lastError : CloudErrorUtil
+					.toCoreException(lastError);
 			throw coreError;
 		}
 		return result;
