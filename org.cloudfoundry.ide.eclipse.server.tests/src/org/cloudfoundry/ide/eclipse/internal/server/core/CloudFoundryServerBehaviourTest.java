@@ -91,7 +91,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		try {
 			serverBehavior.resetClient();
-			getClient("invalid");
+			getClient("invalid", "invalidPassword");
 		}
 		catch (Exception e) {
 			assertEquals("403 Error requesting access token.", e.getMessage());

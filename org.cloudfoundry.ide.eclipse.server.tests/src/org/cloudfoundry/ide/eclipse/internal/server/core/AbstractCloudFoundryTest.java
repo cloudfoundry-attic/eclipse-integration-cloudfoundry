@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -61,8 +61,8 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		return client;
 	}
 
-	protected CloudFoundryOperations getClient(String token) throws CoreException {
-		CloudCredentials credentials = new CloudCredentials(token);
+	protected CloudFoundryOperations getClient(String username, String password) throws CoreException {
+		CloudCredentials credentials = new CloudCredentials(username, password);
 		return getClient(credentials);
 	}
 

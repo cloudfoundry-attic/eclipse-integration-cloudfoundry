@@ -39,6 +39,7 @@ import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.client.lib.domain.CrashesInfo;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.json.simple.JSONObject;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.uaa.client.TransmissionAwareUaaService;
 import org.springframework.uaa.client.TransmissionEventListener;
 import org.springframework.uaa.client.UaaService;
@@ -497,7 +498,7 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 	}
 
 	@Override
-	public String login() {
+	public OAuth2AccessToken login() {
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
 			return super.login();
