@@ -286,7 +286,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		}.run(monitor);
 		// If succeeded, refresh module list right away
-		restartRefreshJob(CloudFoundryClientRequest.DEFAULT_INTERVAL);
+		restartRefreshJob(ClientRequestOperation.DEFAULT_INTERVAL);
 	}
 
 	public void deleteServices(final List<String> services, IProgressMonitor monitor) throws CoreException {
@@ -629,7 +629,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		CloudFoundryPlugin.getDefault().fireServerRefreshed(cloudServer);
 
-		restartRefreshJob(CloudFoundryClientRequest.DEFAULT_INTERVAL);
+		restartRefreshJob(ClientRequestOperation.DEFAULT_INTERVAL);
 
 	}
 
@@ -664,7 +664,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		CloudFoundryPlugin.getDefault().fireServerRefreshed(cloudServer);
 
-		setRefreshInterval(CloudFoundryClientRequest.DEFAULT_INTERVAL);
+		setRefreshInterval(ClientRequestOperation.DEFAULT_INTERVAL);
 	}
 
 	public void resetClient() {
@@ -959,7 +959,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public void updateApplicationInstances(CloudFoundryApplicationModule module, final int instanceCount,
 			IProgressMonitor monitor) throws CoreException {
 		final String appName = module.getApplication().getName();
-		new StagingAwareRequest<Void>() {
+		new AppInStoppedStateAwareRequest<Void>() {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.updateApplicationInstances(appName, instanceCount);
@@ -985,7 +985,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public void updateApplicationMemory(CloudFoundryApplicationModule module, final int memory, IProgressMonitor monitor)
 			throws CoreException {
 		final String appName = module.getApplication().getName();
-		new StagingAwareRequest<Void>() {
+		new AppInStoppedStateAwareRequest<Void>() {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.updateApplicationMemory(appName, memory);
@@ -996,7 +996,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public void updateApplicationUrls(final String appName, final List<String> uris, IProgressMonitor monitor)
 			throws CoreException {
-		new StagingAwareRequest<Void>() {
+		new AppInStoppedStateAwareRequest<Void>() {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.updateApplicationUris(appName, uris);
@@ -1175,30 +1175,30 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private boolean waitForStart(CloudFoundryOperations client, String deploymentId, IProgressMonitor monitor)
 			throws InterruptedException {
-		long initialInterval = CloudFoundryClientRequest.SHORT_INTERVAL;
+		long initialInterval = ClientRequestOperation.SHORT_INTERVAL;
 		Thread.sleep(initialInterval);
-		long timeLeft = CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT - initialInterval;
+		long timeLeft = ClientRequestOperation.DEPLOYMENT_TIMEOUT - initialInterval;
 		while (timeLeft > 0) {
 			CloudApplication deploymentDetails = client.getApplication(deploymentId);
 			if (isApplicationReady(deploymentDetails)) {
 				return true;
 			}
-			Thread.sleep(CloudFoundryClientRequest.ONE_SECOND_INTERVAL);
-			timeLeft -= CloudFoundryClientRequest.ONE_SECOND_INTERVAL;
+			Thread.sleep(ClientRequestOperation.ONE_SECOND_INTERVAL);
+			timeLeft -= ClientRequestOperation.ONE_SECOND_INTERVAL;
 		}
 		return false;
 	}
 
 	private CloudApplication waitForUpload(CloudFoundryOperations client, String applicationId, IProgressMonitor monitor)
 			throws InterruptedException {
-		long timeLeft = CloudFoundryClientRequest.UPLOAD_TIMEOUT;
+		long timeLeft = ClientRequestOperation.UPLOAD_TIMEOUT;
 		while (timeLeft > 0) {
 			CloudApplication application = client.getApplication(applicationId);
 			if (applicationId.equals(application.getName())) {
 				return application;
 			}
-			Thread.sleep(CloudFoundryClientRequest.SHORT_INTERVAL);
-			timeLeft -= CloudFoundryClientRequest.SHORT_INTERVAL;
+			Thread.sleep(ClientRequestOperation.SHORT_INTERVAL);
+			timeLeft -= ClientRequestOperation.SHORT_INTERVAL;
 		}
 		return null;
 	}
@@ -1645,7 +1645,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				CloudFoundryException cfe = ce.getCause() instanceof CloudFoundryException ? (CloudFoundryException) ce
 						.getCause() : null;
 				if (cfe != null && handler.shouldAttemptClientLogin(cfe)) {
-					handler.login(subProgress, 3, CloudFoundryClientRequest.LOGIN_INTERVAL);
+					handler.login(subProgress, 3, ClientRequestOperation.LOGIN_INTERVAL);
 					return runAsClientRequest(client, subProgress);
 				}
 				else {
@@ -1655,7 +1655,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 
 		protected T runAsClientRequest(CloudFoundryOperations client, SubMonitor subProgress) throws CoreException {
-			return new CloudFoundryClientRequest<T>(client) {
+			return new ClientRequestOperation<T>(client) {
 
 				@Override
 				protected T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
@@ -1700,21 +1700,53 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 
 		public StagingAwareRequest(String label) {
-			this(label, CloudFoundryClientRequest.DEFAULT_CF_CLIENT_REQUEST_TIMEOUT);
+			this(label, ClientRequestOperation.DEFAULT_CF_CLIENT_REQUEST_TIMEOUT);
 		}
 
 		public StagingAwareRequest(String label, long requestTimeOut) {
 			super(label);
 			this.requestTimeOut = requestTimeOut > 0 ? requestTimeOut
-					: CloudFoundryClientRequest.DEFAULT_CF_CLIENT_REQUEST_TIMEOUT;
+					: ClientRequestOperation.DEFAULT_CF_CLIENT_REQUEST_TIMEOUT;
 		}
 
 		protected T runAsClientRequest(CloudFoundryOperations client, SubMonitor subProgress) throws CoreException {
-			return new StagingAwareClientRequest<T>(client, requestTimeOut) {
+			return new RetryNotFinishedStagingOperation<T>(client, requestTimeOut) {
 
 				@Override
 				protected T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 					return StagingAwareRequest.this.doRun(client, progress);
+				}
+
+			}.run(subProgress);
+		}
+
+		protected abstract T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException;
+
+	}
+
+	/**
+	 * 
+	 * Reattempts the operation if a app in stopped state error is encountered.
+	 * 
+	 */
+	abstract class AppInStoppedStateAwareRequest<T> extends Request<T> {
+
+		protected final long requestTimeOut;
+
+		public AppInStoppedStateAwareRequest() {
+			this("");
+		}
+
+		public AppInStoppedStateAwareRequest(String label) {
+			this.requestTimeOut = ClientRequestOperation.DEFAULT_CF_CLIENT_REQUEST_TIMEOUT;
+		}
+
+		protected T runAsClientRequest(CloudFoundryOperations client, SubMonitor subProgress) throws CoreException {
+			return new RetryAppInStoppedStateOperation<T>(client, requestTimeOut) {
+
+				@Override
+				protected T doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+					return AppInStoppedStateAwareRequest.this.doRun(client, progress);
 				}
 
 			}.run(subProgress);
@@ -1770,7 +1802,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 			finally {
 				// Restart the refresh job
-				restartRefreshJob(CloudFoundryClientRequest.DEFAULT_INTERVAL);
+				restartRefreshJob(ClientRequestOperation.DEFAULT_INTERVAL);
 			}
 			return null;
 		}
@@ -2109,7 +2141,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// staging related issues when checking if an app has
 					// started or not
 					new StagingAwareRequest<Void>("Waiting for application to start: " + applicationId,
-							CloudFoundryClientRequest.DEPLOYMENT_TIMEOUT) {
+							ClientRequestOperation.DEPLOYMENT_TIMEOUT) {
 						@Override
 						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
 								throws CoreException {
@@ -2180,7 +2212,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 
 		FileRequest(String label) {
-			super(label, CloudFoundryClientRequest.SHORT_INTERVAL);
+			super(label, ClientRequestOperation.SHORT_INTERVAL);
 		}
 
 	}

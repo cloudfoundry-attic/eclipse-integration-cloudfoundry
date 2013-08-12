@@ -19,7 +19,7 @@ import org.eclipse.core.runtime.SubMonitor;
  * well as proxy checks prior to sending the request. Also handles any errors
  * thrown when calling the client.
  */
-public abstract class CloudFoundryClientRequest<T> {
+public abstract class ClientRequestOperation<T> {
 
 	/*
 	 * Intervals are how long a thread should sleep before moving to the next
@@ -46,7 +46,7 @@ public abstract class CloudFoundryClientRequest<T> {
 
 	private long timeLeft;
 
-	public CloudFoundryClientRequest(CloudFoundryOperations client, long requestTimeOut) {
+	public ClientRequestOperation(CloudFoundryOperations client, long requestTimeOut) {
 		this.timeLeft = requestTimeOut;
 		this.client = client;
 	}
@@ -57,7 +57,7 @@ public abstract class CloudFoundryClientRequest<T> {
 	 * made in case of failure.
 	 * @param client
 	 */
-	public CloudFoundryClientRequest(CloudFoundryOperations client) {
+	public ClientRequestOperation(CloudFoundryOperations client) {
 		this.timeLeft = 0;
 		this.client = client;
 	}

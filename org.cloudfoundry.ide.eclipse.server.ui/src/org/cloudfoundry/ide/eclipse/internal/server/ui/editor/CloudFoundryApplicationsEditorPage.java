@@ -153,14 +153,8 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 			setApplicationMemoryChoices(serverBehaviour.getApplicationMemoryChoices());
 		}
 
-		try {
-			if (refreshInstances && (area == RefreshArea.DETAIL || area == RefreshArea.ALL)) {
-				serverBehaviour.refreshApplicationInstanceStats(module, monitor);
-			}
-		}
-		catch (NotFinishedStagingException e) {
-			CloudFoundryPlugin.logError(
-					"Unable to retrieve app instances. Please restart your application and try again.", e);
+		if (refreshInstances && (area == RefreshArea.DETAIL || area == RefreshArea.ALL)) {
+			serverBehaviour.refreshApplicationInstanceStats(module, monitor);
 		}
 
 		return Status.OK_STATUS;

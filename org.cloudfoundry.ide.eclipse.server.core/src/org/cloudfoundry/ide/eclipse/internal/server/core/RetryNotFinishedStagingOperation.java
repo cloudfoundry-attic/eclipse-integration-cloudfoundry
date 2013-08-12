@@ -17,9 +17,9 @@ import org.cloudfoundry.client.lib.StagingErrorException;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.SubMonitor;
 
-public abstract class StagingAwareClientRequest<T> extends CloudFoundryClientRequest<T> {
+public abstract class RetryNotFinishedStagingOperation<T> extends ClientRequestOperation<T> {
 
-	public StagingAwareClientRequest(CloudFoundryOperations client, long requestTimeOut) {
+	public RetryNotFinishedStagingOperation(CloudFoundryOperations client, long requestTimeOut) {
 		super(client, requestTimeOut);
 	}
 

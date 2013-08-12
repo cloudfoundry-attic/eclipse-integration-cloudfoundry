@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
+import org.cloudfoundry.client.lib.CloudFoundryException;
+import org.cloudfoundry.client.lib.NotFinishedStagingException;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
@@ -126,15 +128,19 @@ public abstract class CloudFoundryEditorAction extends Action {
 					}
 				}
 				catch (CoreException e) {
-					IStatus errorStatus = null;
-					if (shouldLogException(e)) {
-						errorStatus = new Status(Status.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, e.getMessage(), e);
-						StatusManager.getManager().handle(errorStatus, StatusManager.LOG);
+					CloudFoundryException cfe = e.getCause() instanceof CloudFoundryException ? (CloudFoundryException) e
+							.getCause() : null;
+					if (cfe instanceof NotFinishedStagingException) {
+						status = new Status(IStatus.WARNING, CloudFoundryServerUiPlugin.PLUGIN_ID,
+								"Please restart your application for any changes to take effect");
+
+					}
+					else if (shouldLogException(e)) {
+						status = new Status(Status.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, e.getMessage(), e);
 					}
 					else {
-						errorStatus = new Status(Status.CANCEL, CloudFoundryServerUiPlugin.PLUGIN_ID, e.getMessage(), e);
+						status = new Status(Status.CANCEL, CloudFoundryServerUiPlugin.PLUGIN_ID, e.getMessage(), e);
 					}
-					return errorStatus;
 				}
 				return status;
 			}
@@ -158,13 +164,20 @@ public abstract class CloudFoundryEditorAction extends Action {
 						if (!userAction) {
 							return;
 						}
-						if (exception != null) {
+						if (status.getSeverity() == IStatus.WARNING || status.getSeverity() == IStatus.INFO) {
+							setMessageInPage(status);
+							return;
+						}
+						else if (exception != null) {
+
 							if (exception instanceof CoreException) {
-								if (CloudErrorUtil.isNotFoundException((CoreException) exception)) {
+								CoreException coreException = (CoreException) exception;
+
+								if (CloudErrorUtil.isNotFoundException(coreException)) {
 									display404Error(status);
 									return;
 								}
-								if (userAction && CloudErrorUtil.isWrongCredentialsException((CoreException) exception)) {
+								else if (CloudErrorUtil.isWrongCredentialsException(coreException)) {
 									CloudFoundryCredentialsWizard wizard = new CloudFoundryCredentialsWizard(editorPage
 											.getCloudServer());
 									WizardDialog dialog = new WizardDialog(Display.getDefault().getActiveShell(),
@@ -175,6 +188,8 @@ public abstract class CloudFoundryEditorAction extends Action {
 									}
 								}
 							}
+
+							StatusManager.getManager().handle(status, StatusManager.LOG);
 							setErrorInPage(status);
 						}
 						else {
@@ -215,6 +230,21 @@ public abstract class CloudFoundryEditorAction extends Action {
 		else {
 			editorPage.setMessage(message, IMessageProvider.ERROR);
 		}
+	}
+
+	protected void setMessageInPage(IStatus status) {
+		String message = status.getMessage();
+		int providerStatus = IMessageProvider.NONE;
+		switch (status.getSeverity()) {
+		case IStatus.INFO:
+			providerStatus = IMessageProvider.INFORMATION;
+			break;
+		case IStatus.WARNING:
+			providerStatus = IMessageProvider.WARNING;
+			break;
+		}
+
+		editorPage.setMessage(message, providerStatus);
 	}
 
 	public void setUserAction(boolean userAction) {
