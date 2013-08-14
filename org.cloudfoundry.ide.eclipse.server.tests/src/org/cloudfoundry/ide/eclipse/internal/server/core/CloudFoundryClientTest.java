@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -26,13 +26,9 @@ import org.junit.Assert;
  */
 public class CloudFoundryClientTest extends TestCase {
 
-	public static final String VALID_V1_HTTP_URL = "http://api.cloudfoundry.com";
-
-	public static final String VALID_V1_HTTPS_URL = "https://api.cloudfoundry.com";
-
 	public void testConnectToNonSecureUrl() throws Exception {
 		CloudFoundryOperations client = CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory()
-				.getCloudFoundryOperations(VALID_V1_HTTP_URL);
+				.getCloudFoundryOperations(CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
 
 		CloudInfo cloudInfo = client.getCloudInfo();
 		Assert.assertNotNull(cloudInfo);
@@ -40,7 +36,7 @@ public class CloudFoundryClientTest extends TestCase {
 
 	public void testConnectToSecureUrl() throws Exception {
 		CloudFoundryOperations client = CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory()
-				.getCloudFoundryOperations(VALID_V1_HTTPS_URL);
+				.getCloudFoundryOperations(CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTPS);
 		CloudInfo cloudInfo = client.getCloudInfo();
 		Assert.assertNotNull(cloudInfo);
 
@@ -50,8 +46,8 @@ public class CloudFoundryClientTest extends TestCase {
 
 		CredentialProperties credentials = CloudFoundryTestFixture.getUserTestCredentials();
 
-		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(VALID_V1_HTTP_URL,
-				credentials.getUserEmail(), credentials.getPassword());
+		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(
+				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP, credentials.userEmail, credentials.password);
 
 		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client, null);
 
@@ -67,8 +63,8 @@ public class CloudFoundryClientTest extends TestCase {
 
 		String invalidPassword = "invalid password";
 
-		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(VALID_V1_HTTP_URL,
-				credentials.getUserEmail(), invalidPassword);
+		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(
+				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP, credentials.userEmail, invalidPassword);
 
 		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client, null);
 		CoreException error = null;
@@ -89,8 +85,8 @@ public class CloudFoundryClientTest extends TestCase {
 
 		String invalidUsername = "invalid username";
 
-		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(VALID_V1_HTTP_URL, invalidUsername,
-				credentials.getPassword());
+		CloudFoundryOperations client = CloudFoundryServerBehaviour.createClient(
+				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP, invalidUsername, credentials.password);
 
 		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client, null);
 		CoreException error = null;

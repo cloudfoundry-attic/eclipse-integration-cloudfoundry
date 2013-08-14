@@ -175,12 +175,12 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 			}
 		}
 		assertTrue(found);
-		URL url = new URL(CloudFoundryTestFixture.VCLOUDLABS.getUrl());
+		URL url = new URL(CloudFoundryTestFixture.PIVOTAL_CF.getUrl());
 		CloudFoundryOperations client = CloudFoundryPlugin
 				.getDefault()
 				.getCloudFoundryClientFactory()
-				.getCloudFoundryOperations(CloudFoundryTestFixture.VCLOUDLABS.getUsername(),
-						CloudFoundryTestFixture.VCLOUDLABS.getPassword(), url);
+				.getCloudFoundryOperations(CloudFoundryTestFixture.PIVOTAL_CF.getCredentials().userEmail,
+						CloudFoundryTestFixture.PIVOTAL_CF.getCredentials().password, url);
 		client.login();
 		client.deleteApplication("dynamic-webapp");
 

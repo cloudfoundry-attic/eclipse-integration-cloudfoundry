@@ -53,7 +53,15 @@ public class CloudFoundryTestFixture {
 
 	public static final String USEREMAIL_PROPERTY = "username";
 
+	public static final String ORG_PROPERTY = "org";
+
+	public static final String SPACE_PROPERTY = "space";
+
 	public static final String CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY = "test.credentials";
+
+	public static final String CF_PIVOTAL_SERVER_URL_HTTP = "http://api.run.pivotal.io";
+
+	public static final String CF_PIVOTAL_SERVER_URL_HTTPS = "https://api.run.pivotal.io";
 
 	public class Harness {
 
@@ -90,8 +98,9 @@ public class CloudFoundryTestFixture {
 			IServerWorkingCopy serverWC = server.createWorkingCopy();
 			CloudFoundryServer cloudFoundryServer = (CloudFoundryServer) serverWC.loadAdapter(CloudFoundryServer.class,
 					null);
-			cloudFoundryServer.setPassword(password);
-			cloudFoundryServer.setUsername(username);
+			cloudFoundryServer.setPassword(credentials.password);
+			cloudFoundryServer.setUsername(credentials.userEmail);
+
 			cloudFoundryServer.setUrl(getUrl());
 			serverWC.save(true, null);
 			return server;
@@ -216,16 +225,22 @@ public class CloudFoundryTestFixture {
 
 	public static final CredentialProperties USER_CREDENTIALS = getUserTestCredentials();
 
-	public static final CloudFoundryTestFixture VCLOUDLABS = new CloudFoundryTestFixture(DOMAIN,
-			USER_CREDENTIALS.getUserEmail(), USER_CREDENTIALS.getPassword());
+	// public static final CloudFoundryTestFixture VCLOUDLABS = new
+	// CloudFoundryTestFixture(DOMAIN,
+	// USER_CREDENTIALS.getUserEmail(), USER_CREDENTIALS.getPassword());
 
-	public static final CloudFoundryTestFixture LOCAL = new CloudFoundryTestFixture("localhost", "user",
-			PASSWORD_PROPERTY);
+	// public static final CloudFoundryTestFixture LOCAL = new
+	// CloudFoundryTestFixture("localhost", "user",
+	// PASSWORD_PROPERTY);
+	//
+	// public static final CloudFoundryTestFixture LOCAL_CLOUD = new
+	// CloudFoundryTestFixture("vcap.me",
+	// USER_CREDENTIALS.getUserEmail(), USER_CREDENTIALS.getPassword());
 
-	public static final CloudFoundryTestFixture LOCAL_CLOUD = new CloudFoundryTestFixture("vcap.me",
-			USER_CREDENTIALS.getUserEmail(), USER_CREDENTIALS.getPassword());
+	public static final CloudFoundryTestFixture PIVOTAL_CF = new CloudFoundryTestFixture("run.pivotal.io",
+			USER_CREDENTIALS);
 
-	private static CloudFoundryTestFixture current = VCLOUDLABS;
+	private static CloudFoundryTestFixture current = PIVOTAL_CF;
 
 	public static CloudFoundryTestFixture current() {
 		CloudFoundryPlugin.setCallback(new TestCallback());
@@ -244,24 +259,21 @@ public class CloudFoundryTestFixture {
 
 	public static CloudFoundryTestFixture currentLocalDebug() {
 		CloudFoundryPlugin.setCallback(new TestCallback());
-		return LOCAL_CLOUD;
+		return null;
 	}
 
 	private final String domain;
 
 	private final ServerHandler handler;
 
-	private final String password;
+	private final CredentialProperties credentials;
 
 	private final String url;
 
-	private final String username;
-
-	public CloudFoundryTestFixture(String domain, String username, String password) {
+	public CloudFoundryTestFixture(String domain, CredentialProperties credentials) {
 		this.domain = domain;
 		this.url = "http://api." + domain;
-		this.username = username;
-		this.password = password;
+		this.credentials = credentials;
 
 		ServerDescriptor descriptor = new ServerDescriptor("server") {
 			{
@@ -275,16 +287,12 @@ public class CloudFoundryTestFixture {
 		handler = new ServerHandler(descriptor);
 	}
 
-	public String getPassword() {
-		return password;
+	public CredentialProperties getCredentials() {
+		return credentials;
 	}
 
 	public String getUrl() {
 		return url;
-	}
-
-	public String getUsername() {
-		return username;
 	}
 
 	public Harness harness() {
@@ -293,22 +301,21 @@ public class CloudFoundryTestFixture {
 
 	public static class CredentialProperties {
 
-		private final String userEmail;
+		public final String userEmail;
 
-		private final String password;
+		public final String password;
 
-		public CredentialProperties(String userEmail, String password) {
+		public final String organization;
+
+		public final String space;
+
+		public CredentialProperties(String userEmail, String password, String organization, String space) {
 			this.userEmail = userEmail;
 			this.password = password;
+			this.organization = organization;
+			this.space = space;
 		}
 
-		public String getUserEmail() {
-			return userEmail;
-		}
-
-		public String getPassword() {
-			return password;
-		}
 	}
 
 	/**
@@ -320,6 +327,8 @@ public class CloudFoundryTestFixture {
 		String propertiesLocation = System.getProperty(CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY);
 		String userEmail = null;
 		String password = null;
+		String org = null;
+		String space = null;
 		if (propertiesLocation != null) {
 
 			File propertiesFile = new File(propertiesLocation);
@@ -332,6 +341,8 @@ public class CloudFoundryTestFixture {
 					properties.load(fileInputStream);
 					userEmail = properties.getProperty(USEREMAIL_PROPERTY);
 					password = properties.getProperty(PASSWORD_PROPERTY);
+					org = properties.getProperty(ORG_PROPERTY);
+					space = properties.getProperty(SPACE_PROPERTY);
 				}
 			}
 			catch (FileNotFoundException e) {
@@ -357,13 +368,14 @@ public class CloudFoundryTestFixture {
 			password = System.getProperty("vcap.passwd", "");
 		}
 
-		if (userEmail == null || password == null) {
+		if (userEmail == null || password == null || org == null || space == null) {
+
 			System.out
 					.println("Unable to read user email or password. Ensure Cloud Foundry credentials are set as properties in a properties file and passed as an argument to the VM using \"-D"
 							+ CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY + "=[full file location]\"");
 		}
 
-		return new CredentialProperties(userEmail, password);
+		return new CredentialProperties(userEmail, password, org, space);
 
 	}
 }
