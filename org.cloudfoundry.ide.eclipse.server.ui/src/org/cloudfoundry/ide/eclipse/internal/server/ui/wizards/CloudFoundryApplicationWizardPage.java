@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,9 +51,13 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 
 	private String appName;
 
+	private String buildpack;
+
 	private boolean canFinish;
 
 	private Text nameText;
+
+	private Text buildpackText;
 
 	private String serverTypeId;
 
@@ -177,12 +183,62 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 			}
 		});
 
+		nameLabel = new Label(composite, SWT.NONE);
+		nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+		nameLabel.setText("Buildpack URL (optional):");
+
+		buildpackText = new Text(composite, SWT.BORDER);
+		buildpackText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		buildpackText.setEditable(true);
+
+		buildpackText.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) {
+				buildpack = buildpackText.getText().trim();
+
+				validateBuildPack();
+			}
+		});
+
 		return composite;
 
 	}
 
 	protected void update() {
 		update(true);
+	}
+
+	protected void validateBuildPack() {
+		canFinish = true;
+		setErrorMessage(null);
+
+		// Clear the previous buildpack anyway, as either a new one valid one
+		// will be set
+		// or if invalid, it should be cleared from the descriptor. The
+		// descriptor should only contain
+		// either null or a valid URL.
+		descriptor.setBuildpack(null);
+
+		// buildpack URL is optional, so an empty URL is acceptable
+		if (buildpack != null && buildpack.length() > 0) {
+			try {
+				URL urlObject = new URL(buildpack);
+				String host = urlObject.getHost();
+				if (host == null || host.length() == 0) {
+					canFinish = false;
+					setErrorMessage("Enter a valid URL");
+				}
+				else {
+					// Only set valid buildpack URLs
+					descriptor.setBuildpack(buildpack);
+				}
+			}
+			catch (MalformedURLException e) {
+				setErrorMessage("Enter a valid URL");
+				canFinish = false;
+			}
+		}
+
+		getWizard().getContainer().updateButtons();
 	}
 
 	protected void update(boolean updateButtons) {

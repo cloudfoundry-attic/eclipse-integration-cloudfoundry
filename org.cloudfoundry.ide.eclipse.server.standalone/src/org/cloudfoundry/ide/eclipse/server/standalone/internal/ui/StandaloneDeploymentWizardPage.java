@@ -13,7 +13,6 @@ package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentInfoValidator;
@@ -110,25 +109,18 @@ public class StandaloneDeploymentWizardPage extends
 			if (!standalonePart.isStartCommandValid()) {
 				setErrorMessage("Invalid start command entered.");
 			} else {
-
-				// A Staging must exist in order to set the start command
 				setErrorMessage(null);
 				canFinish = true;
 			}
 		} else {
 			setErrorMessage(status.getMessage() != null ? status.getMessage()
-					: "Invalid URL value entered.");
+					: "Invalid value entered.");
 		}
 
 		// Set the start command whether valid or not, as the contents of the
 		// descriptor are used to validate whether the wizard can complete or
 		// not
-		Staging staging = descriptor.getStaging();
-		String buildPackURL = staging != null ? staging.getBuildpackUrl()
-				: null;
-
-		staging = new Staging(startCommand, buildPackURL);
-		descriptor.setStaging(staging);
+		descriptor.setStartCommand(startCommand);
 
 		if (updateButtons) {
 			getWizard().getContainer().updateButtons();

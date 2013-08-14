@@ -55,8 +55,14 @@ public class ApplicationWizardDescriptor {
 		return staging;
 	}
 
-	public void setStaging(Staging staging) {
-		this.staging = staging;
+	public void setStartCommand(String startCommand) {
+		String buildpack = staging != null ? staging.getBuildpackUrl() : null;
+		staging = new Staging(startCommand, buildpack);
+	}
+
+	public void setBuildpack(String buildpack) {
+		String existingStartCommand = staging != null ? staging.getCommand() : null;
+		staging = new Staging(existingStartCommand, buildpack);
 	}
 
 	/**
