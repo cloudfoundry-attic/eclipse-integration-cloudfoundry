@@ -1,15 +1,16 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.tests.sts.util;
+package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -276,6 +277,16 @@ public class ServerDescriptor {
 
 	public boolean isValid() {
 		return getId() != null;
+	}
+
+	public static ServerDescriptor getServerDescriptor(CloudFoundryServer server, String serverName) {
+		ServerDescriptor descriptor = new ServerDescriptor("space server");
+		descriptor.setRuntimeTypeId("org.cloudfoundry.appcloudserver.runtime.10");
+		descriptor.setServerTypeId("org.cloudfoundry.appcloudserver.10");
+		descriptor.setRuntimeName("Cloud Foundry (Runtime) v1.0");
+		descriptor.setServerName(serverName);
+		descriptor.setForceCreateRuntime(true);
+		return descriptor;
 	}
 
 }

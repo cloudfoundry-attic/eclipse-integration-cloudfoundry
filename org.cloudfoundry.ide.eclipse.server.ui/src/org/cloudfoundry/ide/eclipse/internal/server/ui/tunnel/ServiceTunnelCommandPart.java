@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
@@ -21,6 +21,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServerService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommandManager;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ServiceCommandWizard;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -297,7 +298,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 	}
 
 	protected Shell getShell() {
-		Shell shell = super.getShell();
+		Shell shell = CloudUiUtil.getShell();
 		if (shell == null) {
 			shell = derivedShell;
 		}

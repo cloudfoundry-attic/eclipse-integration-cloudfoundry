@@ -81,6 +81,12 @@
              label="Go to Spring Insight">
        </action>
        -->
+       <action
+             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloneServerAction"
+             enablesFor="1"
+             id="org.cloudfoundry.ide.eclipse.server.ui.action.cloneserver"
+             label="Clone Server...">
+       </action>
     </objectContribution>
     <objectContribution
           adaptable="true"

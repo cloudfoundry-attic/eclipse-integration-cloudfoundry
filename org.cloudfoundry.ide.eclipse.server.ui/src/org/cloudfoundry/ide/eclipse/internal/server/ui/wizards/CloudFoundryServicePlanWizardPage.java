@@ -193,7 +193,7 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 	}
 
 	protected boolean supportsSpaces() {
-		return cloudServer != null && cloudServer.supportsCloudSpaces();
+		return cloudServer != null && cloudServer.hasCloudSpace();
 	}
 
 	protected void refresh() {

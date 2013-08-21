@@ -12,8 +12,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import junit.framework.TestCase;
 
-import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ServerDescriptor;
-import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ServerHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.wst.server.core.IServer;

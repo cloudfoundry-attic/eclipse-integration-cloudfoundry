@@ -40,6 +40,7 @@ public abstract class AbstractCloudFoundryServerAction implements IObjectActionD
 	protected void serverSelectionChanged(IAction action) {
 		// Do nothing
 	}
+	
 
 	protected IServer getSelectedServer(ISelection selection) {
 		IServer server = null;

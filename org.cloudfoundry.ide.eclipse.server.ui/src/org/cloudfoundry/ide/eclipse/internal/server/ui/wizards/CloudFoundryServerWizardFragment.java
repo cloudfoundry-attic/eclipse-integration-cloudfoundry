@@ -134,14 +134,11 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 				boolean connect = false;
 
-				if (cf.supportsCloudSpaces() && originalServer.supportsCloudSpaces()) {
+				if (cf.hasCloudSpace() && originalServer.hasCloudSpace()) {
 					CloudFoundrySpace originalSpace = originalServer.getCloudFoundrySpace();
 					CloudFoundrySpace space = cf.getCloudFoundrySpace();
 					connect = space.getOrgName().equals(originalSpace.getOrgName())
 							&& space.getSpaceName().equals(originalSpace.getSpaceName());
-				}
-				else if (!cf.supportsCloudSpaces() && !originalServer.supportsCloudSpaces()) {
-					connect = true;
 				}
 
 				if (connect) {
@@ -164,11 +161,11 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 	/**
 	 * Add or removes the orgs and spaces wizard page based on whether a cloud
 	 * space descriptor, which contains a list of orgs and spaces, is changed or
-	 * not. If the changed descriptor is null, the spaces wizard page is removed.
-	 * Otherwise, it is added. Changes in user credentials, and validation of
-	 * the credentials typically trigger spaces descriptor changes, which
-	 * affects whether the spaces page is shown or not in the New CF Server
-	 * wizard.
+	 * not. If the changed descriptor is null, the spaces wizard page is
+	 * removed. Otherwise, it is added. Changes in user credentials, and
+	 * validation of the credentials typically trigger spaces descriptor
+	 * changes, which affects whether the spaces page is shown or not in the New
+	 * CF Server wizard.
 	 * 
 	 */
 	protected class WizardFragmentSpaceChangeHandler extends CloudSpaceChangeHandler {

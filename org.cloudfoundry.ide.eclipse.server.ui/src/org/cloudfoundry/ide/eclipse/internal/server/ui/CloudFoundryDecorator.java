@@ -103,7 +103,7 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 				if (cfServer != null && cfServer.getUsername() != null) {
 					// decoration.addSuffix(NLS.bind("  [{0}, {1}]",
 					// cfServer.getUsername(), cfServer.getUrl()));
-					if (cfServer.supportsCloudSpaces()) {
+					if (cfServer.hasCloudSpace()) {
 						CloudFoundrySpace clSpace = cfServer.getCloudFoundrySpace();
 						if (clSpace != null) {
 							decoration

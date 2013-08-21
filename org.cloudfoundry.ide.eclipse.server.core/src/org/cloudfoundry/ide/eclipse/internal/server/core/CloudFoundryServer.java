@@ -271,7 +271,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		return getAttribute(PROP_SERVER_ID, (String) null);
 	}
 
-	public boolean supportsCloudSpaces() {
+	public boolean hasCloudSpace() {
 		return getCloudFoundrySpace() != null;
 	}
 
@@ -400,7 +400,12 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	public void setSpace(CloudSpace space) {
-		this.secureStoreDirty = true;
+		
+		secureStoreDirty = true;
+		
+		CloudFoundrySpace existingSpace = getCloudFoundrySpace();
+		
+	
 
 		if (space != null) {
 			this.cloudSpace = new CloudFoundrySpace(space);
@@ -446,7 +451,7 @@ public class CloudFoundryServer extends ServerDelegate {
 	private void updateServerId() {
 		StringWriter writer = new StringWriter();
 		writer.append(getUsername());
-		if (supportsCloudSpaces()) {
+		if (hasCloudSpace()) {
 			writer.append('_');
 			writer.append(getOrg());
 			writer.append('_');

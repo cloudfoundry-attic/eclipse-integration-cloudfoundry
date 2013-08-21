@@ -335,6 +335,11 @@ public class CloudFoundryPlugin extends Plugin {
 			tracker.close();
 			tracker = null;
 		}
+		
+		if (moduleCache != null) {
+			moduleCache.dispose();
+			moduleCache = null;
+		}
 
 		plugin = null;
 		super.stop(context);

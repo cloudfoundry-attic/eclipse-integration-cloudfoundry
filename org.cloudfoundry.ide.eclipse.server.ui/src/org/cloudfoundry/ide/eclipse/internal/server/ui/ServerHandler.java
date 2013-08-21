@@ -1,31 +1,29 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.tests.sts.util;
+package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.cloudfoundry.ide.eclipse.server.tests.AllCloudFoundryTests;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.osgi.util.NLS;
@@ -43,6 +41,10 @@ import org.eclipse.wst.server.core.ServerPort;
 import org.eclipse.wst.server.core.ServerUtil;
 
 /**
+ * 
+ * Creates a new server instance based on the given server descriptor. Checks if
+ * an existing server is present, and prompts to overwrite it if necessary.
+ * 
  * @author Steffen Pingel
  * @author Christian Dupuis
  * @author Terry Denney
@@ -136,8 +138,8 @@ public class ServerHandler {
 
 			IServerType st = ServerCore.findServerType(serverType);
 			if (st == null) {
-				throw new CoreException(new Status(IStatus.ERROR, AllCloudFoundryTests.PLUGIN_ID,
-						"Could not find server type \"" + serverType + "\""));
+				throw new CoreException(CloudFoundryPlugin.getErrorStatus("Could not find server type \"" + serverType
+						+ "\""));
 			}
 			IRuntime runtime;
 			if (serverPath != null) {
@@ -205,6 +207,15 @@ public class ServerHandler {
 		return verifyPath;
 	}
 
+	/**
+	 * Programmatic launch. Generally done by the WST framework (e.g. when a
+	 * user double clicks on the server instance in the Server's view or selects
+	 * "Connect"). This is generally used only for unit test cases.
+	 * @param project
+	 * @param monitor
+	 * @return
+	 * @throws CoreException
+	 */
 	public IServer launch(IProject project, IProgressMonitor monitor) throws CoreException {
 		try {
 			monitor.beginTask("Launching " + project.getName(), IProgressMonitor.UNKNOWN);
@@ -214,8 +225,8 @@ public class ServerHandler {
 			IServerWorkingCopy wc = server.createWorkingCopy();
 			IModule[] modules = ServerUtil.getModules(project);
 			if (modules == null || modules.length == 0) {
-				throw new CoreException(new Status(IStatus.ERROR, AllCloudFoundryTests.PLUGIN_ID,
-						"Sample project does not contain web modules: " + project));
+				throw new CoreException(
+						CloudFoundryPlugin.getErrorStatus("Sample project does not contain web modules: " + project));
 			}
 
 			if (!Arrays.asList(wc.getModules()).contains(modules[0])) {
@@ -233,23 +244,23 @@ public class ServerHandler {
 		}
 	}
 
-	public void setForceCreateRuntime(boolean forceCreateRuntime) {
+	protected void setForceCreateRuntime(boolean forceCreateRuntime) {
 		this.forceCreateRuntime = forceCreateRuntime;
 	}
 
-	public void setRuntimeName(String runtimeName) {
+	protected void setRuntimeName(String runtimeName) {
 		this.runtimeName = runtimeName;
 	}
 
-	public void setServerName(String serverName) {
+	protected void setServerName(String serverName) {
 		this.serverName = serverName;
 	}
 
-	public void setServerPath(String serverPath) {
+	protected void setServerPath(String serverPath) {
 		this.serverPath = serverPath;
 	}
 
-	public void setVerifyPath(String verifyPath) {
+	protected void setVerifyPath(String verifyPath) {
 		this.verifyPath = verifyPath;
 	}
 
@@ -261,7 +272,7 @@ public class ServerHandler {
 		return serverPath;
 	}
 
-	private IRuntime createRuntime(IServerType st, IPath path, IProgressMonitor monitor, IOverwriteQuery query)
+	protected IRuntime createRuntime(IServerType st, IPath path, IProgressMonitor monitor, IOverwriteQuery query)
 			throws CoreException {
 		IRuntime runtime = ServerCore.findRuntime(runtimeName);
 		if (runtime != null) {
@@ -322,7 +333,7 @@ public class ServerHandler {
 				}
 			}
 		}
-		throw new CoreException(new Status(IStatus.ERROR, AllCloudFoundryTests.PLUGIN_ID, "No matching runtime found"));
+		throw new CoreException(CloudFoundryPlugin.getErrorStatus("No matching runtime found"));
 	}
 
 	private IServer findServer(IServerType st, IRuntime runtime, IProgressMonitor monitor) throws CoreException {
@@ -334,7 +345,7 @@ public class ServerHandler {
 				}
 			}
 		}
-		throw new CoreException(new Status(IStatus.ERROR, AllCloudFoundryTests.PLUGIN_ID, "No matching server found"));
+		throw new CoreException(CloudFoundryPlugin.getErrorStatus("No matching server found"));
 	}
 
 	private boolean query(IOverwriteQuery query, String message) {

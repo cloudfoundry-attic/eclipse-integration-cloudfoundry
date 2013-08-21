@@ -376,7 +376,7 @@ public class ApplicationMasterPart extends SectionPart {
 					}
 
 				});
-		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer, cloudServer.supportsCloudSpaces()) {
+		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer, cloudServer.hasCloudSpace()) {
 
 			@Override
 			protected int compare(CloudService service1, CloudService service2, ServiceViewColumn sortColumn) {

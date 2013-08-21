@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2013 VMware, Inc.
+ * Copyright (c) 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.EnvironmentVariable;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.TableResizeHelper;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
@@ -208,7 +209,7 @@ public class EnvironmentVariablesPart extends AbstractPart {
 	}
 
 	protected void handleAdd() {
-		Shell shell = getShell();
+		Shell shell = CloudUiUtil.getShell();
 		if (shell != null) {
 			VariableDialogue dialogue = new VariableDialogue(shell, null);
 			if (dialogue.open() == Window.OK) {
@@ -218,7 +219,7 @@ public class EnvironmentVariablesPart extends AbstractPart {
 	}
 
 	protected void handleEdit() {
-		Shell shell = getShell();
+		Shell shell = CloudUiUtil.getShell();
 		List<EnvironmentVariable> selection = getViewerSelection();
 		if (shell != null && selection != null && !selection.isEmpty()) {
 			EnvironmentVariable toEdit = selection.get(0);

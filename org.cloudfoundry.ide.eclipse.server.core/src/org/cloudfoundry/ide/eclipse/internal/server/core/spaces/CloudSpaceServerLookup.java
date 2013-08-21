@@ -74,7 +74,7 @@ public class CloudSpaceServerLookup {
 	public CloudFoundrySpace getCloudSpace(IProgressMonitor monitor) throws CoreException {
 		CloudFoundrySpace cloudFoundrySpace = null;
 		String url = cloudServer.getUrl();
-		if (cloudServer.supportsCloudSpaces()) {
+		if (cloudServer.hasCloudSpace()) {
 			cloudFoundrySpace = cloudServer.getCloudFoundrySpace();
 
 			if (cloudFoundrySpace != null && cloudFoundrySpace.getSpace() == null) {

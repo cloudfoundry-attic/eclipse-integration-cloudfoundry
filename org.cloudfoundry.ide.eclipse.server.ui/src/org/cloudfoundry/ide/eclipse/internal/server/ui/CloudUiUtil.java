@@ -516,5 +516,13 @@ public class CloudUiUtil {
 		}
 		return null;
 	}
+	
+	/**
+	 * Returns the current shell or null.
+	 * @return
+	 */
+	public static Shell getShell() {
+		return PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
+	}
 
 }

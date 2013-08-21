@@ -106,8 +106,8 @@ public class CloudSpacesSelectionPart {
 		return tableArea;
 	}
 
-	protected void setInput() {
-		if (spaceChangeHandler != null && orgsSpacesViewer != null) {
+	public void setInput() {
+		if (spaceChangeHandler != null && orgsSpacesViewer != null && !orgsSpacesViewer.getTree().isDisposed()) {
 			List<CloudOrganization> orgInput = spaceChangeHandler.getCurrentSpacesDescriptor() != null ? spaceChangeHandler
 					.getCurrentSpacesDescriptor().getOrgsAndSpaces().getOrgs()
 					: null;
@@ -118,8 +118,8 @@ public class CloudSpacesSelectionPart {
 				// Expand all first, so that child elements can be selected
 				orgsSpacesViewer.setExpandedElements(organizationInput);
 
-				CloudSpace selectedSpace = spaceChangeHandler.getCurrentSpacesDescriptor().getOrgsAndSpaces()
-						.getDefaultCloudSpace();
+				CloudSpace selectedSpace = spaceChangeHandler.getCurrentSpacesDescriptor() != null ? spaceChangeHandler
+						.getCurrentSpacesDescriptor().getOrgsAndSpaces().getDefaultCloudSpace() : null;
 				if (selectedSpace != null) {
 
 					// First set the default cloud space as the selected space

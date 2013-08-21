@@ -18,6 +18,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryURLNavigation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.UpdatePasswordDialog;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.OrgsAndSpacesWizard;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.operations.AbstractOperation;
 import org.eclipse.core.runtime.IAdaptable;
@@ -26,6 +27,8 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -70,6 +73,8 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 
 	private Text spaceText;
 
+	private Label validateLabel;
+
 	// private CloudUrlWidget urlWidget;
 
 	// private Combo urlCombo;
@@ -92,7 +97,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 			urlText.setText(CloudUiUtil.getDisplayTextFromUrl(cfServer.getUrl(), cfServer.getServer().getServerType()
 					.getId()));
 		}
-		if (cfServer.supportsCloudSpaces()) {
+		if (cfServer.hasCloudSpace()) {
 			if (cfServer.getCloudFoundrySpace() != null && cfServer.getCloudFoundrySpace().getOrgName() != null
 					&& orgText != null && !cfServer.getCloudFoundrySpace().getOrgName().equals(orgText.getText())) {
 				orgText.setText(cfServer.getCloudFoundrySpace().getOrgName());
@@ -194,19 +199,25 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		// urlWidget.getUrlCombo().addModifyListener(new
 		// DataChangeListener(DataType.URL));
 		//
-		final Composite validateComposite = toolkit.createComposite(composite);
-		validateComposite.setLayout(new GridLayout(4, false));
+		final Composite buttonComposite = toolkit.createComposite(composite);
+
+		buttonComposite.setLayout(new GridLayout(4, false));
+		GridDataFactory.fillDefaults().align(SWT.END, SWT.FILL).grab(true, false).applyTo(buttonComposite);
+
+		Composite validateComposite = toolkit.createComposite(composite);
+		validateComposite.setLayout(new GridLayout(1, false));
 		validateComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
-		final Label validateLabel = toolkit.createLabel(validateComposite, "", SWT.NONE);
+		validateLabel = toolkit.createLabel(validateComposite, "", SWT.NONE);
 		validateLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-		final Button changePasswordButton = toolkit.createButton(validateComposite, "Change Password...", SWT.PUSH);
+		createCloneServerArea(buttonComposite, toolkit);
 
-		//Pivotal Tracker: 54644658 - Disable for CF 1.5.0 until fixed. 
+		final Button changePasswordButton = toolkit.createButton(buttonComposite, "Change Password...", SWT.PUSH);
+
+		// Pivotal Tracker: 54644658 - Disable for CF 1.5.0 until fixed.
 		changePasswordButton.setEnabled(false);
-		
-		
+
 		changePasswordButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 		changePasswordButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -238,7 +249,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 			}
 		});
 
-		final Button validateButton = toolkit.createButton(validateComposite, "Validate Account", SWT.PUSH);
+		final Button validateButton = toolkit.createButton(buttonComposite, "Validate Account", SWT.PUSH);
 		validateButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 		validateButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -246,26 +257,29 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 				final String url = cfServer.getUrl();
 				final String userName = emailText.getText();
 				final String password = passwordText.getText();
-				final String org = orgText != null ? orgText.getText() : null;
-				final String space = spaceText != null ? spaceText.getText() : null;
+				final String org = orgText.getText();
+				final String space = spaceText.getText();
 				String errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, url, false, null);
 
-				if (errorMsg == null) {
+				if (errorMsg == null && org != null && space != null) {
 					validateLabel.setText("Account information is valid.");
 					validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_BLACK));
 				}
 				else {
+					if (org == null || space == null) {
+						errorMsg = "Invalid organization or space.";
+					}
 					validateLabel.setText(errorMsg);
 					validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
 				}
 
-				validateComposite.layout(new Control[] { validateLabel, validateButton });
+				buttonComposite.layout(new Control[] { validateLabel, validateButton });
 			}
 		});
 
 		// Create signup button only if the server is not local or micro
 		if (CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(cfServer)) {
-			Button cfSignup = toolkit.createButton(validateComposite,
+			Button cfSignup = toolkit.createButton(buttonComposite,
 					CloudFoundryConstants.PUBLIC_CF_SERVER_SIGNUP_LABEL, SWT.PUSH);
 			cfSignup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 			cfSignup.addSelectionListener(new SelectionAdapter() {
@@ -280,6 +294,25 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		section.setExpanded(true);
 
 		CloudFoundryPlugin.getDefault().addServerListener(this);
+	}
+
+	protected void createCloneServerArea(Composite parent, FormToolkit toolkit) {
+		final Button changeSpaceButton = toolkit.createButton(parent, "Clone Server", SWT.PUSH);
+
+		changeSpaceButton.setEnabled(true);
+
+		changeSpaceButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
+		changeSpaceButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+
+				OrgsAndSpacesWizard wizard = new OrgsAndSpacesWizard(cfServer);
+
+				WizardDialog dialog = new WizardDialog(getShell(), wizard);
+				dialog.open();
+
+			}
+		});
 	}
 
 	@Override
