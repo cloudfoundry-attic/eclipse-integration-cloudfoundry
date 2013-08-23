@@ -38,7 +38,7 @@ import org.eclipse.wst.server.ui.wizard.IWizardHandle;
 
 public class CloudSpacesSelectionPart {
 
-	private static final String DEFAULT_DESCRIPTION = "Selected an organization and space";
+	private static final String DEFAULT_DESCRIPTION = "Select an organization and space";
 
 	private TreeViewer orgsSpacesViewer;
 

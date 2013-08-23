@@ -11,23 +11,29 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudSpacesSelectionPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeHandler;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
 
 public class CloudFoundryCloudSpaceWizardpage extends WizardPage {
 
-	private CloudSpaceChangeHandler spaceChangeHandler;
+	protected CloudSpaceChangeHandler spaceChangeHandler;
 
-	private final CloudFoundryServer cloudServer;
+	protected final CloudFoundryServer cloudServer;
 
-	private CloudSpacesSelectionPart spacesPart;
+	protected CloudSpacesSelectionPart spacesPart;
 
 	public CloudFoundryCloudSpaceWizardpage(CloudFoundryServer cloudServer, CloudSpaceChangeHandler spaceChangeHandler) {
 		super(cloudServer.getServer().getName() + " Organization and Spaces");
 		this.cloudServer = cloudServer;
 		this.spaceChangeHandler = spaceChangeHandler;
+		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(cloudServer.getServer().getServerType().getId());
+		if (banner != null) {
+			setImageDescriptor(banner);
+		}
 	}
 
 	public void createControl(Composite parent) {
