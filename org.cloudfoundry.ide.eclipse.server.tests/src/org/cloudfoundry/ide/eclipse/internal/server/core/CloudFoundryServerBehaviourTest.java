@@ -77,7 +77,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		// wait 1s until app is actually started
 		URI uri = new URI("http://" + harness.getUrl("dynamic-webapp") + "/index.html");
-		assertEquals("Hello World.", getContent(uri));
+		assertEquals("Hello World.", getContent(uri, appModule.getApplication(), serverBehavior));
 	}
 
 	// XXX this test fails on the build server for an unknown reason
@@ -163,7 +163,8 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		// wait 1s until app is actually started
 		URI uri = new URI("http://" + harness.getUrl("dynamic-webapp") + "/index.html");
-		assertEquals("Hello World.", getContent(uri));
+		assertEquals("Hello World.",
+				getContent(uri, serverBehavior.getApplication("dynamic-webapp", null), serverBehavior));
 
 		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
 		boolean found = false;
@@ -222,7 +223,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		// wait 1s until app is actually started
 		URI uri = new URI("http://" + harness.getUrl("dynamic-webapp") + "/index.html");
-		assertEquals("Hello World.", getContent(uri));
+		assertEquals("Hello World.", getContent(uri, appModule.getApplication(), serverBehavior));
 
 		serverBehavior.refreshModules(new NullProgressMonitor());
 		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
@@ -245,11 +246,12 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		IModule[] modules = server.getModules();
 		serverBehavior.deployOrStartModule(modules, true, null);
 
+		CloudFoundryApplicationModule module = cloudServer.getApplication(modules[0]);
+
 		// wait 1s until app is actually started
 		URI uri = new URI("http://" + harness.getUrl("dynamic-webapp") + "/index.html");
-		assertEquals("Hello World.", getContent(uri));
+		assertEquals("Hello World.", getContent(uri, module.getApplication(), serverBehavior));
 
-		CloudFoundryApplicationModule module = cloudServer.getApplication(modules[0]);
 		Assert.assertNull(module.getErrorMessage());
 
 		harness = CloudFoundryTestFixture.current("dynamic-webapp-with-appclient-module",

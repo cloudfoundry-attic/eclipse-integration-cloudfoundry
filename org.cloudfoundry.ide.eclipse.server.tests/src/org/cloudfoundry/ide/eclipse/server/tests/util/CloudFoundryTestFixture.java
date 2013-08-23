@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.cloudfoundry.client.lib.domain.CloudDomain;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -72,6 +73,8 @@ public class CloudFoundryTestFixture {
 		private IServer server;
 
 		private WebApplicationContainerBean webContainer;
+
+		private String applicationDomain;
 
 		public IProject createProjectAndAddModule(String projectName) throws Exception {
 			IProject project = createProject(projectName);
@@ -145,6 +148,13 @@ public class CloudFoundryTestFixture {
 
 				// Delete all services
 				deleteAllServices();
+
+				List<CloudDomain> domains = serverBehavior.getDomains();
+
+				// Get a default domain
+				applicationDomain = domains.get(0).getName();
+				applicationDomain = applicationDomain.replace("http://", "");
+
 			}
 		}
 
@@ -212,7 +222,7 @@ public class CloudFoundryTestFixture {
 		}
 
 		public String getUrl(String projectName) {
-			return projectName + "." + domain;
+			return projectName + "." + applicationDomain;
 		}
 
 		public TestServlet startMockServer() throws Exception {
@@ -234,8 +244,6 @@ public class CloudFoundryTestFixture {
 	}
 
 	public static final String PLUGIN_ID = "org.cloudfoundry.ide.eclipse.server.tests";
-
-	private static final String DOMAIN = System.getProperty("vcap.target", "run.pivotal.io");
 
 	public static final CredentialProperties USER_CREDENTIALS = getUserTestCredentials();
 
@@ -276,17 +284,15 @@ public class CloudFoundryTestFixture {
 		return null;
 	}
 
-	private final String domain;
-
 	private final ServerHandler handler;
 
 	private final CredentialProperties credentials;
 
 	private final String url;
 
-	public CloudFoundryTestFixture(String domain, CredentialProperties credentials) {
-		this.domain = domain;
-		this.url = "http://api." + domain;
+	public CloudFoundryTestFixture(String serverDomain, CredentialProperties credentials) {
+
+		this.url = "http://api." + serverDomain;
 		this.credentials = credentials;
 
 		ServerDescriptor descriptor = new ServerDescriptor("server") {

@@ -24,6 +24,7 @@ import junit.framework.TestCase;
 
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
+import org.cloudfoundry.client.lib.NotFinishedStagingException;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.server.tests.server.TestServlet;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
@@ -78,19 +79,28 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		harness.dispose();
 	}
 
-	protected String getContent(final URI uri) throws Exception {
+	protected String getContent(final URI uri, final CloudApplication app, final CloudFoundryServerBehaviour behaviour)
+			throws Exception {
 
 		String value = null;
 
 		try {
 
-			value = new AbstractWaitWithProgressJob<String>(10, 2000) {
+			value = new AbstractWaitWithProgressJob<String>(5, 2000) {
+
+				boolean stagingCompleted = false;
 
 				@Override
 				protected String runInWait(IProgressMonitor monitor) throws CoreException {
 					// InputStream in = uri.toURL().openStream();
 					CloudFoundryPlugin.trace("Probing " + uri);
+
 					try {
+						if (!stagingCompleted) {
+							behaviour.getInstancesInfo(app.getName(), monitor);
+							stagingCompleted = true;
+						}
+
 						BufferedReader reader = new BufferedReader(new InputStreamReader(download(uri,
 								new NullProgressMonitor())));
 						try {
@@ -103,7 +113,10 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 							}
 						}
 					}
-					catch (Throwable t) {
+					catch (NotFinishedStagingException t) {
+						throw new CoreException(CloudFoundryPlugin.getErrorStatus(t));
+					}
+					catch (IOException t) {
 						throw new CoreException(CloudFoundryPlugin.getErrorStatus(t));
 					}
 				}
@@ -112,7 +125,12 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 				// long to
 				// get a result
 				protected boolean shouldRetryOnError(Throwable t) {
-					return true;
+					if (t instanceof CoreException) {
+						Throwable cause = ((CoreException) t).getCause();
+						return cause instanceof NotFinishedStagingException || cause instanceof IOException;
+					}
+					return false;
+
 				}
 
 			}.run(new NullProgressMonitor());
