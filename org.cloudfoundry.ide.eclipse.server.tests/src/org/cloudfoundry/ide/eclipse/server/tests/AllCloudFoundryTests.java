@@ -13,7 +13,6 @@ package org.cloudfoundry.ide.eclipse.server.tests;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CaldecottTunnelTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryClientTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConsoleTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProxyTest;
@@ -51,7 +50,7 @@ public class AllCloudFoundryTests {
 
 		// These need to be enabled only if a light-weight http servlet is
 		// included in the build. They have been commented out since CF 1.0.0
-		// 	See STS-3159
+		// See STS-3159
 		// XXX suite.addTestSuite(LocalCloudFoundryServerBehaviourTest.class);
 		// suite.addTestSuite(CloudFoundryMockServerTest.class);
 
@@ -61,7 +60,9 @@ public class AllCloudFoundryTests {
 		suite.addTestSuite(CloudFoundryServicesTest.class);
 		suite.addTestSuite(CloudFoundryConsoleTest.class);
 		suite.addTestSuite(CloudFoundryClientTest.class);
-		suite.addTestSuite(CaldecottTunnelTest.class);
+
+		// TODO: Enable when Caldecott is fixed post CF 1.5.1
+		// suite.addTestSuite(CaldecottTunnelTest.class);
 
 		return suite;
 	}

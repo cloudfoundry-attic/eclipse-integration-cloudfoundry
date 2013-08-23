@@ -24,6 +24,8 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudOrgsAndSpaces;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerHandler;
 import org.cloudfoundry.ide.eclipse.server.tests.AllCloudFoundryTests;
@@ -102,8 +104,20 @@ public class CloudFoundryTestFixture {
 			cloudFoundryServer.setUsername(credentials.userEmail);
 
 			cloudFoundryServer.setUrl(getUrl());
+
+			setDefaultCloudSpace(cloudFoundryServer);
+
 			serverWC.save(true, null);
 			return server;
+		}
+
+		protected void setDefaultCloudSpace(CloudFoundryServer cloudServer) throws CoreException {
+			CloudOrgsAndSpaces spaces = CloudUiUtil.getCloudSpaces(cloudServer.getUsername(),
+					cloudServer.getPassword(), cloudServer.getUrl(), false, null);
+			Assert.isTrue(spaces != null, "Failed to resolve orgs and spaces.");
+			Assert.isTrue(spaces.getDefaultCloudSpace() != null,
+					"No default space selected in cloud space lookup handler.");
+			cloudServer.setSpace(spaces.getDefaultCloudSpace());
 		}
 
 		public String getUrl() {
