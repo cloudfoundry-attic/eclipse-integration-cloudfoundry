@@ -180,6 +180,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		CloudFoundryPlugin.getDefault().fireServicesUpdated(getCloudFoundryServer());
 	}
 
+	public synchronized List<CloudDomain> getDomains() {
+		return domainFromOrgs;
+	}
+
 	public synchronized String getLaunchURL(String applicationName, CloudDomain domain) throws CoreException {
 
 		if (domain == null) {
@@ -669,6 +673,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public void resetClient() {
 		client = null;
+		domainFromOrgs = null;
 	}
 
 	protected DeploymentDescriptor getDeploymentDescriptor(IModule[] modules, IProgressMonitor monitor)
