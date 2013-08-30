@@ -42,7 +42,7 @@ public class CloudFoundryApplicationWizard extends Wizard {
 		this.provider = provider;
 
 		applicationDescriptor = new ApplicationWizardDescriptor();
-
+		setNeedsProgressMonitor(true);
 		setWindowTitle("Application");
 	}
 

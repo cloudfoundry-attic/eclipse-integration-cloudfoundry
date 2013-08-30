@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
@@ -16,7 +16,7 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -44,14 +44,14 @@ public class CloudUrlDialog extends Dialog {
 
 	private Label messageLabel;
 
-	private final List<CloudURL> allCloudUrls;
+	private final List<CloudServerURL> allCloudUrls;
 	
-	public CloudUrlDialog(Shell parentShell, List<CloudURL> allCloudUrls) {
+	public CloudUrlDialog(Shell parentShell, List<CloudServerURL> allCloudUrls) {
 		super(parentShell);
 		this.allCloudUrls = allCloudUrls;
 	}
 	
-	public CloudUrlDialog(Shell parentShell, String name, String url, List<CloudURL> allCloudUrls) {
+	public CloudUrlDialog(Shell parentShell, String name, String url, List<CloudServerURL> allCloudUrls) {
 		super(parentShell);
 		this.name = name;
 		this.url = url;
@@ -120,7 +120,7 @@ public class CloudUrlDialog extends Dialog {
 			canFinish = true;
 			
 //			List<CloudURL> cloudUrls = CloudUiUtil.getAllUrls(serverTypeId);
-			for(CloudURL cloudUrl: allCloudUrls) {
+			for(CloudServerURL cloudUrl: allCloudUrls) {
 				if (! cloudUrl.getUrl().contains("{")) {
 					if (cloudUrl.getName().equals(name)) {
 						canFinish = false;

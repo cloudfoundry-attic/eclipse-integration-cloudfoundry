@@ -131,15 +131,6 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 		return staging;
 	}
 
-	public String getDefaultLaunchUrl() throws CoreException {
-		return getLaunchUrl(getName());
-	}
-
-	public String getLaunchUrl(String appName) throws CoreException {
-		CloudFoundryServer cloudServer = (CloudFoundryServer) server.getAdapter(CloudFoundryServer.class);
-		return cloudServer.getBehaviour().getLaunchURL(appName, null);
-	}
-
 	public synchronized int getInstanceCount() {
 		if (application != null) {
 			return application.getInstances();

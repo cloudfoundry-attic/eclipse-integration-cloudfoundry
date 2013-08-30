@@ -55,7 +55,7 @@ public class CloudFoundryBrandingExtensionPoint {
 
 	private static boolean read;
 
-	public static class CloudURL {
+	public static class CloudServerURL {
 
 		private final String name;
 
@@ -63,7 +63,7 @@ public class CloudFoundryBrandingExtensionPoint {
 
 		private final boolean userDefined;
 
-		public CloudURL(String name, String url, boolean userDefined) {
+		public CloudServerURL(String name, String url, boolean userDefined) {
 			this.name = name;
 			this.url = url;
 			this.userDefined = userDefined;
@@ -90,13 +90,13 @@ public class CloudFoundryBrandingExtensionPoint {
 		return brandingDefinitions.get(serverTypeId);
 	}
 
-	private static List<CloudURL> getUrls(String serverTypeId, String elementType) {
+	private static List<CloudServerURL> getUrls(String serverTypeId, String elementType) {
 		if (!read) {
 			readBrandingDefinitions();
 		}
 		IConfigurationElement config = brandingDefinitions.get(serverTypeId);
 		if (config != null) {
-			List<CloudURL> result = new ArrayList<CloudURL>();
+			List<CloudServerURL> result = new ArrayList<CloudServerURL>();
 			IConfigurationElement[] defaultUrls = config.getChildren(elementType);
 			for (IConfigurationElement defaultUrl : defaultUrls) {
 				String urlName = defaultUrl.getAttribute(ATTR_NAME);
@@ -108,7 +108,7 @@ public class CloudFoundryBrandingExtensionPoint {
 						String wildcardName = wildcard.getAttribute(ATTR_NAME);
 						url = url.replaceAll(wildcardName, "{" + wildcardName + "}");
 					}
-					result.add(new CloudURL(urlName, url, false));
+					result.add(new CloudServerURL(urlName, url, false));
 				}
 			}
 			return result;
@@ -117,12 +117,12 @@ public class CloudFoundryBrandingExtensionPoint {
 		return null;
 	}
 
-	public static List<CloudURL> getCloudUrls(String serverTypeId) {
+	public static List<CloudServerURL> getCloudUrls(String serverTypeId) {
 		return getUrls(serverTypeId, ELEM_CLOUD_URL);
 	}
 
-	public static CloudURL getDefaultUrl(String serverTypeId) {
-		List<CloudURL> urls = getUrls(serverTypeId, ELEM_DEFAULT_URL);
+	public static CloudServerURL getDefaultUrl(String serverTypeId) {
+		List<CloudServerURL> urls = getUrls(serverTypeId, ELEM_DEFAULT_URL);
 		if (urls != null && urls.size() == 1) {
 			return urls.get(0);
 		}

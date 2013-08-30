@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2013 VMware, Inc.
+ * Copyright (c) 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 
@@ -17,7 +17,7 @@ import java.util.Map.Entry;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener.PartChangeEvent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -34,7 +34,7 @@ import org.eclipse.swt.widgets.Text;
  * if an environment variable is defined as HOST=${host}, this will prompt the
  * user for a value for "host"
  */
-public class SetValueVariablesPart extends AbstractPart {
+public class SetValueVariablesPart extends UIPart {
 
 	private final Map<String, String> optionsValueVariables;
 
@@ -138,7 +138,7 @@ public class SetValueVariablesPart extends AbstractPart {
 			status = CloudFoundryPlugin.getErrorStatus(showError ? missingValueVariable + " requires a value" : "");
 		}
 
-		notifyChange(new PartChangeEvent(null, status));
+		notifyStatusChange(status);
 		return status;
 	}
 

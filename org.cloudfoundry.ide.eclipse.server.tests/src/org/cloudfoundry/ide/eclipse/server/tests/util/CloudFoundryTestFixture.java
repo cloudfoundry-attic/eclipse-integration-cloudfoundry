@@ -149,7 +149,7 @@ public class CloudFoundryTestFixture {
 				// Delete all services
 				deleteAllServices();
 
-				List<CloudDomain> domains = serverBehavior.getDomains();
+				List<CloudDomain> domains = serverBehavior.getDomainsForSpace(new NullProgressMonitor());
 
 				// Get a default domain
 				applicationDomain = domains.get(0).getName();

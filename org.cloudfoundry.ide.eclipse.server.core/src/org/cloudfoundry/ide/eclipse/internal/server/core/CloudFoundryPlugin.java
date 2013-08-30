@@ -335,7 +335,7 @@ public class CloudFoundryPlugin extends Plugin {
 			tracker.close();
 			tracker = null;
 		}
-		
+
 		if (moduleCache != null) {
 			moduleCache.dispose();
 			moduleCache = null;
@@ -388,6 +388,10 @@ public class CloudFoundryPlugin extends Plugin {
 
 	public static IStatus getErrorStatus(String message) {
 		return new Status(IStatus.ERROR, PLUGIN_ID, message);
+	}
+
+	public static IStatus getStatus(String message, int type) {
+		return new Status(type, PLUGIN_ID, message);
 	}
 
 	public static IStatus getErrorStatus(Throwable t) {

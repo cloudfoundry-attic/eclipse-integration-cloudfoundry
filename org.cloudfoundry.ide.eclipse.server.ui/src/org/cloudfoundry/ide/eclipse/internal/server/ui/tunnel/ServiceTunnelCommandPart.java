@@ -22,6 +22,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommandManager;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ServiceCommandWizard;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -52,7 +53,7 @@ import org.eclipse.swt.widgets.Table;
  * Allows editing of commands per service
  *
  */
-public class ServiceTunnelCommandPart extends AbstractPart {
+public class ServiceTunnelCommandPart extends UIPart {
 
 	protected enum ControlData {
 		Add, Delete, Edit;
@@ -254,7 +255,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 			setServiceCommandInput(initialSelection, null);
 		}
 
-		setStatus(null);
+		notifyStatusChange(null);
 	}
 
 	protected void setServiceCommandInput(ServerService service, ServiceCommand commandToSelect) {
@@ -335,7 +336,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 								editedCommand);
 
 						if (!added) {
-							setStatus(CloudFoundryPlugin.getErrorStatus("Failed to add command: "
+							notifyStatusChange(CloudFoundryPlugin.getErrorStatus("Failed to add command: "
 									+ editedCommand.getDisplayName()));
 							return;
 						}
@@ -398,7 +399,7 @@ public class ServiceTunnelCommandPart extends AbstractPart {
 
 	protected void handleChange(EventObject eventSource) {
 		// Clear errors first
-		setStatus(Status.OK_STATUS);
+		notifyStatusChange(Status.OK_STATUS);
 		if (eventSource != null) {
 			Object source = eventSource.getSource();
 

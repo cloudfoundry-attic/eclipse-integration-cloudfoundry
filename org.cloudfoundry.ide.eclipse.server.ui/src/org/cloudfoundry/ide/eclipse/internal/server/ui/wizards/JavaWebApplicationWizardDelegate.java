@@ -13,6 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.jface.wizard.IWizardPage;
@@ -22,9 +23,9 @@ public class JavaWebApplicationWizardDelegate extends AbstractApplicationWizardD
 	public List<IWizardPage> getWizardPages(ApplicationWizardDescriptor applicationDescriptor,
 			CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule) {
 		List<IWizardPage> defaultPages = new ArrayList<IWizardPage>();
-
+		CloudApplicationUrlLookup urlLookup = new CloudApplicationUrlLookup(cloudServer);
 		CloudFoundryDeploymentWizardPage deploymentPage = new CloudFoundryDeploymentWizardPage(cloudServer,
-				applicationModule, applicationDescriptor);
+				applicationModule, applicationDescriptor, urlLookup);
 
 		CloudFoundryApplicationWizardPage applicationNamePage = new CloudFoundryApplicationWizardPage(cloudServer,
 				deploymentPage, applicationModule, applicationDescriptor);

@@ -1,19 +1,19 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -34,7 +34,7 @@ import org.eclipse.swt.widgets.Text;
  */
 public class TargetURLDialog extends Dialog {
 	
-	private final CloudURL cloudUrl;
+	private final CloudServerURL cloudUrl;
 	
 	private final String wildcard;
 		
@@ -48,9 +48,9 @@ public class TargetURLDialog extends Dialog {
 
 	private Text nameText;
 
-	private final List<CloudURL> allCloudUrls;
+	private final List<CloudServerURL> allCloudUrls;
 
-	public TargetURLDialog(Shell parentShell, CloudURL cloudUrl, String wildcard, List<CloudURL> allCloudUrls) {
+	public TargetURLDialog(Shell parentShell, CloudServerURL cloudUrl, String wildcard, List<CloudServerURL> allCloudUrls) {
 		super(parentShell);
 		this.cloudUrl = cloudUrl;
 		this.wildcard = wildcard;
@@ -117,7 +117,7 @@ public class TargetURLDialog extends Dialog {
 	@Override
 	protected void okPressed() {
 //		List<CloudURL> allUrls = CloudUiUtil.getAllUrls(serverTypeId);
-		for(CloudURL url: allCloudUrls) {
+		for(CloudServerURL url: allCloudUrls) {
 			if (url.getName().equals(name)) {
 				MessageDialog.openError(getParentShell(), "Duplicate Cloud URL Name", "There is already a cloud URL with the name " + name + ". Please enter a new name.");
 				return;

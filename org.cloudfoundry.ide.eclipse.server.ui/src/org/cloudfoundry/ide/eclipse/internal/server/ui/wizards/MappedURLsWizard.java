@@ -34,7 +34,7 @@ import org.eclipse.wst.server.core.IModule;
  * @author Steffen Pingel
  * @author Christian Dupuis
  */
-public class CloudFoundryURLsWizard extends Wizard {
+public class MappedURLsWizard extends Wizard {
 
 	private final String appName;
 
@@ -46,9 +46,9 @@ public class CloudFoundryURLsWizard extends Wizard {
 
 	private CloudFoundryApplicationModule applicationModule;
 
-	private CloudFoundryURLsWizardPage page;
+	private MappedURLsWizardPage page;
 
-	public CloudFoundryURLsWizard(CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule,
+	public MappedURLsWizard(CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule,
 			List<String> existingURIs) {
 		this.cloudServer = cloudServer;
 		this.appName = applicationModule.getApplicationId();
@@ -59,7 +59,7 @@ public class CloudFoundryURLsWizard extends Wizard {
 		setNeedsProgressMonitor(false);
 	}
 
-	public CloudFoundryURLsWizard(CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule,
+	public MappedURLsWizard(CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule,
 			List<String> existingURIs, boolean isPublished) {
 		this(cloudServer, applicationModule, existingURIs);
 		this.isPublished = isPublished;
@@ -67,7 +67,7 @@ public class CloudFoundryURLsWizard extends Wizard {
 
 	@Override
 	public void addPages() {
-		page = new CloudFoundryURLsWizardPage(cloudServer, existingURIs, getAppModule());
+		page = new MappedURLsWizardPage(cloudServer, existingURIs, getAppModule());
 		addPage(page);
 	}
 

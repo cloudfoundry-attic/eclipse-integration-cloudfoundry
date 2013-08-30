@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
@@ -14,7 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -37,7 +37,7 @@ public class CloudUrlWizard extends Wizard {
 
 	private final String serverID;
 
-	private final List<CloudURL> allCloudUrls;
+	private final List<CloudServerURL> allCloudUrls;
 
 	private CloudUrlWizardPage page;
 
@@ -45,7 +45,7 @@ public class CloudUrlWizard extends Wizard {
 
 	private String name;
 
-	public CloudUrlWizard(String serverID, List<CloudURL> allCloudUrls, String url, String name) {
+	public CloudUrlWizard(String serverID, List<CloudServerURL> allCloudUrls, String url, String name) {
 		this.serverID = serverID;
 		this.allCloudUrls = allCloudUrls;
 		this.url = url;
@@ -65,10 +65,10 @@ public class CloudUrlWizard extends Wizard {
 		addPage(page);
 	}
 
-	public CloudURL getCloudUrl() {
+	public CloudServerURL getCloudUrl() {
 		String dURL = page != null ? page.getUrl() : url;
 		String dName = page != null ? page.getName() : name;
-		return new CloudURL(dName, dURL, true);
+		return new CloudServerURL(dName, dURL, true);
 	}
 
 	public boolean performFinish() {

@@ -17,6 +17,7 @@ import java.util.List;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
+import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryLoginHandler;
@@ -52,6 +53,10 @@ public class CloudSpaceServerLookup {
 	public CloudSpaceServerLookup(CloudFoundryServer cloudServer, CloudCredentials credentials) {
 		this.cloudServer = cloudServer;
 		this.credentials = credentials;
+	}
+	
+	public CloudSpaceServerLookup(CloudFoundryServer cloudServer) {
+		this(cloudServer, null);
 	}
 
 	protected CloudCredentials getCredentials() {
@@ -145,11 +150,59 @@ public class CloudSpaceServerLookup {
 
 	}
 
+	/**
+	 * 
+	 * @param credentials
+	 * @param url server URL
+	 * @param monitor
+	 * @return list of all apps in all spaces for the given account.
+	 * @throws CoreException if error occurred while retrieve list of apps.
+	 */
+	public List<CloudApplication> getAllOrgApps(IProgressMonitor monitor)
+			throws CoreException {
+		// By creating a client without a session cloud space, retrieving a list
+		// of applications will
+		// retrieve all the apps for all the spaces.
+		String url = cloudServer.getUrl();
+		CloudCredentials credentials = getCredentials();
+		CloudFoundryOperations operations = CloudFoundryServerBehaviour.createClient(url, credentials.getEmail(),
+				credentials.getPassword());
+		try {
+			List<CloudApplication> apps = null;
+			CloudFoundryLoginHandler handler = new CloudFoundryLoginHandler(operations, url);
+			handler.updateProxyInClient(operations);
+
+			// Attempt to log in
+			handler.login(monitor, 5, 5000);
+
+			try {
+				apps = operations.getApplications();
+			}
+			catch (CloudFoundryException cfe) {
+				throw CloudErrorUtil.toCoreException(cfe);
+			}
+			catch (RestClientException e) {
+				throw CloudErrorUtil.toCoreException(e);
+			}
+
+			return apps;
+
+		}
+		catch (CoreException ce) {
+			// Translate the cause to a user friendly message
+			String validationMessage = CloudErrorUtil.getV2ValidationErrorMessage(ce);
+			if (validationMessage != null) {
+				ce = new CoreException(CloudFoundryPlugin.getErrorStatus(validationMessage));
+			}
+			throw ce;
+		}
+
+	}
+
 	private static CloudOrgsAndSpaces getCloudSpace(CloudFoundryOperations operations, IProgressMonitor monitor)
 			throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor);
-		progress.beginTask("Resolving list of Cloud Foundry organizations and spaces",
-				IProgressMonitor.UNKNOWN);
+		progress.beginTask("Resolving list of Cloud Foundry organizations and spaces", IProgressMonitor.UNKNOWN);
 
 		try {
 

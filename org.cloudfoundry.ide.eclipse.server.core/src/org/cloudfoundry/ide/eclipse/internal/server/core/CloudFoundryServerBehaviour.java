@@ -96,8 +96,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	private DebugSupportCheck isDebugModeSupported = DebugSupportCheck.UNSUPPORTED;
 
-	private List<CloudDomain> domainFromOrgs;
-
 	private IServerListener serverListener = new IServerListener() {
 
 		public void serverChanged(ServerEvent event) {
@@ -180,56 +178,23 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		CloudFoundryPlugin.getDefault().fireServicesUpdated(getCloudFoundryServer());
 	}
 
-	public synchronized List<CloudDomain> getDomains() {
-		return domainFromOrgs;
+	public synchronized List<CloudDomain> getDomainsFromOrgs(IProgressMonitor monitor) throws CoreException {
+		return new Request<List<CloudDomain>>("Getting domains for orgs") {
+			@Override
+			protected List<CloudDomain> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				return client.getDomainsForOrg();
+			}
+		}.run(monitor);
+
 	}
 
-	public synchronized String getLaunchURL(String applicationName, CloudDomain domain) throws CoreException {
-
-		if (domain == null) {
-			CloudFoundryServer cloudServer = getCloudFoundryServer();
-			CloudFoundrySpace space = cloudServer.getCloudFoundrySpace();
-
-			if (space == null) {
-				throw new CoreException(
-						CloudFoundryPlugin
-								.getErrorStatus("No organization and space selected. Unable to generate application launch URL based on organization domain for: "
-										+ applicationName));
+	public synchronized List<CloudDomain> getDomainsForSpace(IProgressMonitor monitor) throws CoreException {
+		return new Request<List<CloudDomain>>("Getting domains for current space") {
+			@Override
+			protected List<CloudDomain> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				return client.getDomains();
 			}
-
-			if (domainFromOrgs == null || domainFromOrgs.isEmpty()) {
-				throw new CoreException(CloudFoundryPlugin.getErrorStatus("No domains found for: " + space.getOrgName()
-						+ " - " + space.getSpaceName()));
-			}
-
-			// Retrieve the first domain
-			domain = domainFromOrgs.get(0);
-		}
-
-		String url = domain.getName();
-		url = url.replace("http://", "");
-
-		// For V2 servers, simply append the application name to the domain.
-		// Do not remove the prefix, unlike V1.
-		url = applicationName + "." + url;
-		return url;
-
-		// // Old V1 way of calculating the URL. Kept as a reference only. Not
-		// used for V2 (orgs/spaces)
-		// if (!supportsSpaces()) {
-		// // Still support V1 for older cloud foundry servers
-		// Server server = (Server) getCloudFoundryServer().getServerOriginal();
-		// applicationName = applicationName.toLowerCase();
-		// String url = server.getAttribute(CloudFoundryServer.PROP_URL, "");
-		// url = url.replace("http://", "");
-		//
-		// // Remove the "api" prefix from the URL and replace it with the app
-		// // name
-		// String prefix = url.split("\\.")[0];
-		// return url.replace(prefix, applicationName);
-		//
-		// }
-
+		}.run(monitor);
 	}
 
 	public void deleteModules(final IModule[] modules, final boolean deleteServices, IProgressMonitor monitor)
@@ -673,7 +638,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public void resetClient() {
 		client = null;
-		domainFromOrgs = null;
 	}
 
 	protected DeploymentDescriptor getDeploymentDescriptor(IModule[] modules, IProgressMonitor monitor)
@@ -1581,27 +1545,25 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				succeeded = true;
 
-				try {
-					// At this stage, the client is connected, otherwise the
-					// client request would have failed.
-					// Now retrieve information that should be done once per
-					// connection session,
-					// including whether the server supports debug, list of
-					// application plans, and domains for the org.
-					// Since request succeeded, at this stage determine
-					// if the server supports debugging.
-
-					// FIXNS: Disabled for CF 1.5.0 until V2 MCF is released
-					// that supports debug.
-					// requestAllowDebug(client);
-
-					if (domainFromOrgs == null) {
-						domainFromOrgs = client.getDomainsForOrg();
-					}
-				}
-				catch (RestClientException e) {
-					throw CloudErrorUtil.toCoreException(e);
-				}
+				// try {
+				// // At this stage, the client is connected, otherwise the
+				// // client request would have failed.
+				// // Now retrieve information that should be done once per
+				// // connection session,
+				// // including whether the server supports debug, list of
+				// // application plans, and domains for the org.
+				// // Since request succeeded, at this stage determine
+				// // if the server supports debugging.
+				//
+				// // FIXNS: Disabled for CF 1.5.0 until V2 MCF is released
+				// // that supports debug.
+				// requestAllowDebug(client);
+				//
+				//
+				// }
+				// catch (RestClientException e) {
+				// throw CloudErrorUtil.toCoreException(e);
+				// }
 
 			}
 			finally {

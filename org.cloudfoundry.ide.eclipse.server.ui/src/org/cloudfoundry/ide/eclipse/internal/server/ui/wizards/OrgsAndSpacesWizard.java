@@ -221,7 +221,7 @@ public class OrgsAndSpacesWizard extends Wizard {
 				UIJob job = new UIJob("Refreshing list of organization and spaces") {
 
 					@Override
-					public IStatus runInUIThread(IProgressMonitor arg0) {
+					public IStatus runInUIThread(IProgressMonitor monitor) {
 						updateSpacesDescriptor();
 						refreshListOfSpaces();
 						CloudSpace defaultSpace = spaceChangeHandler.getCurrentSpacesDescriptor() != null ? spaceChangeHandler

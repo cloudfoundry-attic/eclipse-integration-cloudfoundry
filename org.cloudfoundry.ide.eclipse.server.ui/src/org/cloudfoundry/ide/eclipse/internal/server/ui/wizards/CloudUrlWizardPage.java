@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
@@ -15,7 +15,7 @@ import java.net.URL;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -48,13 +48,13 @@ public class CloudUrlWizardPage extends WizardPage {
 
 	boolean canFinish = false;
 
-	private final List<CloudURL> allCloudUrls;
+	private final List<CloudServerURL> allCloudUrls;
 
 	protected static final String TITLE = "Add a Cloud URL";
 
 	protected static final String DESCRIPTION = "Finish to validate the URL.";
 
-	protected CloudUrlWizardPage(List<CloudURL> allCloudUrls, ImageDescriptor descriptor, String url, String name) {
+	protected CloudUrlWizardPage(List<CloudServerURL> allCloudUrls, ImageDescriptor descriptor, String url, String name) {
 		super("Cloud URL");
 		this.allCloudUrls = allCloudUrls;
 		this.name = name;
@@ -140,7 +140,7 @@ public class CloudUrlWizardPage extends WizardPage {
 			canFinish = true;
 
 			// List<CloudURL> cloudUrls = CloudUiUtil.getAllUrls(serverTypeId);
-			for (CloudURL cloudUrl : allCloudUrls) {
+			for (CloudServerURL cloudUrl : allCloudUrls) {
 				if (!cloudUrl.getUrl().contains("{")) {
 					if (cloudUrl.getName().equals(name)) {
 						canFinish = false;

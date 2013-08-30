@@ -10,13 +10,9 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import static org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentInfoValidator.EMPTY_URL_ERROR;
-import static org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentInfoValidator.INVALID_CHARACTERS_ERROR;
-import static org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentInfoValidator.INVALID_START_COMMAND;
 import junit.framework.TestCase;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 
 /**
  * Tests various types of URL domain names for validity. The validation is used
@@ -99,132 +95,160 @@ public class DeploymentURLTest extends TestCase {
 		assertEquals(true, isInvalidWithValidator(value));
 	}
 
-	public void testDeploymentInfoStandaloneNOurlHAScommand() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(true, "java HelloWord.java", null);
-		assertValidator(Status.OK_STATUS.getMessage(), false, validator);
-	}
-
-	public void testDeploymentInfoStandaloneNOurlEMPTYHAScommand() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(true, "java HelloWord.java", " ");
-		assertValidator(Status.OK_STATUS.getMessage(), false, validator);
-	}
-
-	public void testDeploymentInfoStandaloneHASurlHAScommand() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(true, "java HelloWord.java",
-				"myapp.cloudfoundry.com");
-		assertValidator(Status.OK_STATUS.getMessage(), false, validator);
-	}
-
-	public void testDeploymentInfoStandaloneHASurlNocommandEmpty() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(true, " ", "myapp.cloudfoundry.com");
-		assertValidator(INVALID_START_COMMAND, true, validator);
-	}
-
-	public void testDeploymentInfoStandaloneHASurlNOcommandNull() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(true, null, "myapp.cloudfoundry.com");
-		assertValidator(INVALID_START_COMMAND, true, validator);
-	}
-
-	public void testDeploymentInfoStandaloneNOurlNOcommandNull() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(true, null, null);
-		assertValidator(INVALID_START_COMMAND, true, validator);
-	}
-
-	public void testDeploymentInfoStandaloneNOurlNOcommandEmptySpaces() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(true, "   ", null);
-		assertValidator(INVALID_START_COMMAND, true, validator);
-	}
-
-	public void testDeploymentInfoStandaloneNOurlEMPTYNOcommandEmptySpaces() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(true, "   ", " ");
-		assertValidator(INVALID_START_COMMAND, true, validator);
-	}
-
-	public void testDeploymentInfoStandaloneNOurlEMPTYNOcommand() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(true, null, " ");
-		assertValidator(INVALID_START_COMMAND, true, validator);
-	}
-
-	public void testDeploymentInfoStandaloneHASInvalidurlHAScommand() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(true, "java HelloWord.java",
-				" h ttp://myapp.^cloudfoundry.com");
-		assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
-	}
-
-	public void testDeploymentInfoWebAppNOurlNULL() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, null);
-		assertValidator(EMPTY_URL_ERROR, true, validator);
-	}
-
-	public void testDeploymentInfoWebAppNOurlEmpty() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, "");
-		assertValidator(EMPTY_URL_ERROR, true, validator);
-	}
-
-	public void testDeploymentInfoWebAppNOurlSpaces() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, "  	");
-		assertValidator(EMPTY_URL_ERROR, true, validator);
-	}
-
-	public void testDeploymentInfoWebAppInvalidurlname() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, " h ttp:>vin valid  	");
-		assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
-	}
-
-	public void testDeploymentInfoWebAppInvalidurlname2() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, "myapp .cloudfoundry.com");
-		assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
-	}
-
-	public void testDeploymentInfoWebAppInvalidurlname3() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, " myapp.cloudfoundry.com");
-		assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
-	}
-
-	public void testDeploymentInfoWebAppInvalidurlname4() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, "http://myapp.cloudfoundry.com");
-		assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
-	}
-
-	public void testDeploymentInfoWebAppInvalidurlname5() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, "http:myapp.cloudfoundry.com");
-		assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
-	}
-
-	public void testDeploymentInfoWebAppInvalidurlname6() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, "cloudfoundry?");
-		assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
-	}
-
-	public void testDeploymentInfoWebAppValidurlname() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, "myapp.cloudfoundry.com");
-		assertValidator(Status.OK_STATUS.getMessage(), false, validator);
-	}
-
-	public void testDeploymentInfoWebAppValidurlname2() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, "$myapp.cloudfoundry.com");
-		assertValidator(Status.OK_STATUS.getMessage(), false, validator);
-	}
-
-	public void testDeploymentInfoWebAppValidurlname3() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, "myapp$.cloudfoundry.com");
-		assertValidator(Status.OK_STATUS.getMessage(), false, validator);
-	}
-
-	public void testDeploymentInfoWebAppValidurlname4() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, "4myapp.cloudfoundry.com");
-		assertValidator(Status.OK_STATUS.getMessage(), false, validator);
-	}
-
-	public void testDeploymentInfoWebAppValidurlname5() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, "4myapp.cloudfoundry.com4");
-		assertValidator(Status.OK_STATUS.getMessage(), false, validator);
-	}
-
-	public void testDeploymentInfoWebAppValidurlname6() throws Exception {
-		DeploymentInfoValidator validator = getDeploymentInfoValidator(false, null, "cloudfoundry");
-		assertValidator(Status.OK_STATUS.getMessage(), false, validator);
-	}
+	// public void testDeploymentInfoStandaloneNOurlEMPTYHAScommand() throws
+	// Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(true,
+	// "java HelloWord.java", " ");
+	// assertValidator(Status.OK_STATUS.getMessage(), false, validator);
+	// }
+	//
+	// public void testDeploymentInfoStandaloneHASurlHAScommand() throws
+	// Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(true,
+	// "java HelloWord.java",
+	// "myapp.cloudfoundry.com");
+	// assertValidator(Status.OK_STATUS.getMessage(), false, validator);
+	// }
+	//
+	// public void testDeploymentInfoStandaloneHASurlNocommandEmpty() throws
+	// Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(true, " ",
+	// "myapp.cloudfoundry.com");
+	// assertValidator(INVALID_START_COMMAND, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoStandaloneHASurlNOcommandNull() throws
+	// Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(true,
+	// null, "myapp.cloudfoundry.com");
+	// assertValidator(INVALID_START_COMMAND, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoStandaloneNOurlNOcommandNull() throws
+	// Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(true,
+	// null, null);
+	// assertValidator(INVALID_START_COMMAND, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoStandaloneNOurlNOcommandEmptySpaces()
+	// throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(true,
+	// "   ", null);
+	// assertValidator(INVALID_START_COMMAND, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoStandaloneNOurlEMPTYNOcommandEmptySpaces()
+	// throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(true,
+	// "   ", " ");
+	// assertValidator(INVALID_START_COMMAND, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoStandaloneNOurlEMPTYNOcommand() throws
+	// Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(true,
+	// null, " ");
+	// assertValidator(INVALID_START_COMMAND, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoStandaloneHASInvalidurlHAScommand() throws
+	// Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(true,
+	// "java HelloWord.java",
+	// " h ttp://myapp.^cloudfoundry.com");
+	// assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppNOurlNULL() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, null);
+	// assertValidator(EMPTY_URL_ERROR, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppNOurlEmpty() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, "");
+	// assertValidator(EMPTY_URL_ERROR, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppNOurlSpaces() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, "  	");
+	// assertValidator(EMPTY_URL_ERROR, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppInvalidurlname() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, " h ttp:>vin valid  	");
+	// assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppInvalidurlname2() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, "myapp .cloudfoundry.com");
+	// assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppInvalidurlname3() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, " myapp.cloudfoundry.com");
+	// assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppInvalidurlname4() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, "http://myapp.cloudfoundry.com");
+	// assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppInvalidurlname5() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, "http:myapp.cloudfoundry.com");
+	// assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppInvalidurlname6() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, "cloudfoundry?");
+	// assertValidator(INVALID_CHARACTERS_ERROR, true, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppValidurlname() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, "myapp.cloudfoundry.com");
+	// assertValidator(Status.OK_STATUS.getMessage(), false, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppValidurlname2() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, "$myapp.cloudfoundry.com");
+	// assertValidator(Status.OK_STATUS.getMessage(), false, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppValidurlname3() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, "myapp$.cloudfoundry.com");
+	// assertValidator(Status.OK_STATUS.getMessage(), false, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppValidurlname4() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, "4myapp.cloudfoundry.com");
+	// assertValidator(Status.OK_STATUS.getMessage(), false, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppValidurlname5() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, "4myapp.cloudfoundry.com4");
+	// assertValidator(Status.OK_STATUS.getMessage(), false, validator);
+	// }
+	//
+	// public void testDeploymentInfoWebAppValidurlname6() throws Exception {
+	// ApplicationUrlValidator validator = getDeploymentInfoValidator(false,
+	// null, "cloudfoundry");
+	// assertValidator(Status.OK_STATUS.getMessage(), false, validator);
+	// }
 
 	protected boolean isEmpty(String value) {
 		return ValueValidationUtil.isEmpty(value);
@@ -234,13 +258,13 @@ public class DeploymentURLTest extends TestCase {
 		return new URLNameValidation(value).hasInvalidCharacters();
 	}
 
-	protected DeploymentInfoValidator getDeploymentInfoValidator(boolean isStandalone, String startCommand, String url) {
-		return new DeploymentInfoValidator(url, startCommand, isStandalone);
+	protected ApplicationUrlValidator getDeploymentInfoValidator(boolean isStandalone, String startCommand, String url) {
+		return new ApplicationUrlValidator();
 	}
 
-	protected void assertValidator(String expectedMessage, boolean expectedError, DeploymentInfoValidator validator)
-			throws Exception {
-		IStatus status = validator.isValid();
+	protected void assertValidator(String expectedMessage, boolean expectedError, ApplicationUrlValidator validator,
+			String url) throws Exception {
+		IStatus status = validator.isValid(url);
 		assertEquals(expectedError, status.getSeverity() == IStatus.ERROR);
 		String actualMessage = status.getMessage();
 		assertEquals(expectedMessage, actualMessage);

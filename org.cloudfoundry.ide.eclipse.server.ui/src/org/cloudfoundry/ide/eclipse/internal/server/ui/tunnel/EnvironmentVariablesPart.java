@@ -18,6 +18,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.TableResizeHelper;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -51,7 +52,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 
-public class EnvironmentVariablesPart extends AbstractPart {
+public class EnvironmentVariablesPart extends UIPart {
 
 	private List<EnvironmentVariable> variables;
 
@@ -204,7 +205,7 @@ public class EnvironmentVariablesPart extends AbstractPart {
 				break;
 			}
 			//Notify listeners that changes were made
-			setStatus(Status.OK_STATUS);
+			notifyStatusChange(Status.OK_STATUS);
 		}
 	}
 

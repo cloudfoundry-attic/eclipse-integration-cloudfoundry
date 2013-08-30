@@ -1,37 +1,43 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 
-import org.cloudfoundry.ide.eclipse.server.standalone.internal.ui.StartCommandPartFactory.StartCommandEvent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 
 /**
- * UI part that creates the controls for a particular start command type.
- * Listener can be registered that handles changes to the start command value
- * based on UI control changes.
+ * Base part that allows a UI part to be defined to set a Java start command
+ * 
  */
-public interface StartCommandPart {
-	/**
-	 * Gets the Composite instance that will later be used for possible updates.
-	 * A new composite should not be created every time this method is called
-	 * 
-	 * 
-	 * @return Composite instance to be re-used throughout life of the part
-	 */
-	public Composite getComposite();
+public abstract class StartCommandPart extends UIPart {
+	private final Composite parent;
+
+	private Control composite;
+
+	protected StartCommandPart(Composite parent) {
+		this.parent = parent;
+	}
+
+	public Control getComposite() {
+		if (composite == null) {
+			composite = createPart(parent);
+		}
+		return composite;
+	}
 
 	/**
 	 * Tells the part to update the start command from current values of in the
 	 * UI control and notify listeners with the revised start command
 	 */
-	public void updateStartCommand(StartCommandEvent event);
+	abstract public void updateStartCommand();
 
 }

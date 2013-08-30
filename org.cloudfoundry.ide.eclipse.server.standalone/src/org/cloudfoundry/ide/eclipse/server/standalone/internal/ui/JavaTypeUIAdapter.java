@@ -1,16 +1,15 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 
-import org.cloudfoundry.ide.eclipse.server.standalone.internal.ui.StartCommandPartFactory.IStartCommandPartListener;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -56,8 +55,8 @@ public class JavaTypeUIAdapter {
 
 	private final JavaStartCommandPart javaStartCommandPart;
 
-	public JavaTypeUIAdapter(JavaStartCommandPart javaStartCommandPart, IJavaProject javaProject, String title,
-			IStartCommandPartListener listener) {
+	public JavaTypeUIAdapter(JavaStartCommandPart javaStartCommandPart,
+			IJavaProject javaProject, String title) {
 
 		this.javaProject = javaProject;
 		this.title = title;
@@ -65,9 +64,9 @@ public class JavaTypeUIAdapter {
 
 	}
 
-	public JavaTypeUIAdapter(JavaStartCommandPart javaStartCommandPart, IJavaProject javaProject,
-			IStartCommandPartListener listener) {
-		this(javaStartCommandPart, javaProject, "Browse Type with main method", listener);
+	public JavaTypeUIAdapter(JavaStartCommandPart javaStartCommandPart,
+			IJavaProject javaProject) {
+		this(javaStartCommandPart, javaProject, "Browse Type with main method");
 	}
 
 	public void apply() {
@@ -98,22 +97,27 @@ public class JavaTypeUIAdapter {
 		processor = createContentAssistProcessor();
 		ControlContentAssistHelper.createTextContentAssistant(text, processor);
 		final JavaUIHelper helper = new JavaUIHelper(javaProject);
-		final IPackageFragment defaultPackageFragment = helper.getDefaultPackageFragment();
+		final IPackageFragment defaultPackageFragment = helper
+				.getDefaultPackageFragment();
 
 		if (defaultPackageFragment != null) {
-			processor.setCompletionContextRequestor(new CompletionContextRequestor() {
-				public StubTypeContext getStubTypeContext() {
-					return TypeContextChecker.createSuperClassStubTypeContext(
-							JavaTypeCompletionProcessor.DUMMY_CLASS_NAME, null, defaultPackageFragment);
-				}
-			});
+			processor
+					.setCompletionContextRequestor(new CompletionContextRequestor() {
+						public StubTypeContext getStubTypeContext() {
+							return TypeContextChecker
+									.createSuperClassStubTypeContext(
+											JavaTypeCompletionProcessor.DUMMY_CLASS_NAME,
+											null, defaultPackageFragment);
+						}
+					});
 		}
 		UIJob job = new UIJob("Initialising Java Content Assist") {
 
 			public IStatus runInUIThread(IProgressMonitor monitor) {
 
 				IType type = helper.getMainMethodTypeFromSource(monitor);
-				String qualifiedTypeName = type != null ? type.getFullyQualifiedName() : null;
+				String qualifiedTypeName = type != null ? type
+						.getFullyQualifiedName() : null;
 				Text text = javaStartCommandPart.getTypeText();
 				if (qualifiedTypeName != null && text != null) {
 					text.setText(qualifiedTypeName);
@@ -131,8 +135,8 @@ public class JavaTypeUIAdapter {
 	protected Shell getShell() {
 		Control control = javaStartCommandPart.getTypeText();
 		Shell shell = control != null ? control.getShell()
-				: javaStartCommandPart.getBrowseButton() != null ? javaStartCommandPart.getBrowseButton().getShell()
-						: null;
+				: javaStartCommandPart.getBrowseButton() != null ? javaStartCommandPart
+						.getBrowseButton().getShell() : null;
 		return shell;
 	}
 
@@ -150,8 +154,8 @@ public class JavaTypeUIAdapter {
 		IJavaElement[] elements = new IJavaElement[] { javaProject };
 		IJavaSearchScope scope = SearchEngine.createJavaSearchScope(elements);
 
-		FilteredTypesSelectionDialog dialog = new FilteredTypesSelectionDialog(shell, false, null, scope,
-				javaSearchType);
+		FilteredTypesSelectionDialog dialog = new FilteredTypesSelectionDialog(
+				shell, false, null, scope, javaSearchType);
 		dialog.setTitle(title);
 		dialog.setInitialPattern(pattern);
 

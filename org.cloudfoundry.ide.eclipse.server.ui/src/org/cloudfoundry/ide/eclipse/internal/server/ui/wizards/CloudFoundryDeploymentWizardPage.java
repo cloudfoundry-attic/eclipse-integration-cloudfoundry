@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,28 +17,30 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
-import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentInfoValidator;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudHostDomainUrlPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDescriptor.DescriptorChangeListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDescriptor.DescriptorProperty;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.jface.dialogs.DialogPage;
-import org.eclipse.jface.dialogs.IMessageProvider;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jface.layout.GridDataFactory;
-import org.eclipse.jface.layout.GridLayoutFactory;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.wizard.WizardPage;
-import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
@@ -48,10 +49,9 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.ui.statushandlers.StatusManager;
+import org.eclipse.ui.progress.UIJob;
 import org.eclipse.wst.server.core.IModule;
 
 /**
@@ -62,13 +62,9 @@ import org.eclipse.wst.server.core.IModule;
  * @author Nieraj Singh
  */
 @SuppressWarnings("restriction")
-public class CloudFoundryDeploymentWizardPage extends WizardPage {
-
-	protected boolean canFinish;
+public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage implements DescriptorChangeListener {
 
 	protected final String serverTypeId;
-
-	protected Text urlText;
 
 	protected final CloudFoundryServer server;
 
@@ -86,9 +82,13 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 
 	protected final ApplicationWizardDescriptor descriptor;
 
+	private CloudHostDomainUrlPart urlPart;
+
+	private MemoryPart memoryPart;
+
 	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
-			ApplicationWizardDescriptor descriptor) {
-		super("deployment");
+			ApplicationWizardDescriptor descriptor, CloudApplicationUrlLookup urlLookup) {
+		super("deployment", null, null, urlLookup);
 		this.server = server;
 		this.module = module;
 		this.descriptor = descriptor;
@@ -96,6 +96,11 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 
 		initDeploymentInfoInDescriptor();
 
+	}
+
+	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
+			ApplicationWizardDescriptor descriptor) {
+		this(server, module, descriptor, new CloudApplicationUrlLookup(server));
 	}
 
 	protected void initDeploymentInfoInDescriptor() {
@@ -117,6 +122,10 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 		ApplicationAction deploymentMode = ApplicationAction.START;
 
 		setDeploymentMode(deploymentMode);
+
+		// Listen to changes to the application name, so that the app URL can be
+		// updated if necessary
+		descriptor.addListener(this, DescriptorProperty.ApplicationInfo);
 	}
 
 	private String getDeploymentNameFromModule(CloudFoundryApplicationModule module) {
@@ -130,48 +139,58 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 		return "";
 	}
 
-	@Override
-	public void setVisible(boolean visible) {
-		super.setVisible(visible);
-		if (visible && deploymentConfiguration == null) {
-			if (getPreviousPage() == null) {
-				// delay until dialog is actually visible
-				Display.getDefault().asyncExec(new Runnable() {
-					public void run() {
-						if (!getControl().isDisposed()) {
-							refresh();
-						}
-					}
-				});
-			}
-			else {
-				refresh();
-			}
-		}
+	/**
+	 * Perform some action like refreshing values in the UI. This is only called
+	 * after the page is visible.
+	 */
+	protected void performWhenPageVisible() {
+		fetchDeploymentConfiguration();
+		super.performWhenPageVisible();
 	}
 
-	protected void refresh() {
-		if (updateConfiguration()) {
-			memoryCombo.removeAll();
-			int memory = 0;
-			// Select the default memory first
-			for (int option : deploymentConfiguration.getMemoryOptions()) {
-				memoryCombo.add(option + "M");
-				if (option == deploymentConfiguration.getDefaultMemory()) {
-					int index = memoryCombo.getItemCount() - 1;
-					memoryCombo.setItem(index, option + "M (Default)");
-					memoryCombo.select(index);
-					memory = option;
-				}
-			}
-			// If no default memory is found, select the first memory option
-			if (memory == 0 && deploymentConfiguration.getMemoryOptions().length > 0) {
-				memoryCombo.select(0);
-				memory = deploymentConfiguration.getMemoryOptions()[0];
-			}
-			memoryCombo.setEnabled(true);
-			setMemory(memory);
+	protected void fetchDeploymentConfiguration() {
+		// Only get a deployment if it doesn't yet exist.
+		if (deploymentConfiguration != null) {
+			return;
 		}
+		final String jobLabel = "Fetching list of memory options.";
+		UIJob job = new UIJob(jobLabel) {
+
+			@Override
+			public IStatus runInUIThread(IProgressMonitor arg0) {
+				try {
+					CloudUiUtil.runForked(new ICoreRunnable() {
+						public void run(IProgressMonitor monitor) throws CoreException {
+
+							SubMonitor subProgress = SubMonitor.convert(monitor, jobLabel, 100);
+
+							try {
+								deploymentConfiguration = server.getBehaviour().getDeploymentConfiguration(subProgress);
+							}
+
+							catch (OperationCanceledException e) {
+								throw new CoreException(CloudFoundryPlugin.getErrorStatus(e));
+							}
+							finally {
+								subProgress.done();
+							}
+
+						}
+					}, getWizard().getContainer());
+					memoryPart.refreshMemoryOptions();
+
+				}
+
+				catch (CoreException ce) {
+					update(true, ce.getStatus());
+				}
+				return Status.OK_STATUS;
+			}
+
+		};
+		job.setSystem(true);
+		job.schedule();
+
 	}
 
 	protected Point getRunDebugControlIndentation() {
@@ -184,48 +203,6 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 
 	protected void setDeploymentMode(ApplicationAction deploymentMode) {
 		descriptor.setStartDeploymentMode(deploymentMode);
-	}
-
-	protected void setURL() {
-		String url = urlText != null && !urlText.isDisposed() ? urlText.getText() : null;
-
-		if (url != null) {
-			List<String> urls = new ArrayList<String>();
-			urls.add(url);
-			descriptor.getDeploymentInfo().setUris(urls);
-		}
-	}
-
-	protected boolean updateConfiguration() {
-		try {
-			getContainer().run(true, false, new IRunnableWithProgress() {
-				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-					try {
-						deploymentConfiguration = server.getBehaviour().getDeploymentConfiguration(monitor);
-					}
-					catch (CoreException e) {
-						throw new InvocationTargetException(e);
-					}
-					catch (OperationCanceledException e) {
-						throw new InterruptedException();
-					}
-					finally {
-						monitor.done();
-					}
-				}
-			});
-			return true;
-		}
-		catch (InvocationTargetException e) {
-			IStatus status = server
-					.error(NLS.bind("Configuration retrieval failed: {0}", e.getCause().getMessage()), e);
-			StatusManager.getManager().handle(status, StatusManager.LOG);
-			setMessage(status.getMessage(), IMessageProvider.ERROR);
-		}
-		catch (InterruptedException e) {
-			// ignore
-		}
-		return false;
 	}
 
 	public void createControl(Composite parent) {
@@ -246,7 +223,8 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 
 		setControl(composite);
 
-		update(false);
+		// Do not validate values yet
+		update(false, Status.OK_STATUS);
 	}
 
 	protected void createAreas(Composite parent) {
@@ -263,43 +241,19 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 	}
 
 	protected void createURLArea(Composite parent) {
-		Label label = new Label(parent, SWT.NONE);
-		label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		label.setText("Deployed URL:");
-		label.setFocus();
+		urlPart = createUrlPart(urlLookup);
+		urlPart.createPart(parent);
+		urlPart.addPartChangeListener(this);
+	}
 
-		urlText = new Text(parent, SWT.BORDER);
-		urlText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		urlText.setEditable(true);
-		updateUrl();
-
-		urlText.addModifyListener(new ModifyListener() {
-			public void modifyText(ModifyEvent e) {
-				setURL();
-				update();
-			}
-		});
+	protected CloudHostDomainUrlPart createUrlPart(CloudApplicationUrlLookup urlLookup) {
+		return new CloudHostDomainUrlPart(urlLookup);
 	}
 
 	protected void createMemoryArea(Composite parent) {
-		Label label = new Label(parent, SWT.NONE);
-		label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		label.setText("Memory Reservation:");
-
-		memoryCombo = new Combo(parent, SWT.BORDER | SWT.READ_ONLY);
-		memoryCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		memoryCombo.setEnabled(false);
-		memoryCombo.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent event) {
-				// should always parse correctly
-				int selectionIndex = memoryCombo.getSelectionIndex();
-				if (selectionIndex != -1) {
-					int memory = deploymentConfiguration.getMemoryOptions()[selectionIndex];
-					setMemory(memory);
-				}
-			}
-		});
+		memoryPart = new MemoryPart();
+		memoryPart.addPartChangeListener(this);
+		memoryPart.createPart(parent);
 	}
 
 	protected void createStartOrDebugOptions(Composite parent) {
@@ -326,62 +280,73 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 			public void widgetSelected(SelectionEvent e) {
 				boolean start = regularStartOnDeploymentButton.getSelection();
 				ApplicationAction deploymentMode = null;
-				if (isServerDebugModeAllowed()) {
-					// delegate to the run or debug controls to decide which
-					// mode to select
-					makeStartDeploymentControlsVisible(start);
-					if (!start) {
-						deploymentMode = null;
-					}
-				}
-				else {
-					deploymentMode = start ? ApplicationAction.START : null;
-				}
+
+				// TODO: Uncomment when debug support is available once again
+				// (post CF
+				// 1.5.0)
+				// if (isServerDebugModeAllowed()) {
+				// // delegate to the run or debug controls to decide which
+				// // mode to select
+				// makeStartDeploymentControlsVisible(start);
+				// if (!start) {
+				// deploymentMode = null;
+				// }
+				// }
+				// else {
+				// deploymentMode = start ? ApplicationAction.START : null;
+				// }
+
+				deploymentMode = start ? ApplicationAction.START : null;
+
 				setDeploymentMode(deploymentMode);
 
 			}
 		});
-
-		if (isServerDebugModeAllowed()) {
-			runDebugOptions = new Composite(parent, SWT.NONE);
-
-			GridLayoutFactory.fillDefaults().margins(getRunDebugControlIndentation()).numColumns(1)
-					.applyTo(runDebugOptions);
-			GridDataFactory.fillDefaults().grab(false, false).applyTo(runDebugOptions);
-
-			final Button runRadioButton = new Button(runDebugOptions, SWT.RADIO);
-			runRadioButton.setText("Run");
-			runRadioButton.setToolTipText("Run application after deployment");
-			runRadioButton.setSelection(deploymentMode == ApplicationAction.START);
-
-			runRadioButton.addSelectionListener(new SelectionAdapter() {
-
-				public void widgetSelected(SelectionEvent e) {
-					setDeploymentMode(ApplicationAction.START);
-				}
-			});
-
-			final Button debugRadioButton = new Button(runDebugOptions, SWT.RADIO);
-			debugRadioButton.setText("Debug");
-			debugRadioButton.setToolTipText("Debug application after deployment");
-			debugRadioButton.setSelection(deploymentMode == ApplicationAction.DEBUG);
-
-			debugRadioButton.addSelectionListener(new SelectionAdapter() {
-
-				public void widgetSelected(SelectionEvent e) {
-					setDeploymentMode(ApplicationAction.DEBUG);
-				}
-			});
-
-			// Hide run or debug selection controls if there is no server
-			// support
-			makeStartDeploymentControlsVisible(true);
-		}
+		// TODO: Uncomment when debug support is available once again (post CF
+		// 1.5.0)
+		// if (isServerDebugModeAllowed()) {
+		// runDebugOptions = new Composite(parent, SWT.NONE);
+		//
+		// GridLayoutFactory.fillDefaults().margins(getRunDebugControlIndentation()).numColumns(1)
+		// .applyTo(runDebugOptions);
+		// GridDataFactory.fillDefaults().grab(false,
+		// false).applyTo(runDebugOptions);
+		//
+		// final Button runRadioButton = new Button(runDebugOptions, SWT.RADIO);
+		// runRadioButton.setText("Run");
+		// runRadioButton.setToolTipText("Run application after deployment");
+		// runRadioButton.setSelection(deploymentMode ==
+		// ApplicationAction.START);
+		//
+		// runRadioButton.addSelectionListener(new SelectionAdapter() {
+		//
+		// public void widgetSelected(SelectionEvent e) {
+		// setDeploymentMode(ApplicationAction.START);
+		// }
+		// });
+		//
+		// final Button debugRadioButton = new Button(runDebugOptions,
+		// SWT.RADIO);
+		// debugRadioButton.setText("Debug");
+		// debugRadioButton.setToolTipText("Debug application after deployment");
+		// debugRadioButton.setSelection(deploymentMode ==
+		// ApplicationAction.DEBUG);
+		//
+		// debugRadioButton.addSelectionListener(new SelectionAdapter() {
+		//
+		// public void widgetSelected(SelectionEvent e) {
+		// setDeploymentMode(ApplicationAction.DEBUG);
+		// }
+		// });
+		//
+		// // Hide run or debug selection controls if there is no server
+		// // support
+		// makeStartDeploymentControlsVisible(true);
+		// }
 
 	}
 
 	protected boolean isServerDebugModeAllowed() {
-
 		return CloudFoundryProperties.isDebugEnabled.testProperty(new IModule[] { module }, server);
 	}
 
@@ -401,56 +366,125 @@ public class CloudFoundryDeploymentWizardPage extends WizardPage {
 		}
 	}
 
-	@Override
-	public boolean isPageComplete() {
-		return canFinish;
-	}
+	/**
+	 * Update the application URL in case there have been changes to the
+	 * application name, as the application name is used as the URL's host
+	 * segment.
+	 */
+	public void updateUrlHost() {
 
-	private void update() {
-		update(true);
-	}
-
-	protected void update(boolean updateButtons) {
-		canFinish = true;
-
-		DeploymentInfoValidator validator = new DeploymentInfoValidator(urlText.getText(), null, false);
-
-		IStatus status = validator.isValid();
-		canFinish = status.getSeverity() == IStatus.OK;
-
-		if (canFinish) {
-			setErrorMessage(null);
+		if (urlPart == null) {
+			return;
 		}
-		else {
-			setErrorMessage(status.getMessage() != null ? status.getMessage() : "Invalid value entered.");
-		}
-
-		if (updateButtons) {
-			getWizard().getContainer().updateButtons();
-		}
-	}
-
-	public void updateUrl() {
 
 		ApplicationInfo appInfo = descriptor.getApplicationInfo();
 		if (appInfo != null) {
 			String appName = appInfo.getAppName();
 
-			try {
-				String deploymentUrl = (appName != null) ? module.getLaunchUrl(appName) : module.getDefaultLaunchUrl();
-
-				if (urlText != null) {
-					urlText.setText(deploymentUrl);
-					setURL();
-				}
-			}
-			catch (CoreException ce) {
-				String errorMessage = ce.getMessage() != null ? ce.getMessage()
-						: "Unable to resolve an application launch URL.";
-				errorMessage += " Please manually enter a URL.";
-				setMessage(errorMessage, DialogPage.WARNING);
+			if (appName != null) {
+				urlPart.updateUrlHost(appName);
 			}
 		}
+	}
 
+	/**
+	 * Sets the application URL in the deployment descriptor
+	 */
+	protected void setURL(String url) {
+		if (url != null) {
+			List<String> urls = new ArrayList<String>();
+			urls.add(url);
+			descriptor.getDeploymentInfo().setUris(urls);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.PartsWizardPage
+	 * #handleChange
+	 * (org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent)
+	 */
+	public void handleChange(PartChangeEvent event) {
+		if (event.getSource() == urlPart) {
+			String url = event.getData() instanceof String ? (String) event.getData() : null;
+			setURL(url);
+		}
+
+		super.handleChange(event);
+	}
+
+	class MemoryPart extends UIPart {
+		@Override
+		public Control createPart(Composite parent) {
+			Label label = new Label(parent, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+			label.setText("Memory Reservation:");
+
+			memoryCombo = new Combo(parent, SWT.BORDER | SWT.READ_ONLY);
+			memoryCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+			memoryCombo.setEnabled(false);
+			memoryCombo.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent event) {
+					// should always parse correctly
+					int selectionIndex = memoryCombo.getSelectionIndex();
+					if (selectionIndex != -1) {
+						int memory = deploymentConfiguration.getMemoryOptions()[selectionIndex];
+						setMemory(memory);
+					}
+				}
+			});
+			return parent;
+		}
+
+		public void refreshMemoryOptions() {
+
+			// Select the default memory first
+			if (deploymentConfiguration == null || deploymentConfiguration.getMemoryOptions() == null
+					|| deploymentConfiguration.getMemoryOptions().length == 0) {
+				notifyStatusChange(CloudFoundryPlugin
+						.getErrorStatus("Unable to retrieve list of memory options from the server. Please check connection or account settings."));
+			}
+			else {
+				memoryCombo.removeAll();
+				int memory = 0;
+				for (int option : deploymentConfiguration.getMemoryOptions()) {
+					memoryCombo.add(option + "M");
+					if (option == deploymentConfiguration.getDefaultMemory()) {
+						int index = memoryCombo.getItemCount() - 1;
+						memoryCombo.setItem(index, option + "M (Default)");
+						memoryCombo.select(index);
+						memory = option;
+					}
+				}
+				// If no default memory is found, select the first memory option
+				if (memory == 0 && deploymentConfiguration.getMemoryOptions().length > 0) {
+					memoryCombo.select(0);
+					memory = deploymentConfiguration.getMemoryOptions()[0];
+				}
+				memoryCombo.setEnabled(true);
+				setMemory(memory);
+				notifyStatusChange(Status.OK_STATUS);
+			}
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.
+	 * ApplicationWizardDescriptor
+	 * .DescriptorChangeListener#valueChanged(java.lang.Object)
+	 */
+	public void valueChanged(Object value) {
+		updateUrlHost();
+	}
+
+	@Override
+	protected void refreshURLUI() {
+		urlPart.refreshDomains();
+		updateUrlHost();
 	}
 }

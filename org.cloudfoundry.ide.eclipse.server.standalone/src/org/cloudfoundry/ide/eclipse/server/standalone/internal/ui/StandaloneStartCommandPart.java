@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 
@@ -14,11 +14,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StartCommand;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StartCommandType;
-import org.cloudfoundry.ide.eclipse.server.standalone.internal.ui.StartCommandPartFactory.ICommandChangeListener;
-import org.cloudfoundry.ide.eclipse.server.standalone.internal.ui.StartCommandPartFactory.IStartCommandPartListener;
-import org.cloudfoundry.ide.eclipse.server.standalone.internal.ui.StartCommandPartFactory.StartCommandEvent;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -28,6 +28,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 
 /**
@@ -43,30 +44,37 @@ import org.eclipse.swt.widgets.Label;
  * <p/>
  * If no start command definition is found for the standalone descriptor, a
  * default start command UI will be created containing an editable text where a
- * full start command value can be specified.
+ * full start command value can be specified
  */
-public class StandaloneStartCommandPart implements IStartCommandPartListener {
+/*
+ * IMPLEMENTATION NOTE: The Standalone command part is actually a container for
+ * multiple subparts, each subpart corresponding to a start command type. At any
+ * given time, only one subpart is ever visible. As a listener like a wizard
+ * page may be registered to listen for start command changes, the standalone
+ * container part redirects any events from the subparts as having originated
+ * from the container. The reason for this is to prevent the listener from
+ * keeping track of errors that originated from non-visible subparts. For
+ * example, if a visible subpart had errors, and a user switches to another
+ * subpart that does not have errors, the errors from the now-hidden initial
+ * subpart should not matter anymore. Therefore, the listener should not be
+ * listening to changes in all sub-parts, but only the sub-part that is actually
+ * visible. Thus the reason why the container is in charge of managing events
+ * coming from the subparts.
+ */
+public class StandaloneStartCommandPart extends UIPart implements
+		IPartChangeListener {
 
 	private final StartCommand startCommand;
 
-	private String standaloneStartCommand;
-
-	private boolean isStartCommandValid = false;
-
 	private Map<StartCommandType, StartCommandPart> startCommandAreas = new HashMap<StartCommandType, StartCommandPart>();
-
-	private final ICommandChangeListener listener;
 
 	private final IProject project;
 
-	public StandaloneStartCommandPart(StartCommand startCommand, ICommandChangeListener listener, IProject project) {
+	public StandaloneStartCommandPart(StartCommand startCommand,
+			IProject project) {
 		this.startCommand = startCommand;
-		this.listener = listener;
-		this.project = project;
-	}
 
-	public String getStandaloneStartCommand() {
-		return standaloneStartCommand;
+		this.project = project;
 	}
 
 	public Composite createPart(Composite parent) {
@@ -74,15 +82,13 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 		return parent;
 	}
 
-	public boolean isStartCommandValid() {
-		return isStartCommandValid;
-	}
-
 	protected void createStandaloneSection(Composite parent) {
 
-		List<StartCommandType> commandTypes = startCommand.getStartCommandTypes();
+		List<StartCommandType> commandTypes = startCommand
+				.getStartCommandTypes();
 
-		StartCommandPartFactory partFactory = new StartCommandPartFactory(startCommand, project);
+		StartCommandPartFactory partFactory = new StartCommandPartFactory(
+				startCommand, project);
 		boolean createdControls = false;
 
 		Label label = new Label(parent, SWT.NONE);
@@ -91,17 +97,21 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 
 		Composite startCommandArea = new Composite(parent, SWT.NONE);
 
-		GridLayoutFactory.fillDefaults().numColumns(1).spacing(0, 0).applyTo(startCommandArea);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(startCommandArea);
+		GridLayoutFactory.fillDefaults().numColumns(1).spacing(0, 0)
+				.applyTo(startCommandArea);
+		GridDataFactory.fillDefaults().grab(true, false)
+				.applyTo(startCommandArea);
 
 		if (!commandTypes.isEmpty()) {
-			createdControls = createStartCommandArea(commandTypes, partFactory, startCommandArea);
+			createdControls = createStartCommandArea(commandTypes, partFactory,
+					startCommandArea);
 		}
 
 		// If no controls have been created, create a default start command
 		// control.
 		if (!createdControls) {
-			partFactory.createStartCommandTypePart(StartCommandType.Other, startCommandArea, this);
+			partFactory.createStartCommandTypePart(StartCommandType.Other,
+					startCommandArea);
 		}
 	}
 
@@ -112,8 +122,9 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 	 * @param parent
 	 * @return true if start command area was created. False otherwise.
 	 */
-	protected boolean createStartCommandArea(List<StartCommandType> commandTypes, StartCommandPartFactory partFactory,
-			Composite parent) {
+	protected boolean createStartCommandArea(
+			List<StartCommandType> commandTypes,
+			StartCommandPartFactory partFactory, Composite parent) {
 
 		if (commandTypes.isEmpty()) {
 			return false;
@@ -122,10 +133,13 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 		int columnNumber = commandTypes.size();
 
 		Composite buttonSelectionArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(columnNumber).applyTo(buttonSelectionArea);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(buttonSelectionArea);
+		GridLayoutFactory.fillDefaults().numColumns(columnNumber)
+				.applyTo(buttonSelectionArea);
+		GridDataFactory.fillDefaults().grab(true, false)
+				.applyTo(buttonSelectionArea);
 
-		StartCommandType defaultStartCommandType = startCommand.getDefaultStartCommandType();
+		StartCommandType defaultStartCommandType = startCommand
+				.getDefaultStartCommandType();
 
 		// Create radio buttons for each start command type, which
 		// allows users to
@@ -150,12 +164,13 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 
 				public void widgetSelected(SelectionEvent e) {
 					if (radio.getSelection()) {
-						StartCommandType type = (StartCommandType) radio.getData();
+						StartCommandType type = (StartCommandType) radio
+								.getData();
 
 						makeStartCommandControlsVisible(type);
 						StartCommandPart part = startCommandAreas.get(type);
 						if (part != null) {
-							part.updateStartCommand(StartCommandEvent.UPDATE);
+							part.updateStartCommand();
 						}
 					}
 				}
@@ -165,13 +180,29 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 		// Create the start command type UI whose visibility is
 		// controlled by the radio button
 		Composite startCompositeArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(1).spacing(0, 0).applyTo(startCompositeArea);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(startCompositeArea);
+		GridLayoutFactory.fillDefaults().numColumns(1).spacing(0, 0)
+				.applyTo(startCompositeArea);
+		GridDataFactory.fillDefaults().grab(true, false)
+				.applyTo(startCompositeArea);
 
 		for (StartCommandType commandType : commandTypes) {
 			StartCommandPart commandPart = partFactory
-					.createStartCommandTypePart(commandType, startCompositeArea, this);
+					.createStartCommandTypePart(commandType, startCompositeArea);
 			if (commandPart != null) {
+
+				// Since the standalone part is a container of multiple
+				// subparts, with only one subpart
+				// ever visible at any given time, make sure the listener of any
+				// part changes
+				// (e.g, a wizard page) only receives ONE event originating from
+				// the
+				// container part, not from the individual
+				// subparts. This is to avoid the listener from keeping track of
+				// errors from non-visible subparts, as errors from non-visible
+				// parts should
+				// not prevent the completion of an operation, like deploying an
+				// application.
+				commandPart.addPartChangeListener(this);
 				startCommandAreas.put(commandType, commandPart);
 			}
 		}
@@ -181,14 +212,16 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 		return true;
 	}
 
-	protected void makeStartCommandControlsVisible(StartCommandType typeToMakeVisible) {
+	protected void makeStartCommandControlsVisible(
+			StartCommandType typeToMakeVisible) {
 		StartCommandPart part = startCommandAreas.get(typeToMakeVisible);
-		Composite areaToMakeVisible = part != null ? part.getComposite() : null;
+		Control areaToMakeVisible = part != null ? part.getComposite() : null;
 
 		if (areaToMakeVisible != null && !areaToMakeVisible.isDisposed()) {
 
 			GridData data = (GridData) areaToMakeVisible.getLayoutData();
-			GridDataFactory.createFrom(data).exclude(false).applyTo(areaToMakeVisible);
+			GridDataFactory.createFrom(data).exclude(false)
+					.applyTo(areaToMakeVisible);
 			areaToMakeVisible.setVisible(true);
 
 			// Hide the other sections
@@ -196,14 +229,17 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 			// made invisible
 			for (StartCommandType otherTypes : startCommandAreas.keySet()) {
 				if (!otherTypes.equals(typeToMakeVisible)) {
-					StartCommandPart otherArea = startCommandAreas.get(otherTypes);
+					StartCommandPart otherArea = startCommandAreas
+							.get(otherTypes);
 
 					if (otherArea != null) {
-						Composite otherAreaComposite = otherArea.getComposite();
+						Control otherAreaComposite = otherArea.getComposite();
 
 						if (!otherAreaComposite.isDisposed()) {
-							data = (GridData) otherAreaComposite.getLayoutData();
-							GridDataFactory.createFrom(data).exclude(true).applyTo(otherAreaComposite);
+							data = (GridData) otherAreaComposite
+									.getLayoutData();
+							GridDataFactory.createFrom(data).exclude(true)
+									.applyTo(otherAreaComposite);
 
 							otherAreaComposite.setVisible(false);
 						}
@@ -217,12 +253,12 @@ public class StandaloneStartCommandPart implements IStartCommandPartListener {
 
 	}
 
-	public void handleChange(String command, boolean isValid) {
-		standaloneStartCommand = command;
-		isStartCommandValid = isValid;
-		if (listener != null) {
-			listener.handleEvent(StartCommandEvent.UPDATE);
-		}
-	}
+	@Override
+	public void handleChange(PartChangeEvent event) {
+		// The events received here are coming from the subparts. Redirect the
+		// event to the actual listener (e.g. wizard page) as an event
+		// originating from the container part, rather than the subpart.
+		notifyStatusChange(event.getData(), event.getStatus());
 
+	}
 }

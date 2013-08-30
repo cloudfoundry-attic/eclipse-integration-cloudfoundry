@@ -14,7 +14,7 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
@@ -111,12 +111,12 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 
 						}
 					}
-					List<CloudURL> cloudUrls = CloudUiUtil.getAllUrls(cfServer.getBehaviour().getServer()
+					List<CloudServerURL> cloudUrls = CloudUiUtil.getAllUrls(cfServer.getBehaviour().getServer()
 							.getServerType().getId());
 					String url = cfServer.getUrl();
 					// decoration.addSuffix(NLS.bind("  {0}",
 					// cfServer.getUsername()));
-					for (CloudURL cloudUrl : cloudUrls) {
+					for (CloudServerURL cloudUrl : cloudUrls) {
 						if (cloudUrl.getUrl().equals(url)) {
 							decoration.addSuffix(NLS.bind(" - {0}", cloudUrl.getUrl()));
 							break;

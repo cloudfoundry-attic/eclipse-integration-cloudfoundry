@@ -42,7 +42,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateApplication
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateInstanceCountAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AppStatsContentProvider.InstanceStatsAndInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationActionMenuControl.IButtonMenuListener;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryURLsWizard;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.MappedURLsWizard;
 import org.cloudfoundry.ide.eclipse.server.rse.ConfigureRemoteCloudFoundryAction;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -633,7 +633,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		editURI.addHyperlinkListener(new HyperlinkAdapter() {
 			@Override
 			public void linkActivated(HyperlinkEvent e) {
-				CloudFoundryURLsWizard wizard = new CloudFoundryURLsWizard(cloudServer, getApplication(), URIs,
+				MappedURLsWizard wizard = new MappedURLsWizard(cloudServer, getApplication(), URIs,
 						isPublished);
 				WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(), wizard);
 				if (dialog.open() == Window.OK) {

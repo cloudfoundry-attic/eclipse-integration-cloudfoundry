@@ -1,19 +1,19 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
@@ -67,12 +67,12 @@ public class CloudUrlWidget {
 				int index = urlCombo.getSelectionIndex();
 
 				if (index >= 0 && index != comboIndex) {
-					CloudURL cloudUrl = CloudUiUtil.getAllUrls(serverTypeId).get(index);
+					CloudServerURL cloudUrl = CloudUiUtil.getAllUrls(serverTypeId).get(index);
 					if (cloudUrl.getUrl().contains("{")) {
-						CloudURL newUrl = CloudUiUtil.getWildcardUrl(cloudUrl, CloudUiUtil.getAllUrls(serverTypeId),
+						CloudServerURL newUrl = CloudUiUtil.getWildcardUrl(cloudUrl, CloudUiUtil.getAllUrls(serverTypeId),
 								parent.getShell());
 						if (newUrl != null) {
-							List<CloudURL> userDefinedUrls = CloudUiUtil.getUserDefinedUrls(serverTypeId);
+							List<CloudServerURL> userDefinedUrls = CloudUiUtil.getUserDefinedUrls(serverTypeId);
 							userDefinedUrls.add(newUrl);
 							CloudUiUtil.storeUserDefinedUrls(serverTypeId, userDefinedUrls);
 							String newUrlName = newUrl.getName();
@@ -103,7 +103,7 @@ public class CloudUrlWidget {
 			public void widgetSelected(SelectionEvent e) {
 				ManageCloudDialog dialog = new ManageCloudDialog(manageUrlButton.getShell(), serverTypeId);
 				if (dialog.open() == Dialog.OK) {
-					CloudURL lastAddedEditedURL = dialog.getLastAddedOrEditedURL();
+					CloudServerURL lastAddedEditedURL = dialog.getLastAddedOrEditedURL();
 					updateUrlCombo(lastAddedEditedURL);
 					setUpdatedSelectionInServer();
 				}
@@ -119,11 +119,11 @@ public class CloudUrlWidget {
 		return null;
 	}
 	
-	protected String getComboURLDisplay(CloudURL url) {
+	protected String getComboURLDisplay(CloudServerURL url) {
 		return url.getName() + " - " + url.getUrl();
 	}
 
-	protected void updateUrlCombo(CloudURL lastAddedEditedUrl) {
+	protected void updateUrlCombo(CloudServerURL lastAddedEditedUrl) {
 		String newSelection = null;
 		String oldSelection = null;
 
@@ -138,7 +138,7 @@ public class CloudUrlWidget {
 		}
 
 		// Get updated list of URLs
-		List<CloudURL> cloudUrls = CloudUiUtil.getAllUrls(serverTypeId);
+		List<CloudServerURL> cloudUrls = CloudUiUtil.getAllUrls(serverTypeId);
 		String[] updatedUrls = new String[cloudUrls.size()];
 
 		// If there is a last edited URL, set that as the selection in the combo

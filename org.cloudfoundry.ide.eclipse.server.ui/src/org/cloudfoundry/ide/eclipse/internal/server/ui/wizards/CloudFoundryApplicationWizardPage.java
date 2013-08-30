@@ -177,9 +177,6 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 
 				setApplicationInfo();
 				update();
-
-				// Also update the URL with the new name
-				deploymentPage.updateUrl();
 			}
 		});
 

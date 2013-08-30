@@ -8,16 +8,17 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
+package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
-import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener.PartChangeEvent;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
-public abstract class AbstractPart {
+/**
+ * UI Part that sends notifications on changes in the UI Part controls.
+ */
+public abstract class UIPart {
 
 	private IPartChangeListener listener;
 
@@ -25,10 +26,14 @@ public abstract class AbstractPart {
 		this.listener = listener;
 	}
 
-	protected void notifyChange(IPartChangeListener.PartChangeEvent changeEvent) {
+	protected void notifyChange(PartChangeEvent changeEvent) {
 		if (listener != null) {
 			listener.handleChange(changeEvent);
 		}
+	}
+
+	protected IPartChangeListener getListener() {
+		return listener;
 	}
 
 	/**
@@ -39,13 +44,25 @@ public abstract class AbstractPart {
 	 * required.
 	 * @param status
 	 */
-	protected void setStatus(IStatus status) {
+	protected void notifyStatusChange(IStatus status) {
+		notifyStatusChange(null, status);
+	}
+
+	/**
+	 * Setting a null status is equivalent to an OK status. Setting an error
+	 * status without a message may allow listeners to react to the error (e.g.
+	 * disabling controls like a "Finish" or "OK" button) but not display an
+	 * error message. To display an error message, a non-null error message is
+	 * required.
+	 * @param status
+	 */
+	protected void notifyStatusChange(Object data, IStatus status) {
 
 		if (status == null) {
 			status = Status.OK_STATUS;
 		}
 
-		notifyChange(new PartChangeEvent(null, status));
+		notifyChange(new PartChangeEvent(data, status, this));
 	}
 
 	abstract public Control createPart(Composite parent);

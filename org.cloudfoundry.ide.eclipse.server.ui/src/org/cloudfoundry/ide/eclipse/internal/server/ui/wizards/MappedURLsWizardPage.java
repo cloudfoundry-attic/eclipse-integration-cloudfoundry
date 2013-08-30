@@ -17,8 +17,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplication
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.IInputValidator;
-import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.layout.LayoutConstants;
@@ -30,6 +28,7 @@ import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -44,7 +43,7 @@ import org.eclipse.swt.widgets.Table;
  * @author Steffen Pingel
  * @author Christian Dupuis
  */
-public class CloudFoundryURLsWizardPage extends WizardPage {
+public class MappedURLsWizardPage extends WizardPage {
 
 	private Button addButton;
 
@@ -58,7 +57,9 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 
 	private TableViewer viewer;
 
-	public CloudFoundryURLsWizardPage(CloudFoundryServer cloudServer, List<String> existingURIs,
+	private final CloudFoundryServer cloudServer;
+
+	public MappedURLsWizardPage(CloudFoundryServer cloudServer, List<String> existingURIs,
 			CloudFoundryApplicationModule appModule) {
 		super("Mapped URIs");
 
@@ -66,6 +67,8 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 		if (existingURIs != null) {
 			urls.addAll(existingURIs);
 		}
+
+		this.cloudServer = cloudServer;
 
 		setTitle("Mapped URIs Configuration");
 		setDescription("Finish to modify the mapped URIs.");
@@ -109,18 +112,10 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 		addButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				InputDialog dialog = new InputDialog(addButton.getShell(), "Add URL Mapping", "URL:", "",
-						new IInputValidator() {
-
-							public String isValid(String newText) {
-								if (newText == null || newText.length() == 0) {
-									return "URL cannot be empty";
-								}
-								return null;
-							}
-						});
+				ApplicationURLWizard wizard = new ApplicationURLWizard(cloudServer, null);
+				WizardDialog dialog = new WizardDialog(addButton.getShell(), wizard);
 				if (dialog.open() == Dialog.OK) {
-					String newURI = dialog.getValue();
+					String newURI = wizard.getUrl();
 					urls.add(newURI);
 					update();
 				}
@@ -137,18 +132,10 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 				IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
 				String url = (String) selection.getFirstElement();
 
-				InputDialog dialog = new InputDialog(addButton.getShell(), "Unpdate URL Mapping", "URL:", url,
-						new IInputValidator() {
-
-							public String isValid(String newText) {
-								if (newText == null || newText.length() == 0) {
-									return "URL cannot be empty";
-								}
-								return null;
-							}
-						});
+				ApplicationURLWizard wizard = new ApplicationURLWizard(cloudServer, url);
+				WizardDialog dialog = new WizardDialog(addButton.getShell(), wizard);
 				if (dialog.open() == Dialog.OK) {
-					String newURI = dialog.getValue();
+					String newURI = wizard.getUrl();
 					urls.remove(url);
 					urls.add(newURI);
 					update();
@@ -172,7 +159,7 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 			}
 		});
 
-		boolean isPublished = ((CloudFoundryURLsWizard) getWizard()).isPublished();
+		boolean isPublished = ((MappedURLsWizard) getWizard()).isPublished();
 
 		if (!isPublished) {
 			shouldRepublishButton = new Button(composite, SWT.CHECK);
@@ -193,7 +180,7 @@ public class CloudFoundryURLsWizardPage extends WizardPage {
 	}
 
 	public boolean isPageComplete() {
-		return !((CloudFoundryURLsWizard) getWizard()).requiresURL() || !urls.isEmpty();
+		return !((MappedURLsWizard) getWizard()).requiresURL() || !urls.isEmpty();
 	}
 
 	public List<String> getURLs() {

@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -31,13 +31,7 @@ import org.eclipse.core.runtime.Status;
  * are invalid.
  * 
  */
-public class DeploymentInfoValidator {
-
-	private final String startCommand;
-
-	private final boolean isStandAloneApp;
-
-	private final String url;
+public class ApplicationUrlValidator {
 
 	public static final String EMPTY_URL_ERROR = "Enter a deployment name.";
 
@@ -45,38 +39,22 @@ public class DeploymentInfoValidator {
 
 	public static final String INVALID_START_COMMAND = "A start command is required when deploying a standalone application.";
 
-	public DeploymentInfoValidator(String url, String startCommand, boolean isStandaloneApplication) {
-		this.startCommand = startCommand;
-		this.url = url;
-		this.isStandAloneApp = isStandaloneApplication;
+	public ApplicationUrlValidator() {
 	}
 
-	public IStatus isValid() {
+	public IStatus isValid(String url) {
 		// Check URL validity
-		String message = null;
-		boolean isValid = true;
+		String errorMessage = null;
+
 		if (ValueValidationUtil.isEmpty(url)) {
-			if (!isStandAloneApp) {
-				message = EMPTY_URL_ERROR;
-				isValid = false;
-			}
+			errorMessage = EMPTY_URL_ERROR;
 		}
 		else if (new URLNameValidation(url).hasInvalidCharacters()) {
-			message = INVALID_CHARACTERS_ERROR;
-			isValid = false;
+			errorMessage = INVALID_CHARACTERS_ERROR;
 		}
 
-		// Check standalone app start command
-		if (isValid && isStandAloneApp && ValueValidationUtil.isEmpty(startCommand)) {
-			message = INVALID_START_COMMAND;
-			isValid = false;
-		}
+		IStatus status = errorMessage != null ? CloudFoundryPlugin.getErrorStatus(errorMessage) : Status.OK_STATUS;
 
-		if (!isValid) {
-			return CloudFoundryPlugin.getErrorStatus(message != null ? message : "");
-		}
-		else {
-			return Status.OK_STATUS;
-		}
+		return status;
 	}
 }

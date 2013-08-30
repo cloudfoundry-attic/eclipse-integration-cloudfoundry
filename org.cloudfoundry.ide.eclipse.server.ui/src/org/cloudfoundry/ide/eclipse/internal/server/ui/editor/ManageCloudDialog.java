@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
@@ -18,7 +18,7 @@ import java.util.Set;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudUrlWizard;
 import org.eclipse.core.runtime.CoreException;
@@ -61,11 +61,11 @@ public class ManageCloudDialog extends Dialog {
 
 	private final String serverTypeId;
 
-	private List<CloudURL> cloudUrls;
+	private List<CloudServerURL> cloudUrls;
 
 	private Set<IServer> serversToDelete;
 
-	private CloudURL lastAddedEditedURL;
+	private CloudServerURL lastAddedEditedURL;
 
 	protected ManageCloudDialog(Shell parentShell, String serverTypeId) {
 		super(parentShell);
@@ -104,7 +104,7 @@ public class ManageCloudDialog extends Dialog {
 	 * @return Cloud URL if successfully prompted and entered by user. Null
 	 * otherwise
 	 */
-	protected CloudURL promptForCloudURL(String serverID, Shell shell, List<CloudURL> allURLs, String existingURL,
+	protected CloudServerURL promptForCloudURL(String serverID, Shell shell, List<CloudServerURL> allURLs, String existingURL,
 			String existingName) {
 		CloudUrlWizard wizard = new CloudUrlWizard(serverID, allURLs, existingURL, existingName);
 		WizardDialog dialog = new WizardDialog(shell, wizard);
@@ -134,8 +134,8 @@ public class ManageCloudDialog extends Dialog {
 			}
 
 			public Object[] getElements(Object inputElement) {
-				Collections.sort(cloudUrls, new Comparator<CloudURL>() {
-					public int compare(CloudURL o1, CloudURL o2) {
+				Collections.sort(cloudUrls, new Comparator<CloudServerURL>() {
+					public int compare(CloudServerURL o1, CloudServerURL o2) {
 						return o1.getName().compareTo(o2.getName());
 					}
 				});
@@ -161,8 +161,8 @@ public class ManageCloudDialog extends Dialog {
 			}
 
 			public String getColumnText(Object element, int columnIndex) {
-				if (element instanceof CloudURL) {
-					CloudURL cloudUrl = (CloudURL) element;
+				if (element instanceof CloudServerURL) {
+					CloudServerURL cloudUrl = (CloudServerURL) element;
 					if (columnIndex == 0) {
 						return cloudUrl.getName();
 					}
@@ -189,7 +189,7 @@ public class ManageCloudDialog extends Dialog {
 		addButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				CloudURL cloudURL = promptForCloudURL(serverTypeId, e.display.getActiveShell(), cloudUrls, null, null);
+				CloudServerURL cloudURL = promptForCloudURL(serverTypeId, e.display.getActiveShell(), cloudUrls, null, null);
 				if (cloudURL != null) {
 					addURL(cloudURL);
 					viewer.refresh(true);
@@ -208,12 +208,12 @@ public class ManageCloudDialog extends Dialog {
 				if (selection instanceof IStructuredSelection) {
 					IStructuredSelection sSelection = (IStructuredSelection) selection;
 					Object element = sSelection.getFirstElement();
-					if (element instanceof CloudURL) {
-						CloudURL cloudUrl = (CloudURL) element;
+					if (element instanceof CloudServerURL) {
+						CloudServerURL cloudUrl = (CloudServerURL) element;
 
 						if (cloudUrl.getUserDefined()) {
 							cloudUrls.remove(cloudUrl);
-							CloudURL newUrl = promptForCloudURL(serverTypeId, e.display.getActiveShell(), cloudUrls,
+							CloudServerURL newUrl = promptForCloudURL(serverTypeId, e.display.getActiveShell(), cloudUrls,
 									cloudUrl.getUrl(), cloudUrl.getName());
 							if (newUrl != null) {
 
@@ -229,7 +229,7 @@ public class ManageCloudDialog extends Dialog {
 							}
 						}
 						else {
-							CloudURL url = CloudUiUtil.getWildcardUrl(cloudUrl, cloudUrls, getShell());
+							CloudServerURL url = CloudUiUtil.getWildcardUrl(cloudUrl, cloudUrls, getShell());
 							if (url != null) {
 								addURL(url);
 							}
@@ -252,8 +252,8 @@ public class ManageCloudDialog extends Dialog {
 					IStructuredSelection sSelection = (IStructuredSelection) selection;
 					Object[] selectedItems = sSelection.toArray();
 					for (Object selectedItem : selectedItems) {
-						if (selectedItem instanceof CloudURL) {
-							CloudURL cloudUrl = (CloudURL) selectedItem;
+						if (selectedItem instanceof CloudServerURL) {
+							CloudServerURL cloudUrl = (CloudServerURL) selectedItem;
 							if (cloudUrl.getUserDefined()) {
 								if (canUpdateUrl(cloudUrl, null)) {
 									cloudUrls.remove(cloudUrl);
@@ -277,8 +277,8 @@ public class ManageCloudDialog extends Dialog {
 					IStructuredSelection sSelection = (IStructuredSelection) selection;
 					Object[] selectedItems = sSelection.toArray();
 					for (Object selectedItem : selectedItems) {
-						if (selectedItem instanceof CloudURL) {
-							CloudURL cloudUrl = (CloudURL) selectedItem;
+						if (selectedItem instanceof CloudServerURL) {
+							CloudServerURL cloudUrl = (CloudServerURL) selectedItem;
 							if (!cloudUrl.getUserDefined()) {
 								String url = cloudUrl.getUrl();
 								if (!url.contains("{")) {
@@ -299,18 +299,18 @@ public class ManageCloudDialog extends Dialog {
 		return composite;
 	}
 
-	protected void addURL(CloudURL urlToAdd) {
+	protected void addURL(CloudServerURL urlToAdd) {
 		if (cloudUrls != null) {
 			cloudUrls.add(urlToAdd);
 			lastAddedEditedURL = urlToAdd;
 		}
 	}
 
-	public CloudURL getLastAddedOrEditedURL() {
+	public CloudServerURL getLastAddedOrEditedURL() {
 		return lastAddedEditedURL;
 	}
 
-	private boolean canUpdateUrl(CloudURL url, CloudURL newUrl) {
+	private boolean canUpdateUrl(CloudServerURL url, CloudServerURL newUrl) {
 		IServer[] servers = ServerCore.getServers();
 		Set<CloudFoundryServer> matchedServers = new HashSet<CloudFoundryServer>();
 		for (IServer server : servers) {

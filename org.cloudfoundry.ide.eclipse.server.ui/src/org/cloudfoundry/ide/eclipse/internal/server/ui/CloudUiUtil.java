@@ -24,7 +24,7 @@ import java.util.Set;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudURL;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
@@ -116,39 +116,39 @@ public class CloudUiUtil {
 		return Status.OK_STATUS;
 	}
 
-	public static List<CloudURL> getAllUrls(String serverTypeId) {
-		List<CloudURL> urls = new ArrayList<CloudFoundryBrandingExtensionPoint.CloudURL>();
+	public static List<CloudServerURL> getAllUrls(String serverTypeId) {
+		List<CloudServerURL> urls = new ArrayList<CloudFoundryBrandingExtensionPoint.CloudServerURL>();
 		urls.add(getDefaultUrl(serverTypeId));
 		urls.addAll(getUrls(serverTypeId));
 		return urls;
 	}
 
-	public static CloudURL getDefaultUrl(String serverTypeId) {
+	public static CloudServerURL getDefaultUrl(String serverTypeId) {
 		return CloudFoundryBrandingExtensionPoint.getDefaultUrl(serverTypeId);
 	}
 
-	public static List<CloudURL> getUrls(String serverTypeId) {
-		List<CloudURL> cloudUrls = new ArrayList<CloudURL>();
+	public static List<CloudServerURL> getUrls(String serverTypeId) {
+		List<CloudServerURL> cloudUrls = new ArrayList<CloudServerURL>();
 
 		Set<String> urlNames = new HashSet<String>();
 
-		List<CloudURL> userDefinedUrls = CloudUiUtil.getUserDefinedUrls(serverTypeId);
-		for (CloudURL userDefinedUrl : userDefinedUrls) {
+		List<CloudServerURL> userDefinedUrls = CloudUiUtil.getUserDefinedUrls(serverTypeId);
+		for (CloudServerURL userDefinedUrl : userDefinedUrls) {
 			cloudUrls.add(userDefinedUrl);
 			urlNames.add(userDefinedUrl.getName());
 		}
 
-		List<CloudURL> defaultUrls = CloudFoundryBrandingExtensionPoint.getCloudUrls(serverTypeId);
+		List<CloudServerURL> defaultUrls = CloudFoundryBrandingExtensionPoint.getCloudUrls(serverTypeId);
 		if (defaultUrls != null) {
-			for (CloudURL defaultUrl : defaultUrls) {
+			for (CloudServerURL defaultUrl : defaultUrls) {
 				if (!urlNames.contains(defaultUrl.getName())) {
 					cloudUrls.add(defaultUrl);
 				}
 			}
 
-			Collections.sort(cloudUrls, new Comparator<CloudURL>() {
+			Collections.sort(cloudUrls, new Comparator<CloudServerURL>() {
 
-				public int compare(CloudURL o1, CloudURL o2) {
+				public int compare(CloudServerURL o1, CloudServerURL o2) {
 					return o1.getName().compareToIgnoreCase(o2.getName());
 				}
 
@@ -158,8 +158,8 @@ public class CloudUiUtil {
 		return cloudUrls;
 	}
 
-	public static List<CloudURL> getUserDefinedUrls(String serverTypeId) {
-		List<CloudURL> urls = new ArrayList<CloudURL>();
+	public static List<CloudServerURL> getUserDefinedUrls(String serverTypeId) {
+		List<CloudServerURL> urls = new ArrayList<CloudServerURL>();
 
 		IPreferenceStore prefStore = CloudFoundryServerUiPlugin.getDefault().getPreferenceStore();
 		String urlString = prefStore.getString(ATTR_USER_DEFINED_URLS + "." + serverTypeId);
@@ -180,7 +180,7 @@ public class CloudUiUtil {
 								url = values[1];
 							}
 
-							urls.add(new CloudURL(name, url, true));
+							urls.add(new CloudServerURL(name, url, true));
 						}
 					}
 
@@ -191,11 +191,11 @@ public class CloudUiUtil {
 		return urls;
 	}
 
-	public static void storeUserDefinedUrls(String serverTypeId, List<CloudURL> urls) {
+	public static void storeUserDefinedUrls(String serverTypeId, List<CloudServerURL> urls) {
 		IPreferenceStore prefStore = CloudFoundryServerUiPlugin.getDefault().getPreferenceStore();
 		StringBuilder builder = new StringBuilder();
 
-		for (CloudURL url : urls) {
+		for (CloudServerURL url : urls) {
 			if (url.getUserDefined()) {
 				builder.append(url.getName());
 
@@ -325,8 +325,8 @@ public class CloudUiUtil {
 	}
 
 	public static String getDisplayTextFromUrl(String url, String serverTypeId) {
-		List<CloudURL> cloudUrls = getAllUrls(serverTypeId);
-		for (CloudURL cloudUrl : cloudUrls) {
+		List<CloudServerURL> cloudUrls = getAllUrls(serverTypeId);
+		for (CloudServerURL cloudUrl : cloudUrls) {
 			if (cloudUrl.getUrl().equals(url)) {
 				return cloudUrl.getName() + " - " + url;
 			}
@@ -436,7 +436,7 @@ public class CloudUiUtil {
 	 * @return new URL, null if no wildcard appears in cloudUrl or if user
 	 * cancels out of defining a new value
 	 */
-	public static CloudURL getWildcardUrl(CloudURL cloudUrl, List<CloudURL> allCloudUrls, Shell shell) {
+	public static CloudServerURL getWildcardUrl(CloudServerURL cloudUrl, List<CloudServerURL> allCloudUrls, Shell shell) {
 		String url = cloudUrl.getUrl();
 		if (url.contains("{")) {
 			int startIndex = url.indexOf("{");
@@ -448,7 +448,7 @@ public class CloudUiUtil {
 				url = dialog.getUrl();
 				String name = dialog.getName();
 				// CloudUiUtil.addUserDefinedUrl(serverTypeId, name, url);
-				return new CloudURL(name, url, true);
+				return new CloudServerURL(name, url, true);
 			}
 			else {
 				return null;
