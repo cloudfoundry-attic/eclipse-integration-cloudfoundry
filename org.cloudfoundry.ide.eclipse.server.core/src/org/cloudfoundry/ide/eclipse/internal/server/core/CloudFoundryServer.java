@@ -583,7 +583,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		try {
 			deleteServicesOnModuleRemove.set(Boolean.FALSE);
 			wc.modifyModules(null, deletedModules.toArray(new IModule[deletedModules.size()]), null);
-			wc.save(false, null);
+			wc.save(true, null);
 		}
 		catch (CoreException e) {
 			// log error to avoid pop-up dialog
