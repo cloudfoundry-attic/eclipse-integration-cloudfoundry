@@ -34,7 +34,7 @@ Bundle-ClassPath: .,
  lib/commons-io-2.1.jar,
  lib/spring-context-support-3.0.7.RELEASE.jar,
  lib/cloudfoundry-caldecott-lib-0.1.4.BUILD-SNAPSHOT.jar,
- lib/cloudfoundry-client-lib-0.8.6.jar
+ lib/cloudfoundry-client-lib-0.8.7.BUILD-SNAPSHOT.jar
 Bundle-Activator: org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin
 Export-Package: org.cloudfoundry.caldecott.client,
  org.cloudfoundry.client.lib,

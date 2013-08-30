@@ -556,10 +556,10 @@ public class UaaAwareCloudFoundryClient extends CloudFoundryClient implements Tr
 	}
 
 	@Override
-	public void restartApplication(String appName) {
+	public StartingInfo restartApplication(String appName) {
 		int resultCode = HTTP_SUCCESS_CODE;
 		try {
-			super.restartApplication(appName);
+			return super.restartApplication(appName);
 		}
 		catch (HttpStatusCodeException he) {
 			resultCode = he.getStatusCode().value();
