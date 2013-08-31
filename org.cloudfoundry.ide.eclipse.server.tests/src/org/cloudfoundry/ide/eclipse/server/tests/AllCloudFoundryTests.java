@@ -13,8 +13,17 @@ package org.cloudfoundry.ide.eclipse.server.tests;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryClientTest;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConsoleTest;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProxyTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviourTest;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerTest;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServicesTest;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtilTest;
+import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentURLTest;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsStoreTest;
 import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ManagedTestSuite;
+import org.cloudfoundry.ide.eclipse.server.tests.sts.util.StsTestUtil;
 
 /**
  * @author Steffen Pingel
@@ -41,20 +50,20 @@ public class AllCloudFoundryTests {
 		// FIXNS: DISABLED FOR CF 1.5.1 Nightly
 		if (!heartbeat) {
 			// XXX fails for on build server for unknown reasons
-			// if (!StsTestUtil.isOnBuildSite()) {
-			// suite.addTestSuite(CloudFoundryServerBehaviourTest.class);
-			// }
+			if (!StsTestUtil.isOnBuildSite()) {
+				suite.addTestSuite(CloudFoundryServerBehaviourTest.class);
+			}
 		}
 
-		// suite.addTestSuite(CloudFoundryProxyTest.class);
-		// suite.addTestSuite(ServerCredentialsStoreTest.class);
-		// suite.addTestSuite(CloudFoundryServerTest.class);
-		// suite.addTestSuite(CloudUtilTest.class);
-		//
-		// suite.addTestSuite(DeploymentURLTest.class);
-		// suite.addTestSuite(CloudFoundryServicesTest.class);
-		// suite.addTestSuite(CloudFoundryConsoleTest.class);
-		// suite.addTestSuite(CloudFoundryClientTest.class);
+		suite.addTestSuite(CloudFoundryProxyTest.class);
+		suite.addTestSuite(ServerCredentialsStoreTest.class);
+		suite.addTestSuite(CloudFoundryServerTest.class);
+		suite.addTestSuite(CloudUtilTest.class);
+
+		suite.addTestSuite(DeploymentURLTest.class);
+		suite.addTestSuite(CloudFoundryServicesTest.class);
+		suite.addTestSuite(CloudFoundryConsoleTest.class);
+		suite.addTestSuite(CloudFoundryClientTest.class);
 
 		return suite;
 	}

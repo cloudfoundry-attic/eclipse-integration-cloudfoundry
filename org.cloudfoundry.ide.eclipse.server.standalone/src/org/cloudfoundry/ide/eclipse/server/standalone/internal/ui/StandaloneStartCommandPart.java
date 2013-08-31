@@ -253,7 +253,6 @@ public class StandaloneStartCommandPart extends UIPart implements
 
 	}
 
-	@Override
 	public void handleChange(PartChangeEvent event) {
 		// The events received here are coming from the subparts. Redirect the
 		// event to the actual listener (e.g. wizard page) as an event
