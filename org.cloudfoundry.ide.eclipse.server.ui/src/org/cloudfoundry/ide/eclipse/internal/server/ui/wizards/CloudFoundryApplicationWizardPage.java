@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
@@ -25,8 +25,9 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -42,18 +43,15 @@ import org.eclipse.swt.widgets.Text;
  * application name.
  * 
  */
-@SuppressWarnings("restriction")
-public class CloudFoundryApplicationWizardPage extends WizardPage {
+public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 	private Pattern VALID_CHARS = Pattern.compile("[A-Za-z\\$_0-9\\-]+");
 
-	protected static final String DEFAULT_DESCRIPTION = "Specify application details";
+	protected static final String DEFAULT_DESCRIPTION = "Specify application details.";
 
 	private String appName;
 
 	private String buildpack;
-
-	private boolean canFinish;
 
 	private Text nameText;
 
@@ -74,7 +72,7 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 	public CloudFoundryApplicationWizardPage(CloudFoundryServer server,
 			CloudFoundryDeploymentWizardPage deploymentPage, CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor) {
-		super("Deployment Wizard");
+		super("Deployment Wizard", null, null);
 		this.server = server;
 		this.deploymentPage = deploymentPage;
 		this.module = module;
@@ -82,42 +80,14 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 
 	}
 
-	protected void initialiseFromLastDeployment() {
+	protected void init() {
+		this.serverTypeId = module.getServerTypeId();
 
-		ApplicationInfo lastApplicationInfo = null;
-
-		if (module != null) {
-			// this.app = module.getApplication();
-			lastApplicationInfo = module.getLastApplicationInfo();
-			this.serverTypeId = module.getServerTypeId();
-		}
-
-		if (lastApplicationInfo == null) {
-			appName = getAppName(module);
-		}
-		else {
-			appName = lastApplicationInfo.getAppName();
-		}
-
-		// Set the application info based on information from the previous
-		// deployment
-		setApplicationInfo();
+		appName = descriptor.getApplicationInfo() != null ? descriptor.getApplicationInfo().getAppName() : null;
 	}
 
 	protected CloudFoundryApplicationWizard getApplicationWizard() {
 		return (CloudFoundryApplicationWizard) getWizard();
-	}
-
-	protected String getAppName(CloudFoundryApplicationModule module) {
-		CloudApplication app = module.getApplication();
-		String appName = null;
-		if (app != null && app.getName() != null) {
-			appName = app.getName();
-		}
-		if (appName == null) {
-			appName = module.getName();
-		}
-		return appName;
 	}
 
 	public void createControl(Composite parent) {
@@ -139,10 +109,17 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 		update(false);
 	}
 
-	protected void setApplicationInfo() {
+	protected void updateApplicationName() {
 		ApplicationInfo info = new ApplicationInfo(appName);
 
 		descriptor.setApplicationInfo(info);
+
+		DeploymentInfo depInfo = descriptor.getDeploymentInfo();
+		if (depInfo == null) {
+			depInfo = new DeploymentInfo();
+			descriptor.setDeploymentInfo(depInfo);
+		}
+		depInfo.setDeploymentName(appName);
 	}
 
 	@Override
@@ -154,7 +131,7 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 
 		// This must be called first as the values are then populate into the UI
 		// widgets
-		initialiseFromLastDeployment();
+		init();
 
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout(2, false));
@@ -175,7 +152,7 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 			public void modifyText(ModifyEvent e) {
 				appName = nameText.getText();
 
-				setApplicationInfo();
+				updateApplicationName();
 				update();
 			}
 		});
@@ -205,9 +182,9 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 	}
 
 	protected void validateBuildPack() {
-		canFinish = true;
-		setErrorMessage(null);
 
+		boolean updateButtons = true;
+		IStatus status = Status.OK_STATUS;
 		// Clear the previous buildpack anyway, as either a new one valid one
 		// will be set
 		// or if invalid, it should be cleared from the descriptor. The
@@ -216,13 +193,12 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 		descriptor.setBuildpack(null);
 
 		// buildpack URL is optional, so an empty URL is acceptable
-		if (buildpack != null && buildpack.length() > 0) {
+		if (!ValueValidationUtil.isEmpty(buildpack)) {
 			try {
 				URL urlObject = new URL(buildpack);
 				String host = urlObject.getHost();
 				if (host == null || host.length() == 0) {
-					canFinish = false;
-					setErrorMessage("Enter a valid URL");
+					status = CloudFoundryPlugin.getErrorStatus("Enter a valid URL.");
 				}
 				else {
 					// Only set valid buildpack URLs
@@ -230,50 +206,46 @@ public class CloudFoundryApplicationWizardPage extends WizardPage {
 				}
 			}
 			catch (MalformedURLException e) {
-				setErrorMessage("Enter a valid URL");
-				canFinish = false;
+				status = CloudFoundryPlugin.getErrorStatus("Enter a valid URL.");
 			}
 		}
 
-		getWizard().getContainer().updateButtons();
+		update(updateButtons, status);
+
 	}
 
 	protected void update(boolean updateButtons) {
-		canFinish = true;
-
+		IStatus status = Status.OK_STATUS;
 		if (ValueValidationUtil.isEmpty(appName)) {
-			setDescription("Enter an application name.");
-			canFinish = false;
-		}
-
-		Matcher matcher = VALID_CHARS.matcher(appName);
-		if (canFinish && !matcher.matches()) {
-			setErrorMessage("The entered name contains invalid characters.");
-			canFinish = false;
+			status = CloudFoundryPlugin.getStatus("Enter an application name.", IStatus.ERROR);
 		}
 		else {
-			setErrorMessage(null);
-		}
+			Matcher matcher = VALID_CHARS.matcher(appName);
+			if (!matcher.matches()) {
+				status = CloudFoundryPlugin.getErrorStatus("The entered name contains invalid characters.");
+			}
+			else {
+				ModuleCache moduleCache = CloudFoundryPlugin.getModuleCache();
+				ServerData data = moduleCache.getData(server.getServerOriginal());
+				Collection<CloudFoundryApplicationModule> applications = data.getApplications();
+				boolean duplicate = false;
 
-		ModuleCache moduleCache = CloudFoundryPlugin.getModuleCache();
-		ServerData data = moduleCache.getData(server.getServerOriginal());
-		Collection<CloudFoundryApplicationModule> applications = data.getApplications();
-		boolean duplicate = false;
+				for (CloudFoundryApplicationModule application : applications) {
+					if (application != module && application.getApplicationId().equals(appName)) {
+						duplicate = true;
+						break;
+					}
+				}
 
-		for (CloudFoundryApplicationModule application : applications) {
-			if (application != module && application.getApplicationId().equals(appName)) {
-				duplicate = true;
-				break;
+				if (duplicate) {
+					status = CloudFoundryPlugin
+							.getErrorStatus("The entered name conflicts with an application deployed.");
+				}
 			}
 		}
 
-		if (canFinish && duplicate) {
-			setErrorMessage("The entered name conflicts with an application deployed.");
-			canFinish = false;
-		}
+		update(updateButtons, status);
 
-		if (updateButtons) {
-			getWizard().getContainer().updateButtons();
-		}
 	}
+
 }

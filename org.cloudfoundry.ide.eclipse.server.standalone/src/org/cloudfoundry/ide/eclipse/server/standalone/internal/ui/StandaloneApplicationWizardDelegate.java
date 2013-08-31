@@ -30,11 +30,13 @@ public class StandaloneApplicationWizardDelegate extends
 
 	public List<IWizardPage> getWizardPages(
 			ApplicationWizardDescriptor descriptor,
-			CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule) {
+			CloudFoundryServer cloudServer,
+			CloudFoundryApplicationModule applicationModule) {
 		List<IWizardPage> defaultPages = new ArrayList<IWizardPage>();
 
 		StandaloneDeploymentWizardPage deploymentPage = new StandaloneDeploymentWizardPage(
-				cloudServer, applicationModule, descriptor);
+				cloudServer, applicationModule, descriptor,
+				getApplicationUrlLookup());
 
 		CloudFoundryApplicationWizardPage applicationNamePage = new CloudFoundryApplicationWizardPage(
 				cloudServer, deploymentPage, applicationModule, descriptor);

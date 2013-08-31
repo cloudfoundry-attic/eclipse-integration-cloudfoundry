@@ -56,9 +56,10 @@ public class ApplicationURLWizard extends Wizard {
 	public void addPages() {
 		String serverTypeId = cloudServer.getServer().getServerType().getId();
 
-		ImageDescriptor imgDescriptor = CloudFoundryImages.getWizardBanner(serverTypeId);
-		CloudApplicationUrlLookup urlLookup = new CloudApplicationUrlLookup(cloudServer);
-		urlPage = new ApplicationURLWizardPage(imgDescriptor, urlLookup);
+		ImageDescriptor imageDescriptor = CloudFoundryImages.getWizardBanner(serverTypeId);
+		// Use the cached version if possible.
+		CloudApplicationUrlLookup urlLookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
+		urlPage = createPage(imageDescriptor, urlLookup);
 		urlPage.setWizard(this);
 		addPage(urlPage);
 	}
@@ -67,13 +68,20 @@ public class ApplicationURLWizard extends Wizard {
 		return editedUrl;
 	}
 
+	protected ApplicationURLWizardPage createPage(ImageDescriptor imageDescriptor, CloudApplicationUrlLookup urlLookup) {
+		CloudHostDomainUrlPart urlPart = new CloudHostDomainUrlPart(urlLookup);
+		return new ApplicationURLWizardPage(imageDescriptor, urlLookup, urlPart);
+	}
+
 	class ApplicationURLWizardPage extends AbstractURLWizardPage {
 
-		private CloudHostDomainUrlPart urlPart;
+		private final CloudHostDomainUrlPart urlPart;
 
-		protected ApplicationURLWizardPage(ImageDescriptor titleImage, CloudApplicationUrlLookup urlLookup) {
+		protected ApplicationURLWizardPage(ImageDescriptor titleImage, CloudApplicationUrlLookup urlLookup,
+				CloudHostDomainUrlPart urlPart) {
 			super("Application URL Page", title, titleImage, urlLookup);
 			setDescription("Add or edit application URL.");
+			this.urlPart = urlPart;
 		}
 
 		public void createControl(Composite parent) {
@@ -82,7 +90,6 @@ public class ApplicationURLWizard extends Wizard {
 			GridLayoutFactory.fillDefaults().numColumns(2).applyTo(composite);
 			GridDataFactory.fillDefaults().grab(true, true).applyTo(composite);
 
-			urlPart = new CloudHostDomainUrlPart(urlLookup);
 			urlPart.createPart(composite);
 			urlPart.addPartChangeListener(this);
 
@@ -90,7 +97,7 @@ public class ApplicationURLWizard extends Wizard {
 		}
 
 		@Override
-		protected void refreshURLUI() {
+		protected void postDomainsRefreshedOperation() {
 			urlPart.refreshDomains();
 			urlPart.updateFullUrl(initialUrl);
 		}

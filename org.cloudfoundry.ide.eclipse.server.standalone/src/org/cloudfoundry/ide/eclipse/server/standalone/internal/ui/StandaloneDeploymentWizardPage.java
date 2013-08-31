@@ -33,8 +33,9 @@ public class StandaloneDeploymentWizardPage extends
 
 	public StandaloneDeploymentWizardPage(CloudFoundryServer server,
 			CloudFoundryApplicationModule module,
-			ApplicationWizardDescriptor descriptor) {
-		super(server, module, descriptor);
+			ApplicationWizardDescriptor descriptor,
+			CloudApplicationUrlLookup urlLookup) {
+		super(server, module, descriptor, urlLookup);
 	}
 
 	protected StandaloneStartCommandPart standalonePart;

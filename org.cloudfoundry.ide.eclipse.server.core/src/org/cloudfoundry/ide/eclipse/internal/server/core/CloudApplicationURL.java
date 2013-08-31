@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-
 public class CloudApplicationURL {
 
 	private String host;
@@ -37,5 +36,53 @@ public class CloudApplicationURL {
 		return url;
 	}
 
+	@Override
+	public String toString() {
+		return getHost() + " - " + getDomain();
+	}
+
+	/*
+	 * GENERATED
+	 */
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((domain == null) ? 0 : domain.hashCode());
+		result = prime * result + ((host == null) ? 0 : host.hashCode());
+		result = prime * result + ((url == null) ? 0 : url.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		CloudApplicationURL other = (CloudApplicationURL) obj;
+		if (domain == null) {
+			if (other.domain != null)
+				return false;
+		}
+		else if (!domain.equals(other.domain))
+			return false;
+		if (host == null) {
+			if (other.host != null)
+				return false;
+		}
+		else if (!host.equals(other.host))
+			return false;
+		if (url == null) {
+			if (other.url != null)
+				return false;
+		}
+		else if (!url.equals(other.url))
+			return false;
+		return true;
+	}
 
 }

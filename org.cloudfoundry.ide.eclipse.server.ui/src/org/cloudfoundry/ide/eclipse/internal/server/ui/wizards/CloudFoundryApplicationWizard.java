@@ -67,18 +67,21 @@ public class CloudFoundryApplicationWizard extends Wizard {
 		// wizard
 		List<IWizardPage> applicationDeploymentPages = null;
 
+		// NOte that the descriptor should be initialised FIRST before
+		// requesting pages from the wizard delegate.
 		if (wizardDelegate != null) {
 
-			// Pass a copy to avoid the provider from modifying the original
-			// list of pages
-			applicationDeploymentPages = wizardDelegate.getWizardPages(applicationDescriptor, server, module);
+			wizardDelegate.initialiseWizardDescriptor(applicationDescriptor, server, module);
 
+			applicationDeploymentPages = wizardDelegate.getWizardPages(applicationDescriptor, server, module);
 		}
 
-		if (applicationDeploymentPages == null || applicationDeploymentPages.isEmpty()) {
+		if (wizardDelegate == null || applicationDeploymentPages == null || applicationDeploymentPages.isEmpty()) {
 			// Use the default Java Web pages
-			applicationDeploymentPages = new JavaWebApplicationWizardDelegate().getWizardPages(applicationDescriptor,
-					server, module);
+			wizardDelegate = new JavaWebApplicationWizardDelegate();
+			wizardDelegate.initialiseWizardDescriptor(applicationDescriptor, server, module);
+
+			applicationDeploymentPages = wizardDelegate.getWizardPages(applicationDescriptor, server, module);
 		}
 
 		for (IWizardPage updatedPage : applicationDeploymentPages) {

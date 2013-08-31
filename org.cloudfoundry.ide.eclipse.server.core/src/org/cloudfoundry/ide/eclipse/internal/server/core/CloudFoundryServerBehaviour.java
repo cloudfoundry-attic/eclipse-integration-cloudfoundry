@@ -90,6 +90,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private RefreshJob refreshJob;
 
+	private CloudApplicationUrlLookup applicationUrlLookup;
+
 	/*
 	 * FIXNS: Until V2 MCF is released, disable debugging support for V2, as
 	 * public clouds also indicate they support debug.
@@ -272,6 +274,24 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				return null;
 			}
 		}.run(monitor);
+	}
+
+	/**
+	 * The Cloud application URL lookup is used to resolve a list of URL domains
+	 * that an application can user when specifying a URL. It also validates
+	 * suggested application URLs, to check that the host and domain portions of
+	 * the URL are correction.
+	 * <p/>
+	 * Note that this only returns a cached lookup. The lookup may have to be
+	 * refreshed separately to get the most recent list of domains.
+	 * @return Lookup to retrieve list of application URL domains, as well as
+	 * verify validity of an application URL. May be null as its a cached
+	 * version.
+	 * @throws CoreException if server related errors, like failing to connect
+	 * or resolve server
+	 */
+	public CloudApplicationUrlLookup getApplicationUrlLookup() {
+		return applicationUrlLookup;
 	}
 
 	/**
@@ -638,6 +658,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public void resetClient() {
 		client = null;
+		applicationUrlLookup = null;
 	}
 
 	protected DeploymentDescriptor getDeploymentDescriptor(IModule[] modules, IProgressMonitor monitor)
@@ -1545,25 +1566,28 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				succeeded = true;
 
-				// try {
-				// // At this stage, the client is connected, otherwise the
-				// // client request would have failed.
-				// // Now retrieve information that should be done once per
-				// // connection session,
-				// // including whether the server supports debug, list of
-				// // application plans, and domains for the org.
-				// // Since request succeeded, at this stage determine
-				// // if the server supports debugging.
-				//
-				// // FIXNS: Disabled for CF 1.5.0 until V2 MCF is released
-				// // that supports debug.
-				// requestAllowDebug(client);
-				//
-				//
-				// }
-				// catch (RestClientException e) {
-				// throw CloudErrorUtil.toCoreException(e);
-				// }
+				try {
+					// At this stage, the client is connected, otherwise the
+					// client request would have failed.
+					// Now retrieve information that should be done once per
+					// connection session,
+					// including whether the server supports debug, list of
+					// application plans, and domains for the org.
+					// Since request succeeded, at this stage determine
+					// if the server supports debugging.
+
+					// FIXNS: Disabled for CF 1.5.0 until V2 MCF is released
+					// that supports debug.
+					// requestAllowDebug(client);
+					if (applicationUrlLookup == null) {
+						applicationUrlLookup = new CloudApplicationUrlLookup(getCloudFoundryServer());
+						applicationUrlLookup.refreshDomains(subProgress);
+					}
+
+				}
+				catch (RestClientException e) {
+					throw CloudErrorUtil.toCoreException(e);
+				}
 
 			}
 			finally {

@@ -56,4 +56,15 @@ public interface IApplicationWizardDelegate {
 	public List<IWizardPage> getWizardPages(ApplicationWizardDescriptor descriptor, CloudFoundryServer cloudServer,
 			CloudFoundryApplicationModule applicationModule);
 
+	/**
+	 * This is called by the wizard first, before requesting the wizard pages.
+	 * This allows implementations to access the server, shared application
+	 * descriptor, and app module prior to creating the wizard pages.
+	 * @param applicationDescriptor
+	 * @param cloudServer
+	 * @param module
+	 */
+	public void initialiseWizardDescriptor(ApplicationWizardDescriptor applicationDescriptor,
+			CloudFoundryServer cloudServer, CloudFoundryApplicationModule module);
+
 }

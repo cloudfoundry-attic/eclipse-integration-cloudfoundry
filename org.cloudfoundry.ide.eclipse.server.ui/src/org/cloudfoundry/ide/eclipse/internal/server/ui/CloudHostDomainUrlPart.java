@@ -40,7 +40,7 @@ import org.eclipse.swt.widgets.Text;
  */
 public class CloudHostDomainUrlPart extends UIPart {
 
-	private final CloudApplicationUrlLookup urlLookup;
+	protected final CloudApplicationUrlLookup urlLookup;
 
 	private String appURL;
 
@@ -101,12 +101,23 @@ public class CloudHostDomainUrlPart extends UIPart {
 		}
 	}
 
+	/**
+	 * Note: Triggers validation of the URL, and also notifies any listeners if
+	 * it is validate.
+	 * @param fullUrl
+	 */
 	public void updateFullUrl(String fullUrl) {
 		if (fullUrl != null && fullURLText != null && !fullURLText.isDisposed()) {
 			fullURLText.setText(fullUrl);
 		}
 	}
 
+	/**
+	 * Note: Triggers validation of the URL, and also notifies any listeners if
+	 * it is validate.
+	 * 
+	 * @param host
+	 */
 	public void updateUrlHost(String host) {
 		if (hostText != null && !hostText.isDisposed()) {
 			hostText.setText(host);
@@ -218,7 +229,7 @@ public class CloudHostDomainUrlPart extends UIPart {
 		IStatus status = Status.OK_STATUS;
 
 		try {
-			urlLookup.getAvailableAppUrl(appURL);
+			getCloudApplicationUrl(appURL);
 		}
 		catch (CoreException ce) {
 			status = ce.getStatus();
@@ -229,8 +240,10 @@ public class CloudHostDomainUrlPart extends UIPart {
 
 	protected void validateFullURL() {
 		IStatus status = Status.OK_STATUS;
+		// Try to parse the url based on the known list of domains.
+		// If not found, allow it anyway.
 		try {
-			CloudApplicationURL cloudAppURL = urlLookup.getAvailableAppUrl(appURL);
+			CloudApplicationURL cloudAppURL = getCloudApplicationUrl(appURL);
 
 			String host = cloudAppURL.getHost();
 			selectedDomain = cloudAppURL.getDomain();
@@ -238,11 +251,17 @@ public class CloudHostDomainUrlPart extends UIPart {
 			setDomainInUI();
 		}
 		catch (CoreException e) {
-			status = e.getStatus();
+			// Otherwise, perform simple validation
+			status = urlLookup.simpleValidation(appURL);
+
 		}
 
 		modifyEventSource = null;
 		notifyURLChanged(appURL, status);
+	}
+
+	protected CloudApplicationURL getCloudApplicationUrl(String appURL) throws CoreException {
+		return urlLookup.getCloudApplicationURL(appURL);
 	}
 
 	protected void notifyURLChanged(String appURL, IStatus status) {

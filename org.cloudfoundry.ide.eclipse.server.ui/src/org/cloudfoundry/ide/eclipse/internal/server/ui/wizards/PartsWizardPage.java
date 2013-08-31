@@ -73,19 +73,41 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 		return canFinish;
 	}
 
+	/**
+	 * This should be the ONLY way to notify the wizard page whether the page is
+	 * complete or not, as well as display any error or warning messages.
+	 * 
+	 * <p/>
+	 * 
+	 * The wizard page will only be complete if it receives an OK status.
+	 * 
+	 * <p/>
+	 * 
+	 * It is up to the caller to correctly set the OK state of the page in case
+	 * it sets a non-OK status, and the non-OK status gets resolved.
+	 * 
+	 * @param updateButtons true if force the wizard button states to be
+	 * refreshed. NOTE that if true, it is up to the caller to ensure that the
+	 * wizard page has been added to the wizard , and the wizard page is
+	 * visible.
+	 * @param status if status is OK, the wizard can complete. False otherwise.
+	 */
 	protected void update(boolean updateButtons, IStatus status) {
 
 		canFinish = status.isOK();
 
-		if (canFinish) {
+		if (status.isOK()) {
 			setErrorMessage(null);
 		}
 		else if (status.getSeverity() == IStatus.ERROR) {
 			setErrorMessage(status.getMessage() != null ? status.getMessage()
-					: "Unknown error. Unable to complete operation.");
+					: "Unknown error. Unable to complete the operation.");
 		}
 		else if (status.getSeverity() == IStatus.INFO) {
 			setMessage(status.getMessage(), DialogPage.INFORMATION);
+		}
+		else if (status.getSeverity() == IStatus.WARNING) {
+			setMessage(status.getMessage(), DialogPage.WARNING);
 		}
 
 		if (updateButtons) {
@@ -110,8 +132,8 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 		}
 	}
 
-	 protected void performWhenPageVisible() {
-		 // Do nothing by default;
-	 }
+	protected void performWhenPageVisible() {
+		// Do nothing by default;
+	}
 
 }

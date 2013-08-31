@@ -13,9 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 import java.net.URI;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudDomain;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceServerLookup;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -32,8 +30,6 @@ public class CloudApplicationUrlLookup {
 
 	private List<CloudDomain> domainsPerActiveSpace;
 
-	private List<CloudApplication> allApplications;
-
 	private ApplicationUrlValidator validator;
 
 	public CloudApplicationUrlLookup(CloudFoundryServer cloudServer) {
@@ -43,8 +39,6 @@ public class CloudApplicationUrlLookup {
 
 	public void refreshDomains(IProgressMonitor monitor) throws CoreException {
 		domainsPerActiveSpace = cloudServer.getBehaviour().getDomainsForSpace(monitor);
-		CloudSpaceServerLookup lookup = new CloudSpaceServerLookup(cloudServer);
-		allApplications = lookup.getAllOrgApps(monitor);
 	}
 
 	/**
@@ -54,6 +48,47 @@ public class CloudApplicationUrlLookup {
 	 */
 	public List<CloudDomain> getDomains() {
 		return domainsPerActiveSpace;
+	}
+
+	/**
+	 * Either returns a valid, available Cloud Application URL with the given
+	 * host, or null
+	 * @param host
+	 * @return Non-null valid, available Cloud Application URL.
+	 * @throws CoreException if URL is not available, is invalid, or list of
+	 * domains cannot be resolved,
+	 */
+	public CloudApplicationURL getDefaultApplicationURL(String host) {
+
+		List<CloudDomain> domains = getDomains();
+		if (domains == null || domains.isEmpty()) {
+			return null;
+		}
+
+		CloudApplicationURL appURL = null;
+
+		for (CloudDomain domain : domains) {
+			String suggestedURL = host + "." + domain.getName();
+			try {
+				appURL = getCloudApplicationURL(suggestedURL);
+				break;
+			}
+			catch (CoreException ce) {
+				// Ignore. Move on to the next one
+			}
+		}
+
+		return appURL;
+	}
+
+	/**
+	 * Performs base URL validation (checking if it is empty or has invalid
+	 * characters), but does not perform any checks against existing domains.
+	 * @param url
+	 * @return OK status if valid. Error or Warning status otherwise.
+	 */
+	public IStatus simpleValidation(String url) {
+		return validator.isValid(url);
 	}
 
 	/**
@@ -76,7 +111,7 @@ public class CloudApplicationUrlLookup {
 	 */
 	public CloudApplicationURL getCloudApplicationURL(String url) throws CoreException {
 
-		IStatus isValidStatus = validator.isValid(url);
+		IStatus isValidStatus = simpleValidation(url);
 		if (!isValidStatus.isOK()) {
 			throw new CoreException(isValidStatus);
 		}
@@ -121,57 +156,14 @@ public class CloudApplicationUrlLookup {
 	}
 
 	/**
-	 * Returns a cloud application URL if:
 	 * 
-	 * <p/>
-	 * 1. URL is valid, meaning that its domain portion (the last segments of
-	 * the URL), correspond to a known domain in the active session cloud space
-	 * <p/>
-	 * 2. URL is not currently taken by another application.
-	 * <p/>
-	 * Throws core exception otherwise.
-	 * @param url to check if it is valid and available
-	 * @return
-	 * @throws CoreException if list of domains cannot be resolved, or host or
-	 * domain in the url are invalid.
+	 * @param cloudServer
+	 * @return Non-null Cloud application URL lookup. Will attempt to fetch a
+	 * cached version in the server if available, or create a new one if not.
 	 */
-	public CloudApplicationURL getAvailableAppUrl(String url) throws CoreException {
-		CloudApplicationURL appURL = getCloudApplicationURL(url);
-		if (isAvailable(appURL)) {
-			return appURL;
-		}
-		throw new CoreException(CloudFoundryPlugin.getErrorStatus("The URL is already taken by another application."));
-	}
-
-	/**
-	 * True if the given Cloud app URL is not currently taken by another
-	 * application. False otherwise.
-	 * @param url to check.
-	 */
-	public boolean isAvailable(CloudApplicationURL url) {
-		if (allApplications == null || allApplications.isEmpty()) {
-			// If unable to check applications, for now assume valid, and let
-			// the app deployment or URL mapping process determine if it is
-			// valid
-			return true;
-		}
-		String urlToCheck = url.getUrl().trim();
-
-		for (CloudApplication application : allApplications) {
-			List<String> uris = application.getUris();
-
-			if (uris != null) {
-				for (String uri : uris) {
-					if (uri != null) {
-						uri = uri.trim();
-						if (uri.equals(urlToCheck)) {
-							return false;
-						}
-					}
-				}
-			}
-		}
-		return true;
+	public static CloudApplicationUrlLookup getCurrentLookup(CloudFoundryServer cloudServer) {
+		return cloudServer.getBehaviour().getApplicationUrlLookup() != null ? cloudServer.getBehaviour()
+				.getApplicationUrlLookup() : new CloudApplicationUrlLookup(cloudServer);
 	}
 
 }

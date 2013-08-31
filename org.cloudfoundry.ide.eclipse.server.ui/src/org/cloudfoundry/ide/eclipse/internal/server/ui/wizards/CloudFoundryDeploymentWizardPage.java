@@ -13,15 +13,12 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.domain.CloudApplication;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
@@ -61,7 +58,6 @@ import org.eclipse.wst.server.core.IModule;
  * @author Steffen Pingel
  * @author Nieraj Singh
  */
-@SuppressWarnings("restriction")
 public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage implements DescriptorChangeListener {
 
 	protected final String serverTypeId;
@@ -86,6 +82,8 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage impl
 
 	private MemoryPart memoryPart;
 
+	private boolean requiresUrlUpdate = false;
+
 	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor, CloudApplicationUrlLookup urlLookup) {
 		super("deployment", null, null, urlLookup);
@@ -94,49 +92,8 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage impl
 		this.descriptor = descriptor;
 		this.serverTypeId = module.getServerTypeId();
 
-		initDeploymentInfoInDescriptor();
-
-	}
-
-	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
-			ApplicationWizardDescriptor descriptor) {
-		this(server, module, descriptor, new CloudApplicationUrlLookup(server));
-	}
-
-	protected void initDeploymentInfoInDescriptor() {
-		// Create a new deployment info, and populate it from existing or
-		// default values, as well as user input
-		DeploymentInfo info = new DeploymentInfo();
-		descriptor.setDeploymentInfo(info);
-
-		DeploymentInfo lastInfo = (module != null) ? module.getLastDeploymentInfo() : null;
-
-		String deploymentName = (lastInfo != null) ? lastInfo.getDeploymentName() : getDeploymentNameFromModule(module);
-
-		info.setDeploymentName(deploymentName);
-
-		int memory = CloudUtil.DEFAULT_MEMORY;
-		info.setMemory(memory);
-
-		// Default should be to start in regular mode upon deployment
-		ApplicationAction deploymentMode = ApplicationAction.START;
-
-		setDeploymentMode(deploymentMode);
-
-		// Listen to changes to the application name, so that the app URL can be
-		// updated if necessary
 		descriptor.addListener(this, DescriptorProperty.ApplicationInfo);
-	}
 
-	private String getDeploymentNameFromModule(CloudFoundryApplicationModule module) {
-		if (module != null) {
-			CloudApplication app = module.getApplication();
-			if (app != null && app.getName() != null) {
-				return app.getName();
-			}
-			return module.getName();
-		}
-		return "";
 	}
 
 	/**
@@ -144,8 +101,19 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage impl
 	 * after the page is visible.
 	 */
 	protected void performWhenPageVisible() {
+
 		fetchDeploymentConfiguration();
-		super.performWhenPageVisible();
+		// Note that there is a delay in refreshing list of domains. As a
+		// consequence, the URL host cannot be updated right away. Allow the
+		// callback that gets invoked post-domain Refresh to set the URL host.
+		// Only set the URL host if the domains have been refreshed
+		if (!refreshedDomains) {
+			refreshApplicationUrlDomains();
+		}
+		else if (requiresUrlUpdate) {
+			requiresUrlUpdate = false;
+			updateUrlHost();
+		}
 	}
 
 	protected void fetchDeploymentConfiguration() {
@@ -241,7 +209,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage impl
 	}
 
 	protected void createURLArea(Composite parent) {
-		urlPart = createUrlPart(urlLookup);
+		urlPart = createUrlPart(getApplicationUrlLookup());
 		urlPart.createPart(parent);
 		urlPart.addPartChangeListener(this);
 	}
@@ -479,11 +447,12 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage impl
 	 * .DescriptorChangeListener#valueChanged(java.lang.Object)
 	 */
 	public void valueChanged(Object value) {
-		updateUrlHost();
+		// Delay the URL update until the page is visible
+		requiresUrlUpdate = true;
 	}
 
 	@Override
-	protected void refreshURLUI() {
+	protected void postDomainsRefreshedOperation() {
 		urlPart.refreshDomains();
 		updateUrlHost();
 	}

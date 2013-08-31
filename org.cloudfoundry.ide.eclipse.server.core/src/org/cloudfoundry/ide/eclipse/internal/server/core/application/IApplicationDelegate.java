@@ -25,15 +25,12 @@ import org.eclipse.wst.server.core.model.IModuleResource;
  * IModules. The main contributions for an application is:
  * 
  * <ul>
- * <li>Determine a framework for a given IModule provided by the framework.</li>
- * <li>Runtimes that are supported for the type of application represented by
- * this delegate. For example, java and java7 for Java Web applications.</li>
- * <li>Additional frameworks that would be applicable for a module</li>
- * <li>Optionally, an archiving mechanism for the application's resources that
- * should be pushed to a Cloud Foundry server</li>
  * <li>Whether the application requires a URL to be set before being published.
  * URLs are set through the Cloud Foundry plugin UI. In most case, this is true,
  * except Java standalone applications</li>
+ * <li>Optionally, an archiving mechanism for the application's resources that
+ * should be pushed to a Cloud Foundry server</li>
+ * 
  * </ul>
  * 
  */

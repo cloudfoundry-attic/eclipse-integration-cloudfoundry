@@ -33,7 +33,7 @@ import org.eclipse.core.runtime.Status;
  */
 public class ApplicationUrlValidator {
 
-	public static final String EMPTY_URL_ERROR = "Enter a deployment name.";
+	public static final String EMPTY_URL_ERROR = "Enter a deployment URL.";
 
 	public static final String INVALID_CHARACTERS_ERROR = "The entered name contains invalid characters.";
 

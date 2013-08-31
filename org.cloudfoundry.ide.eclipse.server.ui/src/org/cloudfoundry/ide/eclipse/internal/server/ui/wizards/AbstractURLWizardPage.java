@@ -37,43 +37,61 @@ public abstract class AbstractURLWizardPage extends PartsWizardPage {
 		this.urlLookup = urlLookup;
 	}
 
-	private boolean refreshedDomains = false;
+	protected AbstractURLWizardPage(String pageName, String title, ImageDescriptor titleImage) {
+		this(pageName, title, titleImage, null);
+	}
 
-	// Assign only after the UI controls are visible for URL selection
-	protected CloudApplicationUrlLookup urlLookup;
+	protected boolean refreshedDomains = false;
+
+	private CloudApplicationUrlLookup urlLookup;
+
+	protected CloudApplicationUrlLookup getApplicationUrlLookup() {
+		return urlLookup;
+	}
 
 	@Override
 	protected void performWhenPageVisible() {
-		refreshApplicationURL();
-	}
 
-	protected void refreshApplicationURL() {
 		// Refresh the application URL (since the URL host tends to the the
 		// application name, if the application name has changed
 		// make sure it gets updated in the UI. Also fetch the list of domains
 		// ONCE per session.
 		// Run all URL refresh and fetch in the same UI Job to ensure that
 		// domain updates occur first before the UI is refreshed.
+
 		if (!refreshedDomains) {
-			update(false, CloudFoundryPlugin.getStatus("Fetching list of domains. Please wait while it completes.",
-					IStatus.INFO));
-			final String jobLabel = "Fetching list of domains.";
-			UIJob job = new UIJob(jobLabel) {
+			refreshApplicationUrlDomains();
+		}
+	}
 
-				@Override
-				public IStatus runInUIThread(IProgressMonitor monitor) {
-					try {
+	protected void refreshApplicationUrlDomains() {
 
-						ICoreRunnable coreRunner = new ICoreRunnable() {
-							public void run(IProgressMonitor coreRunnerMonitor) throws CoreException {
-								SubMonitor subProgress = SubMonitor.convert(coreRunnerMonitor, jobLabel, 100);
-								try {
-									urlLookup.refreshDomains(subProgress);
-								}
-								finally {
-									subProgress.done();
-								}
+		final CloudApplicationUrlLookup urlLookup = getApplicationUrlLookup();
+		if (urlLookup == null) {
+			update(false,
+					CloudFoundryPlugin
+							.getStatus(
+									"No Cloud application URL handler found. Possible error with the application delegate. Application may not deploy correctly.",
+									IStatus.WARNING));
+			return;
 
+		}
+
+		update(false,
+				CloudFoundryPlugin.getStatus("Fetching list of domains. Please wait while it completes.", IStatus.INFO));
+		final String jobLabel = "Fetching list of domains.";
+		UIJob job = new UIJob(jobLabel) {
+
+			@Override
+			public IStatus runInUIThread(IProgressMonitor monitor) {
+				try {
+
+					ICoreRunnable coreRunner = new ICoreRunnable() {
+						public void run(IProgressMonitor coreRunnerMonitor) throws CoreException {
+							SubMonitor subProgress = SubMonitor.convert(coreRunnerMonitor, jobLabel, 100);
+							try {
+								urlLookup.refreshDomains(subProgress);
+								refreshedDomains = true;
 								// Must launch this again in the UI thread AFTER
 								// the refresh occurs.
 								Display.getDefault().asyncExec(new Runnable() {
@@ -82,37 +100,40 @@ public abstract class AbstractURLWizardPage extends PartsWizardPage {
 										// Clear any info in the dialogue
 										setMessage(null);
 										update(false, Status.OK_STATUS);
-										refreshURLUI();
+										postDomainsRefreshedOperation();
 									}
 
 								});
-								refreshedDomains = true;
 
 							}
-						};
-						CloudUiUtil.runForked(coreRunner, getWizard().getContainer());
+							finally {
+								subProgress.done();
+							}
 
-					}
-					catch (OperationCanceledException e) {
-						update(true, CloudFoundryPlugin.getErrorStatus(e));
-					}
-					catch (CoreException ce) {
-						update(true, ce.getStatus());
-					}
+						}
+					};
+					CloudUiUtil.runForked(coreRunner, getWizard().getContainer());
 
-					return Status.OK_STATUS;
+				}
+				catch (OperationCanceledException e) {
+					update(true, CloudFoundryPlugin.getErrorStatus(e));
+				}
+				catch (CoreException ce) {
+					update(true, ce.getStatus());
 				}
 
-			};
-			job.setSystem(true);
-			job.schedule();
-		}
+				return Status.OK_STATUS;
+			}
+
+		};
+		job.setSystem(true);
+		job.schedule();
+
 	}
 
 	/**
-	 * Refresh any URL UI after the list of domains has been fetched from the
-	 * server
+	 * UI callback after the domains have been successfully refreshed.
 	 */
-	abstract protected void refreshURLUI();
+	abstract protected void postDomainsRefreshedOperation();
 
 }

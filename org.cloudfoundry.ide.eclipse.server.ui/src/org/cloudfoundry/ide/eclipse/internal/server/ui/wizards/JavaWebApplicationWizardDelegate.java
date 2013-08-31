@@ -13,7 +13,6 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.jface.wizard.IWizardPage;
@@ -23,9 +22,9 @@ public class JavaWebApplicationWizardDelegate extends AbstractApplicationWizardD
 	public List<IWizardPage> getWizardPages(ApplicationWizardDescriptor applicationDescriptor,
 			CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule) {
 		List<IWizardPage> defaultPages = new ArrayList<IWizardPage>();
-		CloudApplicationUrlLookup urlLookup = new CloudApplicationUrlLookup(cloudServer);
+
 		CloudFoundryDeploymentWizardPage deploymentPage = new CloudFoundryDeploymentWizardPage(cloudServer,
-				applicationModule, applicationDescriptor, urlLookup);
+				applicationModule, applicationDescriptor, getApplicationUrlLookup());
 
 		CloudFoundryApplicationWizardPage applicationNamePage = new CloudFoundryApplicationWizardPage(cloudServer,
 				deploymentPage, applicationModule, applicationDescriptor);
@@ -40,4 +39,11 @@ public class JavaWebApplicationWizardDelegate extends AbstractApplicationWizardD
 		defaultPages.add(servicesPage);
 		return defaultPages;
 	}
+
+	@Override
+	public boolean isValid(ApplicationWizardDescriptor applicationDescriptor) {
+		return super.isValid(applicationDescriptor) && applicationDescriptor.getDeploymentInfo().getUris() != null
+				&& !applicationDescriptor.getDeploymentInfo().getUris().isEmpty();
+	}
+
 }
