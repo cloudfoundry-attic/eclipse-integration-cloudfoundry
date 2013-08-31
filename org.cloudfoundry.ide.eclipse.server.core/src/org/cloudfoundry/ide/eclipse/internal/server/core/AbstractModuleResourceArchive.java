@@ -50,7 +50,6 @@ import org.eclipse.wst.server.core.model.IModuleResource;
  * 
  * This application archive works directly on IModuleResource and computes sha1
  * and input stream entries for an application from its IModuleResource.
- * 
  */
 public abstract class AbstractModuleResourceArchive implements ApplicationArchive {
 
