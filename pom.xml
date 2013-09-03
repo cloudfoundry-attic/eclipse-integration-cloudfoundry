@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-   STS PARENT POM
+  CF Eclipse PARENT POM
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
@@ -8,14 +8,14 @@
 
   <groupId>org.cloudfoundry.ide.eclipse.server</groupId>
   <artifactId>org.cloudfoundry.ide.eclipse.server.parent</artifactId>
-  <version>1.5.0-SNAPSHOT</version>
+  <version>1.5.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <scm>
-    <connection>scm:git:ssh://git.springsource.com:sts/cloudfoundry-plugins.git</connection>
-    <developerConnection>scm:git:ssh://git.springsource.com:sts/cloudfoundry-plugins.git</developerConnection>
+    <connection>scm:git:ssh://git@github.com:SpringSource/eclipse-integration-cloudfoundry.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com:SpringSource/eclipse-integration-cloudfoundry.git</developerConnection>
     <tag>HEAD</tag>
-    <url>http://git.springsource.com/sts/sts</url>
+    <url>https://github.com/SpringSource/eclipse-integration-cloudfoundry</url>
   </scm>
 
   <modules>
@@ -34,19 +34,19 @@
 
   <!-- Common Configuration -->
   <organization>
-    <name>SpringSource, a division of VMware, Inc.</name>
-    <url>http://springsource.com</url>
+    <name>GoPivotal, Inc.</name>
+    <url>http://www.gopivotal.com</url>
   </organization>
-  <url>http://www.springsource.com/developer/sts</url>
-  <inceptionYear>2007</inceptionYear>
+  <url>http://docs.cloudfoundry.com/</url>
+  <inceptionYear>2013</inceptionYear>
 
   <prerequisites>
     <maven>3.0</maven>
   </prerequisites>
 
   <issueManagement>
-    <url>https://issuetracker.springsource.com/browse/STS</url>
-    <system>JIRA</system>
+    <url>https://github.com/SpringSource/eclipse-integration-cloudfoundry</url>
+    <system>GitHub</system>
   </issueManagement>
 
   <ciManagement>
@@ -314,7 +314,7 @@
               <artifact>
                 <groupId>org.cloudfoundry.ide.eclipse.server</groupId>
                 <artifactId>org.cloudfoundry.ide.eclipse.server.target</artifactId>
-                <version>1.5.0-SNAPSHOT</version>
+                <version>1.5.1-SNAPSHOT</version>
                 <classifier>${dist.target.classifier}</classifier>
               </artifact>
             </target>
