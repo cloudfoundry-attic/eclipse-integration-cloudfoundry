@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Cloud Foundry Integration (Tests)
 Bundle-SymbolicName: org.cloudfoundry.ide.eclipse.server.tests;singleton:=true
 Bundle-Version: 1.5.0.qualifier
-Bundle-Vendor: VMware, Inc.
+Bundle-Vendor: GoPivotal, Inc.
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.core.resources,
  org.eclipse.debug.core,
