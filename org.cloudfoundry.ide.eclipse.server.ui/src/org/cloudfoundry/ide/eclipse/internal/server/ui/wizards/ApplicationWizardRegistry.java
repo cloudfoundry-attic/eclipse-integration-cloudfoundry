@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2013 VMware, Inc.
+ * Copyright (c) 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
@@ -31,21 +31,42 @@ public class ApplicationWizardRegistry {
 
 	public static String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.ui.applicationWizard";
 
-	public static ApplicationWizardProviderDelegate getWizardProvider(IModule module) {
+	public static IApplicationWizardDelegate getWizardProvider(IModule module) {
 		// See if there is a corresponding application delegate
 		ApplicationProvider applicationProvider = ApplicationRegistry.getApplicationProvider(module);
+		return getWizardDelegate(applicationProvider);
+
+	}
+
+	/**
+	 * Gets the corresponding application wizard delegate that matches the
+	 * provider ID specified by the given application provider, or null if it
+	 * could not find.
+	 * @param applicationProvider
+	 * @return application wizard delegate that matches the provider ID, or
+	 * null.
+	 */
+	protected static IApplicationWizardDelegate getWizardDelegate(ApplicationProvider applicationProvider) {
+		if (applicationProvider == null) {
+			return null;
+		}
 		String providerID = applicationProvider.getProviderID();
 		IApplicationDelegate delegate = applicationProvider.getDelegate();
-		if (delegate != null) {
-			if (wizardProviders == null) {
-				load();
-			}
-			ApplicationWizardProvider wizardProvider = wizardProviders.get(providerID);
-			IApplicationWizardDelegate wizardDelegate = wizardProvider != null ? wizardProvider.getDelegate() : null;
-
-			return new ApplicationWizardProviderDelegate(delegate, wizardDelegate);
+		IApplicationWizardDelegate wizardDelegate = null;
+		if (wizardProviders == null) {
+			load();
 		}
-		return null;
+		ApplicationWizardProvider wizardProvider = wizardProviders.get(providerID);
+		wizardDelegate = wizardProvider != null ? wizardProvider.getDelegate() : null;
+		if (wizardDelegate instanceof ApplicationWizardDelegate) {
+			((ApplicationWizardDelegate) wizardDelegate).setApplicationDelegate(delegate);
+		}
+		return wizardDelegate;
+	}
+
+	public static IApplicationWizardDelegate getDefaultJavaWebWizardDelegate() {
+		ApplicationProvider javaWebProvider = ApplicationRegistry.getDefaultJavaWebApplicationProvider();
+		return getWizardDelegate(javaWebProvider);
 	}
 
 	private static void load() {

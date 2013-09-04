@@ -31,11 +31,11 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.PreApplicationStartConsoleContent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.StagingLogConsoleContent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CaldecottUIHelper;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardProviderDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardRegistry;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryCredentialsWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.DeleteServicesWizard;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.IApplicationWizardDelegate;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -196,7 +196,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 				final DeploymentDescriptor[] depDescriptors = new DeploymentDescriptor[1];
 				Display.getDefault().syncExec(new Runnable() {
 					public void run() {
-						ApplicationWizardProviderDelegate providerDelegate = ApplicationWizardRegistry
+						IApplicationWizardDelegate providerDelegate = ApplicationWizardRegistry
 								.getWizardProvider(appModule.getLocalModule());
 						if (providerDelegate == null) {
 							CloudFoundryPlugin.logError("Failed to open application wizard for: "

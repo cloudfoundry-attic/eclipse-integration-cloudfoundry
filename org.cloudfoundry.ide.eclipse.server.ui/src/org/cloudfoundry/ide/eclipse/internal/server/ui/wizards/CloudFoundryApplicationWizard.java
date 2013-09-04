@@ -18,6 +18,7 @@ import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.wizard.IWizardPage;
@@ -29,17 +30,17 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	protected final CloudFoundryServer server;
 
-	protected final ApplicationWizardProviderDelegate provider;
+	protected IApplicationWizardDelegate wizardDelegate;
 
 	protected final ApplicationWizardDescriptor applicationDescriptor;
 
 	public CloudFoundryApplicationWizard(CloudFoundryServer server, CloudFoundryApplicationModule module,
-			ApplicationWizardProviderDelegate provider) {
+			IApplicationWizardDelegate wizardDelegate) {
 		Assert.isNotNull(server);
 		Assert.isNotNull(module);
 		this.server = server;
 		this.module = module;
-		this.provider = provider;
+		this.wizardDelegate = wizardDelegate;
 
 		applicationDescriptor = new ApplicationWizardDescriptor();
 		setNeedsProgressMonitor(true);
@@ -49,11 +50,8 @@ public class CloudFoundryApplicationWizard extends Wizard {
 	@Override
 	public boolean canFinish() {
 		boolean canFinish = super.canFinish();
-		if (canFinish) {
-			IApplicationWizardDelegate wizardDelegate = provider.getWizardDelegate();
-			if (wizardDelegate instanceof AbstractApplicationWizardDelegate) {
-				canFinish = ((AbstractApplicationWizardDelegate) wizardDelegate).isValid(applicationDescriptor);
-			}
+		if (canFinish && wizardDelegate instanceof ApplicationWizardDelegate) {
+			canFinish = ((ApplicationWizardDelegate) wizardDelegate).isValid(applicationDescriptor);
 		}
 
 		return canFinish;
@@ -62,31 +60,36 @@ public class CloudFoundryApplicationWizard extends Wizard {
 	@Override
 	public void addPages() {
 
-		IApplicationWizardDelegate wizardDelegate = provider.getWizardDelegate();
 		// if a wizard provider exists, see if it contributes pages to the
 		// wizard
 		List<IWizardPage> applicationDeploymentPages = null;
 
-		// NOte that the descriptor should be initialised FIRST before
-		// requesting pages from the wizard delegate.
-		if (wizardDelegate != null) {
-
-			wizardDelegate.initialiseWizardDescriptor(applicationDescriptor, server, module);
-
-			applicationDeploymentPages = wizardDelegate.getWizardPages(applicationDescriptor, server, module);
-		}
-
-		if (wizardDelegate == null || applicationDeploymentPages == null || applicationDeploymentPages.isEmpty()) {
+		if (wizardDelegate == null) {
 			// Use the default Java Web pages
-			wizardDelegate = new JavaWebApplicationWizardDelegate();
-			wizardDelegate.initialiseWizardDescriptor(applicationDescriptor, server, module);
+			wizardDelegate = ApplicationWizardRegistry.getDefaultJavaWebWizardDelegate();
+		}
 
+		if (wizardDelegate != null) {
+			// Note that the descriptor should be initialised FIRST before
+			// requesting pages from the wizard delegate.
+			wizardDelegate.initialiseWizardDescriptor(applicationDescriptor, server, module);
 			applicationDeploymentPages = wizardDelegate.getWizardPages(applicationDescriptor, server, module);
 		}
 
-		for (IWizardPage updatedPage : applicationDeploymentPages) {
-			addPage(updatedPage);
+		if (applicationDeploymentPages != null && !applicationDeploymentPages.isEmpty()) {
+			for (IWizardPage updatedPage : applicationDeploymentPages) {
+				addPage(updatedPage);
+			}
 		}
+		else {
+
+			String moduleID = module != null && module.getModuleType() != null ? module.getModuleType().getId()
+					: "Unknown module type.";
+
+			CloudFoundryPlugin.logError("Unable to load application deployment wizard pages for application type: "
+					+ moduleID);
+		}
+
 	}
 
 	public ApplicationInfo getApplicationInfo() {

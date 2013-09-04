@@ -101,11 +101,11 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 	}
 
 	/**
-	 * The Cloud Foundry application name. This may not necessarily be the same
-	 * as the associated WTP IModule name or workspace project name, as users
-	 * are allowed to enter a different name for the application when pushing
-	 * the application to a Cloud Foundry server.
-	 * @return Cloud Foundry application name.
+	 * Generally, the application ID is the application module name OR the
+	 * actual deployed Cloud Application. TODO: NOTE that this appears to be the
+	 * same as getDeployedName() as well as getName(). Either make it clear that
+	 * ID and Names are different for a cloud application, or use ONE clearly
+	 * documented method to obtain the app name.
 	 */
 	public synchronized String getApplicationId() {
 		return applicationId;
@@ -230,6 +230,26 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 			return null;
 		}
 		return error.getMessage();
+	}
+
+	/**
+	 * 
+	 * TODO: Refactored from the deployment wizard (UI). Verify if separate
+	 * getName(), getDeploymentName() and getApplicationId() are needed, or if
+	 * they are always the same for a Cloud Application.
+	 * 
+	 * Deployment name of the already deployed application. It will first
+	 * attempt to resolve the name from the actual Cloud Application, or if no
+	 * Cloud Application is bound to the application module, then it will return
+	 * the IModule name.
+	 * @return
+	 */
+	public String getDeploymentName() {
+		CloudApplication app = getApplication();
+		if (app != null && app.getName() != null) {
+			return app.getName();
+		}
+		return getName();
 	}
 
 }

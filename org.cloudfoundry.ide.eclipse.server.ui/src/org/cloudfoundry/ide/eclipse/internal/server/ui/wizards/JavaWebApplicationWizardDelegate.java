@@ -17,7 +17,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplication
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.jface.wizard.IWizardPage;
 
-public class JavaWebApplicationWizardDelegate extends AbstractApplicationWizardDelegate {
+public class JavaWebApplicationWizardDelegate extends ApplicationWizardDelegate {
 
 	public List<IWizardPage> getWizardPages(ApplicationWizardDescriptor applicationDescriptor,
 			CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule) {

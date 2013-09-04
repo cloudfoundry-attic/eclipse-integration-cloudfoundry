@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2013 VMware, Inc.
+ * Copyright (c) 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
@@ -23,7 +23,8 @@ import org.eclipse.core.runtime.IConfigurationElement;
  * org.cloudfoundry.ide.eclipse.server.core.application
  * 
  * Reads the attributes and application delegate from the extension point
- * configuration element
+ * configuration element, and contains additional API to access the extension
+ * point attributes, like provider ID.
  * 
  */
 public class ApplicationProvider extends AbstractApplicationProvider<IApplicationDelegate> {

@@ -54,9 +54,7 @@ public class CloudApplicationUrlLookup {
 	 * Either returns a valid, available Cloud Application URL with the given
 	 * host, or null
 	 * @param host
-	 * @return Non-null valid, available Cloud Application URL.
-	 * @throws CoreException if URL is not available, is invalid, or list of
-	 * domains cannot be resolved,
+	 * @return Valid, available Cloud Application URL.
 	 */
 	public CloudApplicationURL getDefaultApplicationURL(String host) {
 

@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
 import org.eclipse.jface.wizard.IWizardPage;
 
 /**
@@ -21,6 +22,17 @@ import org.eclipse.jface.wizard.IWizardPage;
  * extension point:
  * 
  * org.cloudfoundry.ide.eclipse.server.ui.applicationWizard
+ * 
+ * <p/>
+ * The wizard delegate may correspond got an IApplicationDelegate, with the
+ * difference that the wizard delegate provides UI when deploying the
+ * application via the application deployment wizard. On the other hand, the
+ * IApplicationDelegate is a core level delegate that contains API necessary to
+ * push the application to a CF server. The need for two separate delegates is
+ * due to the core and UI components of the plugin being separate.
+ * 
+ * 
+ * @see IApplicationDelegate
  * 
  */
 public interface IApplicationWizardDelegate {

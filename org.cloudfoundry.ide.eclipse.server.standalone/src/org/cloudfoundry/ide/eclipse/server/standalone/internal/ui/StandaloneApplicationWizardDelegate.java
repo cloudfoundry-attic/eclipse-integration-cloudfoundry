@@ -16,14 +16,14 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.AbstractApplicationWizardDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationServicesWizardPage;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationWizardPage;
 import org.eclipse.jface.wizard.IWizardPage;
 
 public class StandaloneApplicationWizardDelegate extends
-		AbstractApplicationWizardDelegate {
+		ApplicationWizardDelegate {
 
 	public StandaloneApplicationWizardDelegate() {
 	}

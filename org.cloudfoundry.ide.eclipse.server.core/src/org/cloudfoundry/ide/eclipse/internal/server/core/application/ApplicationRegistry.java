@@ -42,6 +42,8 @@ public class ApplicationRegistry {
 
 	private static final String APPLICATION_DELEGATE_EXT_ELEMENT = "applicationDelegate";
 
+	public static final String DEFAULT_JAVA_WEB_PROVIDER_ID = "org.cloudfoundry.ide.eclipse.server.application.javaweb";
+
 	public static String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.core.application";
 
 	public static IApplicationDelegate getApplicationDelegate(IModule module) {
@@ -51,6 +53,16 @@ public class ApplicationRegistry {
 		}
 
 		return null;
+	}
+
+	public static ApplicationProvider getDefaultJavaWebApplicationProvider() {
+		ApplicationProvider provider = getApplicationProvider(DEFAULT_JAVA_WEB_PROVIDER_ID);
+
+		if (provider == null) {
+			CloudFoundryPlugin.logError("Unable to load default Java Web application provider with this ID: "
+					+ DEFAULT_JAVA_WEB_PROVIDER_ID + ". Please check that the plug-in is correctly installed.");
+		}
+		return provider;
 	}
 
 	public static ApplicationProvider getApplicationProvider(IModule module) {
@@ -76,6 +88,46 @@ public class ApplicationRegistry {
 						break;
 					}
 
+				}
+			}
+		}
+
+		return provider;
+	}
+
+	/**
+	 * Get the application delegate provider based on the provider ID (e.g.
+	 * org.cloudfoundry.ide.eclipse.server.application.javaweb). This is used in
+	 * case a IModule is not available.
+	 * @param providerID
+	 * @return ApplicationProvider matching the specified providerID, or null if
+	 * not found.
+	 */
+	public static ApplicationProvider getApplicationProvider(String providerID) {
+		if (providerID == null) {
+			return null;
+		}
+		
+		if (delegates == null) {
+			delegates = load();
+		}
+
+		ApplicationProvider provider = null;
+
+		for (Priority priority : Priority.values()) {
+
+			List<ApplicationProvider> providerList = delegates.get(priority);
+			if (providerList != null) {
+				for (ApplicationProvider prv : providerList) {
+					// First do a check based on static extension point
+					// information about the
+					// provider based
+					// on the application ID that the provider supports.
+
+					if (providerID.equals(prv.getProviderID())) {
+						provider = prv;
+						break;
+					}
 				}
 			}
 		}

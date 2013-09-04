@@ -110,16 +110,25 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 	}
 
 	protected void updateApplicationName() {
-		ApplicationInfo info = new ApplicationInfo(appName);
 
-		descriptor.setApplicationInfo(info);
+		// Do not set empty Strings
+		String value = appName != null && appName.trim().length() == 0 ? null : appName;
+
+		if (value != null) {
+			ApplicationInfo appInfo = new ApplicationInfo(value);
+			descriptor.setApplicationInfo(appInfo);
+		}
+		else {
+			descriptor.setApplicationInfo(null);
+		}
 
 		DeploymentInfo depInfo = descriptor.getDeploymentInfo();
 		if (depInfo == null) {
 			depInfo = new DeploymentInfo();
 			descriptor.setDeploymentInfo(depInfo);
 		}
-		depInfo.setDeploymentName(appName);
+
+		depInfo.setDeploymentName(value);
 	}
 
 	@Override
