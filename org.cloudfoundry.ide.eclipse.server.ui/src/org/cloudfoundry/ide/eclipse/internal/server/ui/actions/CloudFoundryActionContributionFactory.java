@@ -25,7 +25,15 @@ import org.eclipse.ui.menus.IMenuService;
 public class CloudFoundryActionContributionFactory extends AbstractMenuContributionFactory {
 
 	private static final MenuActionHandler<?>[] ACTION_HANDLERS = new MenuActionHandler<?>[] {
-			new DebugMenuActionHandler(), new ServerMenuActionHandler() };
+			
+		// TODO: Debug actions disabled until debug support is reenabled in future, post 1.5.0 MicroCloud Foundry.
+	// new DebugMenuActionHandler(),
+		
+		// FIXNS: Disable Caldecott feature in 1.5.1 until feature is supported
+		// in the client-lib
+//		new ServerMenuActionHandler() 
+		
+	};
 
 	public CloudFoundryActionContributionFactory() {
 		super("popup:org.eclipse.wst.server.ui.ServersView?before=additions", null);

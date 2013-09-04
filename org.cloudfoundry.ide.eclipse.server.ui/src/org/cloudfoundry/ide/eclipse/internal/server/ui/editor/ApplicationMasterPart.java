@@ -463,10 +463,13 @@ public class ApplicationMasterPart extends SectionPart {
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
 
-		List<IAction> caldecottAction = new TunnelActionProvider(cloudServer).getTunnelActions(selection, editorPage);
-		for (IAction action : caldecottAction) {
-			manager.add(action);
-		}
+		
+		// FIXNS: Disable Caldecott feature in 1.5.1 until feature is supported
+		// in the client-lib
+//		List<IAction> caldecottAction = new TunnelActionProvider(cloudServer).getTunnelActions(selection, editorPage);
+//		for (IAction action : caldecottAction) {
+//			manager.add(action);
+//		}
 	}
 
 	private void fillApplicationsContextMenu(IMenuManager manager) {
