@@ -148,7 +148,7 @@ public class OrgsAndSpacesWizard extends Wizard {
 		public boolean isPageComplete() {
 			boolean isComplete = super.isPageComplete();
 			if (isComplete) {
-				isComplete = status == null || status.isOK();
+				isComplete = getSelectedCloudSpace() != null && (status == null || status.isOK());
 			}
 
 			return isComplete;

@@ -95,7 +95,9 @@ public class StandaloneDeploymentWizardPage extends
 			// deploying a standalone application
 			List<String> urls = new ArrayList<String>();
 			descriptor.getDeploymentInfo().setUris(urls);
+			return;
 		}
+		super.setUrlInDescriptor(url);
 	}
 
 	@Override
