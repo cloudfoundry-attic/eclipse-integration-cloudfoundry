@@ -10,10 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
@@ -46,25 +43,8 @@ public class ApplicationWizardDescriptor {
 
 	private List<String> selectedServicesForBinding;
 
-	private Map<DescriptorProperty, List<DescriptorChangeListener>> propertyToListeners = new HashMap<ApplicationWizardDescriptor.DescriptorProperty, List<DescriptorChangeListener>>();
-
 	public ApplicationWizardDescriptor() {
 
-	}
-
-	public void addListener(DescriptorChangeListener listener, DescriptorProperty property) {
-		if (property == null || listener == null) {
-			return;
-		}
-
-		List<DescriptorChangeListener> listeners = propertyToListeners.get(property);
-		if (listeners == null) {
-			listeners = new ArrayList<ApplicationWizardDescriptor.DescriptorChangeListener>();
-			propertyToListeners.put(property, listeners);
-		}
-		if (!listeners.contains(listener)) {
-			listeners.add(listener);
-		}
 	}
 
 	/**
@@ -153,37 +133,6 @@ public class ApplicationWizardDescriptor {
 
 		this.applicationInfo = applicationInfo;
 
-		// For now , CF 1.5.1, only log changes for application info, as app
-		// name changes affect the app URL.
-		notifyChanged(applicationInfo, DescriptorProperty.ApplicationInfo);
 	}
 
-	protected void notifyChanged(Object value, DescriptorProperty property) {
-		if (property == null) {
-			return;
-		}
-		List<DescriptorChangeListener> listeners = propertyToListeners.get(property);
-		if (listeners != null) {
-			for (DescriptorChangeListener listener : listeners) {
-				listener.valueChanged(value);
-			}
-		}
-	}
-
-	/**
-	 * Listen for changes in the Application Deployment descriptor.
-	 */
-	interface DescriptorChangeListener {
-		/**
-		 * Notifies listeners when a value has changed in a deployment
-		 * descriptor property.
-		 */
-		public void valueChanged(Object value);
-	}
-
-	enum DescriptorProperty {
-		// For CF 1.5.1, only detect changes for application info. Add more as
-		// needed
-		ApplicationInfo
-	}
 }

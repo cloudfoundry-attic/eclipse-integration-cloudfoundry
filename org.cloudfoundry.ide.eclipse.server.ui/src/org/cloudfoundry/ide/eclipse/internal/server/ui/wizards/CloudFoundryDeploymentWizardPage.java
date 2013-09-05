@@ -13,13 +13,16 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudHostDomainUrlPart;
@@ -27,8 +30,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDescriptor.DescriptorChangeListener;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDescriptor.DescriptorProperty;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -58,7 +59,7 @@ import org.eclipse.wst.server.core.IModule;
  * @author Steffen Pingel
  * @author Nieraj Singh
  */
-public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage implements DescriptorChangeListener {
+public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 
 	protected final String serverTypeId;
 
@@ -82,18 +83,19 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage impl
 
 	private MemoryPart memoryPart;
 
-	private boolean requiresUrlUpdate = false;
+	private ApplicationWizardDelegate wizardDelegate;
+
+	static final int APP_NAME_CHANGE_EVENT = 10;
 
 	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
-			ApplicationWizardDescriptor descriptor, CloudApplicationUrlLookup urlLookup) {
+			ApplicationWizardDescriptor descriptor, CloudApplicationUrlLookup urlLookup,
+			ApplicationWizardDelegate wizardDelegate) {
 		super("deployment", null, null, urlLookup);
 		this.server = server;
 		this.module = module;
 		this.descriptor = descriptor;
 		this.serverTypeId = module.getServerTypeId();
-
-		descriptor.addListener(this, DescriptorProperty.ApplicationInfo);
-
+		this.wizardDelegate = wizardDelegate;
 	}
 
 	/**
@@ -103,16 +105,9 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage impl
 	protected void performWhenPageVisible() {
 
 		fetchDeploymentConfiguration();
-		// Note that there is a delay in refreshing list of domains. As a
-		// consequence, the URL host cannot be updated right away. Allow the
-		// callback that gets invoked post-domain Refresh to set the URL host.
-		// Only set the URL host if the domains have been refreshed
+		// Only refresh Domains once.
 		if (!refreshedDomains) {
 			refreshApplicationUrlDomains();
-		}
-		else if (requiresUrlUpdate) {
-			requiresUrlUpdate = false;
-			updateUrlHost();
 		}
 	}
 
@@ -191,7 +186,8 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage impl
 
 		setControl(composite);
 
-		// Do not validate values yet
+		// Do not validate values yet. When controls are populated, they will
+		// fire validation events accordingly
 		update(false, Status.OK_STATUS);
 	}
 
@@ -339,7 +335,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage impl
 	 * application name, as the application name is used as the URL's host
 	 * segment.
 	 */
-	public void updateUrlHost() {
+	public void updateUrlInUI() {
 
 		if (urlPart == null) {
 			return;
@@ -358,11 +354,14 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage impl
 	/**
 	 * Sets the application URL in the deployment descriptor
 	 */
-	protected void setURL(String url) {
+	protected void setUrlInDescriptor(String url) {
 		if (url != null) {
 			List<String> urls = new ArrayList<String>();
 			urls.add(url);
 			descriptor.getDeploymentInfo().setUris(urls);
+		}
+		else {
+			descriptor.getDeploymentInfo().setUris(null);
 		}
 	}
 
@@ -375,12 +374,82 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage impl
 	 * (org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent)
 	 */
 	public void handleChange(PartChangeEvent event) {
+		String value = event.getData() instanceof String ? (String) event.getData() : null;
+
+		// If the event originated from the URL UI, just update the URL in the
+		// descriptor. No other UI needs to be updated.
 		if (event.getSource() == urlPart) {
-			String url = event.getData() instanceof String ? (String) event.getData() : null;
-			setURL(url);
+			setUrlInDescriptor(value);
+		}
+		// If the app name changed, then update both the descriptor and the UI
+		else if (event.getType() == APP_NAME_CHANGE_EVENT) {
+			updateApplicationNameInDescriptor(value);
+
+			// If the list of domains has been refreshed, update the URL in the
+			// UI right away. Otherwise
+			// wait for the refresh to finish and invoke the call back that then
+			// updates the UI (see the postDomainRefreshOperation callback).
+			if (refreshedDomains) {
+				updateUrlInUI();
+			}
 		}
 
 		super.handleChange(event);
+	}
+
+	protected void updateApplicationNameInDescriptor(String appName) {
+
+		// Do not set empty Strings
+		if (ValueValidationUtil.isEmpty(appName)) {
+			appName = null;
+		}
+
+		if (appName != null) {
+			ApplicationInfo appInfo = new ApplicationInfo(appName);
+			descriptor.setApplicationInfo(appInfo);
+		}
+		else {
+			descriptor.setApplicationInfo(null);
+		}
+
+		DeploymentInfo depInfo = descriptor.getDeploymentInfo();
+		if (depInfo == null) {
+			depInfo = new DeploymentInfo();
+			descriptor.setDeploymentInfo(depInfo);
+		}
+
+		depInfo.setDeploymentName(appName);
+
+		// When the app name changes, the URL also changes, but only for
+		// application types that require a URL. By default, it
+		// is assumed that the app needs a URL, unless otherwise specified by
+		// the app's delegate
+		if (wizardDelegate == null || wizardDelegate.getApplicationDelegate() == null
+				|| wizardDelegate.getApplicationDelegate().requiresURL()) {
+
+			String url = null;
+			if (appName != null) {
+				// First see if there is a selected Domain.
+
+				String selectedDomain = urlPart != null ? urlPart.getCurrentDomain() : null;
+
+				if (selectedDomain == null) {
+					// use a default URL
+					CloudApplicationURL appURL = getApplicationUrlLookup().getDefaultApplicationURL(appName);
+
+					if (appURL != null) {
+						url = appURL.getUrl();
+					}
+				}
+
+				// If url was not yet resolved, manually construct it
+				if (url == null && selectedDomain != null) {
+					url = appName + '.' + selectedDomain;
+				}
+			}
+
+			setUrlInDescriptor(url);
+		}
 	}
 
 	class MemoryPart extends UIPart {
@@ -439,21 +508,9 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage impl
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.
-	 * ApplicationWizardDescriptor
-	 * .DescriptorChangeListener#valueChanged(java.lang.Object)
-	 */
-	public void valueChanged(Object value) {
-		// Delay the URL update until the page is visible
-		requiresUrlUpdate = true;
-	}
-
 	@Override
 	protected void postDomainsRefreshedOperation() {
 		urlPart.refreshDomains();
-		updateUrlHost();
+		updateUrlInUI();
 	}
 }

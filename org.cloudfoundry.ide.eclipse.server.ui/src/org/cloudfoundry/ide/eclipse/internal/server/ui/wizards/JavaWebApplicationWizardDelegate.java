@@ -24,7 +24,7 @@ public class JavaWebApplicationWizardDelegate extends ApplicationWizardDelegate 
 		List<IWizardPage> defaultPages = new ArrayList<IWizardPage>();
 
 		CloudFoundryDeploymentWizardPage deploymentPage = new CloudFoundryDeploymentWizardPage(cloudServer,
-				applicationModule, applicationDescriptor, getApplicationUrlLookup());
+				applicationModule, applicationDescriptor, getApplicationUrlLookup(), this);
 
 		CloudFoundryApplicationWizardPage applicationNamePage = new CloudFoundryApplicationWizardPage(cloudServer,
 				deploymentPage, applicationModule, applicationDescriptor);

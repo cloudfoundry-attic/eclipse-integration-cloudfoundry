@@ -36,7 +36,7 @@ public class StandaloneApplicationWizardDelegate extends
 
 		StandaloneDeploymentWizardPage deploymentPage = new StandaloneDeploymentWizardPage(
 				cloudServer, applicationModule, descriptor,
-				getApplicationUrlLookup());
+				getApplicationUrlLookup(), this);
 
 		CloudFoundryApplicationWizardPage applicationNamePage = new CloudFoundryApplicationWizardPage(
 				cloudServer, deploymentPage, applicationModule, descriptor);

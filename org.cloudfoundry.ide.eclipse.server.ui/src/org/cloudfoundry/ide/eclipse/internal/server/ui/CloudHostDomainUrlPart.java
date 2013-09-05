@@ -202,6 +202,10 @@ public class CloudHostDomainUrlPart extends UIPart {
 
 	}
 
+	public String getCurrentDomain() {
+		return selectedDomain;
+	}
+
 	protected void setUrlFromHostOrDomain() {
 
 		String host = hostText != null && !hostText.isDisposed() ? hostText.getText() : "";

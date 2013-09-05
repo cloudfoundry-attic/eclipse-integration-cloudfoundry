@@ -10,13 +10,9 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -86,6 +82,12 @@ public abstract class ApplicationWizardDelegate implements IApplicationWizardDel
 
 		DeploymentInfo lastDeploymentInfo = (module != null) ? module.getLastDeploymentInfo() : null;
 
+		// FIXNS: Note that application name and deployment name are the SAME.
+		// They are tracked separately
+		// Only because there are two types of "infos". In future versions, the
+		// Deployment Info and the Application Info
+		// should be replaced by one info abstraction. For now, when setting app
+		// name, make sure its set in both infos.
 		String deploymentName = null;
 
 		if (lastDeploymentInfo != null && lastDeploymentInfo.getDeploymentName() != null) {
@@ -121,30 +123,6 @@ public abstract class ApplicationWizardDelegate implements IApplicationWizardDel
 
 		applicationDescriptor.setStartDeploymentMode(ApplicationAction.START);
 
-		if (getApplicationDelegate() == null || getApplicationDelegate().requiresURL()) {
-			String url = getDefaultURL(lastDeploymentInfo, deploymentName);
-			if (url != null) {
-				List<String> urls = new ArrayList<String>();
-				urls.add(url);
-				applicationDescriptor.getDeploymentInfo().setUris(urls);
-			}
-		}
-	}
-
-	protected String getDefaultURL(DeploymentInfo previousInfo, String deploymentName) {
-
-		String url = previousInfo != null && previousInfo.getUris() != null && !previousInfo.getUris().isEmpty() ? previousInfo
-				.getUris().get(0) : null;
-
-		if (url == null && urlLookup != null) {
-			CloudApplicationURL appURL = urlLookup.getDefaultApplicationURL(deploymentName);
-			if (appURL != null) {
-				url = appURL.getUrl();
-			}
-		
-		}
-
-		return url;
 	}
 
 	/**

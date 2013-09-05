@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.widgets.Composite;
@@ -20,20 +23,18 @@ import org.eclipse.swt.widgets.Control;
  */
 public abstract class UIPart {
 
-	private IPartChangeListener listener;
+	private List<IPartChangeListener> listeners = new ArrayList<IPartChangeListener>();
 
 	public void addPartChangeListener(IPartChangeListener listener) {
-		this.listener = listener;
-	}
-
-	protected void notifyChange(PartChangeEvent changeEvent) {
-		if (listener != null) {
-			listener.handleChange(changeEvent);
+		if (listener != null && !listeners.contains(listener)) {
+			listeners.add(listener);
 		}
 	}
 
-	protected IPartChangeListener getListener() {
-		return listener;
+	protected void notifyChange(PartChangeEvent changeEvent) {
+		for (IPartChangeListener listener : listeners) {
+			listener.handleChange(changeEvent);
+		}
 	}
 
 	/**

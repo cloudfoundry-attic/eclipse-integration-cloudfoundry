@@ -13,7 +13,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui;
 import org.eclipse.core.runtime.IStatus;
 
 /**
- * Event fired by a UI part when value changes have occured in the part's controls
+ * Event fired by a UI part when value changes have occured in the part's
+ * controls
  */
 public class PartChangeEvent {
 
@@ -23,10 +24,23 @@ public class PartChangeEvent {
 
 	private final UIPart source;
 
+	private final int type;
+
+	public static final int NONE = -1;
+
 	public PartChangeEvent(Object data, IStatus status, UIPart source) {
+		this(data, status, source, NONE);
+	}
+
+	public PartChangeEvent(Object data, IStatus status, UIPart source, int type) {
 		this.data = data;
 		this.status = status;
 		this.source = source;
+		this.type = type;
+	}
+
+	public int getType() {
+		return type;
 	}
 
 	public UIPart getSource() {

@@ -16,8 +16,6 @@ import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -25,6 +23,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.WizardPartChangeEvent;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -34,6 +34,7 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
@@ -53,8 +54,6 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 	private String buildpack;
 
-	private Text nameText;
-
 	private Text buildpackText;
 
 	private String serverTypeId;
@@ -68,6 +67,8 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 	protected final ApplicationWizardDescriptor descriptor;
 
 	protected final CloudFoundryDeploymentWizardPage deploymentPage;
+
+	private boolean initialisingValues = true;
 
 	public CloudFoundryApplicationWizardPage(CloudFoundryServer server,
 			CloudFoundryDeploymentWizardPage deploymentPage, CloudFoundryApplicationModule module,
@@ -106,34 +107,6 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 		setControl(composite);
 
-		update(false);
-	}
-
-	protected void updateApplicationName() {
-
-		// Do not set empty Strings
-		String value = appName != null && appName.trim().length() == 0 ? null : appName;
-
-		if (value != null) {
-			ApplicationInfo appInfo = new ApplicationInfo(value);
-			descriptor.setApplicationInfo(appInfo);
-		}
-		else {
-			descriptor.setApplicationInfo(null);
-		}
-
-		DeploymentInfo depInfo = descriptor.getDeploymentInfo();
-		if (depInfo == null) {
-			depInfo = new DeploymentInfo();
-			descriptor.setDeploymentInfo(depInfo);
-		}
-
-		depInfo.setDeploymentName(value);
-	}
-
-	@Override
-	public boolean isPageComplete() {
-		return canFinish;
 	}
 
 	protected Composite createContents(Composite parent) {
@@ -146,27 +119,15 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 		composite.setLayout(new GridLayout(2, false));
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
+		final UIPart appPart = new AppNamePart();
+		// Add the listener first so that it can be notified of changes during
+		// the part creation.
+		appPart.addPartChangeListener(deploymentPage);
+		appPart.addPartChangeListener(this);
+
+		appPart.createPart(composite);
+		
 		Label nameLabel = new Label(composite, SWT.NONE);
-		nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		nameLabel.setText("Name:");
-
-		nameText = new Text(composite, SWT.BORDER);
-		nameText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		nameText.setEditable(true);
-
-		if (appName != null) {
-			nameText.setText(appName);
-		}
-		nameText.addModifyListener(new ModifyListener() {
-			public void modifyText(ModifyEvent e) {
-				appName = nameText.getText();
-
-				updateApplicationName();
-				update();
-			}
-		});
-
-		nameLabel = new Label(composite, SWT.NONE);
 		nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 		nameLabel.setText("Buildpack URL (optional):");
 
@@ -184,10 +145,6 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 		return composite;
 
-	}
-
-	protected void update() {
-		update(true);
 	}
 
 	protected void validateBuildPack() {
@@ -223,7 +180,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 	}
 
-	protected void update(boolean updateButtons) {
+	protected IStatus getUpdateNameStatus() {
 		IStatus status = Status.OK_STATUS;
 		if (ValueValidationUtil.isEmpty(appName)) {
 			status = CloudFoundryPlugin.getStatus("Enter an application name.", IStatus.ERROR);
@@ -253,8 +210,46 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 			}
 		}
 
-		update(updateButtons, status);
+		return status;
 
+	}
+
+	protected class AppNamePart extends UIPart {
+
+		private Text nameText;
+
+		@Override
+		public Control createPart(Composite parent) {
+
+			Label nameLabel = new Label(parent, SWT.NONE);
+			nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+			nameLabel.setText("Name:");
+
+			nameText = new Text(parent, SWT.BORDER);
+			nameText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+			nameText.setEditable(true);
+
+			nameText.addModifyListener(new ModifyListener() {
+				public void modifyText(ModifyEvent e) {
+					appName = nameText.getText();
+					// If first time initialising, dont update the wizard
+					// buttons as the may not be available to update yet
+					boolean updateButtons = !initialisingValues;
+					if (initialisingValues) {
+						initialisingValues = false;
+					}
+					notifyChange(new WizardPartChangeEvent(appName, getUpdateNameStatus(), AppNamePart.this,
+							CloudFoundryDeploymentWizardPage.APP_NAME_CHANGE_EVENT, updateButtons));
+				}
+			});
+
+			// Add the name after the listener so that the listener can be
+			// notified.
+			if (appName != null) {
+				nameText.setText(appName);
+			}
+			return parent;
+		}
 	}
 
 }

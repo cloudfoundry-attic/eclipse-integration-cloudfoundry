@@ -19,6 +19,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudHostDomainUrlPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryDeploymentWizardPage;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.application.JavaStartCommand;
@@ -34,8 +35,8 @@ public class StandaloneDeploymentWizardPage extends
 	public StandaloneDeploymentWizardPage(CloudFoundryServer server,
 			CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor,
-			CloudApplicationUrlLookup urlLookup) {
-		super(server, module, descriptor, urlLookup);
+			CloudApplicationUrlLookup urlLookup, ApplicationWizardDelegate delegate) {
+		super(server, module, descriptor, urlLookup, delegate);
 	}
 
 	protected StandaloneStartCommandPart standalonePart;
@@ -87,7 +88,7 @@ public class StandaloneDeploymentWizardPage extends
 	}
 
 	@Override
-	protected void setURL(String url) {
+	protected void setUrlInDescriptor(String url) {
 
 		if (ValueValidationUtil.isEmpty(url)) {
 			// Set an empty list if URL is empty as it can cause problems when
@@ -98,7 +99,7 @@ public class StandaloneDeploymentWizardPage extends
 	}
 
 	@Override
-	public void updateUrlHost() {
+	public void updateUrlInUI() {
 		// Do nothing, as updating URL with the application name is not
 		// applicable for Java standalone
 	}

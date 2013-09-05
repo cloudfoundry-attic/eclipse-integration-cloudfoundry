@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.WizardPartChangeEvent;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.DialogPage;
@@ -36,7 +37,7 @@ import org.eclipse.jface.wizard.WizardPage;
  */
 public abstract class PartsWizardPage extends WizardPage implements IPartChangeListener {
 
-	protected boolean canFinish;
+	private boolean canFinish;
 
 	protected Map<UIPart, IStatus> partStatus = new HashMap<UIPart, IStatus>();
 
@@ -51,6 +52,9 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 			status = Status.OK_STATUS;
 		}
 
+		// If the part indicates its OK, remove it from the list of tracked
+		// parts, as any error it would have previously
+		// generated has now been fixed.
 		if (status.isOK()) {
 			partStatus.remove(event.getSource());
 
@@ -65,7 +69,10 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 			partStatus.put(event.getSource(), status);
 		}
 
-		update(true, status);
+		boolean updateButtons = !(event instanceof WizardPartChangeEvent)
+				|| ((WizardPartChangeEvent) event).updateWizardButtons();
+
+		update(updateButtons, status);
 	}
 
 	@Override
