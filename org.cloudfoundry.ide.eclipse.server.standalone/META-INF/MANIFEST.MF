@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Cloud Foundry Integration for Eclipse (Standalone Core)
+Bundle-Name: Cloud Foundry Integration for Eclipse (Standalone)
 Bundle-SymbolicName: org.cloudfoundry.ide.eclipse.server.standalone;singleton:=true
 Bundle-Version: 1.5.1.qualifier
 Bundle-Vendor: GoPivotal, Inc.
