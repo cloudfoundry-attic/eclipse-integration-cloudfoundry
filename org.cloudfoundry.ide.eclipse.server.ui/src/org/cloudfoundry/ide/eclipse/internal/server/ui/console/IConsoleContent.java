@@ -22,4 +22,5 @@ import org.eclipse.ui.console.IOConsoleOutputStream;
 public interface IConsoleContent {
 
 	public ICloudFoundryConsoleOutputStream getOutputStream(IOConsoleOutputStream consoleOutputStream);
+
 }

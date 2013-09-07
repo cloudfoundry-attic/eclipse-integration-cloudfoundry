@@ -73,10 +73,17 @@ public abstract class ConsoleOutputStream implements ICloudFoundryConsoleOutputS
 
 	abstract protected String getContent(IProgressMonitor monitor) throws CoreException;
 
-	protected void  requestStreamClose(boolean close) {
+	abstract protected String getID();
+
+	@Override
+	public String toString() {
+		return getID();
+	}
+
+	protected void requestStreamClose(boolean close) {
 		shouldCloseStream = close;
 	}
-	
+
 	public boolean shouldCloseStream() {
 		return shouldCloseStream;
 	}

@@ -404,4 +404,10 @@ public class CloudFoundryPlugin extends Plugin {
 		}
 	}
 
+	public static void logWarning(String message) {
+		if (plugin != null && message != null) {
+			plugin.getLog().log(getStatus(message, IStatus.WARNING));
+		}
+	}
+
 }

@@ -104,14 +104,14 @@ public class ConsoleManager {
 		String appUrl = getConsoleId(server, app, instanceIndex);
 		CloudFoundryConsole serverLogTail = consoleByUri.get(appUrl);
 		if (serverLogTail != null) {
-			serverLogTail.stopTailing();
+			serverLogTail.stop();
 			consoleByUri.remove(appUrl);
 		}
 	}
 
 	public void stopConsoles() {
 		for (Entry<String, CloudFoundryConsole> tailEntry : consoleByUri.entrySet()) {
-			tailEntry.getValue().stopTailing();
+			tailEntry.getValue().stop();
 		}
 	}
 
@@ -136,6 +136,7 @@ public class ConsoleManager {
 	}
 
 	public static String getConsoleId(IServer server, CloudApplication app, int instanceIndex) {
+		// Note that the server ID SHOULD contain the org and the space as well.
 		return server.getId() + "/" + app.getName() + "#" + instanceIndex;
 	}
 

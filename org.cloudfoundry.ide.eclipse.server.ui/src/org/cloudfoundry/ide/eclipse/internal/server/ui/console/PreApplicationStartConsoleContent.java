@@ -27,6 +27,8 @@ public class PreApplicationStartConsoleContent implements IConsoleContent {
 		ConsoleOutputStream cfStream = new ConsoleOutputStream(consoleOutputStream, null) {
 			private boolean once = true;
 
+			private static final String ID = "Pre-Staging Message";
+
 			@Override
 			protected String getContent(IProgressMonitor monitor) throws CoreException {
 				if (once) {
@@ -35,6 +37,10 @@ public class PreApplicationStartConsoleContent implements IConsoleContent {
 					return getStagingInitialContent();
 				}
 				return null;
+			}
+
+			protected String getID() {
+				return ID;
 			}
 
 			protected int getStreamColour() {

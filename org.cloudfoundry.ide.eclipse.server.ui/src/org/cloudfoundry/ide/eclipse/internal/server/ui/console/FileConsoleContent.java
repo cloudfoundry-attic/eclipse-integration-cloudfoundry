@@ -2,18 +2,18 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.springframework.http.HttpStatus;
 
-
 /**
- * Streams file content to the Cloud Foundry console. It continues to
- * check for new content indefinitely, until the Cloud Foundry manager
- * decided to terminate any further streaming (e.g., application is deleted
- * or stopped, or enough errors have been encountered)
+ * Streams file content to the Cloud Foundry console. It continues to check for
+ * new content indefinitely, until the Cloud Foundry manager decided to
+ * terminate any further streaming (e.g., application is deleted or stopped, or
+ * enough errors have been encountered)
  */
 public class FileConsoleContent implements IConsoleContent {
 
@@ -44,11 +44,12 @@ public class FileConsoleContent implements IConsoleContent {
 		this.server = server;
 		this.appName = appName;
 		this.instanceIndex = instanceIndex;
+
 	}
 
 	public ICloudFoundryConsoleOutputStream getOutputStream(IOConsoleOutputStream outStream) {
-		FileConsoleOutputStream cfOutStream = new FileConsoleOutputStream(outStream, path, server, swtColour,
-				appName, instanceIndex);
+		FileConsoleOutputStream cfOutStream = new FileConsoleOutputStream(outStream, path, server, swtColour, appName,
+				instanceIndex);
 		cfOutStream.initialiseStream();
 		return cfOutStream;
 	}
@@ -64,6 +65,12 @@ public class FileConsoleContent implements IConsoleContent {
 		private final String appName;
 
 		private final int instanceIndex;
+
+		private String id;
+
+		private static final int MAX_COUNT = 50;
+
+		private int errorCount = MAX_COUNT;
 
 		/**
 		 * 
@@ -81,6 +88,8 @@ public class FileConsoleContent implements IConsoleContent {
 			this.appName = appName;
 			this.instanceIndex = instanceIndex;
 
+			this.id = appName + " - " + instanceIndex + " - " + path;
+
 		}
 
 		protected int getStreamColour() {
@@ -91,40 +100,63 @@ public class FileConsoleContent implements IConsoleContent {
 
 			String content = null;
 			CloudFoundryException cfe = null;
+			CoreException error = null;
 			try {
 
 				content = server.getBehaviour().getFile(appName, instanceIndex, path, offset, monitor);
 				if (content != null) {
 					offset += content.length();
 				}
-
+				// NOte that if no error was thrown, reset the error count. The
+				// stream should only terminate if N number of errors are met in
+				// a row.
+				errorCount = MAX_COUNT;
+				return content;
 			}
 			catch (CoreException e) {
+				error = e;
 				Throwable t = e.getCause();
 
 				if (t instanceof CloudFoundryException) {
 					cfe = (CloudFoundryException) t;
 				}
-				else {
-					throw e;
-				}
-
 			}
 			catch (CloudFoundryException cfex) {
+				error = new CoreException(CloudFoundryPlugin.getErrorStatus(cfe));
 				cfe = cfex;
 			}
 
 			// Do not log error if is is due to range not satisfied, or file is
 			// not
 			// found for instance
-			if (cfe != null && !HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE.equals(cfe.getStatusCode())
-					&& !CloudErrorUtil.isFileNotFoundForInstance(cfe)) {
-				throw CloudErrorUtil.toCoreException(cfe);
+			if (cfe != null
+					&& (HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE.equals(cfe.getStatusCode()) || CloudErrorUtil
+							.isFileNotFoundForInstance(cfe))) {
+				// These types of errors are "valid" meaning they don't indicate
+				// a problem. Return null to let the caller know that there is
+				// no further content at the moment.
+				return null;
 
 			}
-			return content;
+
+			if (adjustCount()) {
+				throw error;
+			}
+			else {
+				return null;
+			}
+
 		}
 
+		public String getID() {
+			return id;
+		}
+
+		protected boolean adjustCount() {
+			// Otherwise an error occurred
+			errorCount--;
+			return errorCount == 0;
+		}
 	}
 
 }

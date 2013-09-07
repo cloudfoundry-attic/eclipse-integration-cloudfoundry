@@ -11,13 +11,11 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -69,7 +67,7 @@ import org.eclipse.ui.console.MessageConsole;
  * @author Christian Dupuis
  * @author Nieraj Singh
  */
-class CloudFoundryConsole extends Job {
+class CloudFoundryConsole {
 
 	static final String ATTRIBUTE_SERVER = "org.cloudfoundry.ide.eclipse.server.Server";
 
@@ -79,48 +77,40 @@ class CloudFoundryConsole extends Job {
 
 	static final String CONSOLE_TYPE = "org.cloudfoundry.ide.eclipse.server.appcloud";
 
-	private Map<ICloudFoundryConsoleOutputStream, Integer> activeStreams;
+	private final CloudApplication app;
+
+	private List<ConsoleStream> activeStreams = new ArrayList<CloudFoundryConsole.ConsoleStream>();
 
 	/** How frequently to check for log changes; defaults to 5 seconds */
 	private long sampleInterval = 5000;
 
-	/** Is the tailer currently tailing? */
-	private boolean tailing = true;
-
 	private final MessageConsole console;
 
 	public CloudFoundryConsole(CloudApplication app, MessageConsole console) {
-		super(getConsoleName(app));
-
+		this.app = app;
 		this.console = console;
-
-		setSystem(true);
 	}
 
 	/**
-	 * Starts the job and creates new output streams to the console for each
+	 * Starts stream jobs and creates new output streams to the console for each
 	 * file listed in the console contents.
 	 * @param contents to stream to the console
 	 */
 	public synchronized void startTailing(ConsoleContents contents) {
 
+		clean();
 
+		// Add any new streams to the list of active streams
 		if (contents != null) {
 			List<IConsoleContent> consoleContents = contents.getContents();
 			if (consoleContents != null && !consoleContents.isEmpty()) {
 
-				// THere may be other streams started prior to the current request (e.g. staging logs), so simply
-				// add to the list of active streams.
-				if (activeStreams == null) {
-					activeStreams = new LinkedHashMap<ICloudFoundryConsoleOutputStream, Integer>();
-				}
-				
 				for (IConsoleContent content : consoleContents) {
 					IOConsoleOutputStream stream = console.newOutputStream();
 					if (stream != null) {
 						ICloudFoundryConsoleOutputStream outStream = content.getOutputStream(stream);
 						if (outStream != null) {
-							activeStreams.put(outStream, 0);
+							activeStreams.add(new ConsoleStream(getConsoleName(app), outStream));
 						}
 						else {
 							try {
@@ -132,102 +122,40 @@ class CloudFoundryConsole extends Job {
 						}
 					}
 				}
-
-				if (!activeStreams.isEmpty()) {
-					tailing = true;
-					schedule();
-				}
 			}
 		}
+
+		// Start tailing both existing and new streams
+		for (ConsoleStream stream : activeStreams) {
+			stream.tailing(true);
+			stream.schedule();
+		}
+	}
+
+	protected synchronized void clean() {
+		// Clean up any streams scheduled for removal
+		List<ConsoleStream> toKeep = new ArrayList<CloudFoundryConsole.ConsoleStream>();
+		for (ConsoleStream stream : activeStreams) {
+			if (!stream.scheduleForRemoval()) {
+				toKeep.add(stream);
+			}
+		}
+		activeStreams = toKeep;
 	}
 
 	/**
 	 * Stops any further streaming of file content, and closes any open output
 	 * stream. NOTE that this does NOT terminate or cancel the console job. The
 	 * job will continue being alive, but not running, until an explicit
-	 * "start tailing" request is made, at which point , new output streams to
-	 * the console are created, and the job rescheduled.
-	 * 
+	 * "start tailing" request is made, at which point .
 	 */
-	public synchronized void stopTailing() {
+	public synchronized void stop() {
 
-		tailing = false;
-		if (activeStreams != null) {
-			for (Entry<ICloudFoundryConsoleOutputStream, Integer> entry : activeStreams.entrySet()) {
-				try {
-					entry.getKey().close();
-				}
-				catch (IOException ioe) {
-					// Ignore
-				}
-			}
-			activeStreams = null;
+		clean();
+
+		for (ConsoleStream outStream : activeStreams) {
+			outStream.tailing(false);
 		}
-
-	}
-
-	@Override
-	protected synchronized IStatus run(IProgressMonitor monitor) {
-		if (this.tailing) {
-
-			// Stream content to the console during this iteration of the job,
-			// checking for any errors , and closing output streams
-			// for any files that generated too many errors. Further job
-			// iterations are scheduled only if there are any remaining
-			// files that haven't generated any errors during content streaming.
-			if (activeStreams != null && !activeStreams.isEmpty()) {
-
-				Map<ICloudFoundryConsoleOutputStream, Integer> copy = new HashMap<ICloudFoundryConsoleOutputStream, Integer>(
-						activeStreams);
-				for (Entry<ICloudFoundryConsoleOutputStream, Integer> entry : copy.entrySet()) {
-					int count = entry.getValue();
-					ICloudFoundryConsoleOutputStream stream = entry.getKey();
-					boolean forceClose = false;
-
-					if (!stream.shouldCloseStream()) {
-						try {
-							stream.write(monitor);
-						}
-						catch (CoreException e) {
-
-							Throwable t = e.getCause();
-							// If IOException encountered, terminate right away
-							// rather than trying again
-							if (t instanceof IOException) {
-								forceClose = true;
-							}
-							count++;
-						}
-					}
-					else {
-						forceClose = true;
-					}
-
-					activeStreams.remove(stream);
-
-					if (forceClose || count > 5) {
-						try {
-							stream.close();
-						}
-						catch (IOException ioe) {
-							// Ignore
-						}
-					}
-					else {
-						activeStreams.put(stream, count);
-					}
-				}
-			}
-
-			if (activeStreams != null && !activeStreams.isEmpty()) {
-				schedule(sampleInterval);
-			}
-			else {
-				stopTailing();
-			}
-
-		}
-		return Status.OK_STATUS;
 	}
 
 	static String getConsoleName(CloudApplication app) {
@@ -237,6 +165,69 @@ class CloudFoundryConsole extends Job {
 
 	public MessageConsole getConsole() {
 		return console;
+	}
+
+	class ConsoleStream extends Job {
+
+		private final ICloudFoundryConsoleOutputStream stream;
+
+		/** Is the tailer currently tailing? */
+
+		private boolean tailing = true;
+
+		private boolean remove = false;
+
+		private final String name;
+
+		public ConsoleStream(String name, ICloudFoundryConsoleOutputStream stream) {
+			super(name);
+			this.stream = stream;
+			this.name = name;
+			setSystem(true);
+		}
+
+		@Override
+		protected synchronized IStatus run(IProgressMonitor monitor) {
+			if (tailing) {
+
+				remove = stream.shouldCloseStream();
+				if (!remove) {
+					try {
+						stream.write(monitor);
+					}
+					catch (CoreException e) {
+						remove = true;
+
+						CloudFoundryPlugin.logError(e);
+					}
+				}
+
+				if (remove) {
+					tailing(false);
+					try {
+						stream.close();
+					}
+					catch (IOException io) {
+						CloudFoundryPlugin.logWarning("I/O Exception attempting to close console stream: " + name);
+					}
+				}
+				else {
+					schedule(sampleInterval);
+				}
+
+			}
+			return Status.OK_STATUS;
+
+		}
+
+		public synchronized boolean scheduleForRemoval() {
+			return remove;
+
+		}
+
+		public synchronized void tailing(boolean tailing) {
+			this.tailing = tailing;
+		}
 	}
 
 }

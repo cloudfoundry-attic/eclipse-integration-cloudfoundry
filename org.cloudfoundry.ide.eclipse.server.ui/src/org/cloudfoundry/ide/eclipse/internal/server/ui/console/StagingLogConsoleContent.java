@@ -81,8 +81,11 @@ public class StagingLogConsoleContent implements IConsoleContent {
 				String content = server.getBehaviour().getStagingLogs(startingInfo, offset, monitor);
 				if (content != null) {
 					offset += content.length();
-					return content;
 				}
+				else {
+					requestStreamClose(true);
+				}
+				return content;
 
 			}
 			catch (CoreException e) {
@@ -94,6 +97,7 @@ public class StagingLogConsoleContent implements IConsoleContent {
 				}
 			}
 			catch (CloudFoundryException cfex) {
+				error = CloudErrorUtil.toCoreException(cfex);
 				cfe = cfex;
 			}
 
@@ -102,13 +106,17 @@ public class StagingLogConsoleContent implements IConsoleContent {
 			requestStreamClose(true);
 
 			// Do not log error if file is not found for instance
-			if (cfe != null && !HttpStatus.NOT_FOUND.equals(cfe.getStatusCode())) {
-				throw CloudErrorUtil.toCoreException(cfe);
+			if (cfe != null && HttpStatus.NOT_FOUND.equals(cfe.getStatusCode())) {
+				return null;
 			}
-			else if (error != null) {
+			else {
 				throw error;
 			}
-			return null;
+		}
+
+		public String getID() {
+			return startingInfo != null && startingInfo.getStagingFile() != null ? startingInfo.getStagingFile()
+					: "Staging Log";
 		}
 	}
 
