@@ -107,7 +107,7 @@ public class FileConsoleContent implements IConsoleContent {
 				if (content != null) {
 					offset += content.length();
 				}
-				// NOte that if no error was thrown, reset the error count. The
+				// Note that if no error was thrown, reset the error count. The
 				// stream should only terminate if N number of errors are met in
 				// a row.
 				errorCount = MAX_COUNT;
@@ -134,25 +134,33 @@ public class FileConsoleContent implements IConsoleContent {
 							.isFileNotFoundForInstance(cfe))) {
 				// These types of errors are "valid" meaning they don't indicate
 				// a problem. Return null to let the caller know that there is
-				// no further content at the moment.
-				return null;
-
-			}
-
-			if (adjustCount()) {
-				throw error;
-			}
-			else {
+				// no further content at the moment, but to keep the stream
+				// alive.
 				return null;
 			}
 
+			if (adjustErrorCount() && !shouldCloseStream()) {
+				requestStreamClose(true);
+				String actualError = error.getMessage() != null ? error.getMessage()
+						: "Unknown error while obtaining content for " + path;
+				throw new CoreException(CloudFoundryPlugin.getErrorStatus(
+						"Too many failures trying to stream content from " + path + ". Terminating stream due to "
+								+ actualError, error));
+
+			}
+			return null;
 		}
 
 		public String getID() {
 			return id;
 		}
 
-		protected boolean adjustCount() {
+		/**
+		 * 
+		 * @return true if errors have reached a limit after adjust the current
+		 * count. False otherwise
+		 */
+		protected boolean adjustErrorCount() {
 			// Otherwise an error occurred
 			errorCount--;
 			return errorCount == 0;
