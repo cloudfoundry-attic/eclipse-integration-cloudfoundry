@@ -229,7 +229,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 											subMonitor);
 								}
 								catch (CoreException e) {
-									CloudFoundryPlugin.logError(e);
+									CloudFoundryPlugin.log(e);
 								}
 								finally {
 									subMonitor.done();

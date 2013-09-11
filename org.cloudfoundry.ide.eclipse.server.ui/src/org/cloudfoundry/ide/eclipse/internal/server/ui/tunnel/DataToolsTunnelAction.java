@@ -295,7 +295,7 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 			if (profile.getConnectionState() == IConnectionProfile.CONNECTED_STATE) {
 				IStatus status = profile.disconnect();
 				if (!status.isOK()) {
-					CloudFoundryPlugin.logError(status);
+					CloudFoundryPlugin.log(status);
 				}
 			}
 

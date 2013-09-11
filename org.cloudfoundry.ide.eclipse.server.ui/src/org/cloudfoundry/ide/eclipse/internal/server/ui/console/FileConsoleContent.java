@@ -6,6 +6,18 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+/*******************************************************************************
+ * Copyright (c) 2013 GoPivotal, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     GoPivotal, Inc. - initial API and implementation
+ *******************************************************************************/
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.springframework.http.HttpStatus;
 
@@ -143,8 +155,8 @@ public class FileConsoleContent implements IConsoleContent {
 				requestStreamClose(true);
 				String actualError = error.getMessage() != null ? error.getMessage()
 						: "Unknown error while obtaining content for " + path;
-				throw new CoreException(CloudFoundryPlugin.getErrorStatus(
-						"Too many failures trying to stream content from " + path + ". Terminating stream due to "
+				throw new CoreException(new Status(IStatus.WARNING, CloudFoundryPlugin.PLUGIN_ID,
+						"Too many failures trying to stream content from " + path + ". Closing stream due to: "
 								+ actualError, error));
 
 			}
@@ -162,7 +174,9 @@ public class FileConsoleContent implements IConsoleContent {
 		 */
 		protected boolean adjustErrorCount() {
 			// Otherwise an error occurred
-			errorCount--;
+			if (errorCount > 0) {
+				errorCount--;
+			}
 			return errorCount == 0;
 		}
 	}

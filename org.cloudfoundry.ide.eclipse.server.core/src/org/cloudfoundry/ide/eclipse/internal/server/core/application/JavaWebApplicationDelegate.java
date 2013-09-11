@@ -18,9 +18,9 @@ import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -111,7 +111,7 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 				catch (JavaModelException e) {
 					// Log the error but don't throw it again as there may be
 					// other ways to detect the framework
-					CloudFoundryPlugin.logError(new Status(IStatus.WARNING, CloudFoundryPlugin.PLUGIN_ID,
+					CloudFoundryPlugin.log(new Status(IStatus.WARNING, CloudFoundryPlugin.PLUGIN_ID,
 							"Unexpected error during auto detection of application type", e));
 				}
 

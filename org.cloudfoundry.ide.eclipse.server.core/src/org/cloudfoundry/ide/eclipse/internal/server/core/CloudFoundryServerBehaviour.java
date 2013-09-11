@@ -787,7 +787,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			jobName += ": " + getCloudFoundryServer().getDeploymentName();
 		}
 		catch (CoreException e1) {
-			CloudFoundryPlugin.logError(e1);
+			CloudFoundryPlugin.log(e1);
 		}
 
 		Job job = new Job(jobName) {
@@ -809,7 +809,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			new TunnelBehaviour(getCloudFoundryServer()).stopAndDeleteAllTunnels(monitor);
 		}
 		catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
+			CloudFoundryPlugin.log(e);
 		}
 	}
 
@@ -1312,7 +1312,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		}
 		catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
+			CloudFoundryPlugin.log(e);
 		}
 		return null;
 	}
@@ -1995,7 +1995,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// if generating a .war file will work
 				// for
 				// this application type
-				CloudFoundryPlugin.logError(e);
+				CloudFoundryPlugin.log(e);
 			}
 		}
 

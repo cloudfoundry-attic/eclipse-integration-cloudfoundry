@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 
@@ -49,7 +49,7 @@ public class StandaloneFacetHandler {
 			return facetedProject != null
 					&& facetedProject.hasProjectFacet(FACET);
 		} catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
+			CloudFoundryPlugin.log(e);
 			return false;
 		}
 	}
@@ -68,7 +68,7 @@ public class StandaloneFacetHandler {
 							FACET.getDefaultVersion(), null, null);
 				}
 			} catch (CoreException e) {
-				CloudFoundryPlugin.logError(e);
+				CloudFoundryPlugin.log(e);
 			}
 		}
 	}
@@ -83,7 +83,7 @@ public class StandaloneFacetHandler {
 							FACET.getDefaultVersion(), null, null);
 				}
 			} catch (CoreException e) {
-				CloudFoundryPlugin.logError(e);
+				CloudFoundryPlugin.log(e);
 			}
 		}
 	}

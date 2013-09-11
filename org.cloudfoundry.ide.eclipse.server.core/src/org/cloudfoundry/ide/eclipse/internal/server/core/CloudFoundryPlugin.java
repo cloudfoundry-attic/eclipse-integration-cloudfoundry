@@ -370,16 +370,20 @@ public class CloudFoundryPlugin extends Plugin {
 		// System.err.println(string);
 	}
 
+	public static void log(CoreException ce) {
+		log(ce.getStatus());
+	}
+
 	public static void logError(Throwable e) {
-		logError(e.getLocalizedMessage());
+		log(getErrorStatus(e));
 	}
 
 	public static void logError(String message) {
-		logError(getErrorStatus(message));
+		log(getErrorStatus(message));
 	}
 
 	public static void logError(String message, Throwable t) {
-		logError(getErrorStatus(message, t));
+		log(getErrorStatus(message, t));
 	}
 
 	public static IStatus getErrorStatus(String message, Throwable t) {
@@ -395,10 +399,10 @@ public class CloudFoundryPlugin extends Plugin {
 	}
 
 	public static IStatus getErrorStatus(Throwable t) {
-		return new Status(IStatus.ERROR, PLUGIN_ID, t.getLocalizedMessage(), t);
+		return new Status(IStatus.ERROR, PLUGIN_ID, t.getMessage(), t);
 	}
 
-	public static void logError(IStatus status) {
+	public static void log(IStatus status) {
 		if (plugin != null) {
 			plugin.getLog().log(status);
 		}

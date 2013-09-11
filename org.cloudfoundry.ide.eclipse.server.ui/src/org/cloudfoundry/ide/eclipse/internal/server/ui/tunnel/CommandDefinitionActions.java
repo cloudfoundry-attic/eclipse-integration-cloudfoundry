@@ -108,13 +108,13 @@ class CommandDefinitionActions extends Action {
 								TunnelServiceCommandStore.getCurrentStore().storeServerServiceCommands(commands);
 							}
 							catch (CoreException e) {
-								CloudFoundryPlugin.logError(e);
+								CloudFoundryPlugin.log(e);
 							}
 						}
 					}
 				}
 				catch (CoreException e) {
-					CloudFoundryPlugin.logError(e);
+					CloudFoundryPlugin.log(e);
 				}
 				return Status.OK_STATUS;
 			}

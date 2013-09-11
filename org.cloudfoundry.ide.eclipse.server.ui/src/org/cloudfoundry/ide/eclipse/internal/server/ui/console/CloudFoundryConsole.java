@@ -20,7 +20,9 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.console.MessageConsole;
 
@@ -67,7 +69,7 @@ import org.eclipse.ui.console.MessageConsole;
  * @author Christian Dupuis
  * @author Nieraj Singh
  */
-class CloudFoundryConsole {
+class CloudFoundryConsole extends JobChangeAdapter {
 
 	static final String ATTRIBUTE_SERVER = "org.cloudfoundry.ide.eclipse.server.Server";
 
@@ -98,19 +100,22 @@ class CloudFoundryConsole {
 	 */
 	public synchronized void startTailing(ConsoleContents contents) {
 
-		clean();
-
 		// Add any new streams to the list of active streams
 		if (contents != null) {
 			List<IConsoleContent> consoleContents = contents.getContents();
-			if (consoleContents != null && !consoleContents.isEmpty()) {
-
+			if (consoleContents != null) {
+				List<ConsoleStream> addedStreams = new ArrayList<CloudFoundryConsole.ConsoleStream>();
 				for (IConsoleContent content : consoleContents) {
 					IOConsoleOutputStream stream = console.newOutputStream();
 					if (stream != null) {
+
 						ICloudFoundryConsoleOutputStream outStream = content.getOutputStream(stream);
 						if (outStream != null) {
-							activeStreams.add(new ConsoleStream(getConsoleName(app), outStream));
+							ConsoleStream consoleStream = new ConsoleStream(getConsoleName(app), outStream);
+							consoleStream.addJobChangeListener(this);
+							consoleStream.tailing(true);
+
+							addedStreams.add(new ConsoleStream(getConsoleName(app), outStream));
 						}
 						else {
 							try {
@@ -122,40 +127,43 @@ class CloudFoundryConsole {
 						}
 					}
 				}
+
+				activeStreams.addAll(addedStreams);
+
+				// Reschedule all jobs
+				for (ConsoleStream stream : addedStreams) {
+					stream.schedule();
+				}
 			}
 		}
 
-		// Start tailing both existing and new streams
-		for (ConsoleStream stream : activeStreams) {
-			stream.tailing(true);
-			stream.schedule();
-		}
 	}
 
-	protected synchronized void clean() {
-		// Clean up any streams scheduled for removal
+	protected synchronized ConsoleStream remove(ConsoleStream toRemove) {
 		List<ConsoleStream> toKeep = new ArrayList<CloudFoundryConsole.ConsoleStream>();
+		ConsoleStream removed = null;
 		for (ConsoleStream stream : activeStreams) {
-			if (!stream.scheduleForRemoval()) {
+			if (stream != toRemove) {
 				toKeep.add(stream);
+			}
+			else {
+				removed = stream;
 			}
 		}
 		activeStreams = toKeep;
+		return removed;
 	}
 
 	/**
-	 * Stops any further streaming of file content, and closes any open output
-	 * stream. NOTE that this does NOT terminate or cancel the console job. The
-	 * job will continue being alive, but not running, until an explicit
-	 * "start tailing" request is made, at which point .
+	 * Stops any further streaming of file content. Stream jobs are terminated.
 	 */
 	public synchronized void stop() {
 
-		clean();
-
 		for (ConsoleStream outStream : activeStreams) {
-			outStream.tailing(false);
+			outStream.close();
 		}
+
+		activeStreams.clear();
 	}
 
 	static String getConsoleName(CloudApplication app) {
@@ -175,7 +183,7 @@ class CloudFoundryConsole {
 
 		private boolean tailing = true;
 
-		private boolean remove = false;
+		private boolean close = false;
 
 		private final String name;
 
@@ -184,32 +192,26 @@ class CloudFoundryConsole {
 			this.stream = stream;
 			this.name = name;
 			setSystem(true);
+
 		}
 
 		@Override
 		protected synchronized IStatus run(IProgressMonitor monitor) {
-			if (tailing) {
+			if (tailing && !close) {
 
-				remove = stream.shouldCloseStream();
+				boolean remove = stream.shouldCloseStream();
 				if (!remove) {
 					try {
 						stream.write(monitor);
 					}
 					catch (CoreException e) {
 						remove = true;
-
-						CloudFoundryPlugin.logError(e);
+						CloudFoundryPlugin.log(e);
 					}
 				}
 
 				if (remove) {
-					tailing(false);
-					try {
-						stream.close();
-					}
-					catch (IOException io) {
-						CloudFoundryPlugin.logWarning("I/O Exception attempting to close console stream: " + name);
-					}
+					close();
 				}
 				else {
 					schedule(sampleInterval);
@@ -220,14 +222,39 @@ class CloudFoundryConsole {
 
 		}
 
-		public synchronized boolean scheduleForRemoval() {
-			return remove;
+		public synchronized boolean close() {
+			if (!close) {
+				close = true;
+				tailing(false);
 
+				try {
+					stream.close();
+				}
+				catch (IOException io) {
+					CloudFoundryPlugin.logWarning("I/O Exception attempting to close console stream: " + name);
+				}
+
+				super.done(Status.OK_STATUS);
+			}
+
+			return close;
 		}
 
 		public synchronized void tailing(boolean tailing) {
 			this.tailing = tailing;
 		}
 	}
+
+	@Override
+	public synchronized void done(IJobChangeEvent event) {
+		Job job = event.getJob();
+
+		if (job instanceof ConsoleStream) {
+			ConsoleStream stream = (ConsoleStream) job;
+			remove(stream);
+		}
+	}
+	
+	
 
 }

@@ -127,7 +127,7 @@ public class LaunchTunnelCommandAction extends CloudFoundryEditorAction {
 								}
 								catch (CoreException e) {
 									IStatus errorStatus = CloudFoundryPlugin.getErrorStatus(e);
-									CloudFoundryPlugin.logError(errorStatus);
+									CloudFoundryPlugin.log(errorStatus);
 									return errorStatus;
 								}
 								return Status.OK_STATUS;
