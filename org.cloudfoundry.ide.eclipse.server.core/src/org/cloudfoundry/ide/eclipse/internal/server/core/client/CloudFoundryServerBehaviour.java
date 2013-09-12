@@ -8,7 +8,7 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,8 +36,19 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.client.lib.domain.Staging;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CachingApplicationArchive;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryLoginHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleResourceDeltaWrapper;
+import org.cloudfoundry.ide.eclipse.internal.server.core.RefreshJob;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
@@ -823,7 +834,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			CloudFoundryServer cloudServer = getCloudFoundryServer();
 			final CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(modules[0]);
 
-			CloudFoundryPlugin.getCallback().applicationStopping(getCloudFoundryServer(), cloudModule);
+			// CloudFoundryPlugin.getCallback().applicationStopping(getCloudFoundryServer(),
+			// cloudModule);
 			new Request<Void>() {
 				@Override
 				protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
@@ -1442,6 +1454,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private static CloudFoundryOperations createClient(String location, CloudCredentials credentials,
 			CloudFoundrySpace cloudSpace) throws CoreException {
+
 		URL url;
 		try {
 			url = new URL(location);

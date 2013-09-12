@@ -15,6 +15,7 @@ import junit.framework.TestCase;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.CredentialProperties;
 import org.eclipse.core.runtime.CoreException;

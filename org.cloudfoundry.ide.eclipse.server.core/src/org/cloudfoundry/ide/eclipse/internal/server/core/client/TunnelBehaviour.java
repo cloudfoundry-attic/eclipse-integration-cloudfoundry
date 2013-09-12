@@ -8,7 +8,7 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -29,6 +29,10 @@ import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour.Request;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;

@@ -11,8 +11,8 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.AddServicesToApplicationAction;
 import org.eclipse.jface.util.LocalSelectionTransfer;
 import org.eclipse.jface.viewers.IStructuredSelection;

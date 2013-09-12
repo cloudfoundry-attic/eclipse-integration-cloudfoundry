@@ -23,6 +23,8 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -472,7 +474,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		this.initialServerId = getAttribute(PROP_SERVER_ID, (String) null);
 	}
 
-	void updateModules(Map<String, CloudApplication> applicationByName) throws CoreException {
+	public void updateModules(Map<String, CloudApplication> applicationByName) throws CoreException {
 		Server server = (Server) getServer();
 
 		final Set<CloudFoundryApplicationModule> allModules = new HashSet<CloudFoundryApplicationModule>();

@@ -11,7 +11,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.debug;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;

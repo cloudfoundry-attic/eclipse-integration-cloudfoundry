@@ -16,7 +16,7 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction;

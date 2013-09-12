@@ -11,9 +11,9 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;

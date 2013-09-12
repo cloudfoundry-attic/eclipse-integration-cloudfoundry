@@ -12,11 +12,11 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.RepublishApplicationHandler;

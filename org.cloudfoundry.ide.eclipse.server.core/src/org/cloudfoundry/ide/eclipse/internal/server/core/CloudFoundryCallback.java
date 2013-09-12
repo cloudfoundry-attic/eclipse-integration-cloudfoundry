@@ -12,9 +12,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.util.List;
 
-import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
-import org.cloudfoundry.client.lib.domain.Staging;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.IProgressMonitor;
 
@@ -31,8 +30,6 @@ public abstract class CloudFoundryCallback {
 
 	public abstract void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
 
-	public abstract void applicationStopping(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
-
 	public abstract void applicationStopped(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer);
 
 	public abstract void disconnecting(CloudFoundryServer server);
@@ -44,24 +41,8 @@ public abstract class CloudFoundryCallback {
 
 	public abstract DeploymentDescriptor prepareForDeployment(CloudFoundryServer server,
 			CloudFoundryApplicationModule module, IProgressMonitor monitor);
-	
+
 	public void applicationAboutToStart(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
-		
-	}
-
-	public static class DeploymentDescriptor {
-
-		public ApplicationInfo applicationInfo;
-
-		public DeploymentInfo deploymentInfo;
-
-		public ApplicationAction deploymentMode;
-
-		public ApplicationArchive applicationArchive;
-
-		public boolean isIncrementalPublish;
-
-		public Staging staging;
 
 	}
 

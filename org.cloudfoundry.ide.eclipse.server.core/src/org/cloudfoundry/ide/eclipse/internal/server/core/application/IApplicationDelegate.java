@@ -11,7 +11,6 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.IModuleResource;

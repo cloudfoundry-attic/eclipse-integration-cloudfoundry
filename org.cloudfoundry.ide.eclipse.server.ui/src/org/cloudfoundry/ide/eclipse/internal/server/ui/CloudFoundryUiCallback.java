@@ -17,14 +17,15 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContents;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
@@ -56,7 +57,8 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	@Override
 	public void applicationStarted(final CloudFoundryServer server, final CloudFoundryApplicationModule cloudModule) {
 		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
-			// Do not clear the console as pre application start information may have been already sent to the console
+			// Do not clear the console as pre application start information may
+			// have been already sent to the console
 			// output
 			boolean shouldClearConsole = false;
 			ConsoleContents content = ConsoleContents.getStandardLogContent(server, cloudModule.getApplication(), i);
@@ -68,7 +70,8 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	public void applicationAboutToStart(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 		// Not necessary to show staging
-		// for instances that are not shown in the console, so just show the first instance.
+		// for instances that are not shown in the console, so just show the
+		// first instance.
 		if (cloudModule.getApplication().getInstances() > 0) {
 
 			boolean clearConsole = true;
@@ -120,11 +123,6 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			}
 			new CaldecottUIHelper(cloudServer).displayCaldecottTunnels(serviceNames);
 		}
-	}
-
-	@Override
-	public void applicationStopping(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
-
 	}
 
 	@Override

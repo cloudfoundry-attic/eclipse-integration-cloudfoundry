@@ -19,9 +19,9 @@ import java.util.Set;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.TreeContentProvider;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewColumn;

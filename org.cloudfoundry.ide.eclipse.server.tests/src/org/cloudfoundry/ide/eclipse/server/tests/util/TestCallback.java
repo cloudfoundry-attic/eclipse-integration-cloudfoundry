@@ -15,10 +15,11 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -54,11 +55,6 @@ public class TestCallback extends CloudFoundryCallback {
 
 	@Override
 	public void applicationStopped(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
-		// ignore
-	}
-
-	@Override
-	public void applicationStopping(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 		// ignore
 	}
 

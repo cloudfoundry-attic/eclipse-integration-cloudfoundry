@@ -27,7 +27,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExt
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudOrgsAndSpaces;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceServerLookup;
 import org.eclipse.core.runtime.CoreException;

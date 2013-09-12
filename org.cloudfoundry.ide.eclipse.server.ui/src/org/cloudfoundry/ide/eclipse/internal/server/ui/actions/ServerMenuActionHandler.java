@@ -14,8 +14,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.wst.server.core.IServer;
 

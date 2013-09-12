@@ -17,6 +17,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryClientFactory;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelCache;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.PredefinedServiceCommands;
@@ -116,11 +119,6 @@ public class CloudFoundryPlugin extends Plugin {
 
 		@Override
 		public void applicationStarted(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
-			// ignore
-		}
-
-		@Override
-		public void applicationStopping(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 			// ignore
 		}
 

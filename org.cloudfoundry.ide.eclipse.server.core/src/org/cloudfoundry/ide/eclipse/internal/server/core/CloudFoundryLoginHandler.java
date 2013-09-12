@@ -16,6 +16,8 @@ import java.net.URL;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.HttpProxyConfiguration;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryClientFactory;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.WaitWithProgressJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;

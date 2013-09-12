@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,29 +8,18 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
-import java.io.File;
 
-public class ApplicationInfo {
-	private String appName;
+public class BehaviourEvent {
 
-	private File warFile;
+	public final CloudFoundryApplicationModule appModule;
 
-	public ApplicationInfo(String appName) {
-		this.appName = appName;
-	}
+	public final Object behaviourResult;
 
-	public String getAppName() {
-		return appName;
-	}
-
-	public void setWarFile(File warFile) {
-		this.warFile = warFile;
-	}
-
-	public File getWarFile() {
-		return warFile;
+	public BehaviourEvent(CloudFoundryApplicationModule appModule, Object behaviourResult) {
+		this.appModule = appModule;
+		this.behaviourResult = behaviourResult;
 	}
 
 }

@@ -11,9 +11,9 @@
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
 
 /**
  * 

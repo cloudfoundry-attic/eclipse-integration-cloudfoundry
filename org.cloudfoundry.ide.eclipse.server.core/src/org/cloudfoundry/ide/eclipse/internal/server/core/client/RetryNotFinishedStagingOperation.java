@@ -8,12 +8,13 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.NotFinishedStagingException;
 import org.cloudfoundry.client.lib.StagingErrorException;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.SubMonitor;
 

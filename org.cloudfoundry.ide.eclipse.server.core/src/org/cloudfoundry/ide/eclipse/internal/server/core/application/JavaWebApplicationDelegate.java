@@ -16,11 +16,10 @@ import java.util.regex.Pattern;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;

@@ -30,7 +30,7 @@
 
 	<extension point="org.eclipse.wst.server.core.serverTypes">
 		<serverType
-	        behaviourClass="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour"
+	        behaviourClass="org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour"
 	        class="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer"
 	        description="Publishes and runs J2EE Web projects to Cloud Foundry."
 	        hasConfiguration="false"

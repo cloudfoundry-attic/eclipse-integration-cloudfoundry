@@ -13,9 +13,9 @@ package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationServicesWizardPage;

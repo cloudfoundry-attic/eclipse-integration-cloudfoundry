@@ -20,6 +20,7 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.Staging;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryClientFactory;
 import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ProxyHandler;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;

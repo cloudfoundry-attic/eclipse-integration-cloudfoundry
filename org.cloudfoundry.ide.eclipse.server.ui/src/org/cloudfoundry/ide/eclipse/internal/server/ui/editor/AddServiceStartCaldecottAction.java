@@ -13,9 +13,9 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.TunnelActionProvider;

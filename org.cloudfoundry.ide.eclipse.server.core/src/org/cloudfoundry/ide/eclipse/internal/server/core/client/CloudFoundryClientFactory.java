@@ -8,7 +8,7 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -18,6 +18,7 @@ import org.cloudfoundry.client.lib.CloudFoundryClient;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.uaa.UaaAwareCloudFoundryClient;
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
@@ -31,7 +32,7 @@ import org.springframework.ide.eclipse.uaa.UaaPlugin;
  * operations prior to invoking client API, including automatic client login and
  * proxy setting handling.
  * 
- * @see org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour.Request
+ * @see org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour.Request
  * 
  * 
  */

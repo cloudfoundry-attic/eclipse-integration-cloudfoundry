@@ -13,6 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 // FIXNS: Commented out because of STS-3159
 //import javax.servlet.http.HttpServletResponse;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;

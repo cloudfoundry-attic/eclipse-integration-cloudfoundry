@@ -8,7 +8,7 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
 import org.cloudfoundry.client.lib.StartingInfo;
 import org.cloudfoundry.client.lib.domain.ApplicationStats;
@@ -17,6 +17,8 @@ import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.client.lib.domain.Staging;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.wst.server.core.IModule;

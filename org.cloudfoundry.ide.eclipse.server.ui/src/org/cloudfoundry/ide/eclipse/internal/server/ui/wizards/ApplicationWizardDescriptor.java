@@ -16,7 +16,7 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
 
 /**
  * 

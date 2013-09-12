@@ -14,7 +14,7 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;

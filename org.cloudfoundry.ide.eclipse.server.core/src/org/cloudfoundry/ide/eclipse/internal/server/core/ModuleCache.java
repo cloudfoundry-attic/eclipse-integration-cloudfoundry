@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;

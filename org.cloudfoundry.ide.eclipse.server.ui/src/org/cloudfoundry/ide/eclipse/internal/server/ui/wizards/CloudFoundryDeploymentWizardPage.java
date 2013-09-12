@@ -15,14 +15,14 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudHostDomainUrlPart;

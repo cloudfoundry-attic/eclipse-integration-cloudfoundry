@@ -17,7 +17,7 @@ import java.util.Set;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.TunnelBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CaldecottTunnelWizard;
 import org.eclipse.core.runtime.CoreException;
