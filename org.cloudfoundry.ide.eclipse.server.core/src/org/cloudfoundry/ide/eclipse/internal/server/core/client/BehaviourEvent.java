@@ -10,16 +10,40 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 
-public class BehaviourEvent {
+public class BehaviourEvent<T> {
 
 	public final CloudFoundryApplicationModule appModule;
 
-	public final Object behaviourResult;
+	public final T behaviourResult;
 
-	public BehaviourEvent(CloudFoundryApplicationModule appModule, Object behaviourResult) {
+	public final BehaviourEventType type;
+
+	public final CloudFoundryServer server;
+
+	public BehaviourEvent(CloudFoundryApplicationModule appModule, CloudFoundryServer server, T behaviourResult,
+			BehaviourEventType type) {
 		this.appModule = appModule;
 		this.behaviourResult = behaviourResult;
+		this.type = type;
+		this.server = server;
+	}
+
+	public CloudFoundryApplicationModule getApplicationModule() {
+		return appModule;
+	}
+
+	public CloudFoundryServer getServer() {
+		return server;
+	}
+
+	public T getResult() {
+		return behaviourResult;
+	}
+
+	public BehaviourEventType getType() {
+		return type;
 	}
 
 }

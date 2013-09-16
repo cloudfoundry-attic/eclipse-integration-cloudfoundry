@@ -13,6 +13,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEvent;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourListener;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -24,7 +26,63 @@ import org.eclipse.core.runtime.IProgressMonitor;
  * @author Steffen Pingel
  * @author Terry Denney
  */
-public abstract class CloudFoundryCallback {
+public abstract class CloudFoundryCallback implements BehaviourListener {
+
+	public <T> void handle(BehaviourEvent<T> event) {
+		if (event == null || event.getType() == null || event.getServer() == null) {
+			String message = null;
+			if (event == null) {
+				message = "Null event.";
+			}
+			else if (event.getType() == null) {
+				message = "No event type specified.";
+			}
+			else if (event.getServer() == null) {
+				message = "No server specified.";
+			}
+			CloudFoundryPlugin.logError("Unable to handle server behaviour event due to: " + message);
+			return;
+		}
+		CloudFoundryApplicationModule cloudModule = event.getApplicationModule();
+		CloudFoundryServer server = event.getServer();
+		T resultObj = event.getResult();
+		switch (event.getType()) {
+		case APP_PRE_START:
+			applicationAboutToStart(server, cloudModule);
+			break;
+		case APP_STARTING:
+			applicationStarting(server, cloudModule);
+
+			break;
+		case APP_STARTED:
+			applicationStarted(server, cloudModule);
+			break;
+		case APP_STOPPED:
+			applicationStopped(cloudModule, server);
+			break;
+		case APP_DELETE:
+			deleteApplication(cloudModule, server);
+			break;
+
+		case DISCONNECT:
+			disconnecting(server);
+			break;
+		case PROMPT_CREDENTIALS:
+			getCredentials(server);
+			break;
+		case REFRESH_TUNNEL_CONNECTIONS:
+			if (resultObj instanceof List<?>) {
+				displayCaldecottTunnelConnections(server, (List<CaldecottTunnelDescriptor>) resultObj);
+			}
+			break;
+		case SERVICES_DELETED:
+			if (resultObj instanceof List<?>) {
+
+				deleteServices((List<String>) resultObj, server);
+			}
+			break;
+		}
+	}
 
 	public abstract void applicationStarted(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
 

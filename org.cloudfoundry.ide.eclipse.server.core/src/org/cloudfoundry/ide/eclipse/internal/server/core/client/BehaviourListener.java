@@ -11,30 +11,12 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
 /**
- * Behaviour events are events that occur while a server request is being
- * processed, for example starting or stopping an application.
- * 
- * 
- * 
+ * Listens for server behaviour events, like starting or stopping an
+ * application. The event types that the listener should listen too are
+ * specified when the listener is registered in the listener handler.
  */
-public enum BehaviourEventType {
+public interface BehaviourListener {
 
-	APP_STARTED,
-
-	APP_PRE_START,
-
-	APP_STARTING,
-
-	APP_DELETE,
-
-	APP_STOPPED,
-
-	DISCONNECT,
-
-	PROMPT_CREDENTIALS,
-
-	REFRESH_TUNNEL_CONNECTIONS,
-
-	SERVICES_DELETED
+	public <T> void handle(BehaviourEvent<T> event);
 
 }
