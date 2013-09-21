@@ -116,7 +116,9 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	public void updateApplication(CloudFoundryApplicationModule module) {
-		getData().updateModule(module);
+		if (getData() != null) {
+			getData().updateModule(module);
+		}
 	}
 
 	@Override
@@ -153,7 +155,10 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	public void clearApplications() {
-		getData().clear();
+		ServerData data = getData();
+		if (data != null) {
+			data.clear();
+		}
 	}
 
 	public IStatus error(String message, Exception e) {
@@ -165,7 +170,8 @@ public class CloudFoundryServer extends ServerDelegate {
 		if (module instanceof CloudFoundryApplicationModule) {
 			return (CloudFoundryApplicationModule) module;
 		}
-		return getData().getOrCreateApplicationModule(module);
+
+		return getData() != null ? getData().getOrCreateApplicationModule(module) : null;
 	}
 
 	public CloudFoundryApplicationModule getApplication(IModule[] modules) {
@@ -176,7 +182,7 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	public Collection<CloudFoundryApplicationModule> getApplications() {
-		return getData().getApplications();
+		return getData() != null ? getData().getApplications() : new ArrayList<CloudFoundryApplicationModule>(0);
 	}
 
 	public CloudFoundryServerBehaviour getBehaviour() {
@@ -204,12 +210,14 @@ public class CloudFoundryServer extends ServerDelegate {
 		return new IModule[0];
 	}
 
+	/**
+	 * Returns the cached server data for the server. In some case the data may
+	 * be null, if the server has not yet been created but it's available to be
+	 * configured (e.g while a new server instance is being created).
+	 * @return cached server data. May be null.
+	 */
 	private ServerData getData() {
 		return CloudFoundryPlugin.getModuleCache().getData(getServerOriginal());
-	}
-
-	public boolean hasValidServerData() {
-		return getServerOriginal() != null && getData() != null;
 	}
 
 	public String getDeploymentName() {
@@ -220,7 +228,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		if (secureStoreDirty) {
 			return password;
 		}
-		String cachedPassword = getData().getPassword();
+		String cachedPassword = getData() != null ? getData().getPassword() : null;
 		if (cachedPassword != null) {
 			return cachedPassword;
 		}
@@ -310,8 +318,10 @@ public class CloudFoundryServer extends ServerDelegate {
 	@Override
 	public void modifyModules(final IModule[] add, IModule[] remove, IProgressMonitor monitor) throws CoreException {
 		if (remove != null && remove.length > 0) {
-			for (IModule module : remove) {
-				getData().tagAsDeployed(module);
+			if (getData() != null) {
+				for (IModule module : remove) {
+					getData().tagAsDeployed(module);
+				}
 			}
 
 			try {
@@ -326,9 +336,12 @@ public class CloudFoundryServer extends ServerDelegate {
 		}
 
 		if (add != null && add.length > 0) {
-			for (IModule module : add) {
-				// avoid automatic deletion before module has been deployed
-				getData().tagAsUndeployed(module);
+
+			if (getData() != null) {
+				for (IModule module : add) {
+					// avoid automatic deletion before module has been deployed
+					getData().tagAsUndeployed(module);
+				}
 			}
 
 			// callback to disable auto deploy when testing
@@ -398,16 +411,14 @@ public class CloudFoundryServer extends ServerDelegate {
 		// servers
 		updateServerId();
 
-		getData().setPassword(password);
+		if (getData() != null) {
+			getData().setPassword(password);
+		}
 	}
 
 	public void setSpace(CloudSpace space) {
-		
+
 		secureStoreDirty = true;
-		
-		CloudFoundrySpace existingSpace = getCloudFoundrySpace();
-		
-	
 
 		if (space != null) {
 			this.cloudSpace = new CloudFoundrySpace(space);
@@ -494,7 +505,7 @@ public class CloudFoundryServer extends ServerDelegate {
 					}
 					allModules.add(appModule);
 				}
-				else if (getData().isUndeployed(module)) {
+				else if (getData() != null && getData().isUndeployed(module)) {
 					// deployment is still in progress
 					allModules.add(appModule);
 				}
@@ -505,10 +516,12 @@ public class CloudFoundryServer extends ServerDelegate {
 			}
 
 			// create modules for new applications
-			for (CloudApplication application : applicationByName.values()) {
-				CloudFoundryApplicationModule appModule = getData().createModule(application);
-				externalModules.add(appModule);
-				allModules.add(appModule);
+			if (getData() != null) {
+				for (CloudApplication application : applicationByName.values()) {
+					CloudFoundryApplicationModule appModule = getData().createModule(application);
+					externalModules.add(appModule);
+					allModules.add(appModule);
+				}
 			}
 
 			// update state for cloud applications
@@ -527,7 +540,9 @@ public class CloudFoundryServer extends ServerDelegate {
 				deleteModules(deletedModules);
 			}
 
-			getData().removeObsoleteModules(allModules);
+			if (getData() != null) {
+				getData().removeObsoleteModules(allModules);
+			}
 		}
 	}
 
@@ -542,7 +557,9 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	public void removeApplication(CloudFoundryApplicationModule cloudModule) {
-		getData().remove(cloudModule);
+		if (getData() != null) {
+			getData().remove(cloudModule);
+		}
 	}
 
 	public IServer getServerOriginal() {
@@ -564,10 +581,14 @@ public class CloudFoundryServer extends ServerDelegate {
 	public void saveConfiguration(IProgressMonitor monitor) throws CoreException {
 		String serverId = getServerId();
 		if (secureStoreDirty || (serverId != null && !serverId.equals(initialServerId))) {
-			getData().updateServerId(initialServerId, serverId);
 
-			// cache password
-			getData().setPassword(password);
+			if (getData() != null) {
+				getData().updateServerId(initialServerId, serverId);
+
+				// cache password
+				getData().setPassword(password);
+			}
+
 			// persist password
 			ServerCredentialsStore store = getCredentialsStore();
 			store.setUsername(getUsername());
@@ -604,7 +625,9 @@ public class CloudFoundryServer extends ServerDelegate {
 
 	public void tagAsDeployed(IModule module) {
 		synchronized (this) {
-			getData().tagAsDeployed(module);
+			if (getData() != null) {
+				getData().tagAsDeployed(module);
+			}
 		}
 	}
 

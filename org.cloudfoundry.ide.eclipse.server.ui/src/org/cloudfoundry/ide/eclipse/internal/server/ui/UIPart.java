@@ -31,6 +31,13 @@ public abstract class UIPart {
 		}
 	}
 
+	/**
+	 * Notify any listeners that a chance has occurred in the UI part. The
+	 * Change event should contain all the information necessary for the
+	 * listeners to react accordingly.
+	 * 
+	 * @param changeEvent
+	 */
 	protected void notifyChange(PartChangeEvent changeEvent) {
 		for (IPartChangeListener listener : listeners) {
 			listener.handleChange(changeEvent);
@@ -38,32 +45,65 @@ public abstract class UIPart {
 	}
 
 	/**
-	 * Setting a null status is equivalent to an OK status. Setting an error
-	 * status without a message may allow listeners to react to the error (e.g.
-	 * disabling controls like a "Finish" or "OK" button) but not display an
-	 * error message. To display an error message, a non-null error message is
-	 * required.
-	 * @param status
+	 * Notify any listeners that a change has occurred in the UI Part. This
+	 * notification is accomplished via a status. E.g., an error status
+	 * indicates that some change in the UI part resulted in an error (e.g.
+	 * invalid value entered in one of the part's controls). Setting a null
+	 * status is equivalent to an OK status.
+	 * @param status reflecting change in UI part
 	 */
 	protected void notifyStatusChange(IStatus status) {
-		notifyStatusChange(null, status);
+		notifyStatusChange(null, status, PartChangeEvent.NONE);
 	}
 
 	/**
-	 * Setting a null status is equivalent to an OK status. Setting an error
-	 * status without a message may allow listeners to react to the error (e.g.
-	 * disabling controls like a "Finish" or "OK" button) but not display an
-	 * error message. To display an error message, a non-null error message is
-	 * required.
-	 * @param status
+	 * Notify any listeners that a change has occurred in the UI Part. This
+	 * notification is accomplished via a status. E.g., an error status
+	 * indicates that some change in the UI part resulted in an error (e.g.
+	 * invalid value entered in one of the part's controls). Setting a null
+	 * status is equivalent to an OK status. The event type provides additional
+	 * information to the listeners on what the change was.
+	 * @param status reflecting change in UI part
+	 * @param eventType a type associated with the change in the UI part that a
+	 * listener may use for additional handling
+	 */
+	protected void notifyStatusChange(IStatus status, int eventType) {
+		notifyStatusChange(null, status, eventType);
+	}
+
+	/**
+	 * Notify any listeners that a change has occurred in the UI Part. This
+	 * notification is accomplished via a status. E.g., an error status
+	 * indicates that some change in the UI part resulted in an error (e.g.
+	 * invalid value entered in one of the part's controls). Setting a null
+	 * status is equivalent to an OK status. The object data may be the result
+	 * of a change in the UI part (e.g. a set value)
+	 * @param data event change value, e.g., a set value in a control.
+	 * @param status reflecting change in UI part
 	 */
 	protected void notifyStatusChange(Object data, IStatus status) {
+		notifyStatusChange(data, status, PartChangeEvent.NONE);
+	}
+
+	/**
+	 * Notify any listeners that a change has occurred in the UI Part. This
+	 * notification is accomplished via a status. E.g., an error status
+	 * indicates that some change in the UI part resulted in an error (e.g.
+	 * invalid value entered in one of the part's controls). Setting a null
+	 * status is equivalent to an OK status. The object data may be the result
+	 * of a change in the UI part (e.g. a set value)
+	 * @param data event change value, e.g., a set value in a control.
+	 * @param status reflecting change in UI part
+	 * @param eventType a type associated with the change in the UI part that a
+	 * listener may use for additional handling
+	 */
+	protected void notifyStatusChange(Object data, IStatus status, int eventType) {
 
 		if (status == null) {
 			status = Status.OK_STATUS;
 		}
 
-		notifyChange(new PartChangeEvent(data, status, this));
+		notifyChange(new PartChangeEvent(data, status, this, eventType));
 	}
 
 	abstract public Control createPart(Composite parent);

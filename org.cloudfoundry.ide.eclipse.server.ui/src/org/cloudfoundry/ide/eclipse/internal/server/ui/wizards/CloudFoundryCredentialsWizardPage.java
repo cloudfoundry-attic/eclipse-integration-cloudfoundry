@@ -15,8 +15,13 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCreden
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeHandler;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 
 /**
+ * Credentials wizard page used to prompt users for credentials in case an
+ * EXISTING server instance can no longer connect with the existing credentials.
+ * This wizard page is not used in the new server wizard when creating a new
+ * server instance.
  * @author Christian Dupuis
  * @author Leo Dos Santos
  * @author Steffen Pingel
@@ -28,20 +33,23 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 
 	private CloudSpaceChangeHandler spaceChangeHandler;
 
+	private CredentialsWizardUpdateHandler wizardUpdateHandler;
+
 	protected CloudFoundryCredentialsWizardPage(CloudFoundryServer server) {
 		super(server.getServer().getName() + " Credentials");
 		spaceChangeHandler = new CloudSpaceChangeHandler(server);
-		credentialsPart = new CloudFoundryCredentialsPart(server, this, spaceChangeHandler);
+		wizardUpdateHandler = new CredentialsWizardUpdateHandler(this);
+		credentialsPart = new CloudFoundryCredentialsPart(server, spaceChangeHandler, wizardUpdateHandler, this);
 	}
 
 	public void createControl(Composite parent) {
-		Composite composite = credentialsPart.createComposite(parent);
-		setControl(composite);
+		Control control = credentialsPart.createPart(parent);
+		setControl(control);
 	}
 
 	@Override
 	public boolean isPageComplete() {
-		return credentialsPart.isComplete();
+		return wizardUpdateHandler.isValid();
 	}
 
 	public CloudSpaceChangeHandler getSpaceChangeHandler() {

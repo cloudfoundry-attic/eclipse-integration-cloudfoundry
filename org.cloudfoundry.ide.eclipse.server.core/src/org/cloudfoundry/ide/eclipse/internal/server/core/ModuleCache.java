@@ -65,7 +65,8 @@ public class ModuleCache {
 		}
 
 		public synchronized CloudFoundryApplicationModule createModule(CloudApplication application) {
-			CloudFoundryApplicationModule appModule = new CloudFoundryApplicationModule(null, application.getName(), server);
+			CloudFoundryApplicationModule appModule = new CloudFoundryApplicationModule(null, application.getName(),
+					server);
 			appModule.setCloudApplication(application);
 			add(appModule);
 			return appModule;
@@ -101,7 +102,8 @@ public class ModuleCache {
 		}
 
 		public synchronized void removeObsoleteModules(Set<CloudFoundryApplicationModule> allModules) {
-			HashSet<CloudFoundryApplicationModule> deletedModules = new HashSet<CloudFoundryApplicationModule>(applications);
+			HashSet<CloudFoundryApplicationModule> deletedModules = new HashSet<CloudFoundryApplicationModule>(
+					applications);
 			deletedModules.removeAll(allModules);
 			if (deletedModules.size() > 0) {
 				Map<String, String> mapping = getModuleIdToApplicationId();
@@ -288,7 +290,7 @@ public class ModuleCache {
 
 	public synchronized ServerData getData(IServer server) {
 		ServerData data = dataByServer.get(server);
-		if (data == null) {
+		if (data == null && server != null) {
 			data = new ServerData(server);
 			dataByServer.put(server, data);
 		}

@@ -20,14 +20,16 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescr
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryURLNavigation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.RegisterAccountWizard;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jface.dialogs.DialogPage;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.window.Window;
-import org.eclipse.jface.wizard.IWizardContainer;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.osgi.util.NLS;
@@ -39,8 +41,8 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
@@ -56,7 +58,11 @@ import org.eclipse.wst.server.ui.wizard.IWizardHandle;
  * @author Terry Denney
  * @author Nieraj Singh
  */
-public class CloudFoundryCredentialsPart {
+public class CloudFoundryCredentialsPart extends UIPart {
+
+	public static final int UNVALIDATED_FILLED = 1000;
+
+	public static final int VALIDATED = 1002;
 
 	private static final String DEFAULT_DESCRIPTION = "Register or log in to {0} account.";
 
@@ -68,8 +74,6 @@ public class CloudFoundryCredentialsPart {
 
 	private TabFolder folder;
 
-	private boolean isFinished;
-
 	private Text passwordText;
 
 	private String serverTypeId;
@@ -78,13 +82,7 @@ public class CloudFoundryCredentialsPart {
 
 	private CloudUrlWidget urlWidget;
 
-	private Combo urlCombo;
-
 	private Button validateButton;
-
-	private IWizardHandle wizardHandle;
-
-	private WizardPage wizardPage;
 
 	private Button registerAccountButton;
 
@@ -92,47 +90,60 @@ public class CloudFoundryCredentialsPart {
 
 	private CloudSpaceChangeHandler spaceChangeHandler;
 
-	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, WizardPage wizardPage) {
-		this.cfServer = cfServer;
-		this.wizardPage = wizardPage;
-		this.serverTypeId = cfServer.getServer().getServerType().getId();
-		this.service = CloudFoundryBrandingExtensionPoint.getServiceName(serverTypeId);
+	private IRunnableContext runnableContext;
 
-		wizardPage.setTitle(NLS.bind("{0} Account", service));
-		wizardPage.setDescription(NLS.bind(DEFAULT_DESCRIPTION, service));
-		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
-		if (banner != null) {
-			wizardPage.setImageDescriptor(banner);
+	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, CloudSpaceChangeHandler spaceChangeHandler,
+			IPartChangeListener changeListener, WizardPage wizardPage) {
+		this(cfServer, spaceChangeHandler, changeListener);
+
+		if (wizardPage != null) {
+			wizardPage.setTitle(NLS.bind("{0} Account", service));
+			wizardPage.setDescription(NLS.bind(DEFAULT_DESCRIPTION, service));
+			ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
+			if (banner != null) {
+				wizardPage.setImageDescriptor(banner);
+			}
+			runnableContext = wizardPage.getWizard() != null && wizardPage.getWizard().getContainer() != null ? wizardPage
+					.getWizard().getContainer() : null;
 		}
 	}
 
-	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, IWizardHandle wizardHandle) {
-		this.cfServer = cfServer;
-		this.wizardHandle = wizardHandle;
-		this.serverTypeId = cfServer.getServer().getServerType().getId();
-		this.service = CloudFoundryBrandingExtensionPoint.getServiceName(serverTypeId);
+	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, CloudSpaceChangeHandler spaceChangeHandler,
+			IPartChangeListener changeListener, final IWizardHandle wizardHandle) {
+		this(cfServer, spaceChangeHandler, changeListener);
+		if (wizardHandle != null) {
+			wizardHandle.setTitle(NLS.bind("{0} Account", service));
+			wizardHandle.setDescription(NLS.bind(DEFAULT_DESCRIPTION, service));
+			ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
+			if (banner != null) {
+				wizardHandle.setImageDescriptor(banner);
+			}
 
-		wizardHandle.setTitle(NLS.bind("{0} Account", service));
-		wizardHandle.setDescription(NLS.bind(DEFAULT_DESCRIPTION, service));
-		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
-		if (banner != null) {
-			wizardHandle.setImageDescriptor(banner);
+			runnableContext = new IRunnableContext() {
+				public void run(boolean fork, boolean cancelable, IRunnableWithProgress runnable)
+						throws InvocationTargetException, InterruptedException {
+					wizardHandle.run(fork, cancelable, runnable);
+				}
+			};
 		}
 	}
 
-	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, WizardPage wizardPage,
-			CloudSpaceChangeHandler spaceChangeHandler) {
-		this(cfServer, wizardPage);
+	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, CloudSpaceChangeHandler spaceChangeHandler,
+			IPartChangeListener changeListener) {
+
+		this.cfServer = cfServer;
+		this.serverTypeId = cfServer.getServer().getServerType().getId();
+		this.service = CloudFoundryBrandingExtensionPoint.getServiceName(serverTypeId);
 		this.spaceChangeHandler = spaceChangeHandler;
+
+		if (changeListener != null) {
+			addPartChangeListener(changeListener);
+		}
+
+		runnableContext = PlatformUI.getWorkbench().getProgressService();
 	}
 
-	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, IWizardHandle wizardHandle,
-			CloudSpaceChangeHandler spaceChangeHandler) {
-		this(cfServer, wizardHandle);
-		this.spaceChangeHandler = spaceChangeHandler;
-	}
-
-	public Composite createComposite(Composite parent) {
+	public Control createPart(Composite parent) {
 
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout());
@@ -143,13 +154,13 @@ public class CloudFoundryCredentialsPart {
 		folder.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				update(false);
+				updateUI(false);
 			}
 		});
 
 		try {
 			createExistingUserComposite(folder);
-			update(false);
+			updateUI(false);
 		}
 		catch (Throwable e1) {
 			CloudFoundryPlugin.logError(e1);
@@ -157,10 +168,6 @@ public class CloudFoundryCredentialsPart {
 
 		return composite;
 
-	}
-
-	public boolean isComplete() {
-		return isFinished;
 	}
 
 	public void setServer(CloudFoundryServer server) {
@@ -184,14 +191,14 @@ public class CloudFoundryCredentialsPart {
 		emailText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		emailText.setEditable(true);
 		emailText.setFocus();
-		if (cfServer.hasValidServerData() && cfServer.getUsername() != null) {
+		if (cfServer.getUsername() != null) {
 			emailText.setText(cfServer.getUsername());
 		}
 
 		emailText.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				cfServer.setUsername(emailText.getText());
-				update(false);
+				updateUI(false);
 			}
 		});
 
@@ -202,14 +209,15 @@ public class CloudFoundryCredentialsPart {
 		passwordText = new Text(topComposite, SWT.PASSWORD | SWT.BORDER);
 		passwordText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		passwordText.setEditable(true);
-		if (cfServer.hasValidServerData() && cfServer.getPassword() != null) {
+		if (cfServer.getPassword() != null) {
 			passwordText.setText(cfServer.getPassword());
 		}
 
 		passwordText.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				cfServer.setPassword(passwordText.getText());
-				update(false);
+
+				updateUI(false);
 			}
 		});
 
@@ -220,16 +228,17 @@ public class CloudFoundryCredentialsPart {
 
 				super.setUpdatedSelectionInServer();
 
-				update(false);
-
+				updateUI(false);
 			}
 
 		};
 
 		urlWidget.createControls(topComposite);
-		urlCombo = urlWidget.getUrlCombo();
 
-		cfServer.setUrl(CloudUiUtil.getUrlFromDisplayText(urlCombo.getItem(urlCombo.getSelectionIndex())));
+		String url = urlWidget.getURLSelection();
+		if (url != null) {
+			cfServer.setUrl(CloudUiUtil.getUrlFromDisplayText(url));
+		}
 
 		final Composite validateComposite = new Composite(composite, SWT.NONE);
 		validateComposite.setLayout(new GridLayout(3, false));
@@ -241,7 +250,7 @@ public class CloudFoundryCredentialsPart {
 			@Override
 			public void widgetSelected(SelectionEvent event) {
 
-				update(true);
+				updateUI(true);
 
 			}
 		});
@@ -278,65 +287,128 @@ public class CloudFoundryCredentialsPart {
 		item.setControl(composite);
 	}
 
-	protected IRunnableContext getRunnableContext() {
-		IWizardContainer wizardContainer = getWizardContainer();
-		if (wizardContainer != null) {
-			return wizardContainer;
-		}
-		else if (wizardHandle != null) {
-			return new IRunnableContext() {
-				public void run(boolean fork, boolean cancelable, IRunnableWithProgress runnable)
-						throws InvocationTargetException, InterruptedException {
-					wizardHandle.run(fork, cancelable, runnable);
+	public PartChangeEvent getValidationEvent(boolean validateAgainstServer) {
+
+		IStatus localValidation = validateLocally();
+
+		String userName = cfServer.getUsername();
+		String password = cfServer.getPassword();
+		String url = cfServer.getUrl();
+
+		String message = localValidation.getMessage();
+		String errorMsg = null;
+
+		int validationType = PartChangeEvent.NONE;
+		if (localValidation.isOK()) {
+
+			if (validateAgainstServer) {
+				errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, url, true, runnableContext);
+
+				// No credential errors, so now do a orgs and spaces lookup for
+				// the newly validated credentials.
+				if (errorMsg == null) {
+
+					try {
+						CloudSpacesDescriptor descriptor = spaceChangeHandler.getUpdatedDescriptor(url, userName,
+								password, runnableContext);
+						if (descriptor == null) {
+							errorMsg = "Failed to resolve organizations and spaces for the given credentials. Please contact Cloud Foundry support.";
+						}
+						else {
+							validationType = VALIDATED;
+						}
+					}
+					catch (CoreException e) {
+						errorMsg = "Failed to resolve organization and spaces "
+								+ (e.getMessage() != null ? " due to " + e.getMessage()
+										: ". Unknown error occurred while requesting list of spaces from the server")
+								+ ". Please contact Cloud Foundry support.";
+					}
 				}
-			};
+			}
+			else {
+				// If no validation request is made, check that there is a
+				// spaces descriptor set and matches the current credentials.
+				// This means the credentials were already validated in a
+				// previous update.
+
+				if (!spaceChangeHandler.matchesCurrentDescriptor(url, userName, password)) {
+					spaceChangeHandler.clearSetDescriptor();
+					message = "Please validate your credentials.";
+					validationType = UNVALIDATED_FILLED;
+				}
+				else {
+					validationType = VALIDATED;
+				}
+			}
+		}
+
+		// If not an actual server validation error, treat anything else as an
+		// Info status, including local errors, as to display missing
+		// value messages as info rather than error messages
+		int statusType = IStatus.INFO;
+		if (errorMsg != null) {
+			message = errorMsg;
+			statusType = IStatus.ERROR;
+		}
+		else if (validationType == VALIDATED) {
+			message = VALID_ACCOUNT_MESSAGE;
+		}
+
+		IStatus eventStatus = CloudFoundryPlugin.getStatus(message, statusType);
+
+		return new PartChangeEvent(null, eventStatus, this, validationType);
+
+	}
+
+	protected IStatus validateLocally() {
+
+		String userName = cfServer.getUsername();
+		String password = cfServer.getPassword();
+		String url = cfServer.getUrl();
+		String message = null;
+
+		boolean valuesFilled = false;
+
+		if (userName == null || userName.trim().length() == 0) {
+			message = "Enter an email address.";
+		}
+		else if (password == null || password.trim().length() == 0) {
+			message = "Enter a password.";
+		}
+		else if (url == null || url.trim().length() == 0) {
+			message = NLS.bind("Select a {0} URL.", service);
 		}
 		else {
-			return PlatformUI.getWorkbench().getProgressService();
+			valuesFilled = true;
+			message = NLS.bind(DEFAULT_DESCRIPTION, service);
 		}
+
+		int statusType = valuesFilled ? IStatus.OK : IStatus.ERROR;
+
+		return CloudFoundryPlugin.getStatus(message, statusType);
 	}
 
-	private IWizardContainer getWizardContainer() {
-		if (wizardPage != null && wizardPage.getWizard() != null && wizardPage.getWizard().getContainer() != null) {
-			return wizardPage.getWizard().getContainer();
-		}
-		return null;
+	public void validate() {
+		PartChangeEvent validationEvent = getValidationEvent(true);
+		notifyChange(validationEvent);
 	}
 
-	private void setWizardDescription(String message) {
-		if (wizardHandle != null) {
-			wizardHandle.setDescription(message);
-		}
-		else if (wizardPage != null) {
-			wizardPage.setDescription(message);
-		}
-	}
+	/**
+	 * 
+	 * @param validateCredentials true if credentials should be validated, which
+	 * would require a network I/O request sent to the server. False if only
+	 * local validation should be performed (e.g. check for malformed URL)
+	 */
+	public void updateUI(boolean validateAgainstServer) {
 
-	private void setWizardError(String message) {
-		if (wizardHandle != null) {
-			wizardHandle.setMessage(message, DialogPage.ERROR);
-		}
-		else if (wizardPage != null) {
-			wizardPage.setErrorMessage(message);
-		}
-	}
+		String url = cfServer.getUrl();
 
-	private void setWizardInformation(String message) {
-		if (wizardHandle != null) {
-			wizardHandle.setMessage(message, DialogPage.INFORMATION);
-		}
-		else if (wizardPage != null) {
-			wizardPage.setMessage(message, DialogPage.INFORMATION);
-		}
-	}
+		PartChangeEvent validationEvent = getValidationEvent(validateAgainstServer);
+		boolean valuesFilled = validationEvent.getType() == UNVALIDATED_FILLED
+				|| validationEvent.getType() == VALIDATED;
 
-	private void update(boolean validateCredentials) {
-		isFinished = true;
-		setWizardError(null);
-
-		// CF signup is only available for public CF cloud
-		String selection = urlWidget.getURLSelection();
-		if (CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(selection)) {
+		if (CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(url)) {
 			cfSignupButton.setVisible(true);
 		}
 		else {
@@ -346,111 +418,12 @@ public class CloudFoundryCredentialsPart {
 		// If the credentials have changed and do not match those used to
 		// previously
 		// set a space descriptor, clear the space descriptor
-		String urlText = urlWidget.getURLSelection();
-		String userName = emailText.getText();
-		String password = passwordText.getText();
 
-		// First check if values have been entered correctly in the
-		// widgets. Note that this doesn't not necessarily mean
-		// they are valid credentials or URL. It only checks if the control
-		// widgets have valid values, but not yet validated against
-		// the remote server. Validation of credentials is only performed on an
-		// explicit validation request (i.e. a user clicks the "Validate"
-		// button) to avoid frequent network I/O.
-		if (folder.getSelectionIndex() == 0) {
-			// The first tab in the folder is the account credential tab
-			String message = "";
-			isFinished = false;
+		validateButton.setEnabled(valuesFilled);
 
-			if (userName == null || userName.trim().length() == 0) {
-				message = "Enter an email address.";
-			}
-			else if (password == null || password.trim().length() == 0) {
-				message = "Enter a password.";
-			}
-			else if (urlCombo.getSelectionIndex() < 0) {
-				message = NLS.bind("Select a {0} URL.", service);
-			}
-			else {
-				isFinished = true;
-				message = NLS.bind(DEFAULT_DESCRIPTION, service);
-			}
+		registerAccountButton.setEnabled(CloudFoundryBrandingExtensionPoint.supportsRegistration(serverTypeId, url));
 
-			validateButton.setEnabled(isFinished);
-			registerAccountButton.setEnabled(CloudFoundryBrandingExtensionPoint.supportsRegistration(serverTypeId,
-					urlCombo.getText()));
-			setWizardDescription(message);
+		notifyChange(validationEvent);
 
-		}
-		else if (folder.getSelectionIndex() == 1) {
-			// FIX: Should not reach here, as only one tab is normally added to
-			// the
-			// folder. Remove when verified that reaching here does not occur.
-			setWizardDescription(NLS.bind("Create a new {0} account, then switch to Enter Credentials tab to log in.",
-					service));
-			isFinished = false;
-		}
-
-		// If the required fields have been entered correctly, they still may
-		// need to be validated against the remote server (validation is not
-		// automatic on each change of credentials to avoid frequent network
-		// I/O. It needs to be triggered by
-		// the validation button)
-		if (isFinished) {
-
-			if (validateCredentials) {
-				String errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, urlText, true,
-						getRunnableContext());
-
-				// No credential errors, so now do a orgs and spaces lookup for
-				// the newly validated credentials.
-				if (errorMsg == null) {
-
-					try {
-						CloudSpacesDescriptor descriptor = spaceChangeHandler.getUpdatedDescriptor(urlText, userName,
-								password, getRunnableContext());
-						if (descriptor == null) {
-							setWizardError("Failed to resolve organizations and spaces for the given credentials. Please contact Cloud Foundry support.");
-							isFinished = false;
-						}
-						else {
-							setWizardInformation(VALID_ACCOUNT_MESSAGE);
-						}
-					}
-					catch (CoreException e) {
-						isFinished = false;
-						setWizardError("Failed to resolve organization and spaces "
-								+ (e.getMessage() != null ? " due to " + e.getMessage()
-										: ". Unknown error occurred while requesting list of spaces from the server")
-								+ ". Please contact Cloud Foundry support.");
-					}
-				}
-				else {
-					isFinished = false;
-					setWizardError(errorMsg);
-				}
-			}
-			else {
-				// If no validation request is made, check that there is a
-				// spaces descriptor set and matches the current credentials.
-
-				if (!spaceChangeHandler.matchesCurrentDescriptor(urlText, userName, password)) {
-					spaceChangeHandler.clearSetDescriptor();
-					isFinished = false;
-					setWizardInformation("Please validate your credentials.");
-				}
-				else {
-					setWizardInformation(VALID_ACCOUNT_MESSAGE);
-				}
-			}
-		}
-
-		if (wizardHandle != null) {
-			wizardHandle.update();
-		}
-		else if (getWizardContainer() != null && getWizardContainer().getCurrentPage() != null) {
-			getWizardContainer().updateButtons();
-		}
 	}
-
 }

@@ -69,8 +69,8 @@ public class CloudUrlWidget {
 				if (index >= 0 && index != comboIndex) {
 					CloudServerURL cloudUrl = CloudUiUtil.getAllUrls(serverTypeId).get(index);
 					if (cloudUrl.getUrl().contains("{")) {
-						CloudServerURL newUrl = CloudUiUtil.getWildcardUrl(cloudUrl, CloudUiUtil.getAllUrls(serverTypeId),
-								parent.getShell());
+						CloudServerURL newUrl = CloudUiUtil.getWildcardUrl(cloudUrl,
+								CloudUiUtil.getAllUrls(serverTypeId), parent.getShell());
 						if (newUrl != null) {
 							List<CloudServerURL> userDefinedUrls = CloudUiUtil.getUserDefinedUrls(serverTypeId);
 							userDefinedUrls.add(newUrl);
@@ -118,7 +118,7 @@ public class CloudUrlWidget {
 		}
 		return null;
 	}
-	
+
 	protected String getComboURLDisplay(CloudServerURL url) {
 		return url.getName() + " - " + url.getUrl();
 	}
@@ -200,7 +200,4 @@ public class CloudUrlWidget {
 		}
 	}
 
-	public Combo getUrlCombo() {
-		return urlCombo;
-	}
 }

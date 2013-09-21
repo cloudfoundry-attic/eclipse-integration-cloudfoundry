@@ -13,6 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudSpace;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
@@ -25,6 +26,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.ServerCore;
@@ -50,16 +54,35 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 	private CloudSpaceChangeHandler spaceChangeHandler;
 
-	@Override
-	public Composite createComposite(Composite parent, IWizardHandle wizard) {
-		initServer();
+	private CredentialsWizardUpdateHandler wizardUpdateHandler;
 
-		if (cfServer != null) {
-			spaceChangeHandler = new WizardFragmentSpaceChangeHandler(cfServer, wizard);
+	@Override
+	public void exit() {
+		if (!wizardUpdateHandler.isValid() && wizardUpdateHandler.credentialsFilled()) {
+			credentialsPart.validate();
 		}
 
-		credentialsPart = new CloudFoundryCredentialsPart(cfServer, wizard, spaceChangeHandler);
-		return credentialsPart.createComposite(parent);
+		super.exit();
+	}
+
+	@Override
+	public Composite createComposite(Composite parent, IWizardHandle wizardHandle) {
+		initServer();
+
+		Composite composite = new Composite(parent, SWT.NONE);
+		composite.setLayout(new GridLayout());
+		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+		if (cfServer != null) {
+			spaceChangeHandler = new WizardFragmentSpaceChangeHandler(cfServer, wizardHandle);
+		}
+
+		wizardUpdateHandler = new CredentialsWizardUpdateHandler(wizardHandle);
+		credentialsPart = new CloudFoundryCredentialsPart(cfServer, spaceChangeHandler, wizardUpdateHandler,
+				wizardHandle);
+
+		credentialsPart.createPart(composite);
+		return composite;
 	}
 
 	@Override
@@ -75,7 +98,9 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 	@Override
 	public boolean isComplete() {
-		return credentialsPart != null && credentialsPart.isComplete();
+		// Enable the Next and Finish buttons, even if credentials are not
+		// validated.
+		return wizardUpdateHandler != null && wizardUpdateHandler.credentialsFilled();
 	}
 
 	@Override
@@ -88,6 +113,18 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 	@Override
 	public void performFinish(IProgressMonitor monitor) throws CoreException {
+		if (!wizardUpdateHandler.isValid() && wizardUpdateHandler.credentialsFilled()) {
+			credentialsPart.validate();
+		}
+
+		if (!wizardUpdateHandler.isValid()) {
+			IStatus status = wizardUpdateHandler.getLastValidationStatus() != null ? wizardUpdateHandler
+					.getLastValidationStatus()
+					: CloudFoundryPlugin
+							.getErrorStatus("Invalid credentials. Please enter a correct username and password, and validate your credentials.");
+			throw new CoreException(status);
+		}
+
 		ServerLifecycleAdapter listener = new ServerLifecycleAdapter() {
 			@Override
 			public void serverAdded(IServer server) {
