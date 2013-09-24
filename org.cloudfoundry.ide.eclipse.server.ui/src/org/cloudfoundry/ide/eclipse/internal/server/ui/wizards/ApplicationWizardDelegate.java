@@ -10,13 +10,12 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 
@@ -60,12 +59,7 @@ public abstract class ApplicationWizardDelegate implements IApplicationWizardDel
 			return false;
 		}
 
-		ApplicationInfo info = applicationDescriptor.getApplicationInfo();
-		if (info == null || info.getAppName() == null) {
-			return false;
-		}
-
-		DeploymentInfo deploymentInfo = applicationDescriptor.getDeploymentInfo();
+		ApplicationDeploymentInfo deploymentInfo = applicationDescriptor.getDeploymentInfo();
 
 		return deploymentInfo != null && deploymentInfo.getDeploymentName() != null && deploymentInfo.getMemory() > 0;
 
@@ -76,18 +70,8 @@ public abstract class ApplicationWizardDelegate implements IApplicationWizardDel
 
 		urlLookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
 
-		DeploymentInfo deploymentInfo = new DeploymentInfo();
+		ApplicationDeploymentInfo lastDeploymentInfo = (module != null) ? module.getLastDeploymentInfo() : null;
 
-		applicationDescriptor.setDeploymentInfo(deploymentInfo);
-
-		DeploymentInfo lastDeploymentInfo = (module != null) ? module.getLastDeploymentInfo() : null;
-
-		// FIXNS: Note that application name and deployment name are the SAME.
-		// They are tracked separately
-		// Only because there are two types of "infos". In future versions, the
-		// Deployment Info and the Application Info
-		// should be replaced by one info abstraction. For now, when setting app
-		// name, make sure its set in both infos.
 		String deploymentName = null;
 
 		if (lastDeploymentInfo != null && lastDeploymentInfo.getDeploymentName() != null) {
@@ -97,29 +81,11 @@ public abstract class ApplicationWizardDelegate implements IApplicationWizardDel
 			deploymentName = module.getDeploymentName();
 		}
 
-		deploymentInfo.setDeploymentName(deploymentName);
+		ApplicationDeploymentInfo deploymentInfo = new ApplicationDeploymentInfo(deploymentName);
+
+		applicationDescriptor.setDeploymentInfo(deploymentInfo);
 
 		deploymentInfo.setMemory(CloudUtil.DEFAULT_MEMORY);
-
-		String appName = null;
-
-		ApplicationInfo lastApplicationInfo = null;
-
-		if (module != null) {
-			lastApplicationInfo = module.getLastApplicationInfo();
-		}
-
-		if (lastApplicationInfo != null && lastApplicationInfo.getAppName() != null) {
-			appName = lastApplicationInfo.getAppName();
-		}
-		else if (module != null) {
-			appName = module.getDeploymentName();
-		}
-
-		if (appName != null) {
-			ApplicationInfo appInfo = new ApplicationInfo(appName);
-			applicationDescriptor.setApplicationInfo(appInfo);
-		}
 
 		applicationDescriptor.setStartDeploymentMode(ApplicationAction.START);
 

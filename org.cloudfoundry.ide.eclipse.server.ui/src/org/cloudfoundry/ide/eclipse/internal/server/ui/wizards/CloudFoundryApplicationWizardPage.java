@@ -84,7 +84,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 	protected void init() {
 		this.serverTypeId = module.getServerTypeId();
 
-		appName = descriptor.getApplicationInfo() != null ? descriptor.getApplicationInfo().getAppName() : null;
+		appName = descriptor.getDeploymentInfo() != null ? descriptor.getDeploymentInfo().getDeploymentName() : null;
 	}
 
 	protected CloudFoundryApplicationWizard getApplicationWizard() {

@@ -17,13 +17,13 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.ApplicationStats;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.client.lib.domain.InstanceInfo;
 import org.cloudfoundry.client.lib.domain.InstanceStats;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
@@ -407,9 +407,9 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			// serviceNames = cloudApplication.getServices();
 			// } else {
 			List<String> serviceNames = null;
-			DeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
+			ApplicationDeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
 			if (deploymentInfo == null) {
-				deploymentInfo = new DeploymentInfo();
+				deploymentInfo = new ApplicationDeploymentInfo(appModule.getApplicationId());
 				appModule.setLastDeploymentInfo(deploymentInfo);
 				if (cloudApplication != null) {
 					List<String> existingServices = cloudApplication.getServices();
@@ -633,8 +633,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		editURI.addHyperlinkListener(new HyperlinkAdapter() {
 			@Override
 			public void linkActivated(HyperlinkEvent e) {
-				MappedURLsWizard wizard = new MappedURLsWizard(cloudServer, getApplication(), URIs,
-						isPublished);
+				MappedURLsWizard wizard = new MappedURLsWizard(cloudServer, getApplication(), URIs, isPublished);
 				WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(), wizard);
 				if (dialog.open() == Window.OK) {
 

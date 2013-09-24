@@ -15,8 +15,8 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
@@ -62,9 +62,9 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 
 		List<String> updatedServices = new ArrayList<String>();
 
-		DeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
+		ApplicationDeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
 		if (deploymentInfo == null) {
-			deploymentInfo = new DeploymentInfo();
+			deploymentInfo = new ApplicationDeploymentInfo(appModule.getApplicationId());
 			appModule.setLastDeploymentInfo(deploymentInfo);
 			if (cloudApplication != null) {
 				existingServices = cloudApplication.getServices();

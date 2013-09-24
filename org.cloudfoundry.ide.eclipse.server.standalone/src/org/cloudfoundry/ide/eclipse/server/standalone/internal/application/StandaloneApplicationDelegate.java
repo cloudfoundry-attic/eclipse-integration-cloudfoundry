@@ -10,10 +10,9 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 
 /**
  * 
@@ -37,12 +36,7 @@ public class StandaloneApplicationDelegate extends ApplicationDelegate {
 			return false;
 		}
 
-		ApplicationInfo info = descriptor.applicationInfo;
-		if (info == null || info.getAppName() == null) {
-			return false;
-		}
-
-		DeploymentInfo deploymentInfo = descriptor.deploymentInfo;
+		ApplicationDeploymentInfo deploymentInfo = descriptor.deploymentInfo;
 
 		return deploymentInfo != null
 				&& deploymentInfo.getDeploymentName() != null

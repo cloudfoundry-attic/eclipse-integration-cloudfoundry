@@ -13,12 +13,11 @@ package org.cloudfoundry.ide.eclipse.server.tests.util;
 import java.util.Collections;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -81,10 +80,8 @@ public class TestCallback extends CloudFoundryCallback {
 			appName = module.getName();
 		}
 
-		descriptor.applicationInfo = new ApplicationInfo(appName);
-		descriptor.deploymentInfo = new DeploymentInfo();
+		descriptor.deploymentInfo = new ApplicationDeploymentInfo(appName);
 		descriptor.deploymentInfo.setMemory(128);
-		descriptor.deploymentInfo.setDeploymentName(appName);
 		descriptor.deploymentMode = ApplicationAction.START;
 
 		if (url != null) {

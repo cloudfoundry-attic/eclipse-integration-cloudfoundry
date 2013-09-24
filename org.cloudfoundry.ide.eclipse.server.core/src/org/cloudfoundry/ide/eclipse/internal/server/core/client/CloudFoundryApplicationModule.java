@@ -14,7 +14,6 @@ import org.cloudfoundry.client.lib.StartingInfo;
 import org.cloudfoundry.client.lib.domain.ApplicationStats;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
@@ -74,9 +73,7 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 
 	private InstancesInfo instancesInfo;
 
-	private ApplicationInfo lastApplicationInfo;
-
-	private DeploymentInfo lastDeploymentInfo;
+	private ApplicationDeploymentInfo lastDeploymentInfo;
 
 	private Staging staging;
 
@@ -140,11 +137,7 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 		return 0;
 	}
 
-	public synchronized ApplicationInfo getLastApplicationInfo() {
-		return lastApplicationInfo;
-	}
-
-	public synchronized DeploymentInfo getLastDeploymentInfo() {
+	public synchronized ApplicationDeploymentInfo getLastDeploymentInfo() {
 		return lastDeploymentInfo;
 	}
 
@@ -182,9 +175,13 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 		return localModule == this;
 	}
 
+	/**
+	 * Application ID must not be null.
+	 * @param applicationId most not be null
+	 */
 	public void setApplicationId(String applicationId) {
 		Assert.isNotNull(applicationId);
-		if (!this.applicationId.equals(applicationId)) {
+		if (!applicationId.equals(this.applicationId)) {
 			this.applicationId = applicationId;
 			if (localModule != null) {
 				CloudFoundryServer cloudServer = (CloudFoundryServer) server
@@ -213,14 +210,13 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 		}
 	}
 
-	public synchronized void setLastApplicationInfo(ApplicationInfo lastApplicationInfo) {
-		Assert.isNotNull(lastApplicationInfo);
-		this.lastApplicationInfo = lastApplicationInfo;
-		setApplicationId(lastApplicationInfo.getAppName());
-	}
-
-	public synchronized void setLastDeploymentInfo(DeploymentInfo lastDeploymentInfo) {
+	public synchronized void setLastDeploymentInfo(ApplicationDeploymentInfo lastDeploymentInfo) {
 		this.lastDeploymentInfo = lastDeploymentInfo;
+		// Note that last Deployment info may be null (e.g. when deleting an
+		// application)
+		if (lastDeploymentInfo != null && lastDeploymentInfo.getDeploymentName() != null) {
+			setApplicationId(lastDeploymentInfo.getDeploymentName());
+		}
 	}
 
 	public synchronized void setErrorStatus(CoreException error) {

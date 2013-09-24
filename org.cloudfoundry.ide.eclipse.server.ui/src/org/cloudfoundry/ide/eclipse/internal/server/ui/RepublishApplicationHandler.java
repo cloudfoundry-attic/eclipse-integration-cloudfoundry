@@ -13,14 +13,13 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.WaitWithProgressJob;
 import org.eclipse.core.resources.IProject;
@@ -161,20 +160,9 @@ public class RepublishApplicationHandler {
 	public DeploymentDescriptor getUpdatedDescriptor(IProgressMonitor monitor) throws CoreException {
 		DeploymentDescriptor descriptor = new DeploymentDescriptor();
 
-		ApplicationInfo appInfo = appModule.getLastApplicationInfo();
-		if (appInfo == null) {
-			appInfo = new ApplicationInfo(appModule.getApplicationId());
-		}
-
-		descriptor.applicationInfo = appInfo;
-
-		DeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
+		ApplicationDeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
 		if (deploymentInfo == null) {
-			deploymentInfo = new DeploymentInfo();
-		}
-
-		if (deploymentInfo.getDeploymentName() == null) {
-			deploymentInfo.setDeploymentName(appModule.getApplicationId());
+			deploymentInfo = new ApplicationDeploymentInfo(appModule.getApplicationId());
 		}
 
 		if (deploymentInfo.getMemory() <= 0) {

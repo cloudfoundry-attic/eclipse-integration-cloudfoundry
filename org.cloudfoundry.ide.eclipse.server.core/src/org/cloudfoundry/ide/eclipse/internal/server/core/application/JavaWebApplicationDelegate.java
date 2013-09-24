@@ -15,11 +15,10 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -165,12 +164,7 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 			return false;
 		}
 
-		ApplicationInfo info = descriptor.applicationInfo;
-		if (info == null || info.getAppName() == null) {
-			return false;
-		}
-
-		DeploymentInfo deploymentInfo = descriptor.deploymentInfo;
+		ApplicationDeploymentInfo deploymentInfo = descriptor.deploymentInfo;
 
 		return deploymentInfo != null && deploymentInfo.getDeploymentName() != null && deploymentInfo.getMemory() > 0
 				&& deploymentInfo.getUris() != null && !deploymentInfo.getUris().isEmpty();

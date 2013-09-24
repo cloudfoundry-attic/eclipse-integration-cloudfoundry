@@ -13,12 +13,11 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.wizard.IWizardPage;
@@ -92,11 +91,8 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	}
 
-	public ApplicationInfo getApplicationInfo() {
-		return applicationDescriptor.getApplicationInfo();
-	}
 
-	public DeploymentInfo getDeploymentInfo() {
+	public ApplicationDeploymentInfo getDeploymentInfo() {
 		return applicationDescriptor.getDeploymentInfo();
 	}
 

@@ -13,10 +13,9 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 
 /**
  * 
@@ -33,9 +32,7 @@ public class ApplicationWizardDescriptor {
 
 	private Staging staging;
 
-	private DeploymentInfo deploymentInfo;
-
-	private ApplicationInfo applicationInfo;
+	private ApplicationDeploymentInfo deploymentInfo;
 
 	private ApplicationAction deploymentMode;
 
@@ -69,11 +66,11 @@ public class ApplicationWizardDescriptor {
 	 * Required value. Must not be null
 	 * @return non-null application deployment info.
 	 */
-	public DeploymentInfo getDeploymentInfo() {
+	public ApplicationDeploymentInfo getDeploymentInfo() {
 		return deploymentInfo;
 	}
 
-	public void setDeploymentInfo(DeploymentInfo deploymentInfo) {
+	public void setDeploymentInfo(ApplicationDeploymentInfo deploymentInfo) {
 		this.deploymentInfo = deploymentInfo;
 	}
 
@@ -118,21 +115,6 @@ public class ApplicationWizardDescriptor {
 
 	public void setSelectedServicesForBinding(List<String> selectedServicesForBinding) {
 		this.selectedServicesForBinding = selectedServicesForBinding;
-	}
-
-	/**
-	 * Required value. All applications to be pushed must have an application
-	 * info.
-	 * @return Non-null application info for the application
-	 */
-	public ApplicationInfo getApplicationInfo() {
-		return applicationInfo;
-	}
-
-	public void setApplicationInfo(ApplicationInfo applicationInfo) {
-
-		this.applicationInfo = applicationInfo;
-
 	}
 
 }

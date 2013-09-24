@@ -348,7 +348,7 @@ public class TunnelBehaviour {
 
 		if (appModule != null) {
 
-			DeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
+			ApplicationDeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
 			// Do NOT set a deployment info if one does not exist, as another
 			// component of CF integration does it, only
 			// add to the existing deployment info.

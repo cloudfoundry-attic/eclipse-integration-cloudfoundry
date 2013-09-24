@@ -323,12 +323,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	protected CloudApplication pushApplication(CloudFoundryOperations client,
 			final CloudFoundryApplicationModule appModule, final DeploymentDescriptor descriptor,
 			IProgressMonitor monitor) throws CoreException {
-		Assert.isNotNull(descriptor.applicationInfo);
+		Assert.isNotNull(descriptor.deploymentInfo);
 
-		ApplicationInfo applicationInfo = descriptor.applicationInfo;
-		String applicationId = applicationInfo.getAppName();
+		String applicationId = descriptor.deploymentInfo.getDeploymentName();
 
-		appModule.setLastApplicationInfo(applicationInfo);
 		appModule.setLastDeploymentInfo(descriptor.deploymentInfo);
 
 		try {
@@ -355,7 +353,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				}
 				client.createApplication(applicationId, staging, descriptor.deploymentInfo.getMemory(), uris, services);
 			}
-			File warFile = applicationInfo.getWarFile();
+			File warFile = descriptor.deploymentInfo.getWarFile();
 
 			// 2. Now push the application content.
 			if (warFile != null) {
@@ -392,7 +390,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 		catch (IOException e) {
 			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-					"Failed to deploy application from {0}", applicationInfo.getWarFile()), e));
+					"Failed to deploy application from {0}", descriptor.deploymentInfo.getWarFile()), e));
 		}
 
 		try {
@@ -1875,14 +1873,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				cloudModule.setErrorStatus(null);
 
 				// update mapping
-				cloudModule.setApplicationId(descriptor.applicationInfo.getAppName());
+				cloudModule.setApplicationId(descriptor.deploymentInfo.getDeploymentName());
 
 				// Update the Staging in the Application module
 				cloudModule.setStaging(descriptor.staging);
 
 				server.setModuleState(modules, IServer.STATE_STARTING);
 
-				final String applicationId = descriptor.applicationInfo.getAppName();
+				final String applicationId = descriptor.deploymentInfo.getDeploymentName();
 
 				// This request does three things:
 				// 1. Checks if the application external or mapped to a local
@@ -1970,12 +1968,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	protected void generateApplicationArchiveFile(DeploymentDescriptor descriptor,
 			CloudFoundryApplicationModule cloudModule, IModule[] modules, Server server, IProgressMonitor monitor)
 			throws CoreException {
-		final String applicationId = descriptor.applicationInfo.getAppName();
-
-		if (descriptor.applicationInfo == null) {
-			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-					"Unable to push application: " + applicationId + " due to missing application descriptor."));
-		}
+		final String applicationId = descriptor.deploymentInfo.getDeploymentName();
 
 		// Perform local operations like building an archive file
 		// and payload for the application
@@ -2045,7 +2038,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				}
 
 				CloudFoundryPlugin.trace("War file " + warFile.getName() + " created");
-				descriptor.applicationInfo.setWarFile(warFile);
+				descriptor.deploymentInfo.setWarFile(warFile);
 
 			}
 		}
@@ -2056,7 +2049,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		IModuleResourceDelta[] deltas = getPublishedResourceDelta(modules);
 		List<IModuleResource> changedResources = getChangedResources(deltas);
 		ApplicationArchive moduleArchive = new CachingApplicationArchive(Arrays.asList(allResources), changedResources,
-				modules[0], descriptor.applicationInfo.getAppName());
+				modules[0], descriptor.deploymentInfo.getDeploymentName());
 
 		descriptor.applicationArchive = moduleArchive;
 	}
@@ -2085,19 +2078,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			try {
 				cloudModule.setErrorStatus(null);
 
+				final String applicationId = descriptor.deploymentInfo.getDeploymentName();
+
 				// update mapping
-				cloudModule.setApplicationId(descriptor.applicationInfo.getAppName());
+				cloudModule.setApplicationId(applicationId);
 
 				server.setModuleState(modules, IServer.STATE_STARTING);
 
-				final String applicationId = descriptor.applicationInfo.getAppName();
-
-				if (descriptor.applicationInfo == null) {
+				if (applicationId == null) {
 					server.setModuleState(modules, IServer.STATE_STOPPED);
 
 					throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
 							"Unable to start application: " + applicationId
-									+ ". Missing application information in application client operation descriptor."));
+									+ ". Missing application deployment name in application client operation descriptor."));
 				}
 
 				if (descriptor.deploymentMode != null) {

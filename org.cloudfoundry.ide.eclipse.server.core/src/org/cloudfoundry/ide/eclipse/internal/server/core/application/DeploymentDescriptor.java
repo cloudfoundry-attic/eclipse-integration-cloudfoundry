@@ -11,10 +11,9 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 
 /**
  * Contains all the necessary information to create an application in a Cloud
@@ -22,9 +21,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
  */
 public class DeploymentDescriptor {
 
-	public ApplicationInfo applicationInfo;
-
-	public DeploymentInfo deploymentInfo;
+	public ApplicationDeploymentInfo deploymentInfo;
 
 	public ApplicationAction deploymentMode;
 

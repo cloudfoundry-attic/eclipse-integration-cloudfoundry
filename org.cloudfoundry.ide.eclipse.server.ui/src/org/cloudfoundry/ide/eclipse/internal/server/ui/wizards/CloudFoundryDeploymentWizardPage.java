@@ -13,7 +13,6 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
@@ -21,7 +20,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
@@ -341,9 +340,9 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 			return;
 		}
 
-		ApplicationInfo appInfo = descriptor.getApplicationInfo();
+		ApplicationDeploymentInfo appInfo = descriptor.getDeploymentInfo();
 		if (appInfo != null) {
-			String appName = appInfo.getAppName();
+			String appName = appInfo.getDeploymentName();
 
 			if (appName != null) {
 				urlPart.updateUrlHost(appName);
@@ -404,21 +403,13 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 			appName = null;
 		}
 
-		if (appName != null) {
-			ApplicationInfo appInfo = new ApplicationInfo(appName);
-			descriptor.setApplicationInfo(appInfo);
-		}
-		else {
-			descriptor.setApplicationInfo(null);
-		}
-
-		DeploymentInfo depInfo = descriptor.getDeploymentInfo();
+		ApplicationDeploymentInfo depInfo = descriptor.getDeploymentInfo();
 		if (depInfo == null) {
-			depInfo = new DeploymentInfo();
+			depInfo = new ApplicationDeploymentInfo(appName);
 			descriptor.setDeploymentInfo(depInfo);
+		} else {
+			depInfo.setDeploymentName(appName);
 		}
-
-		depInfo.setDeploymentName(appName);
 
 		// When the app name changes, the URL also changes, but only for
 		// application types that require a URL. By default, it

@@ -18,16 +18,16 @@ import java.util.Map;
 import java.util.Set;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.TreeContentProvider;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewColumn;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewerConfigurator;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewerSorter;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServicesTreeLabelProvider;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.TreeContentProvider;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.Action;
@@ -261,7 +261,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 	protected void populatedServicesFromLastDeployment() {
 		// Set the initial selection based on the past deployment history
 		selectedServicesToBind.clear();
-		DeploymentInfo lastDeploymentInfo = module.getLastDeploymentInfo();
+		ApplicationDeploymentInfo lastDeploymentInfo = module.getLastDeploymentInfo();
 		if (lastDeploymentInfo != null) {
 			List<String> serviceNames = lastDeploymentInfo.getServices();
 			// Keep it light, there only populate the names as that may be the

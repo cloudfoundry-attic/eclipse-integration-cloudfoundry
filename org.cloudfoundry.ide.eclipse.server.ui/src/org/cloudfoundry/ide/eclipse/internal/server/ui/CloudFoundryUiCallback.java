@@ -15,7 +15,6 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
@@ -24,7 +23,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContents;
@@ -156,15 +155,14 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		CloudApplication existingApp = appModule.getApplication();
 		if (existingApp != null) {
 			descriptor = new DeploymentDescriptor();
-			descriptor.applicationInfo = new ApplicationInfo(existingApp.getName());
-			descriptor.deploymentInfo = new DeploymentInfo();
+			descriptor.deploymentInfo = new ApplicationDeploymentInfo(existingApp.getName());
 			descriptor.deploymentInfo.setUris(existingApp.getUris());
 			descriptor.deploymentMode = ApplicationAction.START;
 
 			// FIXNS_STANDALONE: uncomment when CF client supports staging
 			// descriptor.staging = getStaging(appModule);
 
-			DeploymentInfo lastDeploymentInfo = appModule.getLastDeploymentInfo();
+			ApplicationDeploymentInfo lastDeploymentInfo = appModule.getLastDeploymentInfo();
 			if (lastDeploymentInfo != null) {
 				descriptor.deploymentInfo.setServices(lastDeploymentInfo.getServices());
 			}
@@ -212,7 +210,6 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 						int status = dialog.open();
 						if (status == Dialog.OK) {
 							DeploymentDescriptor descriptorToUpdate = new DeploymentDescriptor();
-							descriptorToUpdate.applicationInfo = wizard.getApplicationInfo();
 							descriptorToUpdate.deploymentInfo = wizard.getDeploymentInfo();
 							descriptorToUpdate.deploymentMode = wizard.getDeploymentMode();
 
