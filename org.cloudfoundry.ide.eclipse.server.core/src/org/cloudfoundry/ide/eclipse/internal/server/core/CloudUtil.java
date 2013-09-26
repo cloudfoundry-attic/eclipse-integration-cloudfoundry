@@ -24,9 +24,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -400,6 +403,30 @@ public class CloudUtil {
 		for (int i = 0; i < size; i++) {
 			result.add(status[i]);
 		}
+	}
+
+	/**
+	 * Given an cloud module, attempt to find a corresponding workspace project
+	 * that is accessible and matches the local name of the application. No
+	 * attempts will be made to find a project that matches the deployed app
+	 * name, in case the deployed app name differs from the local module name.
+	 * @param appModule
+	 * @return project matching local app name, if accessible, or null if not
+	 * found or not accessible.
+	 */
+	public static IProject getProject(CloudFoundryApplicationModule appModule) {
+		IProject project = appModule.getLocalModule() != null ? appModule.getLocalModule().getProject() : null;
+		if (project == null) {
+			// Note. Use the local name of the app, not the deployed app name.
+			// In some cases they are the same, but
+			// if they differ, the local name would more likely match a project
+			// name, rather than the deployed app name, as deployed app names
+			// are specified by users
+			// when the deploy an app to CF server, not when the app is created
+			// in the workspace.
+			project = ResourcesPlugin.getWorkspace().getRoot().getProject(appModule.getName());
+		}
+		return project != null && project.isAccessible() ? project : null;
 	}
 
 }

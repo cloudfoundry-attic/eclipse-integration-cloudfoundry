@@ -64,7 +64,7 @@ public class StartStopApplicationAction extends RefreshInstancesEditorAction {
 			break;
 		}
 
-		jobName.append(" application " + application.getApplicationId());
+		jobName.append(" application " + application.getDeployedApplicationName());
 		return jobName.toString();
 	}
 

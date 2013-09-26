@@ -47,7 +47,7 @@ public class CloudFoundryDebugConnection {
 					try {
 						CloudFoundryApplicationModule appModule = cloudFoundryServer.getApplication(modules);
 						InstancesInfo instancesInfo = cloudFoundryServer.getBehaviour().getInstancesInfo(
-								appModule.getApplicationId(), monitor);
+								appModule.getDeployedApplicationName(), monitor);
 
 						if (instancesInfo != null) {
 							List<InstanceInfo> infos = instancesInfo.getInstances();

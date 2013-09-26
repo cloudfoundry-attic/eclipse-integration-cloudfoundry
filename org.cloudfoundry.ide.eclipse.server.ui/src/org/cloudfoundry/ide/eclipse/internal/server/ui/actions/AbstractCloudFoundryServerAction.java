@@ -77,7 +77,7 @@ public abstract class AbstractCloudFoundryServerAction implements IObjectActionD
 		if (cloudServer == null || selectedModule == null) {
 			return null;
 		}
-		return cloudServer.getApplication(selectedModule);
+		return cloudServer.getCloudModule(selectedModule);
 	}
 
 }

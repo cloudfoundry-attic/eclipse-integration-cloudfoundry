@@ -23,7 +23,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeplo
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.WaitWithProgressJob;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -60,7 +59,8 @@ public class RepublishApplicationHandler {
 		CloudApplication existingApp = appModule.getApplication();
 		if (existingApp == null) {
 			try {
-				existingApp = cloudServer.getBehaviour().getApplication(appModule.getApplicationId(), monitor);
+				existingApp = cloudServer.getBehaviour()
+						.getApplication(appModule.getDeployedApplicationName(), monitor);
 			}
 			catch (CoreException e) {
 				// Ignore it
@@ -69,17 +69,9 @@ public class RepublishApplicationHandler {
 		return existingApp;
 	}
 
-	protected IProject getProject(CloudFoundryApplicationModule appModule) {
-		IProject project = appModule.getLocalModule() != null ? appModule.getLocalModule().getProject() : null;
-		if (project == null) {
-			project = ResourcesPlugin.getWorkspace().getRoot().getProject(appModule.getApplicationId());
-		}
-		return project;
-	}
-
 	public void republish(IProgressMonitor monitor) throws CoreException {
 
-		IProject project = getProject(appModule);
+		IProject project = CloudUtil.getProject(appModule);
 
 		boolean republished = false;
 
@@ -111,7 +103,7 @@ public class RepublishApplicationHandler {
 
 							@Override
 							protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
-								boolean found = cloudServer.getApplication(modules[0]) != null;
+								boolean found = cloudServer.getCloudModule(modules[0]) != null;
 								if (found) {
 									cloudServer.getBehaviour().refreshModules(monitor);
 								}
@@ -152,7 +144,7 @@ public class RepublishApplicationHandler {
 
 		if (!republished) {
 			throw new CoreException(CloudFoundryPlugin.getErrorStatus("Failed to republish module: "
-					+ appModule.getApplicationId() + ". Please try manual republishing."));
+					+ appModule.getDeployedApplicationName() + ". Please try manual republishing."));
 		}
 
 	}
@@ -162,7 +154,7 @@ public class RepublishApplicationHandler {
 
 		ApplicationDeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
 		if (deploymentInfo == null) {
-			deploymentInfo = new ApplicationDeploymentInfo(appModule.getApplicationId());
+			deploymentInfo = new ApplicationDeploymentInfo(appModule.getDeployedApplicationName());
 		}
 
 		if (deploymentInfo.getMemory() <= 0) {

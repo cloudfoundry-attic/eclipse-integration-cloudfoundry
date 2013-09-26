@@ -51,7 +51,7 @@ public class MappedURLsWizard extends Wizard {
 	public MappedURLsWizard(CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule,
 			List<String> existingURIs) {
 		this.cloudServer = cloudServer;
-		this.appName = applicationModule.getApplicationId();
+		this.appName = applicationModule.getDeployedApplicationName();
 		this.applicationModule = applicationModule;
 		this.existingURIs = existingURIs;
 
@@ -109,7 +109,7 @@ public class MappedURLsWizard extends Wizard {
 			else {
 				// Launch a job to execute the republish after the wizard
 				// completes
-				Job job = new Job("Republishing " + appModule.getApplicationId()) {
+				Job job = new Job("Republishing " + appModule.getDeployedApplicationName()) {
 
 					@Override
 					protected IStatus run(IProgressMonitor monitor) {

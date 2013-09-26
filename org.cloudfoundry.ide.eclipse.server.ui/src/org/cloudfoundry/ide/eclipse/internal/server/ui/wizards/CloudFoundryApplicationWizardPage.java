@@ -193,11 +193,11 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 			else {
 				ModuleCache moduleCache = CloudFoundryPlugin.getModuleCache();
 				ServerData data = moduleCache.getData(server.getServerOriginal());
-				Collection<CloudFoundryApplicationModule> applications = data.getApplications();
+				Collection<CloudFoundryApplicationModule> applications = data.getCloudModules();
 				boolean duplicate = false;
 
 				for (CloudFoundryApplicationModule application : applications) {
-					if (application != module && application.getApplicationId().equals(appName)) {
+					if (application != module && application.getDeployedApplicationName().equals(appName)) {
 						duplicate = true;
 						break;
 					}

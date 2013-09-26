@@ -196,7 +196,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 								.getWizardProvider(appModule.getLocalModule());
 						if (providerDelegate == null) {
 							CloudFoundryPlugin.logError("Failed to open application wizard for: "
-									+ appModule.getApplicationId() + " when attempting to push application to "
+									+ appModule.getDeployedApplicationName() + " when attempting to push application to "
 									+ server.getServer().getName()
 									+ ". No application provider found that corresponds to the application type: "
 									+ appModule.getLocalModule().getModuleType().getId());

@@ -70,16 +70,7 @@ public abstract class ApplicationWizardDelegate implements IApplicationWizardDel
 
 		urlLookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
 
-		ApplicationDeploymentInfo lastDeploymentInfo = (module != null) ? module.getLastDeploymentInfo() : null;
-
-		String deploymentName = null;
-
-		if (lastDeploymentInfo != null && lastDeploymentInfo.getDeploymentName() != null) {
-			deploymentName = lastDeploymentInfo.getDeploymentName();
-		}
-		else if (module != null) {
-			deploymentName = module.getDeploymentName();
-		}
+		String deploymentName = module != null ? module.getDeployedApplicationName() : null;
 
 		ApplicationDeploymentInfo deploymentInfo = new ApplicationDeploymentInfo(deploymentName);
 

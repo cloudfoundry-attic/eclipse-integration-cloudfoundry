@@ -82,13 +82,14 @@ public class OpenHomePageAction implements IObjectActionDelegate {
 	private CloudFoundryApplicationModule getSelectedCloudAppModule() {
 		CloudFoundryServer cloudServer = (CloudFoundryServer) selectedServer
 				.loadAdapter(CloudFoundryServer.class, null);
-		return cloudServer.getApplication(selectedModule);
+		return cloudServer.getCloudModule(selectedModule);
 	}
 
 	public static boolean open(CloudFoundryApplicationModule cloudApp) {
 		// verify that URIs are set, as it may be a standalone application with
 		// no URI
-		List<String> uris = cloudApp.getApplication().getUris();
+		List<String> uris = cloudApp != null && cloudApp.getApplication() != null ? cloudApp.getApplication().getUris()
+				: null;
 		if (uris != null && !uris.isEmpty()) {
 			CloudUiUtil.openUrl("http://" + uris.get(0));
 		}

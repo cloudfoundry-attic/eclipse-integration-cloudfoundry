@@ -64,7 +64,7 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 
 		ApplicationDeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
 		if (deploymentInfo == null) {
-			deploymentInfo = new ApplicationDeploymentInfo(appModule.getApplicationId());
+			deploymentInfo = new ApplicationDeploymentInfo(appModule.getDeployedApplicationName());
 			appModule.setLastDeploymentInfo(deploymentInfo);
 			if (cloudApplication != null) {
 				existingServices = cloudApplication.getServices();

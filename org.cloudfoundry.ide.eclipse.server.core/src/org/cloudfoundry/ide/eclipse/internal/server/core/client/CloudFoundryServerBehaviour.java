@@ -217,14 +217,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				for (IModule module : modules) {
-					final CloudFoundryApplicationModule appModule = cloudServer.getApplication(module);
+					final CloudFoundryApplicationModule appModule = cloudServer.getCloudModule(module);
 
 					List<String> servicesToDelete = new ArrayList<String>();
 
 					List<CloudApplication> applications = client.getApplications();
 
 					for (CloudApplication application : applications) {
-						if (application.getName().equals(appModule.getApplicationId())) {
+						if (application.getName().equals(appModule.getDeployedApplicationName())) {
 							// Fix for STS-2416: Get the CloudApplication from
 							// the client again, as the CloudApplication
 							// associate with the WTP ApplicationModule may be
@@ -243,13 +243,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							}
 
 							// Close any Caldecott tunnels before deleting app
-							if (TunnelBehaviour.isCaldecottApp(appModule.getApplicationId())) {
+							if (TunnelBehaviour.isCaldecottApp(appModule.getDeployedApplicationName())) {
 								// Delete all tunnels if the Caldecott app is
 								// removed
 								new TunnelBehaviour(cloudServer).stopAndDeleteAllTunnels(progress);
 							}
 
-							client.deleteApplication(appModule.getApplicationId());
+							client.deleteApplication(appModule.getDeployedApplicationName());
 
 							break;
 						}
@@ -438,7 +438,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		CloudFoundryServer cloudServer = getCloudFoundryServer();
 
 		Set<CloudFoundryApplicationModule> deletedModules = new HashSet<CloudFoundryApplicationModule>(
-				cloudServer.getApplications());
+				cloudServer.getApplicationModules());
 		cloudServer.clearApplications();
 
 		// update state for cloud applications
@@ -676,7 +676,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		IModule module = modules[0];
 
 		CloudFoundryServer cloudServer = getCloudFoundryServer();
-		CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(module);
+		CloudFoundryApplicationModule cloudModule = cloudServer.getCloudModule(module);
 		// prompt user for missing details
 
 		DeploymentDescriptor descriptor = CloudFoundryPlugin.getCallback().prepareForDeployment(cloudServer,
@@ -830,14 +830,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			server.setModuleState(modules, IServer.STATE_STOPPING);
 
 			CloudFoundryServer cloudServer = getCloudFoundryServer();
-			final CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(modules[0]);
+			final CloudFoundryApplicationModule cloudModule = cloudServer.getCloudModule(modules[0]);
 
 			// CloudFoundryPlugin.getCallback().applicationStopping(getCloudFoundryServer(),
 			// cloudModule);
 			new Request<Void>() {
 				@Override
 				protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-					client.stopApplication(cloudModule.getApplicationId());
+					client.stopApplication(cloudModule.getDeployedApplicationName());
 					return null;
 				}
 			}.run(monitor);
@@ -848,7 +848,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			// If succeeded, stop all Caldecott tunnels if the app is the
 			// Caldecott app
-			if (TunnelBehaviour.isCaldecottApp(cloudModule.getApplicationId())) {
+			if (TunnelBehaviour.isCaldecottApp(cloudModule.getDeployedApplicationName())) {
 				TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
 				handler.stopAndDeleteAllTunnels(monitor);
 			}
@@ -1206,14 +1206,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	protected void doRefreshModules(final CloudFoundryServer cloudServer, CloudFoundryOperations client,
 			IProgressMonitor progress) throws CoreException {
 		// update applications and deployments from server
-		Map<String, CloudApplication> applicationByName = new LinkedHashMap<String, CloudApplication>();
+		Map<String, CloudApplication> deployedApplicationsByName = new LinkedHashMap<String, CloudApplication>();
 
+		// Get list of the currently deployed applications.
 		List<CloudApplication> applications = client.getApplications();
 		for (CloudApplication application : applications) {
-			applicationByName.put(application.getName(), application);
+			deployedApplicationsByName.put(application.getName(), application);
 		}
 
-		cloudServer.updateModules(applicationByName);
+		cloudServer.updateModules(deployedApplicationsByName);
 	}
 
 	@Override
@@ -1237,7 +1238,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			else if (kind == IServer.PUBLISH_INCREMENTAL) {
 				List<IModule[]> allModules = getAllModules();
 				for (IModule[] module : allModules) {
-					CloudApplication app = getCloudFoundryServer().getApplication(module[0]).getApplication();
+					CloudApplication app = getCloudFoundryServer().getCloudModule(module[0]).getApplication();
 					if (app != null) {
 						int publishState = getServer().getModulePublishState(module);
 						if (publishState != IServer.PUBLISH_STATE_NONE) {
@@ -1271,12 +1272,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		// module
 		if (deltaKind == REMOVED) {
 			final CloudFoundryServer cloudServer = getCloudFoundryServer();
-			final CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(module[0]);
+			final CloudFoundryApplicationModule cloudModule = cloudServer.getCloudModule(module[0]);
 			if (cloudModule.getApplication() != null) {
 				new Request<Void>() {
 					@Override
 					protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-						client.deleteApplication(cloudModule.getName());
+						client.deleteApplication(cloudModule.getDeployedApplicationName());
 						return null;
 					}
 				}.run(monitor);
@@ -1310,7 +1311,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public DebugModeType getDebugModeType(IModule module, IProgressMonitor monitor) {
 		try {
 			CloudFoundryServer cloudServer = getCloudFoundryServer();
-			CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(module);
+			CloudFoundryApplicationModule cloudModule = cloudServer.getCloudModule(module);
 
 			// Check if a cloud application exists (i.e., it is deployed) before
 			// determining if it is deployed in debug mode
@@ -1338,10 +1339,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public void refreshApplicationInstanceStats(IModule module, IProgressMonitor monitor) throws CoreException {
 		if (module != null) {
-			CloudFoundryApplicationModule appModule = getCloudFoundryServer().getApplication(module);
+			CloudFoundryApplicationModule appModule = getCloudFoundryServer().getCloudModule(module);
 
 			try {
-				CloudApplication application = getApplication(appModule.getApplicationId(), monitor);
+				// Update the CloudApplication in the cloud module.
+				CloudApplication application = getApplication(appModule.getDeployedApplicationName(), monitor);
 				appModule.setCloudApplication(application);
 			}
 			catch (CoreException e) {
@@ -1350,8 +1352,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			if (appModule.getApplication() != null) {
 				// refresh application stats
-				ApplicationStats stats = getApplicationStats(appModule.getApplicationId(), monitor);
-				InstancesInfo info = getInstancesInfo(appModule.getApplicationId(), monitor);
+				ApplicationStats stats = getApplicationStats(appModule.getDeployedApplicationName(), monitor);
+				InstancesInfo info = getInstancesInfo(appModule.getDeployedApplicationName(), monitor);
 				appModule.setApplicationStats(stats);
 				appModule.setInstancesInfo(info);
 			}
@@ -1793,7 +1795,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// In addition, starting, restarting, and update-restarting a
 				// caldecott app should always
 				// disconnect existing tunnels.
-				if (TunnelBehaviour.isCaldecottApp(deployedModule.getApplicationId())) {
+				if (TunnelBehaviour.isCaldecottApp(deployedModule.getDeployedApplicationName())) {
 					new TunnelBehaviour(cloudServer).stopAndDeleteAllTunnels(monitor);
 				}
 				return deployedModule;
@@ -1864,7 +1866,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			final Server server = (Server) getServer();
 			final CloudFoundryServer cloudServer = getCloudFoundryServer();
 			final IModule module = modules[0];
-			final CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(module);
+			final CloudFoundryApplicationModule cloudModule = cloudServer.getCloudModule(module);
 
 			try {
 
@@ -1873,7 +1875,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				cloudModule.setErrorStatus(null);
 
 				// update mapping
-				cloudModule.setApplicationId(descriptor.deploymentInfo.getDeploymentName());
+				cloudModule.setLastDeploymentInfo(descriptor.deploymentInfo);
 
 				// Update the Staging in the Application module
 				cloudModule.setStaging(descriptor.staging);
@@ -1941,11 +1943,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// start the application
 				super.performDeployment(monitor, descriptor);
 
-				return cloudServer.getApplication(modules[0]);
+				return cloudServer.getCloudModule(modules[0]);
 
 			}
 			catch (CoreException e) {
-				cloudServer.getApplication(modules[0]).setErrorStatus(e);
+				cloudServer.getCloudModule(modules[0]).setErrorStatus(e);
 				server.setModulePublishState(modules, IServer.PUBLISH_STATE_UNKNOWN);
 				throw e;
 			}
@@ -2073,7 +2075,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			final Server server = (Server) getServer();
 			final CloudFoundryServer cloudServer = getCloudFoundryServer();
 			final IModule module = modules[0];
-			final CloudFoundryApplicationModule cloudModule = cloudServer.getApplication(module);
+			final CloudFoundryApplicationModule cloudModule = cloudServer.getCloudModule(module);
 
 			try {
 				cloudModule.setErrorStatus(null);
@@ -2081,7 +2083,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				final String applicationId = descriptor.deploymentInfo.getDeploymentName();
 
 				// update mapping
-				cloudModule.setApplicationId(applicationId);
+				cloudModule.setLastDeploymentInfo(descriptor.deploymentInfo);
 
 				server.setModuleState(modules, IServer.STATE_STARTING);
 
@@ -2149,7 +2151,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 									server.setModuleState(modules, IServer.STATE_STOPPED);
 
 									throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-											NLS.bind("Starting of {0} timed out", cloudModule.getName())));
+											NLS.bind("Starting of {0} timed out", cloudModule.getDeployedApplicationName())));
 								}
 							}
 							catch (InterruptedException e) {
@@ -2194,7 +2196,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				return cloudModule;
 			}
 			catch (CoreException e) {
-				cloudServer.getApplication(modules[0]).setErrorStatus(e);
+				cloudServer.getCloudModule(modules[0]).setErrorStatus(e);
 				server.setModulePublishState(modules, IServer.PUBLISH_STATE_UNKNOWN);
 				throw e;
 			}

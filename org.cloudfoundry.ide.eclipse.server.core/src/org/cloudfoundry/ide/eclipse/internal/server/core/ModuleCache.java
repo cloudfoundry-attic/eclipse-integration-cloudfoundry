@@ -40,7 +40,7 @@ public class ModuleCache {
 
 	public static class ServerData {
 
-		private final List<CloudFoundryApplicationModule> applications = new ArrayList<CloudFoundryApplicationModule>();
+		private final List<CloudFoundryApplicationModule> cloudModules = new ArrayList<CloudFoundryApplicationModule>();
 
 		/** Cached password in case secure store fails. */
 		private String password;
@@ -61,27 +61,35 @@ public class ModuleCache {
 		}
 
 		public synchronized void clear() {
-			applications.clear();
+			cloudModules.clear();
 		}
 
 		public synchronized CloudFoundryApplicationModule createModule(CloudApplication application) {
-			CloudFoundryApplicationModule appModule = new CloudFoundryApplicationModule(null, application.getName(),
-					server);
+			CloudFoundryApplicationModule appModule = new CloudFoundryApplicationModule(application.getName(), server);
 			appModule.setCloudApplication(application);
 			add(appModule);
 			return appModule;
 		}
 
-		public synchronized void updateModule(CloudFoundryApplicationModule module) {
-			Map<String, String> mapping = getModuleIdToApplicationId();
+		/**
+		 * Updates the cache of local module -> cloud module mapping. This is
+		 * used when the deployed name changes (e.g. a user specifies a
+		 * different deployment name than the local module name that typically
+		 * matches the workspace project name for the app, if the project is
+		 * accessible).
+		 * @param module whos mapping to a local module needs to be updated.
+		 */
+		public synchronized void updateCloudApplicationModule(CloudFoundryApplicationModule module) {
+			// Update the map of module ID -> Deployed Application name
 			if (module.getLocalModule() != null) {
-				mapping.put(module.getLocalModule().getId(), module.getApplicationId());
-				setMapping(mapping);
+				Map<String, String> mapping = getLocalModuleToCloudModuleMapping();
+				mapping.put(module.getLocalModule().getId(), module.getDeployedApplicationName());
+				setLocalModuleToCloudModuleMapping(mapping);
 			}
 		}
 
-		public synchronized Collection<CloudFoundryApplicationModule> getApplications() {
-			return new ArrayList<CloudFoundryApplicationModule>(applications);
+		public synchronized Collection<CloudFoundryApplicationModule> getCloudModules() {
+			return new ArrayList<CloudFoundryApplicationModule>(cloudModules);
 		}
 
 		public synchronized String getPassword() {
@@ -93,20 +101,20 @@ public class ModuleCache {
 		}
 
 		public synchronized void remove(CloudFoundryApplicationModule module) {
-			applications.remove(module);
-			Map<String, String> mapping = getModuleIdToApplicationId();
+			cloudModules.remove(module);
 			if (module.getLocalModule() != null) {
+				Map<String, String> mapping = getLocalModuleToCloudModuleMapping();
 				mapping.remove(module.getLocalModule().getId());
-				setMapping(mapping);
+				setLocalModuleToCloudModuleMapping(mapping);
 			}
 		}
 
 		public synchronized void removeObsoleteModules(Set<CloudFoundryApplicationModule> allModules) {
 			HashSet<CloudFoundryApplicationModule> deletedModules = new HashSet<CloudFoundryApplicationModule>(
-					applications);
+					cloudModules);
 			deletedModules.removeAll(allModules);
 			if (deletedModules.size() > 0) {
-				Map<String, String> mapping = getModuleIdToApplicationId();
+				Map<String, String> mapping = getLocalModuleToCloudModuleMapping();
 				boolean mappingModified = false;
 				for (CloudFoundryApplicationModule deletedModule : deletedModules) {
 					if (deletedModule.getLocalModule() != null) {
@@ -114,7 +122,7 @@ public class ModuleCache {
 					}
 				}
 				if (mappingModified) {
-					setMapping(mapping);
+					setLocalModuleToCloudModuleMapping(mapping);
 				}
 			}
 		}
@@ -132,6 +140,7 @@ public class ModuleCache {
 		}
 
 		public synchronized void tagForAutomaticRepublish(RepublishModule module) {
+			// Tag modules based on their local name, not the deployed name
 			automaticRepublishModules.put(module.getModule().getName(), module);
 		}
 
@@ -140,7 +149,7 @@ public class ModuleCache {
 		}
 
 		private void add(CloudFoundryApplicationModule module) {
-			applications.add(module);
+			cloudModules.add(module);
 		}
 
 		private String convertMapToString(Map<String, String> map) {
@@ -169,24 +178,44 @@ public class ModuleCache {
 			return result;
 		}
 
-		private Map<String, String> getModuleIdToApplicationId() {
+		/**
+		 * Local modules are mapped to deployed applications, represented by
+		 * cloud modules, by mapping the local module ID (typically, the module
+		 * type + local module name) to the deployed application name.
+		 * @return map containing local module ID (key) to deployed cloud
+		 * application name (value)
+		 */
+		private Map<String, String> getLocalModuleToCloudModuleMapping() {
 			IEclipsePreferences node = new InstanceScope().getNode(CloudFoundryPlugin.PLUGIN_ID);
 			String string = node.get(KEY_MODULE_MAPPING_LIST + ":" + getServerId(), "");
 			return convertStringToMap(string);
 		}
 
-		private CloudFoundryApplicationModule getModuleByApplicationId(String applicationId) {
-			for (CloudFoundryApplicationModule module : applications) {
-				if (applicationId.equals(module.getApplicationId())) {
+		private CloudFoundryApplicationModule getCloudModuleByDeployedAppName(String deployedApplicationName) {
+			for (CloudFoundryApplicationModule module : cloudModules) {
+				if (deployedApplicationName.equals(module.getDeployedApplicationName())) {
 					return module;
 				}
 			}
 			return null;
 		}
 
-		private CloudFoundryApplicationModule getModuleByModuleName(String moduleName) {
-			for (CloudFoundryApplicationModule module : applications) {
-				if (moduleName.equals(module.getName())) {
+		/**
+		 * A {@link CloudFoundryApplicationModule} is a Cloud Foundry-aware
+		 * module representing a deployed application. If it exists, it means
+		 * that the application is currently or has been already processed by
+		 * the CF plugin. If it does not exist (its null), it means it still
+		 * needs to be created separately.
+		 * @param localName must be the local module name. In some cases it may
+		 * be the same as the deployed application name (in case the module is
+		 * external and has not corresponding accessible workspace project), but
+		 * they may be different as well, in case the local name (i.e. the
+		 * project name) differs from the user-defined deployed name.
+		 * @return
+		 */
+		private CloudFoundryApplicationModule getCloudModuleToLocalModuleName(String localName) {
+			for (CloudFoundryApplicationModule module : cloudModules) {
+				if (localName.equals(module.getName())) {
 					return module;
 				}
 			}
@@ -197,7 +226,7 @@ public class ModuleCache {
 			return server.getAttribute(CloudFoundryServer.PROP_SERVER_ID, (String) null);
 		}
 
-		private void setMapping(Map<String, String> list) {
+		private void setLocalModuleToCloudModuleMapping(Map<String, String> list) {
 			String string = convertMapToString(list);
 			IEclipsePreferences node = new InstanceScope().getNode(CloudFoundryPlugin.PLUGIN_ID);
 			CloudFoundryPlugin.trace("Updated mapping: " + string);
@@ -214,28 +243,41 @@ public class ModuleCache {
 			}
 		}
 
-		synchronized CloudFoundryApplicationModule getOrCreateApplicationModule(IModule module) {
-			CloudFoundryApplicationModule appModule = getModuleByModuleName(module.getName());
+		synchronized CloudFoundryApplicationModule getOrCreateCloudModule(IModule module) {
+			if (module == null) {
+				return null;
+			}
+			// See if the cloud module for the given local IModule has been
+			// created.
+			CloudFoundryApplicationModule appModule = getCloudModuleToLocalModuleName(module.getName());
 			if (appModule != null) {
 				return appModule;
 			}
 
-			// lookup mapping for module
-			String applicationId = getModuleIdToApplicationId().get(module.getId());
-			if (applicationId != null) {
-				appModule = getModuleByApplicationId(applicationId);
+			// Otherwise check if there is a mapping between the IModule ID and
+			// the deployed application name, and
+			// search for a cloud module that matches the deployed application
+			// name
+			String deployedAppName = getLocalModuleToCloudModuleMapping().get(module.getId());
+			if (deployedAppName != null) {
+				appModule = getCloudModuleByDeployedAppName(deployedAppName);
 				if (appModule != null) {
 					return appModule;
 				}
+				// If not available, it means it needs to be created below.
 			}
 			else {
-				// assume that application ID and module name match
-				applicationId = module.getName();
+				// Cloud module needs to be created, and by default, if no
+				// deployed name is available, assume the local name is the
+				// deployed application name
+				deployedAppName = module.getName();
 			}
 
-			// no mapping found, create new module
-			appModule = new CloudFoundryApplicationModule(module, module.getName(), server);
-			appModule.setApplicationId(applicationId);
+			// no mapping found, create new Cloud Foundry-aware module. Note
+			// that the
+			// deployedAppName and the module name need not be the same.
+			appModule = new CloudFoundryApplicationModule(module, deployedAppName, server);
+
 			add(appModule);
 			return appModule;
 		}

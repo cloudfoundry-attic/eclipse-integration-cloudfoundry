@@ -216,7 +216,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 				if (element instanceof IModule) {
 					IModule module = (IModule) element;
-					CloudFoundryApplicationModule appModule = editorPage.getCloudServer().getApplication(module);
+					CloudFoundryApplicationModule appModule = editorPage.getCloudServer().getCloudModule(module);
 					if (appModule.getErrorMessage() != null) {
 						return CloudFoundryImages.getImage(new DecorationOverlayIcon(image,
 								CloudFoundryImages.OVERLAY_ERROR, IDecoration.BOTTOM_LEFT));
@@ -243,10 +243,10 @@ public class ApplicationMasterPart extends SectionPart {
 					IModule module = (IModule) element;
 
 					// Find the corresponding Cloud Foundry-aware application Module.
-					CloudFoundryApplicationModule appModule = cloudServer.getApplication((IModule) element);
+					CloudFoundryApplicationModule appModule = cloudServer.getCloudModule((IModule) element);
 
 					if (appModule != null) {
-						String cfAppName = appModule.getApplicationId();
+						String cfAppName = appModule.getDeployedApplicationName();
 						
 						if (cfAppName != null) {
 

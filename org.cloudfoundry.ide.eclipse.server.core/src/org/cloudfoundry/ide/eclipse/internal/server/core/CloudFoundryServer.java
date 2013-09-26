@@ -115,9 +115,9 @@ public class CloudFoundryServer extends ServerDelegate {
 		// constructor
 	}
 
-	public void updateApplication(CloudFoundryApplicationModule module) {
+	public void updateApplicationModule(CloudFoundryApplicationModule module) {
 		if (getData() != null) {
-			getData().updateModule(module);
+			getData().updateCloudApplicationModule(module);
 		}
 	}
 
@@ -166,23 +166,32 @@ public class CloudFoundryServer extends ServerDelegate {
 				.getName()), e);
 	}
 
-	public CloudFoundryApplicationModule getApplication(IModule module) {
+	/**
+	 * Fetches the corresponding Cloud Foundry-aware module for the given WST
+	 * IModule. The Cloud Foundry-aware module contains additional information
+	 * that is specific to Cloud Foundry. If it doesn't exist, it will attempt
+	 * to create and cache it. All cloud modules are cached, so if a cached version
+	 * exists, it will return the cached version.
+	 * @param module WST local module
+	 * @return Cloud module, if it exists, or null if it could not be created.
+	 */
+	public CloudFoundryApplicationModule getCloudModule(IModule module) {
 		if (module instanceof CloudFoundryApplicationModule) {
 			return (CloudFoundryApplicationModule) module;
 		}
 
-		return getData() != null ? getData().getOrCreateApplicationModule(module) : null;
+		return getData() != null ? getData().getOrCreateCloudModule(module) : null;
 	}
 
 	public CloudFoundryApplicationModule getApplication(IModule[] modules) {
 		if (modules != null && modules.length > 0) {
-			return getApplication(modules[0]);
+			return getCloudModule(modules[0]);
 		}
 		return null;
 	}
 
-	public Collection<CloudFoundryApplicationModule> getApplications() {
-		return getData() != null ? getData().getApplications() : new ArrayList<CloudFoundryApplicationModule>(0);
+	public Collection<CloudFoundryApplicationModule> getApplicationModules() {
+		return getData() != null ? getData().getCloudModules() : new ArrayList<CloudFoundryApplicationModule>(0);
 	}
 
 	public CloudFoundryServerBehaviour getBehaviour() {
@@ -485,7 +494,17 @@ public class CloudFoundryServer extends ServerDelegate {
 		this.initialServerId = getAttribute(PROP_SERVER_ID, (String) null);
 	}
 
-	public void updateModules(Map<String, CloudApplication> applicationByName) throws CoreException {
+	/**
+	 * Update the local (WST) ( {@link IModule} ) and corresponding cloud module
+	 * ( {@link CloudFoundryApplicationModule} ) such that they are in synch
+	 * with the actual deployed applications (represented by
+	 * {@link CloudApplication} ). Local WST modules ( {@link IModule} ) that do
+	 * not have a corresponding deployed application ( {@link CloudApplication})
+	 * will be removed.
+	 * @param deployedApplications
+	 * @throws CoreException
+	 */
+	public void updateModules(Map<String, CloudApplication> deployedApplications) throws CoreException {
 		Server server = (Server) getServer();
 
 		final Set<CloudFoundryApplicationModule> allModules = new HashSet<CloudFoundryApplicationModule>();
@@ -493,21 +512,43 @@ public class CloudFoundryServer extends ServerDelegate {
 		final Set<IModule> deletedModules = new HashSet<IModule>();
 
 		synchronized (this) {
-			// check for existing modules and remove them from applicationByName
+			// Iterate through the local WST modules, and update them based on
+			// which are external (have no accessible workspace resources),
+			// which
+			// have no corresponding deployed application (i.e., are obsolete
+			// and need to be deleted).
 			for (IModule module : server.getModules()) {
-				CloudFoundryApplicationModule appModule = getApplication(module);
-				CloudApplication application = applicationByName.remove(appModule.getApplicationId());
-				appModule.setCloudApplication(application);
-				if (application != null) {
-					// the modules maps to an existing application
-					if (appModule.isExternal()) {
-						externalModules.add(appModule);
+				// Find the corresponding Cloud Foundry application module for
+				// the given WST server IModule
+				CloudFoundryApplicationModule cloudModule = getCloudModule(module);
+
+				if (cloudModule == null) {
+					CloudFoundryPlugin.logError("Unable to find local Cloud Foundry application module for : "
+							+ module.getName()
+							+ ". Try refreshing applications or disconnecting and reconnecting to the server.");
+					continue;
+				}
+
+				// Now process the deployed application, and re-categorise it if
+				// necessary (i.e. whether it's external or not)
+				CloudApplication actualApplication = deployedApplications.remove(cloudModule
+						.getDeployedApplicationName());
+
+				// Update the cloud module mapping to the cloud application,
+				// such that the cloud module
+				// has the latest cloud application reference.
+				cloudModule.setCloudApplication(actualApplication);
+
+				// the modules maps to an existing application
+				if (actualApplication != null) {
+					if (cloudModule.isExternal()) {
+						externalModules.add(cloudModule);
 					}
-					allModules.add(appModule);
+					allModules.add(cloudModule);
 				}
 				else if (getData() != null && getData().isUndeployed(module)) {
 					// deployment is still in progress
-					allModules.add(appModule);
+					allModules.add(cloudModule);
 				}
 				else {
 					// the module maps to an application that no longer exists
@@ -517,7 +558,7 @@ public class CloudFoundryServer extends ServerDelegate {
 
 			// create modules for new applications
 			if (getData() != null) {
-				for (CloudApplication application : applicationByName.values()) {
+				for (CloudApplication application : deployedApplications.values()) {
 					CloudFoundryApplicationModule appModule = getData().createModule(application);
 					externalModules.add(appModule);
 					allModules.add(appModule);
@@ -528,7 +569,7 @@ public class CloudFoundryServer extends ServerDelegate {
 			server.setExternalModules(externalModules.toArray(new IModule[0]));
 
 			for (IModule module : server.getModules()) {
-				CloudFoundryApplicationModule appModule = getApplication(module);
+				CloudFoundryApplicationModule appModule = getCloudModule(module);
 				updateState(server, appModule);
 			}
 
@@ -634,10 +675,10 @@ public class CloudFoundryServer extends ServerDelegate {
 	public CloudFoundryApplicationModule getApplicationModule(String appName) throws CoreException {
 
 		CloudFoundryApplicationModule appModule = null;
-		Collection<CloudFoundryApplicationModule> modules = getApplications();
+		Collection<CloudFoundryApplicationModule> modules = getApplicationModules();
 		if (modules != null) {
 			for (CloudFoundryApplicationModule module : modules) {
-				if (appName.equals(module.getApplicationId())) {
+				if (appName.equals(module.getDeployedApplicationName())) {
 					appModule = module;
 					break;
 				}

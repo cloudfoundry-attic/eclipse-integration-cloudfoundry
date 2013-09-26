@@ -57,7 +57,7 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 
 	protected void updateServices(IProgressMonitor monitor, CloudFoundryApplicationModule appModule,
 			CloudFoundryServerBehaviour serverBehaviour, List<String> updatedServices) throws CoreException {
-		serverBehaviour.updateServicesAndCloseCaldecottTunnels(appModule.getApplicationId(), updatedServices, monitor);
+		serverBehaviour.updateServicesAndCloseCaldecottTunnels(appModule.getDeployedApplicationName(), updatedServices, monitor);
 	}
 
 }

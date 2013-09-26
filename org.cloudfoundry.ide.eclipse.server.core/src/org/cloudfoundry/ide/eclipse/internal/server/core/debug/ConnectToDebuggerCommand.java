@@ -76,7 +76,7 @@ public class ConnectToDebuggerCommand extends DebugCommand {
 			StringBuilder launchLabel = new StringBuilder();
 			launchLabel.append(getCloudFoundryServer().getServer().getName());
 			launchLabel.append(" - ");
-			launchLabel.append(appModule.getApplicationId());
+			launchLabel.append(appModule.getDeployedApplicationName());
 
 			ApplicationStats stats = appModule.getApplicationStats();
 			if (stats != null) {

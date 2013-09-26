@@ -337,7 +337,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	private void updateServerNameDisplay(CloudFoundryApplicationModule application) {
 		if (application.getApplication() == null) {
-			serverNameText.setText(NLS.bind("{0} [Not Deployed]", application.getApplicationId()));
+			serverNameText.setText(NLS.bind("{0} [Not Deployed]", application.getDeployedApplicationName()));
 			return;
 		}
 		int state = application.getState();
@@ -346,13 +346,13 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		switch (state) {
 		case IServer.STATE_STARTED:
 			String message = debugLabel != null ? "{0}  [Started in " + debugLabel + "]" : "{0}  [Started]";
-			serverNameText.setText(NLS.bind(message, application.getApplicationId()));
+			serverNameText.setText(NLS.bind(message, application.getDeployedApplicationName()));
 			break;
 		case IServer.STATE_STOPPED:
-			serverNameText.setText(NLS.bind("{0}  [Stopped]", application.getApplicationId()));
+			serverNameText.setText(NLS.bind("{0}  [Stopped]", application.getDeployedApplicationName()));
 			break;
 		default:
-			serverNameText.setText(application.getApplicationId());
+			serverNameText.setText(application.getDeployedApplicationName());
 		}
 	}
 
@@ -409,7 +409,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			List<String> serviceNames = null;
 			ApplicationDeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
 			if (deploymentInfo == null) {
-				deploymentInfo = new ApplicationDeploymentInfo(appModule.getApplicationId());
+				deploymentInfo = new ApplicationDeploymentInfo(appModule.getDeployedApplicationName());
 				appModule.setLastDeploymentInfo(deploymentInfo);
 				if (cloudApplication != null) {
 					List<String> existingServices = cloudApplication.getServices();
@@ -1100,7 +1100,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	}
 
 	private CloudFoundryApplicationModule getApplication() {
-		return cloudServer.getApplication(module);
+		return cloudServer.getCloudModule(module);
 	}
 
 	/**

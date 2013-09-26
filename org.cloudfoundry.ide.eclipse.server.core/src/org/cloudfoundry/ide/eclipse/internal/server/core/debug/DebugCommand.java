@@ -88,7 +88,7 @@ public abstract class DebugCommand {
 
 		CloudFoundryApplicationModule appModule = server.getApplication(modules);
 		if (appModule != null) {
-			idBuffer.append(appModule.getApplicationId());
+			idBuffer.append(appModule.getDeployedApplicationName());
 		}
 		return idBuffer.toString();
 	}
@@ -109,13 +109,13 @@ public abstract class DebugCommand {
 
 		CloudFoundryApplicationModule appModule = getApplicationModule();
 		if (appModule != null) {
-			return appModule.getApplicationId();
+			return appModule.getDeployedApplicationName();
 		}
 		return null;
 	}
 
 	public CloudFoundryApplicationModule getApplicationModule() {
-		return getCloudFoundryServer().getApplication(modules[0]);
+		return getCloudFoundryServer().getCloudModule(modules[0]);
 	}
 
 	public void run(IProgressMonitor monitor) {

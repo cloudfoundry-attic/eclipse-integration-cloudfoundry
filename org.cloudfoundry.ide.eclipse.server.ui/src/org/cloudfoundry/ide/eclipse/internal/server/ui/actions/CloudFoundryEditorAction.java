@@ -195,7 +195,7 @@ public abstract class CloudFoundryEditorAction extends Action {
 						else {
 							IModule currentModule = editorPage.getMasterDetailsBlock().getCurrentModule();
 							if (currentModule != null) {
-								CloudFoundryApplicationModule appModule = editorPage.getCloudServer().getApplication(
+								CloudFoundryApplicationModule appModule = editorPage.getCloudServer().getCloudModule(
 										currentModule);
 								if (appModule != null && appModule.getErrorMessage() != null) {
 									setErrorInPage(appModule.getErrorMessage());

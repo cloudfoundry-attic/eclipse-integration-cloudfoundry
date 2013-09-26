@@ -165,7 +165,7 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 			int moduleState = server.getModuleState(modules);
 			assertEquals(IServer.STATE_STARTED, moduleState);
 
-			CloudFoundryApplicationModule appModule = cloudServer.getApplication(modules[0]);
+			CloudFoundryApplicationModule appModule = cloudServer.getCloudModule(modules[0]);
 			List<String> uris = appModule.getApplication().getUris();
 			assertEquals(Collections.singletonList(harness.getUrl("dynamic-webapp")), uris);
 
