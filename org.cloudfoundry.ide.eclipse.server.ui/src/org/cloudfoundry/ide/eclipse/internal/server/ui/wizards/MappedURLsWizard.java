@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.wst.server.core.IModule;
+import org.springframework.util.Assert;
 
 /**
  * @author Terry Denney
@@ -50,6 +51,7 @@ public class MappedURLsWizard extends Wizard {
 
 	public MappedURLsWizard(CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule,
 			List<String> existingURIs) {
+		Assert.notNull(applicationModule);
 		this.cloudServer = cloudServer;
 		this.appName = applicationModule.getDeployedApplicationName();
 		this.applicationModule = applicationModule;
@@ -67,7 +69,7 @@ public class MappedURLsWizard extends Wizard {
 
 	@Override
 	public void addPages() {
-		page = new MappedURLsWizardPage(cloudServer, existingURIs, getAppModule());
+		page = new MappedURLsWizardPage(cloudServer, existingURIs, applicationModule);
 		addPage(page);
 	}
 
@@ -97,40 +99,27 @@ public class MappedURLsWizard extends Wizard {
 
 		final IStatus[] result = new IStatus[1];
 		if (shouldRepublish) {
-			final CloudFoundryApplicationModule appModule = getAppModule();
-			// In the republish case, finish the URL wizard whether republish
-			// succeeds or not, as error conditions may result
-			// in the publish wizard opening.
-			if (appModule == null) {
-				String url = page.getURLs() != null && page.getURLs().size() > 0 ? page.getURLs().get(0) : null;
-				result[0] = CloudFoundryPlugin.getErrorStatus("Unable to find application module"
-						+ (url != null ? " for " + url : "") + ". Please republish application manually.");
-			}
-			else {
-				// Launch a job to execute the republish after the wizard
-				// completes
-				Job job = new Job("Republishing " + appModule.getDeployedApplicationName()) {
 
-					@Override
-					protected IStatus run(IProgressMonitor monitor) {
-						IStatus status = null;
-						try {
-							new RepublishApplicationHandler(appModule, page.getURLs(), cloudServer).republish(monitor);
-						}
-						catch (CoreException e) {
-							status = CloudFoundryPlugin.getErrorStatus(e);
-							StatusManager.getManager().handle(status, StatusManager.LOG);
-						}
-						return status != null ? status : Status.OK_STATUS;
+			Job job = new Job("Republishing " + applicationModule.getDeployedApplicationName()) {
+
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					IStatus status = null;
+					try {
+						new RepublishApplicationHandler(applicationModule, page.getURLs(), cloudServer)
+								.republish(monitor);
 					}
+					catch (CoreException e) {
+						status = CloudFoundryPlugin.getErrorStatus(e);
+						StatusManager.getManager().handle(status, StatusManager.LOG);
+					}
+					return status != null ? status : Status.OK_STATUS;
+				}
 
-				};
-				job.setSystem(false);
-				job.setPriority(Job.INTERACTIVE);
-				job.schedule();
-
-			}
-
+			};
+			job.setSystem(false);
+			job.setPriority(Job.INTERACTIVE);
+			job.schedule();
 		}
 		else {
 			result[0] = CloudUiUtil.runForked(new ICoreRunnable() {
@@ -141,18 +130,6 @@ public class MappedURLsWizard extends Wizard {
 		}
 
 		return result[0] != null ? result[0].isOK() : true;
-	}
-
-	public CloudFoundryApplicationModule getAppModule() {
-
-		try {
-			return cloudServer.getApplicationModule(appName);
-		}
-		catch (CoreException e) {
-			IStatus status = CloudFoundryPlugin.getErrorStatus(e);
-			StatusManager.getManager().handle(status, StatusManager.LOG);
-		}
-		return null;
 	}
 
 	public boolean isPublished() {

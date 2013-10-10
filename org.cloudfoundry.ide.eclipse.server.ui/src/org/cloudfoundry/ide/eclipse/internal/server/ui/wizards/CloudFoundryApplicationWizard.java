@@ -13,16 +13,23 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.client.lib.domain.Staging;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
 
+/**
+ * Prompts a user for application deployment information. Any information set by
+ * the user is set in the application module's deployment descriptor.
+ * <p/>
+ * To avoid setting deployment values in the application module if a user
+ * cancels the operation, it is up to the caller to ensure that 1. the
+ * application module has a deployment descriptor available to edit and 2. if
+ * operation is cancelled, the values in the module are restored.
+ */
 public class CloudFoundryApplicationWizard extends Wizard {
 
 	protected final CloudFoundryApplicationModule module;
@@ -33,6 +40,13 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	protected final ApplicationWizardDescriptor applicationDescriptor;
 
+	protected DeploymentInfoWorkingCopy workingCopy;
+
+	/**
+	 * @param server must not be null
+	 * @param module must not be null. Note that deployment info in the module
+	 * must also not be null, as it gets modified by the wizard.
+	 */
 	public CloudFoundryApplicationWizard(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			IApplicationWizardDelegate wizardDelegate) {
 		Assert.isNotNull(server);
@@ -41,7 +55,8 @@ public class CloudFoundryApplicationWizard extends Wizard {
 		this.module = module;
 		this.wizardDelegate = wizardDelegate;
 
-		applicationDescriptor = new ApplicationWizardDescriptor();
+		workingCopy = module.getDeploymentInfoWorkingCopy();
+		applicationDescriptor = new ApplicationWizardDescriptor(workingCopy);
 		setNeedsProgressMonitor(true);
 		setWindowTitle("Application");
 	}
@@ -50,7 +65,8 @@ public class CloudFoundryApplicationWizard extends Wizard {
 	public boolean canFinish() {
 		boolean canFinish = super.canFinish();
 		if (canFinish && wizardDelegate instanceof ApplicationWizardDelegate) {
-			canFinish = ((ApplicationWizardDelegate) wizardDelegate).isValid(applicationDescriptor);
+			canFinish = ((ApplicationWizardDelegate) wizardDelegate).getApplicationDelegate()
+					.validateDeploymentInfo(applicationDescriptor.getDeploymentInfo()).isOK();
 		}
 
 		return canFinish;
@@ -68,12 +84,7 @@ public class CloudFoundryApplicationWizard extends Wizard {
 			wizardDelegate = ApplicationWizardRegistry.getDefaultJavaWebWizardDelegate();
 		}
 
-		if (wizardDelegate != null) {
-			// Note that the descriptor should be initialised FIRST before
-			// requesting pages from the wizard delegate.
-			wizardDelegate.initialiseWizardDescriptor(applicationDescriptor, server, module);
-			applicationDeploymentPages = wizardDelegate.getWizardPages(applicationDescriptor, server, module);
-		}
+		applicationDeploymentPages = wizardDelegate.getWizardPages(applicationDescriptor, server, module);
 
 		if (applicationDeploymentPages != null && !applicationDeploymentPages.isEmpty()) {
 			for (IWizardPage updatedPage : applicationDeploymentPages) {
@@ -85,42 +96,26 @@ public class CloudFoundryApplicationWizard extends Wizard {
 			String moduleID = module != null && module.getModuleType() != null ? module.getModuleType().getId()
 					: "Unknown module type.";
 
-			CloudFoundryPlugin.logError("Unable to load application deployment wizard pages for application type: "
-					+ moduleID);
+			CloudFoundryPlugin
+					.logError("No application deployment wizard pages found for application type: "
+							+ moduleID
+							+ ". Unable to complete application deployment. Check that the application type is registered in the Cloud Foundry application framework.");
 		}
 
 	}
 
-
-	public ApplicationDeploymentInfo getDeploymentInfo() {
-		return applicationDescriptor.getDeploymentInfo();
-	}
-
-	public ApplicationAction getDeploymentMode() {
-		return applicationDescriptor.getStartDeploymentMode();
-	}
-
-	public Staging getStaging() {
-		return applicationDescriptor.getStaging();
-	}
-
 	/**
-	 * @return
+	 * @return newly created services. The services may not necessarily be bound
+	 * to the application. To see the actual list of services to be bound,
+	 * obtain the deployment descriptor: {@link #getDeploymentDescriptor()}
 	 */
 	public List<CloudService> getCreatedCloudServices() {
 		return applicationDescriptor.getCreatedCloudServices();
 	}
 
-	/**
-	 * May be empty if nothing selected, but never null
-	 * @return
-	 */
-	public List<String> getSelectedServicesForBinding() {
-		return applicationDescriptor.getSelectedServicesForBinding();
-	}
-
 	@Override
 	public boolean performFinish() {
+		workingCopy.save();
 		return true;
 	}
 

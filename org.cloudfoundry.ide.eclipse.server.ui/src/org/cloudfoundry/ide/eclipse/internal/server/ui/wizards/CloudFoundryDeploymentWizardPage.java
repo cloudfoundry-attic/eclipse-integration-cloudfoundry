@@ -164,7 +164,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	}
 
 	protected void setDeploymentMode(ApplicationAction deploymentMode) {
-		descriptor.setStartDeploymentMode(deploymentMode);
+		descriptor.getDeploymentInfo().setDeploymentMode(deploymentMode);
 	}
 
 	public void createControl(Composite parent) {
@@ -225,7 +225,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 
 		regularStartOnDeploymentButton = new Button(parent, SWT.CHECK);
 		regularStartOnDeploymentButton.setText(startLabelText);
-		ApplicationAction deploymentMode = descriptor.getStartDeploymentMode();
+		ApplicationAction deploymentMode = descriptor.getDeploymentInfo().getDeploymentMode();
 
 		regularStartOnDeploymentButton.setSelection(deploymentMode == ApplicationAction.START);
 
@@ -340,13 +340,10 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 			return;
 		}
 
-		ApplicationDeploymentInfo appInfo = descriptor.getDeploymentInfo();
-		if (appInfo != null) {
-			String appName = appInfo.getDeploymentName();
+		String appName = descriptor.getDeploymentInfo().getDeploymentName();
 
-			if (appName != null) {
-				urlPart.updateUrlHost(appName);
-			}
+		if (appName != null) {
+			urlPart.updateUrlHost(appName);
 		}
 	}
 
@@ -403,13 +400,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 			appName = null;
 		}
 
-		ApplicationDeploymentInfo depInfo = descriptor.getDeploymentInfo();
-		if (depInfo == null) {
-			depInfo = new ApplicationDeploymentInfo(appName);
-			descriptor.setDeploymentInfo(depInfo);
-		} else {
-			depInfo.setDeploymentName(appName);
-		}
+		descriptor.getDeploymentInfo().setDeploymentName(appName);
 
 		// When the app name changes, the URL also changes, but only for
 		// application types that require a URL. By default, it

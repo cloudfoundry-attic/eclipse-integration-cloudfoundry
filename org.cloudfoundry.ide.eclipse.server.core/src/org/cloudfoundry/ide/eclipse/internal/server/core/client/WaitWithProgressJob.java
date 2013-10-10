@@ -15,8 +15,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 
 public abstract class WaitWithProgressJob extends AbstractWaitWithProgressJob<Boolean> {
 
-	public WaitWithProgressJob(int ticks, long sleepTime) {
-		super(ticks, sleepTime);
+	public WaitWithProgressJob(int attempts, long sleepTime) {
+		super(attempts, sleepTime);
 	}
 
 	@Override

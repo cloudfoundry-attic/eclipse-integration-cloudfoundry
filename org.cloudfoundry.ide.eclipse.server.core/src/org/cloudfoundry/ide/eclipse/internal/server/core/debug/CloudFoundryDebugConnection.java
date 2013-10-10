@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.InstanceInfo;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.WaitWithProgressJob;
@@ -39,62 +40,73 @@ public class CloudFoundryDebugConnection {
 	public List<DebugConnectionDescriptor> getDebugConnectionDescriptors(IProgressMonitor monitor) {
 		final List<List<DebugConnectionDescriptor>> resolvedDescriptors = new ArrayList<List<DebugConnectionDescriptor>>();
 
-		try {
-			new WaitWithProgressJob(5, 3000) {
+		final CloudFoundryApplicationModule appModule = modules != null && modules.length > 0 ? cloudFoundryServer
+				.getCloudModule(modules[0]) : null;
 
-				protected boolean internalRunInWait(IProgressMonitor monitor) {
-					List<DebugConnectionDescriptor> descriptors = null;
-					try {
-						CloudFoundryApplicationModule appModule = cloudFoundryServer.getApplication(modules);
-						InstancesInfo instancesInfo = cloudFoundryServer.getBehaviour().getInstancesInfo(
-								appModule.getDeployedApplicationName(), monitor);
+		if (appModule != null) {
+			try {
+				new WaitWithProgressJob(5, 3000) {
 
-						if (instancesInfo != null) {
-							List<InstanceInfo> infos = instancesInfo.getInstances();
-							if (infos != null) {
-								// make sure list of descriptors is same size as
-								// the
-								// number of instance infos, as the descriptor
-								// is
-								// added to the same
-								// info index
-								descriptors = new ArrayList<DebugConnectionDescriptor>(infos.size());
-								for (int i = 0; i < infos.size(); i++) {
-									InstanceInfo info = infos.get(i);
-									String debugIP = info.getDebugIp();
-									int debugPort = info.getDebugPort();
-									DebugConnectionDescriptor descriptor = new DebugConnectionDescriptor(debugIP,
-											debugPort);
-									if (descriptor.areValidIPandPort() && !descriptors.contains(descriptor)) {
-										descriptors.add(i, descriptor);
+					protected boolean internalRunInWait(IProgressMonitor monitor) {
+						List<DebugConnectionDescriptor> descriptors = null;
+						try {
+
+							InstancesInfo instancesInfo = cloudFoundryServer.getBehaviour().getInstancesInfo(
+									appModule.getDeployedApplicationName(), monitor);
+
+							if (instancesInfo != null) {
+								List<InstanceInfo> infos = instancesInfo.getInstances();
+								if (infos != null) {
+									// make sure list of descriptors is same
+									// size as
+									// the
+									// number of instance infos, as the
+									// descriptor
+									// is
+									// added to the same
+									// info index
+									descriptors = new ArrayList<DebugConnectionDescriptor>(infos.size());
+									for (int i = 0; i < infos.size(); i++) {
+										InstanceInfo info = infos.get(i);
+										String debugIP = info.getDebugIp();
+										int debugPort = info.getDebugPort();
+										DebugConnectionDescriptor descriptor = new DebugConnectionDescriptor(debugIP,
+												debugPort);
+										if (descriptor.areValidIPandPort() && !descriptors.contains(descriptor)) {
+											descriptors.add(i, descriptor);
+										}
 									}
-								}
 
-								// keep trying again until all instances are
-								// launched. Since each instance is on a
-								// different
-								// port
-								// checking the size of successfully connected
-								// instances
-								// with the total instances is sufficient
-								if (descriptors.size() == infos.size()) {
-									resolvedDescriptors.add(descriptors);
-									return true;
+									// keep trying again until all instances are
+									// launched. Since each instance is on a
+									// different
+									// port
+									// checking the size of successfully
+									// connected
+									// instances
+									// with the total instances is sufficient
+									if (descriptors.size() == infos.size()) {
+										resolvedDescriptors.add(descriptors);
+										return true;
+									}
 								}
 							}
 						}
+						catch (CoreException e) {
+							// ignore
+						}
+						// Try again
+						return false;
 					}
-					catch (CoreException e) {
-						// ignore
-					}
-					// Try again
-					return false;
-				}
 
-			}.run(monitor);
+				}.run(monitor);
+			}
+			catch (Exception e) {
+				// Ignore
+			}
 		}
-		catch (Exception e) {
-			// Ignore
+		else {
+			CloudFoundryPlugin.logError("No cloud module found for cloud application. Unable to connect debugger.");
 		}
 
 		return !resolvedDescriptors.isEmpty() ? resolvedDescriptors.get(0) : null;

@@ -50,7 +50,7 @@ public class StandaloneModuleHelper {
 		if (appModule == null) {
 			return null;
 		}
-		Staging staging = appModule.getStaging();
+		Staging staging = appModule.getDeploymentInfo() != null  ? appModule.getDeploymentInfo().getStaging() : null;
 		if (staging == null) {
 			CloudApplication cloudApp = appModule.getApplication();
 			if (cloudApp != null) {

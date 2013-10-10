@@ -10,9 +10,11 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationDelegate;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ModuleResourceApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
+import org.eclipse.core.runtime.IStatus;
 
 /**
  * 
@@ -20,7 +22,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeplo
  * an archiving mechanism that is specific to Java standalone applications.
  * 
  */
-public class StandaloneApplicationDelegate extends ApplicationDelegate {
+public class StandaloneApplicationDelegate extends
+		ModuleResourceApplicationDelegate {
 
 	public StandaloneApplicationDelegate() {
 
@@ -31,20 +34,25 @@ public class StandaloneApplicationDelegate extends ApplicationDelegate {
 		return false;
 	}
 
-	public boolean isValidDescriptor(DeploymentDescriptor descriptor) {
-		if (descriptor == null || descriptor.deploymentMode == null) {
-			return false;
+	@Override
+	public IStatus validateDeploymentInfo(
+			ApplicationDeploymentInfo deploymentInfo) {
+		IStatus status = super.validateDeploymentInfo(deploymentInfo);
+		if (status.isOK()) {
+			String errorMessage = null;
+
+			if (deploymentInfo.getStaging() == null) {
+				errorMessage = "Missing staging in application deployment information.";
+			} else if (ValueValidationUtil.isEmpty(deploymentInfo.getStaging()
+					.getCommand())) {
+				errorMessage = "Missing Java standalone start command in staging.";
+			}
+			if (errorMessage != null) {
+				status = CloudFoundryPlugin.getErrorStatus(errorMessage);
+			}
 		}
 
-		ApplicationDeploymentInfo deploymentInfo = descriptor.deploymentInfo;
-
-		return deploymentInfo != null
-				&& deploymentInfo.getDeploymentName() != null
-				&& deploymentInfo.getMemory() > 0
-				// URLs are optional for standalone applications
-				&& descriptor.staging != null
-				&& descriptor.staging.getCommand() != null;
-
+		return status;
 	}
 
 }

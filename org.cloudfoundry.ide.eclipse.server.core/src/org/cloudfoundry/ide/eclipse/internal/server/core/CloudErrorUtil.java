@@ -222,4 +222,11 @@ public class CloudErrorUtil {
 		return cause instanceof RestClientException;
 	}
 
+	public static CoreException toCoreException(String message) {
+		if (message == null) {
+			message = "Unknown Cloud Foundry framework error.";
+		}
+		return new CoreException(CloudFoundryPlugin.getErrorStatus(message));
+	}
+
 }

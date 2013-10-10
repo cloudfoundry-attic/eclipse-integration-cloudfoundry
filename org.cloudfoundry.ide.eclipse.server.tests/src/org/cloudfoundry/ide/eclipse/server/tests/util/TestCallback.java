@@ -16,9 +16,8 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -68,9 +67,8 @@ public class TestCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public DeploymentDescriptor prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
+	public void prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			IProgressMonitor monitor) {
-		DeploymentDescriptor descriptor = new DeploymentDescriptor();
 		String appName;
 
 		if (this.appName != null) {
@@ -80,15 +78,16 @@ public class TestCallback extends CloudFoundryCallback {
 			appName = module.getName();
 		}
 
-		descriptor.deploymentInfo = new ApplicationDeploymentInfo(appName);
-		descriptor.deploymentInfo.setMemory(128);
-		descriptor.deploymentMode = ApplicationAction.START;
+		DeploymentInfoWorkingCopy copy = module.getDeploymentInfoWorkingCopy();
+		copy.setDeploymentName(appName);
+		copy.setMemory(128);
+		copy.setDeploymentMode(ApplicationAction.START);
 
 		if (url != null) {
-			descriptor.deploymentInfo.setUris(Collections.singletonList(url));
+			copy.setUris(Collections.singletonList(url));
 		}
 
-		return descriptor;
+		copy.save();
 	}
 
 	@Override

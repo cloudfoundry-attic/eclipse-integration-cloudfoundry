@@ -42,6 +42,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateApplication
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateInstanceCountAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AppStatsContentProvider.InstanceStatsAndInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationActionMenuControl.IButtonMenuListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationDetailsPart.ApplicationDetailsDebugListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.MappedURLsWizard;
 import org.cloudfoundry.ide.eclipse.server.rse.ConfigureRemoteCloudFoundryAction;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -216,8 +217,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		}
 	}
 
-	protected void refreshDebugButtons() {
-		CloudFoundryApplicationModule appModule = getApplication();
+	protected void refreshDebugButtons(CloudFoundryApplicationModule appModule) {
 		int state = appModule.getState();
 
 		if (isDebugAllowed()) {
@@ -262,9 +262,12 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	}
 
-	protected void refreshApplicationDeploymentButtons() {
+	/**
+	 * 
+	 * @param appModule should not be null.
+	 */
+	protected void refreshApplicationDeploymentButtons(CloudFoundryApplicationModule appModule) {
 
-		CloudFoundryApplicationModule appModule = getApplication();
 		int state = appModule.getState();
 
 		// Don't refresh if the restart buttons were selected
@@ -331,7 +334,10 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		}
 
 		refreshRestartButtons();
-		refreshDebugButtons();
+
+		// FIXNS: Enable when debug is supported in v2 in the future
+		// refreshDebugButtons(appModule);
+
 		buttonComposite.layout(true, true);
 	}
 
@@ -366,8 +372,13 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		new DebugApplicationEditorAction(editorPage, command).run();
 	}
 
-	protected void refreshPublishState() {
-		isPublished = getApplication().getState() != IServer.STATE_UNKNOWN;
+	/**
+	 * 
+	 * @param appModule may be null. If null, publish state should indicate
+	 * unknown state.
+	 */
+	protected void refreshPublishState(CloudFoundryApplicationModule appModule) {
+		isPublished = appModule != null && appModule.getState() != IServer.STATE_UNKNOWN;
 	}
 
 	public void refreshUI() {
@@ -375,10 +386,16 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		resizeTableColumns();
 
 		canUpdate = false;
-		CloudFoundryApplicationModule appModule = getApplication();
-		int state = appModule.getState();
+		CloudFoundryApplicationModule appModule = getUpdatedApplication();
+		refreshPublishState(appModule);
 
-		refreshPublishState();
+		if (appModule == null) {
+			return;
+		}
+		// The rest of the refresh requires appModule to be non-null
+		updateServerNameDisplay(appModule);
+
+		int state = appModule.getState();
 
 		// FIXNS: Uncomment when stagin updates are supported in CF client
 		// refreshStandaloneCommandArea();
@@ -386,13 +403,12 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		setCurrentStartDebugApplicationAction();
 		instanceSpinner.setSelection(appModule.getInstanceCount());
 
-		updateServerNameDisplay(appModule);
-
-		refreshApplicationDeploymentButtons();
+		refreshApplicationDeploymentButtons(appModule);
 
 		mappedURIsLink.setEnabled(state == IServer.STATE_STARTED);
 
 		CloudApplication cloudApplication = appModule.getApplication();
+
 		List<CloudService> services = new ArrayList<CloudService>();
 
 		instanceSpinner.setEnabled(cloudApplication != null);
@@ -403,35 +419,14 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		if (provideServices) {
 			// servicesViewer.getTable().setEnabled(cloudApplication != null);
 
-			// if (cloudApplication != null) {
-			// serviceNames = cloudApplication.getServices();
-			// } else {
 			List<String> serviceNames = null;
-			ApplicationDeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
-			if (deploymentInfo == null) {
-				deploymentInfo = new ApplicationDeploymentInfo(appModule.getDeployedApplicationName());
-				appModule.setLastDeploymentInfo(deploymentInfo);
-				if (cloudApplication != null) {
-					List<String> existingServices = cloudApplication.getServices();
-					serviceNames = new ArrayList<String>();
 
-					// Must iterate to filter out any potential null values in
-					// existing services
-					if (existingServices != null) {
-						for (String existingService : existingServices) {
-							if (existingService != null) {
-								serviceNames.add(existingService);
-							}
-						}
-					}
+			ApplicationDeploymentInfo deploymentInfo = appModule.getDeploymentInfo();
 
-					deploymentInfo.setServices(serviceNames);
-				}
-			}
-			else {
+			// Update the services
+			if (deploymentInfo != null) {
 				serviceNames = deploymentInfo.getServices();
 			}
-			// }
 
 			if (serviceNames == null) {
 				serviceNames = Collections.emptyList();
@@ -500,9 +495,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		if (currentURIs == null && !isPublished) {
 			// At this stage, the app may not have deployed due to errors, but
 			// there may already
-			// be set URIs in an existing descriptor
-			currentURIs = appModule.getLastDeploymentInfo() != null ? appModule.getLastDeploymentInfo().getUris()
-					: null;
+			// be set URIs in an existing info
+			currentURIs = appModule.getDeploymentInfo() != null ? appModule.getDeploymentInfo().getUris() : null;
 		}
 
 		if (currentURIs == null) {
@@ -536,7 +530,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	public void selectionChanged(IFormPart part, ISelection selection) {
 		IStructuredSelection sel = (IStructuredSelection) selection;
 		module = (IModule) sel.getFirstElement();
-		updateServerNameDisplay(getApplication());
+
 		refreshUI();
 		editorPage.refresh(RefreshArea.DETAIL, true);
 	}
@@ -633,11 +627,16 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		editURI.addHyperlinkListener(new HyperlinkAdapter() {
 			@Override
 			public void linkActivated(HyperlinkEvent e) {
-				MappedURLsWizard wizard = new MappedURLsWizard(cloudServer, getApplication(), URIs, isPublished);
+				CloudFoundryApplicationModule appModule = getExistingApplication();
+
+				if (appModule == null) {
+					return;
+				}
+				MappedURLsWizard wizard = new MappedURLsWizard(cloudServer, appModule, URIs, isPublished);
 				WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(), wizard);
 				if (dialog.open() == Window.OK) {
 
-					CloudApplication application = getApplication().getApplication();
+					CloudApplication application = appModule.getApplication();
 					if (application != null) {
 						URIs = wizard.getURLs();
 						mappedURIsLink.setText(getURIsAsLinkText(wizard.getURLs()));
@@ -675,7 +674,11 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 					int selectionIndex = memoryCombo.getSelectionIndex();
 					if (selectionIndex != -1) {
 						memory = editorPage.getApplicationMemoryChoices()[selectionIndex];
-						new UpdateApplicationMemoryAction(editorPage, memory, getApplication()).run();
+						CloudFoundryApplicationModule appModule = getExistingApplication();
+
+						if (appModule != null) {
+							new UpdateApplicationMemoryAction(editorPage, memory, appModule).run();
+						}
 					}
 				}
 			}
@@ -694,7 +697,10 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 			public void modifyText(ModifyEvent e) {
 				if (canUpdate) {
-					new UpdateInstanceCountAction(editorPage, instanceSpinner, getApplication()).run();
+					CloudFoundryApplicationModule appModule = getExistingApplication();
+					if (appModule != null) {
+						new UpdateInstanceCountAction(editorPage, instanceSpinner, appModule).run();
+					}
 				}
 			}
 		});
@@ -719,31 +725,11 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			}
 		});
 
-		debugControl = toolkit.createButton(buttonComposite, "Debug", SWT.PUSH);
-		debugControl.setImage(CloudFoundryImages.getImage(CloudFoundryImages.DEBUG));
-		debugControl.setEnabled(true);
-		debugControl.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				debugApplication(ApplicationAction.DEBUG);
-			}
-		});
-
-		// Do not show Debug control if server does not support debug
-		debugControl.setVisible(isDebugAllowed());
-
 		stopAppButton = toolkit.createButton(buttonComposite, "Stop", SWT.PUSH);
 		stopAppButton.setImage(ImageResource.getImage(ImageResource.IMG_CLCL_STOP));
 		stopAppButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				startStopApplication(ApplicationAction.STOP);
-			}
-		});
-
-		connectToDebugger = toolkit.createButton(buttonComposite, "Connect to Debugger", SWT.PUSH);
-		connectToDebugger.setImage(CloudFoundryImages.getImage(CloudFoundryImages.DEBUG));
-		connectToDebugger.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				connectToDebugger();
 			}
 		});
 
@@ -784,6 +770,32 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 			public void widgetSelected(ApplicationAction actionType) {
 				restartApplication(ApplicationAction.UPDATE_RESTART, actionType);
+			}
+		});
+
+		// FIXNS: Disabled until debug support is present in v2
+		// createDebugArea(buttonComposite);
+
+	}
+
+	protected void createDebugArea(Composite parent) {
+		debugControl = toolkit.createButton(parent, "Debug", SWT.PUSH);
+		debugControl.setImage(CloudFoundryImages.getImage(CloudFoundryImages.DEBUG));
+		debugControl.setEnabled(true);
+		debugControl.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				debugApplication(ApplicationAction.DEBUG);
+			}
+		});
+
+		// Do not show Debug control if server does not support debug
+		debugControl.setVisible(isDebugAllowed());
+
+		connectToDebugger = toolkit.createButton(parent, "Connect to Debugger", SWT.PUSH);
+		connectToDebugger.setImage(CloudFoundryImages.getImage(CloudFoundryImages.DEBUG));
+		connectToDebugger.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				connectToDebugger();
 			}
 		});
 
@@ -1070,7 +1082,10 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		if (selection.isEmpty())
 			return;
 
-		manager.add(new RemoveServicesFromApplicationAction(selection, getApplication(), serverBehaviour, editorPage));
+		CloudFoundryApplicationModule appModule = getExistingApplication();
+		if (appModule != null) {
+			manager.add(new RemoveServicesFromApplicationAction(selection, appModule, serverBehaviour, editorPage));
+		}
 	}
 
 	private void fillInstancesContextMenu(IMenuManager manager) {
@@ -1086,21 +1101,55 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			InstanceStats stats = ((InstanceStatsAndInfo) instanceObject).getStats();
 
 			if (stats != null) {
-				CloudFoundryApplicationModule appModule = getApplication();
+				CloudFoundryApplicationModule appModule = getExistingApplication();
 
-				try {
-					manager.add(new ShowConsoleAction(cloudServer, appModule.getApplication(), Integer.parseInt(stats
-							.getId())));
-				}
-				catch (NumberFormatException e) {
-					// ignore
+				if (appModule != null) {
+					try {
+						manager.add(new ShowConsoleAction(cloudServer, appModule.getApplication(), Integer
+								.parseInt(stats.getId())));
+					}
+					catch (NumberFormatException e) {
+						// ignore
+					}
 				}
 			}
 		}
 	}
 
-	private CloudFoundryApplicationModule getApplication() {
-		return cloudServer.getCloudModule(module);
+	/**
+	 * @return an existing cloud application module. If null, an error will be
+	 * logged.
+	 */
+	protected CloudFoundryApplicationModule getExistingApplication() {
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
+		String errorMessage = appModule == null ? "No Cloud Foundry application module found for: " + module.getId()
+				+ ". Unable to complete selected operation." : null;
+		logError(errorMessage);
+		return appModule;
+	}
+
+	/**
+	 * @return an updated cloud applicaiton module. If it did not previously
+	 * exist, it will attempt to create it. If null, an error is logged.
+	 */
+	protected CloudFoundryApplicationModule getUpdatedApplication() {
+		CloudFoundryApplicationModule appModule = cloudServer.getCloudModule(module);
+		String errorMessage = appModule == null ? "No Cloud Foundry application module found for: " + module.getId()
+				+ ". Unable to complete selected operation." : null;
+		logError(errorMessage);
+		return appModule;
+	}
+
+	protected void logError(String message) {
+		if (editorPage != null && !editorPage.isDisposed()) {
+			if (message != null) {
+				editorPage.setErrorMessage(message);
+
+			}
+			else {
+				editorPage.setErrorMessage(null);
+			}
+		}
 	}
 
 	/**
@@ -1116,7 +1165,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	}
 
 	private void startStopApplication(ApplicationAction action) {
-		new StartStopApplicationAction(editorPage, action, getApplication(), serverBehaviour, module).run();
+		CloudFoundryApplicationModule appModule = getExistingApplication();
+		new StartStopApplicationAction(editorPage, action, appModule, serverBehaviour, module).run();
 	}
 
 	private static String getURIsAsLinkText(List<String> uris) {
@@ -1138,10 +1188,14 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	protected class ApplicationDetailsDebugListener implements ICloudFoundryDebuggerListener {
 
 		public void handleDebuggerTermination() {
+
+			final CloudFoundryApplicationModule appModule = getExistingApplication();
+
 			UIJob job = new UIJob("Debug Termination Job") {
 
 				public IStatus runInUIThread(IProgressMonitor arg0) {
-					refreshApplicationDeploymentButtons();
+
+					refreshApplicationDeploymentButtons(appModule);
 					return Status.OK_STATUS;
 				}
 

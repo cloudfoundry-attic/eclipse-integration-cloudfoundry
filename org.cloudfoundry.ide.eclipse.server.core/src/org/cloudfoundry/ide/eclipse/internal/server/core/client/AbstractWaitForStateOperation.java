@@ -12,81 +12,51 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.wst.server.core.IModule;
+import org.springframework.util.Assert;
 
 /**
- * Performs an application operation and waits until it reaches an expected
- * state. Concrete classes need to specify the operation, like start or stopping
- * the application, as well as the state that the app needs to be in. If an
- * application is already in the expected state, the operation will not perform
- * 
+ * Waits until a deployed application reaches an expected state.
  */
-public abstract class AbstractWaitForStateOperation {
+public abstract class AbstractWaitForStateOperation extends WaitWithProgressJob {
 	private final CloudFoundryServer cloudServer;
 
-	private final String jobName;
+	private final CloudFoundryApplicationModule appModule;
 
-	private int attempts;
-
-	private long sleep;
-
-	public AbstractWaitForStateOperation(CloudFoundryServer cloudServer, String jobName) {
-		this(cloudServer, jobName, 10, 3000);
+	public AbstractWaitForStateOperation(CloudFoundryServer cloudServer, CloudFoundryApplicationModule appModule) {
+		this(cloudServer, appModule, 10, 3000);
 	}
 
-	public AbstractWaitForStateOperation(CloudFoundryServer cloudServer, String jobName, int attempts, long sleep) {
+	public AbstractWaitForStateOperation(CloudFoundryServer cloudServer, CloudFoundryApplicationModule appModule,
+			int attempts, long sleep) {
+		super(attempts, sleep);
+		Assert.notNull(appModule);
 		this.cloudServer = cloudServer;
-		this.jobName = jobName;
-		this.attempts = attempts;
-		this.sleep = sleep;
+		this.appModule = appModule;
 	}
 
-	public boolean run(IProgressMonitor progress, CloudApplication cloudApplication) throws CoreException {
+	protected boolean internalRunInWait(IProgressMonitor progress) throws CoreException {
 
-		if (cloudApplication == null) {
-			return false;
+		CloudApplication updatedCloudApp = cloudServer.getBehaviour().getApplication(
+				appModule.getDeployedApplicationName(), progress);
+
+		if (updatedCloudApp == null) {
+			throw CloudErrorUtil
+					.toCoreException("No cloud application found while attempting to check application state.");
 		}
 
-		if (jobName != null) {
-			progress.setTaskName(jobName);
-		}
+		return isInState(updatedCloudApp.getState());
 
-		if (!isInState(cloudApplication.getState())) {
-			final String appName = cloudApplication.getName();
-
-			CloudFoundryApplicationModule appModule = cloudServer.getApplicationModule(appName);
-			if (appModule != null) {
-				IModule module = appModule.getLocalModule();
-				doOperation(cloudServer.getBehaviour(), module, progress);
-				Boolean result = new WaitWithProgressJob(attempts, sleep) {
-
-					@Override
-					protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
-						CloudApplication updatedCloudApp = cloudServer.getBehaviour().getApplication(appName, monitor);
-
-						return updatedCloudApp != null && isInState(updatedCloudApp.getState());
-					}
-
-					@Override
-					protected boolean shouldRetryOnError(Throwable t) {
-						return true;
-					}
-
-				}.run(progress);
-				return result != null ? result.booleanValue() : false;
-			}
-			return false;
-		}
-		else {
-			return true;
-		}
 	}
 
-	protected abstract void doOperation(CloudFoundryServerBehaviour behaviour, IModule module, IProgressMonitor progress)
-			throws CoreException;
+	protected boolean shouldRetryOnError(Throwable t) {
+		// If cloud application cannot be resolved due to any errors, stop any
+		// further attempts to check app state.
+		return false;
+	}
 
 	protected abstract boolean isInState(AppState state);
 

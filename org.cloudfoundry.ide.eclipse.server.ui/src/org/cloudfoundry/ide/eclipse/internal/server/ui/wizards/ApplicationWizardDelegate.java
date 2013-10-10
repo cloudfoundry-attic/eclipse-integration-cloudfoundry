@@ -10,14 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 
 /**
  * 
@@ -27,8 +20,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServ
  * the two is not pushed up to the parent.
  */
 public abstract class ApplicationWizardDelegate implements IApplicationWizardDelegate {
-
-	private CloudApplicationUrlLookup urlLookup;
 
 	private IApplicationDelegate appDelegate;
 
@@ -45,48 +36,6 @@ public abstract class ApplicationWizardDelegate implements IApplicationWizardDel
 	 */
 	public IApplicationDelegate getApplicationDelegate() {
 		return appDelegate;
-	}
-
-	/*
-	 * FIXNS: Note that a very similar logic is also present in corresponding
-	 * core level IApplicationDelegate implementation for Java web. Use one
-	 * descriptor for both the wizard and the core, instead of two separate
-	 * ones, to avoid duplication.
-	 */
-	public boolean isValid(ApplicationWizardDescriptor applicationDescriptor) {
-
-		if (applicationDescriptor == null) {
-			return false;
-		}
-
-		ApplicationDeploymentInfo deploymentInfo = applicationDescriptor.getDeploymentInfo();
-
-		return deploymentInfo != null && deploymentInfo.getDeploymentName() != null && deploymentInfo.getMemory() > 0;
-
-	}
-
-	public void initialiseWizardDescriptor(ApplicationWizardDescriptor applicationDescriptor,
-			CloudFoundryServer cloudServer, CloudFoundryApplicationModule module) {
-
-		urlLookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
-
-		String deploymentName = module != null ? module.getDeployedApplicationName() : null;
-
-		ApplicationDeploymentInfo deploymentInfo = new ApplicationDeploymentInfo(deploymentName);
-
-		applicationDescriptor.setDeploymentInfo(deploymentInfo);
-
-		deploymentInfo.setMemory(CloudUtil.DEFAULT_MEMORY);
-
-		applicationDescriptor.setStartDeploymentMode(ApplicationAction.START);
-
-	}
-
-	/**
-	 * @see CloudFoundryServerBehaviour#getApplicationUrlLookup()
-	 */
-	public CloudApplicationUrlLookup getApplicationUrlLookup() {
-		return urlLookup;
 	}
 
 }

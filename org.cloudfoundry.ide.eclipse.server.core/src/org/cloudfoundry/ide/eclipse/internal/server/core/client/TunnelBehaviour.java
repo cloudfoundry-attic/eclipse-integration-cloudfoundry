@@ -28,11 +28,10 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour.Request;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -121,7 +120,19 @@ public class TunnelBehaviour {
 		progress.setTaskName("Starting tunnel application");
 		CloudApplication caldecottApp = getCaldecottApp(client);
 
-		new StartApplicationInWaitOperation(cloudServer).run(progress, caldecottApp);
+		if (caldecottApp == null) {
+			throw CloudErrorUtil.toCoreException("No Caldecott application found. Unable to create tunnel.");
+		}
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(caldecottApp.getName());
+		if (appModule == null) {
+			throw CloudErrorUtil
+					.toCoreException("No local Caldecott application module found. Application may not have finished deploying. Unable to create tunnel.");
+		}
+
+		cloudServer.getBehaviour().startModule(new IModule[] { appModule.getLocalModule() }, progress);
+
+		// Wait til application has started
+		new WaitApplicationToStartOp(cloudServer, appModule).run(progress);
 
 	}
 
@@ -348,10 +359,8 @@ public class TunnelBehaviour {
 
 		if (appModule != null) {
 
-			ApplicationDeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
-			// Do NOT set a deployment info if one does not exist, as another
-			// component of CF integration does it, only
-			// add to the existing deployment info.
+			DeploymentInfoWorkingCopy deploymentInfo = appModule.getDeploymentInfoWorkingCopy();
+
 			if (deploymentInfo != null) {
 				List<String> existingServices = deploymentInfo.getServices();
 				List<String> updatedServices = new ArrayList<String>();
@@ -362,6 +371,7 @@ public class TunnelBehaviour {
 				if (!updatedServices.contains(serviceName)) {
 					updatedServices.add(serviceName);
 					deploymentInfo.setServices(updatedServices);
+					deploymentInfo.save();
 					serviceChanges = true;
 				}
 			}
@@ -554,7 +564,6 @@ public class TunnelBehaviour {
 	}
 
 	public synchronized CloudFoundryApplicationModule getCaldecottModule(IProgressMonitor monitor) throws CoreException {
-		return cloudServer.getApplicationModule(TunnelHelper.getTunnelAppName());
+		return cloudServer.getExistingCloudModule(TunnelHelper.getTunnelAppName());
 	}
-
 }

@@ -82,15 +82,16 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 	private final List<CloudService> allServices = new ArrayList<CloudService>();
 
 	private final CloudFoundryApplicationModule module;
-	
+
 	private final ApplicationWizardDescriptor descriptor;
 
-	public CloudFoundryApplicationServicesWizardPage(CloudFoundryServer cloudServer, CloudFoundryApplicationModule module, ApplicationWizardDescriptor descriptor) {
+	public CloudFoundryApplicationServicesWizardPage(CloudFoundryServer cloudServer,
+			CloudFoundryApplicationModule module, ApplicationWizardDescriptor descriptor) {
 		super("Services");
 		this.cloudServer = cloudServer;
 		this.serverTypeId = module.getServerTypeId();
 		this.module = module;
-		this.descriptor  = descriptor;
+		this.descriptor = descriptor;
 		populatedServicesFromLastDeployment();
 	}
 
@@ -129,20 +130,19 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 		servicesViewer = new CheckboxTableViewer(table);
 
 		servicesViewer.setContentProvider(new TreeContentProvider());
-		servicesViewer
-				.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
+		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
 
-					protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
-						if (column == ServiceViewColumn.Tunnel) {
-							TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
-							if (handler.hasCaldecottTunnel(service.getName())) {
-								return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
-							}
-						}
-						return null;
+			protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
+				if (column == ServiceViewColumn.Tunnel) {
+					TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
+					if (handler.hasCaldecottTunnel(service.getName())) {
+						return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
 					}
+				}
+				return null;
+			}
 
-				});
+		});
 		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer, cloudServer.hasCloudSpace()) {
 
 			@Override
@@ -254,26 +254,21 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 				setServicesToBind();
 			}
 			setSelection();
-
 		}
 	}
 
 	protected void populatedServicesFromLastDeployment() {
 		// Set the initial selection based on the past deployment history
 		selectedServicesToBind.clear();
-		ApplicationDeploymentInfo lastDeploymentInfo = module.getLastDeploymentInfo();
-		if (lastDeploymentInfo != null) {
-			List<String> serviceNames = lastDeploymentInfo.getServices();
-			// Keep it light, there only populate the names as that may be the
-			// only information
-			// available, and heavier requests shouldn't be made at the time of
-			// population. Rely on the page actually opening to populate the
-			// actual services
-			if (serviceNames != null) {
-				for (String name : serviceNames) {
-					selectedServicesToBind.put(name, null);
-				}
-				setServicesToBind();
+		List<String> serviceNames = descriptor.getDeploymentInfo().getServices();
+		// Keep it light, there only populate the names as that may be the
+		// only information
+		// available, and heavier requests shouldn't be made at the time of
+		// population. Rely on the page actually opening to populate the
+		// actual services
+		if (serviceNames != null) {
+			for (String name : serviceNames) {
+				selectedServicesToBind.put(name, null);
 			}
 		}
 	}
@@ -282,11 +277,11 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 		servicesViewer.setInput(allServices.toArray(new CloudService[] {}));
 		servicesViewer.setCheckedElements(selectedServicesToBind.values().toArray());
 	}
-	
+
 	protected void setServicesToBind() {
-		descriptor.setSelectedServicesForBinding(new ArrayList<String>(selectedServicesToBind.keySet()));
+		descriptor.getDeploymentInfo().setServices(new ArrayList<String>(selectedServicesToBind.keySet()));
 	}
-	
+
 	protected void setServicesAdded() {
 		descriptor.setCreatedCloudServices(new ArrayList<CloudService>(servicesToAdd));
 	}

@@ -143,10 +143,23 @@ public class ApplicationMasterPart extends SectionPart {
 	}
 
 	public void refreshUI() {
-		applicationsViewer.setInput(cloudServer.getServerOriginal().getModules());
-		// applicationsViewer.refresh(true);
 
+		IStatus status = cloudServer.refreshCloudModules();
+
+		applicationsViewer.setInput(cloudServer.getServerOriginal().getModules());
+		// Update the sections regardless of any errors in the modules, as some
+		// modules may have no errors
 		updateSections();
+
+		if (editorPage != null && !editorPage.isDisposed()) {
+			if (!status.isOK()) {
+				editorPage.setErrorMessage(status.getMessage());
+			}
+			else {
+				editorPage.setErrorMessage(null);
+			}
+		}
+
 	}
 
 	private class ApplicationViewersDropAdapter extends ServersViewDropAdapter {
@@ -216,8 +229,9 @@ public class ApplicationMasterPart extends SectionPart {
 
 				if (element instanceof IModule) {
 					IModule module = (IModule) element;
-					CloudFoundryApplicationModule appModule = editorPage.getCloudServer().getCloudModule(module);
-					if (appModule.getErrorMessage() != null) {
+					CloudFoundryApplicationModule appModule = editorPage.getCloudServer()
+							.getExistingCloudModule(module);
+					if (appModule != null && appModule.getErrorMessage() != null) {
 						return CloudFoundryImages.getImage(new DecorationOverlayIcon(image,
 								CloudFoundryImages.OVERLAY_ERROR, IDecoration.BOTTOM_LEFT));
 					}
@@ -242,12 +256,13 @@ public class ApplicationMasterPart extends SectionPart {
 
 					IModule module = (IModule) element;
 
-					// Find the corresponding Cloud Foundry-aware application Module.
-					CloudFoundryApplicationModule appModule = cloudServer.getCloudModule((IModule) element);
+					// Find the corresponding Cloud Foundry-aware application
+					// Module.
+					CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule((IModule) element);
 
 					if (appModule != null) {
 						String cfAppName = appModule.getDeployedApplicationName();
-						
+
 						if (cfAppName != null) {
 
 							// Be sure not to show a null WTP module name,
@@ -360,20 +375,19 @@ public class ApplicationMasterPart extends SectionPart {
 		new ServiceViewerConfigurator().configureViewer(servicesViewer);
 
 		servicesViewer.setContentProvider(new TreeContentProvider());
-		servicesViewer
-				.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
+		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
 
-					protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
-						if (column == ServiceViewColumn.Tunnel) {
-							TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
-							if (handler.hasCaldecottTunnel(service.getName())) {
-								return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
-							}
-						}
-						return null;
+			protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
+				if (column == ServiceViewColumn.Tunnel) {
+					TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
+					if (handler.hasCaldecottTunnel(service.getName())) {
+						return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
 					}
+				}
+				return null;
+			}
 
-				});
+		});
 		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer, cloudServer.hasCloudSpace()) {
 
 			@Override
@@ -461,13 +475,14 @@ public class ApplicationMasterPart extends SectionPart {
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
 
-		
 		// FIXNS: Disable Caldecott feature in 1.5.1 until feature is supported
 		// in the client-lib
-//		List<IAction> caldecottAction = new TunnelActionProvider(cloudServer).getTunnelActions(selection, editorPage);
-//		for (IAction action : caldecottAction) {
-//			manager.add(action);
-//		}
+		// List<IAction> caldecottAction = new
+		// TunnelActionProvider(cloudServer).getTunnelActions(selection,
+		// editorPage);
+		// for (IAction action : caldecottAction) {
+		// manager.add(action);
+		// }
 	}
 
 	private void fillApplicationsContextMenu(IMenuManager manager) {

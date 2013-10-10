@@ -27,9 +27,10 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.NotFinishedStagingException;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.AbstractWaitWithProgressJob;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.StartApplicationInWaitOperation;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.StopApplicationInWaitOperation;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.WaitApplicationToStartOp;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.WaitForApplicationToStopOp;
 import org.cloudfoundry.ide.eclipse.server.tests.server.TestServlet;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.runtime.CoreException;
@@ -181,8 +182,12 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	protected void assertStartApplication(CloudApplication cloudApplication) throws Exception {
 
-		boolean started = new StartApplicationInWaitOperation(cloudServer, "Starting test app").run(
-				new NullProgressMonitor(), cloudApplication);
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(cloudApplication.getName());
+		assertNotNull(appModule);
+		assertNotNull(appModule.getLocalModule());
+		serverBehavior.startModule(new IModule[] { appModule.getLocalModule() }, new NullProgressMonitor());
+
+		boolean started = new WaitApplicationToStartOp(cloudServer, appModule).run(new NullProgressMonitor());
 		serverBehavior.refreshModules(new NullProgressMonitor());
 
 		assertTrue(started);
@@ -190,8 +195,14 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	}
 
 	protected void assertStopApplication(CloudApplication cloudApplication) throws Exception {
-		boolean stopped = new StopApplicationInWaitOperation(cloudServer).run(new NullProgressMonitor(),
-				cloudApplication);
+
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(cloudApplication.getName());
+		assertNotNull(appModule);
+		assertNotNull(appModule.getLocalModule());
+		serverBehavior.stopModule(new IModule[] { appModule.getLocalModule() }, new NullProgressMonitor());
+
+		boolean stopped = new WaitForApplicationToStopOp(cloudServer, appModule).run(new NullProgressMonitor());
+
 		serverBehavior.refreshModules(new NullProgressMonitor());
 
 		assertTrue(stopped);

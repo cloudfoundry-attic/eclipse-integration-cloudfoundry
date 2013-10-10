@@ -1,49 +1,118 @@
 /*******************************************************************************
- * Copyright (c) 2013 VMware, Inc.
+ * Copyright (c) 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 
-import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.wst.server.core.IModule;
-import org.eclipse.wst.server.core.model.IModuleResource;
+import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 
-/**
- * 
- * Contains a default implementation for generating a resources archive of all
- * the resources that are to be pushed to the Cloud Foundry server.
- * 
- */
 public abstract class ApplicationDelegate implements IApplicationDelegate {
 
-	public ApplicationDelegate() {
-
-	}
-	
-	public boolean providesApplicationArchive(IModule module) {
-		return true;
-	}
-	
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see org.cloudfoundry.ide.eclipse.internal.server.core.application.
 	 * IApplicationDelegate
-	 * #getApplicationArchive(org.eclipse.wst.server.core.IModule,
-	 * org.eclipse.wst.server.core.model.IModuleResource[])
+	 * #getDefaultApplicationDeploymentInfo(org.cloudfoundry.
+	 * ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule,
+	 * org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer)
 	 */
-	public ApplicationArchive getApplicationArchive(IModule module, IModuleResource[] moduleResources)
-			throws CoreException {
-		return new ModuleResourceApplicationArchive(module, Arrays.asList(moduleResources));
+	public ApplicationDeploymentInfo getDefaultApplicationDeploymentInfo(CloudFoundryApplicationModule appModule,
+			CloudFoundryServer cloudServer) {
+
+		// Set default values.
+		String appName = appModule.getDeployedApplicationName();
+		ApplicationDeploymentInfo deploymentInfo = new ApplicationDeploymentInfo(appName);
+		deploymentInfo.setMemory(CloudUtil.DEFAULT_MEMORY);
+		deploymentInfo.setDeploymentMode(ApplicationAction.START);
+
+		// Now parse the manifest file, if it exists, and merge the default
+		// values with the manifest values (e.g., missing manifest values will
+		// be substituted with the default values,
+		// with manifest values having higher priority in case values are
+		// present for the same properties in both.)
+		deploymentInfo = new ManifestParser(appModule).parse(deploymentInfo);
+		return deploymentInfo;
+	}
+
+	public ApplicationDeploymentInfo resolveApplicationDeploymentInfo(CloudApplication cloudApplication,
+			CloudFoundryServer cloudServer) {
+
+		return parseApplicationDeploymentInfo(cloudApplication);
+	}
+
+	public IStatus validateDeploymentInfo(ApplicationDeploymentInfo deploymentInfo) {
+		return basicValidateDeploymentInfo(deploymentInfo);
+	}
+
+	public static IStatus basicValidateDeploymentInfo(ApplicationDeploymentInfo deploymentInfo) {
+		IStatus status = Status.OK_STATUS;
+
+		String errorMessage = null;
+
+		if (deploymentInfo == null) {
+			errorMessage = "Missing application deployment information.";
+		}
+		else if (ValueValidationUtil.isEmpty(deploymentInfo.getDeploymentName())) {
+			errorMessage = "Missing application name in application deployment information.";
+		}
+		else if (deploymentInfo.getMemory() <= 0) {
+			errorMessage = "No memory set in application deployment information.";
+		}
+
+		if (errorMessage != null) {
+			status = CloudFoundryPlugin.getErrorStatus(errorMessage);
+		}
+
+		return status;
+	}
+
+	/**
+	 * Parses deployment information from a deployed Cloud Application. Returns
+	 * null if the cloud application is null.
+	 * @param cloudApplication deployed in a CF server
+	 * @return Parsed deployment information, or null if Cloud Application is
+	 * null.
+	 */
+	public static ApplicationDeploymentInfo parseApplicationDeploymentInfo(CloudApplication cloudApplication) {
+
+		if (cloudApplication != null) {
+
+			String deploymentName = cloudApplication.getName();
+			ApplicationDeploymentInfo deploymentInfo = new ApplicationDeploymentInfo(deploymentName);
+
+			deploymentInfo.setStaging(cloudApplication.getStaging());
+			deploymentInfo.setMemory(cloudApplication.getMemory());
+			deploymentInfo.setDeploymentMode(ApplicationAction.START);
+
+			if (cloudApplication.getServices() != null) {
+				deploymentInfo.setServices(new ArrayList<String>(cloudApplication.getServices()));
+			}
+
+			if (cloudApplication.getUris() != null) {
+				deploymentInfo.setUris(new ArrayList<String>(cloudApplication.getUris()));
+			}
+			return deploymentInfo;
+
+		}
+		return null;
 	}
 
 }

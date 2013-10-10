@@ -84,7 +84,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 	protected void init() {
 		this.serverTypeId = module.getServerTypeId();
 
-		appName = descriptor.getDeploymentInfo() != null ? descriptor.getDeploymentInfo().getDeploymentName() : null;
+		appName = descriptor.getDeploymentInfo().getDeploymentName();
 	}
 
 	protected CloudFoundryApplicationWizard getApplicationWizard() {
@@ -193,7 +193,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 			else {
 				ModuleCache moduleCache = CloudFoundryPlugin.getModuleCache();
 				ServerData data = moduleCache.getData(server.getServerOriginal());
-				Collection<CloudFoundryApplicationModule> applications = data.getCloudModules();
+				Collection<CloudFoundryApplicationModule> applications = data.getExistingCloudModules();
 				boolean duplicate = false;
 
 				for (CloudFoundryApplicationModule application : applications) {

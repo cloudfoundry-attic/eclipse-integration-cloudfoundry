@@ -13,12 +13,12 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -57,22 +57,15 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 
 	@Override
 	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
-		CloudApplication cloudApplication = appModule.getApplication();
 		List<String> existingServices = null;
 
 		List<String> updatedServices = new ArrayList<String>();
 
-		ApplicationDeploymentInfo deploymentInfo = appModule.getLastDeploymentInfo();
-		if (deploymentInfo == null) {
-			deploymentInfo = new ApplicationDeploymentInfo(appModule.getDeployedApplicationName());
-			appModule.setLastDeploymentInfo(deploymentInfo);
-			if (cloudApplication != null) {
-				existingServices = cloudApplication.getServices();
-			}
-		}
-		else {
-			existingServices = deploymentInfo.getServices();
-		}
+		DeploymentInfoWorkingCopy workingCopy = appModule.getDeploymentInfoWorkingCopy();
+
+		// Check the deployment information to see if it has an existing list of
+		// bound services.
+		existingServices = workingCopy.getServices();
 
 		// Must iterate rather than passing to constructor or using
 		// addAll, as some
@@ -105,13 +98,8 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 				updateServices(monitor, appModule, serverBehaviour, updatedServices);
 			}
 
-			// DeploymentInfo deploymentInfo =
-			// appModule.getLastDeploymentInfo();
-			// if (deploymentInfo == null) {
-			// deploymentInfo = new DeploymentInfo();
-			// appModule.setLastDeploymentInfo(deploymentInfo);
-			// }
-			deploymentInfo.setServices(updatedServices);
+			workingCopy.setServices(updatedServices);
+			workingCopy.save();
 		}
 
 		return Status.OK_STATUS;

@@ -13,8 +13,8 @@ package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDescriptor;
@@ -36,7 +36,7 @@ public class StandaloneApplicationWizardDelegate extends
 
 		StandaloneDeploymentWizardPage deploymentPage = new StandaloneDeploymentWizardPage(
 				cloudServer, applicationModule, descriptor,
-				getApplicationUrlLookup(), this);
+				CloudApplicationUrlLookup.getCurrentLookup(cloudServer), this);
 
 		CloudFoundryApplicationWizardPage applicationNamePage = new CloudFoundryApplicationWizardPage(
 				cloudServer, deploymentPage, applicationModule, descriptor);
@@ -51,13 +51,5 @@ public class StandaloneApplicationWizardDelegate extends
 		defaultPages.add(servicesPage);
 		return defaultPages;
 
-	}
-
-	public boolean isValid(ApplicationWizardDescriptor applicationDescriptor) {
-
-		return super.isValid(applicationDescriptor)
-				&& applicationDescriptor.getStaging() != null
-				&& !ValueValidationUtil.isEmpty(applicationDescriptor
-						.getStaging().getCommand());
 	}
 }

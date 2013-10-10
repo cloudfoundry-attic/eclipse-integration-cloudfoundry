@@ -35,7 +35,8 @@ public class StandaloneDeploymentWizardPage extends
 	public StandaloneDeploymentWizardPage(CloudFoundryServer server,
 			CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor,
-			CloudApplicationUrlLookup urlLookup, ApplicationWizardDelegate delegate) {
+			CloudApplicationUrlLookup urlLookup,
+			ApplicationWizardDelegate delegate) {
 		super(server, module, descriptor, urlLookup, delegate);
 	}
 
@@ -94,6 +95,7 @@ public class StandaloneDeploymentWizardPage extends
 			// Set an empty list if URL is empty as it can cause problems when
 			// deploying a standalone application
 			List<String> urls = new ArrayList<String>();
+
 			descriptor.getDeploymentInfo().setUris(urls);
 			return;
 		}

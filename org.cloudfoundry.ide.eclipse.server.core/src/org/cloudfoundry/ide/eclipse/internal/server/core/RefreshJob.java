@@ -39,7 +39,7 @@ public class RefreshJob extends Job {
 		this.interval = DEFAULT_INTERVAL;
 	}
 
-	public void reschedule(long interval) {
+	public synchronized void reschedule(long interval) {
 		// schedule, if not already running or scheduled
 		this.interval = interval;
 		cancel();
@@ -54,24 +54,26 @@ public class RefreshJob extends Job {
 	 * after the specified interval.
 	 * @param interval
 	 */
-	public void runAndReschedule(long interval) {
+	public synchronized void runAndReschedule(long interval) {
 		this.interval = interval;
 		cancel();
 		schedule();
 	}
 
 	@Override
-	protected IStatus run(IProgressMonitor monitor) {
-		try {
-			server.getBehaviour().refreshModules(monitor);
+	protected synchronized IStatus run(IProgressMonitor monitor) {
+		if (interval > 0) {
+			try {
+				server.getBehaviour().refreshModules(monitor);
 
-			if (server.getServer().getServerState() == IServer.STATE_STARTED && interval > 0) {
-				schedule(interval);
+				if (server.getServer().getServerState() == IServer.STATE_STARTED) {
+					schedule(interval);
+				}
 			}
-		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.getDefault().getLog()
-					.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, "Refresh of server failed", e));
+			catch (CoreException e) {
+				CloudFoundryPlugin.getDefault().getLog()
+						.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, "Refresh of server failed", e));
+			}
 		}
 
 		return Status.OK_STATUS;

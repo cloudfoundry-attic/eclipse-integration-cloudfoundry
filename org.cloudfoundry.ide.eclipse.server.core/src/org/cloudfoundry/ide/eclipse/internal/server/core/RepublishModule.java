@@ -10,26 +10,26 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.eclipse.wst.server.core.IModule;
 
 public class RepublishModule {
 
 	private final IModule module;
 
-	private final DeploymentDescriptor descriptor;
+	private final ApplicationDeploymentInfo deploymentInfo;
 
-	public RepublishModule(IModule module, DeploymentDescriptor descriptor) {
+	public RepublishModule(IModule module, ApplicationDeploymentInfo deploymentInfo) {
 		this.module = module;
-		this.descriptor = descriptor;
+		this.deploymentInfo = deploymentInfo;
 	}
 
 	public IModule getModule() {
 		return module;
 	}
 
-	public DeploymentDescriptor getDeploymentDescriptor() {
-		return descriptor;
+	public ApplicationDeploymentInfo getDeploymentInfo() {
+		return deploymentInfo;
 	}
 
 }

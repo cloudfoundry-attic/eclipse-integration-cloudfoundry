@@ -11,7 +11,12 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
+import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.IModuleResource;
 
@@ -102,5 +107,36 @@ public interface IApplicationDelegate {
 	public ApplicationArchive getApplicationArchive(IModule module, IModuleResource[] moduleResources)
 			throws CoreException;
 
-	public boolean isValidDescriptor(DeploymentDescriptor descriptor);
+	/**
+	 * {@link IStatus#OK} If the deployment information is valid. Otherwise
+	 * return {@link IStatus#ERROR} if error. Must NOT return a null status.
+	 * @param deploymentInfo
+	 * @return non-null status.
+	 */
+	public IStatus validateDeploymentInfo(ApplicationDeploymentInfo deploymentInfo);
+
+	/**
+	 * Resolve an application deployment for the given application. Return null
+	 * if it cannot be resolved. If returning non-null value, it should always
+	 * be a new copy of a deployment info.
+	 * @param Cloud server where application exists.
+	 * @param cloudApplication application that already exists in the server
+	 * @return A new copy of the deployment information for an existing
+	 * application, or null if it cannot be resolved.
+	 */
+	public ApplicationDeploymentInfo resolveApplicationDeploymentInfo(CloudApplication cloudApplication,
+			CloudFoundryServer cloudServer);
+
+	/**
+	 * Get a default application deployment information, regardless of whether
+	 * the application is deployed or not. It should contain default settings
+	 * for this type of application (e.g. memory, default URL, if necessary,
+	 * etc..). Should not be null.
+	 * @param appModule
+	 * @param cloudServer
+	 * @return Non-null application deployment information with default values.
+	 */
+	public ApplicationDeploymentInfo getDefaultApplicationDeploymentInfo(CloudFoundryApplicationModule appModule,
+			CloudFoundryServer cloudServer);
+
 }

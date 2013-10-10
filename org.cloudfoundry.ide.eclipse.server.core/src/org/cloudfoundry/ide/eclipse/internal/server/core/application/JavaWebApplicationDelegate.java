@@ -10,15 +10,20 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -37,7 +42,7 @@ import org.eclipse.wst.server.core.model.IModuleResource;
  * <p/>
  * This application delegate supports the above Java Web frameworks.
  */
-public class JavaWebApplicationDelegate implements IApplicationDelegate {
+public class JavaWebApplicationDelegate extends ApplicationDelegate {
 
 	private static final Map<String, String> JAVA_WEB_SUPPORTED_FRAMEWORKS = getJavaWebSupportedFrameworks();
 
@@ -45,6 +50,11 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 
 	}
 
+	/**
+	 * 
+	 * @deprecated No longer used for v2 CF servers. Kept only as a reference
+	 * for legacy v1 CF servers.
+	 */
 	protected static Map<String, String> getJavaWebSupportedFrameworks() {
 		Map<String, String> valuesByLabel = new LinkedHashMap<String, String>();
 		valuesByLabel.put(CloudFoundryConstants.SPRING, "Spring");
@@ -59,8 +69,10 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 	 * the project. Returns null if no framework was determined.
 	 * @param project
 	 * @return Framework type or null if framework was not determined.
-	 * @deprecated kept for reference as application type is being determined by
-	 * checking properties of a Java project
+	 * @deprecated kept for reference as to how application type was being
+	 * determined from a Java project for legacy v1 CF servers. v2 Servers no
+	 * longer require a framework for an application, as frameworks have been
+	 * replaced with buildpacks.
 	 */
 	protected String getFramework(IProject project) {
 		if (project != null) {
@@ -159,15 +171,45 @@ public class JavaWebApplicationDelegate implements IApplicationDelegate {
 		return null;
 	}
 
-	public boolean isValidDescriptor(DeploymentDescriptor descriptor) {
-		if (descriptor == null || descriptor.deploymentMode == null) {
-			return false;
+	@Override
+	public IStatus validateDeploymentInfo(ApplicationDeploymentInfo deploymentInfo) {
+
+		IStatus status = super.validateDeploymentInfo(deploymentInfo);
+		if (status.isOK() && ((deploymentInfo.getUris() == null || deploymentInfo.getUris().isEmpty()))) {
+			String errorMessage = "No mapped application URLs set in application deployment information.";
+			status = CloudFoundryPlugin.getErrorStatus(errorMessage);
 		}
 
-		ApplicationDeploymentInfo deploymentInfo = descriptor.deploymentInfo;
+		return status;
 
-		return deploymentInfo != null && deploymentInfo.getDeploymentName() != null && deploymentInfo.getMemory() > 0
-				&& deploymentInfo.getUris() != null && !deploymentInfo.getUris().isEmpty();
+	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.cloudfoundry.ide.eclipse.internal.server.core.application.
+	 * IApplicationDelegate
+	 * #getDefaultApplicationDeploymentInfo(org.cloudfoundry.
+	 * ide.eclipse.internal.server.core.CloudFoundryServer,
+	 * org.cloudfoundry.ide.
+	 * eclipse.internal.server.core.client.CloudFoundryApplicationModule)
+	 */
+	@Override
+	public ApplicationDeploymentInfo getDefaultApplicationDeploymentInfo(CloudFoundryApplicationModule appModule,
+			CloudFoundryServer cloudServer) {
+		ApplicationDeploymentInfo info = super.getDefaultApplicationDeploymentInfo(appModule, cloudServer);
+
+		// Set a default URL for the application.
+		if ((info.getUris() == null || info.getUris().isEmpty()) && info.getDeploymentName() != null) {
+			CloudApplicationUrlLookup urlLookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
+			if (urlLookup != null) {
+				CloudApplicationURL url = urlLookup.getDefaultApplicationURL(info.getDeploymentName());
+				if (url != null) {
+					info.setUris(Arrays.asList(url.getUrl()));
+				}
+			}
+
+		}
+		return info;
 	}
 }

@@ -31,7 +31,7 @@ public class ApplicationWizardRegistry {
 
 	public static String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.ui.applicationWizard";
 
-	public static IApplicationWizardDelegate getWizardProvider(IModule module) {
+	public static ApplicationWizardDelegate getWizardProvider(IModule module) {
 		// See if there is a corresponding application delegate
 		ApplicationProvider applicationProvider = ApplicationRegistry.getApplicationProvider(module);
 		return getWizardDelegate(applicationProvider);
@@ -46,12 +46,18 @@ public class ApplicationWizardRegistry {
 	 * @return application wizard delegate that matches the provider ID, or
 	 * null.
 	 */
-	protected static IApplicationWizardDelegate getWizardDelegate(ApplicationProvider applicationProvider) {
+	protected static ApplicationWizardDelegate getWizardDelegate(ApplicationProvider applicationProvider) {
 		if (applicationProvider == null) {
 			return null;
 		}
 		String providerID = applicationProvider.getProviderID();
 		IApplicationDelegate delegate = applicationProvider.getDelegate();
+
+		if (delegate == null) {
+			CloudFoundryPlugin.logError("No application delegate found for: " + providerID);
+			return null;
+		}
+
 		IApplicationWizardDelegate wizardDelegate = null;
 		if (wizardProviders == null) {
 			load();
@@ -59,9 +65,14 @@ public class ApplicationWizardRegistry {
 		ApplicationWizardProvider wizardProvider = wizardProviders.get(providerID);
 		wizardDelegate = wizardProvider != null ? wizardProvider.getDelegate() : null;
 		if (wizardDelegate instanceof ApplicationWizardDelegate) {
+			// Map the application delegate to the wizard delegate
 			((ApplicationWizardDelegate) wizardDelegate).setApplicationDelegate(delegate);
+			return (ApplicationWizardDelegate) wizardDelegate;
 		}
-		return wizardDelegate;
+		else {
+			CloudFoundryPlugin.logError("No application wizard delegate found for: " + providerID);
+		}
+		return null;
 	}
 
 	public static IApplicationWizardDelegate getDefaultJavaWebWizardDelegate() {

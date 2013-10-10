@@ -31,9 +31,11 @@ import org.eclipse.wst.server.core.ServerCore;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
- * Manages the cloud state of the modules. This can not be managed in the server
- * or behavior delegate since those get disposed every time a working copy is
- * saved.
+ * Manages the cloud state of the modules in the form of {@link ServerData}.
+ * This can not be managed in the server or behavior delegate since those get
+ * disposed every time a working copy is saved. The module cache may be accessed
+ * by multiple threads therefore multi-threaded access needs to be taken into
+ * account when modifying server data state.
  * @author Steffen Pingel
  */
 public class ModuleCache {
@@ -77,7 +79,8 @@ public class ModuleCache {
 		 * different deployment name than the local module name that typically
 		 * matches the workspace project name for the app, if the project is
 		 * accessible).
-		 * @param module whos mapping to a local module needs to be updated.
+		 * @param module whose mapping to a local module needs to be updated and
+		 * persisted.
 		 */
 		public synchronized void updateCloudApplicationModule(CloudFoundryApplicationModule module) {
 			// Update the map of module ID -> Deployed Application name
@@ -88,7 +91,7 @@ public class ModuleCache {
 			}
 		}
 
-		public synchronized Collection<CloudFoundryApplicationModule> getCloudModules() {
+		public synchronized Collection<CloudFoundryApplicationModule> getExistingCloudModules() {
 			return new ArrayList<CloudFoundryApplicationModule>(cloudModules);
 		}
 
@@ -243,7 +246,7 @@ public class ModuleCache {
 			}
 		}
 
-		synchronized CloudFoundryApplicationModule getOrCreateCloudModule(IModule module) {
+		synchronized CloudFoundryApplicationModule getExistingCloudModule(IModule module) {
 			if (module == null) {
 				return null;
 			}
@@ -266,10 +269,24 @@ public class ModuleCache {
 				}
 				// If not available, it means it needs to be created below.
 			}
-			else {
-				// Cloud module needs to be created, and by default, if no
-				// deployed name is available, assume the local name is the
-				// deployed application name
+			return null;
+		}
+
+		synchronized CloudFoundryApplicationModule getOrCreateCloudModule(IModule module) {
+
+			// See if the cloud module for the given local IModule has been
+			// created.
+			CloudFoundryApplicationModule appModule = getExistingCloudModule(module);
+			if (appModule != null) {
+				return appModule;
+			}
+
+			// Otherwise check if there is a mapping between the IModule ID and
+			// the deployed application name, and
+			// search for a cloud module that matches the deployed application
+			// name
+			String deployedAppName = getLocalModuleToCloudModuleMapping().get(module.getId());
+			if (deployedAppName == null) {
 				deployedAppName = module.getName();
 			}
 

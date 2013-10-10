@@ -14,8 +14,8 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.Staging;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
+import org.springframework.util.Assert;
 
 /**
  * 
@@ -30,63 +30,31 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeplo
  */
 public class ApplicationWizardDescriptor {
 
-	private Staging staging;
-
-	private ApplicationDeploymentInfo deploymentInfo;
-
-	private ApplicationAction deploymentMode;
+	private final ApplicationDeploymentInfo deploymentInfo;
 
 	private List<CloudService> createdCloudServices;
 
-	private List<String> selectedServicesForBinding;
+	private boolean persistDeploymentInfo;
 
-	public ApplicationWizardDescriptor() {
+	public ApplicationWizardDescriptor(ApplicationDeploymentInfo deploymentInfo) {
+		Assert.notNull(deploymentInfo);
 
-	}
-
-	/**
-	 * Required value. Must not be null
-	 * @return non-null application framework
-	 */
-	public Staging getStaging() {
-		return staging;
-	}
-
-	public void setStartCommand(String startCommand) {
-		String buildpack = staging != null ? staging.getBuildpackUrl() : null;
-		staging = new Staging(startCommand, buildpack);
-	}
-
-	public void setBuildpack(String buildpack) {
-		String existingStartCommand = staging != null ? staging.getCommand() : null;
-		staging = new Staging(existingStartCommand, buildpack);
-	}
-
-	/**
-	 * Required value. Must not be null
-	 * @return non-null application deployment info.
-	 */
-	public ApplicationDeploymentInfo getDeploymentInfo() {
-		return deploymentInfo;
-	}
-
-	public void setDeploymentInfo(ApplicationDeploymentInfo deploymentInfo) {
 		this.deploymentInfo = deploymentInfo;
 	}
 
-	/**
-	 * Optional value. Indicates whether an application should be started
-	 * automatically after being pushed. If null, the application will be pushed
-	 * to the Cloud Foundry server, but not started automatically.
-	 * @return Deployment mode if the application needs to be started after
-	 * being pushed, or null if app should not be started
-	 */
-	public ApplicationAction getStartDeploymentMode() {
-		return deploymentMode;
+	public void setStartCommand(String startCommand) {
+		Staging staging = deploymentInfo.getStaging();
+		String buildpackUrl = staging != null ? staging.getBuildpackUrl() : null;
+		staging = new Staging(startCommand, buildpackUrl);
+		deploymentInfo.setStaging(staging);
 	}
 
-	public void setStartDeploymentMode(ApplicationAction deploymentMode) {
-		this.deploymentMode = deploymentMode;
+	public void setBuildpack(String buildpack) {
+		Staging staging = deploymentInfo.getStaging();
+
+		String existingStartCommand = staging != null ? staging.getCommand() : null;
+		staging = new Staging(existingStartCommand, buildpack);
+		deploymentInfo.setStaging(staging);
 	}
 
 	/**
@@ -104,17 +72,22 @@ public class ApplicationWizardDescriptor {
 	}
 
 	/**
-	 * Optional value. If no services are bound to the application, return null
-	 * or empty list.
-	 * @return Optional list of bound services, or null/empty list if no
-	 * services should be bound to the application
+	 * Its never null. An application wizard descriptor always wraps around an
+	 * actual deployment info.
+	 * @return non-null deployment info
 	 */
-	public List<String> getSelectedServicesForBinding() {
-		return selectedServicesForBinding;
+	public ApplicationDeploymentInfo getDeploymentInfo() {
+		return deploymentInfo;
 	}
 
-	public void setSelectedServicesForBinding(List<String> selectedServicesForBinding) {
-		this.selectedServicesForBinding = selectedServicesForBinding;
+	/**
+	 * 
+	 * @param persist true if the deployment descriptor should be persisted in
+	 * the app's manifest file. If the manifest file already exists, it will be
+	 * overwritten. False otherwise.
+	 */
+	public void persistDeploymentInfo(boolean persist) {
+		this.persistDeploymentInfo = persist;
 	}
 
 }

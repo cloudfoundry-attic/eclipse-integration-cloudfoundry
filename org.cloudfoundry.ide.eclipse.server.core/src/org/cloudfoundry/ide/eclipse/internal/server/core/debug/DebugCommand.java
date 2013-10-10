@@ -74,10 +74,10 @@ public abstract class DebugCommand {
 	}
 
 	/**
-	 * Computers a new debugger connection identifier based on the given server
+	 * Computes a new debugger connection identifier based on the given server
 	 * and modules.
 	 * @param server must not be null
-	 * @param modules must not be null
+	 * @param modules must not be null or empty
 	 * @return non-null debugger connection identifier
 	 */
 	public static String getDebuggerConnectionIdentifier(CloudFoundryServer server, IModule[] modules) {
@@ -86,7 +86,8 @@ public abstract class DebugCommand {
 		idBuffer.append(server.getUrl());
 		idBuffer.append(server.getUsername());
 
-		CloudFoundryApplicationModule appModule = server.getApplication(modules);
+		
+		CloudFoundryApplicationModule appModule = server.getExistingCloudModule(modules[0]);
 		if (appModule != null) {
 			idBuffer.append(appModule.getDeployedApplicationName());
 		}

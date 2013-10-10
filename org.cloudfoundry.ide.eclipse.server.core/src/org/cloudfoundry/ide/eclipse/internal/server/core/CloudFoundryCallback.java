@@ -12,11 +12,11 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.DeploymentDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourListener;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 /**
@@ -97,8 +97,8 @@ public abstract class CloudFoundryCallback implements BehaviourListener {
 	public abstract void displayCaldecottTunnelConnections(CloudFoundryServer server,
 			List<CaldecottTunnelDescriptor> descriptors);
 
-	public abstract DeploymentDescriptor prepareForDeployment(CloudFoundryServer server,
-			CloudFoundryApplicationModule module, IProgressMonitor monitor);
+	public abstract void prepareForDeployment(CloudFoundryServer server,
+			CloudFoundryApplicationModule module, IProgressMonitor monitor) throws CoreException;
 
 	public void applicationAboutToStart(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 

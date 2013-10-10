@@ -43,6 +43,22 @@ import org.eclipse.wst.server.core.internal.ServerPlugin;
 import org.eclipse.wst.server.core.model.ServerDelegate;
 
 /**
+ * Local representation of a Cloud Foundry server, with API to obtain local
+ * {@link IModule} for deployed applications, as well as persist local server
+ * information like the server name, or user credentials.
+ * <p/>
+ * Note that a local cloud foundry server is an instance that may be discarded
+ * and created multiple times by the underlying local server framework even
+ * while the same server is still connected, typically when server changes are
+ * saved (e.g. changing a server name), therefore the server instance should NOT
+ * hold state intended to be present during the life span of an Eclipse runtime
+ * session. Use an appropriate caching mechanism if application or server state
+ * needs to be cached during a runtime session. See {@link ModuleCache}.
+ * <p/>
+ * In addition, the local server instance delegates to a
+ * {@link CloudFoundryServerBehaviour} for ALL CF client calls. Do NOT add
+ * client calls in the server instance. These should be added to the
+ * {@link CloudFoundryServerBehaviour}.
  * @author Christian Dupuis
  * @author Terry Denney
  * @author Leo Dos Santos
@@ -169,13 +185,20 @@ public class CloudFoundryServer extends ServerDelegate {
 	/**
 	 * Fetches the corresponding Cloud Foundry-aware module for the given WST
 	 * IModule. The Cloud Foundry-aware module contains additional information
-	 * that is specific to Cloud Foundry. If it doesn't exist, it will attempt
-	 * to create and cache it. All cloud modules are cached, so if a cached version
-	 * exists, it will return the cached version.
+	 * that is specific to Cloud Foundry. It will not create the module if it does
+	 * not exist.
 	 * @param module WST local module
-	 * @return Cloud module, if it exists, or null if it could not be created.
+	 * @return Cloud module, if it exists, or null.
 	 */
-	public CloudFoundryApplicationModule getCloudModule(IModule module) {
+	public CloudFoundryApplicationModule getExistingCloudModule(IModule module) {
+		if (module instanceof CloudFoundryApplicationModule) {
+			return (CloudFoundryApplicationModule) module;
+		}
+
+		return getData() != null ? getData().getExistingCloudModule(module) : null;
+	}
+
+	private CloudFoundryApplicationModule getOrCreateCloudModule(IModule module) {
 		if (module instanceof CloudFoundryApplicationModule) {
 			return (CloudFoundryApplicationModule) module;
 		}
@@ -183,15 +206,58 @@ public class CloudFoundryServer extends ServerDelegate {
 		return getData() != null ? getData().getOrCreateCloudModule(module) : null;
 	}
 
-	public CloudFoundryApplicationModule getApplication(IModule[] modules) {
-		if (modules != null && modules.length > 0) {
-			return getCloudModule(modules[0]);
+	/**
+	 * Gets an existing Cloud module for the given {@link IModule} or if it
+	 * doesn't exist, it will attempt to create it.
+	 * @param module
+	 * @return existing cloud module, or if not yet created, creates and returns
+	 * it.
+	 */
+	public CloudFoundryApplicationModule getCloudModule(IModule module) {
+		if (module == null) {
+			return null;
 		}
-		return null;
+		return getOrCreateCloudModule(module);
 	}
 
-	public Collection<CloudFoundryApplicationModule> getApplicationModules() {
-		return getData() != null ? getData().getCloudModules() : new ArrayList<CloudFoundryApplicationModule>(0);
+	/**
+	 * Update all Cloud Modules for the list of local server {@link IModule}. If all modules have been mapped to a Cloud
+	 * module, {@link IStatus#OK} is returned. If no modules are present
+	 * (nothing is deployed), {@link IStatus#OK} also returned. Otherwise, if
+	 * there are modules with missing mapped Cloud Application modules,
+	 * {@link IStatus#ERROR} is returned.
+	 * @return {@link IStatus#OK} if all local server {@link IModule} have a
+	 * Cloud Application module mapping, or list of {@link IModule} in the
+	 * server is empty. Otherwise, {@link IStatus#ERROR} returned.
+	 */
+	public IStatus refreshCloudModules() {
+		if (getServerOriginal() == null) {
+			return CloudFoundryPlugin
+					.getErrorStatus("Server original for " + getDeploymentName() + " cannot be found.");
+		}
+		IModule[] modules = getServerOriginal().getModules();
+		if (modules != null) {
+			StringWriter writer = new StringWriter();
+
+			for (IModule module : modules) {
+				CloudFoundryApplicationModule appModule = getCloudModule(module);
+				if (appModule == null) {
+					writer.append("Failed to create Cloud Foundry application module for: ");
+					writer.append(module.getId());
+					writer.append('\n');
+				}
+			}
+			String message = writer.toString();
+			if (message.length() > 0) {
+				CloudFoundryPlugin.getErrorStatus(message);
+			}
+		}
+
+		return Status.OK_STATUS;
+	}
+
+	public Collection<CloudFoundryApplicationModule> getExistingCloudModules() {
+		return getData() != null ? getData().getExistingCloudModules() : new ArrayList<CloudFoundryApplicationModule>(0);
 	}
 
 	public CloudFoundryServerBehaviour getBehaviour() {
@@ -520,7 +586,7 @@ public class CloudFoundryServer extends ServerDelegate {
 			for (IModule module : server.getModules()) {
 				// Find the corresponding Cloud Foundry application module for
 				// the given WST server IModule
-				CloudFoundryApplicationModule cloudModule = getCloudModule(module);
+				CloudFoundryApplicationModule cloudModule = getOrCreateCloudModule(module);
 
 				if (cloudModule == null) {
 					CloudFoundryPlugin.logError("Unable to find local Cloud Foundry application module for : "
@@ -569,7 +635,7 @@ public class CloudFoundryServer extends ServerDelegate {
 			server.setExternalModules(externalModules.toArray(new IModule[0]));
 
 			for (IModule module : server.getModules()) {
-				CloudFoundryApplicationModule appModule = getCloudModule(module);
+				CloudFoundryApplicationModule appModule = getExistingCloudModule(module);
 				updateState(server, appModule);
 			}
 
@@ -672,10 +738,13 @@ public class CloudFoundryServer extends ServerDelegate {
 		}
 	}
 
-	public CloudFoundryApplicationModule getApplicationModule(String appName) throws CoreException {
+	/**
+	 * @return Cloud application module, if it exists for the given app name. Null otherwise.
+	 */
+	public CloudFoundryApplicationModule getExistingCloudModule(String appName) throws CoreException {
 
 		CloudFoundryApplicationModule appModule = null;
-		Collection<CloudFoundryApplicationModule> modules = getApplicationModules();
+		Collection<CloudFoundryApplicationModule> modules = getExistingCloudModules();
 		if (modules != null) {
 			for (CloudFoundryApplicationModule module : modules) {
 				if (appName.equals(module.getDeployedApplicationName())) {
