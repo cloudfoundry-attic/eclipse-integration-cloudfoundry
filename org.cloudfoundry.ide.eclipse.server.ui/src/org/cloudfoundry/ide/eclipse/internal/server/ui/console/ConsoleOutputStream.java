@@ -59,7 +59,6 @@ public abstract class ConsoleOutputStream implements ICloudFoundryConsoleOutputS
 		final String content = getContent(monitor);
 
 		if (content != null && content.length() > 0) {
-
 			try {
 				outputStream.write(content);
 			}
@@ -71,8 +70,20 @@ public abstract class ConsoleOutputStream implements ICloudFoundryConsoleOutputS
 		return null;
 	}
 
+	/**
+	 * Get content for the file. If no content is available , return null. If
+	 * error occurred, throw exception.
+	 * @param monitor
+	 * @return content for the file, if available. Otherwise return null if no
+	 * content is available.
+	 * @throws CoreException if error occurred while fetching content.
+	 */
 	abstract protected String getContent(IProgressMonitor monitor) throws CoreException;
 
+	/**
+	 * 
+	 * @return symbolic label that identifies the file stream.
+	 */
 	abstract protected String getID();
 
 	@Override
