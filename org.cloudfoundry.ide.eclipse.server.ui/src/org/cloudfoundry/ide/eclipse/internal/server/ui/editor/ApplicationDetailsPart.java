@@ -392,8 +392,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			appModule = getUpdatedApplication();
 		}
 		catch (CoreException ce) {
-			String message = getApplicationRefreshErrorMessage("Unable to refresh editor state.");
-			logError(message);
+			logApplicationModuleFailureError("Unable to refresh editor state");
 		}
 		// Refresh the state of the editor regardless of whether there is a
 		// module or not
@@ -657,8 +656,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 					}
 				}
 				catch (CoreException ce) {
-					String message = getApplicationRefreshErrorMessage("Unable to open Mapped URL wizard");
-					logError(message);
+					logApplicationModuleFailureError("Unable to open Mapped URL wizard");
 				}
 
 			}
@@ -696,8 +694,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 							new UpdateApplicationMemoryAction(editorPage, memory, appModule).run();
 						}
 						catch (CoreException ce) {
-							String message = getApplicationRefreshErrorMessage("Unable to update application memory");
-							logError(message);
+							logApplicationModuleFailureError("Unable to update application memory");
 						}
 					}
 				}
@@ -722,8 +719,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 						new UpdateInstanceCountAction(editorPage, instanceSpinner, appModule).run();
 					}
 					catch (CoreException ce) {
-						String errorMessage = getApplicationRefreshErrorMessage("Unable to update application instances");
-						logError(errorMessage);
+						logApplicationModuleFailureError("Unable to update application instances");
 					}
 				}
 			}
@@ -802,11 +798,13 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	}
 
-	protected String getApplicationRefreshErrorMessage(String issue) {
+	protected void logApplicationModuleFailureError(String issue) {
 		if (issue == null) {
 			issue = "Unknown cause";
 		}
-		return "Failed to resolve a cloud application module - " + issue + " - Try to manually refresh the editor.";
+		String errorMessage = "Failed to resolve a cloud application module - " + issue
+				+ " - Try to manually refresh the editor.";
+		logError(errorMessage);
 	}
 
 	protected void createDebugArea(Composite parent) {
@@ -1118,10 +1116,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			manager.add(new RemoveServicesFromApplicationAction(selection, appModule, serverBehaviour, editorPage));
 		}
 		catch (CoreException ce) {
-			String errorMessage = getApplicationRefreshErrorMessage("Unable to determine bound services context menu actions");
-			logError(errorMessage);
+			logApplicationModuleFailureError("Unable to determine bound services context menu actions");
 		}
-
 	}
 
 	private void fillInstancesContextMenu(IMenuManager manager) {
@@ -1143,8 +1139,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 							.getId())));
 				}
 				catch (CoreException ce) {
-					String errorMessage = getApplicationRefreshErrorMessage("Unable to generate application instances context menu");
-					logError(errorMessage);
+					logApplicationModuleFailureError("Unable to generate application instances context menu");
 				}
 				catch (NumberFormatException e) {
 					// ignore
@@ -1216,8 +1211,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			new StartStopApplicationAction(editorPage, action, appModule, serverBehaviour, module).run();
 		}
 		catch (CoreException ce) {
-			String errorMessage = getApplicationRefreshErrorMessage("Unable to perform " + action.getDisplayName());
-			logError(errorMessage);
+			logApplicationModuleFailureError("Unable to perform " + action.getDisplayName());
 		}
 	}
 
@@ -1259,12 +1253,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				job.schedule();
 			}
 			catch (CoreException ce) {
-				String errorMessage = getApplicationRefreshErrorMessage("Unable to complete debugging session termination");
-				logError(errorMessage);
+				logApplicationModuleFailureError("Unable to refresh debug buttons");
 			}
-
 		}
-
 	}
-
 }
