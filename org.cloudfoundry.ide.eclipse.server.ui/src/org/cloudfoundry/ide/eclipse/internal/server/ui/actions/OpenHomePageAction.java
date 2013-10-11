@@ -82,7 +82,7 @@ public class OpenHomePageAction implements IObjectActionDelegate {
 	private CloudFoundryApplicationModule getSelectedCloudAppModule() {
 		CloudFoundryServer cloudServer = (CloudFoundryServer) selectedServer
 				.loadAdapter(CloudFoundryServer.class, null);
-		return cloudServer.getCloudModule(selectedModule);
+		return cloudServer.getExistingCloudModule(selectedModule);
 	}
 
 	public static boolean open(CloudFoundryApplicationModule cloudApp) {

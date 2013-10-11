@@ -50,28 +50,14 @@ public class ApplicationWizardRegistry {
 		if (applicationProvider == null) {
 			return null;
 		}
-		String providerID = applicationProvider.getProviderID();
-		IApplicationDelegate delegate = applicationProvider.getDelegate();
-
-		if (delegate == null) {
-			CloudFoundryPlugin.logError("No application delegate found for: " + providerID);
-			return null;
-		}
-
-		IApplicationWizardDelegate wizardDelegate = null;
 		if (wizardProviders == null) {
 			load();
 		}
-		ApplicationWizardProvider wizardProvider = wizardProviders.get(providerID);
-		wizardDelegate = wizardProvider != null ? wizardProvider.getDelegate() : null;
-		if (wizardDelegate instanceof ApplicationWizardDelegate) {
-			// Map the application delegate to the wizard delegate
-			((ApplicationWizardDelegate) wizardDelegate).setApplicationDelegate(delegate);
-			return (ApplicationWizardDelegate) wizardDelegate;
+		ApplicationWizardProvider wizardProvider = wizardProviders.get(applicationProvider.getProviderID());
+		if (wizardProvider != null) {
+			return wizardProvider.getDelegate(applicationProvider.getDelegate());
 		}
-		else {
-			CloudFoundryPlugin.logError("No application wizard delegate found for: " + providerID);
-		}
+
 		return null;
 	}
 

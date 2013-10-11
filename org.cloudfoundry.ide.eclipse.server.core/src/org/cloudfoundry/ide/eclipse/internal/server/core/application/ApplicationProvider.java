@@ -27,7 +27,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
  * point attributes, like provider ID.
  * 
  */
-public class ApplicationProvider extends AbstractApplicationProvider<IApplicationDelegate> {
+public class ApplicationProvider extends FrameworkProvider<IApplicationDelegate> {
 
 	private static final String MODULE_ID_ELEMENT = "moduleID";
 

@@ -21,6 +21,7 @@ import org.cloudfoundry.client.lib.domain.InstanceInfo;
 import org.cloudfoundry.client.lib.domain.InstanceStats;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
@@ -42,10 +43,10 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateApplication
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateInstanceCountAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AppStatsContentProvider.InstanceStatsAndInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationActionMenuControl.IButtonMenuListener;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationDetailsPart.ApplicationDetailsDebugListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.MappedURLsWizard;
 import org.cloudfoundry.ide.eclipse.server.rse.ConfigureRemoteCloudFoundryAction;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -382,16 +383,26 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	}
 
 	public void refreshUI() {
-
+		logError(null);
 		resizeTableColumns();
 
 		canUpdate = false;
-		CloudFoundryApplicationModule appModule = getUpdatedApplication();
+		CloudFoundryApplicationModule appModule = null;
+		try {
+			appModule = getUpdatedApplication();
+		}
+		catch (CoreException ce) {
+			String message = getApplicationRefreshErrorMessage("Unable to refresh editor state.");
+			logError(message);
+		}
+		// Refresh the state of the editor regardless of whether there is a
+		// module or not
 		refreshPublishState(appModule);
 
 		if (appModule == null) {
 			return;
 		}
+
 		// The rest of the refresh requires appModule to be non-null
 		updateServerNameDisplay(appModule);
 
@@ -627,24 +638,29 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		editURI.addHyperlinkListener(new HyperlinkAdapter() {
 			@Override
 			public void linkActivated(HyperlinkEvent e) {
-				CloudFoundryApplicationModule appModule = getExistingApplication();
 
-				if (appModule == null) {
-					return;
-				}
-				MappedURLsWizard wizard = new MappedURLsWizard(cloudServer, appModule, URIs, isPublished);
-				WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(), wizard);
-				if (dialog.open() == Window.OK) {
+				try {
+					CloudFoundryApplicationModule appModule = getExistingApplication();
 
-					CloudApplication application = appModule.getApplication();
-					if (application != null) {
-						URIs = wizard.getURLs();
-						mappedURIsLink.setText(getURIsAsLinkText(wizard.getURLs()));
-						generalSection.getParent().layout(true, true);
-						editorPage.reflow();
-						application.setUris(URIs);
+					MappedURLsWizard wizard = new MappedURLsWizard(cloudServer, appModule, URIs, isPublished);
+					WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(), wizard);
+					if (dialog.open() == Window.OK) {
+
+						CloudApplication application = appModule.getApplication();
+						if (application != null) {
+							URIs = wizard.getURLs();
+							mappedURIsLink.setText(getURIsAsLinkText(wizard.getURLs()));
+							generalSection.getParent().layout(true, true);
+							editorPage.reflow();
+							application.setUris(URIs);
+						}
 					}
 				}
+				catch (CoreException ce) {
+					String message = getApplicationRefreshErrorMessage("Unable to open Mapped URL wizard");
+					logError(message);
+				}
+
 			}
 		});
 
@@ -674,10 +690,14 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 					int selectionIndex = memoryCombo.getSelectionIndex();
 					if (selectionIndex != -1) {
 						memory = editorPage.getApplicationMemoryChoices()[selectionIndex];
-						CloudFoundryApplicationModule appModule = getExistingApplication();
 
-						if (appModule != null) {
+						try {
+							CloudFoundryApplicationModule appModule = getExistingApplication();
 							new UpdateApplicationMemoryAction(editorPage, memory, appModule).run();
+						}
+						catch (CoreException ce) {
+							String message = getApplicationRefreshErrorMessage("Unable to update application memory");
+							logError(message);
 						}
 					}
 				}
@@ -697,9 +717,13 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 			public void modifyText(ModifyEvent e) {
 				if (canUpdate) {
-					CloudFoundryApplicationModule appModule = getExistingApplication();
-					if (appModule != null) {
+					try {
+						CloudFoundryApplicationModule appModule = getExistingApplication();
 						new UpdateInstanceCountAction(editorPage, instanceSpinner, appModule).run();
+					}
+					catch (CoreException ce) {
+						String errorMessage = getApplicationRefreshErrorMessage("Unable to update application instances");
+						logError(errorMessage);
 					}
 				}
 			}
@@ -776,6 +800,13 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		// FIXNS: Disabled until debug support is present in v2
 		// createDebugArea(buttonComposite);
 
+	}
+
+	protected String getApplicationRefreshErrorMessage(String issue) {
+		if (issue == null) {
+			issue = "Unknown cause";
+		}
+		return "Failed to resolve a cloud application module - " + issue + " - Try to manually refresh the editor.";
 	}
 
 	protected void createDebugArea(Composite parent) {
@@ -1082,10 +1113,15 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		if (selection.isEmpty())
 			return;
 
-		CloudFoundryApplicationModule appModule = getExistingApplication();
-		if (appModule != null) {
+		try {
+			CloudFoundryApplicationModule appModule = getExistingApplication();
 			manager.add(new RemoveServicesFromApplicationAction(selection, appModule, serverBehaviour, editorPage));
 		}
+		catch (CoreException ce) {
+			String errorMessage = getApplicationRefreshErrorMessage("Unable to determine bound services context menu actions");
+			logError(errorMessage);
+		}
+
 	}
 
 	private void fillInstancesContextMenu(IMenuManager manager) {
@@ -1101,42 +1137,52 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			InstanceStats stats = ((InstanceStatsAndInfo) instanceObject).getStats();
 
 			if (stats != null) {
-				CloudFoundryApplicationModule appModule = getExistingApplication();
-
-				if (appModule != null) {
-					try {
-						manager.add(new ShowConsoleAction(cloudServer, appModule.getApplication(), Integer
-								.parseInt(stats.getId())));
-					}
-					catch (NumberFormatException e) {
-						// ignore
-					}
+				try {
+					CloudFoundryApplicationModule appModule = getExistingApplication();
+					manager.add(new ShowConsoleAction(cloudServer, appModule.getApplication(), Integer.parseInt(stats
+							.getId())));
+				}
+				catch (CoreException ce) {
+					String errorMessage = getApplicationRefreshErrorMessage("Unable to generate application instances context menu");
+					logError(errorMessage);
+				}
+				catch (NumberFormatException e) {
+					// ignore
 				}
 			}
 		}
 	}
 
 	/**
-	 * @return an existing cloud application module. If null, an error will be
-	 * logged.
+	 * @return an existing cloud application module. Should not be null during
+	 * the lifecycle of the editor.
+	 * @throws CoreException if application module was not resolved.
 	 */
-	protected CloudFoundryApplicationModule getExistingApplication() {
+	protected CloudFoundryApplicationModule getExistingApplication() throws CoreException {
 		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
-		String errorMessage = appModule == null ? "No Cloud Foundry application module found for: " + module.getId()
-				+ ". Unable to complete selected operation." : null;
-		logError(errorMessage);
+
+		if (appModule == null) {
+			String errorMessage = "No Cloud Foundry application module found for: " + module.getId();
+			throw CloudErrorUtil.toCoreException(errorMessage);
+		}
+
 		return appModule;
 	}
 
 	/**
-	 * @return an updated cloud applicaiton module. If it did not previously
-	 * exist, it will attempt to create it. If null, an error is logged.
+	 * @return an updated cloud application module. If it did not previously
+	 * exist, it will attempt to create it. Never null as requesting an app
+	 * module during the lifecycle of the editor should always result in
+	 * non-null app.
+	 * @throws CoreException if application does not exist
 	 */
-	protected CloudFoundryApplicationModule getUpdatedApplication() {
+	protected CloudFoundryApplicationModule getUpdatedApplication() throws CoreException {
 		CloudFoundryApplicationModule appModule = cloudServer.getCloudModule(module);
-		String errorMessage = appModule == null ? "No Cloud Foundry application module found for: " + module.getId()
-				+ ". Unable to complete selected operation." : null;
-		logError(errorMessage);
+
+		if (appModule == null) {
+			String errorMessage = "No Cloud Foundry application module found for: " + module.getId();
+			throw CloudErrorUtil.toCoreException(errorMessage);
+		}
 		return appModule;
 	}
 
@@ -1165,8 +1211,14 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	}
 
 	private void startStopApplication(ApplicationAction action) {
-		CloudFoundryApplicationModule appModule = getExistingApplication();
-		new StartStopApplicationAction(editorPage, action, appModule, serverBehaviour, module).run();
+		try {
+			CloudFoundryApplicationModule appModule = getExistingApplication();
+			new StartStopApplicationAction(editorPage, action, appModule, serverBehaviour, module).run();
+		}
+		catch (CoreException ce) {
+			String errorMessage = getApplicationRefreshErrorMessage("Unable to perform " + action.getDisplayName());
+			logError(errorMessage);
+		}
 	}
 
 	private static String getURIsAsLinkText(List<String> uris) {
@@ -1189,21 +1241,28 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		public void handleDebuggerTermination() {
 
-			final CloudFoundryApplicationModule appModule = getExistingApplication();
+			try {
+				final CloudFoundryApplicationModule appModule = getExistingApplication();
 
-			UIJob job = new UIJob("Debug Termination Job") {
+				UIJob job = new UIJob("Debug Termination Job") {
 
-				public IStatus runInUIThread(IProgressMonitor arg0) {
+					public IStatus runInUIThread(IProgressMonitor arg0) {
 
-					refreshApplicationDeploymentButtons(appModule);
-					return Status.OK_STATUS;
-				}
+						refreshApplicationDeploymentButtons(appModule);
+						return Status.OK_STATUS;
+					}
 
-			};
-			job.setSystem(true);
-			job.setRule(ResourcesPlugin.getWorkspace().getRuleFactory().buildRule());
-			job.setPriority(Job.INTERACTIVE);
-			job.schedule();
+				};
+				job.setSystem(true);
+				job.setRule(ResourcesPlugin.getWorkspace().getRuleFactory().buildRule());
+				job.setPriority(Job.INTERACTIVE);
+				job.schedule();
+			}
+			catch (CoreException ce) {
+				String errorMessage = getApplicationRefreshErrorMessage("Unable to complete debugging session termination");
+				logError(errorMessage);
+			}
+
 		}
 
 	}

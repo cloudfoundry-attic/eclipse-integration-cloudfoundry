@@ -185,8 +185,11 @@ public class CloudFoundryServer extends ServerDelegate {
 	/**
 	 * Fetches the corresponding Cloud Foundry-aware module for the given WST
 	 * IModule. The Cloud Foundry-aware module contains additional information
-	 * that is specific to Cloud Foundry. It will not create the module if it does
-	 * not exist.
+	 * that is specific to Cloud Foundry. It will not create the module if it
+	 * does not exist. For most cases where an cloud application module is
+	 * expected to already exist, this method is preferable than
+	 * {@link #getCloudModule(IModule)}, and avoids possible bugs when an
+	 * application is being deleted. See {@link #getCloudModule(IModule)}.
 	 * @param module WST local module
 	 * @return Cloud module, if it exists, or null.
 	 */
@@ -209,6 +212,22 @@ public class CloudFoundryServer extends ServerDelegate {
 	/**
 	 * Gets an existing Cloud module for the given {@link IModule} or if it
 	 * doesn't exist, it will attempt to create it.
+	 * <p/>
+	 * NOTE: care should be taken when invoking this method. Only invoke in
+	 * cases where a cloud module may not yet exist, for example, when
+	 * refreshing list of currently deployed applications for the first time, or
+	 * deploying an application for the first time. If a cloud module is already
+	 * expected to exist for some operation (e.g., modifying properties for an
+	 * application that is already deployed, like scaling memory, changing
+	 * mapped URLs, binding services etc..) , use
+	 * {@link #getExistingCloudModule(IModule)} instead. The reason for this is
+	 * to avoid recreating a module that may be in the processing of being
+	 * deleted by another operation, but the corresponding WST {@link IModule}
+	 * may still be referenced by the local server. Using
+	 * {@link #getExistingCloudModule(IModule)} is also preferable for better
+	 * error detection, as if a module is expected to exist for an operation,
+	 * but it doesn't it may indicate that an error occurred in refreshing the
+	 * list of deployed applications.
 	 * @param module
 	 * @return existing cloud module, or if not yet created, creates and returns
 	 * it.
@@ -221,11 +240,12 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	/**
-	 * Update all Cloud Modules for the list of local server {@link IModule}. If all modules have been mapped to a Cloud
-	 * module, {@link IStatus#OK} is returned. If no modules are present
-	 * (nothing is deployed), {@link IStatus#OK} also returned. Otherwise, if
-	 * there are modules with missing mapped Cloud Application modules,
-	 * {@link IStatus#ERROR} is returned.
+	 * Update all Cloud Modules for the list of local server {@link IModule}. If
+	 * all modules have been mapped to a Cloud module, {@link IStatus#OK} is
+	 * returned. If no modules are present (nothing is deployed),
+	 * {@link IStatus#OK} also returned. Otherwise, if there are modules with
+	 * missing mapped Cloud Application modules, {@link IStatus#ERROR} is
+	 * returned.
 	 * @return {@link IStatus#OK} if all local server {@link IModule} have a
 	 * Cloud Application module mapping, or list of {@link IModule} in the
 	 * server is empty. Otherwise, {@link IStatus#ERROR} returned.
@@ -257,7 +277,8 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	public Collection<CloudFoundryApplicationModule> getExistingCloudModules() {
-		return getData() != null ? getData().getExistingCloudModules() : new ArrayList<CloudFoundryApplicationModule>(0);
+		return getData() != null ? getData().getExistingCloudModules()
+				: new ArrayList<CloudFoundryApplicationModule>(0);
 	}
 
 	public CloudFoundryServerBehaviour getBehaviour() {
@@ -739,7 +760,8 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	/**
-	 * @return Cloud application module, if it exists for the given app name. Null otherwise.
+	 * @return Cloud application module, if it exists for the given app name.
+	 * Null otherwise.
 	 */
 	public CloudFoundryApplicationModule getExistingCloudModule(String appName) throws CoreException {
 

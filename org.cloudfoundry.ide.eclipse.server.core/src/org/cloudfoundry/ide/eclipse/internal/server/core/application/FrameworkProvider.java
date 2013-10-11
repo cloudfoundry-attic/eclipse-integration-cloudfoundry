@@ -22,7 +22,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
  * @param <T> Type of delegate that this provider is creating from an extension
  * point definition
  */
-public abstract class AbstractApplicationProvider<T> {
+public class FrameworkProvider<T> {
 
 	private static final String CLASS_ELEMENT = "class";
 
@@ -36,7 +36,7 @@ public abstract class AbstractApplicationProvider<T> {
 
 	private final String extensionPointID;
 
-	protected AbstractApplicationProvider(IConfigurationElement configurationElement, String extensionPointID) {
+	protected FrameworkProvider(IConfigurationElement configurationElement, String extensionPointID) {
 		this.configurationElement = configurationElement;
 		this.extensionPointID = extensionPointID;
 	}

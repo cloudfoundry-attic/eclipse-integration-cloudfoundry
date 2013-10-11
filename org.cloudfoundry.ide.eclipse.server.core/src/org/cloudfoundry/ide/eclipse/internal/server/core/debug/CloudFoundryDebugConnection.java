@@ -41,7 +41,7 @@ public class CloudFoundryDebugConnection {
 		final List<List<DebugConnectionDescriptor>> resolvedDescriptors = new ArrayList<List<DebugConnectionDescriptor>>();
 
 		final CloudFoundryApplicationModule appModule = modules != null && modules.length > 0 ? cloudFoundryServer
-				.getCloudModule(modules[0]) : null;
+				.getExistingCloudModule(modules[0]) : null;
 
 		if (appModule != null) {
 			try {

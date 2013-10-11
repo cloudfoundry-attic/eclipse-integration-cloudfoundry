@@ -116,7 +116,7 @@ public abstract class DebugCommand {
 	}
 
 	public CloudFoundryApplicationModule getApplicationModule() {
-		return getCloudFoundryServer().getCloudModule(modules[0]);
+		return getCloudFoundryServer().getExistingCloudModule(modules[0]);
 	}
 
 	public void run(IProgressMonitor monitor) {

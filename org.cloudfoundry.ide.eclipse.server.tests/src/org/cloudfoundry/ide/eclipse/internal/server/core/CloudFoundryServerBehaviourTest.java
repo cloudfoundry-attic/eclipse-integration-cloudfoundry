@@ -74,7 +74,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		moduleState = server.getModulePublishState(modules);
 		// assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
-		CloudFoundryApplicationModule appModule = cloudServer.getCloudModule(modules[0]);
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
 		List<String> uris = appModule.getApplication().getUris();
 		assertEquals(Collections.singletonList(harness.getUrl("dynamic-webapp")), uris);
 
@@ -220,7 +220,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		moduleState = server.getModulePublishState(modules);
 		// assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
-		CloudFoundryApplicationModule appModule = cloudServer.getCloudModule(modules[0]);
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
 		List<String> uris = appModule.getApplication().getUris();
 		assertEquals(Collections.singletonList(harness.getUrl("dynamic-webapp")), uris);
 
@@ -249,7 +249,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		IModule[] modules = server.getModules();
 		serverBehavior.deployOrStartModule(modules, true, null);
 
-		CloudFoundryApplicationModule module = cloudServer.getCloudModule(modules[0]);
+		CloudFoundryApplicationModule module = cloudServer.getExistingCloudModule(modules[0]);
 
 		// wait 1s until app is actually started
 		URI uri = new URI("http://" + harness.getUrl("dynamic-webapp") + "/index.html");

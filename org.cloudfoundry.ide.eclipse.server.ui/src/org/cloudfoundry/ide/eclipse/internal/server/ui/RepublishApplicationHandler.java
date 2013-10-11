@@ -101,7 +101,7 @@ public class RepublishApplicationHandler {
 
 						@Override
 						protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
-							boolean found = cloudServer.getCloudModule(modules[0]) != null;
+							boolean found = cloudServer.getExistingCloudModule(modules[0]) != null;
 							if (found) {
 								cloudServer.getBehaviour().refreshModules(monitor);
 							}

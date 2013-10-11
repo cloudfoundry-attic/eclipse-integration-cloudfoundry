@@ -218,43 +218,38 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				for (IModule module : modules) {
-					final CloudFoundryApplicationModule appModule = cloudServer.getCloudModule(module);
+					final CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
 					List<String> servicesToDelete = new ArrayList<String>();
 
-					List<CloudApplication> applications = client.getApplications();
+					CloudApplication application = client.getApplication(appModule.getDeployedApplicationName());
 
-					for (CloudApplication application : applications) {
-						if (application.getName().equals(appModule.getDeployedApplicationName())) {
-							// Fix for STS-2416: Get the CloudApplication from
-							// the client again, as the CloudApplication
-							// associate with the WTP ApplicationModule may be
-							// out of date and have an out of date list of
-							// services.
-							List<String> actualServices = application.getServices();
-							if (actualServices != null) {
-								// This has to be used instead of addAll(..), as
-								// there is a chance the list is non-empty but
-								// contains null entries
-								for (String serviceName : actualServices) {
-									if (serviceName != null) {
-										servicesToDelete.add(serviceName);
-									}
-								}
+					// Fix for STS-2416: Get the CloudApplication from
+					// the client again, as the CloudApplication
+					// mapped to the local Cloud application module may be
+					// out of date and have an out of date list of
+					// services.
+					List<String> actualServices = application.getServices();
+					if (actualServices != null) {
+						// This has to be used instead of addAll(..), as
+						// there is a chance the list is non-empty but
+						// contains null entries
+						for (String serviceName : actualServices) {
+							if (serviceName != null) {
+								servicesToDelete.add(serviceName);
 							}
-
-							// Close any Caldecott tunnels before deleting app
-							if (TunnelBehaviour.isCaldecottApp(appModule.getDeployedApplicationName())) {
-								// Delete all tunnels if the Caldecott app is
-								// removed
-								new TunnelBehaviour(cloudServer).stopAndDeleteAllTunnels(progress);
-							}
-
-							client.deleteApplication(appModule.getDeployedApplicationName());
-
-							break;
 						}
 					}
+
+					// Close any Caldecott tunnels before deleting app
+					if (TunnelBehaviour.isCaldecottApp(appModule.getDeployedApplicationName())) {
+						// Delete all tunnels if the Caldecott app is
+						// removed
+						new TunnelBehaviour(cloudServer).stopAndDeleteAllTunnels(progress);
+					}
+
+					client.deleteApplication(appModule.getDeployedApplicationName());
+
 					cloudServer.removeApplication(appModule);
 
 					// Be sure the cloud application mapping is removed
@@ -262,6 +257,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// module
 					appModule.setCloudApplication(null);
 
+					// Prompt the user to delete services as well
 					if (deleteServices && !servicesToDelete.isEmpty()) {
 						CloudFoundryPlugin.getCallback().deleteServices(servicesToDelete, cloudServer);
 						CloudFoundryPlugin.getDefault().fireServicesUpdated(cloudServer);
@@ -617,10 +613,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	/**
 	 * Returns non-null Cloud application module mapped to the first module in
-	 * the list of modules. If the cloud module module does not exist for the given module, it will attempt to
-	 * create it. To avoid re-creating a cloud application module that may have been deleted,
-	 * restrict invoking this method to only operations that start, restart, or
-	 * update an application. Should not be called when deleting an application.
+	 * the list of modules. If the cloud module module does not exist for the
+	 * given module, it will attempt to create it. To avoid re-creating a cloud
+	 * application module that may have been deleted, restrict invoking this
+	 * method to only operations that start, restart, or update an application.
+	 * Should not be called when deleting an application.
 	 * @param local WST modules representing app to be deployed.
 	 * @return non-null Cloud Application module mapped to the given WST module.
 	 * @throws CoreException if no modules specified or mapped cloud application
@@ -725,7 +722,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			server.setModuleState(modules, IServer.STATE_STOPPING);
 
 			CloudFoundryServer cloudServer = getCloudFoundryServer();
-			final CloudFoundryApplicationModule cloudModule = cloudServer.getCloudModule(modules[0]);
+			final CloudFoundryApplicationModule cloudModule = cloudServer.getExistingCloudModule(modules[0]);
 
 			// CloudFoundryPlugin.getCallback().applicationStopping(getCloudFoundryServer(),
 			// cloudModule);
@@ -1228,7 +1225,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public DebugModeType getDebugModeType(IModule module, IProgressMonitor monitor) {
 		try {
 			CloudFoundryServer cloudServer = getCloudFoundryServer();
-			CloudFoundryApplicationModule cloudModule = cloudServer.getCloudModule(module);
+			CloudFoundryApplicationModule cloudModule = cloudServer.getExistingCloudModule(module);
+
+			if (cloudModule == null) {
+				CloudFoundryPlugin.logError("No cloud application module found for: " + module.getId()
+						+ ". Unable to determine debug mode.");
+				return null;
+			}
 
 			// Check if a cloud application exists (i.e., it is deployed) before
 			// determining if it is deployed in debug mode
@@ -1240,7 +1243,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		}
 		catch (CoreException e) {
-			CloudFoundryPlugin.log(e);
+			CloudFoundryPlugin.logError(e);
 		}
 		return null;
 	}
@@ -1256,7 +1259,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public void refreshApplicationInstanceStats(IModule module, IProgressMonitor monitor) throws CoreException {
 		if (module != null) {
-			CloudFoundryApplicationModule appModule = getCloudFoundryServer().getCloudModule(module);
+			CloudFoundryApplicationModule appModule = getCloudFoundryServer().getExistingCloudModule(module);
 
 			try {
 				// Update the CloudApplication in the cloud module.
@@ -1907,13 +1910,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			final Server server = (Server) getServer();
 			final CloudFoundryServer cloudServer = getCloudFoundryServer();
 			final IModule module = modules[0];
-			final CloudFoundryApplicationModule cloudModule = cloudServer.getCloudModule(module);
 
 			try {
 
 				// Update the local cloud module representing the application
 				// first.
-				cloudModule.setErrorStatus(null);
+				appModule.setErrorStatus(null);
 
 				server.setModuleState(modules, IServer.STATE_STARTING);
 
@@ -1933,7 +1935,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				if (!modules[0].isExternal()) {
 
 					final ApplicationArchive applicationArchive = generateApplicationArchiveFile(
-							appModule.getDeploymentInfo(), cloudModule, modules, server, monitor);
+							appModule.getDeploymentInfo(), appModule, modules, server, monitor);
 					File warFile = null;
 					if (applicationArchive == null) {
 						// Create a full war archive
@@ -1964,13 +1966,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					}
 
 					final File warFileFin = warFile;
+					final CloudFoundryApplicationModule appModuleFin = appModule;
 					// Now push the application resources to the server
 					new Request<Void>("Pushing the application: " + deploymentName) {
 						@Override
 						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
 								throws CoreException {
 
-							pushApplication(client, cloudModule, warFileFin, applicationArchive, progress);
+							pushApplication(client, appModuleFin, warFileFin, applicationArchive, progress);
 
 							CloudFoundryPlugin.trace("Application " + deploymentName
 									+ " pushed to Cloud Foundry server.");
@@ -1988,11 +1991,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// pushing probably succeeded without errors, therefore attempt
 				// to
 				// start the application
-				super.performDeployment(cloudModule, monitor);
+				super.performDeployment(appModule, monitor);
 
 			}
 			catch (CoreException e) {
-				cloudServer.getCloudModule(modules[0]).setErrorStatus(e);
+				appModule.setErrorStatus(e);
 				server.setModulePublishState(modules, IServer.PUBLISH_STATE_UNKNOWN);
 				throw e;
 			}
@@ -2213,7 +2216,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			}
 			catch (CoreException e) {
-				cloudServer.getCloudModule(modules[0]).setErrorStatus(e);
+				appModule.setErrorStatus(e);
 				server.setModulePublishState(modules, IServer.PUBLISH_STATE_UNKNOWN);
 				throw e;
 			}

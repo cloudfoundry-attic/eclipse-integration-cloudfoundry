@@ -14,6 +14,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryDebugTest.AbstractDebugLaunchAppHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryDebugTest.AbstractLaunchAppHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryDebugTest.CreateAppAndDebug;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryDebugTest.RestartInDebugHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
@@ -21,7 +25,6 @@ import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Ha
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
-
 
 public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 
@@ -165,7 +168,7 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 			int moduleState = server.getModuleState(modules);
 			assertEquals(IServer.STATE_STARTED, moduleState);
 
-			CloudFoundryApplicationModule appModule = cloudServer.getCloudModule(modules[0]);
+			CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
 			List<String> uris = appModule.getApplication().getUris();
 			assertEquals(Collections.singletonList(harness.getUrl("dynamic-webapp")), uris);
 
