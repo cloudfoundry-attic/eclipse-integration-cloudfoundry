@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
@@ -17,14 +18,13 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.RepublishApplicationHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.wst.server.core.IModule;
@@ -58,7 +58,7 @@ public class MappedURLsWizard extends Wizard {
 		this.existingURIs = existingURIs;
 
 		setWindowTitle("Modify Mapped URLs");
-		setNeedsProgressMonitor(false);
+		setNeedsProgressMonitor(true);
 	}
 
 	public MappedURLsWizard(CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule,
@@ -122,14 +122,37 @@ public class MappedURLsWizard extends Wizard {
 			job.schedule();
 		}
 		else {
-			result[0] = CloudUiUtil.runForked(new ICoreRunnable() {
-				public void run(IProgressMonitor monitor) throws CoreException {
-					cloudServer.getBehaviour().updateApplicationUrls(appName, page.getURLs(), monitor);
-				}
-			}, this);
+			try {
+				page.setMessage("Updating URLs. Please wait while the process completes.");
+				getContainer().run(true, true, new IRunnableWithProgress() {
+					public void run(IProgressMonitor monitor) {
+						try {
+							cloudServer.getBehaviour().updateApplicationUrls(appName, page.getURLs(), monitor);
+						}
+						catch (CoreException e) {
+							result[0] = e.getStatus();
+						}
+					}
+				});
+				page.setMessage(null);
+			}
+			catch (InvocationTargetException e) {
+				result[0] = CloudFoundryPlugin.getErrorStatus(e);
+			}
+			catch (InterruptedException e) {
+				result[0] = CloudFoundryPlugin.getErrorStatus(e);
+
+			}
+
+		}
+		if (result[0] != null && !result[0].isOK()) {
+			page.setErrorMessage("URL may not have changed correctly due to: " + result[0].getMessage());
+			return false;
+		}
+		else {
+			return true;
 		}
 
-		return result[0] != null ? result[0].isOK() : true;
 	}
 
 	public boolean isPublished() {
