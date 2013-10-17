@@ -46,7 +46,7 @@ public class CloudHostDomainUrlPart extends UIPart {
 
 	private String selectedDomain;
 
-	private Text hostText;
+	private Text subDomainText;
 
 	private Text fullURLText;
 
@@ -118,9 +118,9 @@ public class CloudHostDomainUrlPart extends UIPart {
 	 * 
 	 * @param host
 	 */
-	public void updateUrlHost(String host) {
-		if (hostText != null && !hostText.isDisposed()) {
-			hostText.setText(host);
+	public void updateUrlSubdomain(String subDomain) {
+		if (subDomainText != null && !subDomainText.isDisposed()) {
+			subDomainText.setText(subDomain);
 		}
 	}
 
@@ -140,18 +140,18 @@ public class CloudHostDomainUrlPart extends UIPart {
 
 		Label label = new Label(hostDomainComp, SWT.NONE);
 
-		label.setText("Host:");
+		label.setText("Subdomain:");
 		GridDataFactory.fillDefaults().grab(false, false).align(SWT.FILL, SWT.CENTER).applyTo(label);
 
-		hostText = new Text(hostDomainComp, SWT.BORDER);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(hostText);
+		subDomainText = new Text(hostDomainComp, SWT.BORDER);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(subDomainText);
 
-		hostText.addModifyListener(new ModifyListener() {
+		subDomainText.addModifyListener(new ModifyListener() {
 
 			public void modifyText(ModifyEvent arg0) {
 				if (modifyEventSource == null) {
-					modifyEventSource = hostText;
-					setUrlFromHostOrDomain();
+					modifyEventSource = subDomainText;
+					setUrlFromSubdomainOrDomain();
 				}
 			}
 		});
@@ -171,7 +171,7 @@ public class CloudHostDomainUrlPart extends UIPart {
 					int selectionIndex = domainCombo.getSelectionIndex();
 					if (selectionIndex != -1 && selectionIndex < domains.size()) {
 						selectedDomain = domains.get(selectionIndex);
-						setUrlFromHostOrDomain();
+						setUrlFromSubdomainOrDomain();
 					}
 				}
 			}
@@ -206,13 +206,13 @@ public class CloudHostDomainUrlPart extends UIPart {
 		return selectedDomain;
 	}
 
-	protected void setUrlFromHostOrDomain() {
+	protected void setUrlFromSubdomainOrDomain() {
 
-		String host = hostText != null && !hostText.isDisposed() ? hostText.getText() : "";
+		String subdomain = subDomainText != null && !subDomainText.isDisposed() ? subDomainText.getText() : "";
 		StringWriter urlWriter = new StringWriter();
 
-		if (host != null) {
-			urlWriter.append(host);
+		if (subdomain != null) {
+			urlWriter.append(subdomain);
 
 			if (selectedDomain != null) {
 				urlWriter.append('.');
@@ -249,9 +249,9 @@ public class CloudHostDomainUrlPart extends UIPart {
 		try {
 			CloudApplicationURL cloudAppURL = getCloudApplicationUrl(appURL);
 
-			String host = cloudAppURL.getHost();
+			String subDomain = cloudAppURL.getSubdomain();
 			selectedDomain = cloudAppURL.getDomain();
-			hostText.setText(host);
+			subDomainText.setText(subDomain);
 			setDomainInUI();
 		}
 		catch (CoreException e) {

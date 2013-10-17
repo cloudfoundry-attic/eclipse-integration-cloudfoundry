@@ -342,7 +342,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 		String appName = descriptor.getDeploymentInfo().getDeploymentName();
 
 		if (appName != null) {
-			urlPart.updateUrlHost(appName);
+			urlPart.updateUrlSubdomain(appName);
 		}
 	}
 
