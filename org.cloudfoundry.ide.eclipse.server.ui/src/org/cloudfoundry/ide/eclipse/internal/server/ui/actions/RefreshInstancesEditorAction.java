@@ -14,7 +14,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplic
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.wst.server.core.IModule;
+import org.eclipse.core.runtime.Status;
 
 /**
  * Editor action that also refreshes application instances stats after the
@@ -27,10 +27,21 @@ public abstract class RefreshInstancesEditorAction extends CloudFoundryEditorAct
 	}
 
 	@Override
-	protected IStatus refreshApplication(IModule module, RefreshArea area, IProgressMonitor monitor)
-			throws CoreException {
-		// Refresh instances stats
-		return doRefreshApplication(module, area, true, monitor);
+	protected IStatus performAction(IProgressMonitor monitor) throws CoreException {
+		return Status.OK_STATUS;
 	}
 
+	@Override
+	protected IStatus runEditorOperation(IProgressMonitor monitor) throws CoreException {
+		// Be sure the refresh job is stopped.
+		getEditorPage().getCloudServer().getBehaviour().stopRefreshJob();
+		IStatus status = performAction(monitor);
+
+		getEditorPage().getCloudServer().getBehaviour().refreshApplicationInstanceStats(getModule(), monitor);
+
+		// This will trigger the refresh job to restart
+		getEditorPage().getCloudServer().getBehaviour().refreshModules(monitor);
+
+		return status;
+	}
 }

@@ -134,7 +134,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
 	public void prepareForDeployment(final CloudFoundryServer server, final CloudFoundryApplicationModule appModule,
-			final IProgressMonitor monitor) throws CoreException {
+			final IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		new ApplicationDeploymentUIHandler().prepareForDeployment(server, appModule, monitor);
 	}
 

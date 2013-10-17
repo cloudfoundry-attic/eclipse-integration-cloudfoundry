@@ -17,6 +17,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
@@ -60,7 +61,7 @@ public class ApplicationDeploymentUIHandler {
 	 * @throws OperationCanceledException if user canceled deployment.
 	 */
 	public void prepareForDeployment(final CloudFoundryServer server, final CloudFoundryApplicationModule appModule,
-			final IProgressMonitor monitor) throws CoreException {
+			final IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 
 		// First check if the module is set for automatic republish (i.e. a
 		// prior publish for the application
@@ -81,8 +82,17 @@ public class ApplicationDeploymentUIHandler {
 			}
 		}
 
-		// If the deployment information is not present, it means it's the first
-		// time deploying, therefore open the wizard
+		// Validate the existing deployment info. Do NOT save or make changes to
+		// the deployment info prior to this stage
+		// (for example, saving a working copy of the deployment info with
+		// default values), unless it was done so for a module that is being
+		// republished, as if the deployment info is valid,
+		// the wizard will not open. We want the deployment wizard to ALWAYS
+		// open when deploying an application for the first time (i.e the app
+		// will not have
+		// a deployment info set), even if we have to populate that deployment
+		// info with default values or values from the manifest file. The latter
+		// should only occur AFTER the handler decides to open the wizard.
 		if (!appModule.validateDeploymentInfo().isOK()) {
 
 			// Any application that can be pushed to a CF server
@@ -104,12 +114,28 @@ public class ApplicationDeploymentUIHandler {
 						+ appModule.getLocalModule().getModuleType().getId());
 			}
 
+			// Now parse the manifest file, if it exists, and load into a deployment info working copy.
+			// Do NOT save the working copy yet, as a user may cancel the operation from the wizard. 
+			// THe working copy should only be saved by the wizard if a user clicks "OK".
+			DeploymentInfoWorkingCopy workingCopy = null;
+			try {
+				workingCopy = new ManifestParser(appModule, server).load();
+			}
+			catch (CoreException ce) {
+				// Some failure occurred reading the manifest file. Proceed
+				// anyway, to allow the user to manually enter deployment
+				// values.
+				CloudFoundryPlugin.log(ce);
+			}
+
 			final boolean[] cancelled = { false };
+			final boolean[] writeToManifest = { false };
+			final DeploymentInfoWorkingCopy finWorkingCopy = workingCopy;
 			Display.getDefault().syncExec(new Runnable() {
 				public void run() {
 
 					CloudFoundryApplicationWizard wizard = new CloudFoundryApplicationWizard(server, appModule,
-							providerDelegate);
+							finWorkingCopy, providerDelegate);
 					WizardDialog dialog = new WizardDialog(PlatformUI.getWorkbench().getModalDialogShellProvider()
 							.getShell(), wizard);
 					int status = dialog.open();
@@ -118,6 +144,7 @@ public class ApplicationDeploymentUIHandler {
 
 						// First add any new services to the server
 						final List<CloudService> addedServices = wizard.getCreatedCloudServices();
+						writeToManifest[0] = wizard.persistManifestChanges();
 
 						if (addedServices != null && !addedServices.isEmpty()) {
 							IProgressMonitor subMonitor = new SubProgressMonitor(monitor, addedServices.size());
@@ -132,10 +159,6 @@ public class ApplicationDeploymentUIHandler {
 								subMonitor.done();
 							}
 						}
-
-						// FIXNS: gate around if persistance is set in the
-						// wizard
-						// parser.write(revisedInfo);
 					}
 					else {
 						cancelled[0] = true;
@@ -151,6 +174,20 @@ public class ApplicationDeploymentUIHandler {
 				IStatus status = appModule.validateDeploymentInfo();
 				if (!status.isOK()) {
 					throw new CoreException(status);
+				}
+				else if (writeToManifest[0]) {
+					
+					IProgressMonitor subMonitor = new SubProgressMonitor(monitor, 1);
+					try {
+						new ManifestParser(appModule, server).write(subMonitor);
+					}
+					catch (CoreException ce) {
+						// Do not let this error propagate, as failing to write
+						// to the manifest should not stop the app's deployment
+						CloudFoundryPlugin.logError(ce);
+					} finally {
+						subMonitor.done();
+					}
 				}
 			}
 		}

@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.wst.server.core.IModule;
 
-
 /**
  * @author Terry Denney
  * @author Steffen Pingel
@@ -89,6 +88,15 @@ public class StartStopApplicationAction extends RefreshInstancesEditorAction {
 
 	protected boolean getIncrementalPublish() {
 		return CloudFoundryPlugin.getDefault().getIncrementalPublish();
+	}
+
+	@Override
+	protected IStatus runEditorOperation(IProgressMonitor monitor) throws CoreException {
+		// No need to stop and restart refresh jobs with start, stop, update
+		// restart as its already done by the behaviour
+		IStatus status = performAction(monitor);
+
+		return status;
 	}
 
 }

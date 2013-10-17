@@ -43,12 +43,6 @@ public abstract class ApplicationDelegate implements IApplicationDelegate {
 		deploymentInfo.setMemory(CloudUtil.DEFAULT_MEMORY);
 		deploymentInfo.setDeploymentMode(ApplicationAction.START);
 
-		// Now parse the manifest file, if it exists, and merge the default
-		// values with the manifest values (e.g., missing manifest values will
-		// be substituted with the default values,
-		// with manifest values having higher priority in case values are
-		// present for the same properties in both.)
-		deploymentInfo = new ManifestParser(appModule).parse(deploymentInfo);
 		return deploymentInfo;
 	}
 

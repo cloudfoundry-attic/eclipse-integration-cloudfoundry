@@ -17,7 +17,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerListener;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.RefreshApplicationEditorAction;
@@ -29,11 +28,12 @@ import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.forms.ManagedForm;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.ScrolledForm;
+import org.eclipse.ui.progress.UIJob;
 import org.eclipse.wst.server.core.IModule;
+import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerListener;
 import org.eclipse.wst.server.core.ServerEvent;
 import org.eclipse.wst.server.ui.editor.ServerEditorPart;
@@ -126,39 +126,6 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 		action.run();
 	}
 
-	/**
-	 * Refresh application state with the one on the server. This method can
-	 * take a long time. Always run within a job.
-	 * @param area
-	 * @param module
-	 * @throws CoreException
-	 */
-	public IStatus refreshModules(IModule module, RefreshArea area, boolean refreshInstances, IProgressMonitor monitor)
-			throws CoreException {
-		// cloudServer is not set up yet, don't refresh
-		if (cloudServer == null) {
-			return Status.CANCEL_STATUS;
-		}
-
-		CloudFoundryServerBehaviour serverBehaviour = cloudServer.getBehaviour();
-
-		if (area == RefreshArea.MASTER || area == RefreshArea.ALL) {
-			// refresh applications
-			serverBehaviour.refreshModules(monitor);
-
-			// refresh services
-			setServices(serverBehaviour.getServices(monitor));
-
-			setApplicationMemoryChoices(serverBehaviour.getApplicationMemoryChoices());
-		}
-
-		if (refreshInstances && (area == RefreshArea.DETAIL || area == RefreshArea.ALL)) {
-			serverBehaviour.refreshApplicationInstanceStats(module, monitor);
-		}
-
-		return Status.OK_STATUS;
-	}
-
 	public void selectAndReveal(IModule module) {
 		masterDetailsBlock.refreshUI(RefreshArea.MASTER);
 		TableViewer viewer = masterDetailsBlock.getMasterPart().getApplicationsViewer();
@@ -168,7 +135,6 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 	@Override
 	public void setFocus() {
 		// TODO Auto-generated method stub
-
 	}
 
 	public void setMessage(String message, int messageType) {
@@ -223,25 +189,47 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 			// ignore EVENT_UPDATE_INSTANCES as refresh will be called after
 			// instances are updated
 			if (event.getType() != CloudServerEvent.EVENT_UPDATE_INSTANCES) {
-				refresh();
+				refresh(cloudServer.getServer());
 			}
 		}
 
 		public void serverChanged(ServerEvent event) {
 			// refresh when server is saved, e.g. due to add/remove of modules
-			if (event.getKind() == ServerEvent.SERVER_CHANGE ) {
-				refresh();
+			if (event.getKind() == ServerEvent.SERVER_CHANGE) {
+				refresh(event.getServer());
 			}
 		}
 
-		private void refresh() {
-			Display.getDefault().asyncExec(new Runnable() {
-				public void run() {
-					if (mform != null && mform.getForm() != null && !mform.getForm().isDisposed()) {
-						masterDetailsBlock.refreshUI(RefreshArea.ALL);
+		private void refresh(final IServer server) {
+
+			UIJob job = new UIJob("Refreshing editor") {
+
+				@Override
+				public IStatus runInUIThread(IProgressMonitor monitor) {
+					try {
+						if (server != null) {
+							CloudFoundryServer cloudServer = (CloudFoundryServer) server.loadAdapter(
+									CloudFoundryServer.class, monitor);
+							if (cloudServer != null) {
+								setServices(cloudServer.getBehaviour().getServices(monitor));
+
+								setApplicationMemoryChoices(cloudServer.getBehaviour().getApplicationMemoryChoices());
+							}
+						}
+
+						if (mform != null && mform.getForm() != null && !mform.getForm().isDisposed()) {
+							masterDetailsBlock.refreshUI(RefreshArea.ALL);
+						}
 					}
+					catch (CoreException e) {
+						return e.getStatus();
+					}
+					return Status.OK_STATUS;
 				}
-			});
+			};
+
+			job.schedule();
+
 		}
 	}
 

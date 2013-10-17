@@ -602,12 +602,13 @@ public class CloudFoundryServer extends ServerDelegate {
 			// Iterate through the local WST modules, and update them based on
 			// which are external (have no accessible workspace resources),
 			// which
-			// have no corresponding deployed application (i.e., are obsolete
-			// and need to be deleted).
+			// have no corresponding deployed application . 
+			// Note that some IModules may also be in the process of being deleted. DO NOT recreate cloud application modules for these
+			// CHANGE
 			for (IModule module : server.getModules()) {
 				// Find the corresponding Cloud Foundry application module for
 				// the given WST server IModule
-				CloudFoundryApplicationModule cloudModule = getOrCreateCloudModule(module);
+				CloudFoundryApplicationModule cloudModule = getCloudModule(module);
 
 				if (cloudModule == null) {
 					CloudFoundryPlugin.logError("Unable to find local Cloud Foundry application module for : "

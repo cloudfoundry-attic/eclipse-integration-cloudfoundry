@@ -20,7 +20,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DeleteServicesAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.RefreshApplicationEditorAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryServiceWizard;
@@ -184,10 +183,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
-					boolean result = ApplicationViewersDropAdapter.super.performDrop(data);
-					if (result) {
-						editorPage.refresh(RefreshArea.MASTER, true);
-					}
+					ApplicationViewersDropAdapter.super.performDrop(data);
 
 					return Status.OK_STATUS;
 				}

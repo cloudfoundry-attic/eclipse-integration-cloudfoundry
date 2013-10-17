@@ -15,7 +15,6 @@ import org.cloudfoundry.client.lib.NotFinishedStagingException;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationMasterDetailsBlock;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
@@ -69,13 +68,22 @@ public abstract class CloudFoundryEditorAction extends Action {
 		return editorPage;
 	}
 
+	/**
+	 * 
+	 * @return area of the editor to be refreshed after the operation is
+	 * complete.
+	 */
+	protected RefreshArea getArea() {
+		return area;
+	}
+
 	public abstract String getJobName();
+
+	protected abstract IStatus performAction(IProgressMonitor monitor) throws CoreException;
 
 	public boolean isUserAction() {
 		return userAction;
 	}
-
-	protected abstract IStatus performAction(IProgressMonitor monitor) throws CoreException;
 
 	protected boolean shouldLogException(CoreException e) {
 		return true;
@@ -83,8 +91,11 @@ public abstract class CloudFoundryEditorAction extends Action {
 
 	@Override
 	public void run() {
-
 		Job job = getJob();
+		runJob(job);
+	}
+
+	protected void runJob(Job job) {
 		IWorkbenchSiteProgressService service = (IWorkbenchSiteProgressService) editorPage.getEditorSite().getService(
 				IWorkbenchSiteProgressService.class);
 		if (service != null) {
@@ -95,37 +106,13 @@ public abstract class CloudFoundryEditorAction extends Action {
 		}
 	}
 
-	protected IStatus refreshApplication(IModule module, RefreshArea area, IProgressMonitor monitor)
-			throws CoreException {
-		// Do not refresh instances stats
-		return doRefreshApplication(module, area, false, monitor);
-	}
-
-	protected IStatus doRefreshApplication(IModule module, RefreshArea area, boolean refreshInstances,
-			IProgressMonitor monitor) throws CoreException {
-		// Since Caldecott related operations affect multiple
-		// areas of the editor
-		// refresh the entire editor when an operation is
-		// related to Caldecott
-		if (module != null && TunnelBehaviour.isCaldecottApp(module.getName())) {
-			return editorPage.refreshModules(module, RefreshArea.ALL, refreshInstances, monitor);
-		}
-		else {
-			return editorPage.refreshModules(module, area, refreshInstances, monitor);
-		}
-	}
-
 	protected Job getJob() {
 		Job job = new Job(getJobName()) {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				IStatus status = null;
 				try {
-					IModule module = editorPage.getMasterDetailsBlock().getCurrentModule();
-					status = performAction(monitor);
-					if (status != null && status.isOK()) {
-						return refreshApplication(module, area, monitor);
-					}
+					status = runEditorOperation(monitor);
 				}
 				catch (CoreException e) {
 					CloudFoundryException cfe = e.getCause() instanceof CloudFoundryException ? (CloudFoundryException) e
@@ -195,8 +182,8 @@ public abstract class CloudFoundryEditorAction extends Action {
 						else {
 							IModule currentModule = editorPage.getMasterDetailsBlock().getCurrentModule();
 							if (currentModule != null) {
-								CloudFoundryApplicationModule appModule = editorPage.getCloudServer().getExistingCloudModule(
-										currentModule);
+								CloudFoundryApplicationModule appModule = editorPage.getCloudServer()
+										.getExistingCloudModule(currentModule);
 								if (appModule != null && appModule.getErrorMessage() != null) {
 									setErrorInPage(appModule.getErrorMessage());
 									return;
@@ -254,4 +241,20 @@ public abstract class CloudFoundryEditorAction extends Action {
 	protected CloudFoundryServerBehaviour getBehavior() {
 		return getEditorPage().getCloudServer().getBehaviour();
 	}
+
+	protected IModule getModule() {
+		return editorPage.getMasterDetailsBlock().getCurrentModule();
+	}
+
+	protected IStatus runEditorOperation(IProgressMonitor monitor) throws CoreException {
+		// Be sure the refresh job is stopped.
+		editorPage.getCloudServer().getBehaviour().stopRefreshJob();
+		IStatus status = CloudFoundryEditorAction.this.performAction(monitor);
+
+		// This will trigger the refresh job to restart
+		editorPage.getCloudServer().getBehaviour().refreshModules(monitor);
+
+		return status;
+	}
+
 }

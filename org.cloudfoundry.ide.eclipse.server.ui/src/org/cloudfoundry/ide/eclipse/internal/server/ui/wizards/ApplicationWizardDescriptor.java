@@ -90,4 +90,13 @@ public class ApplicationWizardDescriptor {
 		this.persistDeploymentInfo = persist;
 	}
 
+	/**
+	 * 
+	 * @return true if the deployment info should be persisted in an app's
+	 * manifest. False otherwise.
+	 */
+	public boolean shouldPersistDeploymentInfo() {
+		return persistDeploymentInfo;
+	}
+
 }

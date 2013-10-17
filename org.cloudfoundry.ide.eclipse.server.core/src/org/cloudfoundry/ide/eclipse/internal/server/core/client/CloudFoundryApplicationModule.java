@@ -253,24 +253,18 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 	}
 
 	/**
-	 * Creates a working copy of the current deployment information, or returns
-	 * an existing working copy.
-	 * <p/>
-	 * If the module does not have a deployment info, a deployment information
-	 * with default values will be created as a working copy.
+	 * Creates a working copy of the current deployment information. If the
+	 * application does not have a current deployment information, a working
+	 * copy will be generated from the app's deployment default values. A new
+	 * copy is always returned. No changes take effect in the app modules'
+	 * deployment info unless the working copy is saved.
 	 * 
-	 * <p/>
-	 * Note that multiple working copies can exist, and changes in the working
-	 * copies are only persisted when {@link DeploymentInfoWorkingCopy#save()}
-	 * is invoked.
-	 * 
-	 * @return A new non-null working copy of the app's deployment info.
+	 * @return a new working copy with either existing deployment information,
+	 * or default deployment information, if an deployment information does not
+	 * exist.
 	 */
 	public synchronized DeploymentInfoWorkingCopy getDeploymentInfoWorkingCopy() {
-
-		ModuleDeploymentInfoWorkingCopy copy = new ModuleDeploymentInfoWorkingCopy(this);
-
-		return copy;
+		return new ModuleDeploymentInfoWorkingCopy(this);
 	}
 
 	/**
@@ -388,19 +382,12 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 					cloudApplicationInfo.setIncrementalPublish(currentInfo.isIncrementalPublish());
 				}
 
-				DeploymentInfoWorkingCopy copy = getDeploymentInfoWorkingCopy();
-				copy.setInfo(cloudApplicationInfo);
-				copy.save();
+				internalSetDeploymentInfo(cloudApplicationInfo);
 			}
 
 		}
 
 	}
-
-	/*
-	 * 
-	 * Internal helper methods. Thread aware.
-	 */
 
 	/**
 	 * Sets a deployment information for the application. Note that if the
@@ -412,7 +399,7 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 	 * module name will also be updated. If setting null (e.g. application is
 	 * being deleted), the current module name will remain unchanged.
 	 */
-	private synchronized void setDeploymentInfo(ApplicationDeploymentInfo deploymentInfo) {
+	private void internalSetDeploymentInfo(ApplicationDeploymentInfo deploymentInfo) {
 		this.deploymentInfo = deploymentInfo;
 		// Note that last Deployment info may be null (e.g. when deleting an
 		// application). Only update the appliation ID if setting a new last
@@ -523,31 +510,27 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 		return (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
 	}
 
-	class ModuleDeploymentInfoWorkingCopy extends DeploymentInfoWorkingCopy {
+	/**
+	 * Should not be instantiated outside of a Cloud Module, as it is coupled
+	 * with the implementation of the module.
+	 */
+	protected class ModuleDeploymentInfoWorkingCopy extends DeploymentInfoWorkingCopy {
 
-		private final CloudFoundryApplicationModule appModule;
-
-		ModuleDeploymentInfoWorkingCopy(CloudFoundryApplicationModule appModule) {
-			super(appModule.getDeployedApplicationName());
-			this.appModule = appModule;
-
-			if (appModule.getDeploymentInfo() != null) {
-				setInfo(appModule.getDeploymentInfo());
-			}
-			else {
-				setInfo(appModule.getDefaultDeploymentInfo());
-			}
+		protected ModuleDeploymentInfoWorkingCopy(CloudFoundryApplicationModule appModule) {
+			super(appModule);
 		}
 
 		@Override
 		public void save() {
-			// Set the working copy as a regular deployment info, as to keeping
-			// a reference to the working copy
-			ApplicationDeploymentInfo info = new ApplicationDeploymentInfo(getDeployedApplicationName());
-			info.setInfo(this);
-			appModule.setDeploymentInfo(info);
+			synchronized (appModule) {
+
+				// Set the working copy as a regular deployment info, as to not
+				// keeping
+				// a reference to the working copy
+				ApplicationDeploymentInfo info = new ApplicationDeploymentInfo(getDeployedApplicationName());
+				info.setInfo(this);
+				appModule.internalSetDeploymentInfo(info);
+			}
 		}
-
 	}
-
 }

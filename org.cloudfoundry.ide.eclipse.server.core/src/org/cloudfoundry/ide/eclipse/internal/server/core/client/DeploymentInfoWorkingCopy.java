@@ -10,20 +10,33 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
-
 /**
- * A working copy of an application's {@link ApplicationDeploymentInfo}. Changes are not persisted in a related {@link CloudFoundryApplicationModule} unless
- * {@link #save()} is performed
+ * A working copy of an application's {@link ApplicationDeploymentInfo}. If the
+ * app module contains a deployment info, it will create a working copy of it.
+ * If the app module does not contain a deployment info, it will create a
+ * working copy with the app's default deployment values. The working copy is
+ * intended to be short-lived, and not shared, and changes only take effect in
+ * the cloud app module's deployment info if {@link #save()} is invoked.
  */
 public abstract class DeploymentInfoWorkingCopy extends ApplicationDeploymentInfo {
 
+	protected final CloudFoundryApplicationModule appModule;
 
-	public DeploymentInfoWorkingCopy(String appName) {
-		super(appName);
+	protected DeploymentInfoWorkingCopy(CloudFoundryApplicationModule appModule) {
+		super(appModule.getDeployedApplicationName());
+		this.appModule = appModule;
+
+		if (appModule.getDeploymentInfo() != null) {
+			setInfo(appModule.getDeploymentInfo());
+		}
+		else {
+			setInfo(appModule.getDefaultDeploymentInfo());
+		}
 	}
 
 	/**
-	 * Saves the working copy in an associated {@link CloudFoundryApplicationModule}
+	 * Saves the working copy in the associated
+	 * {@link CloudFoundryApplicationModule}.
 	 */
 	abstract public void save();
 

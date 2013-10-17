@@ -20,7 +20,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
@@ -469,19 +468,38 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 			else {
 				memoryCombo.removeAll();
 				int memory = 0;
+				int currentMemory = descriptor.getDeploymentInfo().getMemory();
+				int defaultIndex = -1;
 				for (int option : deploymentConfiguration.getMemoryOptions()) {
 					memoryCombo.add(option + "M");
+
+					int index = memoryCombo.getItemCount() - 1;
+
+					// Label the default memory
 					if (option == deploymentConfiguration.getDefaultMemory()) {
-						int index = memoryCombo.getItemCount() - 1;
+						defaultIndex = index;
 						memoryCombo.setItem(index, option + "M (Default)");
+					}
+
+					// select a current memory setting
+					if (option == currentMemory) {
 						memoryCombo.select(index);
 						memory = option;
 					}
 				}
-				// If no default memory is found, select the first memory option
+				// If no memory is yet selected, select either the default
+				// memory, or the first memory
 				if (memory == 0 && deploymentConfiguration.getMemoryOptions().length > 0) {
-					memoryCombo.select(0);
-					memory = deploymentConfiguration.getMemoryOptions()[0];
+
+					if (defaultIndex >= 0 && defaultIndex < deploymentConfiguration.getMemoryOptions().length) {
+						memoryCombo.select(defaultIndex);
+						memory = deploymentConfiguration.getMemoryOptions()[defaultIndex];
+					}
+					else {
+						memoryCombo.select(0);
+						memory = deploymentConfiguration.getMemoryOptions()[0];
+					}
+
 				}
 				memoryCombo.setEnabled(true);
 				setMemory(memory);

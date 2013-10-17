@@ -44,19 +44,24 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	/**
 	 * @param server must not be null
-	 * @param module must not be null. Note that deployment info in the module
-	 * must also not be null, as it gets modified by the wizard.
+	 * @param module must not be null.
+	 * @param workingCopy a working copy that should be edited by the wizard. If
+	 * a user clicks "OK", the working copy will be saved into its corresponding
+	 * app module. If no working copy is specified, one will be requested from
+	 * the app module.
+	 * @param wizard delegate that provides wizard pages for the application
+	 * module. If null, default Java web wizard delegate will be used.
 	 */
 	public CloudFoundryApplicationWizard(CloudFoundryServer server, CloudFoundryApplicationModule module,
-			IApplicationWizardDelegate wizardDelegate) {
+			DeploymentInfoWorkingCopy workingCopy, IApplicationWizardDelegate wizardDelegate) {
 		Assert.isNotNull(server);
 		Assert.isNotNull(module);
 		this.server = server;
 		this.module = module;
 		this.wizardDelegate = wizardDelegate;
 
-		workingCopy = module.getDeploymentInfoWorkingCopy();
-		applicationDescriptor = new ApplicationWizardDescriptor(workingCopy);
+		this.workingCopy = workingCopy != null ? workingCopy : module.getDeploymentInfoWorkingCopy();
+		applicationDescriptor = new ApplicationWizardDescriptor(this.workingCopy);
 		setNeedsProgressMonitor(true);
 		setWindowTitle("Application");
 	}
@@ -111,6 +116,10 @@ public class CloudFoundryApplicationWizard extends Wizard {
 	 */
 	public List<CloudService> getCreatedCloudServices() {
 		return applicationDescriptor.getCreatedCloudServices();
+	}
+
+	public boolean persistManifestChanges() {
+		return applicationDescriptor.shouldPersistDeploymentInfo();
 	}
 
 	@Override

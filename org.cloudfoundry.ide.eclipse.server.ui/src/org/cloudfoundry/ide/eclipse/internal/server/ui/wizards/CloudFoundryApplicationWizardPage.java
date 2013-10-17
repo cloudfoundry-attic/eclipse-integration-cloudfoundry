@@ -20,19 +20,23 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.WizardPartChangeEvent;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
@@ -126,7 +130,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 		appPart.addPartChangeListener(this);
 
 		appPart.createPart(composite);
-		
+
 		Label nameLabel = new Label(composite, SWT.NONE);
 		nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 		nameLabel.setText("Buildpack URL (optional):");
@@ -143,6 +147,23 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 			}
 		});
 
+		final Button saveToManifest = new Button(composite, SWT.CHECK);
+		saveToManifest.setText("Save to manifest file");
+		saveToManifest
+				.setToolTipText("Save the deployment configuration to the application's manifest file. If a manifest file does not exist, a new one will be created. If one already exists, changes will be merged with the existing file.");
+
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(saveToManifest);
+
+		saveToManifest.setSelection(false);
+
+		saveToManifest.addSelectionListener(new SelectionAdapter() {
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				descriptor.persistDeploymentInfo(saveToManifest.getSelection());
+			}
+
+		});
 		return composite;
 
 	}

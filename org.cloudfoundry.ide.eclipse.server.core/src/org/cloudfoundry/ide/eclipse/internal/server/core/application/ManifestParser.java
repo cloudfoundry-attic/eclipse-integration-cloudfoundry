@@ -13,21 +13,31 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.yaml.snakeyaml.Yaml;
 
 public class ManifestParser {
@@ -58,40 +68,78 @@ public class ManifestParser {
 
 	private final CloudFoundryApplicationModule appModule;
 
+	private final CloudFoundryServer cloudServer;
+
 	public static final String DEFAULT = "manifest.yml";
 
-	public ManifestParser(CloudFoundryApplicationModule appModule) {
-		this(DEFAULT, appModule);
+	static final String ERROR_MESSAGE = "Unable to write changes to the application's manifest file";
+
+	public ManifestParser(CloudFoundryApplicationModule appModule, CloudFoundryServer cloudServer) {
+		this(DEFAULT, appModule, cloudServer);
 	}
 
-	public ManifestParser(String relativePath, CloudFoundryApplicationModule appModule) {
+	public ManifestParser(String relativePath, CloudFoundryApplicationModule appModule, CloudFoundryServer cloudServer) {
 		Assert.isNotNull(relativePath);
 		this.relativePath = relativePath;
 		this.appModule = appModule;
+		this.cloudServer = cloudServer;
 	}
 
-	protected InputStream getInputStream() {
+	/**
+	 * Input stream to the manifest file, if the file exists. Caller must
+	 * properly dispose any open resources and close the stream.
+	 * @return input stream to the manifest file, ONLY if the file exists and is
+	 * accessible. Null otherwise.
+	 * @throws FileNotFoundException if file exists, but input stream could not
+	 * be opened to it.
+	 */
+	protected InputStream getInputStream() throws FileNotFoundException {
 
 		File file = getFile();
 		if (file != null && file.exists()) {
-			try {
-				return new FileInputStream(file);
-			}
-			catch (FileNotFoundException e) {
-				CloudFoundryPlugin.logError("Unable to read manifest.yml file. Check if file is accessible at: "
-						+ file.getAbsolutePath().toString());
-			}
+			return new FileInputStream(file);
 		}
 		return null;
 	}
 
+	/**
+	 * Output stream to the manifest file. Existing manifest files are deleted.
+	 * If the manifest does not exist, it will be created. Caller must properly
+	 * dispose any open resources and close the stream.
+	 * @return output stream to an existing manifest file, or null if it does
+	 * not exist
+	 * @throws IOException if error while creating a manifest file.
+	 */
+	protected OutputStream getOutStream() throws IOException, FileNotFoundException {
+		File file = getFile();
+		if (file != null) {
+			if (file.exists()) {
+				file.delete();
+			}
+
+			if (file.createNewFile()) {
+				return new FileOutputStream(file);
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * If the application module has an accessible workspace project, return the
+	 * manifest file contained in the project. Otherwise return null. The file
+	 * itself may not yet exist, but if returned, it at least means the
+	 * workspace project does indeed exist.
+	 * @return Manifest file in the workspace project for the application, or
+	 * null if the project does not exists or is not accessible.
+	 */
 	protected File getFile() {
 		IProject project = CloudUtil.getProject(appModule);
 		if (project == null) {
 			return null;
 		}
 		IResource resource = project.getFile(relativePath);
-		if (resource.exists()) {
+		if (resource != null) {
 			URI locationURI = resource.getLocationURI();
 			return new File(locationURI);
 
@@ -99,95 +147,264 @@ public class ManifestParser {
 		return null;
 	}
 
-	protected Map<?, ?> getContainingPropertiesMap(Map<?, ?> containerMap, String propertyName) {
-		Object yamlElementObj = containerMap.get(propertyName);
-		if (!isPropertiesMap(yamlElementObj, propertyName)) {
-			return Collections.EMPTY_MAP;
+	protected boolean hasManifest() {
+		File file = getFile();
+		return file != null && file.exists();
+	}
+
+	/**
+	 * 
+	 * @param containerMap
+	 * @param propertyName
+	 * @return
+	 */
+	protected Map<Object, Object> getContainingPropertiesMap(Map<Object, Object> containerMap, String propertyName) {
+		if (containerMap == null || propertyName == null) {
+			return null;
 		}
-		return (Map<?, ?>) yamlElementObj;
+		Object yamlElementObj = containerMap.get(propertyName);
+
+		if (yamlElementObj instanceof Map<?, ?>) {
+			return (Map<Object, Object>) yamlElementObj;
+		}
+		else {
+			return null;
+		}
 	}
 
 	protected String getValue(Map<?, ?> containingMap, String propertyName) {
 		Object valObj = containingMap.get(propertyName);
 
-		if (isStringValue(valObj, propertyName)) {
+		if (valObj instanceof String) {
 			return (String) valObj;
 		}
 		return null;
 	}
 
-	protected boolean isPropertiesMap(Object possibleMap, String propertyName) {
-		if (!(possibleMap instanceof Map<?, ?>)) {
-			CloudFoundryPlugin.logError("Problem parsing manifest file for application: "
-					+ appModule.getDeployedApplicationName() + ". Expected map of properties for: " + propertyName);
+	/**
+	 * 
+	 * @return Deployment copy if a manifest file was successfully loaded into
+	 * an app's deployment info working copy. Note that the copy is NOT saved.
+	 * Null if there is no content to load into the app's deployment info
+	 * working copy.
+	 * @throws CoreException if error occurred while loading an existing
+	 * manifest file.
+	 */
+	public DeploymentInfoWorkingCopy load() throws CoreException {
 
-			return false;
+		DeploymentInfoWorkingCopy workingCopy = appModule.getDeploymentInfoWorkingCopy();
+
+		Map<Object, Object> results = parseManifestFromFile();
+
+		if (results == null) {
+			return null;
 		}
-		return true;
+
+		Map<Object, Object> applications = getContainingPropertiesMap(results, APPLICATIONS_PROP);
+		if (applications == null) {
+			throw CloudErrorUtil
+					.toCoreException("Expected a top-level map with application properties for: "
+							+ relativePath
+							+ ". Unable to continue parsing manifest values. No manifest values will be loaded into the application deployment info.");
+		}
+
+		String appName = getValue(applications, NAME_PROP);
+
+		if (appName != null) {
+			workingCopy.setDeploymentName(appName);
+		}
+
+		String memoryVal = getValue(applications, MEMORY_PROP);
+		if (memoryVal != null) {
+			int memory = Integer.valueOf(memoryVal);
+			if (memory > 0) {
+				workingCopy.setMemory(memory);
+			}
+		}
+
+		String host = getValue(applications, SUB_DOMAIN_PROP);
+
+		if (host != null) {
+			// Select a default URL with the given host:
+			CloudApplicationUrlLookup lookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
+			CloudApplicationURL defaultUrl = lookup.getDefaultApplicationURL(host);
+			if (defaultUrl != null) {
+				List<String> urls = Arrays.asList(defaultUrl.getUrl());
+				workingCopy.setUris(urls);
+			}
+		}
+
+		Map<Object, Object> services = getContainingPropertiesMap(applications, SERVICES_PROP);
+		if (services != null) {
+			List<String> servicesToBind = new ArrayList<String>();
+
+			for (Entry<Object, Object> entry : services.entrySet()) {
+				Object serviceNameObj = entry.getKey();
+				if (serviceNameObj instanceof String) {
+					String serviceName = (String) serviceNameObj;
+					if (!servicesToBind.contains(serviceName)) {
+						servicesToBind.add(serviceName);
+					}
+				}
+			}
+
+			workingCopy.setServices(servicesToBind);
+		}
+
+		return workingCopy;
 	}
 
-	protected boolean isStringValue(Object valObj, String propertyName) {
+	/**
+	 * 
+	 * @return map of parsed manifest file, if the file exists. If the file does
+	 * not exist, return null.
+	 * @throws CoreException if manifest file exists, but error occurred that
+	 * prevents a map to be generated.
+	 */
+	protected Map<Object, Object> parseManifestFromFile() throws CoreException {
 
-		if (!(valObj instanceof String)) {
-			CloudFoundryPlugin.logError("Problem parsing manifest file for application: "
-					+ appModule.getDeployedApplicationName() + ". Expected String value for: " + propertyName);
-
-			return false;
+		InputStream inputStream = null;
+		try {
+			inputStream = getInputStream();
 		}
-		return true;
-	}
-
-	public ApplicationDeploymentInfo parse(ApplicationDeploymentInfo existingInfo) {
-		
-		if (existingInfo != null) {
-			return existingInfo;
+		catch (FileNotFoundException fileException) {
+			throw CloudErrorUtil.toCoreException(fileException);
 		}
-		ApplicationDeploymentInfo deploymentInfo = null;
-		InputStream inputStream = getInputStream();
 
 		if (inputStream != null) {
 			Yaml yaml = new Yaml();
 
-			Object results = yaml.load(inputStream);
-			if (results instanceof Map<?, ?>) {
-				Map<?, ?> mapResult = (Map<?, ?>) results;
+			try {
 
-				Map<?, ?> applications = getContainingPropertiesMap(mapResult, APPLICATIONS_PROP);
-				String appName = getValue(applications, NAME_PROP);
+				Object results = yaml.load(inputStream);
 
-				deploymentInfo = new ApplicationDeploymentInfo(appName);
-
-				String memoryVal = getValue(applications, MEMORY_PROP);
-				String instancesVal = getValue(applications, INSTANCES_PROP);
-				String host = getValue(applications, SUB_DOMAIN_PROP);
-
-				Map<?, ?> services = getContainingPropertiesMap(applications, SERVICES_PROP);
-
-				List<String> servicesToBind = new ArrayList<String>();
-
-				for (Entry<?, ?> entry : services.entrySet()) {
-					Object serviceNameObj = entry.getKey();
-					if (isStringValue(serviceNameObj, SERVICES_PROP)) {
-						String serviceName = (String) entry.getKey();
-						if (!servicesToBind.contains(serviceName)) {
-							servicesToBind.add(serviceName);
-						}
-
-					}
-
+				if (results instanceof Map<?, ?>) {
+					return (Map<Object, Object>) results;
+				}
+				else {
+					throw CloudErrorUtil.toCoreException("Expected a map of values for manifest file: " + relativePath
+							+ ". Unable to load manifest content.  Actual results: " + results);
 				}
 
 			}
-		}
+			finally {
+				try {
+					inputStream.close();
+				}
+				catch (IOException e) {
+					// Ignore
+				}
+			}
 
-		return deploymentInfo;
+		}
+		return null;
 	}
 
-	public void write(ApplicationDeploymentInfo deploymentInfo) {
-		// if (results != null) {
-		// Yaml yaml = new Yaml();
-		// String string = yaml.dump(results);
-		// System.out.println("RESULT MANIFEST DUMP:" + string);
-		// }
+	/**
+	 * Writes the app's current deployment info into a manifest file in the
+	 * app's related workspace project. If the workspace project is not
+	 * accessible, false is returned. If the manifest file does not exist in the
+	 * app's workspace project, one will be created. If manifest file failed to
+	 * create, exception is thrown. Returns true if the manifest file was
+	 * successfully written. If so, the project is also refreshed.
+	 * @return true if deployment info for the cloud module was written to
+	 * manifest file. False if there was no content to write to the manifest
+	 * file.
+	 * @throws CoreException if error occurred while writing to a Manifest file.
+	 */
+	public boolean write(IProgressMonitor monitor) throws CoreException {
+
+		ApplicationDeploymentInfo deploymentInfo = appModule.getDeploymentInfo();
+
+		if (deploymentInfo == null) {
+			return false;
+		}
+
+		Map<Object, Object> deploymentInfoYaml = parseManifestFromFile();
+
+		if (deploymentInfoYaml == null) {
+			deploymentInfoYaml = new HashMap<Object, Object>();
+		}
+
+		Map<Object, Object> applicationProperties = getContainingPropertiesMap(deploymentInfoYaml, APPLICATIONS_PROP);
+
+		if (applicationProperties == null) {
+			applicationProperties = new HashMap<Object, Object>();
+			deploymentInfoYaml.put(APPLICATIONS_PROP, applicationProperties);
+		}
+
+		String appName = deploymentInfo.getDeploymentName();
+
+		if (appName != null) {
+			applicationProperties.put(NAME_PROP, appName);
+		}
+
+		int memory = deploymentInfo.getMemory();
+		if (memory > 0) {
+			applicationProperties.put(MEMORY_PROP, memory + 'M');
+		}
+
+		List<String> servicesToBind = deploymentInfo.getServices();
+
+		if (servicesToBind != null && !servicesToBind.isEmpty()) {
+
+			Map<Object, Object> services = getContainingPropertiesMap(applicationProperties, SERVICES_PROP);
+
+			if (services == null) {
+				services = new HashMap<Object, Object>();
+				applicationProperties.put(SERVICES_PROP, services);
+			}
+
+			for (String service : servicesToBind) {
+				// Service name is the key in the yaml map
+				services.put(service, null);
+			}
+		}
+
+		if (deploymentInfoYaml.isEmpty()) {
+			return false;
+		}
+
+		Yaml yaml = new Yaml();
+		String manifestValue = yaml.dump(deploymentInfoYaml);
+
+		if (manifestValue == null) {
+			throw CloudErrorUtil.toCoreException("Manifest map for " + appModule.getDeployedApplicationName()
+					+ " contained values but yaml parser failed to serialise the map. : " + deploymentInfoYaml);
+		}
+
+		OutputStream outStream = null;
+		try {
+			outStream = getOutStream();
+			if (outStream == null) {
+				throw CloudErrorUtil.toCoreException("No output stream could be opened to: " + relativePath
+						+ ". Unable to write changes to the app's manifest file for: "
+						+ appModule.getDeployedApplicationName());
+			}
+
+			outStream.write(manifestValue.getBytes());
+			outStream.flush();
+			// Refresh the associated project
+			IProject project = CloudUtil.getProject(appModule);
+			if (project != null) {
+				project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			}
+			return true;
+
+		}
+		catch (IOException io) {
+			throw CloudErrorUtil.toCoreException(io);
+		}
+		finally {
+			if (outStream != null) {
+				try {
+					outStream.close();
+				}
+				catch (IOException io) {
+					// Ignore
+				}
+			}
+		}
+
 	}
 }

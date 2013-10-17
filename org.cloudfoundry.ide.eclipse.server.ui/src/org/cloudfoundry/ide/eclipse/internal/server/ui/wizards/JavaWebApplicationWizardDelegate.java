@@ -18,6 +18,14 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.jface.wizard.IWizardPage;
 
+/**
+ * Default delegate for any application that uses standard Java web deployment
+ * properties for Cloud Foundry. For example, default Java web applications
+ * require at least one mapped application URL, therefore the wizard delegate
+ * will provide wizard pages that require that at least one mapped application
+ * URL is set by the user in the UI.
+ * 
+ */
 public class JavaWebApplicationWizardDelegate extends ApplicationWizardDelegate {
 
 	public List<IWizardPage> getWizardPages(ApplicationWizardDescriptor applicationDescriptor,

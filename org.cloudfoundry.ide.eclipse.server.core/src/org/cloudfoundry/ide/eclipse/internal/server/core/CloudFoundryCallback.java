@@ -18,6 +18,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 
 /**
  * Callback interface to support clients to hook into CloudFoundry Server
@@ -98,7 +99,7 @@ public abstract class CloudFoundryCallback implements BehaviourListener {
 			List<CaldecottTunnelDescriptor> descriptors);
 
 	public abstract void prepareForDeployment(CloudFoundryServer server,
-			CloudFoundryApplicationModule module, IProgressMonitor monitor) throws CoreException;
+			CloudFoundryApplicationModule module, IProgressMonitor monitor) throws CoreException, OperationCanceledException;
 
 	public void applicationAboutToStart(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 

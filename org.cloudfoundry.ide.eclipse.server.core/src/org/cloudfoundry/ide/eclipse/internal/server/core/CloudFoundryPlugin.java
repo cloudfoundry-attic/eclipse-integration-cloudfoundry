@@ -137,8 +137,8 @@ public class CloudFoundryPlugin extends Plugin {
 		}
 
 		@Override
-		public void prepareForDeployment(CloudFoundryServer server,
-				CloudFoundryApplicationModule module, IProgressMonitor monitor) throws CoreException {
+		public void prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
+				IProgressMonitor monitor) throws CoreException {
 			throw new OperationCanceledException();
 		}
 
@@ -300,7 +300,7 @@ public class CloudFoundryPlugin extends Plugin {
 	}
 
 	public void fireServerRefreshed(CloudFoundryServer server) {
-		fireServerEvent(new CloudServerEvent(server));
+		fireServerEvent(new CloudServerEvent(server, CloudServerEvent.EVENT_SERVER_REFRESHED));
 	}
 
 	@SuppressWarnings("unchecked")
