@@ -172,11 +172,20 @@ public class ManifestParser {
 		}
 	}
 
-	protected String getValue(Map<?, ?> containingMap, String propertyName) {
+	protected String getStringValue(Map<?, ?> containingMap, String propertyName) {
 		Object valObj = containingMap.get(propertyName);
 
 		if (valObj instanceof String) {
 			return (String) valObj;
+		}
+		return null;
+	}
+
+	protected Integer getIntegerValue(Map<?, ?> containingMap, String propertyName) {
+		Object valObj = containingMap.get(propertyName);
+
+		if (valObj instanceof Integer) {
+			return (Integer) valObj;
 		}
 		return null;
 	}
@@ -208,21 +217,18 @@ public class ManifestParser {
 							+ ". Unable to continue parsing manifest values. No manifest values will be loaded into the application deployment info.");
 		}
 
-		String appName = getValue(applications, NAME_PROP);
+		String appName = getStringValue(applications, NAME_PROP);
 
 		if (appName != null) {
 			workingCopy.setDeploymentName(appName);
 		}
 
-		String memoryVal = getValue(applications, MEMORY_PROP);
+		Integer memoryVal = getIntegerValue(applications, MEMORY_PROP);
 		if (memoryVal != null) {
-			int memory = Integer.valueOf(memoryVal);
-			if (memory > 0) {
-				workingCopy.setMemory(memory);
-			}
+			workingCopy.setMemory(memoryVal.intValue());
 		}
 
-		String host = getValue(applications, SUB_DOMAIN_PROP);
+		String host = getStringValue(applications, SUB_DOMAIN_PROP);
 
 		if (host != null) {
 			// Select a default URL with the given host:
@@ -341,19 +347,19 @@ public class ManifestParser {
 
 		int memory = deploymentInfo.getMemory();
 		if (memory > 0) {
-			applicationProperties.put(MEMORY_PROP, memory + 'M');
+			applicationProperties.put(MEMORY_PROP, memory);
 		}
+
+		// Regardless if there are services or not, always clear list of
+		// services in the manifest, and replace with new list. The list of
+		// services in the
+		// deployment info has to match the content in the manifest.
+		Map<Object, Object> services = new HashMap<Object, Object>();
+		applicationProperties.put(SERVICES_PROP, services);
 
 		List<String> servicesToBind = deploymentInfo.getServices();
 
-		if (servicesToBind != null && !servicesToBind.isEmpty()) {
-
-			Map<Object, Object> services = getContainingPropertiesMap(applicationProperties, SERVICES_PROP);
-
-			if (services == null) {
-				services = new HashMap<Object, Object>();
-				applicationProperties.put(SERVICES_PROP, services);
-			}
+		if (servicesToBind != null) {
 
 			for (String service : servicesToBind) {
 				// Service name is the key in the yaml map
