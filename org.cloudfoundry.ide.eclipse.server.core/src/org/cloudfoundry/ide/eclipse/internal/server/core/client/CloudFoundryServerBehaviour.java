@@ -476,11 +476,16 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
-	public int[] getApplicationMemoryChoices() {
-		if (client != null) {
-			return client.getApplicationMemoryChoices();
-		}
-		return new int[0];
+	public int[] getApplicationMemoryChoices(IProgressMonitor monitor) throws CoreException {
+		return new Request<int[]>("Getting memory choices") {
+
+			@Override
+			protected int[] doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				return client.getApplicationMemoryChoices();
+			}
+
+		}.run(monitor);
+
 	}
 
 	public DeploymentConfiguration getDeploymentConfiguration(IProgressMonitor monitor) throws CoreException {
@@ -488,7 +493,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			@Override
 			protected DeploymentConfiguration doRun(CloudFoundryOperations client, SubMonitor progress)
 					throws CoreException {
-				DeploymentConfiguration configuration = new DeploymentConfiguration(getApplicationMemoryChoices());
+				DeploymentConfiguration configuration = new DeploymentConfiguration(
+						client.getApplicationMemoryChoices());
 				// XXX make bogus call that triggers login if needed to work
 				// around NPE in client.getApplicationMemoryChoices()
 				client.getServices();
@@ -2311,20 +2317,20 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		/*
 		 * IMPLEMENTATION NOTE: Avoid synchronizing changes to the refresh job
-		 * scheduling, as the job always runs on a separate thread, but calls
-		 * back into the behaviour to refresh modules, and may result in
-		 * deadlocks if other threads already have a lock on the behaviour and
-		 * are attempting to access the refresh job job. Some calls to the
-		 * behaviour (e.g refreshing modules, etc) may be synchronized on the
-		 * behaviour. Example to avoid: If the API to stop the fresh job has
-		 * been synchronized (which is to be avoided), and a second thread has
-		 * requested the job to stop refreshing, but it has already acquired a
-		 * lock on the behaviour as it is already performing a behaviour
-		 * operation like starting an application, deadlock may occur, since the
-		 * second thread that acquired the behaviour lock is waiting on the job,
-		 * but the job is waiting for the behaviour lock, as it is attempting to
-		 * perform the refresh operation, which it cant complete since the
-		 * second thread has a lock on the behaviour
+		 * scheduling around the server behaviour, as the job always runs on a
+		 * separate thread, but calls back into the behaviour to refresh
+		 * modules, and may result in deadlocks if other threads already have a
+		 * lock on the behaviour and are attempting to access the refresh job
+		 * job. Some calls to the behaviour (e.g refreshing modules, etc) may be
+		 * synchronized on the behaviour. Example to avoid: If the API to stop
+		 * the fresh job has been synchronized (which is to be avoided), and a
+		 * second thread has requested the job to stop refreshing, but it has
+		 * already acquired a lock on the behaviour as it is already performing
+		 * a behaviour operation like starting an application, deadlock may
+		 * occur, since the second thread that acquired the behaviour lock is
+		 * waiting on the job, but the job is waiting for the behaviour lock, as
+		 * it is attempting to perform the refresh operation, which it cant
+		 * complete since the second thread has a lock on the behaviour
 		 */
 		private long interval;
 
@@ -2343,14 +2349,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		 * 
 		 */
 		public void reschedule(long initialWait, long interval) {
-			// schedule, if not already running or scheduled
-			this.interval = interval;
+			synchronized (BehaviourRefreshJob.this) {
+				// schedule, if not already running or scheduled
+				this.interval = interval;
 
-			if (interval > 0) {
-				long initial = initialWait > 0 ? initialWait : interval;
-				schedule(initial);
+				if (interval > 0) {
+					long initial = initialWait > 0 ? initialWait : interval;
+					schedule(initial);
+				}
 			}
-
 		}
 
 		/**
@@ -2368,7 +2375,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					internalRefreshModule(monitor);
 					CloudFoundryPlugin.getDefault().fireServerRefreshed(getCloudFoundryServer());
 					if (getServer().getServerState() == IServer.STATE_STARTED) {
-						schedule(interval);
+
+						synchronized (BehaviourRefreshJob.this) {
+							if (interval > 0) {
+								schedule(interval);
+							}
+						}
 					}
 				}
 				catch (CoreException e) {

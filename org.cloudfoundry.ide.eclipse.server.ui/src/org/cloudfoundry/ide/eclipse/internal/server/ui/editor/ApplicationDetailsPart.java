@@ -23,7 +23,9 @@ import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
@@ -157,6 +159,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	private Button stopAppButton;
 
 	private Button connectToDebugger;
+
+	private Button saveManifest;
 
 	private Combo memoryCombo;
 
@@ -402,6 +406,16 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			return;
 		}
 
+		if (saveManifest != null) {
+			ManifestParser parser = new ManifestParser(appModule, cloudServer);
+			if (!parser.canWriteToManifest()) {
+				saveManifest.setEnabled(false);
+			}
+			else {
+				saveManifest.setEnabled(true);
+			}
+		}
+
 		// The rest of the refresh requires appModule to be non-null
 		updateServerNameDisplay(appModule);
 
@@ -475,6 +489,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 					memoryCombo.select(0);
 				}
 				memoryCombo.setEnabled(true);
+				memoryCombo.redraw();
 			}
 		}
 
@@ -726,6 +741,19 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		});
 		toolkit.adapt(instanceSpinner);
 
+		// Manifest area
+		createLabel(client, "Manifest:", SWT.CENTER);
+		saveManifest = toolkit.createButton(client, "Save", SWT.PUSH);
+
+		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(saveManifest);
+
+		saveManifest.setEnabled(false);
+		saveManifest.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				writeToManifest();
+			}
+		});
+
 		// FIXNS: Uncomment when CF client supports staging updates
 		// createStandaloneCommandArea(client);
 
@@ -795,6 +823,44 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		// FIXNS: Disabled until debug support is present in v2
 		// createDebugArea(buttonComposite);
+
+	}
+
+	protected void writeToManifest() {
+		final IStatus[] errorStatus = new IStatus[1];
+
+		try {
+			final CloudFoundryApplicationModule appModule = getExistingApplication();
+			if (appModule != null) {
+				Job job = new Job("Writing manifest file for: " + appModule.getDeployedApplicationName()) {
+
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
+						ManifestParser parser = new ManifestParser(appModule, cloudServer);
+						try {
+							parser.write(monitor);
+						}
+						catch (CoreException ce) {
+							errorStatus[0] = ce.getStatus();
+							return errorStatus[0];
+						}
+						return Status.OK_STATUS;
+					}
+				};
+				job.schedule();
+			}
+			else {
+				errorStatus[0] = CloudFoundryPlugin
+						.getErrorStatus("Unable to write manifest file. Missing module for cloud application. Try a manual refresh.");
+			}
+		}
+		catch (CoreException ce) {
+			errorStatus[0] = ce.getStatus();
+		}
+
+		if (errorStatus[0] != null && !errorStatus[0].isOK()) {
+			logError("Unable to write to manifest due to: " + errorStatus[0].getMessage());
+		}
 
 	}
 
@@ -1157,7 +1223,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
 		if (appModule == null) {
-			String errorMessage = "No Cloud Foundry application module found for: " + module.getId();
+			String errorMessage = "No Cloud Foundry application module found"
+					+ (module != null ? " for: " + module.getId() : "");
 			throw CloudErrorUtil.toCoreException(errorMessage);
 		}
 
@@ -1175,7 +1242,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		CloudFoundryApplicationModule appModule = cloudServer.getCloudModule(module);
 
 		if (appModule == null) {
-			String errorMessage = "No Cloud Foundry application module found for: " + module.getId();
+			String errorMessage = "No Cloud Foundry application module found"
+					+ (module != null ? " for: " + module.getId() : "");
 			throw CloudErrorUtil.toCoreException(errorMessage);
 		}
 		return appModule;

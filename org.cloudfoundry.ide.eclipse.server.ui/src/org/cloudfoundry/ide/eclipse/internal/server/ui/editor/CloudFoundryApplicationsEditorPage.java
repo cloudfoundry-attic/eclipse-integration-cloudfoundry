@@ -213,7 +213,8 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 							if (cloudServer != null) {
 								setServices(cloudServer.getBehaviour().getServices(monitor));
 
-								setApplicationMemoryChoices(cloudServer.getBehaviour().getApplicationMemoryChoices());
+								setApplicationMemoryChoices(cloudServer.getBehaviour().getApplicationMemoryChoices(
+										monitor));
 							}
 						}
 

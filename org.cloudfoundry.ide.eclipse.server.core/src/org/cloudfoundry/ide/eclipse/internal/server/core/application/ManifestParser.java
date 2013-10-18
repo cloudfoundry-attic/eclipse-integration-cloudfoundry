@@ -147,9 +147,22 @@ public class ManifestParser {
 		return null;
 	}
 
-	protected boolean hasManifest() {
+	/**
+	 * @return true if the application has an accessible manifest file that
+	 * exists. False otherwise, even if the application does have a manifest
+	 * file. A false in this case would mean the file is not accessible.
+	 */
+	public boolean hasManifest() {
 		File file = getFile();
 		return file != null && file.exists();
+	}
+
+	/**
+	 * @return true if the application has an accessible workspace project where
+	 * a manifest file can be written too. False otherwise.
+	 */
+	public boolean canWriteToManifest() {
+		return CloudUtil.getProject(appModule) != null;
 	}
 
 	/**
