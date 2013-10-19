@@ -11,6 +11,9 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
@@ -102,6 +105,22 @@ public abstract class ApplicationDelegate implements IApplicationDelegate {
 
 			if (cloudApplication.getUris() != null) {
 				deploymentInfo.setUris(new ArrayList<String>(cloudApplication.getUris()));
+			}
+
+			Map<String, String> envMap = cloudApplication.getEnvAsMap();
+
+			if (envMap != null) {
+				List<EnvironmentVariable> variables = new ArrayList<EnvironmentVariable>();
+				for (Entry<String, String> entry : envMap.entrySet()) {
+					String varName = entry.getKey();
+					if (varName != null) {
+						EnvironmentVariable variable = new EnvironmentVariable();
+						variable.setVariable(varName);
+						variable.setValue(entry.getValue());
+						variables.add(variable);
+					}
+				}
+				deploymentInfo.setEnvVariables(variables);
 			}
 			return deploymentInfo;
 

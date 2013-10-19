@@ -27,6 +27,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.PlatformUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ProcessLauncher;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.EnvironmentVariable;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;

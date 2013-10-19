@@ -46,6 +46,9 @@ public class JavaWebApplicationWizardDelegate extends ApplicationWizardDelegate 
 				cloudServer, applicationModule, applicationDescriptor);
 
 		defaultPages.add(servicesPage);
+
+		defaultPages.add(new CloudFoundryApplicationEnvVarWizardPage(cloudServer, applicationDescriptor
+				.getDeploymentInfo()));
 		return defaultPages;
 	}
 

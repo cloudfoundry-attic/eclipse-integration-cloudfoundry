@@ -19,7 +19,6 @@ import java.util.Set;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
@@ -81,8 +80,6 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 	 */
 	private final List<CloudService> allServices = new ArrayList<CloudService>();
 
-	private final CloudFoundryApplicationModule module;
-
 	private final ApplicationWizardDescriptor descriptor;
 
 	public CloudFoundryApplicationServicesWizardPage(CloudFoundryServer cloudServer,
@@ -90,7 +87,6 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 		super("Services");
 		this.cloudServer = cloudServer;
 		this.serverTypeId = module.getServerTypeId();
-		this.module = module;
 		this.descriptor = descriptor;
 		populatedServicesFromLastDeployment();
 	}

@@ -16,6 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,6 +48,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleResourceDeltaWrapper;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
@@ -1045,6 +1047,59 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return getClient((CloudCredentials) null, monitor);
 	}
 
+	/**
+	 * Updates the application's environment variables. Note that the
+	 * application needs to first exist in the server, and be in a state that
+	 * will accept environment variable changes (either stopped, or running
+	 * after staging has completed). WARNING: The {@link CloudApplication}
+	 * mapping in the module WILL be updated if the environment variable update
+	 * is successful, which will replace any existing deployment info in the app
+	 * module.
+	 * @param appModule
+	 * @param monitor
+	 * @throws CoreException
+	 */
+	public void updateEnvironmentVariables(final CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
+			throws CoreException {
+		new Request<Void>() {
+
+			@Override
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				// Update environment variables.
+				Map<String, String> varsMap = new HashMap<String, String>();
+
+				SubMonitor subProgress = SubMonitor.convert(progress);
+				subProgress
+						.setTaskName("Updating environment variables for: " + appModule.getDeployedApplicationName());
+
+				try {
+					List<EnvironmentVariable> vars = appModule.getDeploymentInfo().getEnvVariables();
+
+					if (vars != null) {
+						for (EnvironmentVariable var : vars) {
+							varsMap.put(var.getVariable(), var.getValue());
+						}
+					}
+
+					client.updateApplicationEnv(appModule.getDeployedApplicationName(), varsMap);
+
+					// Update the cloud application which contains the updated
+					// environment variables.
+					CloudApplication cloudApplication = getApplication(appModule.getDeployedApplicationName(), subProgress);
+					appModule.setCloudApplication(cloudApplication);
+
+				}
+				finally {
+					subProgress.done();
+				}
+
+				return null;
+			}
+
+		}.run(monitor);
+
+	}
+
 	private boolean isApplicationReady(CloudApplication application) {
 		/*
 		 * RestTemplate restTemplate = new RestTemplate(); String response =
@@ -1759,6 +1814,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				// Refresh the application instance stats as well
 				internalUpdateApplicationInstanceStats(appModule, monitor);
+
 				return appModule;
 			}
 			catch (OperationCanceledException e) {
@@ -1805,10 +1861,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		 * to upload (push) the application archive containing the application's
 		 * resources. This is performed in a second separate request.
 		 * <p/>
-		 * To avoid replacing the deployment info in the app module, the
-		 * mappings in the app module are NOT updated with newly created
-		 * application. It is up to the caller to set the mapping in
-		 * {@link CloudFoundryApplicationModule}
+		 * To avoid replacing the deployment info in the app module, the mapping
+		 * to the most recent {@link CloudApplication} in the app module is NOT
+		 * updated with newly created application. It is up to the caller to set
+		 * the mapping in {@link CloudFoundryApplicationModule}
 		 * @param client
 		 * @param appModule valid Cloud module with valid deployment info.
 		 * @param monitor
@@ -1888,18 +1944,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 									.bind("Failed to deploy application {0} since no deployable war or application archive file was generated.",
 											appModule.getDeploymentInfo().getDeploymentName()));
 				}
-
-				// Verify the application uploaded and exists in the server
-				CloudApplication application = getDeployedCloudApplication(client, appName, monitor);
-
-				if (application == null) {
-					throw CloudErrorUtil
-							.toCoreException("No cloud application obtained from the Cloud Foundry server for :  "
-									+ appModule.getDeployedApplicationName()
-									+ ". Application may not have deployed correctly to the Cloud Foundry server, or there are connection problems to the server.");
-				}
-
-				appModule.setCloudApplication(application);
 			}
 			catch (IOException e) {
 				throw new CoreException(CloudFoundryPlugin.getErrorStatus(NLS.bind(
@@ -2059,6 +2103,25 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					}.run(monitor);
 
 				}
+
+				// Verify the application exists in the server
+				CloudApplication application = getDeployedCloudApplication(client,
+						appModule.getDeployedApplicationName(), monitor);
+
+				if (application == null) {
+					throw CloudErrorUtil
+							.toCoreException("No cloud application obtained from the Cloud Foundry server for :  "
+									+ appModule.getDeployedApplicationName()
+									+ ". Application may not have deployed correctly to the Cloud Foundry server, or there are connection problems to the server.");
+				}
+
+				// At this stage, the app is either created or it already
+				// exists.
+				// Set the environment variables BEFORE starting the app, and
+				// BEFORE updating
+				// the cloud application mapping in the module, which will
+				// replace the deployment info
+				updateEnvironmentVariables(appModule, monitor);
 
 				// If reached here it means the application creation and content
 				// pushing probably succeeded without errors, therefore attempt

@@ -11,11 +11,13 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.DeploymentInfo;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.EnvironmentVariable;
 
 /**
  * Describes the application that is to be pushed to a CF server, or already
@@ -38,6 +40,8 @@ public class ApplicationDeploymentInfo extends DeploymentInfo {
 	private boolean isIncrementalPublish;
 
 	private Staging staging;
+
+	private List<EnvironmentVariable> envVars;
 
 	public ApplicationDeploymentInfo(String appName) {
 		setDeploymentName(appName);
@@ -63,6 +67,14 @@ public class ApplicationDeploymentInfo extends DeploymentInfo {
 	 */
 	public void setDeploymentMode(ApplicationAction deploymentMode) {
 		this.deploymentMode = deploymentMode;
+	}
+
+	public void setEnvVariables(List<EnvironmentVariable> envVars) {
+		this.envVars = envVars;
+	}
+
+	public List<EnvironmentVariable> getEnvVariables() {
+		return envVars;
 	}
 
 	/**
@@ -126,6 +138,13 @@ public class ApplicationDeploymentInfo extends DeploymentInfo {
 		else {
 			setUris(null);
 		}
+
+		if (info.getEnvVariables() != null) {
+			setEnvVariables(new ArrayList<EnvironmentVariable>(info.getEnvVariables()));
+		}
+		else {
+			setEnvVariables(null);
+		}
 	}
 
 	/**
@@ -149,6 +168,11 @@ public class ApplicationDeploymentInfo extends DeploymentInfo {
 		if (getUris() != null) {
 			info.setUris(new ArrayList<String>(getUris()));
 		}
+
+		if (getEnvVariables() != null) {
+			info.setEnvVariables(new ArrayList<EnvironmentVariable>(getEnvVariables()));
+		}
+
 		return info;
 	}
 }

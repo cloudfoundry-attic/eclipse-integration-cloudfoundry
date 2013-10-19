@@ -8,17 +8,14 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
+package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.EnvironmentVariable;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.TableResizeHelper;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.EnvironmentVariable;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;

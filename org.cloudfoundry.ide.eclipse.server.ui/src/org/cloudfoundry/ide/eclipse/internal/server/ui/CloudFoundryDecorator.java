@@ -69,6 +69,12 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 
 					}
 					CloudFoundryApplicationModule module = server.getExistingCloudModule(modules[0]);
+
+					// module may no longer exist
+					if (module == null) {
+						return;
+					}
+					
 					if (module.getLocalModule() != null) {
 						// show local information?
 					}

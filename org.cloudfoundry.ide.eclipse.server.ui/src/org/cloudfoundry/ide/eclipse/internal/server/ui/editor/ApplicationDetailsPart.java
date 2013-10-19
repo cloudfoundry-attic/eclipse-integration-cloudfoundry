@@ -45,6 +45,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateApplication
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateInstanceCountAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AppStatsContentProvider.InstanceStatsAndInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationActionMenuControl.IButtonMenuListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.EnvVarsWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.MappedURLsWizard;
 import org.cloudfoundry.ide.eclipse.server.rse.ConfigureRemoteCloudFoundryAction;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -740,6 +741,26 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			}
 		});
 		toolkit.adapt(instanceSpinner);
+
+		createLabel(client, "Environment Variables:", SWT.CENTER);
+		Button envVarsButton = toolkit.createButton(client, "Edit...", SWT.PUSH);
+		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(envVarsButton);
+
+		envVarsButton.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				try {
+					CloudFoundryApplicationModule appModule = getExistingApplication();
+					if (appModule != null) {
+						EnvVarsWizard wizard = new EnvVarsWizard(cloudServer, appModule);
+						WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(), wizard);
+						dialog.open();
+					}
+				}
+				catch (CoreException ce) {
+					logError("Error while updating environment variables due to: " + ce.getMessage());
+				}
+			}
+		});
 
 		// Manifest area
 		createLabel(client, "Manifest:", SWT.CENTER);

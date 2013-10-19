@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 - 2013 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.tunnel;
 
@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.EnvironmentVariable;
 
 /**
  * 
@@ -92,11 +94,12 @@ public class ServiceCommand {
 		StringWriter variableBuffer = null;
 
 		for (int i = 0; i < options.length(); i++) {
-			// If char sequence at i and i+1 start with ${ start parsing variable
+			// If char sequence at i and i+1 start with ${ start parsing
+			// variable
 			if ((options.charAt(i) == '$') && i + 1 < options.length() && (options.charAt(i + 1) == '{')) {
 				// Start parsing the variable
 				variableBuffer = new StringWriter();
-				
+
 				// Advance by one more to skip the starting bracket: {
 				i++;
 			}
@@ -143,10 +146,11 @@ public class ServiceCommand {
 		// vary during each iteration
 		for (int i = 0; i < resolvedOptions.length();) {
 			boolean inserted = false;
-			if ((resolvedOptions.charAt(i) == '$') && i + 1 < resolvedOptions.length() && (resolvedOptions.charAt(i + 1) == '{')) {
+			if ((resolvedOptions.charAt(i) == '$') && i + 1 < resolvedOptions.length()
+					&& (resolvedOptions.charAt(i + 1) == '{')) {
 				// Start parsing the variable
 				dollarSignIndex = i;
-				
+
 				// Advance by one more to skip '{'
 				i++;
 				variableBuffer = new StringBuffer();
