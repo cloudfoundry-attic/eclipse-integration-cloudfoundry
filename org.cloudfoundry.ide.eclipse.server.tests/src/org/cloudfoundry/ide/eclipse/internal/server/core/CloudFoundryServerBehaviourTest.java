@@ -180,10 +180,8 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		}
 		assertTrue(found);
 		URL url = new URL(CloudFoundryTestFixture.PIVOTAL_CF.getUrl());
-		CloudFoundryOperations client = CloudFoundryPlugin
-				.getDefault()
-				.getCloudFoundryClientFactory()
-				.getCloudFoundryOperations(CloudFoundryTestFixture.PIVOTAL_CF.getCredentials().userEmail,
+		CloudFoundryOperations client = CloudFoundryPlugin.getCloudFoundryClientFactory()
+				.getNonUAACloudFoundryOperations(CloudFoundryTestFixture.PIVOTAL_CF.getCredentials().userEmail,
 						CloudFoundryTestFixture.PIVOTAL_CF.getCredentials().password, url);
 		client.login();
 		client.deleteApplication("dynamic-webapp");

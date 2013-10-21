@@ -47,6 +47,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleResourceDeltaWrapper;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
@@ -169,7 +170,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		server.setServerState(IServer.STATE_STARTED);
 		server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
 
-		CloudFoundryPlugin.getDefault().fireServerRefreshed(cloudServer);
+		ServerEventHandler.getDefault().fireServerRefreshed(cloudServer);
 	}
 
 	/**
@@ -206,7 +207,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				return null;
 			}
 		}.run(monitor);
-		CloudFoundryPlugin.getDefault().fireServicesUpdated(getCloudFoundryServer());
+		ServerEventHandler.getDefault().fireServicesUpdated(getCloudFoundryServer());
 	}
 
 	public synchronized List<CloudDomain> getDomainsFromOrgs(IProgressMonitor monitor) throws CoreException {
@@ -298,7 +299,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// Prompt the user to delete services as well
 					if (deleteServices && !servicesToDelete.isEmpty()) {
 						CloudFoundryPlugin.getCallback().deleteServices(servicesToDelete, cloudServer);
-						CloudFoundryPlugin.getDefault().fireServicesUpdated(cloudServer);
+						ServerEventHandler.getDefault().fireServicesUpdated(cloudServer);
 					}
 
 				}
@@ -539,11 +540,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	/**
 	 * Refresh the application modules and reschedules the app module refresh
-	 * job to execute at certain intervals.
+	 * job to execute at certain intervals. This may be a long running
+	 * operation.
 	 * @param monitor
 	 * @throws CoreException
 	 */
 	public synchronized void refreshModules(IProgressMonitor monitor) throws CoreException {
+		// Refresh modules FIRST, then restart job, to avoid delays in
+		// refreshing
+		internalRefreshModule(monitor);
 		// Refresh of applications is delegated to the refresh job.
 		restartRefreshJob();
 	}
@@ -884,7 +889,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		}.run(monitor);
 
-		CloudFoundryPlugin.getDefault().fireInstancesUpdated(getCloudFoundryServer());
+		ServerEventHandler.getDefault().fireInstancesUpdated(getCloudFoundryServer());
 	}
 
 	public void updatePassword(final String newPassword, IProgressMonitor monitor) throws CoreException {
@@ -1085,7 +1090,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 					// Update the cloud application which contains the updated
 					// environment variables.
-					CloudApplication cloudApplication = getApplication(appModule.getDeployedApplicationName(), subProgress);
+					CloudApplication cloudApplication = getApplication(appModule.getDeployedApplicationName(),
+							subProgress);
 					appModule.setCloudApplication(cloudApplication);
 
 				}
@@ -1465,8 +1471,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			// At this stage, determine if it is a cloud server and account that
 			// supports orgs and spaces
 
-			return cloudSpace != null ? CloudFoundryPlugin.getDefault().getCloudFoundryClient(credentials,
-					cloudSpace.getSpace(), url) : CloudFoundryPlugin.getDefault().getCloudFoundryClient(credentials,
+			return cloudSpace != null ? CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(credentials,url,
+					cloudSpace.getSpace() ) : CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(credentials,
 					url);
 		}
 		catch (MalformedURLException e) {
@@ -2436,7 +2442,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			if (interval > 0) {
 				try {
 					internalRefreshModule(monitor);
-					CloudFoundryPlugin.getDefault().fireServerRefreshed(getCloudFoundryServer());
+					ServerEventHandler.getDefault().fireServerRefreshed(getCloudFoundryServer());
 					if (getServer().getServerState() == IServer.STATE_STARTED) {
 
 						synchronized (BehaviourRefreshJob.this) {

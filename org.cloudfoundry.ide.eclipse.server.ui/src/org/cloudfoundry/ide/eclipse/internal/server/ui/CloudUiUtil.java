@@ -27,6 +27,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExt
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudOrgsAndSpaces;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceServerLookup;
@@ -216,7 +217,7 @@ public class CloudUiUtil {
 				cfServer.getBehaviour().updatePassword(newPassword, monitor);
 				cfServer.setPassword(newPassword);
 				// cfServer.saveConfiguration(monitor);
-				CloudFoundryPlugin.getDefault().firePasswordUpdated(cfServer);
+				ServerEventHandler.getDefault().firePasswordUpdated(cfServer);
 				serverWc.save(true, monitor);
 			}
 		};

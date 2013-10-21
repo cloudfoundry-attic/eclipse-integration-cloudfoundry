@@ -10,13 +10,8 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import java.net.URL;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.cloudfoundry.client.lib.CloudCredentials;
-import org.cloudfoundry.client.lib.CloudFoundryOperations;
-import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryClientFactory;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelCache;
@@ -51,6 +46,15 @@ import org.springframework.util.ClassUtils;
  */
 @SuppressWarnings("rawtypes")
 public class CloudFoundryPlugin extends Plugin {
+
+	// NOTE: Avoid adding API that accesses the plugin instance for CF
+	// operations
+	// (i.e. using CloudFoundryPlugin.getDefault()), as the plugin activator
+	// may not always be available, in particular for background CF Eclipse jobs
+	// that may
+	// still be running while the workbench is shutting down. If adding API
+	// to access the plugin instance (e.g. logging an error), always check
+	// if the plugin activator is available (i.e not null)
 
 	private static final boolean UAA_AVAILABLE = ClassUtils.isPresent("org.springframework.uaa.client.UaaService",
 			CloudFoundryPlugin.class.getClassLoader());
@@ -251,17 +255,11 @@ public class CloudFoundryPlugin extends Plugin {
 		return serviceCommandsStore;
 	}
 
-	private final List<CloudServerListener> applicationListeners = new CopyOnWriteArrayList<CloudServerListener>();
-
 	private ServiceTracker tracker;
 
-	private CloudFoundryClientFactory factory;
+	private static CloudFoundryClientFactory factory;
 
 	public CloudFoundryPlugin() {
-	}
-
-	public void addServerListener(CloudServerListener listener) {
-		applicationListeners.add(listener);
 	}
 
 	/**
@@ -269,38 +267,15 @@ public class CloudFoundryPlugin extends Plugin {
 	 * factory has not been defined
 	 * @return non-null client factory
 	 */
-	public synchronized CloudFoundryClientFactory getCloudFoundryClientFactory() {
+	public static synchronized CloudFoundryClientFactory getCloudFoundryClientFactory() {
 		if (factory == null) {
 			factory = new CloudFoundryClientFactory();
 		}
 		return factory;
 	}
 
-	public synchronized void setCloudFoundryClientFactory(CloudFoundryClientFactory factory) {
-		this.factory = factory;
-	}
-
-	private void fireServerEvent(CloudServerEvent event) {
-		CloudServerListener[] listeners = applicationListeners.toArray(new CloudServerListener[0]);
-		for (CloudServerListener listener : listeners) {
-			listener.serverChanged(event);
-		}
-	}
-
-	public void fireInstancesUpdated(CloudFoundryServer server) {
-		fireServerEvent(new CloudServerEvent(server, CloudServerEvent.EVENT_UPDATE_INSTANCES));
-	}
-
-	public void fireServicesUpdated(CloudFoundryServer server) {
-		fireServerEvent(new CloudServerEvent(server, CloudServerEvent.EVENT_UPDATE_SERVICES));
-	}
-
-	public void firePasswordUpdated(CloudFoundryServer server) {
-		fireServerEvent(new CloudServerEvent(server, CloudServerEvent.EVENT_UPDATE_PASSWORD));
-	}
-
-	public void fireServerRefreshed(CloudFoundryServer server) {
-		fireServerEvent(new CloudServerEvent(server, CloudServerEvent.EVENT_SERVER_REFRESHED));
+	public static synchronized void setCloudFoundryClientFactory(CloudFoundryClientFactory factory) {
+		CloudFoundryPlugin.factory = factory;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -314,10 +289,6 @@ public class CloudFoundryPlugin extends Plugin {
 			proxyService = (IProxyService) tracker.getService();
 		}
 		return proxyService;
-	}
-
-	public void removeServerListener(CloudServerListener listener) {
-		applicationListeners.remove(listener);
 	}
 
 	@Override
@@ -340,27 +311,6 @@ public class CloudFoundryPlugin extends Plugin {
 
 		plugin = null;
 		super.stop(context);
-	}
-
-	/**
-	 * Returns a non-null Cloud Foundry Java client which may be UAA aware if
-	 * UAA support is available.
-	 * @param userName
-	 * @param password
-	 * @param url
-	 * @return non-null Cloud Foundry Java client, including a UAA aware client
-	 * if UAA is available
-	 */
-	public CloudFoundryOperations getCloudFoundryClient(String userName, String password, URL url) {
-		return getCloudFoundryClientFactory().getCloudFoundryOperations(isUAAIDEAvailable(), userName, password, url);
-	}
-
-	public CloudFoundryOperations getCloudFoundryClient(CloudCredentials credentials, URL url) {
-		return getCloudFoundryClientFactory().getCloudFoundryOperations(isUAAIDEAvailable(), credentials, url);
-	}
-
-	public CloudFoundryOperations getCloudFoundryClient(CloudCredentials credentials, CloudSpace session, URL url) {
-		return getCloudFoundryClientFactory().getCloudFoundryOperations(isUAAIDEAvailable(), credentials, url, session);
 	}
 
 	public static void trace(String string) {

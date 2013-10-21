@@ -38,37 +38,51 @@ import org.springframework.ide.eclipse.uaa.UaaPlugin;
  */
 public class CloudFoundryClientFactory {
 
+	private static CloudFoundryClientFactory sessionFactory = null;
+
+	public static CloudFoundryClientFactory getDefault() {
+		if (sessionFactory == null) {
+			sessionFactory = new CloudFoundryClientFactory();
+		}
+		return sessionFactory;
+	}
+
 	// Must match the import package for the UAA plugin used for Spring UAA
 	// services
 	public static final String SPRING_IDE_UAA_BUNDLE_SYMBOLIC_NAME = "org.springframework.ide.eclipse.uaa";
 
-	public CloudFoundryOperations getCloudFoundryOperations(boolean isUAAIDEAvailable, String userName,
-			String password, URL url) {
-		return getCloudFoundryOperations(isUAAIDEAvailable, getCredentials(userName, password), url);
-	}
-
-	public CloudFoundryOperations getCloudFoundryOperations(boolean isUAAIDEAvailable, CloudCredentials credentials,
-			URL url) {
-		return getCloudFoundryOperations(isUAAIDEAvailable, credentials, url, null);
-	}
-
-	public CloudFoundryOperations getCloudFoundryOperations(boolean isUAAIDEAvailable, CloudCredentials credentials,
-			URL url, CloudSpace session) {
-		if (isUAAIDEAvailable) {
-			return new UaaAwareCloudFoundryClientAccessor().getCloudFoundryOperations(credentials, url, session);
-		}
-		else {
-			return getCloudFoundryOperations(credentials, url, session);
-		}
-	}
-
-	public CloudFoundryOperations getCloudFoundryOperations(String userName, String password, URL url) {
-		CloudCredentials credentials = getCredentials(userName, password);
+	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url) {
 		return getCloudFoundryOperations(credentials, url, null);
 	}
 
-	protected static CloudCredentials getCredentials(String userName, String password) {
-		return new CloudCredentials(userName, password);
+	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, CloudSpace session) {
+
+		if (CloudFoundryPlugin.isUAAIDEAvailable()) {
+			return new UaaAwareCloudFoundryClientAccessor().getCloudFoundryOperations(credentials, url, session);
+		}
+		else {
+			// Proxies are always updated on each client call by the
+			// CloudFoundryServerBehaviour Request as well as the client login
+			// handler
+			// therefore it is not critical to set the proxy in the client on
+			// client
+			// creation
+			HttpProxyConfiguration proxyConfiguration = getProxy(url);
+			return session != null ? new CloudFoundryClient(credentials, url, session) : new CloudFoundryClient(
+					credentials, url, proxyConfiguration);
+		}
+	}
+
+	/**
+	 * For testing purposes only.
+	 * @param userName
+	 * @param password
+	 * @param url
+	 * @return
+	 */
+	public CloudFoundryOperations getNonUAACloudFoundryOperations(String userName, String password, URL url) {
+		CloudCredentials credentials = getCredentials(userName, password);
+		return getCloudFoundryOperations(credentials, url, null);
 	}
 
 	public CloudFoundryOperations getCloudFoundryOperations(String cloudControllerUrl) throws MalformedURLException {
@@ -82,15 +96,8 @@ public class CloudFoundryClientFactory {
 		return new CloudFoundryClient(url, proxyConfiguration);
 	}
 
-	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, CloudSpace session) {
-		// Proxies are always updated on each client call by the
-		// CloudFoundryServerBehaviour Request as well as the client login
-		// handler
-		// therefore it is not critical to set the proxy in the client on client
-		// creation
-		HttpProxyConfiguration proxyConfiguration = getProxy(url);
-		return session != null ? new CloudFoundryClient(credentials, url, session) : new CloudFoundryClient(
-				credentials, url, proxyConfiguration);
+	protected static CloudCredentials getCredentials(String userName, String password) {
+		return new CloudCredentials(userName, password);
 	}
 
 	static class UaaAwareCloudFoundryClientAccessor {

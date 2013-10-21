@@ -40,8 +40,7 @@ public class CloudFoundryMockClientFixture {
 		CloudFoundryClientFactory factory = new CloudFoundryClientFactory() {
 
 			@Override
-			public CloudFoundryClient getCloudFoundryOperations(boolean uaaAvailable, String userName, String password,
-					URL url) {
+			public CloudFoundryClient getNonUAACloudFoundryOperations(String userName, String password, URL url) {
 
 				try {
 					return new CFClientMockedRestTemplate(userName, password, url);

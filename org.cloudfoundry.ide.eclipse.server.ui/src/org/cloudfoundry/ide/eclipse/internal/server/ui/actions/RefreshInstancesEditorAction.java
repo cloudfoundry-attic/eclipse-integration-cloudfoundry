@@ -31,17 +31,4 @@ public abstract class RefreshInstancesEditorAction extends CloudFoundryEditorAct
 		return Status.OK_STATUS;
 	}
 
-	@Override
-	protected IStatus runEditorOperation(IProgressMonitor monitor) throws CoreException {
-		// Be sure the refresh job is stopped.
-		getEditorPage().getCloudServer().getBehaviour().stopRefreshJob();
-		IStatus status = performAction(monitor);
-
-		getEditorPage().getCloudServer().getBehaviour().refreshApplicationInstanceStats(getModule(), monitor);
-
-		// This will trigger the refresh job to restart
-		getEditorPage().getCloudServer().getBehaviour().refreshModules(monitor);
-
-		return status;
-	}
 }

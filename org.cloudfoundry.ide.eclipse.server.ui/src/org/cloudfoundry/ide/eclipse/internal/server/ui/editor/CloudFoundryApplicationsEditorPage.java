@@ -17,6 +17,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerListener;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.RefreshApplicationEditorAction;
@@ -80,13 +81,13 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 		refresh(RefreshArea.MASTER, true);
 
 		serverListener = new ServerListener();
-		CloudFoundryPlugin.getDefault().addServerListener(serverListener);
+		ServerEventHandler.getDefault().addServerListener(serverListener);
 		getServer().getOriginal().addServerListener(serverListener);
 	}
 
 	@Override
 	public void dispose() {
-		CloudFoundryPlugin.getDefault().removeServerListener(serverListener);
+		ServerEventHandler.getDefault().removeServerListener(serverListener);
 		getServer().getOriginal().removeServerListener(serverListener);
 
 		if (mform != null) {

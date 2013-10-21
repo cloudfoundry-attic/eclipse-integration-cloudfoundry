@@ -1,19 +1,19 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerListener;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -137,7 +137,7 @@ public class CloudFoundryServerStatusSection extends ServerEditorSection impleme
 		
 		update();
 		
-		CloudFoundryPlugin.getDefault().addServerListener(this);
+		ServerEventHandler.getDefault().addServerListener(this);
 		cfServer.getServer().addServerListener(this);
 	}
 	
@@ -185,7 +185,7 @@ public class CloudFoundryServerStatusSection extends ServerEditorSection impleme
 	@Override
 	public void dispose() {
 		cfServer.getServer().removeServerListener(this);
-		CloudFoundryPlugin.getDefault().removeServerListener(this);
+		ServerEventHandler.getDefault().removeServerListener(this);
 	}
 
 }

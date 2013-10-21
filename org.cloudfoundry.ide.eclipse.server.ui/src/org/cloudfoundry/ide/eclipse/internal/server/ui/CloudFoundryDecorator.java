@@ -14,10 +14,10 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerListener;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.eclipse.jface.viewers.IDecoration;
@@ -53,7 +53,7 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 				});
 			}
 		};
-		CloudFoundryPlugin.getDefault().addServerListener(listener);
+		ServerEventHandler.getDefault().addServerListener(listener);
 	}
 
 	public void decorate(Object element, IDecoration decoration) {
@@ -136,7 +136,7 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 	@Override
 	public void dispose() {
 		super.dispose();
-		CloudFoundryPlugin.getDefault().removeServerListener(listener);
+		ServerEventHandler.getDefault().removeServerListener(listener);
 	}
 
 	private CloudFoundryServer getCloudFoundryServer(IServer server) {

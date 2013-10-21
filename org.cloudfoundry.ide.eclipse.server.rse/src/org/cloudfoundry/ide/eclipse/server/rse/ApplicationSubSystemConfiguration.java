@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.rse;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.eclipse.rse.core.filters.ISystemFilter;
 import org.eclipse.rse.core.filters.ISystemFilterPool;
 import org.eclipse.rse.core.filters.ISystemFilterPoolManager;
@@ -113,7 +113,7 @@ public class ApplicationSubSystemConfiguration extends FileServiceSubSystemConfi
 		super.addSubSystem(subsys);
 		if (subsys instanceof ApplicationSubSystem) {
 			ServerCore.addServerLifecycleListener((ApplicationSubSystem) subsys);
-			CloudFoundryPlugin.getDefault().addServerListener((ApplicationSubSystem) subsys);
+			ServerEventHandler.getDefault().addServerListener((ApplicationSubSystem) subsys);
 		}
 	}
 
@@ -142,7 +142,7 @@ public class ApplicationSubSystemConfiguration extends FileServiceSubSystemConfi
 	protected void removeSubSystem(ISubSystem subsys) {
 		if (subsys instanceof ApplicationSubSystem) {
 			ServerCore.removeServerLifecycleListener((ApplicationSubSystem) subsys);
-			CloudFoundryPlugin.getDefault().removeServerListener((ApplicationSubSystem) subsys);
+			ServerEventHandler.getDefault().removeServerListener((ApplicationSubSystem) subsys);
 		}
 		super.removeSubSystem(subsys);
 	}

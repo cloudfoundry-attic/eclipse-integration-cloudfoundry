@@ -15,6 +15,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerListener;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryURLNavigation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.UpdatePasswordDialog;
@@ -293,7 +294,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		toolkit.paintBordersFor(topComposite);
 		section.setExpanded(true);
 
-		CloudFoundryPlugin.getDefault().addServerListener(this);
+		ServerEventHandler.getDefault().addServerListener(this);
 	}
 
 	protected void createCloneServerArea(Composite parent, FormToolkit toolkit) {
@@ -456,7 +457,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 
 	@Override
 	public void dispose() {
-		CloudFoundryPlugin.getDefault().removeServerListener(this);
+		ServerEventHandler.getDefault().removeServerListener(this);
 	}
 
 }

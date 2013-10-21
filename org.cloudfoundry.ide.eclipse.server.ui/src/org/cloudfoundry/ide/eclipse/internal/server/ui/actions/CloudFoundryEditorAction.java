@@ -251,6 +251,8 @@ public abstract class CloudFoundryEditorAction extends Action {
 		editorPage.getCloudServer().getBehaviour().stopRefreshJob();
 		IStatus status = CloudFoundryEditorAction.this.performAction(monitor);
 
+		getEditorPage().getCloudServer().getBehaviour().refreshApplicationInstanceStats(getModule(), monitor);
+
 		// This will trigger the refresh job to restart
 		editorPage.getCloudServer().getBehaviour().refreshModules(monitor);
 
