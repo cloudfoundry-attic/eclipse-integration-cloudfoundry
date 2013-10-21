@@ -45,7 +45,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateApplication
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateInstanceCountAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AppStatsContentProvider.InstanceStatsAndInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationActionMenuControl.IButtonMenuListener;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationDetailsPart.ApplicationDetailsDebugListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.EnvVarsWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.MappedURLsWizard;
 import org.cloudfoundry.ide.eclipse.server.rse.ConfigureRemoteCloudFoundryAction;
@@ -185,8 +184,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	private List<String> URIs;
 
 	private final boolean provideServices;
-
-	private Label memoryNoteLabel;
 
 	private int memory;
 
