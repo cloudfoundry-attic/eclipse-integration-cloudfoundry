@@ -45,6 +45,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateApplication
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateInstanceCountAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AppStatsContentProvider.InstanceStatsAndInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationActionMenuControl.IButtonMenuListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationDetailsPart.ApplicationDetailsDebugListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.EnvVarsWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.MappedURLsWizard;
 import org.cloudfoundry.ide.eclipse.server.rse.ConfigureRemoteCloudFoundryAction;
@@ -124,6 +125,10 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	private final CloudFoundryApplicationsEditorPage editorPage;
 
 	private Section generalSection;
+
+	private Section generalSectionRestartRequired;
+
+	private Section operationsSection;
 
 	private AppStatsContentProvider instancesContentProvider;
 
@@ -209,6 +214,10 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		createGeneralSection(parent);
 
+		createGeneralSectionRestartRequired(parent);
+
+		createApplicationOperationsSection(parent);
+
 		if (provideServices) {
 			createServicesSection(parent);
 			servicesDropListener = new ServicesViewerDropListener(servicesViewer, serverBehaviour, editorPage);
@@ -218,6 +227,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		if (provideServices) {
 			addDropSupport(generalSection);
+			addDropSupport(generalSectionRestartRequired);
+			addDropSupport(operationsSection);
 			addDropSupport(servicesSection);
 			addDropSupport(instancesSection);
 		}
@@ -689,12 +700,38 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			}
 		});
 
+		// Manifest area
+		createLabel(client, "Manifest:", SWT.CENTER);
+		saveManifest = toolkit.createButton(client, "Save", SWT.PUSH);
+
+		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(saveManifest);
+
+		saveManifest.setEnabled(false);
+		saveManifest.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				writeToManifest();
+			}
+		});
+
+	}
+
+	private void createGeneralSectionRestartRequired(Composite parent) {
+		generalSectionRestartRequired = toolkit.createSection(parent, Section.TITLE_BAR);
+		generalSectionRestartRequired.setLayout(new GridLayout());
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(generalSectionRestartRequired);
+		generalSectionRestartRequired.setText("General (Application Restart Required)");
+
+		// reset spacing due to toolbar
+		generalSectionRestartRequired.clientVerticalSpacing = 0;
+
+		Composite client = toolkit.createComposite(generalSectionRestartRequired);
+		client.setLayout(new GridLayout(2, false));
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(client);
+		generalSectionRestartRequired.setClient(client);
+
 		createLabel(client, "Memory limit:", SWT.CENTER);
 
-		Composite memoryComposite = toolkit.createComposite(client);
-		GridLayoutFactory.fillDefaults().margins(0, 0).numColumns(2).equalWidth(false).applyTo(memoryComposite);
-
-		memoryCombo = new Combo(memoryComposite, SWT.BORDER);
+		memoryCombo = new Combo(client, SWT.BORDER);
 		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.FILL).applyTo(memoryCombo);
 		memoryCombo.addSelectionListener(new SelectionAdapter() {
 
@@ -717,9 +754,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			}
 
 		});
-
-		memoryNoteLabel = toolkit.createLabel(memoryComposite, " Change is not updated until application restarts");
-		GridDataFactory.fillDefaults().align(SWT.RIGHT, SWT.CENTER).applyTo(memoryNoteLabel);
 
 		createLabel(client, "Instances:", SWT.CENTER);
 
@@ -761,19 +795,22 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				}
 			}
 		});
+	}
 
-		// Manifest area
-		createLabel(client, "Manifest:", SWT.CENTER);
-		saveManifest = toolkit.createButton(client, "Save", SWT.PUSH);
+	private void createApplicationOperationsSection(Composite parent) {
 
-		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(saveManifest);
+		operationsSection = toolkit.createSection(parent, Section.TITLE_BAR);
+		operationsSection.setLayout(new GridLayout());
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(operationsSection);
+		operationsSection.setText("Application Operations");
 
-		saveManifest.setEnabled(false);
-		saveManifest.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				writeToManifest();
-			}
-		});
+		// reset spacing due to toolbar
+		operationsSection.clientVerticalSpacing = 0;
+
+		Composite client = toolkit.createComposite(operationsSection);
+		client.setLayout(new GridLayout(2, false));
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(client);
+		operationsSection.setClient(client);
 
 		// FIXNS: Uncomment when CF client supports staging updates
 		// createStandaloneCommandArea(client);
