@@ -602,8 +602,9 @@ public class CloudFoundryServer extends ServerDelegate {
 			// Iterate through the local WST modules, and update them based on
 			// which are external (have no accessible workspace resources),
 			// which
-			// have no corresponding deployed application . 
-			// Note that some IModules may also be in the process of being deleted. DO NOT recreate cloud application modules for these
+			// have no corresponding deployed application .
+			// Note that some IModules may also be in the process of being
+			// deleted. DO NOT recreate cloud application modules for these
 			// CHANGE
 			for (IModule module : server.getModules()) {
 				// Find the corresponding Cloud Foundry application module for
@@ -658,7 +659,9 @@ public class CloudFoundryServer extends ServerDelegate {
 
 			for (IModule module : server.getModules()) {
 				CloudFoundryApplicationModule appModule = getExistingCloudModule(module);
-				updateState(server, appModule);
+				if (appModule != null) {
+					updateState(server, appModule);
+				}
 			}
 
 			// update state for deleted applications to trigger a refresh

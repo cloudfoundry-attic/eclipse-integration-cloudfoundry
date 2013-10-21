@@ -258,6 +258,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				for (IModule module : modules) {
 					final CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
+					if (appModule == null) {
+						CloudFoundryPlugin
+								.logWarning("Attempting to delete module that has no corresponding cloud application module: "
+										+ module.getName());
+						continue;
+					}
+
 					List<String> servicesToDelete = new ArrayList<String>();
 
 					CloudApplication application = client.getApplication(appModule.getDeployedApplicationName());
@@ -735,6 +742,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			CloudFoundryServer cloudServer = getCloudFoundryServer();
 			final CloudFoundryApplicationModule cloudModule = cloudServer.getExistingCloudModule(modules[0]);
+			
+			if (cloudModule == null) {
+				throw CloudErrorUtil.toCoreException("Unable to stop application as no cloud module found for: " + modules[0].getName());
+			}
 
 			// CloudFoundryPlugin.getCallback().applicationStopping(getCloudFoundryServer(),
 			// cloudModule);
@@ -1324,18 +1335,21 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public void refreshApplicationInstanceStats(IModule module, IProgressMonitor monitor) throws CoreException {
 		if (module != null) {
+
 			CloudFoundryApplicationModule appModule = getCloudFoundryServer().getExistingCloudModule(module);
 
-			try {
-				// Update the CloudApplication in the cloud module.
-				CloudApplication application = getApplication(appModule.getDeployedApplicationName(), monitor);
-				appModule.setCloudApplication(application);
-			}
-			catch (CoreException e) {
-				// application is not deployed to server yet
-			}
+			if (appModule != null) {
+				try {
+					// Update the CloudApplication in the cloud module.
+					CloudApplication application = getApplication(appModule.getDeployedApplicationName(), monitor);
+					appModule.setCloudApplication(application);
+				}
+				catch (CoreException e) {
+					// application is not deployed to server yet
+				}
 
-			internalUpdateApplicationInstanceStats(appModule, monitor);
+				internalUpdateApplicationInstanceStats(appModule, monitor);
+			}
 
 		}
 	}
@@ -1471,9 +1485,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			// At this stage, determine if it is a cloud server and account that
 			// supports orgs and spaces
 
-			return cloudSpace != null ? CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(credentials,url,
-					cloudSpace.getSpace() ) : CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(credentials,
-					url);
+			return cloudSpace != null ? CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
+					credentials, url, cloudSpace.getSpace()) : CloudFoundryPlugin.getCloudFoundryClientFactory()
+					.getCloudFoundryOperations(credentials, url);
 		}
 		catch (MalformedURLException e) {
 			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(

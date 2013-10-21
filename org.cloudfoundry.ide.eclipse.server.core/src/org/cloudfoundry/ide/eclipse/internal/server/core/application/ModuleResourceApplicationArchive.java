@@ -12,7 +12,6 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.AbstractModuleResourceArchive;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.wst.server.core.IModule;

@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -114,9 +115,12 @@ public class ApplicationDeploymentUIHandler {
 						+ appModule.getLocalModule().getModuleType().getId());
 			}
 
-			// Now parse the manifest file, if it exists, and load into a deployment info working copy.
-			// Do NOT save the working copy yet, as a user may cancel the operation from the wizard. 
-			// THe working copy should only be saved by the wizard if a user clicks "OK".
+			// Now parse the manifest file, if it exists, and load into a
+			// deployment info working copy.
+			// Do NOT save the working copy yet, as a user may cancel the
+			// operation from the wizard.
+			// THe working copy should only be saved by the wizard if a user
+			// clicks "OK".
 			DeploymentInfoWorkingCopy workingCopy = null;
 			try {
 				workingCopy = new ManifestParser(appModule, server).load();
@@ -130,53 +134,69 @@ public class ApplicationDeploymentUIHandler {
 
 			final boolean[] cancelled = { false };
 			final boolean[] writeToManifest = { false };
+			final IStatus status[] = { Status.OK_STATUS };
 			final DeploymentInfoWorkingCopy finWorkingCopy = workingCopy;
+
 			Display.getDefault().syncExec(new Runnable() {
 				public void run() {
 
 					CloudFoundryApplicationWizard wizard = new CloudFoundryApplicationWizard(server, appModule,
 							finWorkingCopy, providerDelegate);
-					WizardDialog dialog = new WizardDialog(PlatformUI.getWorkbench().getModalDialogShellProvider()
-							.getShell(), wizard);
-					int status = dialog.open();
 
-					if (status == Dialog.OK) {
+					try {
+						WizardDialog dialog = new WizardDialog(PlatformUI.getWorkbench().getModalDialogShellProvider()
+								.getShell(), wizard);
+						int dialogueStatus = dialog.open();
 
-						// First add any new services to the server
-						final List<CloudService> addedServices = wizard.getCreatedCloudServices();
-						writeToManifest[0] = wizard.persistManifestChanges();
+						if (dialogueStatus == Dialog.OK) {
 
-						if (addedServices != null && !addedServices.isEmpty()) {
-							IProgressMonitor subMonitor = new SubProgressMonitor(monitor, addedServices.size());
-							try {
-								server.getBehaviour().createService(addedServices.toArray(new CloudService[0]),
-										subMonitor);
-							}
-							catch (CoreException e) {
-								CloudFoundryPlugin.log(e);
-							}
-							finally {
-								subMonitor.done();
+							// First add any new services to the server
+							final List<CloudService> addedServices = wizard.getCreatedCloudServices();
+							writeToManifest[0] = wizard.persistManifestChanges();
+
+							if (addedServices != null && !addedServices.isEmpty()) {
+								IProgressMonitor subMonitor = new SubProgressMonitor(monitor, addedServices.size());
+								try {
+									server.getBehaviour().createService(addedServices.toArray(new CloudService[0]),
+											subMonitor);
+								}
+								catch (CoreException e) {
+									CloudFoundryPlugin.log(e);
+								}
+								finally {
+									subMonitor.done();
+								}
 							}
 						}
+						else {
+							cancelled[0] = true;
+						}
 					}
-					else {
+					catch (Throwable t) {
+						// Any error in the wizard should result in the module
+						// being deleted (i.e. cancelled)
 						cancelled[0] = true;
+						status[0] = CloudFoundryPlugin.getErrorStatus(t);
 					}
 				}
 			});
 
 			if (cancelled[0]) {
+				if (!status[0].isOK()) {
+					CloudFoundryPlugin.logError("Failed to deploy application due to: " + status[0].getMessage(),
+							status[0].getException());
+				}
 				throw new OperationCanceledException();
 			}
 			else {
-
-				IStatus status = appModule.validateDeploymentInfo();
-				if (!status.isOK()) {
-					throw new CoreException(status);
+				if (status[0].isOK()) {
+					status[0] = appModule.validateDeploymentInfo();
+				}
+				if (!status[0].isOK()) {
+					throw new CoreException(status[0]);
 				}
 				else if (writeToManifest[0]) {
-					
+
 					IProgressMonitor subMonitor = new SubProgressMonitor(monitor, 1);
 					try {
 						new ManifestParser(appModule, server).write(subMonitor);
@@ -185,13 +205,12 @@ public class ApplicationDeploymentUIHandler {
 						// Do not let this error propagate, as failing to write
 						// to the manifest should not stop the app's deployment
 						CloudFoundryPlugin.logError(ce);
-					} finally {
+					}
+					finally {
 						subMonitor.done();
 					}
 				}
 			}
 		}
-
 	}
-
 }

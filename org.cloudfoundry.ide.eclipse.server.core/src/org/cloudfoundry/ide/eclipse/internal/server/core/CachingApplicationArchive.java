@@ -27,6 +27,7 @@ import java.util.zip.ZipFile;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeployedResourceCache.CachedDeployedApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeployedResourceCache.DeployedResourceEntry;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.AbstractModuleResourceArchive;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.IModuleFile;
