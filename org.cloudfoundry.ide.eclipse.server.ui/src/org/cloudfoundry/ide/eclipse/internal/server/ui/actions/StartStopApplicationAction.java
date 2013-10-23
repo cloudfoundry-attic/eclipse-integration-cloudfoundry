@@ -14,11 +14,9 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.wst.server.core.IModule;
 
 /**
@@ -26,7 +24,7 @@ import org.eclipse.wst.server.core.IModule;
  * @author Steffen Pingel
  * @author Christian Dupuis
  */
-public class StartStopApplicationAction extends RefreshInstancesEditorAction {
+public class StartStopApplicationAction extends CloudFoundryEditorAction {
 
 	private final ApplicationAction action;
 
@@ -67,36 +65,28 @@ public class StartStopApplicationAction extends RefreshInstancesEditorAction {
 		return jobName.toString();
 	}
 
-	@Override
-	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
+	public ICloudFoundryOperation getOperation() throws CoreException {
+		ICloudFoundryOperation operation = null;
+		IModule[] modules = new IModule[] { module };
 		switch (action) {
 		case START:
-			serverBehaviour.startModule(new IModule[] { module }, null);
+			operation = serverBehaviour.getDeployStartApplicationOperation(modules, false);
 			break;
 		case STOP:
-			serverBehaviour.stopModule(new IModule[] { module }, null);
+			operation = serverBehaviour.getStopAppOperation(modules);
 			break;
 		case RESTART:
-			serverBehaviour.restartModuleRunMode(new IModule[] { module }, null);
+			operation = serverBehaviour.getRestartOperation(modules);
 			break;
 		case UPDATE_RESTART:
-			serverBehaviour.updateRestartModuleRunMode(new IModule[] { module }, getIncrementalPublish(), null);
+			operation = serverBehaviour.getUpdateRestartOperation(modules, getIncrementalPublish());
 			break;
 		}
-		return Status.OK_STATUS;
+		return operation;
 	}
 
 	protected boolean getIncrementalPublish() {
 		return CloudFoundryPlugin.getDefault().getIncrementalPublish();
-	}
-
-	@Override
-	protected IStatus runEditorOperation(IProgressMonitor monitor) throws CoreException {
-		// No need to stop and restart refresh jobs with start, stop, update
-		// restart as its already done by the behaviour
-		IStatus status = performAction(monitor);
-
-		return status;
 	}
 
 }

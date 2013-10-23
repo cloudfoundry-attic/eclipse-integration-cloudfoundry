@@ -165,7 +165,7 @@ public class CloudFoundryTestFixture {
 			List<String> services = new ArrayList<String>();
 			services.add(serviceName);
 
-			serverBehavior.deleteServices(services, new NullProgressMonitor());
+			serverBehavior.getDeleteServicesOperation(services).run(new NullProgressMonitor());
 		}
 
 		public void deleteAllServices() throws CoreException {

@@ -122,6 +122,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private CloudApplicationUrlLookup applicationUrlLookup;
 
+	private final boolean REFRESH_MODULES[] = { false };
+
 	/*
 	 * FIXNS: Until V2 MCF is released, disable debugging support for V2, as
 	 * public clouds also indicate they support debug.
@@ -164,13 +166,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		}.run(monitor);
 
-		internalRefreshModule(monitor);
-
 		Server server = (Server) cloudServer.getServerOriginal();
 		server.setServerState(IServer.STATE_STARTED);
 		server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
 
-		ServerEventHandler.getDefault().fireServerRefreshed(cloudServer);
+		internalRefreshAndFireEvent(monitor);
 	}
 
 	/**
@@ -239,11 +239,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public void deleteModules(final IModule[] modules, final boolean deleteServices, IProgressMonitor monitor)
 			throws CoreException {
-		new BehaviourOperation<Void>() {
+		new BehaviourOperation(CloudFoundryServerBehaviour.this) {
 
-			protected Void doRun(IProgressMonitor monitor) throws CoreException {
+			protected void performOperation(IProgressMonitor monitor) throws CoreException {
 				internalDeleteModules(modules, deleteServices, monitor);
-				return null;
 			}
 		}.run(monitor);
 	}
@@ -316,28 +315,30 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
-	 * Deletes the list of services. Refresh operations are stopped while
-	 * services are being deleted.
+	 * Deletes the list of services.
 	 * @param services
-	 * @param monitor
-	 * @throws CoreException if error occurred during or after services are
-	 * deleted. Error may still occur in a post-operation even if services are
-	 * deleted.
+	 * @throws CoreException if error occurred during service deletion.
 	 */
-	public void deleteServices(final List<String> services, IProgressMonitor monitor) throws CoreException {
-		new Request<Void>("Deleting services") {
-			@Override
-			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-				TunnelBehaviour handler = new TunnelBehaviour(getCloudFoundryServer());
-				for (String service : services) {
-					client.deleteService(service);
+	public ICloudFoundryOperation getDeleteServicesOperation(final List<String> services) throws CoreException {
+		return new BehaviourOperation(CloudFoundryServerBehaviour.this) {
 
-					// Also delete any existing Tunnels
-					handler.stopAndDeleteCaldecottTunnel(service, progress);
-				}
-				return null;
+			@Override
+			protected void performOperation(IProgressMonitor monitor) throws CoreException {
+				new Request<Void>("Deleting services") {
+					@Override
+					protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+						TunnelBehaviour handler = new TunnelBehaviour(getCloudFoundryServer());
+						for (String service : services) {
+							client.deleteService(service);
+
+							// Also delete any existing Tunnels
+							handler.stopAndDeleteCaldecottTunnel(service, progress);
+						}
+						return null;
+					}
+				}.run(monitor);
 			}
-		}.run(monitor);
+		};
 	}
 
 	/**
@@ -388,7 +389,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		Server server = (Server) getServer();
 		server.setServerState(IServer.STATE_STOPPING);
 
-		stopRefreshJob();
+		stopRefreshModules();
 
 		CloudFoundryServer cloudServer = getCloudFoundryServer();
 
@@ -547,16 +548,23 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	/**
 	 * Refresh the application modules and reschedules the app module refresh
-	 * job to execute at certain intervals. This may be a long running
-	 * operation.
+	 * job to execute at certain intervals. This will synch all local
+	 * application modules with the actual deployed applications. This may be a
+	 * long running operation.
 	 * @param monitor
 	 * @throws CoreException
 	 */
-	public synchronized void refreshModules(IProgressMonitor monitor) throws CoreException {
-		// Refresh modules FIRST, then restart job, to avoid delays in
-		// refreshing
-		internalRefreshModule(monitor);
-		// Refresh of applications is delegated to the refresh job.
+	public void refreshModules(IProgressMonitor monitor) throws CoreException {
+		// Restart the refresh operation
+		synchronized (REFRESH_MODULES) {
+			REFRESH_MODULES[0] = true;
+		}
+		// Do an immediate refresh first as to avoid delays in refresh operation
+		// as the refresh job may not execute immediately after it is restarted
+		// below
+		internalRefreshAndFireEvent(monitor);
+
+		// Restart refresh job so that it can continue refreshing on an interval
 		restartRefreshJob();
 	}
 
@@ -594,7 +602,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		boolean waitForDeployment = true;
 
-		return new StartOrDeployOperation(waitForDeployment, incrementalPublish, modules) {
+		ApplicationOperation op = new StartOrDeployOperation(waitForDeployment, incrementalPublish, modules) {
 
 			@Override
 			protected CloudFoundryApplicationModule prepareForDeployment(IProgressMonitor monitor) throws CoreException {
@@ -611,7 +619,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				return appModule;
 			}
 
-		}.run(monitor);
+		};
+		op.run(monitor);
+		return op.getApplicationModule();
 
 	}
 
@@ -621,17 +631,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * application that needs to be started.
 	 * @param waitForDeployment true if start or deploy operation should wait
 	 * until the application has been deployed before the operation terminates.
-	 * @param monitor
-	 * @return Cloud module that was created and mapped to or updated for the
-	 * given WST {@link IModule}
+	 * 
+	 * @return {@link ApplicationOperation} that performs the operation when
+	 * run.
 	 * @throws CoreException
 	 * @throws {@link OperationCanceledException} if deployment or start
 	 * cancelled.
 	 */
-	public CloudFoundryApplicationModule deployOrStartModule(final IModule[] modules, boolean waitForDeployment,
-			IProgressMonitor monitor) throws CoreException {
+	public ApplicationOperation getDeployStartApplicationOperation(final IModule[] modules, boolean waitForDeployment)
+			throws CoreException {
 		boolean incrementalPublish = false;
-		return doDeployOrStartModule(incrementalPublish, modules, waitForDeployment, monitor);
+		return getDeployStartApplicationOperation(incrementalPublish, modules, waitForDeployment);
 	}
 
 	/**
@@ -642,14 +652,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param waitForDeployment wait for the application to start. Waiting for
 	 * an application to start may take a long time, depending on the
 	 * application type. False otherwise
-	 * @param monitor
-	 * @return app module mapped to a {@link CloudApplication} for an
-	 * application that successfully deployed and/or started.
+	 * @return {@link ICloudFoundryOperation} that performs the operation when
+	 * run.
 	 * @throws CoreException
 	 */
-	protected CloudFoundryApplicationModule doDeployOrStartModule(boolean isIncremental, final IModule[] modules,
-			boolean waitForDeployment, IProgressMonitor monitor) throws CoreException {
-		return new StartOrDeployOperation(waitForDeployment, isIncremental, modules).run(monitor);
+	protected ApplicationOperation getDeployStartApplicationOperation(boolean isIncremental, final IModule[] modules,
+			boolean waitForDeployment) throws CoreException {
+		return new StartOrDeployOperation(waitForDeployment, isIncremental, modules);
 	}
 
 	/**
@@ -689,7 +698,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	@Override
 	public void startModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		deployOrStartModule(modules, false, monitor);
+		ApplicationOperation operation = getDeployStartApplicationOperation(modules, false);
+		operation.run(monitor);
+	}
+
+	public CloudFoundryApplicationModule startModuleWaitForDeployment(IModule[] modules, IProgressMonitor monitor)
+			throws CoreException {
+		ApplicationOperation operation = getDeployStartApplicationOperation(modules, true);
+		operation.run(monitor);
+		return operation.getApplicationModule();
 	}
 
 	@Override
@@ -735,44 +752,59 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	@Override
 	public void stopModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		Server server = (Server) getServer();
-		boolean succeeded = false;
-		try {
-			server.setModuleState(modules, IServer.STATE_STOPPING);
+		getStopAppOperation(modules).run(monitor);
+	}
 
-			CloudFoundryServer cloudServer = getCloudFoundryServer();
-			final CloudFoundryApplicationModule cloudModule = cloudServer.getExistingCloudModule(modules[0]);
-			
-			if (cloudModule == null) {
-				throw CloudErrorUtil.toCoreException("Unable to stop application as no cloud module found for: " + modules[0].getName());
-			}
+	public ApplicationOperation getStopAppOperation(IModule[] modules) {
+		return new ApplicationOperation(modules) {
 
-			// CloudFoundryPlugin.getCallback().applicationStopping(getCloudFoundryServer(),
-			// cloudModule);
-			new Request<Void>() {
-				@Override
-				protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-					client.stopApplication(cloudModule.getDeployedApplicationName());
-					return null;
+			@Override
+			protected void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
+					throws CoreException {
+				Server server = (Server) getServer();
+				boolean succeeded = false;
+				try {
+					server.setModuleState(modules, IServer.STATE_STOPPING);
+
+					CloudFoundryServer cloudServer = getCloudFoundryServer();
+					final CloudFoundryApplicationModule cloudModule = cloudServer.getExistingCloudModule(modules[0]);
+
+					if (cloudModule == null) {
+						throw CloudErrorUtil
+								.toCoreException("Unable to stop application as no cloud module found for: "
+										+ modules[0].getName());
+					}
+
+					// CloudFoundryPlugin.getCallback().applicationStopping(getCloudFoundryServer(),
+					// cloudModule);
+					new Request<Void>() {
+						@Override
+						protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+							client.stopApplication(cloudModule.getDeployedApplicationName());
+							return null;
+						}
+					}.run(monitor);
+
+					server.setModuleState(modules, IServer.STATE_STOPPED);
+					succeeded = true;
+					CloudFoundryPlugin.getCallback().applicationStopped(cloudModule, cloudServer);
+
+					// If succeeded, stop all Caldecott tunnels if the app is
+					// the
+					// Caldecott app
+					if (TunnelBehaviour.isCaldecottApp(cloudModule.getDeployedApplicationName())) {
+						TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
+						handler.stopAndDeleteAllTunnels(monitor);
+					}
 				}
-			}.run(monitor);
+				finally {
+					if (!succeeded) {
+						server.setModuleState(modules, IServer.STATE_UNKNOWN);
+					}
+				}
 
-			server.setModuleState(modules, IServer.STATE_STOPPED);
-			succeeded = true;
-			CloudFoundryPlugin.getCallback().applicationStopped(cloudModule, cloudServer);
-
-			// If succeeded, stop all Caldecott tunnels if the app is the
-			// Caldecott app
-			if (TunnelBehaviour.isCaldecottApp(cloudModule.getDeployedApplicationName())) {
-				TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
-				handler.stopAndDeleteAllTunnels(monitor);
 			}
-		}
-		finally {
-			if (!succeeded) {
-				server.setModuleState(modules, IServer.STATE_UNKNOWN);
-			}
-		}
+		};
 	}
 
 	/**
@@ -803,7 +835,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			restartDebugModule(modules, monitor);
 		}
 		else {
-			restartModuleRunMode(modules, monitor);
+			ICloudFoundryOperation operation = getRestartOperation(modules);
+			operation.run(monitor);
 		}
 
 	}
@@ -857,14 +890,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * It does not support debug mode.Publishing of changes is done
 	 * incrementally.
 	 * @param modules
-	 * @param monitor
+	 * 
 	 * @param isIncrementalPublishing true if optimised incremental publishing
 	 * should be enabled. False otherwise
 	 * @throws CoreException
 	 */
-	public void updateRestartModuleRunMode(IModule[] modules, boolean isIncrementalPublishing, IProgressMonitor monitor)
+	public ApplicationOperation getUpdateRestartOperation(IModule[] modules, boolean isIncrementalPublishing)
 			throws CoreException {
-		doDeployOrStartModule(isIncrementalPublishing, modules, false, monitor);
+		return getDeployStartApplicationOperation(isIncrementalPublishing, modules, false);
 	}
 
 	/**
@@ -872,11 +905,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * application in debug mode. Does not push application resources or create
 	 * the application. The application must exist in the CloudFoundry server.
 	 * @param modules
-	 * @param monitor
 	 * @throws CoreException
 	 */
-	public void restartModuleRunMode(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		new RestartOperation(modules).run(monitor);
+	public ApplicationOperation getRestartOperation(IModule[] modules) throws CoreException {
+		return new RestartOperation(modules);
 	}
 
 	/**
@@ -1128,23 +1160,34 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return AppState.STARTED.equals(application.getState());
 	}
 
-	private synchronized void restartRefreshJob() {
+	private void restartRefreshJob() {
+
 		if (refreshJob == null) {
 			refreshJob = new BehaviourRefreshJob();
 		}
-		refreshJob.reschedule(ClientRequestOperation.ONE_SECOND_INTERVAL, ClientRequestOperation.DEFAULT_INTERVAL);
+		refreshJob.reschedule(ClientRequestOperation.DEFAULT_INTERVAL);
 	}
 
 	/**
-	 * Will stop the refresh job at the next available chance. It does not
-	 * guarantee that the job will stop immediately, as a job may be currently
-	 * refreshing.
+	 * Will stop any scheduled refresh operations at the next available chance,
+	 * including continuously auto-scheduled background refresh jobs. Refresh
+	 * operations include refreshing the list of application modules, to keep
+	 * the local module representations of applications in synch with the actual
+	 * deployed applications. It does not guarantee that all refresh operations
+	 * will stop immediately, as refresh operations are performed atomically and
+	 * a refresh operation may be currently running.
 	 */
-	public synchronized void stopRefreshJob() {
+	public void stopRefreshModules() {
+
+		synchronized (REFRESH_MODULES) {
+			REFRESH_MODULES[0] = false;
+		}
+
 		if (refreshJob == null) {
 			return;
 		}
 		refreshJob.stop();
+
 	}
 
 	private boolean waitForStart(CloudFoundryOperations client, String deploymentId, IProgressMonitor monitor)
@@ -1188,23 +1231,43 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param cloudServer
 	 * @param monitor
 	 * @throws CoreException
+	 * @return true if refresh was performed. False otherwise.
 	 */
-	protected void internalRefreshModule(IProgressMonitor monitor) throws CoreException {
+	protected boolean internalRefreshModule(IProgressMonitor monitor) throws CoreException {
 
-		final CloudFoundryServer cloudServer = getCloudFoundryServer();
+		synchronized (REFRESH_MODULES) {
+			if (REFRESH_MODULES[0]) {
+				final CloudFoundryServer cloudServer = getCloudFoundryServer();
 
-		// Get updated list of cloud applications from the server
-		List<CloudApplication> applications = getApplications(monitor);
+				// Get updated list of cloud applications from the server
+				List<CloudApplication> applications = getApplications(monitor);
 
-		// update applications and deployments from server
-		Map<String, CloudApplication> deployedApplicationsByName = new LinkedHashMap<String, CloudApplication>();
+				// update applications and deployments from server
+				Map<String, CloudApplication> deployedApplicationsByName = new LinkedHashMap<String, CloudApplication>();
 
-		for (CloudApplication application : applications) {
-			deployedApplicationsByName.put(application.getName(), application);
+				for (CloudApplication application : applications) {
+					deployedApplicationsByName.put(application.getName(), application);
+				}
+
+				cloudServer.updateModules(deployedApplicationsByName);
+
+			}
+			return REFRESH_MODULES[0];
 		}
 
-		cloudServer.updateModules(deployedApplicationsByName);
+	}
 
+	/**
+	 * Will fetch the latest list of cloud applications from the server, and
+	 * update local module mappings accordingly. Fires event after refresh
+	 * operation is complete
+	 * @param monitor
+	 * @throws CoreException
+	 */
+	protected void internalRefreshAndFireEvent(IProgressMonitor monitor) throws CoreException {
+		if (internalRefreshModule(monitor)) {
+			ServerEventHandler.getDefault().fireServerRefreshed(getCloudFoundryServer());
+		}
 	}
 
 	@Override
@@ -1220,7 +1283,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				List<IModule[]> allModules = getAllModules();
 				for (IModule[] module : allModules) {
 					if (!module[0].isExternal()) {
-						deployOrStartModule(module, false, monitor);
+						startModule(module, monitor);
 					}
 				}
 				return Status.OK_STATUS;
@@ -1232,7 +1295,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					if (app != null) {
 						int publishState = getServer().getModulePublishState(module);
 						if (publishState != IServer.PUBLISH_STATE_NONE) {
-							deployOrStartModule(module, false, monitor);
+							startModule(module, monitor);
 						}
 					}
 				}
@@ -1792,17 +1855,24 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * operation, and restarted afterward.
 	 * 
 	 */
-	protected abstract class ApplicationOperation extends BehaviourOperation<CloudFoundryApplicationModule> {
+	protected abstract class ApplicationOperation extends BehaviourOperation {
 
 		final protected IModule[] modules;
 
+		private CloudFoundryApplicationModule appModule;
+
 		protected ApplicationOperation(IModule[] modules) {
+			super(CloudFoundryServerBehaviour.this);
 			this.modules = modules;
 		}
 
-		protected CloudFoundryApplicationModule doRun(IProgressMonitor monitor) throws CoreException {
+		public CloudFoundryApplicationModule getApplicationModule() {
+			return appModule;
+		}
 
-			CloudFoundryApplicationModule appModule = prepareForDeployment(monitor);
+		protected void performOperation(IProgressMonitor monitor) throws CoreException {
+
+			appModule = prepareForDeployment(monitor);
 
 			IStatus validationStatus = appModule.validateDeploymentInfo();
 			if (!validationStatus.isOK()) {
@@ -1835,14 +1905,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// Refresh the application instance stats as well
 				internalUpdateApplicationInstanceStats(appModule, monitor);
 
-				return appModule;
 			}
 			catch (OperationCanceledException e) {
 				// ignore so webtools does not show an exception
 				((Server) getServer()).setModuleState(modules, IServer.STATE_UNKNOWN);
 			}
 
-			return null;
 		}
 
 		/**
@@ -2424,21 +2492,21 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 
 		/**
-		 * Schedules the refresh job after the given interval. If the job it
-		 * will complete before scheduling the next refresh.
-		 * @param initialWait how long the job should wait before starting. If
-		 * zero or less, interval will be used as the starting wait time.
-		 * @param interval how long to wait before the job runs again
+		 * Schedules the refresh job after the given interval. The job will not
+		 * execute immediately, but after the given interval passes, and will
+		 * continue to execute after each interval.
+		 * 
+		 * @param interval how long to wait before the job runs again. If -1,
+		 * the job will not be scheduled any further (i.e. it will be "stopped")
 		 * 
 		 */
-		public void reschedule(long initialWait, long interval) {
+		public void reschedule(long interval) {
 			synchronized (BehaviourRefreshJob.this) {
 				// schedule, if not already running or scheduled
 				this.interval = interval;
 
 				if (interval > 0) {
-					long initial = initialWait > 0 ? initialWait : interval;
-					schedule(initial);
+					schedule(interval);
 				}
 			}
 		}
@@ -2447,7 +2515,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		 * Will stop the job at the next available opportunity.
 		 */
 		public void stop() {
-			reschedule(-1, -1);
+			reschedule(-1);
 		}
 
 		@Override
@@ -2455,8 +2523,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			if (interval > 0) {
 				try {
-					internalRefreshModule(monitor);
-					ServerEventHandler.getDefault().fireServerRefreshed(getCloudFoundryServer());
+					internalRefreshAndFireEvent(monitor);
+
 					if (getServer().getServerState() == IServer.STATE_STARTED) {
 
 						synchronized (BehaviourRefreshJob.this) {
@@ -2478,29 +2546,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			return Status.OK_STATUS;
 
 		}
-
-	}
-
-	/**
-	 * Behaviour operation that stops the refresh job prior to executing the
-	 * operation, and restarts it afterward.
-	 * 
-	 */
-	protected abstract class BehaviourOperation<T> {
-
-		public T run(IProgressMonitor monitor) throws CoreException {
-			stopRefreshJob();
-
-			try {
-				return doRun(monitor);
-			}
-			finally {
-				restartRefreshJob();
-			}
-
-		}
-
-		protected abstract T doRun(IProgressMonitor monitor) throws CoreException;
 
 	}
 

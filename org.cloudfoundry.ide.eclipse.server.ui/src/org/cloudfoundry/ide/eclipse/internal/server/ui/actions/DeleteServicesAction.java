@@ -11,16 +11,13 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServicesHandler;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
-
 
 /**
  * @author Terry Denney
@@ -50,9 +47,8 @@ public class DeleteServicesAction extends CloudFoundryEditorAction {
 	}
 
 	@Override
-	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
-		serverBehaviour.deleteServices(servicesHandler.getServiceNames(), monitor);
-		return Status.OK_STATUS;
+	public ICloudFoundryOperation getOperation() throws CoreException {
+		return serverBehaviour.getDeleteServicesOperation(servicesHandler.getServiceNames());
 	}
 
 	@Override

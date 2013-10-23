@@ -27,6 +27,7 @@ import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Ha
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.springframework.web.client.ResourceAccessException;
@@ -82,7 +83,7 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 		int moduleState = server.getModulePublishState(modules);
 		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
-		serverBehavior.deployOrStartModule(modules, true, null);
+		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 		moduleState = server.getModuleState(modules);
 		assertEquals(IServer.STATE_STARTED, moduleState);
 		CloudApplication cloudApplication = getCloudApplication(modules[0]);

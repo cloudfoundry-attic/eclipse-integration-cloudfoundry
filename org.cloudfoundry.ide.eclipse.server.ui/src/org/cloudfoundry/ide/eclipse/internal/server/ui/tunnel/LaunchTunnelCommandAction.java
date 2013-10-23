@@ -13,6 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.LaunchTunnelCommandManager;
@@ -62,9 +63,10 @@ public class LaunchTunnelCommandAction extends CloudFoundryEditorAction {
 		this.serviceCommand = command;
 		this.cloudServer = cloudServer;
 		this.cloudService = cloudService;
-		
+
 		/**
-		 * FIXNS: Disabled for CF 1.5.0 until tunnel support at client level are updated.
+		 * FIXNS: Disabled for CF 1.5.0 until tunnel support at client level are
+		 * updated.
 		 */
 		setEnabled(false);
 		setToolTipText(TunnelActionProvider.DISABLED_V2_TOOLTIP_MESSAGE);
@@ -80,8 +82,7 @@ public class LaunchTunnelCommandAction extends CloudFoundryEditorAction {
 		return job;
 	}
 
-	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
-
+	protected IStatus launch(IProgressMonitor monitor) {
 		// if there is no tunnel descriptor, create the tunnel first
 		if (descriptor == null && cloudService != null) {
 			try {
@@ -149,7 +150,18 @@ public class LaunchTunnelCommandAction extends CloudFoundryEditorAction {
 		}
 
 		return Status.OK_STATUS;
-
 	}
 
+	public ICloudFoundryOperation getOperation() throws CoreException {
+		return new EditorOperation() {
+
+			@Override
+			protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
+				IStatus status = launch(monitor);
+				if (!status.isOK()) {
+					throw new CoreException(status);
+				}
+			}
+		};
+	}
 }

@@ -39,7 +39,6 @@ public class CloudFoundryMockClientFixture {
 		// mocked rest template
 		CloudFoundryClientFactory factory = new CloudFoundryClientFactory() {
 
-			@Override
 			public CloudFoundryClient getNonUAACloudFoundryOperations(String userName, String password, URL url) {
 
 				try {
@@ -54,7 +53,6 @@ public class CloudFoundryMockClientFixture {
 				return null;
 			}
 
-			@Override
 			public CloudFoundryClient getCloudFoundryOperations(String cloudControllerUrl) throws MalformedURLException {
 				try {
 					return new CFClientMockedRestTemplate(cloudControllerUrl);
@@ -70,7 +68,7 @@ public class CloudFoundryMockClientFixture {
 
 		};
 
-		CloudFoundryPlugin.getDefault().setCloudFoundryClientFactory(factory);
+		CloudFoundryPlugin.setCloudFoundryClientFactory(factory);
 		return factory;
 	}
 

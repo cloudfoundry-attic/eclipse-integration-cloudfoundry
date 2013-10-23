@@ -18,11 +18,10 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.viewers.IStructuredSelection;
 
 /**
@@ -55,10 +54,10 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 	}
 
 	@Override
-	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
+	protected ICloudFoundryOperation getOperation() throws CoreException {
 		List<String> existingServices = null;
 
-		List<String> updatedServices = new ArrayList<String>();
+		final List<String> updatedServices = new ArrayList<String>();
 
 		DeploymentInfoWorkingCopy workingCopy = appModule.getDeploymentInfoWorkingCopy();
 
@@ -92,19 +91,32 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 		serviceChanges |= updatedServices.removeAll(getServicesToRemove());
 
 		if (serviceChanges) {
-			// update services right away, if app is already deployed
-			if (appModule.getApplication() != null) {
-				updateServices(monitor, appModule, serverBehaviour, updatedServices);
-			}
-
+			// Save the changes even if an app is not deployed
 			workingCopy.setServices(updatedServices);
 			workingCopy.save();
-		}
 
-		return Status.OK_STATUS;
+			if (appModule.getApplication() != null) {
+				// update services right away, if app is already deployed
+				return new EditorOperation() {
+					protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
+						ModifyServicesForApplicationAction.this.updateServicesInClient(monitor, appModule,
+								serverBehaviour, updatedServices);
+					}
+				};
+			}
+		}
+		return null;
 	}
 
-	protected abstract void updateServices(IProgressMonitor monitor, CloudFoundryApplicationModule appModule,
+	/**
+	 * Performs the actual services update through the CF server behaviour
+	 * @param monitor
+	 * @param appModule
+	 * @param serverBehaviour
+	 * @param updatedServices
+	 * @throws CoreException
+	 */
+	protected abstract void updateServicesInClient(IProgressMonitor monitor, CloudFoundryApplicationModule appModule,
 			CloudFoundryServerBehaviour serverBehaviour, List<String> updatedServices) throws CoreException;
 
 	@Override

@@ -10,15 +10,13 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 
-
-public class DebugApplicationEditorAction extends RefreshInstancesEditorAction {
+public class DebugApplicationEditorAction extends CloudFoundryEditorAction {
 
 	private final DebugCommand command;
 
@@ -36,8 +34,12 @@ public class DebugApplicationEditorAction extends RefreshInstancesEditorAction {
 		return jobName.toString();
 	}
 
-	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
-		command.run(monitor);
-		return Status.OK_STATUS;
+	public ICloudFoundryOperation getOperation() throws CoreException {
+		return new ICloudFoundryOperation() {
+
+			public void run(IProgressMonitor monitor) throws CoreException {
+				command.run(monitor);
+			}
+		};
 	}
 }

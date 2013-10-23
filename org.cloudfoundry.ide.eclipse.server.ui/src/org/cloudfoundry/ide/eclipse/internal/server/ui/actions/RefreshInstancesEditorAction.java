@@ -10,11 +10,10 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 
 /**
  * Editor action that also refreshes application instances stats after the
@@ -27,8 +26,15 @@ public abstract class RefreshInstancesEditorAction extends CloudFoundryEditorAct
 	}
 
 	@Override
-	protected IStatus performAction(IProgressMonitor monitor) throws CoreException {
-		return Status.OK_STATUS;
+	protected ICloudFoundryOperation getOperation() throws CoreException {
+		return new EditorOperation() {
+
+			@Override
+			protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
+				// Do Nothing. Use the base editor operation refreshing
+				// mechanism as the refresh action
+			}
+		};
 	}
 
 }

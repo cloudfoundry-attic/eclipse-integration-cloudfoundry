@@ -13,16 +13,14 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.TunnelActionProvider;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
@@ -41,9 +39,10 @@ public class AddServiceStartCaldecottAction extends CloudFoundryEditorAction {
 		setText(jobName);
 		setImageDescriptor(CloudFoundryImages.CONNECT);
 		this.services = new ArrayList<String>(services);
-		
+
 		/**
-		 * FIXNS: Disabled for CF 1.5.0 until tunnel support at client level are updated.
+		 * FIXNS: Disabled for CF 1.5.0 until tunnel support at client level are
+		 * updated.
 		 */
 		setEnabled(false);
 		setToolTipText(TunnelActionProvider.DISABLED_V2_TOOLTIP_MESSAGE);
@@ -69,20 +68,20 @@ public class AddServiceStartCaldecottAction extends CloudFoundryEditorAction {
 	}
 
 	@Override
-	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
+	public ICloudFoundryOperation getOperation() throws CoreException {
 
 		if (services != null && !services.isEmpty()) {
+			return new EditorOperation() {
 
-			try {
-				TunnelBehaviour handler = new TunnelBehaviour(getBehavior().getCloudFoundryServer());
-				handler.startCaldecottTunnel(services.get(0), monitor, true);
-			}
-			catch (CoreException e) {
-				return CloudFoundryPlugin.getErrorStatus(e);
-			}
-
+				@Override
+				protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
+						TunnelBehaviour handler = new TunnelBehaviour(getBehavior().getCloudFoundryServer());
+					handler.startCaldecottTunnel(services.get(0), monitor, true);
+				}
+				
+			};
 		}
-		return Status.OK_STATUS;
+		return null;
 
 	}
 

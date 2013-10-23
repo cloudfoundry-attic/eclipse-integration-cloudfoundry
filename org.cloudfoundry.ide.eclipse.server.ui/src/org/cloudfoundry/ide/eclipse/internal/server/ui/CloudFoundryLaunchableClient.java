@@ -28,8 +28,6 @@ import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.model.ClientDelegate;
 
-
-
 /**
  * @author Christian Dupuis
  * @author Terry Denney
@@ -46,8 +44,8 @@ public class CloudFoundryLaunchableClient extends ClientDelegate {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
-					final CloudFoundryApplicationModule module = behaviour.deployOrStartModule(new IModule[] { cfLaunchable.getModule() },
-							true, monitor);
+					final CloudFoundryApplicationModule module = behaviour.startModuleWaitForDeployment(
+							new IModule[] { cfLaunchable.getModule() }, monitor);
 					if (module == null) {
 						return Status.CANCEL_STATUS;
 					}

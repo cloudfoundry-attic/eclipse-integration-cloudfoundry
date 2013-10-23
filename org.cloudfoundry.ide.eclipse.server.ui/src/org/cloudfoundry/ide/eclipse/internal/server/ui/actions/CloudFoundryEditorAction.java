@@ -13,8 +13,11 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.NotFinishedStagingException;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationMasterDetailsBlock;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
@@ -79,7 +82,12 @@ public abstract class CloudFoundryEditorAction extends Action {
 
 	public abstract String getJobName();
 
-	protected abstract IStatus performAction(IProgressMonitor monitor) throws CoreException;
+	/**
+	 * Operation to execute. May be null.
+	 * @return operation to execute.
+	 * @throws CoreException
+	 */
+	protected abstract ICloudFoundryOperation getOperation() throws CoreException;
 
 	public boolean isUserAction() {
 		return userAction;
@@ -110,9 +118,13 @@ public abstract class CloudFoundryEditorAction extends Action {
 		Job job = new Job(getJobName()) {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				IStatus status = null;
+				IStatus status = Status.OK_STATUS;
 				try {
-					status = runEditorOperation(monitor);
+					ICloudFoundryOperation operation = getOperation();
+					if (operation == null) {
+						return CloudFoundryPlugin.getStatus("No editor operation to execute.", IStatus.WARNING);
+					}
+					operation.run(monitor);
 				}
 				catch (CoreException e) {
 					CloudFoundryException cfe = e.getCause() instanceof CloudFoundryException ? (CloudFoundryException) e
@@ -246,17 +258,30 @@ public abstract class CloudFoundryEditorAction extends Action {
 		return editorPage.getMasterDetailsBlock().getCurrentModule();
 	}
 
-	protected IStatus runEditorOperation(IProgressMonitor monitor) throws CoreException {
-		// Be sure the refresh job is stopped.
-		editorPage.getCloudServer().getBehaviour().stopRefreshJob();
-		IStatus status = CloudFoundryEditorAction.this.performAction(monitor);
+	/**
+	 * Editor operations should only be created AFTER the editor page is
+	 * accessible.
+	 * 
+	 */
+	protected abstract class EditorOperation extends BehaviourOperation {
 
-		getEditorPage().getCloudServer().getBehaviour().refreshApplicationInstanceStats(getModule(), monitor);
+		public EditorOperation() {
+			super(editorPage.getCloudServer().getBehaviour());
 
-		// This will trigger the refresh job to restart
-		editorPage.getCloudServer().getBehaviour().refreshModules(monitor);
+		}
 
-		return status;
+		protected void performOperation(IProgressMonitor monitor) throws CoreException {
+
+			performEditorOperation(monitor);
+
+			// Many operations affect app instances therefore updated the
+			// instances after the operation
+			editorPage.getCloudServer().getBehaviour().refreshApplicationInstanceStats(getModule(), monitor);
+
+		}
+
+		abstract protected void performEditorOperation(IProgressMonitor monitor) throws CoreException;
+
 	}
 
 }

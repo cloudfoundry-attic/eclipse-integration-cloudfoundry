@@ -11,18 +11,15 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-
-
 
 /**
  * @author Terry Denney
  */
-public class UpdateApplicationMemoryAction extends RefreshInstancesEditorAction {
+public class UpdateApplicationMemoryAction extends CloudFoundryEditorAction {
 
 	private final int memory;
 
@@ -41,9 +38,14 @@ public class UpdateApplicationMemoryAction extends RefreshInstancesEditorAction 
 	}
 
 	@Override
-	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
-		getBehavior().updateApplicationMemory(module, memory, monitor);
-		return Status.OK_STATUS;
+	public ICloudFoundryOperation getOperation() throws CoreException {
+		return new EditorOperation() {
+
+			@Override
+			protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
+				getBehavior().updateApplicationMemory(module, memory, monitor);
+			}
+		};
 	}
 
 }

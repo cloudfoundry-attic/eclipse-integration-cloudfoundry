@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
@@ -101,27 +101,27 @@ public class CloudFoundryActionProvider extends CommonActionProvider {
 			catch (SecurityException e) {
 				StatusManager.getManager().handle(
 						new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
-								"Reflection error while opening Cloud Foundry applicatinos page", e), StatusManager.LOG);
+								"Reflection error while opening Cloud Foundry applications page", e), StatusManager.LOG);
 			}
 			catch (NoSuchMethodException e) {
 				StatusManager.getManager().handle(
 						new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
-								"Reflection error while opening Cloud Foundry applicatinos page", e), StatusManager.LOG);
+								"Reflection error while opening Cloud Foundry applications page", e), StatusManager.LOG);
 			}
 			catch (IllegalArgumentException e) {
 				StatusManager.getManager().handle(
 						new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
-								"Reflection error while opening Cloud Foundry applicatinos page", e), StatusManager.LOG);
+								"Reflection error while opening Cloud Foundry applications page", e), StatusManager.LOG);
 			}
 			catch (IllegalAccessException e) {
 				StatusManager.getManager().handle(
 						new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
-								"Reflection error while opening Cloud Foundry applicatinos page", e), StatusManager.LOG);
+								"Reflection error while opening Cloud Foundry applications page", e), StatusManager.LOG);
 			}
 			catch (InvocationTargetException e) {
 				StatusManager.getManager().handle(
 						new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
-								"Reflection error while opening Cloud Foundry applicatinos page", e), StatusManager.LOG);
+								"Reflection error while opening Cloud Foundry applications page", e), StatusManager.LOG);
 			}
 		}
 

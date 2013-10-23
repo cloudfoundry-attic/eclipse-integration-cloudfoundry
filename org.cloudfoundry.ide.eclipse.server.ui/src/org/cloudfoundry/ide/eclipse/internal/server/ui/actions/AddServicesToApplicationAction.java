@@ -52,7 +52,7 @@ public class AddServicesToApplicationAction extends ModifyServicesForApplication
 	}
 
 	@Override
-	protected void updateServices(IProgressMonitor monitor, CloudFoundryApplicationModule appModule, CloudFoundryServerBehaviour serverBehaviour, List<String> updatedServices) throws CoreException {
+	protected void updateServicesInClient(IProgressMonitor monitor, CloudFoundryApplicationModule appModule, CloudFoundryServerBehaviour serverBehaviour, List<String> updatedServices) throws CoreException {
 		serverBehaviour.updateServices(appModule.getDeployedApplicationName(),
 				updatedServices, monitor);
 	}

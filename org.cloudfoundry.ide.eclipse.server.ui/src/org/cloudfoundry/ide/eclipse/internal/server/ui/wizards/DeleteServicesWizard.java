@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 VMware, Inc.
+ * Copyright (c) 2012, 2013 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VMware, Inc. - initial API and implementation
+ *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
@@ -24,8 +24,6 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.statushandlers.StatusManager;
-
-
 
 /**
  * @author Terry Denney
@@ -59,7 +57,7 @@ public class DeleteServicesWizard extends Wizard {
 					try {
 						List<String> selectedServices = page.getSelectedServices();
 						if (selectedServices.size() > 0) {
-							cloudServer.getBehaviour().deleteServices(selectedServices, monitor);
+							cloudServer.getBehaviour().getDeleteServicesOperation(selectedServices).run(monitor);
 						}
 					}
 					catch (CoreException e) {

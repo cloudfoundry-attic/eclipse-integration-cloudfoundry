@@ -216,6 +216,7 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 
 								setApplicationMemoryChoices(cloudServer.getBehaviour().getApplicationMemoryChoices(
 										monitor));
+
 							}
 						}
 

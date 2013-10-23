@@ -448,7 +448,7 @@ public class CloudFoundryServer extends ServerDelegate {
 						Set<IModule> pending = new HashSet<IModule>(Arrays.asList(add));
 						try {
 							for (IModule module : add) {
-								getBehaviour().deployOrStartModule(new IModule[] { module }, true, monitor2);
+								getBehaviour().startModuleWaitForDeployment(new IModule[] { module }, monitor2);
 								pending.remove(module);
 							}
 						}

@@ -14,13 +14,9 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.wst.server.core.IModule;
-
-
 
 /**
  * @author Terry Denney
@@ -35,7 +31,7 @@ public class RefreshApplicationEditorAction extends RefreshInstancesEditorAction
 
 	public RefreshApplicationEditorAction(CloudFoundryApplicationsEditorPage editorPage, RefreshArea area) {
 		super(editorPage, area);
-		
+
 		setImageDescriptor(CloudFoundryImages.REFRESH);
 		setText("Refresh");
 	}
@@ -46,30 +42,21 @@ public class RefreshApplicationEditorAction extends RefreshInstancesEditorAction
 	}
 
 	@Override
-	public IStatus performAction(IProgressMonitor monitor) {
-		// no action needed, just need to refresh editor through super class'
-		// implementation
-		return Status.OK_STATUS;
-	}
-
-	@Override
 	protected void display404Error(IStatus status) {
 		IModule currentModule = getEditorPage().getMasterDetailsBlock().getCurrentModule();
 		if (currentModule != null) {
-			getEditorPage().setMessage(
-				"Local module is not yet deployed. Cannot refresh with server.",
-				IMessageProvider.WARNING);
+			getEditorPage().setMessage("Local module is not yet deployed. Cannot refresh with server.",
+					IMessageProvider.WARNING);
 		}
 		else {
-			getEditorPage().setMessage(
-				"Status is not up to date with server. Refresh needed.",
-				IMessageProvider.WARNING);
+			getEditorPage().setMessage("Status is not up to date with server. Refresh needed.",
+					IMessageProvider.WARNING);
 		}
 	}
-	
+
 	@Override
 	protected boolean shouldLogException(CoreException e) {
 		return !CloudErrorUtil.isNotFoundException(e);
 	}
-	
+
 }

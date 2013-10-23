@@ -68,7 +68,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		int moduleState = server.getModulePublishState(modules);
 		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
-		serverBehavior.deployOrStartModule(modules, true, null);
+		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 		moduleState = server.getModuleState(modules);
 		assertEquals(IServer.STATE_STARTED, moduleState);
 		moduleState = server.getModulePublishState(modules);
@@ -101,8 +101,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		}
 
 		try {
-			serverBehavior.deployOrStartModule(modules, true, null);
-
+			serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 		}
 		catch (Throwable e) {
 			assertEquals("Operation not permitted (403 Forbidden)", e.getMessage());
@@ -145,7 +144,8 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 			CloudCredentials credentials = new CloudCredentials(userName, "invalid-password");
 			getClient(credentials);
 
-			serverBehavior.deployOrStartModule(modules, true, null);
+			serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
+
 			fail("Expected CoreException due to invalid password");
 		}
 		catch (Throwable e) {
@@ -162,7 +162,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		harness.createProjectAndAddModule("dynamic-webapp");
 
 		IModule[] modules = server.getModules();
-		serverBehavior.deployOrStartModule(modules, true, null);
+		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 
 		// wait 1s until app is actually started
 		URI uri = new URI("http://" + harness.getUrl("dynamic-webapp") + "/index.html");
@@ -212,7 +212,8 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		int moduleState = server.getModulePublishState(modules);
 		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
-		serverBehavior.deployOrStartModule(modules, true, null);
+		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
+
 		moduleState = server.getModuleState(modules);
 		assertEquals(IServer.STATE_STARTED, moduleState);
 		moduleState = server.getModulePublishState(modules);
@@ -245,7 +246,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		harness.createProjectAndAddModule("dynamic-webapp");
 
 		IModule[] modules = server.getModules();
-		serverBehavior.deployOrStartModule(modules, true, null);
+		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 
 		CloudFoundryApplicationModule module = cloudServer.getExistingCloudModule(modules[0]);
 

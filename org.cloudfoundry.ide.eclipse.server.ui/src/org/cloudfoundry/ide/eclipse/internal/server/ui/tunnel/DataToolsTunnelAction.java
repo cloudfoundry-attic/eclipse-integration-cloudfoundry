@@ -16,6 +16,7 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
@@ -84,9 +85,10 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 		setText(ACTION_NAME);
 		setImageDescriptor(CloudFoundryImages.JDBC_DATA_TOOLS);
 		this.cloudServer = cloudServer;
-		
+
 		/**
-		 * FIXNS: Disabled for CF 1.5.0 until tunnel support at client level are updated.
+		 * FIXNS: Disabled for CF 1.5.0 until tunnel support at client level are
+		 * updated.
 		 */
 		setEnabled(false);
 		setToolTipText(TunnelActionProvider.DISABLED_V2_TOOLTIP_MESSAGE);
@@ -124,8 +126,21 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 		return job;
 	}
 
-	public IStatus performAction(IProgressMonitor monitor) throws CoreException {
+	public ICloudFoundryOperation getOperation() throws CoreException {
 
+		return new EditorOperation() {
+
+			@Override
+			protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
+				IStatus status = openConnection(monitor);
+				if (!status.isOK()) {
+					throw new CoreException(status);
+				}
+			}
+		};
+	}
+
+	protected IStatus openConnection(IProgressMonitor monitor) {
 		tunnelDescriptor = descriptor.getTunnelDescriptor();
 
 		// if there is no tunnel descriptor, create the tunnel first
@@ -174,7 +189,6 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 			return CloudFoundryPlugin.getErrorStatus("Failed to create tunnel for: "
 					+ tunnelDescriptor.getServiceName());
 		}
-
 	}
 
 	protected IConnectionProfile getConnectionProfile() {

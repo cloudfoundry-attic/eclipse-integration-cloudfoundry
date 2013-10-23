@@ -17,6 +17,7 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.ServiceCommand;
@@ -28,8 +29,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AddServiceStartCal
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -37,7 +36,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 public class TunnelActionProvider {
 
 	private final CloudFoundryServer cloudServer;
-	
+
 	public static final String DISABLED_V2_TOOLTIP_MESSAGE = "Disabled for this version of Cloud Foundry Integration for Eclipse";
 
 	public TunnelActionProvider(CloudFoundryServer cloudServer) {
@@ -99,11 +98,12 @@ public class TunnelActionProvider {
 			// See if there is an existing tunnel that is open
 			CaldecottTunnelDescriptor descriptor = CloudFoundryPlugin.getCaldecottTunnelCache().getDescriptor(
 					cloudServer, selectedService.getName());
-			
+
 			IAction dataToolsAction = DataToolsTunnelAction.getAction(editorPage, selectedService, descriptor,
 					cloudServer);
-			
-			// Add connection to Eclipse data tools, if one exists for the given service
+
+			// Add connection to Eclipse data tools, if one exists for the given
+			// service
 			if (dataToolsAction != null) {
 				actions.add(dataToolsAction);
 			}
@@ -153,19 +153,22 @@ public class TunnelActionProvider {
 		}
 
 		@Override
-		public IStatus performAction(IProgressMonitor monitor) throws CoreException {
-			for (String serviceName : servicesWithTunnels) {
-				try {
-					handler.stopAndDeleteCaldecottTunnel(serviceName, monitor);
-				}
-				catch (CoreException e) {
-					CloudFoundryPlugin.logError("Failed to close tunnel for service: " + serviceName, e);
-				}
-			}
+		public ICloudFoundryOperation getOperation() throws CoreException {
 
-			return Status.OK_STATUS;
+			return new EditorOperation() {
+
+				@Override
+				protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
+					for (String serviceName : servicesWithTunnels) {
+						try {
+							handler.stopAndDeleteCaldecottTunnel(serviceName, monitor);
+						}
+						catch (CoreException e) {
+							CloudFoundryPlugin.logError("Failed to close tunnel for service: " + serviceName, e);
+						}
+					}
+				}
+			};
 		}
-
 	}
-
 }
