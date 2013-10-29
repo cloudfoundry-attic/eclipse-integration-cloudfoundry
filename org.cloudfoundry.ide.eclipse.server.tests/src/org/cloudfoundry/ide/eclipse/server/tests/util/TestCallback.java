@@ -52,7 +52,7 @@ public class TestCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public void applicationStopped(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
+	public void stopApplicationConsole(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
 		// ignore
 	}
 

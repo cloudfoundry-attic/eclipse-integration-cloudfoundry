@@ -16,6 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -393,8 +394,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		CloudFoundryServer cloudServer = getCloudFoundryServer();
 
-		Set<CloudFoundryApplicationModule> deletedModules = new HashSet<CloudFoundryApplicationModule>(
-				cloudServer.getExistingCloudModules());
+		Collection<CloudFoundryApplicationModule> cloudModules = cloudServer.getExistingCloudModules();
+
+		for (CloudFoundryApplicationModule appModule : cloudModules) {
+			CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, cloudServer);
+		}
+
+		Set<CloudFoundryApplicationModule> deletedModules = new HashSet<CloudFoundryApplicationModule>(cloudModules);
+
 		cloudServer.clearApplications();
 
 		// update state for cloud applications
@@ -787,7 +794,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 					server.setModuleState(modules, IServer.STATE_STOPPED);
 					succeeded = true;
-					CloudFoundryPlugin.getCallback().applicationStopped(cloudModule, cloudServer);
+					CloudFoundryPlugin.getCallback().stopApplicationConsole(cloudModule, cloudServer);
 
 					// If succeeded, stop all Caldecott tunnels if the app is
 					// the
@@ -1919,7 +1926,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			// Operation cancelled exceptions after an application has been
 			// prepared for deployment should not be logged.
 			try {
+
 				CloudFoundryServer cloudServer = getCloudFoundryServer();
+
+				// Stop any consoles
+				CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, cloudServer);
+
 				boolean debug = appModule.getDeploymentInfo().getDeploymentMode() == ApplicationAction.DEBUG;
 
 				performDeployment(appModule, monitor);
@@ -1955,7 +1967,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		 * missing information.
 		 * @param monitor
 		 * @return Cloud Foundry application mapped to the deployed WST
-		 * {@link IModule}, if the application successfully deployed or started.
+		 * {@link IModule}. Must not be null. If null, it indicates error,
+		 * therefore throw {@link CoreException} instead.
 		 * @throws CoreException if any failure during or after the operation.
 		 * @throws OperationCanceledException if the user cancelled deploying or
 		 * starting the application. The application's deployment information

@@ -276,6 +276,10 @@ public class CloudFoundryServer extends ServerDelegate {
 		return Status.OK_STATUS;
 	}
 
+	/**
+	 * Does not refresh the list of application modules. Returns the cached list, which may be empty.
+	 * @return never null. May be empty
+	 */
 	public Collection<CloudFoundryApplicationModule> getExistingCloudModules() {
 		return getData() != null ? getData().getExistingCloudModules()
 				: new ArrayList<CloudFoundryApplicationModule>(0);

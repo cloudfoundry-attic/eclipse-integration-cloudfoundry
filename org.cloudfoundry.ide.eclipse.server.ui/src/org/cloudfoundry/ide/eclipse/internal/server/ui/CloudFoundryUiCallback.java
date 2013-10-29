@@ -87,10 +87,13 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
 	public void deleteApplication(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
-		applicationStopped(cloudModule, cloudServer);
+		stopApplicationConsole(cloudModule, cloudServer);
 	}
 
-	public void applicationStopped(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
+	public void stopApplicationConsole(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
+		if (cloudModule == null || cloudModule.getApplication() == null) {
+			return;
+		}
 		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
 			ConsoleManager.getInstance().stopConsole(cloudServer.getServer(), cloudModule.getApplication(), i);
 		}

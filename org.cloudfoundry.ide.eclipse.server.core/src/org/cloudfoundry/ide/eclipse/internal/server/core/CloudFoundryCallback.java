@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.OperationCanceledException;
  */
 public abstract class CloudFoundryCallback implements BehaviourListener {
 
+	//FIXNS: event-driven handler still in development as of CF 1.6.0
 	public <T> void handle(BehaviourEvent<T> event) {
 		if (event == null || event.getType() == null || event.getServer() == null) {
 			String message = null;
@@ -59,7 +60,7 @@ public abstract class CloudFoundryCallback implements BehaviourListener {
 			applicationStarted(server, cloudModule);
 			break;
 		case APP_STOPPED:
-			applicationStopped(cloudModule, server);
+			stopApplicationConsole(cloudModule, server);
 			break;
 		case APP_DELETE:
 			deleteApplication(cloudModule, server);
@@ -89,7 +90,7 @@ public abstract class CloudFoundryCallback implements BehaviourListener {
 
 	public abstract void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
 
-	public abstract void applicationStopped(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer);
+	public abstract void stopApplicationConsole(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer);
 
 	public abstract void disconnecting(CloudFoundryServer server);
 

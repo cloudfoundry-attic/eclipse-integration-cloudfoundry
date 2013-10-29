@@ -91,6 +91,10 @@ public class ModuleCache {
 			}
 		}
 
+		/**
+		 * 
+		 * @return never null. May be empty
+		 */
 		public synchronized Collection<CloudFoundryApplicationModule> getExistingCloudModules() {
 			return new ArrayList<CloudFoundryApplicationModule>(cloudModules);
 		}
