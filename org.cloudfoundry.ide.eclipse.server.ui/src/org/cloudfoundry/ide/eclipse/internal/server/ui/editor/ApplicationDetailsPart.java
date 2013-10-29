@@ -451,10 +451,13 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		if (cloudApplication != null) {
 			int appMemory = appModule.getApplication().getMemory();
 
-			memoryCombo.removeAll();
-			boolean found = false;
 			int[] applicationMemoryChoices = editorPage.getApplicationMemoryChoices();
-			if (applicationMemoryChoices != null) {
+			if (applicationMemoryChoices != null && applicationMemoryChoices.length > 0) {
+				boolean found = false;
+
+				// Only clear memory combo if a new list is obtained. Otherwise
+				// the memory combo shrinks
+				memoryCombo.removeAll();
 				for (int option : applicationMemoryChoices) {
 					memoryCombo.add(option + "M");
 					if (option == appMemory) {
@@ -536,7 +539,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 							updatedServices.add(service);
 						}
 					}
-					
+
 					// Update the bound services mapping in the application
 					if (!updatedServices.isEmpty()) {
 						deploymentInfo.setServices(updatedServices);
@@ -699,6 +702,27 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			}
 		});
 
+		createLabel(client, "Instances:", SWT.CENTER);
+
+		instanceSpinner = new Spinner(client, SWT.BORDER);
+		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(instanceSpinner);
+		instanceSpinner.setMinimum(0);
+		instanceSpinner.addModifyListener(new ModifyListener() {
+
+			public void modifyText(ModifyEvent e) {
+				if (canUpdate) {
+					try {
+						CloudFoundryApplicationModule appModule = getExistingApplication();
+						new UpdateInstanceCountAction(editorPage, instanceSpinner, appModule).run();
+					}
+					catch (CoreException ce) {
+						logApplicationModuleFailureError("Unable to update application instances");
+					}
+				}
+			}
+		});
+		toolkit.adapt(instanceSpinner);
+
 		// Manifest area
 		createLabel(client, "Manifest:", SWT.CENTER);
 		saveManifest = toolkit.createButton(client, "Save", SWT.PUSH);
@@ -753,27 +777,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			}
 
 		});
-
-		createLabel(client, "Instances:", SWT.CENTER);
-
-		instanceSpinner = new Spinner(client, SWT.BORDER);
-		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(instanceSpinner);
-		instanceSpinner.setMinimum(0);
-		instanceSpinner.addModifyListener(new ModifyListener() {
-
-			public void modifyText(ModifyEvent e) {
-				if (canUpdate) {
-					try {
-						CloudFoundryApplicationModule appModule = getExistingApplication();
-						new UpdateInstanceCountAction(editorPage, instanceSpinner, appModule).run();
-					}
-					catch (CoreException ce) {
-						logApplicationModuleFailureError("Unable to update application instances");
-					}
-				}
-			}
-		});
-		toolkit.adapt(instanceSpinner);
 
 		createLabel(client, "Environment Variables:", SWT.CENTER);
 		Button envVarsButton = toolkit.createButton(client, "Edit...", SWT.PUSH);
