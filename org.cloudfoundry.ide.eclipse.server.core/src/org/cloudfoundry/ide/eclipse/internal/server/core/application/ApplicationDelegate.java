@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
@@ -23,6 +24,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.LocalCloudService;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
@@ -98,9 +100,15 @@ public abstract class ApplicationDelegate implements IApplicationDelegate {
 			deploymentInfo.setStaging(cloudApplication.getStaging());
 			deploymentInfo.setMemory(cloudApplication.getMemory());
 			deploymentInfo.setDeploymentMode(ApplicationAction.START);
-
-			if (cloudApplication.getServices() != null) {
-				deploymentInfo.setServices(new ArrayList<String>(cloudApplication.getServices()));
+			List<String> boundServiceNames = cloudApplication.getServices();
+			if (boundServiceNames != null) {
+				List<CloudService> services = new ArrayList<CloudService>();
+				for (String name : boundServiceNames) {
+					if (name != null) {
+						services.add(new LocalCloudService(name));
+					}
+				}
+				deploymentInfo.setServices(services);
 			}
 
 			if (cloudApplication.getUris() != null) {
@@ -127,5 +135,4 @@ public abstract class ApplicationDelegate implements IApplicationDelegate {
 		}
 		return null;
 	}
-
 }

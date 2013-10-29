@@ -103,9 +103,14 @@ public class StandaloneDeploymentWizardPage extends
 	}
 
 	@Override
-	public void updateUrlInUI() {
-		// Do nothing, as updating URL with the application name is not
-		// applicable for Java standalone
+	protected void postDomainsRefreshedOperation() {
+		if (urlPart == null) {
+			return;
+		}
+		urlPart.refreshDomains();
+
+		// Do not update the app URL after domains have been refreshed as
+		// standalone does not require URL
 	}
 
 	public void handleChange(PartChangeEvent event) {

@@ -125,11 +125,11 @@ public class ApplicationDeploymentUIHandler {
 			try {
 				workingCopy = new ManifestParser(appModule, server).load();
 			}
-			catch (CoreException ce) {
+			catch (Throwable ce) {
 				// Some failure occurred reading the manifest file. Proceed
 				// anyway, to allow the user to manually enter deployment
 				// values.
-				CloudFoundryPlugin.log(ce);
+				CloudFoundryPlugin.logError(ce);
 			}
 
 			final boolean[] cancelled = { false };
@@ -151,7 +151,7 @@ public class ApplicationDeploymentUIHandler {
 						if (dialogueStatus == Dialog.OK) {
 
 							// First add any new services to the server
-							final List<CloudService> addedServices = wizard.getCreatedCloudServices();
+							final List<CloudService> addedServices = wizard.getCloudServicesToCreate();
 							writeToManifest[0] = wizard.persistManifestChanges();
 
 							if (addedServices != null && !addedServices.isEmpty()) {
@@ -201,7 +201,7 @@ public class ApplicationDeploymentUIHandler {
 					try {
 						new ManifestParser(appModule, server).write(subMonitor);
 					}
-					catch (CoreException ce) {
+					catch (Throwable ce) {
 						// Do not let this error propagate, as failing to write
 						// to the manifest should not stop the app's deployment
 						CloudFoundryPlugin.logError(ce);

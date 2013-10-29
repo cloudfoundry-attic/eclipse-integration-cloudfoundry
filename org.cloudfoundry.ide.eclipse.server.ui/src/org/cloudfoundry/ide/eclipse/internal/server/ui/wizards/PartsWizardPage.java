@@ -14,15 +14,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.WizardPartChangeEvent;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.WizardPage;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.progress.UIJob;
 
 /**
  * Wizard page that manages multiple UI parts, and handles errors from each
@@ -141,6 +149,49 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 
 	protected void performWhenPageVisible() {
 		// Do nothing by default;
+	}
+
+	/**
+	 * Runs the specified runnable asynchronously in a worker thread. Caller is
+	 * responsible for ensuring that any UI behaviour in the runnable is
+	 * executed in the UI thread, either synchronously (synch exec through
+	 * {@link Display} or asynch through {@link Display} or {@link UIJob}).
+	 * @param runnable
+	 * @param operationLabel
+	 */
+	protected void runAsynchWithWizardProgress(final ICoreRunnable runnable, String operationLabel) {
+		if (runnable == null) {
+			return;
+		}
+		if (operationLabel == null) {
+			operationLabel = "";
+		}
+		update(false, CloudFoundryPlugin.getStatus(operationLabel + " - Please wait while operation completes.",
+				IStatus.INFO));
+
+		// Asynch launch as a UI job, as the wizard messages get updated before
+		// and after the forked operation
+		UIJob job = new UIJob(operationLabel) {
+
+			@Override
+			public IStatus runInUIThread(IProgressMonitor monitor) {
+				try {
+					// Fork in a worker thread.
+					CloudUiUtil.runForked(runnable, getWizard().getContainer());
+				}
+				catch (OperationCanceledException e) {
+					update(true, CloudFoundryPlugin.getErrorStatus(e));
+				}
+				catch (CoreException ce) {
+					update(true, ce.getStatus());
+				}
+
+				return Status.OK_STATUS;
+			}
+
+		};
+		job.setSystem(true);
+		job.schedule();
 	}
 
 }

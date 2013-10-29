@@ -18,11 +18,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.cloudfoundry.client.lib.domain.CloudEntity;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.client.lib.domain.CloudServicePlan;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.LocalCloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.eclipse.core.databinding.DataBindingContext;
 import org.eclipse.core.databinding.UpdateValueStrategy;
@@ -80,7 +80,7 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 	/**
 	 * The data model.
 	 */
-	protected CloudService service;
+	protected LocalCloudService service;
 
 	private Composite planDetailsComposite;
 
@@ -173,7 +173,7 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 		setControl(composite);
 	}
 
-	public CloudService getService() {
+	public LocalCloudService getService() {
 		return service;
 	}
 
@@ -402,9 +402,8 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 
 	}
 
-	protected CloudService createService() {
-		CloudService service = new CloudService();
-		service.setMeta(CloudEntity.Meta.defaultMeta());
+	protected LocalCloudService createService() {
+		LocalCloudService service = new LocalCloudService("");
 		return service;
 	}
 

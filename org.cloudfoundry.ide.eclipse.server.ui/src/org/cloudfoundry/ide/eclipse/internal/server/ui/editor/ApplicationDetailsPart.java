@@ -26,9 +26,9 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExt
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ManifestParser;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommand;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugCommandBuilder;
@@ -442,39 +442,10 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		CloudApplication cloudApplication = appModule.getApplication();
 
-		List<CloudService> services = new ArrayList<CloudService>();
-
 		instanceSpinner.setEnabled(cloudApplication != null);
 		instancesViewer.getTable().setEnabled(cloudApplication != null);
 
 		instancesViewer.setInput(null);
-
-		if (provideServices) {
-			// servicesViewer.getTable().setEnabled(cloudApplication != null);
-
-			List<String> serviceNames = null;
-
-			ApplicationDeploymentInfo deploymentInfo = appModule.getDeploymentInfo();
-
-			// Update the services
-			if (deploymentInfo != null) {
-				serviceNames = deploymentInfo.getServices();
-			}
-
-			if (serviceNames == null) {
-				serviceNames = Collections.emptyList();
-			}
-
-			List<CloudService> allServices = editorPage.getServices();
-			if (allServices != null) {
-				for (CloudService service : allServices) {
-					if (serviceNames.contains(service.getName())) {
-						services.add(service);
-					}
-				}
-			}
-			servicesViewer.setInput(services.toArray(new CloudService[services.size()]));
-		}
 
 		memoryCombo.setEnabled(cloudApplication != null);
 		if (cloudApplication != null) {
@@ -545,10 +516,41 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		}
 
 		if (provideServices) {
+			// servicesViewer.getTable().setEnabled(cloudApplication != null);
+
+			// Update the mapping of bound services in the application
+			List<CloudService> updatedServices = new ArrayList<CloudService>();
+
+			DeploymentInfoWorkingCopy deploymentInfo = appModule.getDeploymentInfoWorkingCopy();
+
+			List<String> serviceNames = deploymentInfo.asServiceBindingList();
+
+			if (serviceNames != null && !serviceNames.isEmpty()) {
+
+				List<CloudService> allServices = editorPage.getServices();
+
+				// Only show bound services that actually exist
+				if (allServices != null) {
+					for (CloudService service : allServices) {
+						if (serviceNames.contains(service.getName())) {
+							updatedServices.add(service);
+						}
+					}
+					
+					// Update the bound services mapping in the application
+					if (!updatedServices.isEmpty()) {
+						deploymentInfo.setServices(updatedServices);
+						deploymentInfo.save();
+					}
+
+				}
+				servicesViewer.setInput(updatedServices.toArray(new CloudService[updatedServices.size()]));
+			}
+
 			servicesDropListener.setModule(appModule);
 			servicesViewer.refresh(true);
-		}
 
+		}
 		instancesViewer.refresh(true);
 
 		canUpdate = true;
@@ -891,8 +893,14 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 					@Override
 					protected IStatus run(IProgressMonitor monitor) {
-						ManifestParser parser = new ManifestParser(appModule, cloudServer);
+
 						try {
+							// Update the bound service mappings so they point
+							// to
+							// the updated services
+							serverBehaviour.refreshApplicationBoundServices(appModule, monitor);
+
+							ManifestParser parser = new ManifestParser(appModule, cloudServer);
 							parser.write(monitor);
 						}
 						catch (CoreException ce) {

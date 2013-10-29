@@ -11,10 +11,12 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.LocalCloudService;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -35,6 +37,8 @@ public class CloudFoundryServiceWizard extends Wizard {
 	private final CloudFoundryServer cloudServer;
 
 	private CloudFoundryServicePlanWizardPage page;
+
+	private CloudService createdService;
 
 	/**
 	 * Set true if service should not be added during wizard completion.
@@ -65,19 +69,30 @@ public class CloudFoundryServiceWizard extends Wizard {
 
 	@Override
 	public void addPages() {
-		page =  new CloudFoundryServicePlanWizardPage(cloudServer);
+		page = new CloudFoundryServicePlanWizardPage(cloudServer);
 		addPage(page);
 	}
 
 	@Override
 	public boolean performFinish() {
-		if (!deferServiceAddition) {
+		if (!deferServiceAddition && page.getService() != null) {
 			try {
-
+				final LocalCloudService localService = page.getService();
 				getContainer().run(true, false, new IRunnableWithProgress() {
 					public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 						try {
-							cloudServer.getBehaviour().createService(new CloudService[] { page.getService() }, monitor);
+							cloudServer.getBehaviour().createService(new CloudService[] { localService }, monitor);
+							// Get the actual Service
+							List<CloudService> allServices = cloudServer.getBehaviour().getServices(monitor);
+							if (allServices != null) {
+								for (CloudService existingService : allServices) {
+									if (existingService.getName().equals(localService.getName())) {
+										createdService = existingService;
+										break;
+									}
+								}
+							}
+
 						}
 						catch (CoreException e) {
 							throw new InvocationTargetException(e);
@@ -116,6 +131,9 @@ public class CloudFoundryServiceWizard extends Wizard {
 	 * @return added service or null if nothing added at the time of the call
 	 */
 	public CloudService getService() {
+		if (createdService != null) {
+			return createdService;
+		}
 		return page != null ? page.getService() : null;
 	}
 

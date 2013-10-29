@@ -1015,6 +1015,41 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		updateServices(appName, services, false, monitor);
 	}
 
+	public void refreshApplicationBoundServices(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
+			throws CoreException {
+		DeploymentInfoWorkingCopy copy = appModule.getDeploymentInfoWorkingCopy();
+		List<CloudService> boundServices = copy.getServices();
+		if (boundServices != null && !boundServices.isEmpty()) {
+
+			List<CloudService> allServices = getServices(monitor);
+			if (allServices != null) {
+				Map<String, CloudService> existingAsMap = new HashMap<String, CloudService>();
+
+				for (CloudService existingServices : allServices) {
+					existingAsMap.put(existingServices.getName(), existingServices);
+				}
+
+				List<CloudService> updatedServices = new ArrayList<CloudService>();
+
+				for (CloudService boundService : boundServices) {
+					CloudService updatedService = existingAsMap.get(boundService.getName());
+					// Check if there is an updated mapping to an actual Cloud
+					// Service or retain the old one.
+					if (updatedService != null) {
+						updatedServices.add(updatedService);
+					}
+					else {
+						updatedServices.add(boundService);
+					}
+				}
+
+				copy.setServices(updatedServices);
+				copy.save();
+			}
+
+		}
+	}
+
 	public void updateServicesAndCloseCaldecottTunnels(String appName, List<String> services, IProgressMonitor monitor)
 			throws CoreException {
 		updateServices(appName, services, true, monitor);
@@ -1978,8 +2013,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					Staging staging = appModule.getDeploymentInfo().getStaging();
 					List<String> uris = appModule.getDeploymentInfo().getUris() != null ? appModule.getDeploymentInfo()
 							.getUris() : new ArrayList<String>(0);
-					List<String> services = appModule.getDeploymentInfo().getServices() != null ? appModule
-							.getDeploymentInfo().getServices() : new ArrayList<String>(0);
+					List<String> services = appModule.getDeploymentInfo().asServiceBindingList();
 
 					if (staging == null) {
 						// For v2, a non-null staging is required.
@@ -2210,6 +2244,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// the cloud application mapping in the module, which will
 				// replace the deployment info
 				updateEnvironmentVariables(appModule, monitor);
+
+				// Update instances if it is more than 1. By default, app starts
+				// with 1 instance.
+				int instances = appModule.getDeploymentInfo().getInstances();
+				if (instances > 1) {
+					updateApplicationInstances(appModule, instances, monitor);
+				}
 
 				// If reached here it means the application creation and content
 				// pushing probably succeeded without errors, therefore attempt

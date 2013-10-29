@@ -362,14 +362,22 @@ public class TunnelBehaviour {
 			DeploymentInfoWorkingCopy deploymentInfo = appModule.getDeploymentInfoWorkingCopy();
 
 			if (deploymentInfo != null) {
-				List<String> existingServices = deploymentInfo.getServices();
-				List<String> updatedServices = new ArrayList<String>();
+				List<CloudService> existingServices = deploymentInfo.getServices();
+				List<CloudService> updatedServices = new ArrayList<CloudService>();
 				if (existingServices != null) {
 					updatedServices.addAll(existingServices);
 				}
 
-				if (!updatedServices.contains(serviceName)) {
-					updatedServices.add(serviceName);
+				CloudService existingService = null;
+				for (CloudService service : updatedServices) {
+					if (service.getName().equals(serviceName)) {
+						existingService = service;
+						break;
+					}
+				}
+
+				if (existingService == null) {
+					updatedServices.add(new LocalCloudService(serviceName));
 					deploymentInfo.setServices(updatedServices);
 					deploymentInfo.save();
 					serviceChanges = true;

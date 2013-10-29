@@ -77,13 +77,15 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 
 	protected final ApplicationWizardDescriptor descriptor;
 
-	private CloudHostDomainUrlPart urlPart;
+	protected CloudHostDomainUrlPart urlPart;
 
 	private MemoryPart memoryPart;
 
 	private ApplicationWizardDelegate wizardDelegate;
 
 	static final int APP_NAME_CHANGE_EVENT = 10;
+
+	static final int APP_NAME_INIT = 100;
 
 	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor, CloudApplicationUrlLookup urlLookup,
@@ -329,24 +331,6 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	}
 
 	/**
-	 * Update the application URL in case there have been changes to the
-	 * application name, as the application name is used as the URL's host
-	 * segment.
-	 */
-	public void updateUrlInUI() {
-
-		if (urlPart == null) {
-			return;
-		}
-
-		String appName = descriptor.getDeploymentInfo().getDeploymentName();
-
-		if (appName != null) {
-			urlPart.updateUrlSubdomain(appName);
-		}
-	}
-
-	/**
 	 * Sets the application URL in the deployment descriptor
 	 */
 	protected void setUrlInDescriptor(String url) {
@@ -377,15 +361,16 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 			setUrlInDescriptor(value);
 		}
 		// If the app name changed, then update both the descriptor and the UI
-		else if (event.getType() == APP_NAME_CHANGE_EVENT) {
+		else if (event.getType() == APP_NAME_CHANGE_EVENT || event.getType() == APP_NAME_INIT) {
 			updateApplicationNameInDescriptor(value);
 
 			// If the list of domains has been refreshed, update the URL in the
 			// UI right away. Otherwise
 			// wait for the refresh to finish and invoke the call back that then
 			// updates the UI (see the postDomainRefreshOperation callback).
-			if (refreshedDomains) {
-				updateUrlInUI();
+
+			if (event.getType() == APP_NAME_CHANGE_EVENT) {
+				updateDescriptorURLwithAppName(value);
 			}
 		}
 
@@ -401,6 +386,9 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 
 		descriptor.getDeploymentInfo().setDeploymentName(appName);
 
+	}
+
+	protected void updateDescriptorURLwithAppName(String appName) {
 		// When the app name changes, the URL also changes, but only for
 		// application types that require a URL. By default, it
 		// is assumed that the app needs a URL, unless otherwise specified by
@@ -430,6 +418,9 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 			}
 
 			setUrlInDescriptor(url);
+			if (urlPart != null) {
+				urlPart.updateFullUrl(url);
+			}
 		}
 	}
 
@@ -511,6 +502,26 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	@Override
 	protected void postDomainsRefreshedOperation() {
 		urlPart.refreshDomains();
-		updateUrlInUI();
+		if (urlPart == null) {
+			return;
+		}
+
+		// If the app already has a URL, use that in the part. Otherwise, set a
+		// url based on the app's deployment name
+		List<String> urls = descriptor.getDeploymentInfo().getUris();
+		String url = urls != null && !urls.isEmpty() ? urls.get(0) : null;
+
+		if (url != null) {
+			urlPart.updateFullUrl(url);
+		}
+		else {
+			String appName = descriptor.getDeploymentInfo().getDeploymentName();
+
+			if (appName != null) {
+				urlPart.updateUrlSubdomain(appName);
+			}
+		}
+
 	}
+
 }

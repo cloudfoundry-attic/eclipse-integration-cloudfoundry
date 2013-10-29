@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
-import org.cloudfoundry.client.lib.domain.DeploymentInfo;
+import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.EnvironmentVariable;
@@ -33,7 +33,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.application.Environment
  * However, values specific to the Eclipse plug-in should not be persisted in an
  * app's manifest file.
  */
-public class ApplicationDeploymentInfo extends DeploymentInfo {
+public class ApplicationDeploymentInfo {
 
 	private ApplicationAction deploymentMode;
 
@@ -42,6 +42,16 @@ public class ApplicationDeploymentInfo extends DeploymentInfo {
 	private Staging staging;
 
 	private List<EnvironmentVariable> envVars;
+
+	private int instances;
+
+	private String name;
+
+	private List<String> uris;
+
+	private List<CloudService> services;
+
+	private int memory;
 
 	public ApplicationDeploymentInfo(String appName) {
 		setDeploymentName(appName);
@@ -77,6 +87,14 @@ public class ApplicationDeploymentInfo extends DeploymentInfo {
 		return envVars;
 	}
 
+	public int getInstances() {
+		return instances;
+	}
+
+	public void setInstances(int instances) {
+		this.instances = instances;
+	}
+
 	/**
 	 * Eclipse-specific property. It is not persisted in an application's
 	 * manifest, or sent to the server. If true, the application should be
@@ -99,15 +117,59 @@ public class ApplicationDeploymentInfo extends DeploymentInfo {
 		this.isIncrementalPublish = isIncrementalPublish;
 	}
 
-	/*
-	 * TODO: Staging should pulled up to the parent, as they are client-defined.
-	 */
 	public Staging getStaging() {
 		return staging;
 	}
 
 	public void setStaging(Staging staging) {
 		this.staging = staging;
+	}
+
+	public String getDeploymentName() {
+		return name;
+	}
+
+	public void setDeploymentName(String name) {
+		this.name = name;
+	}
+
+	public void setUris(List<String> uris) {
+		this.uris = uris;
+	}
+
+	public List<String> getUris() {
+		return uris;
+	}
+
+	public List<CloudService> getServices() {
+		return services;
+	}
+
+	/**
+	 * 
+	 * @return never null, may be empty.
+	 */
+	public List<String> asServiceBindingList() {
+		List<String> bindingList = new ArrayList<String>();
+
+		if (services != null && !services.isEmpty()) {
+			for (CloudService service : services) {
+				bindingList.add(service.getName());
+			}
+		}
+		return bindingList;
+	}
+
+	public void setServices(List<CloudService> services) {
+		this.services = services;
+	}
+
+	public int getMemory() {
+		return memory;
+	}
+
+	public void setMemory(int memory) {
+		this.memory = memory;
 	}
 
 	/**
@@ -124,9 +186,10 @@ public class ApplicationDeploymentInfo extends DeploymentInfo {
 		setIncrementalPublish(info.isIncrementalPublish());
 		setMemory(info.getMemory());
 		setStaging(info.getStaging());
+		setInstances(info.getInstances());
 
 		if (info.getServices() != null) {
-			setServices(new ArrayList<String>(info.getServices()));
+			setServices(new ArrayList<CloudService>(info.getServices()));
 		}
 		else {
 			setServices(null);
@@ -160,9 +223,10 @@ public class ApplicationDeploymentInfo extends DeploymentInfo {
 		info.setIncrementalPublish(isIncrementalPublish());
 		info.setMemory(getMemory());
 		info.setStaging(getStaging());
+		info.setInstances(getInstances());
 
 		if (getServices() != null) {
-			info.setServices(new ArrayList<String>(getServices()));
+			info.setServices(new ArrayList<CloudService>(getServices()));
 		}
 
 		if (getUris() != null) {

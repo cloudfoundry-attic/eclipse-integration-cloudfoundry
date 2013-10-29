@@ -19,6 +19,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.LocalCloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -63,7 +64,7 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 
 		// Check the deployment information to see if it has an existing list of
 		// bound services.
-		existingServices = workingCopy.getServices();
+		existingServices = workingCopy.asServiceBindingList();
 
 		// Must iterate rather than passing to constructor or using
 		// addAll, as some
@@ -92,7 +93,11 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 
 		if (serviceChanges) {
 			// Save the changes even if an app is not deployed
-			workingCopy.setServices(updatedServices);
+			List<CloudService> boundServices = new ArrayList<CloudService>();
+			for (String serName : updatedServices) {
+				boundServices.add(new LocalCloudService(serName));
+			}
+			workingCopy.setServices(boundServices);
 			workingCopy.save();
 
 			if (appModule.getApplication() != null) {

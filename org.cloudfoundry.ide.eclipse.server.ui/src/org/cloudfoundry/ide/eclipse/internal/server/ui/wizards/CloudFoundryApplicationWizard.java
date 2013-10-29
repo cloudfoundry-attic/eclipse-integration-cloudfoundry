@@ -114,8 +114,8 @@ public class CloudFoundryApplicationWizard extends Wizard {
 	 * to the application. To see the actual list of services to be bound,
 	 * obtain the deployment descriptor: {@link #getDeploymentDescriptor()}
 	 */
-	public List<CloudService> getCreatedCloudServices() {
-		return applicationDescriptor.getCreatedCloudServices();
+	public List<CloudService> getCloudServicesToCreate() {
+		return applicationDescriptor.getCloudServicesToCreate();
 	}
 
 	public boolean persistManifestChanges() {

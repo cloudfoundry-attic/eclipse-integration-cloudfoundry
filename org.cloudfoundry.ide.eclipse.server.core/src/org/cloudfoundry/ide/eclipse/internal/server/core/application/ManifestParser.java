@@ -20,19 +20,23 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.LocalCloudService;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
@@ -63,6 +67,8 @@ public class ManifestParser {
 	public static final String VERSION_PROP = "version";
 
 	public static final String PLAN_PROP = "plan";
+
+	public static final String BUILDPACK_PROP = "buildpack";
 
 	private final String relativePath;
 
@@ -171,7 +177,7 @@ public class ManifestParser {
 	 * @param propertyName
 	 * @return
 	 */
-	protected Map<Object, Object> getContainingPropertiesMap(Map<Object, Object> containerMap, String propertyName) {
+	protected Map<?, ?> getContainingPropertiesMap(Map<?, ?> containerMap, String propertyName) {
 		if (containerMap == null || propertyName == null) {
 			return null;
 		}
@@ -222,13 +228,31 @@ public class ManifestParser {
 			return null;
 		}
 
-		Map<Object, Object> applications = getContainingPropertiesMap(results, APPLICATIONS_PROP);
-		if (applications == null) {
+		Object applicationsObj = results.get(APPLICATIONS_PROP);
+		if (!(applicationsObj instanceof List<?>)) {
 			throw CloudErrorUtil
-					.toCoreException("Expected a top-level map with application properties for: "
+					.toCoreException("Expected a top-level list of applications in: "
 							+ relativePath
 							+ ". Unable to continue parsing manifest values. No manifest values will be loaded into the application deployment info.");
 		}
+
+		List<?> applicationsList = (List<?>) applicationsObj;
+
+		// Parse only the first application
+		if (applicationsList.isEmpty()) {
+			return null;
+		}
+
+		Object mapObj = applicationsList.get(0);
+
+		if (!(mapObj instanceof Map<?, ?>)) {
+			throw CloudErrorUtil
+					.toCoreException("Expected a map of application properties in: "
+							+ relativePath
+							+ ". Unable to continue parsing manifest values. No manifest values will be loaded into the application deployment info.");
+		}
+
+		Map<?, ?> applications = (Map<?, ?>) mapObj;
 
 		String appName = getStringValue(applications, NAME_PROP);
 
@@ -237,40 +261,143 @@ public class ManifestParser {
 		}
 
 		Integer memoryVal = getIntegerValue(applications, MEMORY_PROP);
-		if (memoryVal != null) {
-			workingCopy.setMemory(memoryVal.intValue());
-		}
 
-		String host = getStringValue(applications, SUB_DOMAIN_PROP);
+		// If not in Integer form, try String as the memory may end in with a
+		// 'G'
+		if (memoryVal == null) {
+			String memoryStringVal = getStringValue(applications, MEMORY_PROP);
+			if (memoryStringVal != null && memoryStringVal.length() > 0) {
 
-		if (host != null) {
-			// Select a default URL with the given host:
-			CloudApplicationUrlLookup lookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
-			CloudApplicationURL defaultUrl = lookup.getDefaultApplicationURL(host);
-			if (defaultUrl != null) {
-				List<String> urls = Arrays.asList(defaultUrl.getUrl());
-				workingCopy.setUris(urls);
+				char memoryIndicator[] = { 'M', 'G', 'm', 'g' };
+				int gIndex = -1;
+
+				for (char indicator : memoryIndicator) {
+					gIndex = memoryStringVal.indexOf(indicator);
+					if (gIndex >= 0) {
+						break;
+					}
+				}
+
+				// There has to be a number before the 'G' or 'M', if 'G' or 'M'
+				// is used, or its not a valid
+				// memory
+				if (gIndex > 0) {
+					memoryStringVal = memoryStringVal.substring(0, gIndex);
+				}
+				else if (gIndex == 0) {
+					CloudFoundryPlugin.logError("Failed to read memory value in manifest file: " + relativePath
+							+ " for: " + appModule.getDeployedApplicationName() + ". Invalid memory: "
+							+ memoryStringVal);
+				}
+
+				try {
+					memoryVal = Integer.valueOf(memoryStringVal);
+				}
+				catch (NumberFormatException e) {
+					// Log an error but do not stop the parsing
+					CloudFoundryPlugin.logError("Failed to parse memory from manifest file: " + relativePath + " for: "
+							+ appModule.getDeployedApplicationName() + " due to: " + e.getMessage());
+				}
 			}
 		}
 
-		Map<Object, Object> services = getContainingPropertiesMap(applications, SERVICES_PROP);
-		if (services != null) {
-			List<String> servicesToBind = new ArrayList<String>();
+		if (memoryVal != null) {
+			int actualMemory = -1;
+			switch (memoryVal.intValue()) {
+			case 1:
+				actualMemory = 1024;
+				break;
+			case 2:
+				actualMemory = 2048;
+				break;
+			default:
+				actualMemory = memoryVal.intValue();
+				break;
+			}
+			if (actualMemory > 0) {
+				workingCopy.setMemory(actualMemory);
+			}
+		}
 
-			for (Entry<Object, Object> entry : services.entrySet()) {
+		String subdomain = getStringValue(applications, SUB_DOMAIN_PROP);
+		String domain = getStringValue(applications, DOMAIN_PROP);
+
+		if (subdomain != null || domain != null) {
+
+			String url = null;
+			if (subdomain == null) {
+				subdomain = appName;
+			}
+			else {
+				// Get a default domain since no domain has been specified
+				CloudApplicationUrlLookup lookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
+				CloudApplicationURL cloudURL = lookup.getDefaultApplicationURL(subdomain);
+				if (cloudURL != null) {
+					url = cloudURL.getUrl();
+				}
+			}
+
+			if (url == null) {
+				url = subdomain + '.' + domain;
+			}
+
+			if (url != null) {
+				List<String> urls = Arrays.asList(url);
+				workingCopy.setUris(urls);
+			}
+
+		}
+
+		String buildpackurl = getStringValue(applications, BUILDPACK_PROP);
+		if (buildpackurl != null) {
+			Staging staging = new Staging(null, buildpackurl);
+			workingCopy.setStaging(staging);
+		}
+
+		parseServices(workingCopy, applications);
+
+		return workingCopy;
+	}
+
+	protected void parseServices(DeploymentInfoWorkingCopy workingCopy, Map<?, ?> applications) {
+		Map<?, ?> services = getContainingPropertiesMap(applications, SERVICES_PROP);
+		if (services != null) {
+			Map<String, CloudService> servicesToBind = new LinkedHashMap<String, CloudService>();
+
+			for (Entry<?, ?> entry : services.entrySet()) {
 				Object serviceNameObj = entry.getKey();
 				if (serviceNameObj instanceof String) {
 					String serviceName = (String) serviceNameObj;
-					if (!servicesToBind.contains(serviceName)) {
-						servicesToBind.add(serviceName);
+					if (!servicesToBind.containsKey(serviceName)) {
+						LocalCloudService service = new LocalCloudService(serviceName);
+						servicesToBind.put(serviceName, service);
+
+						Object servicePropertiesObj = entry.getValue();
+						if (servicePropertiesObj instanceof Map<?, ?>) {
+							Map<?, ?> serviceProperties = (Map<?, ?>) servicePropertiesObj;
+							String label = getStringValue(serviceProperties, LABEL_PROP);
+							if (label != null) {
+								service.setLabel(label);
+							}
+							String provider = getStringValue(serviceProperties, PROVIDER_PROP);
+							if (provider != null) {
+								service.setProvider(provider);
+							}
+							String version = getStringValue(serviceProperties, VERSION_PROP);
+							if (version != null) {
+								service.setVersion(version);
+							}
+							String plan = getStringValue(serviceProperties, PLAN_PROP);
+							if (plan != null) {
+								service.setPlan(plan);
+							}
+						}
 					}
 				}
 			}
 
-			workingCopy.setServices(servicesToBind);
+			workingCopy.setServices(new ArrayList<CloudService>(servicesToBind.values()));
 		}
-
-		return workingCopy;
 	}
 
 	/**
@@ -320,6 +447,16 @@ public class ManifestParser {
 	}
 
 	/**
+	 * 
+	 * @param descriptor
+	 * @return true if it contains description to create a service
+	 */
+	protected boolean containsServiceCreationDescription(CloudService service) {
+		return service.getVersion() != null && service.getLabel() != null && service.getProvider() != null
+				&& service.getPlan() != null;
+	}
+
+	/**
 	 * Writes the app's current deployment info into a manifest file in the
 	 * app's related workspace project. If the workspace project is not
 	 * accessible, false is returned. If the manifest file does not exist in the
@@ -339,44 +476,125 @@ public class ManifestParser {
 			return false;
 		}
 
+		String appName = deploymentInfo.getDeploymentName();
+
 		Map<Object, Object> deploymentInfoYaml = parseManifestFromFile();
 
 		if (deploymentInfoYaml == null) {
-			deploymentInfoYaml = new HashMap<Object, Object>();
+			deploymentInfoYaml = new LinkedHashMap<Object, Object>();
 		}
 
-		Map<Object, Object> applicationProperties = getContainingPropertiesMap(deploymentInfoYaml, APPLICATIONS_PROP);
+		Object applicationsObj = deploymentInfoYaml.get(APPLICATIONS_PROP);
+		List<Map<Object, Object>> applicationsList = null;
+		if (applicationsObj == null) {
+			applicationsList = new ArrayList<Map<Object, Object>>();
+			deploymentInfoYaml.put(APPLICATIONS_PROP, applicationsList);
+		}
+		else if (applicationsObj instanceof List<?>) {
+			applicationsList = (List<Map<Object, Object>>) applicationsObj;
+		}
+		else {
+			throw CloudErrorUtil.toCoreException("Expected a top-level list of applications in: " + relativePath
+					+ ". Unable to continue writing manifest values.");
+		}
+
+		Map<Object, Object> applicationProperties = null;
+
+		for (Object appMap : applicationsList) {
+			if (appMap instanceof Map<?, ?>) {
+				applicationProperties = (Map<Object, Object>) appMap;
+
+				if (!appName.equals(applicationProperties.get(NAME_PROP))) {
+					applicationProperties = null;
+				}
+				else {
+					break;
+				}
+			}
+		}
 
 		if (applicationProperties == null) {
-			applicationProperties = new HashMap<Object, Object>();
-			deploymentInfoYaml.put(APPLICATIONS_PROP, applicationProperties);
+			applicationProperties = new LinkedHashMap<Object, Object>();
+			applicationsList.add(applicationProperties);
 		}
 
-		String appName = deploymentInfo.getDeploymentName();
+		applicationProperties.put(NAME_PROP, appName);
 
-		if (appName != null) {
-			applicationProperties.put(NAME_PROP, appName);
-		}
-
-		int memory = deploymentInfo.getMemory();
-		if (memory > 0) {
+		String memory = getMemoryAsString(deploymentInfo.getMemory());
+		if (memory != null) {
 			applicationProperties.put(MEMORY_PROP, memory);
+		}
+
+		int instances = deploymentInfo.getInstances();
+		if (instances > 0) {
+			applicationProperties.put(INSTANCES_PROP, instances);
+		}
+
+		List<String> urls = deploymentInfo.getUris();
+		if (urls != null && !urls.isEmpty()) {
+			// Persist only the first URL
+			String url = urls.get(0);
+
+			CloudApplicationUrlLookup lookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
+			CloudApplicationURL cloudUrl = lookup.getCloudApplicationURL(url);
+			String subdomain = cloudUrl.getSubdomain();
+			String domain = cloudUrl.getDomain();
+
+			if (subdomain != null) {
+				applicationProperties.put(SUB_DOMAIN_PROP, subdomain);
+			}
+
+			if (domain != null) {
+				applicationProperties.put(DOMAIN_PROP, domain);
+			}
+		}
+
+		Staging staging = deploymentInfo.getStaging();
+		if (staging != null && staging.getBuildpackUrl() != null) {
+			applicationProperties.put(BUILDPACK_PROP, staging.getBuildpackUrl());
 		}
 
 		// Regardless if there are services or not, always clear list of
 		// services in the manifest, and replace with new list. The list of
 		// services in the
 		// deployment info has to match the content in the manifest.
-		Map<Object, Object> services = new HashMap<Object, Object>();
+
+		Map<Object, Object> services = new LinkedHashMap<Object, Object>();
 		applicationProperties.put(SERVICES_PROP, services);
 
-		List<String> servicesToBind = deploymentInfo.getServices();
+		List<CloudService> servicesToBind = deploymentInfo.getServices();
 
 		if (servicesToBind != null) {
 
-			for (String service : servicesToBind) {
-				// Service name is the key in the yaml map
-				services.put(service, null);
+			for (CloudService service : servicesToBind) {
+				String serviceName = service.getName();
+				if (!services.containsKey(serviceName)) {
+
+					// Only persist the service if it has complete information
+					if (containsServiceCreationDescription(service)) {
+						Map<String, String> serviceDescription = new LinkedHashMap<String, String>();
+						String label = service.getLabel();
+						if (label != null) {
+							serviceDescription.put(LABEL_PROP, label);
+						}
+						String version = service.getVersion();
+						if (version != null) {
+							serviceDescription.put(VERSION_PROP, version);
+						}
+						String plan = service.getPlan();
+						if (plan != null) {
+							serviceDescription.put(PLAN_PROP, plan);
+						}
+						String provider = service.getProvider();
+						if (provider != null) {
+							serviceDescription.put(PROVIDER_PROP, provider);
+						}
+
+						// Service name is the key in the yaml map
+						services.put(serviceName, serviceDescription);
+					}
+
+				}
 			}
 		}
 
@@ -397,7 +615,7 @@ public class ManifestParser {
 			outStream = getOutStream();
 			if (outStream == null) {
 				throw CloudErrorUtil.toCoreException("No output stream could be opened to: " + relativePath
-						+ ". Unable to write changes to the app's manifest file for: "
+						+ ". Unable to write changes to the application's manifest file for: "
 						+ appModule.getDeployedApplicationName());
 			}
 
@@ -426,4 +644,12 @@ public class ManifestParser {
 		}
 
 	}
+
+	protected String getMemoryAsString(int memory) {
+		if (memory < 1) {
+			return null;
+		}
+		return memory + "M";
+	}
+
 }

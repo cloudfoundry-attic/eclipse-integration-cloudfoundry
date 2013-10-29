@@ -12,17 +12,14 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.progress.UIJob;
 
 /**
  * 
@@ -77,57 +74,34 @@ public abstract class AbstractURLWizardPage extends PartsWizardPage {
 
 		}
 
-		update(false,
-				CloudFoundryPlugin.getStatus("Fetching list of domains. Please wait while it completes.", IStatus.INFO));
-		final String jobLabel = "Fetching list of domains.";
-		UIJob job = new UIJob(jobLabel) {
-
-			@Override
-			public IStatus runInUIThread(IProgressMonitor monitor) {
+		final String operationLabel = "Fetching list of domains";
+		ICoreRunnable runnable = new ICoreRunnable() {
+			public void run(IProgressMonitor coreRunnerMonitor) throws CoreException {
+				SubMonitor subProgress = SubMonitor.convert(coreRunnerMonitor, operationLabel, 100);
 				try {
+					urlLookup.refreshDomains(subProgress);
+					refreshedDomains = true;
+					// Must launch this again in the UI thread AFTER
+					// the refresh occurs.
+					Display.getDefault().asyncExec(new Runnable() {
 
-					ICoreRunnable coreRunner = new ICoreRunnable() {
-						public void run(IProgressMonitor coreRunnerMonitor) throws CoreException {
-							SubMonitor subProgress = SubMonitor.convert(coreRunnerMonitor, jobLabel, 100);
-							try {
-								urlLookup.refreshDomains(subProgress);
-								refreshedDomains = true;
-								// Must launch this again in the UI thread AFTER
-								// the refresh occurs.
-								Display.getDefault().asyncExec(new Runnable() {
-
-									public void run() {
-										// Clear any info in the dialogue
-										setMessage(null);
-										update(false, Status.OK_STATUS);
-										postDomainsRefreshedOperation();
-									}
-
-								});
-
-							}
-							finally {
-								subProgress.done();
-							}
-
+						public void run() {
+							// Clear any info in the dialogue
+							setMessage(null);
+							update(false, Status.OK_STATUS);
+							postDomainsRefreshedOperation();
 						}
-					};
-					CloudUiUtil.runForked(coreRunner, getWizard().getContainer());
+
+					});
 
 				}
-				catch (OperationCanceledException e) {
-					update(true, CloudFoundryPlugin.getErrorStatus(e));
-				}
-				catch (CoreException ce) {
-					update(true, ce.getStatus());
+				finally {
+					subProgress.done();
 				}
 
-				return Status.OK_STATUS;
 			}
-
 		};
-		job.setSystem(true);
-		job.schedule();
+		runAsynchWithWizardProgress(runnable, operationLabel);
 
 	}
 

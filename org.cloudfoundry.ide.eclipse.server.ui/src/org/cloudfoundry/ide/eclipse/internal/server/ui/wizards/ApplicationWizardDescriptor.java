@@ -58,16 +58,16 @@ public class ApplicationWizardDescriptor {
 	}
 
 	/**
-	 * Optional value. If a user does not create services in the Application
-	 * wizard, return null or an empty list.
+	 * Optional value. List of services to be created. If a user does not create
+	 * services in the Application wizard, return null or an empty list.
 	 * @return Optional list of created services, or null/empty list if no
 	 * services are to be created
 	 */
-	public List<CloudService> getCreatedCloudServices() {
+	public List<CloudService> getCloudServicesToCreate() {
 		return createdCloudServices;
 	}
 
-	public void setCreatedCloudServices(List<CloudService> createdCloudServices) {
+	public void setCloudServicesToCreate(List<CloudService> createdCloudServices) {
 		this.createdCloudServices = createdCloudServices;
 	}
 

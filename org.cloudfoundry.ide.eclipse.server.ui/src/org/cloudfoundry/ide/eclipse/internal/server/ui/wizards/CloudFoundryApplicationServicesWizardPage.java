@@ -18,17 +18,21 @@ import java.util.Map;
 import java.util.Set;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.LocalCloudService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewColumn;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewerConfigurator;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServiceViewerSorter;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServicesTreeLabelProvider;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.TreeContentProvider;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -39,15 +43,15 @@ import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
-import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.ToolBar;
 
-public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
+public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 
 	// This page is optional and can be completed at any time
 	private final boolean canFinish = true;
@@ -60,35 +64,32 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 
 	private static final String DESCRIPTION = "Bind or add new services";
 
-	private static final CloudService[] NO_SERVICES = new CloudService[0];
-
 	/**
 	 * Services, either existing or new, that a user has checked for binding.
 	 */
-	private final Map<String, CloudService> selectedServicesToBind = new HashMap<String, CloudService>();
+	private final Set<String> selectedServicesToBind = new HashSet<String>();
 
 	/**
 	 * This is a list of services to add to the CF server. This may not
 	 * necessarily match all the services a user has selected to bind to an
 	 * application, as a user may add a service, but uncheck it for binding.
 	 */
-	private final Set<CloudService> servicesToAdd = new HashSet<CloudService>();
+	private final Set<String> servicesToAdd = new HashSet<String>();
 
 	/**
 	 * All services both existing and added, used to refresh the input of the
 	 * viewer
 	 */
-	private final List<CloudService> allServices = new ArrayList<CloudService>();
+	private final Map<String, CloudService> allServices = new HashMap<String, CloudService>();
 
 	private final ApplicationWizardDescriptor descriptor;
 
 	public CloudFoundryApplicationServicesWizardPage(CloudFoundryServer cloudServer,
 			CloudFoundryApplicationModule module, ApplicationWizardDescriptor descriptor) {
-		super("Services");
+		super("Services", "Services selection", null);
 		this.cloudServer = cloudServer;
 		this.serverTypeId = module.getServerTypeId();
 		this.descriptor = descriptor;
-		populatedServicesFromLastDeployment();
 	}
 
 	public boolean isPageComplete() {
@@ -96,7 +97,7 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 	}
 
 	public void createControl(Composite parent) {
-		setTitle("Services selection");
+
 		setDescription(DESCRIPTION);
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
 		if (banner != null) {
@@ -170,9 +171,9 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 					selectedServicesToBind.clear();
 					for (Object obj : services) {
 						CloudService service = (CloudService) obj;
-						selectedServicesToBind.put(service.getName(), service);
+						selectedServicesToBind.add(service.getName());
 					}
-					setServicesToBind();
+					setServicesToBindInDescriptor();
 				}
 			}
 		});
@@ -180,11 +181,14 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 		Action addServiceAction = new Action("Add Service", CloudFoundryImages.NEW_SERVICE) {
 
 			public void run() {
+				// Do not create the service right away.
 				boolean deferAdditionOfService = true;
 				CloudFoundryServiceWizard wizard = new CloudFoundryServiceWizard(cloudServer, deferAdditionOfService);
 				WizardDialog dialog = new WizardDialog(getShell(), wizard);
 				dialog.setBlockOnOpen(true);
 				if (dialog.open() == Window.OK) {
+					// This cloud service does not yet exist. It will be created
+					// outside of the wizard
 					CloudService addedService = wizard.getService();
 					if (addedService != null) {
 						addService(addedService);
@@ -211,75 +215,148 @@ public class CloudFoundryApplicationServicesWizardPage extends WizardPage {
 	 * be bound to the application.
 	 */
 	protected void addService(CloudService service) {
-		// FIXNS: check if duplicate services or with the same name but
-		// different type are
-		// allowable
-		servicesToAdd.add(service);
-		allServices.add(service);
-		selectedServicesToBind.put(service.getName(), service);
-		setServicesToBind();
-		setServicesAdded();
-		setSelection();
+		if (service == null) {
+			return;
+		}
+
+		allServices.put(service.getName(), service);
+
+		servicesToAdd.add(service.getName());
+
+		selectedServicesToBind.add(service.getName());
+		setServicesToBindInDescriptor();
+		setServicesToCreateInDescriptor();
+		setBoundServiceSelectionInUI();
 	}
 
 	protected void setInput() {
-		List<CloudService> existingServices = null;
 
-		try {
-			existingServices = cloudServer.getBehaviour().getServices(new NullProgressMonitor());
-		}
-		catch (CoreException e) {
-			setErrorText("Unable to obtain current list of messages due to: " + e.getLocalizedMessage());
-		}
+		ICoreRunnable runnable = new ICoreRunnable() {
 
-		if (existingServices == null) {
-			servicesViewer.setInput(NO_SERVICES);
-		}
-		else {
+			public void run(IProgressMonitor monitor) throws CoreException {
 
-			// All available services should be displayed
-			allServices.clear();
-			allServices.addAll(existingServices);
-			servicesViewer.setInput(allServices.toArray(new CloudService[] {}));
-			// Also add any actual services to the selected services ID map as
-			// the map may have been prepopulated
-			for (CloudService service : existingServices) {
-				if (selectedServicesToBind.containsKey(service.getName())) {
-					selectedServicesToBind.put(service.getName(), service);
+				try {
+					List<CloudService> existingServices = cloudServer.getBehaviour().getServices(monitor);
+
+					// Clear only after retrieving an update list without errors
+					allServices.clear();
+					servicesToAdd.clear();
+					selectedServicesToBind.clear();
+
+					// Only populate from the existing deployment info if
+					// retrieving list of existing services was successful.
+					// That way the services in the deployment info can be
+					// verified if they exist, or if they need to be created.
+					populateServicesFromDeploymentInfo();
+
+					// Update the mapping with existing Cloud Services. Local
+					// services
+					// (services that have not yet been created) will be
+					// unaffected by this.
+					if (existingServices != null) {
+						for (CloudService actualService : existingServices) {
+							if (actualService != null) {
+								allServices.put(actualService.getName(), actualService);
+							}
+						}
+					}
+
+					// At this stage, since the existing Cloud Service mapping
+					// has been updated
+					// above, any remaining Local cloud services can be assumed
+					// to not exist and
+					// will require being created. Only create services IF they
+					// are to be bound to the app.
+					for (String name : selectedServicesToBind) {
+						CloudService service = allServices.get(name);
+						if (service instanceof LocalCloudService) {
+							servicesToAdd.add(name);
+						}
+					}
+
+					setServicesToCreateInDescriptor();
+
+					// Refresh UI
+					Display.getDefault().asyncExec(new Runnable() {
+
+						public void run() {
+							// Clear any info in the dialogue
+							setMessage(null);
+							update(false, Status.OK_STATUS);
+
+							setBoundServiceSelectionInUI();
+						}
+
+					});
 				}
-				setServicesToBind();
+				catch (final CoreException e) {
+
+					Display.getDefault().asyncExec(new Runnable() {
+
+						public void run() {
+
+							update(false,
+									CloudFoundryPlugin
+											.getErrorStatus(
+													"Failed to verify existing services in the server. Only new services can be created at this time. Please check connection or credentials and try again. - "
+															+ e.getMessage(), e));
+
+						}
+					});
+				}
 			}
-			setSelection();
-		}
+		};
+		runAsynchWithWizardProgress(runnable, "Verifying existing services");
+
 	}
 
-	protected void populatedServicesFromLastDeployment() {
-		// Set the initial selection based on the past deployment history
-		selectedServicesToBind.clear();
-		List<String> serviceNames = descriptor.getDeploymentInfo().getServices();
-		// Keep it light, there only populate the names as that may be the
-		// only information
-		// available, and heavier requests shouldn't be made at the time of
-		// population. Rely on the page actually opening to populate the
-		// actual services
-		if (serviceNames != null) {
-			for (String name : serviceNames) {
-				selectedServicesToBind.put(name, null);
+	protected void populateServicesFromDeploymentInfo() {
+
+		List<CloudService> servicesToBind = descriptor.getDeploymentInfo().getServices();
+
+		if (servicesToBind != null) {
+			for (CloudService service : servicesToBind) {
+				allServices.put(service.getName(), service);
+
+				selectedServicesToBind.add(service.getName());
 			}
 		}
+		setServicesToBindInDescriptor();
 	}
 
-	protected void setSelection() {
-		servicesViewer.setInput(allServices.toArray(new CloudService[] {}));
-		servicesViewer.setCheckedElements(selectedServicesToBind.values().toArray());
+	protected void setBoundServiceSelectionInUI() {
+		servicesViewer.setInput(allServices.values().toArray(new CloudService[] {}));
+		List<CloudService> checkedServices = getServicesToBindAsCloudServices();
+		servicesViewer.setCheckedElements(checkedServices.toArray());
 	}
 
-	protected void setServicesToBind() {
-		descriptor.getDeploymentInfo().setServices(new ArrayList<String>(selectedServicesToBind.keySet()));
+	protected List<CloudService> getServicesToBindAsCloudServices() {
+		List<CloudService> servicesToBind = new ArrayList<CloudService>();
+		for (String serviceName : selectedServicesToBind) {
+			CloudService service = allServices.get(serviceName);
+			if (service != null) {
+				servicesToBind.add(service);
+			}
+		}
+		return servicesToBind;
 	}
 
-	protected void setServicesAdded() {
-		descriptor.setCreatedCloudServices(new ArrayList<CloudService>(servicesToAdd));
+	protected void setServicesToBindInDescriptor() {
+		List<CloudService> servicesToBind = getServicesToBindAsCloudServices();
+
+		descriptor.getDeploymentInfo().setServices(servicesToBind);
+	}
+
+	protected void setServicesToCreateInDescriptor() {
+		List<CloudService> toCreate = new ArrayList<CloudService>();
+		for (String serviceName : servicesToAdd) {
+			CloudService service = allServices.get(serviceName);
+			if (service != null) {
+				toCreate.add(service);
+			}
+		}
+
+		descriptor.setCloudServicesToCreate(toCreate);
 	}
 
 	public void setErrorText(String newMessage) {
