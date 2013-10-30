@@ -40,16 +40,25 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
 	public void applicationStarted(final CloudFoundryServer server, final CloudFoundryApplicationModule cloudModule) {
+		startApplicationConsole(server, cloudModule, 0);
+	}
+
+	public void startApplicationConsole(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule, int showIndex) {
+		if (cloudModule == null || cloudModule.getApplication() == null) {
+			return;
+		}
+		if (showIndex < 0) {
+			showIndex = 0;
+		}
 		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
 			// Do not clear the console as pre application start information may
 			// have been already sent to the console
 			// output
 			boolean shouldClearConsole = false;
-			ConsoleContents content = ConsoleContents.getStandardLogContent(server, cloudModule.getApplication(), i);
-			ConsoleManager.getInstance().startConsole(server, content, cloudModule.getApplication(), i, i == 0,
+			ConsoleContents content = ConsoleContents.getStandardLogContent(cloudServer, cloudModule.getApplication(), i);
+			ConsoleManager.getInstance().startConsole(cloudServer, content, cloudModule.getApplication(), i, i == showIndex,
 					shouldClearConsole);
 		}
-
 	}
 
 	public void applicationAboutToStart(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {

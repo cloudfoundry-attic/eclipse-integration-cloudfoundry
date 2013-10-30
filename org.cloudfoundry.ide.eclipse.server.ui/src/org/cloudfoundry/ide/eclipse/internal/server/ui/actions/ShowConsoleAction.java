@@ -10,12 +10,10 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
-import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContents;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.jface.action.Action;
-
 
 /**
  * @author Steffen Pingel
@@ -24,21 +22,27 @@ public class ShowConsoleAction extends Action {
 
 	private final CloudFoundryServer server;
 
-	private final CloudApplication app;
+	private final CloudFoundryApplicationModule appModule;
 
 	private final int instanceIndex;
 
-	public ShowConsoleAction(CloudFoundryServer server, CloudApplication app, int instanceIndex) {
+	public ShowConsoleAction(CloudFoundryServer server, CloudFoundryApplicationModule appModule, int instanceIndex) {
 		this.server = server;
-		this.app = app;
+		this.appModule = appModule;
 		this.instanceIndex = instanceIndex;
 		setText("Show Console");
 	}
 
 	@Override
 	public void run() {
-		ConsoleContents content = ConsoleContents.getStandardLogContent(server, app, instanceIndex);
-		ConsoleManager.getInstance().startConsole(server, content, app, instanceIndex, true, true);
+		if (CloudFoundryPlugin.getCallback() != null) {
+			CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, server);
+			CloudFoundryPlugin.getCallback().startApplicationConsole(server, appModule, instanceIndex);
+		}
+		else {
+			CloudFoundryPlugin
+					.logError("No Cloud Foundry console callback available. Unable to refresh console contents.");
+		}
 	}
 
 }

@@ -473,6 +473,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				}
 				memoryCombo.setEnabled(true);
 				memoryCombo.redraw();
+
 			}
 		}
 
@@ -755,7 +756,11 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		createLabel(client, "Memory limit:", SWT.CENTER);
 
 		memoryCombo = new Combo(client, SWT.BORDER);
-		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.FILL).applyTo(memoryCombo);
+
+		// Set minimum so combo doesn't shrink on refresh.
+		int comboMinimumWidth = 70;
+		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.FILL).hint(comboMinimumWidth, SWT.DEFAULT)
+				.applyTo(memoryCombo);
 		memoryCombo.addSelectionListener(new SelectionAdapter() {
 
 			@Override
@@ -1267,8 +1272,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			if (stats != null) {
 				try {
 					CloudFoundryApplicationModule appModule = getExistingApplication();
-					manager.add(new ShowConsoleAction(cloudServer, appModule.getApplication(), Integer.parseInt(stats
-							.getId())));
+					manager.add(new ShowConsoleAction(cloudServer, appModule, Integer.parseInt(stats.getId())));
 				}
 				catch (CoreException ce) {
 					logApplicationModuleFailureError("Unable to generate application instances context menu");

@@ -645,8 +645,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @throws {@link OperationCanceledException} if deployment or start
 	 * cancelled.
 	 */
-	public ApplicationOperation getDeployStartApplicationOperation(final IModule[] modules, boolean waitForDeployment)
+	public BehaviourOperation getDeployStartApplicationOperation(final IModule[] modules, boolean waitForDeployment)
 			throws CoreException {
+		return internalGetDeployStartApplicationOperation(modules, waitForDeployment);
+	}
+
+	protected ApplicationOperation internalGetDeployStartApplicationOperation(IModule[] modules,
+			boolean waitForDeployment) throws CoreException {
 		boolean incrementalPublish = false;
 		return getDeployStartApplicationOperation(incrementalPublish, modules, waitForDeployment);
 	}
@@ -705,13 +710,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	@Override
 	public void startModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		ApplicationOperation operation = getDeployStartApplicationOperation(modules, false);
+		BehaviourOperation operation = getDeployStartApplicationOperation(modules, false);
 		operation.run(monitor);
 	}
 
 	public CloudFoundryApplicationModule startModuleWaitForDeployment(IModule[] modules, IProgressMonitor monitor)
 			throws CoreException {
-		ApplicationOperation operation = getDeployStartApplicationOperation(modules, true);
+		ApplicationOperation operation = internalGetDeployStartApplicationOperation(modules, true);
 		operation.run(monitor);
 		return operation.getApplicationModule();
 	}
@@ -902,7 +907,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * should be enabled. False otherwise
 	 * @throws CoreException
 	 */
-	public ApplicationOperation getUpdateRestartOperation(IModule[] modules, boolean isIncrementalPublishing)
+	public BehaviourOperation getUpdateRestartOperation(IModule[] modules, boolean isIncrementalPublishing)
 			throws CoreException {
 		return getDeployStartApplicationOperation(isIncrementalPublishing, modules, false);
 	}
@@ -914,7 +919,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param modules
 	 * @throws CoreException
 	 */
-	public ApplicationOperation getRestartOperation(IModule[] modules) throws CoreException {
+	public BehaviourOperation getRestartOperation(IModule[] modules) throws CoreException {
 		return new RestartOperation(modules);
 	}
 

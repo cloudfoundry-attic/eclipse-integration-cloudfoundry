@@ -29,7 +29,7 @@ import org.eclipse.core.runtime.OperationCanceledException;
  */
 public abstract class CloudFoundryCallback implements BehaviourListener {
 
-	//FIXNS: event-driven handler still in development as of CF 1.6.0
+	// FIXNS: event-driven handler still in development as of CF 1.6.0
 	public <T> void handle(BehaviourEvent<T> event) {
 		if (event == null || event.getType() == null || event.getServer() == null) {
 			String message = null;
@@ -90,7 +90,23 @@ public abstract class CloudFoundryCallback implements BehaviourListener {
 
 	public abstract void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
 
-	public abstract void stopApplicationConsole(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer);
+	/**
+	 * Starts application instances console (log files shown in console), and shows the specified console in the Eclipse console.
+	 * @param cloudServer
+	 * @param cloudModule
+	 * @param showIndex if -1 shows the first app instance
+	 */
+	public abstract void startApplicationConsole(CloudFoundryServer cloudServer,
+			CloudFoundryApplicationModule cloudModule, int showIndex);
+
+	
+	/**
+	 * Stops all consoles for the given application for all application instances.
+	 * @param cloudModule
+	 * @param cloudServer
+	 */
+	public abstract void stopApplicationConsole(CloudFoundryApplicationModule cloudModule,
+			CloudFoundryServer cloudServer);
 
 	public abstract void disconnecting(CloudFoundryServer server);
 
@@ -99,8 +115,8 @@ public abstract class CloudFoundryCallback implements BehaviourListener {
 	public abstract void displayCaldecottTunnelConnections(CloudFoundryServer server,
 			List<CaldecottTunnelDescriptor> descriptors);
 
-	public abstract void prepareForDeployment(CloudFoundryServer server,
-			CloudFoundryApplicationModule module, IProgressMonitor monitor) throws CoreException, OperationCanceledException;
+	public abstract void prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
+			IProgressMonitor monitor) throws CoreException, OperationCanceledException;
 
 	public void applicationAboutToStart(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 
