@@ -42,6 +42,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.DumperOptions.FlowStyle;
 import org.yaml.snakeyaml.Yaml;
 
 public class ManifestParser {
@@ -602,7 +604,11 @@ public class ManifestParser {
 			return false;
 		}
 
-		Yaml yaml = new Yaml();
+		DumperOptions options = new DumperOptions();
+		options.setCanonical(false);
+		options.setPrettyFlow(true);
+		options.setDefaultFlowStyle(FlowStyle.BLOCK);
+		Yaml yaml = new Yaml(options);
 		String manifestValue = yaml.dump(deploymentInfoYaml);
 
 		if (manifestValue == null) {

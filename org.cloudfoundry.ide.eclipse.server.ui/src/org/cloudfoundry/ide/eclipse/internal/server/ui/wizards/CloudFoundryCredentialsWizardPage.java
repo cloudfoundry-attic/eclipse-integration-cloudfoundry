@@ -12,7 +12,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServerWizardValidator;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -31,15 +32,18 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 
 	private final CloudFoundryCredentialsPart credentialsPart;
 
-	private CloudSpaceChangeHandler spaceChangeHandler;
+	private CloudSpaceHandler spaceHandler;
 
-	private CredentialsWizardUpdateHandler wizardUpdateHandler;
+	private WizardChangeListener wizardUpdateHandler;
+
+	private ServerWizardValidator validator;
 
 	protected CloudFoundryCredentialsWizardPage(CloudFoundryServer server) {
 		super(server.getServer().getName() + " Credentials");
-		spaceChangeHandler = new CloudSpaceChangeHandler(server);
-		wizardUpdateHandler = new CredentialsWizardUpdateHandler(this);
-		credentialsPart = new CloudFoundryCredentialsPart(server, spaceChangeHandler, wizardUpdateHandler, this);
+		spaceHandler = new CloudSpaceHandler(server);
+		wizardUpdateHandler = new WizardPageChangeListener(this);
+		validator = new ServerWizardValidator(server, spaceHandler);
+		credentialsPart = new CloudFoundryCredentialsPart(server, validator, wizardUpdateHandler, this);
 	}
 
 	public void createControl(Composite parent) {
@@ -49,21 +53,17 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 
 	@Override
 	public boolean isPageComplete() {
-		return wizardUpdateHandler.isValid();
+		return validator.validate(false, getContainer()).getStatus().isOK();
 	}
 
-	public CloudSpaceChangeHandler getSpaceChangeHandler() {
-		return spaceChangeHandler;
-	}
-
-	public boolean areSpacesResolved() {
-		return spaceChangeHandler.getCurrentSpacesDescriptor() != null;
+	public CloudSpaceHandler getSpaceChangeHandler() {
+		return spaceHandler;
 	}
 
 	public boolean canFlipToNextPage() {
 		// There should only be a next page for the spaces page if there is a
 		// cloud space descriptor set
-		return isPageComplete() && areSpacesResolved() && getNextPage() != null;
+		return isPageComplete() && getNextPage() != null;
 	}
 
 }

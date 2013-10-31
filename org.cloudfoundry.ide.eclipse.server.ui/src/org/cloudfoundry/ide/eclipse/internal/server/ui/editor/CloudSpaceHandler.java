@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.cloudfoundry.client.lib.domain.CloudSpace;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
@@ -63,11 +64,13 @@ import org.eclipse.osgi.util.NLS;
  * 
  * 
  */
-public class CloudSpaceChangeHandler {
+public class CloudSpaceHandler {
 
 	private final CloudFoundryServer cloudServer;
 
 	private CloudSpacesDescriptor spacesDescriptor;
+
+	protected final String serverServiceName;
 
 	/**
 	 * 
@@ -75,8 +78,10 @@ public class CloudSpaceChangeHandler {
 	 */
 	private Map<String, CloudSpacesDescriptor> cachedDescriptors = new HashMap<String, CloudSpacesDescriptor>();
 
-	public CloudSpaceChangeHandler(CloudFoundryServer cloudServer) {
+	public CloudSpaceHandler(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
+		String serverTypeId = cloudServer.getServer().getServerType().getId();
+		serverServiceName = CloudFoundryBrandingExtensionPoint.getServiceName(serverTypeId);
 	}
 
 	/**
@@ -115,8 +120,6 @@ public class CloudSpaceChangeHandler {
 			}
 		}
 
-		internalNotifyDescriptorChanged();
-
 		return spacesDescriptor;
 	}
 
@@ -141,7 +144,6 @@ public class CloudSpaceChangeHandler {
 
 	public void clearSetDescriptor() {
 		spacesDescriptor = null;
-		internalNotifyDescriptorChanged();
 	}
 
 	protected void validateCredentials(String url, String userName, String password) throws CoreException {
@@ -187,7 +189,7 @@ public class CloudSpaceChangeHandler {
 	 * is assumed to be changed, a new default space obtained from that
 	 * descriptor will be set in the server
 	 */
-	protected void internalNotifyDescriptorChanged() {
+	protected void internalDescriptorChanged() {
 
 		// Set a default space, if one is available
 		if (spacesDescriptor != null) {
@@ -198,17 +200,6 @@ public class CloudSpaceChangeHandler {
 			setSelectedSpace(null);
 		}
 
-		// Notify that a new descriptor is available so that the list of spaces
-		// can be presented to a user for selection
-		handleCloudSpaceDescriptorSelection(spacesDescriptor);
-	}
-
-	protected void handleCloudSpaceDescriptorSelection(CloudSpacesDescriptor spacesDescriptor) {
-		// do nothing. Subclasses can override
-	}
-
-	protected void handleCloudSpaceSelection(CloudSpace cloudSpace) {
-		// do nothing. Subclasses can override
 	}
 
 	public void setSelectedSpace(CloudSpace selectedCloudSpace) {
@@ -217,7 +208,6 @@ public class CloudSpaceChangeHandler {
 		// when no changes have been made, as well as avoid dirtying the server.
 		if (hasSpaceChanged(selectedCloudSpace)) {
 			cloudServer.setSpace(selectedCloudSpace);
-			handleCloudSpaceSelection(selectedCloudSpace);
 		}
 	}
 
@@ -226,8 +216,6 @@ public class CloudSpaceChangeHandler {
 		return !matchesExisting(selectedCloudSpace, existingSpace);
 	}
 
-	
-	
 	public static boolean matchesExisting(CloudSpace selectedCloudSpace, CloudFoundrySpace existingSpace) {
 		return (existingSpace == null && selectedCloudSpace == null)
 				|| (existingSpace != null && selectedCloudSpace != null
@@ -237,6 +225,10 @@ public class CloudSpaceChangeHandler {
 
 	public boolean hasSetSpace() {
 		return cloudServer.hasCloudSpace();
+	}
+
+	protected CloudFoundryServer getCloudServer() {
+		return cloudServer;
 	}
 
 }

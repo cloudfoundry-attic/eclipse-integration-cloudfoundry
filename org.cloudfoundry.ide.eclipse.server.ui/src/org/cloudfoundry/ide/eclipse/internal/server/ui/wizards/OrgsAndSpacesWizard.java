@@ -19,7 +19,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerHandlerCallback;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -68,7 +68,7 @@ public class OrgsAndSpacesWizard extends Wizard {
 
 		// Only create a new space, if it doesnt match the existing space
 		if (selectedSpace != null
-				&& !CloudSpaceChangeHandler.matchesExisting(selectedSpace, cloudServer.getCloudFoundrySpace())) {
+				&& !CloudSpaceHandler.matchesExisting(selectedSpace, cloudServer.getCloudFoundrySpace())) {
 
 			String serverName = cloudSpacePage.getServerName();
 			final ServerDescriptor descriptor = ServerDescriptor.getServerDescriptor(cloudServer, serverName);
@@ -126,7 +126,7 @@ public class OrgsAndSpacesWizard extends Wizard {
 		CloneSpacePage(CloudFoundryServer server) {
 			super(server, null);
 
-			spaceChangeHandler = new CloudSpaceChangeHandler(cloudServer) {
+			spaceChangeHandler = new CloudSpaceHandler(cloudServer) {
 
 				@Override
 				public void setSelectedSpace(CloudSpace selectedCloudSpace) {
@@ -179,8 +179,10 @@ public class OrgsAndSpacesWizard extends Wizard {
 
 				}
 			});
-			spacesPart = new CloudSpacesSelectionPart(spaceChangeHandler, cloudServer, this);
-			spacesPart.createComposite(mainComposite);
+			WizardChangeListener listener = new WizardPageChangeListener(this);
+			spacesPart = new CloudSpacesSelectionPart(spaceChangeHandler, listener, cloudServer,
+					this);
+			spacesPart.createPart(mainComposite);
 
 			// Make sure the description is set after the part is created, to
 			// avoid using the default parent description.

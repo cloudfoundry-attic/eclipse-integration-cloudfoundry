@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsValidationStatics;
 import org.eclipse.core.runtime.IStatus;
 
 /**
@@ -26,10 +27,10 @@ public class PartChangeEvent {
 
 	private final int type;
 
-	public static final int NONE = -1;
+
 
 	public PartChangeEvent(Object data, IStatus status, UIPart source) {
-		this(data, status, source, NONE);
+		this(data, status, source, ServerCredentialsValidationStatics.EVENT_NONE);
 	}
 
 	public PartChangeEvent(Object data, IStatus status, UIPart source, int type) {

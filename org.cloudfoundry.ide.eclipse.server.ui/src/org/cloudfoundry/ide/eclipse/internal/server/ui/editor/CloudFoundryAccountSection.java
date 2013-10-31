@@ -11,7 +11,6 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerListener;
@@ -298,7 +297,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 	}
 
 	protected void createCloneServerArea(Composite parent, FormToolkit toolkit) {
-		final Button changeSpaceButton = toolkit.createButton(parent, "Clone Server", SWT.PUSH);
+		final Button changeSpaceButton = toolkit.createButton(parent, "Clone Server...", SWT.PUSH);
 
 		changeSpaceButton.setEnabled(true);
 

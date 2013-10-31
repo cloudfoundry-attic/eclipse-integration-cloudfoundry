@@ -16,16 +16,15 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExt
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsValidationStatics;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryURLNavigation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServerWizardValidator.ValidationStatus;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.RegisterAccountWizard;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -60,14 +59,6 @@ import org.eclipse.wst.server.ui.wizard.IWizardHandle;
  */
 public class CloudFoundryCredentialsPart extends UIPart {
 
-	public static final int UNVALIDATED_FILLED = 1000;
-
-	public static final int VALIDATED = 1002;
-
-	private static final String DEFAULT_DESCRIPTION = "Register or log in to {0} account.";
-
-	private static final String VALID_ACCOUNT_MESSAGE = "Account information is valid. Click 'Next' to chose a cloud space, or 'Finish' to use the default space.";
-
 	private CloudFoundryServer cfServer;
 
 	private Text emailText;
@@ -88,17 +79,17 @@ public class CloudFoundryCredentialsPart extends UIPart {
 
 	private Button cfSignupButton;
 
-	private CloudSpaceChangeHandler spaceChangeHandler;
+	private ServerValidator validator;
 
 	private IRunnableContext runnableContext;
 
-	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, CloudSpaceChangeHandler spaceChangeHandler,
+	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, ServerValidator validator,
 			IPartChangeListener changeListener, WizardPage wizardPage) {
-		this(cfServer, spaceChangeHandler, changeListener);
+		this(cfServer, validator, changeListener);
 
 		if (wizardPage != null) {
 			wizardPage.setTitle(NLS.bind("{0} Account", service));
-			wizardPage.setDescription(NLS.bind(DEFAULT_DESCRIPTION, service));
+			wizardPage.setDescription(NLS.bind(ServerCredentialsValidationStatics.DEFAULT_DESCRIPTION, service));
 			ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
 			if (banner != null) {
 				wizardPage.setImageDescriptor(banner);
@@ -108,12 +99,12 @@ public class CloudFoundryCredentialsPart extends UIPart {
 		}
 	}
 
-	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, CloudSpaceChangeHandler spaceChangeHandler,
+	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, ServerValidator validator,
 			IPartChangeListener changeListener, final IWizardHandle wizardHandle) {
-		this(cfServer, spaceChangeHandler, changeListener);
+		this(cfServer, validator, changeListener);
 		if (wizardHandle != null) {
 			wizardHandle.setTitle(NLS.bind("{0} Account", service));
-			wizardHandle.setDescription(NLS.bind(DEFAULT_DESCRIPTION, service));
+			wizardHandle.setDescription(NLS.bind(ServerCredentialsValidationStatics.DEFAULT_DESCRIPTION, service));
 			ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
 			if (banner != null) {
 				wizardHandle.setImageDescriptor(banner);
@@ -128,13 +119,13 @@ public class CloudFoundryCredentialsPart extends UIPart {
 		}
 	}
 
-	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, CloudSpaceChangeHandler spaceChangeHandler,
+	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, ServerValidator validator,
 			IPartChangeListener changeListener) {
 
 		this.cfServer = cfServer;
 		this.serverTypeId = cfServer.getServer().getServerType().getId();
 		this.service = CloudFoundryBrandingExtensionPoint.getServiceName(serverTypeId);
-		this.spaceChangeHandler = spaceChangeHandler;
+		this.validator = validator;
 
 		if (changeListener != null) {
 			addPartChangeListener(changeListener);
@@ -287,111 +278,11 @@ public class CloudFoundryCredentialsPart extends UIPart {
 		item.setControl(composite);
 	}
 
-	public PartChangeEvent getValidationEvent(boolean validateAgainstServer) {
-
-		IStatus localValidation = validateLocally();
-
-		String userName = cfServer.getUsername();
-		String password = cfServer.getPassword();
-		String url = cfServer.getUrl();
-
-		String message = localValidation.getMessage();
-		String errorMsg = null;
-
-		int validationType = PartChangeEvent.NONE;
-		if (localValidation.isOK()) {
-
-			if (validateAgainstServer) {
-				errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, url, true, runnableContext);
-
-				// No credential errors, so now do a orgs and spaces lookup for
-				// the newly validated credentials.
-				if (errorMsg == null) {
-
-					try {
-						CloudSpacesDescriptor descriptor = spaceChangeHandler.getUpdatedDescriptor(url, userName,
-								password, runnableContext);
-						if (descriptor == null) {
-							errorMsg = "Failed to resolve organizations and spaces for the given credentials. Please contact Cloud Foundry support.";
-						}
-						else {
-							validationType = VALIDATED;
-						}
-					}
-					catch (CoreException e) {
-						errorMsg = "Failed to resolve organization and spaces "
-								+ (e.getMessage() != null ? " due to " + e.getMessage()
-										: ". Unknown error occurred while requesting list of spaces from the server")
-								+ ". Please contact Cloud Foundry support.";
-					}
-				}
-			}
-			else {
-				// If no validation request is made, check that there is a
-				// spaces descriptor set and matches the current credentials.
-				// This means the credentials were already validated in a
-				// previous update.
-
-				if (!spaceChangeHandler.matchesCurrentDescriptor(url, userName, password)) {
-					spaceChangeHandler.clearSetDescriptor();
-					message = "Please validate your credentials.";
-					validationType = UNVALIDATED_FILLED;
-				}
-				else {
-					validationType = VALIDATED;
-				}
-			}
-		}
-
-		// If not an actual server validation error, treat anything else as an
-		// Info status, including local errors, as to display missing
-		// value messages as info rather than error messages
-		int statusType = IStatus.INFO;
-		if (errorMsg != null) {
-			message = errorMsg;
-			statusType = IStatus.ERROR;
-		}
-		else if (validationType == VALIDATED) {
-			message = VALID_ACCOUNT_MESSAGE;
-		}
-
-		IStatus eventStatus = CloudFoundryPlugin.getStatus(message, statusType);
-
-		return new PartChangeEvent(null, eventStatus, this, validationType);
-
-	}
-
-	protected IStatus validateLocally() {
-
-		String userName = cfServer.getUsername();
-		String password = cfServer.getPassword();
-		String url = cfServer.getUrl();
-		String message = null;
-
-		boolean valuesFilled = false;
-
-		if (userName == null || userName.trim().length() == 0) {
-			message = "Enter an email address.";
-		}
-		else if (password == null || password.trim().length() == 0) {
-			message = "Enter a password.";
-		}
-		else if (url == null || url.trim().length() == 0) {
-			message = NLS.bind("Select a {0} URL.", service);
-		}
-		else {
-			valuesFilled = true;
-			message = NLS.bind(DEFAULT_DESCRIPTION, service);
-		}
-
-		int statusType = valuesFilled ? IStatus.OK : IStatus.ERROR;
-
-		return CloudFoundryPlugin.getStatus(message, statusType);
-	}
-
-	public void validate() {
-		PartChangeEvent validationEvent = getValidationEvent(true);
-		notifyChange(validationEvent);
+	protected PartChangeEvent validateAndGetEvent(boolean validateAgainstServer) {
+		ValidationStatus status = validator.validate(validateAgainstServer, runnableContext);
+		PartChangeEvent validationEvent = new PartChangeEvent(null, status.getStatus(), this,
+				status.getValidationType());
+		return validationEvent;
 	}
 
 	/**
@@ -404,9 +295,9 @@ public class CloudFoundryCredentialsPart extends UIPart {
 
 		String url = cfServer.getUrl();
 
-		PartChangeEvent validationEvent = getValidationEvent(validateAgainstServer);
-		boolean valuesFilled = validationEvent.getType() == UNVALIDATED_FILLED
-				|| validationEvent.getType() == VALIDATED;
+		PartChangeEvent validationEvent = validateAndGetEvent(validateAgainstServer);
+		boolean valuesFilled = validationEvent.getType() == ServerCredentialsValidationStatics.EVENT_INVALID_SPACE_FILLED_CREDENTIALS
+				|| validationEvent.getType() == ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
 
 		if (CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(url)) {
 			cfSignupButton.setVisible(true);

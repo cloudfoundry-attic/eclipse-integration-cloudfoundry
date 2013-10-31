@@ -13,6 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsValidationStatics;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.widgets.Composite;
@@ -53,7 +54,7 @@ public abstract class UIPart {
 	 * @param status reflecting change in UI part
 	 */
 	protected void notifyStatusChange(IStatus status) {
-		notifyStatusChange(null, status, PartChangeEvent.NONE);
+		notifyStatusChange(null, status, ServerCredentialsValidationStatics.EVENT_NONE);
 	}
 
 	/**
@@ -82,7 +83,7 @@ public abstract class UIPart {
 	 * @param status reflecting change in UI part
 	 */
 	protected void notifyStatusChange(Object data, IStatus status) {
-		notifyStatusChange(data, status, PartChangeEvent.NONE);
+		notifyStatusChange(data, status, ServerCredentialsValidationStatics.EVENT_NONE);
 	}
 
 	/**

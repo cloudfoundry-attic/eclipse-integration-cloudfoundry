@@ -13,20 +13,21 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudSpacesSelectionPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceHandler;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 
 public class CloudFoundryCloudSpaceWizardpage extends WizardPage {
 
-	protected CloudSpaceChangeHandler spaceChangeHandler;
+	protected CloudSpaceHandler spaceChangeHandler;
 
 	protected final CloudFoundryServer cloudServer;
 
 	protected CloudSpacesSelectionPart spacesPart;
 
-	public CloudFoundryCloudSpaceWizardpage(CloudFoundryServer cloudServer, CloudSpaceChangeHandler spaceChangeHandler) {
+	public CloudFoundryCloudSpaceWizardpage(CloudFoundryServer cloudServer, CloudSpaceHandler spaceChangeHandler) {
 		super(cloudServer.getServer().getName() + " Organization and Spaces");
 		this.cloudServer = cloudServer;
 		this.spaceChangeHandler = spaceChangeHandler;
@@ -38,8 +39,8 @@ public class CloudFoundryCloudSpaceWizardpage extends WizardPage {
 
 	public void createControl(Composite parent) {
 
-		spacesPart = new CloudSpacesSelectionPart(spaceChangeHandler, cloudServer, this);
-		Composite composite = spacesPart.createComposite(parent);
+		spacesPart = new CloudSpacesSelectionPart(spaceChangeHandler, new WizardPageChangeListener(this), cloudServer, this);
+		Control composite = spacesPart.createPart(parent);
 		setControl(composite);
 	}
 

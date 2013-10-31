@@ -12,15 +12,15 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import java.util.List;
 
-import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceChangeHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServerWizardValidator;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServerWizardValidator.ValidationStatus;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -30,6 +30,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.ServerCore;
 import org.eclipse.wst.server.core.TaskModel;
@@ -46,49 +47,45 @@ import org.eclipse.wst.server.ui.wizard.WizardFragment;
 @SuppressWarnings("restriction")
 public class CloudFoundryServerWizardFragment extends WizardFragment {
 
-	private CloudFoundryServer cfServer;
+	private CloudFoundryServer cloudServer;
 
 	private CloudFoundryCredentialsPart credentialsPart;
 
 	private CloudFoundrySpacesWizardFragment spacesFragment;
 
-	private CloudSpaceChangeHandler spaceChangeHandler;
+	private ServerWizardValidator validator;
 
-	private CredentialsWizardUpdateHandler wizardUpdateHandler;
-
-	@Override
-	public void exit() {
-		if (!wizardUpdateHandler.isValid() && wizardUpdateHandler.credentialsFilled()) {
-			credentialsPart.validate();
-		}
-
-		super.exit();
-	}
+	private WizardFragmentChangeListener wizardListener;
 
 	@Override
 	public Composite createComposite(Composite parent, IWizardHandle wizardHandle) {
 		initServer();
-
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-		if (cfServer != null) {
-			spaceChangeHandler = new WizardFragmentSpaceChangeHandler(cfServer, wizardHandle);
-		}
+		validator = new ServerWizardValidator(cloudServer, new CloudSpaceHandler(cloudServer));
 
-		wizardUpdateHandler = new CredentialsWizardUpdateHandler(wizardHandle);
-		credentialsPart = new CloudFoundryCredentialsPart(cfServer, spaceChangeHandler, wizardUpdateHandler,
-				wizardHandle);
+		spacesFragment = new CloudFoundrySpacesWizardFragment(cloudServer, validator);
+		wizardListener = new WizardFragmentChangeListener(wizardHandle);
+		credentialsPart = new CloudFoundryCredentialsPart(cloudServer, validator, wizardListener, wizardHandle);
 
 		credentialsPart.createPart(composite);
+
 		return composite;
 	}
 
 	@Override
 	public void enter() {
 		initServer();
-		credentialsPart.setServer(cfServer);
+		credentialsPart.setServer(cloudServer);
+
+		// Validate currently credentials but not against the server
+		if (validator != null && wizardListener != null) {
+			ValidationStatus lastStatus = validator.validate(false);
+			// Display all messages except "OK" message.
+			wizardListener.handleChange(lastStatus.getStatus());
+		}
 	}
 
 	@Override
@@ -100,29 +97,33 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 	public boolean isComplete() {
 		// Enable the Next and Finish buttons, even if credentials are not
 		// validated.
-		return wizardUpdateHandler != null && wizardUpdateHandler.credentialsFilled();
+		return validator.areCredentialsFilled();
 	}
 
 	@Override
 	protected void createChildFragments(List<WizardFragment> list) {
 		if (spacesFragment != null) {
 			list.add(spacesFragment);
+
 		}
 		super.createChildFragments(list);
 	}
 
 	@Override
 	public void performFinish(IProgressMonitor monitor) throws CoreException {
-		if (!wizardUpdateHandler.isValid() && wizardUpdateHandler.credentialsFilled()) {
-			credentialsPart.validate();
-		}
+		if (!validator.isValid()) {
+			final IStatus[] validationStatus = { Status.OK_STATUS };
+			// Must run in UI thread since errors result in a dialogue opening.
+			Display.getDefault().syncExec(new Runnable() {
 
-		if (!wizardUpdateHandler.isValid()) {
-			IStatus status = wizardUpdateHandler.getLastValidationStatus() != null ? wizardUpdateHandler
-					.getLastValidationStatus()
-					: CloudFoundryPlugin
-							.getErrorStatus("Invalid credentials. Please enter a correct username and password, and validate your credentials.");
-			throw new CoreException(status);
+				public void run() {
+					ValidationStatus status = validator.validate(true);
+					validationStatus[0] = status.getStatus();
+				}
+			});
+			if (!validationStatus[0].isOK()) {
+				throw new CoreException(validationStatus[0]);
+			}
 		}
 
 		ServerLifecycleAdapter listener = new ServerLifecycleAdapter() {
@@ -130,7 +131,7 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 			public void serverAdded(IServer server) {
 				ServerCore.removeServerLifecycleListener(this);
 
-				Job job = new ConnectJob(cfServer, server);
+				Job job = new ConnectJob(cloudServer, server);
 				// this is getting called before
 				// CloudFoundryServer.saveConfiguration() has flushed the
 				// configuration therefore delay job
@@ -142,7 +143,12 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 	private void initServer() {
 		ServerWorkingCopy server = (ServerWorkingCopy) getTaskModel().getObject(TaskModel.TASK_SERVER);
-		cfServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
+		cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
+		if (cloudServer == null) {
+			CloudFoundryPlugin
+					.logError("Cloud Foundry Server Framework Error: Failed to create a Cloud Foundry server working copy for: "
+							+ server.getId() + ". Please check if the plugin has been installed correctly.");
+		}
 	}
 
 	private static class ConnectJob extends Job {
@@ -193,48 +199,6 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 			}
 			return Status.OK_STATUS;
 		}
-	}
-
-	/**
-	 * Add or removes the orgs and spaces wizard page based on whether a cloud
-	 * space descriptor, which contains a list of orgs and spaces, is changed or
-	 * not. If the changed descriptor is null, the spaces wizard page is
-	 * removed. Otherwise, it is added. Changes in user credentials, and
-	 * validation of the credentials typically trigger spaces descriptor
-	 * changes, which affects whether the spaces page is shown or not in the New
-	 * CF Server wizard.
-	 * 
-	 */
-	protected class WizardFragmentSpaceChangeHandler extends CloudSpaceChangeHandler {
-
-		private final IWizardHandle wizardHandle;
-
-		public WizardFragmentSpaceChangeHandler(CloudFoundryServer cloudServer, IWizardHandle wizardHandle) {
-			super(cloudServer);
-			this.wizardHandle = wizardHandle;
-		}
-
-		@Override
-		protected void handleCloudSpaceDescriptorSelection(CloudSpacesDescriptor spacesDescriptor) {
-			initServer();
-			// Add the spaces page if passed a valid descriptor
-			// Clear the org and spaces page if there the descriptor is null
-			// (i.e. there is no list of orgs and spaces), to avoid showing a
-			// blank spaces page
-			if (spacesDescriptor == null) {
-				spacesFragment = null;
-			}
-			else {
-				spacesFragment = new CloudFoundrySpacesWizardFragment(spaceChangeHandler, cfServer);
-			}
-		}
-
-		protected void handleCloudSpaceSelection(CloudSpace cloudSpace) {
-			if (wizardHandle != null) {
-				wizardHandle.update();
-			}
-		}
-
 	}
 
 }
