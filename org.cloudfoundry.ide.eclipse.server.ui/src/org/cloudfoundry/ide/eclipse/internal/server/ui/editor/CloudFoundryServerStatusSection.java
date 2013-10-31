@@ -149,19 +149,22 @@ public class CloudFoundryServerStatusSection extends ServerEditorSection impleme
 		Display.getDefault().asyncExec(new Runnable() {
 			
 			public void run() {
-				nameLabel.setText(cfServer.getServer().getName() + ": ");
 				
-				int s = cfServer.getServer().getServerState();
-				String statusString = "Not connected";
-				if (s == IServer.STATE_STARTED) {
-					statusString = "Connected";
+				if (composite != null && !composite.isDisposed()) {
+					nameLabel.setText(cfServer.getServer().getName() + ": ");
+					
+					int s = cfServer.getServer().getServerState();
+					String statusString = "Not connected";
+					if (s == IServer.STATE_STARTED) {
+						statusString = "Connected";
+					}
+					statusLabel.setText(statusString);
+					
+					connectButton.setEnabled(s != IServer.STATE_STARTED);
+					disconnectButton.setEnabled(s == IServer.STATE_STARTED);
+					
+					composite.layout(true);
 				}
-				statusLabel.setText(statusString);
-				
-				connectButton.setEnabled(s != IServer.STATE_STARTED);
-				disconnectButton.setEnabled(s == IServer.STATE_STARTED);
-				
-				composite.layout(true);
 			}
 		});
 	}

@@ -559,9 +559,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * application modules with the actual deployed applications. This may be a
 	 * long running operation.
 	 * @param monitor
-	 * @throws CoreException
 	 */
-	public void refreshModules(IProgressMonitor monitor) throws CoreException {
+	public void refreshModules(IProgressMonitor monitor) {
 		// Restart the refresh operation
 		synchronized (REFRESH_MODULES) {
 			REFRESH_MODULES[0] = true;
@@ -1277,29 +1276,40 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * update the local module mappings accordingly.
 	 * @param cloudServer
 	 * @param monitor
-	 * @throws CoreException
 	 * @return true if refresh was performed. False otherwise.
 	 */
-	protected boolean internalRefreshModule(IProgressMonitor monitor) throws CoreException {
+	protected boolean internalRefreshModule(IProgressMonitor monitor) {
 
 		synchronized (REFRESH_MODULES) {
 			if (REFRESH_MODULES[0]) {
-				final CloudFoundryServer cloudServer = getCloudFoundryServer();
 
-				// Get updated list of cloud applications from the server
-				List<CloudApplication> applications = getApplications(monitor);
+				try {
+					final CloudFoundryServer cloudServer = getCloudFoundryServer();
 
-				// update applications and deployments from server
-				Map<String, CloudApplication> deployedApplicationsByName = new LinkedHashMap<String, CloudApplication>();
+					// Get updated list of cloud applications from the server
+					List<CloudApplication> applications = getApplications(monitor);
 
-				for (CloudApplication application : applications) {
-					deployedApplicationsByName.put(application.getName(), application);
+					// update applications and deployments from server
+					Map<String, CloudApplication> deployedApplicationsByName = new LinkedHashMap<String, CloudApplication>();
+
+					for (CloudApplication application : applications) {
+						deployedApplicationsByName.put(application.getName(), application);
+					}
+
+					cloudServer.updateModules(deployedApplicationsByName);
+					return true;
+				}
+				catch (Throwable t) {
+					// refresh operations MUST not block any other operation.
+					// therefore catch all errors and log them
+					CloudFoundryPlugin
+							.logError(
+									"Failed to refresh list of applications. Application list may not be accurate. Check connection and try a manual refresh - Reason: "
+											+ t.getMessage(), t);
 				}
 
-				cloudServer.updateModules(deployedApplicationsByName);
-
 			}
-			return REFRESH_MODULES[0];
+			return false;
 		}
 
 	}
@@ -1309,11 +1319,18 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * update local module mappings accordingly. Fires event after refresh
 	 * operation is complete
 	 * @param monitor
-	 * @throws CoreException
 	 */
-	protected void internalRefreshAndFireEvent(IProgressMonitor monitor) throws CoreException {
+	protected void internalRefreshAndFireEvent(IProgressMonitor monitor) {
 		if (internalRefreshModule(monitor)) {
-			ServerEventHandler.getDefault().fireServerRefreshed(getCloudFoundryServer());
+			try {
+				ServerEventHandler.getDefault().fireServerRefreshed(getCloudFoundryServer());
+			}
+			catch (CoreException ce) {
+				CloudFoundryPlugin
+						.logError(
+								"Internal Error: Failed to resolve Cloud Foundry server from WST IServer. Manual server disconnect and reconnect may be required - Reason: "
+										+ ce.getMessage(), ce);
+			}
 		}
 	}
 
@@ -2581,24 +2598,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		protected IStatus run(IProgressMonitor monitor) {
 
 			if (interval > 0) {
-				try {
-					internalRefreshAndFireEvent(monitor);
+				internalRefreshAndFireEvent(monitor);
 
-					if (getServer().getServerState() == IServer.STATE_STARTED) {
+				if (getServer().getServerState() == IServer.STATE_STARTED) {
 
-						synchronized (BehaviourRefreshJob.this) {
-							if (interval > 0) {
-								schedule(interval);
-							}
+					synchronized (BehaviourRefreshJob.this) {
+						if (interval > 0) {
+							schedule(interval);
 						}
 					}
-				}
-				catch (CoreException e) {
-					CloudFoundryPlugin
-							.getDefault()
-							.getLog()
-							.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-									"Refresh of server failed due to: " + e.getMessage(), e));
 				}
 			}
 
