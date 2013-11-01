@@ -32,6 +32,8 @@ public class FileConsoleContent implements IConsoleContent {
 
 	private final CloudFoundryServer server;
 
+	private long startingWait = -1;
+
 	/**
 	 * 
 	 * @param path relative path of content resource, relative to the
@@ -43,11 +45,17 @@ public class FileConsoleContent implements IConsoleContent {
 	 * @param instanceIndex must be valid and greater than -1.
 	 */
 	public FileConsoleContent(String path, int swtColour, CloudFoundryServer server, String appName, int instanceIndex) {
+		this(path, swtColour, server, appName, instanceIndex, -1);
+	}
+
+	public FileConsoleContent(String path, int swtColour, CloudFoundryServer server, String appName, int instanceIndex,
+			long startingWait) {
 		this.path = path;
 		this.swtColour = swtColour;
 		this.server = server;
 		this.appName = appName;
 		this.instanceIndex = instanceIndex;
+		this.startingWait = startingWait;
 	}
 
 	public ICloudFoundryConsoleOutputStream getOutputStream(IOConsoleOutputStream outStream) {
@@ -55,6 +63,15 @@ public class FileConsoleContent implements IConsoleContent {
 				instanceIndex);
 		cfOutStream.initialiseStream();
 		return cfOutStream;
+	}
+
+	/**
+	 * 
+	 * @return How long to wait before streaming starts. -1 if no waiting
+	 * required.
+	 */
+	public long startingWait() {
+		return startingWait;
 	}
 
 }

@@ -104,7 +104,6 @@ class CloudFoundryConsole extends JobChangeAdapter {
 		if (contents != null) {
 			List<IConsoleContent> consoleContents = contents.getContents();
 			if (consoleContents != null) {
-				List<ConsoleStream> addedStreams = new ArrayList<CloudFoundryConsole.ConsoleStream>();
 				for (IConsoleContent content : consoleContents) {
 					IOConsoleOutputStream stream = console.newOutputStream();
 					if (stream != null) {
@@ -112,10 +111,18 @@ class CloudFoundryConsole extends JobChangeAdapter {
 						ICloudFoundryConsoleOutputStream outStream = content.getOutputStream(stream);
 						if (outStream != null) {
 							ConsoleStream consoleStream = new ConsoleStream(getConsoleName(app), outStream);
-							consoleStream.addJobChangeListener(this);
+							// consoleStream.addJobChangeListener(this);
 							consoleStream.tailing(true);
 
-							addedStreams.add(new ConsoleStream(getConsoleName(app), outStream));
+							activeStreams.add(consoleStream);
+							long initialWait = content instanceof FileConsoleContent ? ((FileConsoleContent) content)
+									.startingWait() : -1;
+							if (initialWait > 0) {
+								consoleStream.schedule(initialWait);
+							}
+							else {
+								consoleStream.schedule();
+							}
 						}
 						else {
 							try {
@@ -126,13 +133,6 @@ class CloudFoundryConsole extends JobChangeAdapter {
 							}
 						}
 					}
-				}
-
-				activeStreams.addAll(addedStreams);
-
-				// Reschedule all jobs
-				for (ConsoleStream stream : addedStreams) {
-					stream.schedule();
 				}
 			}
 		}
@@ -254,7 +254,5 @@ class CloudFoundryConsole extends JobChangeAdapter {
 			remove(stream);
 		}
 	}
-	
-	
 
 }

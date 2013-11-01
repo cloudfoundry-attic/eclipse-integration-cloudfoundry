@@ -26,6 +26,10 @@ public class ConsoleContents {
 
 	public static final String STD_ERROR_LOG = "logs/stderr.log";
 
+	public static final String STAGING_LOG = "logs/staging_task.log";
+
+	public static final long STD_LOG_INITIAL_WAIT = 1000;
+
 	public ConsoleContents(List<IConsoleContent> content) {
 		this.content = content;
 	}
@@ -50,9 +54,11 @@ public class ConsoleContents {
 			int instanceIndex) {
 
 		List<IConsoleContent> content = new ArrayList<IConsoleContent>();
-
-		content.add(new FileConsoleContent(STD_ERROR_LOG, SWT.COLOR_RED, cloudServer, app.getName(), instanceIndex));
-		content.add(new FileConsoleContent(STD_OUT_LOG, -1, cloudServer, app.getName(), instanceIndex));
+		content.add(new FileConsoleContent(STAGING_LOG, SWT.COLOR_DARK_GREEN, cloudServer, app.getName(), instanceIndex));
+		content.add(new FileConsoleContent(STD_ERROR_LOG, SWT.COLOR_RED, cloudServer, app.getName(), instanceIndex,
+				STD_LOG_INITIAL_WAIT*2));
+		content.add(new FileConsoleContent(STD_OUT_LOG, -1, cloudServer, app.getName(), instanceIndex,
+				STD_LOG_INITIAL_WAIT*3));
 		return new ConsoleContents(content);
 	}
 

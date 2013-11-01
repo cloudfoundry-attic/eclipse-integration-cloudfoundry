@@ -81,16 +81,17 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		// Only show the starting info for the first instance that is shown.
 		// Not necessary to show staging
 		// for instances that are not shown in the console.
-		if (cloudModule.getStartingInfo() != null && cloudModule.getStartingInfo().getStagingFile() != null
-				&& cloudModule.getApplication().getInstances() > 0) {
-
-			boolean clearConsole = false;
-			StagingLogConsoleContent stagingContent = new StagingLogConsoleContent(cloudModule.getStartingInfo(),
-					server);
-			ConsoleManager.getInstance().startConsole(server, new ConsoleContents(stagingContent),
-					cloudModule.getApplication(), 0, true, clearConsole);
-
-		}
+		// FIXNS: Streaming of staging logs no longer works using CF client for CF 1.6.0. Disabling til future
+//		if (cloudModule.getStartingInfo() != null && cloudModule.getStartingInfo().getStagingFile() != null
+//				&& cloudModule.getApplication().getInstances() > 0) {
+//
+//			boolean clearConsole = false;
+//			StagingLogConsoleContent stagingContent = new StagingLogConsoleContent(cloudModule.getStartingInfo(),
+//					server);
+//			ConsoleManager.getInstance().startConsole(server, new ConsoleContents(stagingContent),
+//					cloudModule.getApplication(), 0, true, clearConsole);
+//
+//		}
 
 	}
 
