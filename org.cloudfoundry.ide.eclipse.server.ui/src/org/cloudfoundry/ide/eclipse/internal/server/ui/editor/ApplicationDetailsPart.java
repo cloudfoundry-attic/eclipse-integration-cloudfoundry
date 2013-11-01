@@ -281,7 +281,11 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	 * @param appModule should not be null.
 	 */
 	protected void refreshApplicationDeploymentButtons(CloudFoundryApplicationModule appModule) {
-
+		// FIXNS: Not called for CF 1.6.0 as restart and update restart buttons
+		// are not made visible even when set visible.
+		// Possible issue could be that restart and update restart buttons have
+		// their own parent composite since for debug, they change to dropdown
+		// combos
 		int state = appModule.getState();
 
 		// Don't refresh if the restart buttons were selected
@@ -353,6 +357,57 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		// refreshDebugButtons(appModule);
 
 		buttonComposite.layout(true, true);
+	}
+
+	protected void refreshAndReenableDeploymentButtons(CloudFoundryApplicationModule appModule) {
+
+		if (buttonComposite == null || buttonComposite.isDisposed()) {
+			return;
+		}
+		int state = appModule.getState();
+
+		// Don't refresh if the restart buttons were selected
+		if (skipButtonRefreshOnRestart) {
+			skipButtonRefreshOnRestart = false;
+			return;
+		}
+
+		// Show/hide action buttons based on server state
+		if (state == IServer.STATE_STOPPED || state == IServer.STATE_UNKNOWN) {
+
+			startAppButton.setEnabled(true);
+
+			restartAppButton.getSelectionButton().setEnabled(false);
+
+			stopAppButton.setEnabled(false);
+		}
+		else {
+			startAppButton.setEnabled(false);
+
+			restartAppButton.getSelectionButton().setEnabled(true);
+
+			stopAppButton.setEnabled(true);
+		}
+
+		// handle the update and restart button separately.
+		// Do not show the update button if there is not accessible
+		// module project in the workspace, as no source update would be
+		// possible within Eclipse
+		if (state == IServer.STATE_STOPPED
+				|| state == IServer.STATE_UNKNOWN
+				|| !CloudFoundryProperties.isModuleProjectAccessible
+						.testProperty(new IModule[] { module }, cloudServer)) {
+			updateRestartAppButton.getSelectionButton().setEnabled(false);
+
+		}
+		else {
+			updateRestartAppButton.getSelectionButton().setEnabled(true);
+		}
+
+		refreshRestartButtons();
+
+		// FIXNS: Enable when debug is supported in v2 in the future
+		// refreshDebugButtons(appModule);
 	}
 
 	private void updateServerNameDisplay(CloudFoundryApplicationModule application) {
@@ -436,7 +491,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		setCurrentStartDebugApplicationAction();
 		instanceSpinner.setSelection(appModule.getInstanceCount());
 
-		refreshApplicationDeploymentButtons(appModule);
+		refreshAndReenableDeploymentButtons(appModule);
+		// refreshApplicationDeploymentButtons(appModule);
 
 		mappedURIsLink.setEnabled(state == IServer.STATE_STARTED);
 
@@ -1380,7 +1436,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 					public IStatus runInUIThread(IProgressMonitor arg0) {
 
-						refreshApplicationDeploymentButtons(appModule);
+//						refreshApplicationDeploymentButtons(appModule);
+						refreshAndReenableDeploymentButtons(appModule);
 						return Status.OK_STATUS;
 					}
 
