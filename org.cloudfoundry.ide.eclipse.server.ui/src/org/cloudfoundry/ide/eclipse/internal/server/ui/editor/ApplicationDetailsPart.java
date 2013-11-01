@@ -529,27 +529,27 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 			List<String> serviceNames = deploymentInfo.asServiceBindingList();
 
-			if (serviceNames != null && !serviceNames.isEmpty()) {
-
-				List<CloudService> allServices = editorPage.getServices();
-
-				// Only show bound services that actually exist
-				if (allServices != null) {
-					for (CloudService service : allServices) {
-						if (serviceNames.contains(service.getName())) {
-							updatedServices.add(service);
-						}
-					}
-
-					// Update the bound services mapping in the application
-					if (!updatedServices.isEmpty()) {
-						deploymentInfo.setServices(updatedServices);
-						deploymentInfo.save();
-					}
-
-				}
-				servicesViewer.setInput(updatedServices.toArray(new CloudService[updatedServices.size()]));
+			if (serviceNames == null) {
+				serviceNames = Collections.emptyList();
 			}
+
+			List<CloudService> allServices = editorPage.getServices();
+
+			// Only show bound services that actually exist
+			if (allServices != null && !serviceNames.isEmpty()) {
+				for (CloudService service : allServices) {
+					if (serviceNames.contains(service.getName())) {
+						updatedServices.add(service);
+					}
+				}
+
+				// Update the bound services mapping in the application
+				if (!updatedServices.isEmpty()) {
+					deploymentInfo.setServices(updatedServices);
+					deploymentInfo.save();
+				}
+			}
+			servicesViewer.setInput(updatedServices.toArray(new CloudService[updatedServices.size()]));
 
 			servicesDropListener.setModule(appModule);
 			servicesViewer.refresh(true);
