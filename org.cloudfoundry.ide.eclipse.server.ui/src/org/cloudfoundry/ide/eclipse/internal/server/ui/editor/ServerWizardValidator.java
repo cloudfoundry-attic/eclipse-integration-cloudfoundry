@@ -17,7 +17,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescr
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.osgi.util.NLS;
 
@@ -62,8 +61,8 @@ public class ServerWizardValidator implements ServerValidator {
 	 * True if the previous status was valid. False if a new validation is
 	 * required or previous status was not valid.
 	 */
-	public synchronized boolean isValid() {
-		return previousStatus != null && previousStatus.getStatus().isOK();
+	public synchronized ValidationStatus getPreviousValidationStatus() {
+		return previousStatus;
 
 	}
 

@@ -82,8 +82,13 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 		// Validate currently credentials but not against the server
 		if (validator != null && wizardListener != null) {
-			ValidationStatus lastStatus = validator.validate(false);
-			// Display all messages except "OK" message.
+			// Display an errors from the last validation on entering
+			ValidationStatus lastStatus = validator.getPreviousValidationStatus();
+
+			if (lastStatus == null || lastStatus.getStatus().getSeverity() != IStatus.ERROR) {
+				// Otherwise validate locally
+				lastStatus = validator.validate(false);
+			}
 			wizardListener.handleChange(lastStatus.getStatus());
 		}
 	}
@@ -111,7 +116,10 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 	@Override
 	public void performFinish(IProgressMonitor monitor) throws CoreException {
-		if (!validator.isValid()) {
+		// Check the current credentials without server validation first, as if
+		// they are
+		// valid, there is no need to send a server request.
+		if (!validator.validate(false).getStatus().isOK()) {
 			final IStatus[] validationStatus = { Status.OK_STATUS };
 			// Must run in UI thread since errors result in a dialogue opening.
 			Display.getDefault().syncExec(new Runnable() {
