@@ -107,11 +107,12 @@ public class FileConsoleOutputStream extends ConsoleOutputStream {
 			// If stream is still active, handle the error.
 			if (!shouldCloseStream() && adjustErrorCount()) {
 				requestStreamClose(true);
-				String actualErrorMessage = ce.getMessage() != null ? ce.getMessage()
-						: "Unknown error while obtaining content for " + path;
-				throw new CoreException(CloudFoundryPlugin.getErrorStatus(
-						"Too many failures trying to stream content from " + path + ". Closing stream due to: "
-								+ actualErrorMessage, ce));
+				//FIXNS: For CF 1.6.0, do not log the error in the console. Leaving it commented in case it needs to be reenabled again in the future.
+//				String actualErrorMessage = ce.getMessage() != null ? ce.getMessage()
+//						: "Unknown error while obtaining content for " + path;
+//				throw new CoreException(CloudFoundryPlugin.getErrorStatus(
+//						"Too many failures trying to stream content from " + path + ". Closing stream due to: "
+//								+ actualErrorMessage, ce));
 			}
 		}
 
