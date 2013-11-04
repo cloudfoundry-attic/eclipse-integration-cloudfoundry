@@ -53,10 +53,10 @@ public class CloudApplicationUrlLookup {
 	/**
 	 * Either returns a valid, available Cloud Application URL with the given
 	 * host, or null
-	 * @param host
+	 * @param subDomain
 	 * @return Valid, available Cloud Application URL.
 	 */
-	public CloudApplicationURL getDefaultApplicationURL(String host) {
+	public CloudApplicationURL getDefaultApplicationURL(String subDomain) {
 
 		List<CloudDomain> domains = getDomains();
 		if (domains == null || domains.isEmpty()) {
@@ -66,7 +66,7 @@ public class CloudApplicationUrlLookup {
 		CloudApplicationURL appURL = null;
 
 		for (CloudDomain domain : domains) {
-			String suggestedURL = host + "." + domain.getName();
+			String suggestedURL = subDomain + "." + domain.getName();
 			try {
 				appURL = getCloudApplicationURL(suggestedURL);
 				break;
@@ -105,7 +105,7 @@ public class CloudApplicationUrlLookup {
 	 * @return non-null valid Cloud Application URL. Never returns null. If
 	 * error, exception is thrown instead.
 	 * @throws CoreException if unable to retrieve list of domains to check the
-	 * URL, or URL is invalid, including invalid host or domain.
+	 * URL, or URL is invalid, including invalid subdomain or domain.
 	 */
 	public CloudApplicationURL getCloudApplicationURL(String url) throws CoreException {
 
@@ -147,7 +147,7 @@ public class CloudApplicationUrlLookup {
 		}
 		if (host == null || host.trim().length() == 0l) {
 			throw new CoreException(CloudFoundryPlugin.getErrorStatus("Invalid URL " + url
-					+ " -- host not specified for domain " + domainName));
+					+ " -- subdomain not specified for domain " + domainName));
 
 		}
 		return new CloudApplicationURL(host, domainName);

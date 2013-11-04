@@ -133,8 +133,13 @@ public class CloudSpacesSelectionPart extends UIPart {
 			// Expand all first, so that child elements can be selected
 			orgsSpacesViewer.setExpandedElements(organizationInput);
 
-			CloudSpace selectedSpace = spaceChangeHandler.getCurrentSpacesDescriptor() != null ? spaceChangeHandler
-					.getCurrentSpacesDescriptor().getOrgsAndSpaces().getDefaultCloudSpace() : null;
+			CloudSpace selectedSpace = spaceChangeHandler.getCurrentCloudSpace();
+			if (selectedSpace == null) {
+				// Attempt to select a default value
+				selectedSpace = spaceChangeHandler.getCurrentSpacesDescriptor() != null ? spaceChangeHandler
+						.getCurrentSpacesDescriptor().getOrgsAndSpaces().getDefaultCloudSpace() : null;
+			}
+
 			if (selectedSpace != null) {
 
 				// First set the default cloud space as the selected space

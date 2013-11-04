@@ -12,7 +12,7 @@ package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudHostDomainUrlPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudApplicationUrlPart;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
@@ -20,7 +20,7 @@ import org.eclipse.core.runtime.Status;
  * Application URL part that is aware that empty URLs are valid for standalone
  * apps, as URLs are optional.
  */
-public class StandaloneAppUrlPart extends CloudHostDomainUrlPart {
+public class StandaloneAppUrlPart extends CloudApplicationUrlPart {
 
 	public StandaloneAppUrlPart(CloudApplicationUrlLookup urlLookUp) {
 		super(urlLookUp);

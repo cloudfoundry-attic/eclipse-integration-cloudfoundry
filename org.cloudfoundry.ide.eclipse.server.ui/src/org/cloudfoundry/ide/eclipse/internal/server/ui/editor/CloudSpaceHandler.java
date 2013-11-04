@@ -119,6 +119,7 @@ public class CloudSpaceHandler {
 				cachedDescriptors.put(cachedDescriptorID, spacesDescriptor);
 			}
 		}
+		internalDescriptorChanged();
 
 		return spacesDescriptor;
 	}
@@ -225,6 +226,10 @@ public class CloudSpaceHandler {
 
 	public boolean hasSetSpace() {
 		return cloudServer.hasCloudSpace();
+	}
+
+	public CloudSpace getCurrentCloudSpace() {
+		return cloudServer.getCloudFoundrySpace() != null ? cloudServer.getCloudFoundrySpace().getSpace() : null;
 	}
 
 	protected CloudFoundryServer getCloudServer() {

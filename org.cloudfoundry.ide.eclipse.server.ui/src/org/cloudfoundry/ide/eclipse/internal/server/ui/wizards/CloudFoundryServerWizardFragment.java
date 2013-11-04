@@ -102,7 +102,7 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 	public boolean isComplete() {
 		// Enable the Next and Finish buttons, even if credentials are not
 		// validated.
-		return validator.areCredentialsFilled();
+		return validator != null && validator.areCredentialsFilled();
 	}
 
 	@Override
@@ -116,6 +116,11 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 	@Override
 	public void performFinish(IProgressMonitor monitor) throws CoreException {
+		if (validator == null) {
+			throw new CoreException(
+					CloudFoundryPlugin
+							.getErrorStatus("Credentials validator not initialised. Error loading Cloud Foundry server wizard pages. Please close wizard and try again."));
+		}
 		// Check the current credentials without server validation first, as if
 		// they are
 		// valid, there is no need to send a server request.

@@ -53,7 +53,7 @@ public class CloudFoundrySpacesWizardFragment extends WizardFragment {
 	}
 
 	public boolean isComplete() {
-		return validator.areCredentialsFilled();
+		return validator != null && validator.areCredentialsFilled();
 	}
 
 	@Override

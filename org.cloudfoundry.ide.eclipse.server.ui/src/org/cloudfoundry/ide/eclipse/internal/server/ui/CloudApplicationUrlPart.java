@@ -36,9 +36,9 @@ import org.eclipse.swt.widgets.Text;
 /**
  * 
  * Allows users to edit or add an application URL based on a list of existing
- * URL Cloud domains.d
+ * URL Cloud domains
  */
-public class CloudHostDomainUrlPart extends UIPart {
+public class CloudApplicationUrlPart extends UIPart {
 
 	protected final CloudApplicationUrlLookup urlLookup;
 
@@ -62,7 +62,7 @@ public class CloudHostDomainUrlPart extends UIPart {
 
 	private List<String> domains = new ArrayList<String>();
 
-	public CloudHostDomainUrlPart(CloudApplicationUrlLookup urlLookup) {
+	public CloudApplicationUrlPart(CloudApplicationUrlLookup urlLookup) {
 		this.urlLookup = urlLookup;
 	}
 
@@ -116,7 +116,7 @@ public class CloudHostDomainUrlPart extends UIPart {
 	 * Note: Triggers validation of the URL, and also notifies any listeners if
 	 * it is validate.
 	 * 
-	 * @param host
+	 * @param subDomain
 	 */
 	public void updateUrlSubdomain(String subDomain) {
 		if (subDomainText != null && !subDomainText.isDisposed()) {
@@ -134,16 +134,16 @@ public class CloudHostDomainUrlPart extends UIPart {
 	 */
 	public Composite createPart(Composite parent) {
 
-		Composite hostDomainComp = parent;
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(hostDomainComp);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(hostDomainComp);
+		Composite subDomainComp = parent;
+		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(subDomainComp);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(subDomainComp);
 
-		Label label = new Label(hostDomainComp, SWT.NONE);
+		Label label = new Label(subDomainComp, SWT.NONE);
 
 		label.setText("Subdomain:");
 		GridDataFactory.fillDefaults().grab(false, false).align(SWT.FILL, SWT.CENTER).applyTo(label);
 
-		subDomainText = new Text(hostDomainComp, SWT.BORDER);
+		subDomainText = new Text(subDomainComp, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(subDomainText);
 
 		subDomainText.addModifyListener(new ModifyListener() {
@@ -156,11 +156,11 @@ public class CloudHostDomainUrlPart extends UIPart {
 			}
 		});
 
-		label = new Label(hostDomainComp, SWT.NONE);
+		label = new Label(subDomainComp, SWT.NONE);
 		label.setText("Domain:");
 		GridDataFactory.fillDefaults().grab(false, false).align(SWT.FILL, SWT.CENTER).applyTo(label);
 
-		domainCombo = new Combo(hostDomainComp, SWT.BORDER | SWT.READ_ONLY);
+		domainCombo = new Combo(subDomainComp, SWT.BORDER | SWT.READ_ONLY);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(domainCombo);
 		domainCombo.setEnabled(true);
 		domainCombo.addSelectionListener(new SelectionAdapter() {
@@ -179,12 +179,12 @@ public class CloudHostDomainUrlPart extends UIPart {
 
 		setDomainInUI();
 
-		label = new Label(hostDomainComp, SWT.NONE);
+		label = new Label(subDomainComp, SWT.NONE);
 
 		label.setText("Deployed URL:");
 		GridDataFactory.fillDefaults().grab(false, false).align(SWT.FILL, SWT.CENTER).applyTo(label);
 
-		fullURLText = new Text(hostDomainComp, SWT.BORDER);
+		fullURLText = new Text(subDomainComp, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(fullURLText);
 
 		fullURLText.addModifyListener(new ModifyListener() {
@@ -198,7 +198,7 @@ public class CloudHostDomainUrlPart extends UIPart {
 			}
 		});
 
-		return hostDomainComp;
+		return subDomainComp;
 
 	}
 

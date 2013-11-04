@@ -23,7 +23,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudHostDomainUrlPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudApplicationUrlPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
@@ -77,7 +77,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 
 	protected final ApplicationWizardDescriptor descriptor;
 
-	protected CloudHostDomainUrlPart urlPart;
+	protected CloudApplicationUrlPart urlPart;
 
 	private MemoryPart memoryPart;
 
@@ -210,8 +210,8 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 		urlPart.addPartChangeListener(this);
 	}
 
-	protected CloudHostDomainUrlPart createUrlPart(CloudApplicationUrlLookup urlLookup) {
-		return new CloudHostDomainUrlPart(urlLookup);
+	protected CloudApplicationUrlPart createUrlPart(CloudApplicationUrlLookup urlLookup) {
+		return new CloudApplicationUrlPart(urlLookup);
 	}
 
 	protected void createMemoryArea(Composite parent) {

@@ -13,7 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudHostDomainUrlPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudApplicationUrlPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -69,16 +69,16 @@ public class ApplicationURLWizard extends Wizard {
 	}
 
 	protected ApplicationURLWizardPage createPage(ImageDescriptor imageDescriptor, CloudApplicationUrlLookup urlLookup) {
-		CloudHostDomainUrlPart urlPart = new CloudHostDomainUrlPart(urlLookup);
+		CloudApplicationUrlPart urlPart = new CloudApplicationUrlPart(urlLookup);
 		return new ApplicationURLWizardPage(imageDescriptor, urlLookup, urlPart);
 	}
 
 	class ApplicationURLWizardPage extends AbstractURLWizardPage {
 
-		private final CloudHostDomainUrlPart urlPart;
+		private final CloudApplicationUrlPart urlPart;
 
 		protected ApplicationURLWizardPage(ImageDescriptor titleImage, CloudApplicationUrlLookup urlLookup,
-				CloudHostDomainUrlPart urlPart) {
+				CloudApplicationUrlPart urlPart) {
 			super("Application URL Page", title, titleImage, urlLookup);
 			setDescription("Add or edit application URL.");
 			this.urlPart = urlPart;
