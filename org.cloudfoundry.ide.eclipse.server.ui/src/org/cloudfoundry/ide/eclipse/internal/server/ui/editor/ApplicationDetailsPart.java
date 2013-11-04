@@ -60,6 +60,7 @@ import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.dialogs.IMessageProvider;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.layout.RowLayoutFactory;
@@ -474,9 +475,13 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			ManifestParser parser = new ManifestParser(appModule, cloudServer);
 			if (!parser.canWriteToManifest()) {
 				saveManifest.setEnabled(false);
+				saveManifest
+						.setToolTipText("No accessible application workspace project available. Manifest file cannot be saved or created at this time.");
 			}
 			else {
 				saveManifest.setEnabled(true);
+				saveManifest
+						.setToolTipText("Save application deployment properties into the manifest file. Existing manifest file will be merged with updated values.");
 			}
 		}
 
@@ -952,29 +957,34 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		try {
 			final CloudFoundryApplicationModule appModule = getExistingApplication();
-			if (appModule != null) {
-				Job job = new Job("Writing manifest file for: " + appModule.getDeployedApplicationName()) {
+			if (appModule != null && saveManifest != null && !saveManifest.isDisposed()) {
+				if (MessageDialog
+						.openConfirm(saveManifest.getShell(), "Save to Manifest File",
+								"Existing manifest file will be merged with new application deployment values. Are you sure you want to continue?")) {
+					Job job = new Job("Writing manifest file for: " + appModule.getDeployedApplicationName()) {
 
-					@Override
-					protected IStatus run(IProgressMonitor monitor) {
+						@Override
+						protected IStatus run(IProgressMonitor monitor) {
 
-						try {
-							// Update the bound service mappings so they point
-							// to
-							// the updated services
-							serverBehaviour.refreshApplicationBoundServices(appModule, monitor);
+							try {
+								// Update the bound service mappings so they
+								// point
+								// to
+								// the updated services
+								serverBehaviour.refreshApplicationBoundServices(appModule, monitor);
 
-							ManifestParser parser = new ManifestParser(appModule, cloudServer);
-							parser.write(monitor);
+								ManifestParser parser = new ManifestParser(appModule, cloudServer);
+								parser.write(monitor);
+							}
+							catch (CoreException ce) {
+								errorStatus[0] = ce.getStatus();
+								return errorStatus[0];
+							}
+							return Status.OK_STATUS;
 						}
-						catch (CoreException ce) {
-							errorStatus[0] = ce.getStatus();
-							return errorStatus[0];
-						}
-						return Status.OK_STATUS;
-					}
-				};
-				job.schedule();
+					};
+					job.schedule();
+				}
 			}
 			else {
 				errorStatus[0] = CloudFoundryPlugin
@@ -1436,7 +1446,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 					public IStatus runInUIThread(IProgressMonitor arg0) {
 
-//						refreshApplicationDeploymentButtons(appModule);
+						// refreshApplicationDeploymentButtons(appModule);
 						refreshAndReenableDeploymentButtons(appModule);
 						return Status.OK_STATUS;
 					}
