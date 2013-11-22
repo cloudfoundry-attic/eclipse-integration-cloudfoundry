@@ -8,7 +8,7 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
+package org.cloudfoundry.ide.eclipse.server.standalone.internal.startcommand;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -44,6 +44,7 @@ public class JavaUIHelper {
 		IJavaProject javaProject = getJavaProject();
 
 		if (javaProject != null) {
+			// REturns main method types
 			boolean includeSubtypes = true;
 			MainMethodSearchEngine engine = new MainMethodSearchEngine();
 			int constraints = IJavaSearchScope.SOURCES;
@@ -57,17 +58,25 @@ public class JavaUIHelper {
 	}
 
 	public IType getMainMethodTypeFromSource(IProgressMonitor monitor) {
-		IType[] types = getMainMethodTypes(monitor);
-		IType firstEncounteredSourceType = null;
-		if (types != null) {
-			for (IType type : types) {
-				if (!type.isBinary()) {
-					firstEncounteredSourceType = type;
-					break;
+		if (project != null) {
+			IType firstEncounteredSourceType = null ;
+			IType[] types = getMainMethodTypes(monitor);
+					// Enable when dependency to org.springsource.ide.eclipse.commons.core is
+					// added. This should be the common way to obtain main types
+//					MainTypeFinder.guessMainTypes(project, monitor);
+	
+			if (types != null) {
+				for (IType type : types) {
+					if (!type.isBinary()) {
+						firstEncounteredSourceType = type;
+						break;
+					}
 				}
 			}
+			 return firstEncounteredSourceType;
 		}
-		return firstEncounteredSourceType;
+		return null;
+
 	}
 
 	public IPackageFragment getDefaultPackageFragment() {

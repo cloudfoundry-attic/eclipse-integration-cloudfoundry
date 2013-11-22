@@ -8,7 +8,7 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
+package org.cloudfoundry.ide.eclipse.server.standalone.internal.startcommand;
 
 import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.eclipse.swt.widgets.Composite;

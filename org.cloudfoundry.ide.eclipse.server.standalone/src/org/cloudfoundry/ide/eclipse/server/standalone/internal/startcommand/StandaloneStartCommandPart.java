@@ -8,7 +8,7 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
+package org.cloudfoundry.ide.eclipse.server.standalone.internal.startcommand;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,8 +17,6 @@ import java.util.Map;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
-import org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StartCommand;
-import org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StartCommandType;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;

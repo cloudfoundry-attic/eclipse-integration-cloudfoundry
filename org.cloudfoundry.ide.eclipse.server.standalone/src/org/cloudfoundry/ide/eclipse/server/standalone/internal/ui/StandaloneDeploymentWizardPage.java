@@ -18,16 +18,9 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudApplicationUrlPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryDeploymentWizardPage;
-import org.cloudfoundry.ide.eclipse.server.standalone.internal.application.JavaStartCommand;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Composite;
 
 public class StandaloneDeploymentWizardPage extends
 		CloudFoundryDeploymentWizardPage {
@@ -38,48 +31,6 @@ public class StandaloneDeploymentWizardPage extends
 			CloudApplicationUrlLookup urlLookup,
 			ApplicationWizardDelegate delegate) {
 		super(server, module, descriptor, urlLookup, delegate);
-	}
-
-	protected StandaloneStartCommandPart standalonePart;
-
-	@Override
-	protected void createAreas(Composite parent) {
-
-		Composite topComposite = new Composite(parent, SWT.NONE);
-		GridLayout topLayout = new GridLayout(2, false);
-		topComposite.setLayout(topLayout);
-		topComposite
-				.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-
-		createURLArea(topComposite);
-
-		createMemoryArea(topComposite);
-
-		IProject project = module.getLocalModule().getProject();
-
-		standalonePart = new StandaloneStartCommandPart(new JavaStartCommand(),
-				project);
-		standalonePart.addPartChangeListener(this);
-
-		standalonePart.createPart(topComposite);
-
-		createStartOrDebugOptions(topComposite);
-	}
-
-	@Override
-	protected void createStartOrDebugOptions(Composite parent) {
-		super.createStartOrDebugOptions(parent);
-
-		// TODO: Enable when debug is supported again post CF 1.5.0
-		// if (isServerDebugModeAllowed()) {
-		// regularStartOnDeploymentButton.setText("Start application:");
-		// GridData buttonData = new GridData(SWT.FILL, SWT.FILL, false, false);
-		// regularStartOnDeploymentButton.setLayoutData(buttonData);
-		//
-		// // Also add two columns
-		// GridLayoutFactory.fillDefaults().numColumns(2)
-		// .applyTo(runDebugOptions);
-		// }
 	}
 
 	@Override
@@ -111,16 +62,6 @@ public class StandaloneDeploymentWizardPage extends
 
 		// Do not update the app URL after domains have been refreshed as
 		// standalone does not require URL
-	}
-
-	public void handleChange(PartChangeEvent event) {
-		if (event.getSource() == standalonePart) {
-			String startCommand = event.getData() instanceof String ? (String) event
-					.getData() : null;
-			descriptor.setStartCommand(startCommand);
-		}
-
-		super.handleChange(event);
 	}
 
 }
