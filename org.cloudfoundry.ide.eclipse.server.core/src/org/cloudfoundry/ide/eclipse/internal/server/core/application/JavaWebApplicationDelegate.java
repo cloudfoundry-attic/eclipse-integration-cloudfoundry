@@ -44,7 +44,6 @@ import org.eclipse.wst.server.core.model.IModuleResource;
  */
 public class JavaWebApplicationDelegate extends ApplicationDelegate {
 
-	private static final Map<String, String> JAVA_WEB_SUPPORTED_FRAMEWORKS = getJavaWebSupportedFrameworks();
 
 	public JavaWebApplicationDelegate() {
 
@@ -164,7 +163,7 @@ public class JavaWebApplicationDelegate extends ApplicationDelegate {
 		return false;
 	}
 
-	public ApplicationArchive getApplicationArchive(IModule module, IModuleResource[] moduleResources)
+	public ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule module, IModuleResource[] moduleResources)
 			throws CoreException {
 		// No need for application archive, as the CF plugin framework generates
 		// .war files for Java Web applications.

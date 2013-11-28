@@ -70,6 +70,8 @@ public class ManifestParser {
 
 	public static final String PLAN_PROP = "plan";
 
+	public static final String RELATIVE_APP_PATH = "path";
+
 	public static final String BUILDPACK_PROP = "buildpack";
 
 	private final String relativePath;
@@ -264,20 +266,119 @@ public class ManifestParser {
 							+ ". Unable to continue parsing manifest values. No manifest values will be loaded into the application deployment info.");
 		}
 
-		Map<?, ?> applications = (Map<?, ?>) mapObj;
+		Map<?, ?> application = (Map<?, ?>) mapObj;
 
-		String appName = getStringValue(applications, NAME_PROP);
+		// NOTE: When reading from manifest, the manifest may be INCOMPLETE,
+		// therefore do not automatically
+		// set all properties in the deployment info. Check if the value of the
+		// property is actually set before set value
+		// in the info
+		String appName = getStringValue(application, NAME_PROP);
 
 		if (appName != null) {
 			workingCopy.setDeploymentName(appName);
 		}
 
-		Integer memoryVal = getIntegerValue(applications, MEMORY_PROP);
+		readMemory(application, workingCopy);
+
+		readApplicationURL(application, workingCopy, appName);
+
+		String buildpackurl = getStringValue(application, BUILDPACK_PROP);
+		if (buildpackurl != null) {
+			Staging staging = new Staging(null, buildpackurl);
+			workingCopy.setStaging(staging);
+		}
+
+		readServices(workingCopy, application);
+
+		String archiveURL = getStringValue(application, RELATIVE_APP_PATH);
+		if (archiveURL != null) {
+			workingCopy.setArchive(archiveURL);
+		}
+
+		return workingCopy;
+	}
+
+	protected void readServices(DeploymentInfoWorkingCopy workingCopy, Map<?, ?> applications) {
+		Map<?, ?> services = getContainingPropertiesMap(applications, SERVICES_PROP);
+		if (services != null) {
+			Map<String, CloudService> servicesToBind = new LinkedHashMap<String, CloudService>();
+
+			for (Entry<?, ?> entry : services.entrySet()) {
+				Object serviceNameObj = entry.getKey();
+				if (serviceNameObj instanceof String) {
+					String serviceName = (String) serviceNameObj;
+					if (!servicesToBind.containsKey(serviceName)) {
+						LocalCloudService service = new LocalCloudService(serviceName);
+						servicesToBind.put(serviceName, service);
+
+						Object servicePropertiesObj = entry.getValue();
+						if (servicePropertiesObj instanceof Map<?, ?>) {
+							Map<?, ?> serviceProperties = (Map<?, ?>) servicePropertiesObj;
+							String label = getStringValue(serviceProperties, LABEL_PROP);
+							if (label != null) {
+								service.setLabel(label);
+							}
+							String provider = getStringValue(serviceProperties, PROVIDER_PROP);
+							if (provider != null) {
+								service.setProvider(provider);
+							}
+							String version = getStringValue(serviceProperties, VERSION_PROP);
+							if (version != null) {
+								service.setVersion(version);
+							}
+							String plan = getStringValue(serviceProperties, PLAN_PROP);
+							if (plan != null) {
+								service.setPlan(plan);
+							}
+						}
+					}
+				}
+			}
+
+			workingCopy.setServices(new ArrayList<CloudService>(servicesToBind.values()));
+		}
+	}
+
+	protected void readApplicationURL(Map<?, ?> application, DeploymentInfoWorkingCopy workingCopy, String appName) {
+		String subdomain = getStringValue(application, SUB_DOMAIN_PROP);
+		String domain = getStringValue(application, DOMAIN_PROP);
+
+		// IF one or the other is set, set a default value for the missing part
+		if (subdomain != null || domain != null) {
+
+			String url = null;
+			if (subdomain == null) {
+				subdomain = appName;
+			}
+			else {
+				// Get a default domain since no domain has been specified
+				CloudApplicationUrlLookup lookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
+				CloudApplicationURL cloudURL = lookup.getDefaultApplicationURL(subdomain);
+				if (cloudURL != null) {
+					url = cloudURL.getUrl();
+				}
+			}
+
+			if (url == null) {
+				url = subdomain + '.' + domain;
+			}
+
+			if (url != null) {
+				List<String> urls = Arrays.asList(url);
+				workingCopy.setUris(urls);
+			}
+
+		}
+	}
+
+	protected void readMemory(Map<?, ?> application, DeploymentInfoWorkingCopy workingCopy) {
+		Integer memoryVal = getIntegerValue(application, MEMORY_PROP);
 
 		// If not in Integer form, try String as the memory may end in with a
 		// 'G'
 		if (memoryVal == null) {
-			String memoryStringVal = getStringValue(applications, MEMORY_PROP);
+			String memoryStringVal = getStringValue(application, MEMORY_PROP);
 			if (memoryStringVal != null && memoryStringVal.length() > 0) {
 
 				char memoryIndicator[] = { 'M', 'G', 'm', 'g' };
@@ -329,86 +430,6 @@ public class ManifestParser {
 			if (actualMemory > 0) {
 				workingCopy.setMemory(actualMemory);
 			}
-		}
-
-		String subdomain = getStringValue(applications, SUB_DOMAIN_PROP);
-		String domain = getStringValue(applications, DOMAIN_PROP);
-
-		if (subdomain != null || domain != null) {
-
-			String url = null;
-			if (subdomain == null) {
-				subdomain = appName;
-			}
-			else {
-				// Get a default domain since no domain has been specified
-				CloudApplicationUrlLookup lookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
-				CloudApplicationURL cloudURL = lookup.getDefaultApplicationURL(subdomain);
-				if (cloudURL != null) {
-					url = cloudURL.getUrl();
-				}
-			}
-
-			if (url == null) {
-				url = subdomain + '.' + domain;
-			}
-
-			if (url != null) {
-				List<String> urls = Arrays.asList(url);
-				workingCopy.setUris(urls);
-			}
-
-		}
-
-		String buildpackurl = getStringValue(applications, BUILDPACK_PROP);
-		if (buildpackurl != null) {
-			Staging staging = new Staging(null, buildpackurl);
-			workingCopy.setStaging(staging);
-		}
-
-		parseServices(workingCopy, applications);
-
-		return workingCopy;
-	}
-
-	protected void parseServices(DeploymentInfoWorkingCopy workingCopy, Map<?, ?> applications) {
-		Map<?, ?> services = getContainingPropertiesMap(applications, SERVICES_PROP);
-		if (services != null) {
-			Map<String, CloudService> servicesToBind = new LinkedHashMap<String, CloudService>();
-
-			for (Entry<?, ?> entry : services.entrySet()) {
-				Object serviceNameObj = entry.getKey();
-				if (serviceNameObj instanceof String) {
-					String serviceName = (String) serviceNameObj;
-					if (!servicesToBind.containsKey(serviceName)) {
-						LocalCloudService service = new LocalCloudService(serviceName);
-						servicesToBind.put(serviceName, service);
-
-						Object servicePropertiesObj = entry.getValue();
-						if (servicePropertiesObj instanceof Map<?, ?>) {
-							Map<?, ?> serviceProperties = (Map<?, ?>) servicePropertiesObj;
-							String label = getStringValue(serviceProperties, LABEL_PROP);
-							if (label != null) {
-								service.setLabel(label);
-							}
-							String provider = getStringValue(serviceProperties, PROVIDER_PROP);
-							if (provider != null) {
-								service.setProvider(provider);
-							}
-							String version = getStringValue(serviceProperties, VERSION_PROP);
-							if (version != null) {
-								service.setVersion(version);
-							}
-							String plan = getStringValue(serviceProperties, PLAN_PROP);
-							if (plan != null) {
-								service.setPlan(plan);
-							}
-						}
-					}
-				}
-			}
-
-			workingCopy.setServices(new ArrayList<CloudService>(servicesToBind.values()));
 		}
 	}
 
@@ -597,6 +618,11 @@ public class ManifestParser {
 		Staging staging = deploymentInfo.getStaging();
 		if (staging != null && staging.getBuildpackUrl() != null) {
 			application.put(BUILDPACK_PROP, staging.getBuildpackUrl());
+		}
+
+		String archiveURL = deploymentInfo.getArchive();
+		if (archiveURL != null) {
+			application.put(RELATIVE_APP_PATH, archiveURL);
 		}
 
 		// Regardless if there are services or not, always clear list of

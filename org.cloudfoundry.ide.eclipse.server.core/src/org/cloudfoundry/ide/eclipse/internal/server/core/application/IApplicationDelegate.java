@@ -104,7 +104,7 @@ public interface IApplicationDelegate {
 	 * @throws CoreException if the application delegate provides an application
 	 * archive but it failed to create one.
 	 */
-	public ApplicationArchive getApplicationArchive(IModule module, IModuleResource[] moduleResources)
+	public ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule module, IModuleResource[] moduleResources)
 			throws CoreException;
 
 	/**

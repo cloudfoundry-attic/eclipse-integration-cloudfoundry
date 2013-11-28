@@ -52,6 +52,8 @@ public class ApplicationDeploymentInfo {
 	private List<CloudService> services;
 
 	private int memory;
+	
+	private String archive;
 
 	public ApplicationDeploymentInfo(String appName) {
 		setDeploymentName(appName);
@@ -171,6 +173,14 @@ public class ApplicationDeploymentInfo {
 	public void setMemory(int memory) {
 		this.memory = memory;
 	}
+	
+	public String getArchive() {
+		return this.archive;
+	}
+	
+	public void setArchive(String archive) {
+		this.archive = archive;
+	}
 
 	/**
 	 * 
@@ -187,6 +197,7 @@ public class ApplicationDeploymentInfo {
 		setMemory(info.getMemory());
 		setStaging(info.getStaging());
 		setInstances(info.getInstances());
+		setArchive(info.getArchive());
 
 		if (info.getServices() != null) {
 			setServices(new ArrayList<CloudService>(info.getServices()));
@@ -224,6 +235,7 @@ public class ApplicationDeploymentInfo {
 		info.setMemory(getMemory());
 		info.setStaging(getStaging());
 		info.setInstances(getInstances());
+		info.setArchive(getArchive());
 
 		if (getServices() != null) {
 			info.setServices(new ArrayList<CloudService>(getServices()));

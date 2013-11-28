@@ -2344,7 +2344,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			IModuleResource[] resources = getResources(modules);
 
 			try {
-				archive = delegate.getApplicationArchive(cloudModule.getLocalModule(), resources);
+				archive = delegate.getApplicationArchive(cloudModule, resources);
 			}
 			catch (CoreException e) {
 				// Log the error, but continue anyway to

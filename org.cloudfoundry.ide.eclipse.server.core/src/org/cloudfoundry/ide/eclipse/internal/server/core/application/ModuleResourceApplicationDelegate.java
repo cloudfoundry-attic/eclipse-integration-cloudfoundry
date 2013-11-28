@@ -13,6 +13,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 import java.util.Arrays;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.IModuleResource;
@@ -38,11 +39,12 @@ public abstract class ModuleResourceApplicationDelegate extends ApplicationDeleg
 	 * 
 	 * @see org.cloudfoundry.ide.eclipse.internal.server.core.application.
 	 * IApplicationDelegate
-	 * #getApplicationArchive(org.eclipse.wst.server.core.IModule,
+	 * #getApplicationArchive(org.cloudfoundry.ide.eclipse.internal
+	 * .server.core.client.CloudFoundryApplicationModule,
 	 * org.eclipse.wst.server.core.model.IModuleResource[])
 	 */
-	public ApplicationArchive getApplicationArchive(IModule module, IModuleResource[] moduleResources)
-			throws CoreException {
-		return new ModuleResourceApplicationArchive(module, Arrays.asList(moduleResources));
+	public ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule module,
+			IModuleResource[] moduleResources) throws CoreException {
+		return new ModuleResourceApplicationArchive(module.getLocalModule(), Arrays.asList(moduleResources));
 	}
 }
