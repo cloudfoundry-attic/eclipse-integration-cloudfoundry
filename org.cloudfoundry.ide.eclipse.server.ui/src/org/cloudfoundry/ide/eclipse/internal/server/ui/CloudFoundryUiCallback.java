@@ -20,7 +20,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelD
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContents;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.PreApplicationStartConsoleContent;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.console.StagingLogConsoleContent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryCredentialsWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.DeleteServicesWizard;

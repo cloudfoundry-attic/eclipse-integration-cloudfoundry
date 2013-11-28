@@ -974,7 +974,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 								serverBehaviour.refreshApplicationBoundServices(appModule, monitor);
 
 								ManifestParser parser = new ManifestParser(appModule, cloudServer);
-								parser.write(monitor);
+								parser.write(monitor, null);
 							}
 							catch (CoreException ce) {
 								errorStatus[0] = ce.getStatus();

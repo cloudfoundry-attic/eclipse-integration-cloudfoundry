@@ -240,9 +240,19 @@ public class ManifestParser {
 
 		List<?> applicationsList = (List<?>) applicationsObj;
 
-		// Parse only the first application
+		// Use only the first application entry
 		if (applicationsList.isEmpty()) {
 			return null;
+		}
+		if (applicationsList.size() > 1) {
+			File file = getFile();
+			String fileName = null;
+			if (file != null) {
+				fileName = file.getAbsolutePath();
+			}
+			CloudFoundryPlugin.logWarning("Two or more application definitions found in manifest file "
+					+ (fileName != null ? fileName : "") + " - only the first one will be used for deployment of "
+					+ appModule.getDeployedApplicationName());
 		}
 
 		Object mapObj = applicationsList.get(0);
@@ -468,15 +478,36 @@ public class ManifestParser {
 	 * @return true if deployment info for the cloud module was written to
 	 * manifest file. False if there was no content to write to the manifest
 	 * file.
+	 * <p/>
+	 * WHne writing content to manifest, if the application has a previous
+	 * deployment information, and the app name changed, meaning the current
+	 * name of the application does not match the one in the old deployment
+	 * information, the old entry in the manifest will be updated to the new
+	 * name, rather than creating a new entry with the new name.
+	 * <p/>
+	 * If both an existing entry with the current application name, as well as
+	 * an old entry with the old application name, exist, the old entry has
+	 * higher priority, as the old entry truly represents the application that
+	 * is being edited.
+	 * @param monitor progress monitor
+	 * @param previousInfo Previous deployment information pertaining to the
+	 * give application module. May be null if there is no previous information
+	 * available.
 	 * @throws CoreException if error occurred while writing to a Manifest file.
 	 */
-	public boolean write(IProgressMonitor monitor) throws CoreException {
+	public boolean write(IProgressMonitor monitor, ApplicationDeploymentInfo previousInfo) throws CoreException {
 
 		ApplicationDeploymentInfo deploymentInfo = appModule.getDeploymentInfo();
 
 		if (deploymentInfo == null) {
 			return false;
 		}
+
+		// Fetch the previous name, in case the app name was changed. This will
+		// allow the old
+		// entry to be replaced by the new one, since application entries are
+		// looked up by application name.
+		String previousName = previousInfo != null ? previousInfo.getDeploymentName() : null;
 
 		String appName = deploymentInfo.getDeploymentName();
 
@@ -500,36 +531,48 @@ public class ManifestParser {
 					+ ". Unable to continue writing manifest values.");
 		}
 
-		Map<Object, Object> applicationProperties = null;
+		Map<Object, Object> applicationWithSameName = null;
 
+		Map<Object, Object> oldApplication = null;
+
+		// Each application listing should be a map. Find both an entry with the
+		// same name as the application name
+		// As well as an entry with an older name of the application, in case
+		// the application has changed.
 		for (Object appMap : applicationsList) {
 			if (appMap instanceof Map<?, ?>) {
-				applicationProperties = (Map<Object, Object>) appMap;
-
-				if (!appName.equals(applicationProperties.get(NAME_PROP))) {
-					applicationProperties = null;
+				Map<Object, Object> properties = (Map<Object, Object>) appMap;
+				String name = getStringValue(properties, NAME_PROP);
+				if (appName.equals(name)) {
+					applicationWithSameName = properties;
 				}
-				else {
-					break;
+				else if (previousName != null && previousName.equals(name)) {
+					oldApplication = properties;
 				}
 			}
 		}
 
-		if (applicationProperties == null) {
-			applicationProperties = new LinkedHashMap<Object, Object>();
-			applicationsList.add(applicationProperties);
+		// The order of priority in terms of replacing an existing entry is : 1.
+		// old application entry that
+		// has been changed will get replaced 2. existing entry with same name
+		// as app will now get replaced2.
+		Map<Object, Object> application = oldApplication != null ? oldApplication : applicationWithSameName;
+
+		if (application == null) {
+			application = new LinkedHashMap<Object, Object>();
+			applicationsList.add(application);
 		}
 
-		applicationProperties.put(NAME_PROP, appName);
+		application.put(NAME_PROP, appName);
 
 		String memory = getMemoryAsString(deploymentInfo.getMemory());
 		if (memory != null) {
-			applicationProperties.put(MEMORY_PROP, memory);
+			application.put(MEMORY_PROP, memory);
 		}
 
 		int instances = deploymentInfo.getInstances();
 		if (instances > 0) {
-			applicationProperties.put(INSTANCES_PROP, instances);
+			application.put(INSTANCES_PROP, instances);
 		}
 
 		List<String> urls = deploymentInfo.getUris();
@@ -543,17 +586,17 @@ public class ManifestParser {
 			String domain = cloudUrl.getDomain();
 
 			if (subdomain != null) {
-				applicationProperties.put(SUB_DOMAIN_PROP, subdomain);
+				application.put(SUB_DOMAIN_PROP, subdomain);
 			}
 
 			if (domain != null) {
-				applicationProperties.put(DOMAIN_PROP, domain);
+				application.put(DOMAIN_PROP, domain);
 			}
 		}
 
 		Staging staging = deploymentInfo.getStaging();
 		if (staging != null && staging.getBuildpackUrl() != null) {
-			applicationProperties.put(BUILDPACK_PROP, staging.getBuildpackUrl());
+			application.put(BUILDPACK_PROP, staging.getBuildpackUrl());
 		}
 
 		// Regardless if there are services or not, always clear list of
@@ -562,7 +605,7 @@ public class ManifestParser {
 		// deployment info has to match the content in the manifest.
 
 		Map<Object, Object> services = new LinkedHashMap<Object, Object>();
-		applicationProperties.put(SERVICES_PROP, services);
+		application.put(SERVICES_PROP, services);
 
 		List<CloudService> servicesToBind = deploymentInfo.getServices();
 
@@ -595,7 +638,6 @@ public class ManifestParser {
 						// Service name is the key in the yaml map
 						services.put(serviceName, serviceDescription);
 					}
-
 				}
 			}
 		}

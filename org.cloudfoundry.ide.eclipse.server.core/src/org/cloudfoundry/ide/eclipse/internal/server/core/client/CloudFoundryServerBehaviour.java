@@ -1972,7 +1972,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				}
 
 				// Refresh the application instance stats as well
-				internalUpdateApplicationInstanceStats(appModule, monitor);
+				try {
+					internalUpdateApplicationInstanceStats(appModule, monitor);
+				}
+				catch (CoreException e) {
+				// Don't let errors in app instance stats stop the completion of the ApplicationOperation
+					CloudFoundryPlugin.logError(e);
+				}
 
 			}
 			catch (OperationCanceledException e) {

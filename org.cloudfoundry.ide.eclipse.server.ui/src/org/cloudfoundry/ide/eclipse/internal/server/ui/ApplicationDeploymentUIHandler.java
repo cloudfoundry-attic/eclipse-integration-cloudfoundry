@@ -115,6 +115,7 @@ public class ApplicationDeploymentUIHandler {
 						+ appModule.getLocalModule().getModuleType().getId());
 			}
 
+				
 			// Now parse the manifest file, if it exists, and load into a
 			// deployment info working copy.
 			// Do NOT save the working copy yet, as a user may cancel the
@@ -131,6 +132,11 @@ public class ApplicationDeploymentUIHandler {
 				// values.
 				CloudFoundryPlugin.logError(ce);
 			}
+			
+			// Get the old working copy in case during the deployment wizard, the app name changes
+			// Apps are looked up by app name in the manifest, therefore if the app name changed,
+			// the old entry in the manifest 
+			ApplicationDeploymentInfo oldInfo = workingCopy != null ? workingCopy.copy() : null;
 
 			final boolean[] cancelled = { false };
 			final boolean[] writeToManifest = { false };
@@ -199,7 +205,7 @@ public class ApplicationDeploymentUIHandler {
 
 					IProgressMonitor subMonitor = new SubProgressMonitor(monitor, 1);
 					try {
-						new ManifestParser(appModule, server).write(subMonitor);
+						new ManifestParser(appModule, server).write(subMonitor, oldInfo);
 					}
 					catch (Throwable ce) {
 						// Do not let this error propagate, as failing to write
