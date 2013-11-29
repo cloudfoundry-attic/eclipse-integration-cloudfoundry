@@ -51,10 +51,9 @@ public abstract class ApplicationDelegate implements IApplicationDelegate {
 		return deploymentInfo;
 	}
 
-	public ApplicationDeploymentInfo resolveApplicationDeploymentInfo(CloudApplication cloudApplication,
+	public ApplicationDeploymentInfo resolveApplicationDeploymentInfo(CloudFoundryApplicationModule appModule,
 			CloudFoundryServer cloudServer) {
-
-		return parseApplicationDeploymentInfo(cloudApplication);
+		return parseApplicationDeploymentInfo(appModule.getApplication());
 	}
 
 	public IStatus validateDeploymentInfo(ApplicationDeploymentInfo deploymentInfo) {

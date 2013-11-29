@@ -436,7 +436,7 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 		CloudFoundryServer cloudServer = getCloudFoundryServer();
 
 		if (delegate != null) {
-			info = delegate.resolveApplicationDeploymentInfo(application, cloudServer);
+			info = delegate.resolveApplicationDeploymentInfo(this, cloudServer);
 		}
 
 		// If no info has been resolved yet, use a default parser

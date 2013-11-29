@@ -174,6 +174,20 @@ public class ManifestParser {
 	public boolean canWriteToManifest() {
 		return CloudUtil.getProject(appModule) != null;
 	}
+	
+//	public <T> T getApplicationProperty(String propertyName) {
+//		try {
+//			Map<?, ?> map = getFirstApplication();
+//			if (map != null) {
+//				return getStringValue(map, propertyName);
+//			}
+//		}
+//		catch (CoreException e) {
+//			CloudFoundryPlugin.logError(e);
+//		}
+//		
+//		
+//	}
 
 	/**
 	 * 
@@ -213,19 +227,7 @@ public class ManifestParser {
 		return null;
 	}
 
-	/**
-	 * 
-	 * @return Deployment copy if a manifest file was successfully loaded into
-	 * an app's deployment info working copy. Note that the copy is NOT saved.
-	 * Null if there is no content to load into the app's deployment info
-	 * working copy.
-	 * @throws CoreException if error occurred while loading an existing
-	 * manifest file.
-	 */
-	public DeploymentInfoWorkingCopy load() throws CoreException {
-
-		DeploymentInfoWorkingCopy workingCopy = appModule.getDeploymentInfoWorkingCopy();
-
+	protected Map<?, ?> getFirstApplication() throws CoreException {
 		Map<Object, Object> results = parseManifestFromFile();
 
 		if (results == null) {
@@ -266,7 +268,27 @@ public class ManifestParser {
 							+ ". Unable to continue parsing manifest values. No manifest values will be loaded into the application deployment info.");
 		}
 
-		Map<?, ?> application = (Map<?, ?>) mapObj;
+		return (Map<?, ?>) mapObj;
+	}
+
+	/**
+	 * 
+	 * @return Deployment copy if a manifest file was successfully loaded into
+	 * an app's deployment info working copy. Note that the copy is NOT saved.
+	 * Null if there is no content to load into the app's deployment info
+	 * working copy.
+	 * @throws CoreException if error occurred while loading an existing
+	 * manifest file.
+	 */
+	public DeploymentInfoWorkingCopy load() throws CoreException {
+
+		DeploymentInfoWorkingCopy workingCopy = appModule.getDeploymentInfoWorkingCopy();
+
+		Map<?, ?> application = getFirstApplication();
+		
+		if (application == null) {
+			return null;
+		}
 
 		// NOTE: When reading from manifest, the manifest may be INCOMPLETE,
 		// therefore do not automatically

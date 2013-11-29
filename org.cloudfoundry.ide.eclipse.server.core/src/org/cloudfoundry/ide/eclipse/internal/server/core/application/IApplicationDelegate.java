@@ -11,7 +11,6 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.application;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
@@ -120,11 +119,11 @@ public interface IApplicationDelegate {
 	 * if it cannot be resolved. If returning non-null value, it should always
 	 * be a new copy of a deployment info.
 	 * @param Cloud server where application exists.
-	 * @param cloudApplication application that already exists in the server
+	 * @param module application that already exists in the server
 	 * @return A new copy of the deployment information for an existing
 	 * application, or null if it cannot be resolved.
 	 */
-	public ApplicationDeploymentInfo resolveApplicationDeploymentInfo(CloudApplication cloudApplication,
+	public ApplicationDeploymentInfo resolveApplicationDeploymentInfo(CloudFoundryApplicationModule module,
 			CloudFoundryServer cloudServer);
 
 	/**
