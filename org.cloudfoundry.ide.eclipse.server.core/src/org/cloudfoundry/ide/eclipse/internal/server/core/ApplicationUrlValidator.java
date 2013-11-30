@@ -30,7 +30,6 @@ import org.eclipse.core.runtime.Status;
  * names with trailing or ending spaces, or spaces in between the name segments
  * are invalid.
  * 
- * 
  */
 public class ApplicationUrlValidator {
 
