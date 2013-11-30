@@ -18,7 +18,9 @@ import java.util.zip.ZipFile;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.archive.ZipApplicationArchive;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ModuleResourceApplicationArchive;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ModuleResourceApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
@@ -52,12 +54,34 @@ public class StandaloneApplicationDelegate extends
 	 * IApplicationDelegate
 	 * #getApplicationArchive(org.cloudfoundry.ide.eclipse.internal
 	 * .server.core.client.CloudFoundryApplicationModule,
+	 * org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer,
 	 * org.eclipse.wst.server.core.model.IModuleResource[])
 	 */
 	public ApplicationArchive getApplicationArchive(
 			CloudFoundryApplicationModule module,
-			IModuleResource[] moduleResources) throws CoreException {
+			CloudFoundryServer cloudServer, IModuleResource[] moduleResources)
+			throws CoreException {
 		String archiveURL = module.getDeploymentInfo().getArchive();
+
+		// FIXNS:
+		// Workaround to the fact that path manifest property does not get
+		// persisted in the server for the application,
+		// therefore if the deploymentinfo does not have it, parse it from the
+		// manifest, if one can be found for the application
+		// in a local project. The reason this is done here as opposed to when
+		// deployment info is updated for an application
+		// is that the path only gets used when pushing the application (either
+		// initial push, or through start/update restart)
+		// so it will keep manifest reading I/O only to these cases, rather than
+		// on deployment info update, which occurs on
+		// every refresh.
+		if (archiveURL == null) {
+			archiveURL = new ManifestParser(module, cloudServer)
+					.getApplicationProperty(
+							module.getDeployedApplicationName(),
+							ManifestParser.RELATIVE_APP_PATH);
+		}
+		
 		ApplicationArchive appArchive = null;
 		if (archiveURL != null) {
 			// For now assume urls are project relative

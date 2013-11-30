@@ -44,7 +44,6 @@ import org.eclipse.wst.server.core.model.IModuleResource;
  */
 public class JavaWebApplicationDelegate extends ApplicationDelegate {
 
-
 	public JavaWebApplicationDelegate() {
 
 	}
@@ -163,8 +162,18 @@ public class JavaWebApplicationDelegate extends ApplicationDelegate {
 		return false;
 	}
 
-	public ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule module, IModuleResource[] moduleResources)
-			throws CoreException {
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.cloudfoundry.ide.eclipse.internal.server.core.application.
+	 * IApplicationDelegate
+	 * #getApplicationArchive(org.cloudfoundry.ide.eclipse.internal
+	 * .server.core.client.CloudFoundryApplicationModule,
+	 * org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer,
+	 * org.eclipse.wst.server.core.model.IModuleResource[])
+	 */
+	public ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule module,
+			CloudFoundryServer cloudServer, IModuleResource[] moduleResources) throws CoreException {
 		// No need for application archive, as the CF plugin framework generates
 		// .war files for Java Web applications.
 		return null;

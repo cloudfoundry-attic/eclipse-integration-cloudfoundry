@@ -94,6 +94,8 @@ public interface IApplicationDelegate {
 	 * to be used and the framework .war file generation should be used instead.
 	 * 
 	 * @param module for the application that needs to be published.
+	 * @param cloudServer server where application should be deployed (or where
+	 * it is currently deployed, and app resources need to be updated).
 	 * @param moduleResources corresponding module resources for the module that
 	 * needs to be published. These module resources are typically used to
 	 * generated the archive
@@ -103,8 +105,8 @@ public interface IApplicationDelegate {
 	 * @throws CoreException if the application delegate provides an application
 	 * archive but it failed to create one.
 	 */
-	public ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule module, IModuleResource[] moduleResources)
-			throws CoreException;
+	public ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule module,
+			CloudFoundryServer cloudServer, IModuleResource[] moduleResources) throws CoreException;
 
 	/**
 	 * {@link IStatus#OK} If the deployment information is valid. Otherwise

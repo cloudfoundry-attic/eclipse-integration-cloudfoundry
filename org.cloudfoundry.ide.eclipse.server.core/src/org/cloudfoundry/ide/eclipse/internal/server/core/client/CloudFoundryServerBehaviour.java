@@ -1976,7 +1976,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					internalUpdateApplicationInstanceStats(appModule, monitor);
 				}
 				catch (CoreException e) {
-				// Don't let errors in app instance stats stop the completion of the ApplicationOperation
+					// Don't let errors in app instance stats stop the
+					// completion of the ApplicationOperation
 					CloudFoundryPlugin.logError(e);
 				}
 
@@ -2344,7 +2345,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			IModuleResource[] resources = getResources(modules);
 
 			try {
-				archive = delegate.getApplicationArchive(cloudModule, resources);
+				archive = delegate.getApplicationArchive(cloudModule, getCloudFoundryServer(), resources);
 			}
 			catch (CoreException e) {
 				// Log the error, but continue anyway to

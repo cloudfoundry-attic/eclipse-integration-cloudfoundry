@@ -174,20 +174,28 @@ public class ManifestParser {
 	public boolean canWriteToManifest() {
 		return CloudUtil.getProject(appModule) != null;
 	}
-	
-//	public <T> T getApplicationProperty(String propertyName) {
-//		try {
-//			Map<?, ?> map = getFirstApplication();
-//			if (map != null) {
-//				return getStringValue(map, propertyName);
-//			}
-//		}
-//		catch (CoreException e) {
-//			CloudFoundryPlugin.logError(e);
-//		}
-//		
-//		
-//	}
+
+	/**
+	 * 
+	 * @param applicationName name of application to lookup in the manifest
+	 * file.
+	 * @param propertyName String value property to retrieve from manifest for
+	 * given application entry.
+	 * @return Value of property, or null if not found, or entry for application
+	 * in manifest does not exist.
+	 */
+	public String getApplicationProperty(String applicationName, String propertyName) {
+		try {
+			Map<?, ?> map = getApplication(applicationName);
+			if (map != null) {
+				return getStringValue(map, propertyName);
+			}
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		return null;
+	}
 
 	/**
 	 * 
@@ -227,7 +235,7 @@ public class ManifestParser {
 		return null;
 	}
 
-	protected Map<?, ?> getFirstApplication() throws CoreException {
+	protected Map<?, ?> getApplication(String applicationName) throws CoreException {
 		Map<Object, Object> results = parseManifestFromFile();
 
 		if (results == null) {
@@ -248,27 +256,40 @@ public class ManifestParser {
 		if (applicationsList.isEmpty()) {
 			return null;
 		}
-		if (applicationsList.size() > 1) {
-			File file = getFile();
-			String fileName = null;
-			if (file != null) {
-				fileName = file.getAbsolutePath();
+
+		Map<?, ?> application = null;
+		String errorMessage = null;
+		// If no application name specified, get the first one.
+		if (applicationName == null) {
+			Object mapObj = applicationsList.get(0);
+			application = (mapObj instanceof Map<?, ?>) ? (Map<?, ?>) mapObj : null;
+			if (application == null) {
+				errorMessage = "Expected a map of application properties in: "
+						+ relativePath
+						+ ". Unable to continue parsing manifest values. No manifest values will be loaded into the application deployment info.";
+
 			}
-			CloudFoundryPlugin.logWarning("Two or more application definitions found in manifest file "
-					+ (fileName != null ? fileName : "") + " - only the first one will be used for deployment of "
-					+ appModule.getDeployedApplicationName());
+		}
+		else {
+			for (Object mapObj : applicationsList) {
+				if (mapObj instanceof Map<?, ?>) {
+					application = (Map<?, ?>) mapObj;
+					String appName = getStringValue(application, NAME_PROP);
+					if (applicationName.equals(appName)) {
+						break;
+					}
+					else {
+						application = null;
+					}
+				}
+			}
 		}
 
-		Object mapObj = applicationsList.get(0);
-
-		if (!(mapObj instanceof Map<?, ?>)) {
-			throw CloudErrorUtil
-					.toCoreException("Expected a map of application properties in: "
-							+ relativePath
-							+ ". Unable to continue parsing manifest values. No manifest values will be loaded into the application deployment info.");
+		if (errorMessage != null) {
+			throw CloudErrorUtil.toCoreException(errorMessage);
 		}
 
-		return (Map<?, ?>) mapObj;
+		return application;
 	}
 
 	/**
@@ -284,8 +305,8 @@ public class ManifestParser {
 
 		DeploymentInfoWorkingCopy workingCopy = appModule.getDeploymentInfoWorkingCopy();
 
-		Map<?, ?> application = getFirstApplication();
-		
+		Map<?, ?> application = getApplication(null);
+
 		if (application == null) {
 			return null;
 		}
