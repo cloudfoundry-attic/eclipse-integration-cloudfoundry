@@ -78,7 +78,7 @@ public class StandaloneApplicationDelegate extends
 		if (archiveURL == null) {
 			archiveURL = new ManifestParser(module, cloudServer)
 					.getApplicationProperty(
-							module.getDeployedApplicationName(),
+							null,
 							ManifestParser.RELATIVE_APP_PATH);
 		}
 		
