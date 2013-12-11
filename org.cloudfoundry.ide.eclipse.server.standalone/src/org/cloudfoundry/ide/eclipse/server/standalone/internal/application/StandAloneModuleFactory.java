@@ -18,15 +18,15 @@ import org.eclipse.wst.server.core.model.ModuleDelegate;
 import org.eclipse.wst.server.core.util.ProjectModuleFactoryDelegate;
 
 /**
- * Required factory to support Java standalone applications in the Eclipse
- * WST-based Cloud Foundry server.
+ * Required factory to support Java applications in the Eclipse
+ * WST-based Cloud Foundry server, including Spring boot applications.
  * 
  */
 public class StandAloneModuleFactory extends ProjectModuleFactoryDelegate {
 
 	@Override
 	public ModuleDelegate getModuleDelegate(IModule module) {
-		return new StandaloneModuleDelegate(module.getProject());
+		return new JavaLauncherModuleDelegate(module.getProject());
 	}
 
 	/*

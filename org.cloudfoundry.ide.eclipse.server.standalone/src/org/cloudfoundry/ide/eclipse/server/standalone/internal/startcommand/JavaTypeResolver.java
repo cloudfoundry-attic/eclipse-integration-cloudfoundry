@@ -28,11 +28,11 @@ import org.eclipse.jdt.internal.debug.ui.launcher.MainMethodSearchEngine;
  * Helper methods for UI components that require Java type searching, given a
  * valid java project.
  */
-public class JavaUIHelper {
+public class JavaTypeResolver {
 
 	private final IJavaProject project;
 
-	public JavaUIHelper(IJavaProject project) {
+	public JavaTypeResolver(IJavaProject project) {
 		this.project = project;
 	}
 
@@ -40,7 +40,7 @@ public class JavaUIHelper {
 		return project;
 	}
 
-	public IType[] getMainMethodTypes(IProgressMonitor monitor) {
+	public IType[] getMainTypes(IProgressMonitor monitor) {
 		IJavaProject javaProject = getJavaProject();
 
 		if (javaProject != null) {
@@ -57,10 +57,10 @@ public class JavaUIHelper {
 
 	}
 
-	public IType getMainMethodTypeFromSource(IProgressMonitor monitor) {
+	public IType getMainTypesFromSource(IProgressMonitor monitor) {
 		if (project != null) {
 			IType firstEncounteredSourceType = null ;
-			IType[] types = getMainMethodTypes(monitor);
+			IType[] types = getMainTypes(monitor);
 					// Enable when dependency to org.springsource.ide.eclipse.commons.core is
 					// added. This should be the common way to obtain main types
 //					MainTypeFinder.guessMainTypes(project, monitor);

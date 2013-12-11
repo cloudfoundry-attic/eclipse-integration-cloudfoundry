@@ -26,6 +26,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeplo
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IClasspathContainer;
@@ -170,10 +171,12 @@ public class JavaWebApplicationDelegate extends ApplicationDelegate {
 	 * #getApplicationArchive(org.cloudfoundry.ide.eclipse.internal
 	 * .server.core.client.CloudFoundryApplicationModule,
 	 * org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer,
-	 * org.eclipse.wst.server.core.model.IModuleResource[])
+	 * org.eclipse.wst.server.core.model.IModuleResource[],
+	 * org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule module,
-			CloudFoundryServer cloudServer, IModuleResource[] moduleResources) throws CoreException {
+			CloudFoundryServer cloudServer, IModuleResource[] moduleResources, IProgressMonitor monitor)
+			throws CoreException {
 		// No need for application archive, as the CF plugin framework generates
 		// .war files for Java Web applications.
 		return null;

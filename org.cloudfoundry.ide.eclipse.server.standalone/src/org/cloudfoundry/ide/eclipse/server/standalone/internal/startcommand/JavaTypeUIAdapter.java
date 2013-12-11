@@ -96,7 +96,7 @@ public class JavaTypeUIAdapter {
 		}
 		processor = createContentAssistProcessor();
 		ControlContentAssistHelper.createTextContentAssistant(text, processor);
-		final JavaUIHelper helper = new JavaUIHelper(javaProject);
+		final JavaTypeResolver helper = new JavaTypeResolver(javaProject);
 		final IPackageFragment defaultPackageFragment = helper
 				.getDefaultPackageFragment();
 
@@ -115,7 +115,7 @@ public class JavaTypeUIAdapter {
 
 			public IStatus runInUIThread(IProgressMonitor monitor) {
 
-				IType type = helper.getMainMethodTypeFromSource(monitor);
+				IType type = helper.getMainTypesFromSource(monitor);
 				String qualifiedTypeName = type != null ? type
 						.getFullyQualifiedName() : null;
 				Text text = javaStartCommandPart.getTypeText();

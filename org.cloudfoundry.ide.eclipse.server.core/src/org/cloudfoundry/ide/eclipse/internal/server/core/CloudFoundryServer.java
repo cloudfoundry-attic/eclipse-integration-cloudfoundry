@@ -467,6 +467,7 @@ public class CloudFoundryServer extends ServerDelegate {
 									.getLog()
 									.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
 											"Failed to deploy module", e));
+							doDeleteModules(pending);
 						}
 						return Status.OK_STATUS;
 					}

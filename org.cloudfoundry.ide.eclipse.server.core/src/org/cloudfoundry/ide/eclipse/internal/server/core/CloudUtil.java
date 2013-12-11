@@ -404,17 +404,4 @@ public class CloudUtil {
 		}
 	}
 
-	/**
-	 * Given an cloud module, attempt to find a corresponding workspace project
-	 * that is accessible.
-	 * @param appModule
-	 * @return Accessible project related to the application module, or null if
-	 * not accessible or does not exist.
-	 */
-	public static IProject getProject(CloudFoundryApplicationModule appModule) {
-		IProject project = appModule.getLocalModule() != null ? appModule.getLocalModule().getProject() : null;
-
-		return project != null && project.isAccessible() ? project : null;
-	}
-
 }

@@ -31,8 +31,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
@@ -144,7 +144,7 @@ public class ManifestParser {
 	 * null if the project does not exists or is not accessible.
 	 */
 	protected File getFile() {
-		IProject project = CloudUtil.getProject(appModule);
+		IProject project = CloudFoundryProjectUtil.getProject(appModule);
 		if (project == null) {
 			return null;
 		}
@@ -172,7 +172,7 @@ public class ManifestParser {
 	 * a manifest file can be written too. False otherwise.
 	 */
 	public boolean canWriteToManifest() {
-		return CloudUtil.getProject(appModule) != null;
+		return CloudFoundryProjectUtil.getProject(appModule) != null;
 	}
 
 	/**
@@ -739,7 +739,7 @@ public class ManifestParser {
 			outStream.write(manifestValue.getBytes());
 			outStream.flush();
 			// Refresh the associated project
-			IProject project = CloudUtil.getProject(appModule);
+			IProject project = CloudFoundryProjectUtil.getProject(appModule);
 			if (project != null) {
 				project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 			}

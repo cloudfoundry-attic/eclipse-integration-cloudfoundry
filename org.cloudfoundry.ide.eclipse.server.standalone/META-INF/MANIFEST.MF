@@ -21,3 +21,5 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.jface.text
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ClassPath: .,
+ lib/spring-boot-loader-tools-0.5.0.BUILD-SNAPSHOT.jar

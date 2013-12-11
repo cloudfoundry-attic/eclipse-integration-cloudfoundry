@@ -15,6 +15,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.IModuleResource;
@@ -106,7 +107,7 @@ public interface IApplicationDelegate {
 	 * archive but it failed to create one.
 	 */
 	public ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule module,
-			CloudFoundryServer cloudServer, IModuleResource[] moduleResources) throws CoreException;
+			CloudFoundryServer cloudServer, IModuleResource[] moduleResources, IProgressMonitor monitor) throws CoreException;
 
 	/**
 	 * {@link IStatus#OK} If the deployment information is valid. Otherwise

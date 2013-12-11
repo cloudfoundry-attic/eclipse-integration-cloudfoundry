@@ -259,9 +259,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					final CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
 					if (appModule == null) {
-						CloudFoundryPlugin
-								.logWarning("Attempting to delete module that has no corresponding cloud application module: "
-										+ module.getName());
 						continue;
 					}
 
@@ -2344,17 +2341,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		if (delegate != null && delegate.providesApplicationArchive(cloudModule.getLocalModule())) {
 			IModuleResource[] resources = getResources(modules);
 
-			try {
-				archive = delegate.getApplicationArchive(cloudModule, getCloudFoundryServer(), resources);
-			}
-			catch (CoreException e) {
-				// Log the error, but continue anyway to
-				// see
-				// if generating a .war file will work
-				// for
-				// this application type
-				CloudFoundryPlugin.log(e);
-			}
+			archive = getApplicationArchive(cloudModule, monitor, delegate, resources);
 		}
 
 		// If no application archive was provided,then attempt an incremental
@@ -2382,6 +2369,21 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 		return archive;
 
+	}
+
+	private ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule cloudModule,
+			IProgressMonitor monitor, IApplicationDelegate delegate, IModuleResource[] resources) throws CoreException {
+		SubMonitor subProgress = SubMonitor.convert(monitor);
+		subProgress.setTaskName("Creating application archive for: " + cloudModule.getDeployedApplicationName());
+
+		ApplicationArchive archive = null;
+		try {
+			archive = delegate.getApplicationArchive(cloudModule, getCloudFoundryServer(), resources, monitor);
+		}
+		finally {
+			subProgress.done();
+		}
+		return archive;
 	}
 
 	protected ApplicationArchive getIncrementalPublishArchive(final ApplicationDeploymentInfo deploymentInfo,

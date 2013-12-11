@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -54,6 +55,9 @@ public class CloudFoundryProjectUtil {
 	 * project is not defined or the project is not accessible
 	 */
 	public static IJavaProject getJavaProject(IProject project) {
+		if (project == null) {
+			return null;
+		}
 		if (project.isAccessible()) {
 			try {
 				if (project.hasNature(JavaCore.NATURE_ID)) {
@@ -65,6 +69,29 @@ public class CloudFoundryProjectUtil {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Given an cloud module, attempt to find a corresponding workspace project
+	 * that is accessible.
+	 * @param appModule
+	 * @return Accessible project related to the application module, or null if
+	 * not accessible or does not exist.
+	 */
+	public static IProject getProject(CloudFoundryApplicationModule appModule) {
+		IProject project = appModule.getLocalModule() != null ? appModule.getLocalModule().getProject() : null;
+
+		return project != null && project.isAccessible() ? project : null;
+	}
+
+	/**
+	 * 
+	 * @param appModule with a possible corresponding workspace Project
+	 * @return Java project, if it exists and is accessible in the workspace for
+	 * the given appModule, or null.
+	 */
+	public static IJavaProject getJavaProject(CloudFoundryApplicationModule appModule) {
+		return getJavaProject(getProject(appModule));
 	}
 
 }
