@@ -169,7 +169,6 @@ public class JavaCloudFoundryArchiver {
 		try {
 			bootRepackager.repackage(new Libraries() {
 
-				@Override
 				public void doWithLibraries(LibraryCallback callBack)
 						throws IOException {
 					for (IPackageFragmentRoot root : roots) {
