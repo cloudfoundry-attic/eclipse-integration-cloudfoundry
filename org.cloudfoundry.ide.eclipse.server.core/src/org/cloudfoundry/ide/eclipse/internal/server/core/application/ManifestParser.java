@@ -70,7 +70,7 @@ public class ManifestParser {
 
 	public static final String PLAN_PROP = "plan";
 
-	public static final String RELATIVE_APP_PATH = "path";
+	public static final String PATH_PROP = "path";
 
 	public static final String BUILDPACK_PROP = "buildpack";
 
@@ -334,7 +334,7 @@ public class ManifestParser {
 
 		readServices(workingCopy, application);
 
-		String archiveURL = getStringValue(application, RELATIVE_APP_PATH);
+		String archiveURL = getStringValue(application, PATH_PROP);
 		if (archiveURL != null) {
 			workingCopy.setArchive(archiveURL);
 		}
@@ -404,7 +404,15 @@ public class ManifestParser {
 			}
 
 			if (url == null) {
-				url = subdomain + '.' + domain;
+				if (domain != null) {
+					url = subdomain + '.' + domain;
+				}
+				else {
+					CloudFoundryPlugin
+							.logWarning("No domain found while parsing manifest for "
+									+ appName
+									+ " - No URL will be set for this application. Manual URL entry may be required when pushing the application to Cloud Foundry.");
+				}
 			}
 
 			if (url != null) {
@@ -665,7 +673,7 @@ public class ManifestParser {
 
 		String archiveURL = deploymentInfo.getArchive();
 		if (archiveURL != null) {
-			application.put(RELATIVE_APP_PATH, archiveURL);
+			application.put(PATH_PROP, archiveURL);
 		}
 
 		// Regardless if there are services or not, always clear list of

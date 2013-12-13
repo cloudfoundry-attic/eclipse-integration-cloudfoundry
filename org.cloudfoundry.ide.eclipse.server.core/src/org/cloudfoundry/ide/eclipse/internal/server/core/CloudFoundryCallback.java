@@ -13,11 +13,13 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEvent;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourListener;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 
 /**
@@ -91,7 +93,8 @@ public abstract class CloudFoundryCallback implements BehaviourListener {
 	public abstract void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
 
 	/**
-	 * Starts application instances console (log files shown in console), and shows the specified console in the Eclipse console.
+	 * Starts application instances console (log files shown in console), and
+	 * shows the specified console in the Eclipse console.
 	 * @param cloudServer
 	 * @param cloudModule
 	 * @param showIndex if -1 shows the first app instance
@@ -99,9 +102,9 @@ public abstract class CloudFoundryCallback implements BehaviourListener {
 	public abstract void startApplicationConsole(CloudFoundryServer cloudServer,
 			CloudFoundryApplicationModule cloudModule, int showIndex);
 
-	
 	/**
-	 * Stops all consoles for the given application for all application instances.
+	 * Stops all consoles for the given application for all application
+	 * instances.
 	 * @param cloudModule
 	 * @param cloudServer
 	 */
@@ -128,6 +131,10 @@ public abstract class CloudFoundryCallback implements BehaviourListener {
 
 	public boolean isAutoDeployEnabled() {
 		return true;
+	}
+
+	public void handleError(IStatus status, BehaviourEventType eventType) {
+
 	}
 
 }

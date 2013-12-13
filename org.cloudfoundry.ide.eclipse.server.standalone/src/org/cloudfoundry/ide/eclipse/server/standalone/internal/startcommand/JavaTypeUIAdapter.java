@@ -10,14 +10,21 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.startcommand;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
@@ -97,8 +104,7 @@ public class JavaTypeUIAdapter {
 		processor = createContentAssistProcessor();
 		ControlContentAssistHelper.createTextContentAssistant(text, processor);
 		final JavaTypeResolver helper = new JavaTypeResolver(javaProject);
-		final IPackageFragment defaultPackageFragment = helper
-				.getDefaultPackageFragment();
+		final IPackageFragment defaultPackageFragment = getDefaultPackageFragment(javaProject);
 
 		if (defaultPackageFragment != null) {
 			processor
@@ -174,6 +180,62 @@ public class JavaTypeUIAdapter {
 
 	protected JavaTypeCompletionProcessor createContentAssistProcessor() {
 		return new JavaTypeCompletionProcessor(false, false, true);
+	}
+	
+	public IPackageFragment getDefaultPackageFragment(IJavaProject javaProject) {
+
+		if (javaProject == null) {
+			return null;
+		}
+
+		List<IPackageFragmentRoot> packFragRoots = new ArrayList<IPackageFragmentRoot>();
+		try {
+
+			IClasspathEntry[] entries = javaProject.getRawClasspath();
+
+			for (IClasspathEntry entry : entries) {
+
+				if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+					IPackageFragmentRoot[] roots = javaProject.findPackageFragmentRoots(entry);
+					if (roots != null) {
+						for (IPackageFragmentRoot rt : roots) {
+							if (!packFragRoots.contains(rt)) {
+								packFragRoots.add(rt);
+							}
+						}
+					}
+				}
+			}
+
+		}
+		catch (JavaModelException e) {
+			CloudFoundryPlugin.log(e);
+		}
+
+		IPackageFragment fragment = null;
+		for (IPackageFragmentRoot root : packFragRoots) {
+			try {
+				IJavaElement[] members = root.getChildren();
+				if (members != null) {
+					for (IJavaElement element : members) {
+						if (element instanceof IPackageFragment) {
+							IPackageFragment frag = (IPackageFragment) element;
+							if (frag.isDefaultPackage()) {
+								fragment = frag;
+								break;
+							}
+						}
+					}
+				}
+				if (fragment != null) {
+					break;
+				}
+			}
+			catch (JavaModelException e) {
+				CloudFoundryPlugin.log(e);
+			}
+		}
+		return fragment;
 	}
 
 }

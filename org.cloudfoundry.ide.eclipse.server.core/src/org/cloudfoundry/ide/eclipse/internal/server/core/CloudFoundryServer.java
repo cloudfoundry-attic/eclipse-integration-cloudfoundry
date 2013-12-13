@@ -23,6 +23,7 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
@@ -277,7 +278,8 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	/**
-	 * Does not refresh the list of application modules. Returns the cached list, which may be empty.
+	 * Does not refresh the list of application modules. Returns the cached
+	 * list, which may be empty.
 	 * @return never null. May be empty
 	 */
 	public Collection<CloudFoundryApplicationModule> getExistingCloudModules() {
@@ -462,12 +464,11 @@ public class CloudFoundryServer extends ServerDelegate {
 							return Status.CANCEL_STATUS;
 						}
 						catch (CoreException e) {
-							CloudFoundryPlugin
-									.getDefault()
-									.getLog()
-									.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-											"Failed to deploy module", e));
 							doDeleteModules(pending);
+							IStatus errorStatus = CloudFoundryPlugin.getErrorStatus("Failed to deploy module - "
+									+ e.getMessage());
+							CloudFoundryPlugin.log(errorStatus);
+							CloudFoundryPlugin.getCallback().handleError(errorStatus, BehaviourEventType.APP_START);
 						}
 						return Status.OK_STATUS;
 					}

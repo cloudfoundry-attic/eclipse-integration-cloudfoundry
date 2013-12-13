@@ -11,8 +11,13 @@
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.zip.ZipFile;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
@@ -24,7 +29,9 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -34,6 +41,8 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.internal.ui.jarpackagerfat.FatJarRsrcUrlBuilder;
+import org.eclipse.jdt.ui.jarpackager.IJarBuilder;
 import org.eclipse.jdt.ui.jarpackager.IJarExportRunnable;
 import org.eclipse.jdt.ui.jarpackager.JarPackageData;
 import org.eclipse.wst.server.core.IModule;
@@ -57,6 +66,12 @@ public class JavaCloudFoundryArchiver {
 	private final CloudFoundryApplicationModule appModule;
 
 	private final CloudFoundryServer cloudServer;
+
+	private static final String META_FOLDER_NAME = "META-INF";
+
+	private static final String MANIFEST_FILE = "MANIFEST.MF";
+
+	private static final String NO_MANIFEST_ERROR = "No META-INF/MANIFEST.MF file found in source folders";
 
 	public JavaCloudFoundryArchiver(CloudFoundryApplicationModule appModule,
 			CloudFoundryServer cloudServer) {
@@ -82,13 +97,12 @@ public class JavaCloudFoundryArchiver {
 		// every refresh.
 		if (archivePath == null) {
 			archivePath = new ManifestParser(appModule, cloudServer)
-					.getApplicationProperty(null,
-							ManifestParser.RELATIVE_APP_PATH);
+					.getApplicationProperty(null, ManifestParser.PATH_PROP);
 		}
 
 		File packagedFile = null;
 		if (archivePath != null) {
-			// For now assume urls are project relative
+			// URLs should be project relative
 			IPath path = new Path(archivePath);
 			if (path.getFileExtension() != null) {
 				IProject project = CloudFoundryProjectUtil
@@ -101,7 +115,6 @@ public class JavaCloudFoundryArchiver {
 					}
 				}
 			}
-
 		}
 
 		if (packagedFile == null) {
@@ -120,40 +133,154 @@ public class JavaCloudFoundryArchiver {
 					.getPackageFragmentRoots(monitor);
 			IType mainType = rootResolver.getMainType();
 
-			// If it is spring boot, use spring boot repackager. Otherwise,
-			// package
-			// using Eclipse
-			if (isBootProject(javaProject)) {
-				// The package fragment roots should also list all the jars
+			JarPackageData jarPackageData = getJarPackageData(roots, mainType,
+					monitor);
 
-				packagedFile = packageApplication(roots, mainType, monitor);
+			boolean isBoot = isBootProject(javaProject);
 
-				if (packagedFile != null) {
-					bootRepackage(roots, packagedFile);
+			if (!isBoot) {
+				// If it is not a boot project, use a standard library jar
+				// builder
+				jarPackageData.setJarBuilder(getDefaultLibJarBuilder());
+
+				// Search for META-INF in source package fragment roots
+				IFile metaFile = getManifest(roots);
+
+				if (metaFile != null) {
+
+					jarPackageData.setManifestLocation(metaFile.getFullPath());
+					jarPackageData.setSaveManifest(false);
+					jarPackageData.setGenerateManifest(false);
+					// Check manifest accessibility through the jar package data
+					// API
+					// to verify the packaging won't fail
+					if (!jarPackageData.isManifestAccessible()) {
+						handleApplicationDeploymentFailure(NO_MANIFEST_ERROR);
+					}
+
+					InputStream inputStream = null;
+					try {
+
+						inputStream = new FileInputStream(metaFile
+								.getLocation().toFile());
+						Manifest manifest = new Manifest(inputStream);
+						Attributes att = manifest.getMainAttributes();
+						if (att.getValue("Main-Class") == null) {
+							handleApplicationDeploymentFailure("No Main Class found in manifest file");
+						}
+					} catch (FileNotFoundException e) {
+						// Dont terminate deployment, just log error
+						CloudFoundryPlugin.logError(e);
+					} catch (IOException e) {
+						// Dont terminate deployment, just log error
+						CloudFoundryPlugin.logError(e);
+					} finally {
+
+						if (inputStream != null) {
+							try {
+								inputStream.close();
+
+							} catch (IOException io) {
+								// Ignore
+							}
+						}
+					}
+
 				} else {
-					handleApplicationDeploymentFailure("Spring boot packaging failed. No packaged file was created");
+					handleApplicationDeploymentFailure(NO_MANIFEST_ERROR);
 				}
 
 			} else {
-				// FIXNS: Create an archive file based on the package fragment
-				// roots.
-				// This would be for any other Java application
+				// Otherwise use the default jar builder which does not handle
+				// exporting jar dependencies,
+				// as the boot repackage will repackage the jar dependencies
+				// separately.
+				// Also generated manifest for spring boot, although it will
+				// later be edited by the boot repackager to include a spring
+				// boot loader
+				jarPackageData.setGenerateManifest(true);
 			}
-		}
 
-		if (packagedFile != null && packagedFile.exists()) {
 			try {
-				return new ZipApplicationArchive(new ZipFile(packagedFile));
-			} catch (IOException ioe) {
-				throw CloudErrorUtil.toCoreException(ioe);
+				packagedFile = packageApplication(jarPackageData, monitor);
+			} catch (CoreException e) {
+				handleApplicationDeploymentFailure("Java application packaging failed - "
+						+ e.getMessage());
 			}
-		} else {
-			throw CloudErrorUtil
-					.toCoreException("Application is not a valid Java application - "
-							+ appModule.getDeployedApplicationName()
-							+ ". Unable to deploy application.");
+
+			if (packagedFile == null || !packagedFile.exists()) {
+				handleApplicationDeploymentFailure("Java application packaging failed. No packaged file was created");
+			}
+
+			if (isBoot) {
+				bootRepackage(roots, packagedFile);
+			}
 		}
 
+		// At this stage a packaged file should have been created or found
+		try {
+			return new ZipApplicationArchive(new ZipFile(packagedFile));
+		} catch (IOException ioe) {
+			handleApplicationDeploymentFailure("Error creating Cloud Foundry archive due to - "
+					+ ioe.getMessage());
+		}
+		return null;
+	}
+
+	protected IFolder getMetaFolder(IResource resource) throws CoreException {
+		if (!(resource instanceof IFolder)) {
+			return null;
+		}
+		IFolder folder = (IFolder) resource;
+		// META-INF can only be contained in a source folder at root level
+		// relative
+		// to that source folder, since it needs to appear in the packaged app
+		// at root level
+		// (source folders themselves do not appear in the jar structure, only
+		// their content).
+		IResource[] members = folder.members();
+		if (members != null) {
+			for (IResource mem : members) {
+				if (META_FOLDER_NAME.equals(mem.getName())
+						&& mem instanceof IFolder) {
+					return (IFolder) mem;
+				}
+			}
+		}
+		return null;
+	}
+
+	protected IFile getManifest(IPackageFragmentRoot[] roots)
+			throws CoreException {
+		for (IPackageFragmentRoot root : roots) {
+			if (!root.isArchive() && !root.isExternal()) {
+				IResource resource = root.getResource();
+
+				IFolder metaFolder = getMetaFolder(resource);
+				if (metaFolder != null) {
+					IResource[] members = metaFolder.members();
+					if (members != null) {
+						for (IResource mem : members) {
+							if (MANIFEST_FILE.equals(mem.getName()
+									.toUpperCase()) && mem instanceof IFile) {
+								return (IFile) mem;
+							}
+						}
+					}
+				}
+			}
+		}
+		return null;
+
+	}
+
+	protected IJarBuilder getDefaultLibJarBuilder() {
+		return new FatJarRsrcUrlBuilder() {
+
+			public void writeRsrcUrlClasses() throws IOException {
+				// Do not unpack and repackage the Eclipse jar loader
+			}
+		};
 	}
 
 	protected JavaPackageFragmentRootHandler getPackageFragmentRootHandler(
@@ -180,11 +307,8 @@ public class JavaCloudFoundryArchiver {
 							if (rootFile.exists()) {
 								callBack.library(rootFile, LibraryScope.COMPILE);
 							}
-
 						}
-
 					}
-
 				}
 			});
 		} catch (IOException e) {
@@ -193,9 +317,8 @@ public class JavaCloudFoundryArchiver {
 		}
 	}
 
-	protected File packageApplication(IPackageFragmentRoot[] roots,
+	protected JarPackageData getJarPackageData(IPackageFragmentRoot[] roots,
 			IType mainType, IProgressMonitor monitor) throws CoreException {
-
 		if (roots == null || roots.length == 0) {
 			handleApplicationDeploymentFailure("No package fragment roots found");
 		}
@@ -219,8 +342,10 @@ public class JavaCloudFoundryArchiver {
 
 		packageData.setJarLocation(location);
 
-		// Don't create a manifest. A repackager should set a manifest
-		packageData.setGenerateManifest(true);
+		// Don't create a manifest. A repackager should determine if a generated
+		// manifest is necessary
+		// or use a user-defined manifest.
+		packageData.setGenerateManifest(false);
 
 		// Since user manifest is not used, do not save to manifest (save to
 		// manifest saves to user defined manifest)
@@ -228,6 +353,11 @@ public class JavaCloudFoundryArchiver {
 
 		packageData.setManifestMainClass(mainType);
 		packageData.setElements(roots);
+		return packageData;
+	}
+
+	protected File packageApplication(JarPackageData packageData,
+			IProgressMonitor monitor) throws CoreException {
 
 		int progressWork = 10;
 		SubMonitor subProgress = SubMonitor.convert(monitor, progressWork);
@@ -235,7 +365,7 @@ public class JavaCloudFoundryArchiver {
 		IJarExportRunnable runnable = packageData.createJarExportRunnable(null);
 		try {
 			runnable.run(monitor);
-			File file = new File(location.toString());
+			File file = new File(packageData.getJarLocation().toString());
 			if (!file.exists()) {
 				handleApplicationDeploymentFailure();
 			} else {
@@ -243,9 +373,9 @@ public class JavaCloudFoundryArchiver {
 			}
 
 		} catch (InvocationTargetException e) {
-			CloudErrorUtil.toCoreException(e);
+			throw CloudErrorUtil.toCoreException(e);
 		} catch (InterruptedException ie) {
-			CloudErrorUtil.toCoreException(ie);
+			throw CloudErrorUtil.toCoreException(ie);
 		} finally {
 			subProgress.done();
 		}

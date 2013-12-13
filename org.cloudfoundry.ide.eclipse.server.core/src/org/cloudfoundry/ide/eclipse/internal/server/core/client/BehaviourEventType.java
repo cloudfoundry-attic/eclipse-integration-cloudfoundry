@@ -18,6 +18,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.client;
  * 
  */
 public enum BehaviourEventType {
+	
+	APP_START,
 
 	APP_STARTED,
 

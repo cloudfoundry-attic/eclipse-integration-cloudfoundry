@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContents;
@@ -25,10 +26,15 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryCrede
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.DeleteServicesWizard;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.progress.UIJob;
 
 /**
  * @author Christian Dupuis
@@ -165,6 +171,27 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			}
 
 		});
+	}
+	
+	@Override
+	public void handleError(final IStatus status, BehaviourEventType eventType) {
+ 
+		if (status != null && status.getSeverity() == IStatus.ERROR) {
+			
+			UIJob job = new UIJob("Cloud Foundry Error") {
+				  public  IStatus runInUIThread(IProgressMonitor monitor) {
+					  Shell shell = CloudUiUtil.getShell();
+					  if (shell != null) {
+						   new MessageDialog(shell, "Cloud Foundry Error", null, status.getMessage(), MessageDialog.ERROR, new String[] {
+								"OK" }, 0).open();
+					  }
+					  return Status.OK_STATUS;
+				  }
+			};
+			job.setSystem(true);
+			job.schedule();
+			
+		}
 	}
 
 }

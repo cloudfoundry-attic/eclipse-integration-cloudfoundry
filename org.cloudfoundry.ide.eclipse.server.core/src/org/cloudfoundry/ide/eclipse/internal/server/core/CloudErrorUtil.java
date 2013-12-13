@@ -172,7 +172,7 @@ public class CloudErrorUtil {
 			}
 		}
 		return new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-				"Communication with server failed: {0}", e.getMessage()), e));
+				"Error performing Cloud Foundry operation: {0}", e.getMessage()), e));
 	}
 
 	// check if error is 403 - take CoreException
