@@ -55,8 +55,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.SectionPart;
-import org.eclipse.ui.forms.events.ExpansionAdapter;
-import org.eclipse.ui.forms.events.ExpansionEvent;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.Section;
 import org.eclipse.ui.progress.UIJob;
@@ -128,16 +126,11 @@ public class ApplicationMasterPart extends SectionPart {
 		if (provideServices) {
 			List<CloudService> services = editorPage.getServices();
 			servicesViewer.setInput((services != null) ? services.toArray() : null);
-			if (servicesSection != null && !userExpanded) {
-				servicesSection.setExpanded((services == null ? 0 : services.size()) > 0);
-				GridDataFactory.fillDefaults().grab(true, servicesSection.isExpanded())
-						.hint(SWT.DEFAULT, servicesSection.isExpanded() ? SWT.DEFAULT : 0).applyTo(servicesSection);
-				GridDataFactory.fillDefaults().grab(true, servicesSection.isExpanded())
-						.hint(SWT.DEFAULT, servicesSection.isExpanded() ? SWT.DEFAULT : 0)
-						.applyTo(servicesViewer.getControl());
-				servicesSection.getParent().layout();
+			if (servicesSection != null && !servicesSection.isExpanded()) {
+				// If collapsed, expand (e.g. section is collapsed and user adds
+				// a new service)
+				servicesSection.setExpanded(true);
 			}
-			// servicesViewer.refresh(true);
 		}
 	}
 
@@ -342,15 +335,17 @@ public class ApplicationMasterPart extends SectionPart {
 		servicesSection.setLayout(new GridLayout());
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(servicesSection);
 		servicesSection.setText("Services");
+		servicesSection.setExpanded(true);
 		servicesSection.setDescription("Drag a service to the right hand side to bind it to an application.");
-
-		servicesSection.addExpansionListener(new ExpansionAdapter() {
-
-			@Override
-			public void expansionStateChanged(ExpansionEvent e) {
-				userExpanded = true;
-			}
-		});
+		// NOTE:Comment out as keeping section collapsed by default causes zero
+		// height tables if no services are provided
+		// servicesSection.addExpansionListener(new ExpansionAdapter() {
+		//
+		// @Override
+		// public void expansionStateChanged(ExpansionEvent e) {
+		// userExpanded = true;
+		// }
+		// });
 
 		Composite client = toolkit.createComposite(servicesSection);
 		client.setLayout(new GridLayout());
@@ -460,7 +455,6 @@ public class ApplicationMasterPart extends SectionPart {
 
 		getManagedForm().getToolkit().paintBordersFor(client);
 
-		userExpanded = false;
 	}
 
 	private void fillServicesContextMenu(IMenuManager manager) {
