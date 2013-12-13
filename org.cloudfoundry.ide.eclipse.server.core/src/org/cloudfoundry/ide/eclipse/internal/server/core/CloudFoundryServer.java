@@ -464,7 +464,8 @@ public class CloudFoundryServer extends ServerDelegate {
 							return Status.CANCEL_STATUS;
 						}
 						catch (CoreException e) {
-							doDeleteModules(pending);
+							// Do not automatically delete apps on errors, even if critical errors
+							// as there may be features that may allow an app to be redeployed without drag/drop (i.e. clicking "Start").
 							IStatus errorStatus = CloudFoundryPlugin.getErrorStatus("Failed to deploy module - "
 									+ e.getMessage());
 							CloudFoundryPlugin.log(errorStatus);
