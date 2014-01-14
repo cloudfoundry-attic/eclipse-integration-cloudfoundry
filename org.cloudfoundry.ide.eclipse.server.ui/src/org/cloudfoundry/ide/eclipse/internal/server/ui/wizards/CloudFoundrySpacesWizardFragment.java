@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,8 +12,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudSpacesSelectionPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServerWizardValidator;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServerWizardValidator.ValidationStatus;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator.ValidationStatus;
 import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -47,7 +47,7 @@ public class CloudFoundrySpacesWizardFragment extends WizardFragment {
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		listener = new WizardFragmentChangeListener(wizardHandle);
-		spacesPart = new CloudSpacesSelectionPart(validator.getSpaceHandler(), listener, cloudServer, wizardHandle);
+		spacesPart = new CloudSpacesSelectionPart(validator.getSpaceDelegate(), listener, cloudServer, wizardHandle);
 		spacesPart.createPart(composite);
 		return composite;
 	}

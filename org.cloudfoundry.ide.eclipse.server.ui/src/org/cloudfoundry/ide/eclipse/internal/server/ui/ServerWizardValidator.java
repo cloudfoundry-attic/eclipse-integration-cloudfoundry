@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 GoPivotal, Inc.
+ * Copyright (c) 2013, 2014 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,13 +8,12 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
+package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsValidationStatics;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.operation.IRunnableContext;
@@ -29,41 +28,37 @@ public class ServerWizardValidator implements ServerValidator {
 
 	private final CloudFoundryServer cfServer;
 
-	private final CloudSpaceHandler handler;
+	private final CloudServerSpaceDelegate cloudServerSpaceDelegate;
 
 	private ValidationStatus previousStatus;
 
-	public ServerWizardValidator(CloudFoundryServer cloudServer, CloudSpaceHandler spaceHandler) {
+	public ServerWizardValidator(CloudFoundryServer cloudServer, CloudServerSpaceDelegate cloudServerSpaceDelegate) {
 		this.cfServer = cloudServer;
-		this.handler = spaceHandler;
+		this.cloudServerSpaceDelegate = cloudServerSpaceDelegate;
 	}
 
-	public CloudSpaceHandler getSpaceHandler() {
-		return handler;
+	public CloudServerSpaceDelegate getSpaceDelegate() {
+		return cloudServerSpaceDelegate;
 	}
 
 	/**
-	 * True if username and password were set in the previous validation.
-	 * However, it does not imply that the credentials were also validated
-	 * against the server, merely that they were present when a validation
-	 * request was made before.
+	 * True if username and password were filled without errors in the last validation.
 	 * 
 	 */
 	public synchronized boolean areCredentialsFilled() {
 
 		return previousStatus != null
+				&& previousStatus.getStatus().getSeverity() != IStatus.ERROR
 				&& (previousStatus.getValidationType() == ServerCredentialsValidationStatics.EVENT_SPACE_VALID || previousStatus
-						.getValidationType() == ServerCredentialsValidationStatics.EVENT_INVALID_SPACE_FILLED_CREDENTIALS);
+						.getValidationType() == ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED);
 
 	}
 
 	/**
-	 * True if the previous status was valid. False if a new validation is
-	 * required or previous status was not valid.
+	 * Validation from the last validation run.
 	 */
 	public synchronized ValidationStatus getPreviousValidationStatus() {
 		return previousStatus;
-
 	}
 
 	/**
@@ -101,12 +96,12 @@ public class ServerWizardValidator implements ServerValidator {
 			// First check if a space is already selected, and credentials
 			// haven't changed, meaning new credentials validation and space
 			// look up is not necessary
-			if (!handler.matchesCurrentDescriptor(url, userName, password)) {
-				handler.clearSetDescriptor();
+			if (!cloudServerSpaceDelegate.matchesCurrentDescriptor(url, userName, password)) {
+				cloudServerSpaceDelegate.clearSetDescriptor();
 				message = "Press 'Validate Account', 'Next' or 'Finish' to validate credentials.";
-				validationType = ServerCredentialsValidationStatics.EVENT_INVALID_SPACE_FILLED_CREDENTIALS;
+				validationType = ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED;
 			}
-			else if (handler.hasSetSpace()) {
+			else if (cloudServerSpaceDelegate.hasSetSpace()) {
 				validationType = ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
 				// No need to validate as credentials haven't changed and space
 				// is the same
@@ -121,17 +116,17 @@ public class ServerWizardValidator implements ServerValidator {
 				if (errorMsg == null) {
 
 					try {
-						CloudSpacesDescriptor descriptor = handler.getUpdatedDescriptor(url, userName, password,
+						CloudSpacesDescriptor descriptor = cloudServerSpaceDelegate.getUpdatedDescriptor(url, userName, password,
 								runnableContext);
 						if (descriptor == null) {
 							errorMsg = "Failed to resolve organizations and spaces for the given credentials. Please contact Cloud Foundry support.";
 						}
-						else if (handler.hasSetSpace()) {
+						else if (cloudServerSpaceDelegate.hasSetSpace()) {
 							validationType = ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
 						}
 						else {
 							message = "No Cloud space selected. Please select a valid Cloud space";
-							validationType = ServerCredentialsValidationStatics.EVENT_INVALID_SPACE_FILLED_CREDENTIALS;
+							validationType = ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED;
 						}
 					}
 					catch (CoreException e) {
@@ -181,11 +176,11 @@ public class ServerWizardValidator implements ServerValidator {
 			message = "Enter a password.";
 		}
 		else if (url == null || url.trim().length() == 0) {
-			message = NLS.bind("Select a {0} URL.", handler.serverServiceName);
+			message = NLS.bind("Select a {0} URL.", cloudServerSpaceDelegate.serverServiceName);
 		}
 		else {
 			valuesFilled = true;
-			message = NLS.bind(ServerCredentialsValidationStatics.DEFAULT_DESCRIPTION, handler.serverServiceName);
+			message = NLS.bind(ServerCredentialsValidationStatics.DEFAULT_DESCRIPTION, cloudServerSpaceDelegate.serverServiceName);
 		}
 
 		int statusType = valuesFilled ? IStatus.OK : IStatus.ERROR;

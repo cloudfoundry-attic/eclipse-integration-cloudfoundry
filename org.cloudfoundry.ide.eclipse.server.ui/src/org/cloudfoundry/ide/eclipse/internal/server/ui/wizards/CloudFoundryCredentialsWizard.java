@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,7 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceHandler;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpaceDelegate;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
@@ -75,9 +75,9 @@ public class CloudFoundryCredentialsWizard extends Wizard {
 		if (page == credentialsPage) {
 			// Only create the page if there is a cloud space descriptor set
 			// that has a list of orgs and spaces to choose from
-			CloudSpaceHandler handler = credentialsPage.getSpaceChangeHandler();
-			if (handler != null && handler.getCurrentSpacesDescriptor() != null) {
-				cloudSpacePage = new CloudFoundryCloudSpaceWizardpage(server, handler);
+			CloudServerSpaceDelegate cloudServerSpaceDelegate = credentialsPage.getServerSpaceDelegate();
+			if (cloudServerSpaceDelegate != null && cloudServerSpaceDelegate.getCurrentSpacesDescriptor() != null) {
+				cloudSpacePage = new CloudFoundryCloudSpaceWizardpage(server, cloudServerSpaceDelegate);
 				cloudSpacePage.setWizard(this);
 				return cloudSpacePage;
 			}

@@ -13,13 +13,13 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpaceDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudSpacesSelectionPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerHandlerCallback;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -68,7 +68,7 @@ public class OrgsAndSpacesWizard extends Wizard {
 
 		// Only create a new space, if it doesnt match the existing space
 		if (selectedSpace != null
-				&& !CloudSpaceHandler.matchesExisting(selectedSpace, cloudServer.getCloudFoundrySpace())) {
+				&& !CloudServerSpaceDelegate.matchesExisting(selectedSpace, cloudServer.getCloudFoundrySpace())) {
 
 			String serverName = cloudSpacePage.getServerName();
 			final ServerDescriptor descriptor = ServerDescriptor.getServerDescriptor(cloudServer, serverName);
@@ -126,7 +126,7 @@ public class OrgsAndSpacesWizard extends Wizard {
 		CloneSpacePage(CloudFoundryServer server) {
 			super(server, null);
 
-			spaceChangeHandler = new CloudSpaceHandler(cloudServer) {
+			cloudServerSpaceDelegate = new CloudServerSpaceDelegate(cloudServer) {
 
 				@Override
 				public void setSelectedSpace(CloudSpace selectedCloudSpace) {
@@ -180,7 +180,7 @@ public class OrgsAndSpacesWizard extends Wizard {
 				}
 			});
 			WizardChangeListener listener = new WizardPageChangeListener(this);
-			spacesPart = new CloudSpacesSelectionPart(spaceChangeHandler, listener, cloudServer,
+			spacesPart = new CloudSpacesSelectionPart(cloudServerSpaceDelegate, listener, cloudServer,
 					this);
 			spacesPart.createPart(mainComposite);
 
@@ -226,7 +226,7 @@ public class OrgsAndSpacesWizard extends Wizard {
 					public IStatus runInUIThread(IProgressMonitor monitor) {
 						updateSpacesDescriptor();
 						refreshListOfSpaces();
-						CloudSpace defaultSpace = spaceChangeHandler.getCurrentSpacesDescriptor() != null ? spaceChangeHandler
+						CloudSpace defaultSpace = cloudServerSpaceDelegate.getCurrentSpacesDescriptor() != null ? cloudServerSpaceDelegate
 								.getCurrentSpacesDescriptor().getOrgsAndSpaces().getDefaultCloudSpace()
 								: null;
 
@@ -253,12 +253,12 @@ public class OrgsAndSpacesWizard extends Wizard {
 		}
 
 		protected IStatus updateSpacesDescriptor() {
-			if (spaceChangeHandler != null) {
+			if (cloudServerSpaceDelegate != null) {
 				String url = cloudServer.getUrl();
 				String userName = cloudServer.getUsername();
 				String password = cloudServer.getPassword();
 				try {
-					spaceChangeHandler.getUpdatedDescriptor(url, userName, password, getWizard().getContainer());
+					cloudServerSpaceDelegate.getUpdatedDescriptor(url, userName, password, getWizard().getContainer());
 					return Status.OK_STATUS;
 				}
 				catch (CoreException e) {

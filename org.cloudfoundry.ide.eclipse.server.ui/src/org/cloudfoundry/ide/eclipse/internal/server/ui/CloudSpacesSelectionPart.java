@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,7 +19,6 @@ import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceHandler;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -47,11 +46,11 @@ public class CloudSpacesSelectionPart extends UIPart {
 
 	private TreeViewer orgsSpacesViewer;
 
-	private CloudSpaceHandler spaceChangeHandler;
+	private CloudServerSpaceDelegate cloudSpaceServerDelegate;
 
-	public CloudSpacesSelectionPart(CloudSpaceHandler spaceChangeHandler, IPartChangeListener listener,
+	public CloudSpacesSelectionPart(CloudServerSpaceDelegate cloudSpaceServerDelegate, IPartChangeListener listener,
 			CloudFoundryServer cloudServer, WizardPage wizardPage) {
-		this.spaceChangeHandler = spaceChangeHandler;
+		this.cloudSpaceServerDelegate = cloudSpaceServerDelegate;
 
 		if (listener != null) {
 			addPartChangeListener(listener);
@@ -66,9 +65,9 @@ public class CloudSpacesSelectionPart extends UIPart {
 		}
 	}
 
-	public CloudSpacesSelectionPart(CloudSpaceHandler spaceChangeHandler, IPartChangeListener listener,
+	public CloudSpacesSelectionPart(CloudServerSpaceDelegate cloudSpaceServerDelegate, IPartChangeListener listener,
 			CloudFoundryServer cloudServer, IWizardHandle wizardHandle) {
-		this.spaceChangeHandler = spaceChangeHandler;
+		this.cloudSpaceServerDelegate = cloudSpaceServerDelegate;
 
 		if (listener != null) {
 			addPartChangeListener(listener);
@@ -119,8 +118,8 @@ public class CloudSpacesSelectionPart extends UIPart {
 	}
 
 	public void setInput() {
-		if (spaceChangeHandler != null && orgsSpacesViewer != null && !orgsSpacesViewer.getTree().isDisposed()) {
-			List<CloudOrganization> orgInput = spaceChangeHandler.getCurrentSpacesDescriptor() != null ? spaceChangeHandler
+		if (cloudSpaceServerDelegate != null && orgsSpacesViewer != null && !orgsSpacesViewer.getTree().isDisposed()) {
+			List<CloudOrganization> orgInput = cloudSpaceServerDelegate.getCurrentSpacesDescriptor() != null ? cloudSpaceServerDelegate
 					.getCurrentSpacesDescriptor().getOrgsAndSpaces().getOrgs()
 					: null;
 			if (orgInput == null) {
@@ -133,59 +132,67 @@ public class CloudSpacesSelectionPart extends UIPart {
 			// Expand all first, so that child elements can be selected
 			orgsSpacesViewer.setExpandedElements(organizationInput);
 
-			CloudSpace selectedSpace = spaceChangeHandler.getCurrentCloudSpace();
+			CloudSpace selectedSpace = cloudSpaceServerDelegate.getCurrentCloudSpace();
 			if (selectedSpace == null) {
 				// Attempt to select a default value
-				selectedSpace = spaceChangeHandler.getCurrentSpacesDescriptor() != null ? spaceChangeHandler
-						.getCurrentSpacesDescriptor().getOrgsAndSpaces().getDefaultCloudSpace() : null;
+				selectedSpace = cloudSpaceServerDelegate.getCurrentSpacesDescriptor() != null ? cloudSpaceServerDelegate
+						.getCurrentSpacesDescriptor().getOrgsAndSpaces().getDefaultCloudSpace()
+						: null;
 			}
 
 			if (selectedSpace != null) {
-
 				// First set the default cloud space as the selected space
 				setSpaceSelection(selectedSpace);
 
-				// Now set the cloud space in the tree
-				Tree tree = orgsSpacesViewer.getTree();
-				TreeItem[] orgItems = tree.getItems();
-				if (orgItems != null) {
-					TreeItem orgItem = null;
+				setSelectionInViewer(selectedSpace);
+			}
 
-					// Find the tree item corresponding to the cloud space's
-					// org
-					for (TreeItem item : orgItems) {
-						Object treeObj = item.getData();
-						if (treeObj instanceof CloudOrganization
-								&& ((CloudOrganization) treeObj).getName().equals(
-										selectedSpace.getOrganization().getName())) {
-							orgItem = item;
-							break;
-
-						}
-					}
-
-					if (orgItem != null) {
-						TreeItem[] children = orgItem.getItems();
-						if (children != null) {
-							for (TreeItem childItem : children) {
-								Object treeObj = childItem.getData();
-								if (treeObj instanceof CloudSpace
-										&& ((CloudSpace) treeObj).getName().equals(selectedSpace.getName())) {
-									tree.select(childItem);
-									break;
-								}
-							}
-						}
-					}
-				}
+			if (orgInput.isEmpty()) {
+				notifyStatusChange(CloudFoundryPlugin
+						.getErrorStatus("Failed to resolve list of organizations and spaces from the server. Please check your connection or credentials."));
 			}
 
 		}
 	}
 
+	protected void setSelectionInViewer(CloudSpace selectedSpace) {
+		// Now set the cloud space in the tree
+		Tree tree = orgsSpacesViewer.getTree();
+		TreeItem[] orgItems = tree.getItems();
+		if (orgItems != null) {
+			TreeItem orgItem = null;
+
+			// Find the tree item corresponding to the cloud space's
+			// org
+			for (TreeItem item : orgItems) {
+				Object treeObj = item.getData();
+				if (treeObj instanceof CloudOrganization
+						&& ((CloudOrganization) treeObj).getName().equals(selectedSpace.getOrganization().getName())) {
+					orgItem = item;
+					break;
+
+				}
+			}
+
+			if (orgItem != null) {
+				TreeItem[] children = orgItem.getItems();
+				if (children != null) {
+					for (TreeItem childItem : children) {
+						Object treeObj = childItem.getData();
+						if (treeObj instanceof CloudSpace
+								&& ((CloudSpace) treeObj).getName().equals(selectedSpace.getName())) {
+							tree.select(childItem);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	protected void setSpaceSelection(CloudSpace selectedSpace) {
-		if (spaceChangeHandler != null) {
-			spaceChangeHandler.setSelectedSpace(selectedSpace);
+		if (cloudSpaceServerDelegate != null) {
+			cloudSpaceServerDelegate.setSelectedSpace(selectedSpace);
 			String errorMessage = selectedSpace == null ? "Please select a space." : null;
 
 			IStatus status = errorMessage != null ? CloudFoundryPlugin.getErrorStatus(errorMessage) : Status.OK_STATUS;
@@ -240,8 +247,8 @@ public class CloudSpacesSelectionPart extends UIPart {
 		}
 
 		public Object[] getChildren(Object parentElement) {
-			if (parentElement instanceof CloudOrganization && spaceChangeHandler != null) {
-				CloudSpacesDescriptor spaceDescriptor = spaceChangeHandler.getCurrentSpacesDescriptor();
+			if (parentElement instanceof CloudOrganization && cloudSpaceServerDelegate != null) {
+				CloudSpacesDescriptor spaceDescriptor = cloudSpaceServerDelegate.getCurrentSpacesDescriptor();
 				if (spaceDescriptor != null) {
 					List<CloudSpace> spaces = spaceDescriptor.getOrgsAndSpaces().getOrgSpaces(
 							((CloudOrganization) parentElement).getName());

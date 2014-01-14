@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,9 +11,9 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpaceDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceHandler;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServerWizardValidator;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -32,7 +32,7 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 
 	private final CloudFoundryCredentialsPart credentialsPart;
 
-	private CloudSpaceHandler spaceHandler;
+	private CloudServerSpaceDelegate cloudServerSpaceDelegate;
 
 	private WizardChangeListener wizardUpdateHandler;
 
@@ -40,9 +40,9 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 
 	protected CloudFoundryCredentialsWizardPage(CloudFoundryServer server) {
 		super(server.getServer().getName() + " Credentials");
-		spaceHandler = new CloudSpaceHandler(server);
+		cloudServerSpaceDelegate = new CloudServerSpaceDelegate(server);
 		wizardUpdateHandler = new WizardPageChangeListener(this);
-		validator = new ServerWizardValidator(server, spaceHandler);
+		validator = new ServerWizardValidator(server, cloudServerSpaceDelegate);
 		credentialsPart = new CloudFoundryCredentialsPart(server, validator, wizardUpdateHandler, this);
 	}
 
@@ -56,8 +56,8 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 		return validator.validate(false, getContainer()).getStatus().isOK();
 	}
 
-	public CloudSpaceHandler getSpaceChangeHandler() {
-		return spaceHandler;
+	public CloudServerSpaceDelegate getServerSpaceDelegate() {
+		return cloudServerSpaceDelegate;
 	}
 
 	public boolean canFlipToNextPage() {

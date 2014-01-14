@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,8 +12,8 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpaceDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudSpacesSelectionPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceHandler;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
@@ -21,16 +21,16 @@ import org.eclipse.swt.widgets.Control;
 
 public class CloudFoundryCloudSpaceWizardpage extends WizardPage {
 
-	protected CloudSpaceHandler spaceChangeHandler;
+	protected CloudServerSpaceDelegate cloudServerSpaceDelegate;
 
 	protected final CloudFoundryServer cloudServer;
 
 	protected CloudSpacesSelectionPart spacesPart;
 
-	public CloudFoundryCloudSpaceWizardpage(CloudFoundryServer cloudServer, CloudSpaceHandler spaceChangeHandler) {
+	public CloudFoundryCloudSpaceWizardpage(CloudFoundryServer cloudServer, CloudServerSpaceDelegate cloudServerSpaceDelegate) {
 		super(cloudServer.getServer().getName() + " Organization and Spaces");
 		this.cloudServer = cloudServer;
-		this.spaceChangeHandler = spaceChangeHandler;
+		this.cloudServerSpaceDelegate = cloudServerSpaceDelegate;
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(cloudServer.getServer().getServerType().getId());
 		if (banner != null) {
 			setImageDescriptor(banner);
@@ -39,13 +39,13 @@ public class CloudFoundryCloudSpaceWizardpage extends WizardPage {
 
 	public void createControl(Composite parent) {
 
-		spacesPart = new CloudSpacesSelectionPart(spaceChangeHandler, new WizardPageChangeListener(this), cloudServer, this);
+		spacesPart = new CloudSpacesSelectionPart(cloudServerSpaceDelegate, new WizardPageChangeListener(this), cloudServer, this);
 		Control composite = spacesPart.createPart(parent);
 		setControl(composite);
 	}
 
 	public boolean isPageComplete() {
-		return spaceChangeHandler != null && spaceChangeHandler.hasSetSpace();
+		return cloudServerSpaceDelegate != null && cloudServerSpaceDelegate.hasSetSpace();
 	}
 
 	public void refreshListOfSpaces() {

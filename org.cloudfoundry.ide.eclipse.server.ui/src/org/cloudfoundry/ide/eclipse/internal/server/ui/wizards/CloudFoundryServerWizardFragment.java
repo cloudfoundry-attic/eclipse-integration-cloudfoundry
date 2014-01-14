@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,10 +17,10 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpaceDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator.ValidationStatus;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudSpaceHandler;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServerWizardValidator;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServerWizardValidator.ValidationStatus;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -64,7 +64,7 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-		validator = new ServerWizardValidator(cloudServer, new CloudSpaceHandler(cloudServer));
+		validator = new ServerWizardValidator(cloudServer, new CloudServerSpaceDelegate(cloudServer));
 
 		spacesFragment = new CloudFoundrySpacesWizardFragment(cloudServer, validator);
 		wizardListener = new WizardFragmentChangeListener(wizardHandle);

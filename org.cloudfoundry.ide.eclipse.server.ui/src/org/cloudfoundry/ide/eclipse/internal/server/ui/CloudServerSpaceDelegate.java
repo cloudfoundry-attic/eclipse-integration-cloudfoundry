@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,7 +8,7 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
+package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +20,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudOrgsAndSpaces;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.osgi.util.NLS;
@@ -64,7 +63,7 @@ import org.eclipse.osgi.util.NLS;
  * 
  * 
  */
-public class CloudSpaceHandler {
+public class CloudServerSpaceDelegate {
 
 	private final CloudFoundryServer cloudServer;
 
@@ -78,7 +77,7 @@ public class CloudSpaceHandler {
 	 */
 	private Map<String, CloudSpacesDescriptor> cachedDescriptors = new HashMap<String, CloudSpacesDescriptor>();
 
-	public CloudSpaceHandler(CloudFoundryServer cloudServer) {
+	public CloudServerSpaceDelegate(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
 		String serverTypeId = cloudServer.getServer().getServerType().getId();
 		serverServiceName = CloudFoundryBrandingExtensionPoint.getServiceName(serverTypeId);

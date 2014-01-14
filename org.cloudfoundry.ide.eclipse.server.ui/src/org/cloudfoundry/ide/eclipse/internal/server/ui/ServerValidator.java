@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 GoPivotal, Inc.
+ * Copyright (c) 2013, 2014 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,9 +8,9 @@
  * Contributors:
  *     GoPivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
+package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServerWizardValidator.ValidationStatus;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator.ValidationStatus;
 import org.eclipse.jface.operation.IRunnableContext;
 
 public interface ServerValidator {

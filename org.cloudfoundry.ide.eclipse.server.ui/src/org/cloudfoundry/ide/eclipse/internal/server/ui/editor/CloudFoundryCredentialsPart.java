@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,8 +22,9 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryURLNavigation
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerValidator;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServerWizardValidator.ValidationStatus;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator.ValidationStatus;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.RegisterAccountWizard;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -296,7 +297,7 @@ public class CloudFoundryCredentialsPart extends UIPart {
 		String url = cfServer.getUrl();
 
 		PartChangeEvent validationEvent = validateAndGetEvent(validateAgainstServer);
-		boolean valuesFilled = validationEvent.getType() == ServerCredentialsValidationStatics.EVENT_INVALID_SPACE_FILLED_CREDENTIALS
+		boolean valuesFilled = validationEvent.getType() == ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED
 				|| validationEvent.getType() == ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
 
 		if (CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(url)) {
