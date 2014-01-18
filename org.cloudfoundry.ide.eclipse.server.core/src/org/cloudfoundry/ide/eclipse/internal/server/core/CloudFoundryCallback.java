@@ -1,20 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     GoPivotal, Inc. - initial API and implementation
+ *     Pivotal Software, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEventType;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourListener;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
@@ -29,63 +27,11 @@ import org.eclipse.core.runtime.OperationCanceledException;
  * @author Steffen Pingel
  * @author Terry Denney
  */
-public abstract class CloudFoundryCallback implements BehaviourListener {
+public abstract class CloudFoundryCallback {
 
-	// FIXNS: event-driven handler still in development as of CF 1.6.0
-	public <T> void handle(BehaviourEvent<T> event) {
-		if (event == null || event.getType() == null || event.getServer() == null) {
-			String message = null;
-			if (event == null) {
-				message = "Null event.";
-			}
-			else if (event.getType() == null) {
-				message = "No event type specified.";
-			}
-			else if (event.getServer() == null) {
-				message = "No server specified.";
-			}
-			CloudFoundryPlugin.logError("Unable to handle server behaviour event due to: " + message);
-			return;
-		}
-		CloudFoundryApplicationModule cloudModule = event.getApplicationModule();
-		CloudFoundryServer server = event.getServer();
-		T resultObj = event.getResult();
-		switch (event.getType()) {
-		case APP_PRE_START:
-			applicationAboutToStart(server, cloudModule);
-			break;
-		case APP_STARTING:
-			applicationStarting(server, cloudModule);
-
-			break;
-		case APP_STARTED:
-			applicationStarted(server, cloudModule);
-			break;
-		case APP_STOPPED:
-			stopApplicationConsole(cloudModule, server);
-			break;
-		case APP_DELETE:
-			deleteApplication(cloudModule, server);
-			break;
-
-		case DISCONNECT:
-			disconnecting(server);
-			break;
-		case PROMPT_CREDENTIALS:
-			getCredentials(server);
-			break;
-		case REFRESH_TUNNEL_CONNECTIONS:
-			if (resultObj instanceof List<?>) {
-				displayCaldecottTunnelConnections(server, (List<CaldecottTunnelDescriptor>) resultObj);
-			}
-			break;
-		case SERVICES_DELETED:
-			if (resultObj instanceof List<?>) {
-
-				deleteServices((List<String>) resultObj, server);
-			}
-			break;
-		}
+	public void printToConsole(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule, String message,
+			boolean clearConsole) {
+		// Optional
 	}
 
 	public abstract void applicationStarted(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
@@ -120,10 +66,6 @@ public abstract class CloudFoundryCallback implements BehaviourListener {
 
 	public abstract void prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			IProgressMonitor monitor) throws CoreException, OperationCanceledException;
-
-	public void applicationAboutToStart(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
-
-	}
 
 	public abstract void deleteServices(List<String> services, CloudFoundryServer cloudServer);
 

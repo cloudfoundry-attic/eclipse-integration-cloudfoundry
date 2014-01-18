@@ -1,26 +1,25 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     GoPivotal, Inc. - initial API and implementation
+ *     Pivotal Software, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.ui.console.IOConsoleOutputStream;
@@ -79,16 +78,16 @@ class CloudFoundryConsole extends JobChangeAdapter {
 
 	static final String CONSOLE_TYPE = "org.cloudfoundry.ide.eclipse.server.appcloud";
 
-	private final CloudApplication app;
+	private final CloudFoundryApplicationModule app;
 
-	private List<ConsoleStream> activeStreams = new ArrayList<CloudFoundryConsole.ConsoleStream>();
+	private List<ConsoleStreamJob> activeStreams = new ArrayList<CloudFoundryConsole.ConsoleStreamJob>();
 
 	/** How frequently to check for log changes; defaults to 5 seconds */
 	private long sampleInterval = 5000;
 
 	private final MessageConsole console;
 
-	public CloudFoundryConsole(CloudApplication app, MessageConsole console) {
+	public CloudFoundryConsole(CloudFoundryApplicationModule app, MessageConsole console) {
 		this.app = app;
 		this.console = console;
 	}
@@ -98,51 +97,30 @@ class CloudFoundryConsole extends JobChangeAdapter {
 	 * file listed in the console contents.
 	 * @param contents to stream to the console
 	 */
-	public synchronized void startTailing(ConsoleContents contents) {
+	public synchronized void startTailing(List<IConsoleContent> consoleContents) {
 
 		// Add any new streams to the list of active streams
-		if (contents != null) {
-			List<IConsoleContent> consoleContents = contents.getContents();
-			if (consoleContents != null) {
-				for (IConsoleContent content : consoleContents) {
-					IOConsoleOutputStream stream = console.newOutputStream();
-					if (stream != null) {
+		if (consoleContents != null) {
+			for (IConsoleContent content : consoleContents) {
+				IOConsoleOutputStream stream = console.newOutputStream();
+				if (stream != null) {
 
-						ICloudFoundryConsoleOutputStream outStream = content.getOutputStream(stream);
-						if (outStream != null) {
-							ConsoleStream consoleStream = new ConsoleStream(getConsoleName(app), outStream);
-							// consoleStream.addJobChangeListener(this);
-							consoleStream.tailing(true);
+					content.initialiseStream(stream);
 
-							activeStreams.add(consoleStream);
-							long initialWait = content instanceof FileConsoleContent ? ((FileConsoleContent) content)
-									.startingWait() : -1;
-							if (initialWait > 0) {
-								consoleStream.schedule(initialWait);
-							}
-							else {
-								consoleStream.schedule();
-							}
-						}
-						else {
-							try {
-								stream.close();
-							}
-							catch (IOException ioe) {
-								// Ignore;
-							}
-						}
-					}
+					ConsoleStreamJob consoleJob = new ConsoleStreamJob(getConsoleName(app), content);
+					consoleJob.tailing(true);
+
+					activeStreams.add(consoleJob);
+					consoleJob.schedule();
 				}
 			}
 		}
-
 	}
 
-	protected synchronized ConsoleStream remove(ConsoleStream toRemove) {
-		List<ConsoleStream> toKeep = new ArrayList<CloudFoundryConsole.ConsoleStream>();
-		ConsoleStream removed = null;
-		for (ConsoleStream stream : activeStreams) {
+	protected synchronized ConsoleStreamJob remove(ConsoleStreamJob toRemove) {
+		List<ConsoleStreamJob> toKeep = new ArrayList<CloudFoundryConsole.ConsoleStreamJob>();
+		ConsoleStreamJob removed = null;
+		for (ConsoleStreamJob stream : activeStreams) {
 			if (stream != toRemove) {
 				toKeep.add(stream);
 			}
@@ -150,6 +128,11 @@ class CloudFoundryConsole extends JobChangeAdapter {
 				removed = stream;
 			}
 		}
+
+		if (removed != null) {
+			removed.close();
+		}
+
 		activeStreams = toKeep;
 		return removed;
 	}
@@ -159,15 +142,17 @@ class CloudFoundryConsole extends JobChangeAdapter {
 	 */
 	public synchronized void stop() {
 
-		for (ConsoleStream outStream : activeStreams) {
+		for (ConsoleStreamJob outStream : activeStreams) {
 			outStream.close();
 		}
 
 		activeStreams.clear();
 	}
 
-	static String getConsoleName(CloudApplication app) {
-		String name = (app.getUris() != null && app.getUris().size() > 0) ? app.getUris().get(0) : app.getName();
+	static String getConsoleName(CloudFoundryApplicationModule app) {
+		CloudApplication cloudApp = app.getApplication();
+		String name = (cloudApp != null && cloudApp.getUris() != null && cloudApp.getUris().size() > 0) ? cloudApp
+				.getUris().get(0) : app.getDeployedApplicationName();
 		return name;
 	}
 
@@ -175,83 +160,53 @@ class CloudFoundryConsole extends JobChangeAdapter {
 		return console;
 	}
 
-	class ConsoleStream extends Job {
+	class ConsoleStreamJob extends Job {
 
-		private final ICloudFoundryConsoleOutputStream stream;
+		private final IConsoleContent content;
 
 		/** Is the tailer currently tailing? */
 
 		private boolean tailing = true;
 
-		private boolean close = false;
-
-		private final String name;
-
-		public ConsoleStream(String name, ICloudFoundryConsoleOutputStream stream) {
+		public ConsoleStreamJob(String name, IConsoleContent content) {
 			super(name);
-			this.stream = stream;
-			this.name = name;
+			this.content = content;
 			setSystem(true);
-
 		}
 
 		@Override
 		protected synchronized IStatus run(IProgressMonitor monitor) {
-			if (tailing && !close) {
-
-				boolean remove = stream.shouldCloseStream();
-				if (!remove) {
-					try {
-						stream.write(monitor);
-					}
-					catch (CoreException e) {
-						remove = true;
-						CloudFoundryPlugin.log(e);
-					}
-				}
-
-				if (remove) {
-					close();
-				}
-				else {
-					schedule(sampleInterval);
-				}
-
+			if (content.isClosed()) {
+				remove(this);
 			}
-			return Status.OK_STATUS;
-
-		}
-
-		public synchronized boolean close() {
-			if (!close) {
-				close = true;
-				tailing(false);
+			else if (tailing) {
 
 				try {
-					stream.close();
-				}
-				catch (IOException io) {
-					CloudFoundryPlugin.logWarning("I/O Exception attempting to close console stream: " + name);
-				}
+					content.write(monitor);
+					schedule(sampleInterval);
 
-				super.done(Status.OK_STATUS);
+				}
+				catch (CoreException e) {
+					CloudFoundryPlugin.logError("Streaming to console failed due to: " + e.getMessage(), e);
+					remove(this);
+				}
+				// Fetch next ordered content that should follow the current one
+				if (content instanceof FileConsoleContent) {
+					List<IConsoleContent> nextContent = ((FileConsoleContent) content).getNextContent();
+					if (nextContent != null) {
+						startTailing(nextContent);
+					}
+				}
 			}
+			return Status.OK_STATUS;
+		}
 
-			return close;
+		public synchronized void close() {
+			content.close();
 		}
 
 		public synchronized void tailing(boolean tailing) {
 			this.tailing = tailing;
-		}
-	}
-
-	@Override
-	public synchronized void done(IJobChangeEvent event) {
-		Job job = event.getJob();
-
-		if (job instanceof ConsoleStream) {
-			ConsoleStream stream = (ConsoleStream) job;
-			remove(stream);
 		}
 	}
 

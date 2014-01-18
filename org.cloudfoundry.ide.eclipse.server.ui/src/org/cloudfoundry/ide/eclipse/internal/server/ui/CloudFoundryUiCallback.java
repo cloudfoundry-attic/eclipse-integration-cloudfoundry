@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     GoPivotal, Inc. - initial API and implementation
+ *     Pivotal Software, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
@@ -14,13 +14,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContents;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.console.PreApplicationStartConsoleContent;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.SingleMessageConsoleContent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryCredentialsWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.DeleteServicesWizard;
@@ -48,8 +49,11 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		startApplicationConsole(server, cloudModule, 0);
 	}
 
-	public void startApplicationConsole(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule, int showIndex) {
+	public void startApplicationConsole(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
+			int showIndex) {
 		if (cloudModule == null || cloudModule.getApplication() == null) {
+			CloudFoundryPlugin
+					.logError("No application content to display to the console while starting application in the Cloud Foundry server.");
 			return;
 		}
 		if (showIndex < 0) {
@@ -60,24 +64,18 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			// have been already sent to the console
 			// output
 			boolean shouldClearConsole = false;
-			ConsoleContents content = ConsoleContents.getStandardLogContent(cloudServer, cloudModule.getApplication(), i);
-			ConsoleManager.getInstance().startConsole(cloudServer, content, cloudModule.getApplication(), i, i == showIndex,
+			ConsoleContents content = ConsoleContents.getStandardLogContent(cloudServer, cloudModule.getApplication(),
+					i);
+			ConsoleManager.getInstance().startConsole(cloudServer, content, cloudModule, i, i == showIndex,
 					shouldClearConsole);
 		}
 	}
 
-	public void applicationAboutToStart(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
-		// Not necessary to show staging
-		// for instances that are not shown in the console, so just show the
-		// first instance.
-		if (cloudModule.getApplication().getInstances() > 0) {
+	public void printToConsole(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule, String message,
+			boolean clearConsole) {
 
-			boolean clearConsole = true;
-			PreApplicationStartConsoleContent content = new PreApplicationStartConsoleContent();
-			ConsoleManager.getInstance().startConsole(server, new ConsoleContents(content),
-					cloudModule.getApplication(), 0, true, clearConsole);
-
-		}
+		ConsoleManager.getInstance().startConsole(server,
+				new ConsoleContents(new SingleMessageConsoleContent(message)), cloudModule, 0, true, clearConsole);
 	}
 
 	@Override
@@ -86,17 +84,21 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		// Only show the starting info for the first instance that is shown.
 		// Not necessary to show staging
 		// for instances that are not shown in the console.
-		// FIXNS: Streaming of staging logs no longer works using CF client for CF 1.6.0. Disabling til future
-//		if (cloudModule.getStartingInfo() != null && cloudModule.getStartingInfo().getStagingFile() != null
-//				&& cloudModule.getApplication().getInstances() > 0) {
-//
-//			boolean clearConsole = false;
-//			StagingLogConsoleContent stagingContent = new StagingLogConsoleContent(cloudModule.getStartingInfo(),
-//					server);
-//			ConsoleManager.getInstance().startConsole(server, new ConsoleContents(stagingContent),
-//					cloudModule.getApplication(), 0, true, clearConsole);
-//
-//		}
+		// FIXNS: Streaming of staging logs no longer works using CF client for
+		// CF 1.6.0. Disabling til future
+		// if (cloudModule.getStartingInfo() != null &&
+		// cloudModule.getStartingInfo().getStagingFile() != null
+		// && cloudModule.getApplication().getInstances() > 0) {
+		//
+		// boolean clearConsole = false;
+		// StagingLogConsoleContent stagingContent = new
+		// StagingLogConsoleContent(cloudModule.getStartingInfo(),
+		// server);
+		// ConsoleManager.getInstance().startConsole(server, new
+		// ConsoleContents(stagingContent),
+		// cloudModule.getApplication(), 0, true, clearConsole);
+		//
+		// }
 
 	}
 
@@ -110,7 +112,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			return;
 		}
 		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
-			ConsoleManager.getInstance().stopConsole(cloudServer.getServer(), cloudModule.getApplication(), i);
+			ConsoleManager.getInstance().stopConsole(cloudServer.getServer(), cloudModule, i);
 		}
 	}
 
@@ -172,25 +174,25 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 		});
 	}
-	
+
 	@Override
 	public void handleError(final IStatus status, BehaviourEventType eventType) {
- 
+
 		if (status != null && status.getSeverity() == IStatus.ERROR) {
-			
+
 			UIJob job = new UIJob("Cloud Foundry Error") {
-				  public  IStatus runInUIThread(IProgressMonitor monitor) {
-					  Shell shell = CloudUiUtil.getShell();
-					  if (shell != null) {
-						   new MessageDialog(shell, "Cloud Foundry Error", null, status.getMessage(), MessageDialog.ERROR, new String[] {
-								"OK" }, 0).open();
-					  }
-					  return Status.OK_STATUS;
-				  }
+				public IStatus runInUIThread(IProgressMonitor monitor) {
+					Shell shell = CloudUiUtil.getShell();
+					if (shell != null) {
+						new MessageDialog(shell, "Cloud Foundry Error", null, status.getMessage(), MessageDialog.ERROR,
+								new String[] { "OK" }, 0).open();
+					}
+					return Status.OK_STATUS;
+				}
 			};
 			job.setSystem(true);
 			job.schedule();
-			
+
 		}
 	}
 

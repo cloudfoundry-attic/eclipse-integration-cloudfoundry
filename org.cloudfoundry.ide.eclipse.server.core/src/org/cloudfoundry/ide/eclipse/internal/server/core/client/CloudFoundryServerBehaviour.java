@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     GoPivotal, Inc. - initial API and implementation
+ *     Pivotal Software, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
@@ -115,7 +115,11 @@ import org.springframework.web.client.RestClientException;
 @SuppressWarnings("restriction")
 public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
-	static String ERROR_RESULT_MESSAGE = " - Unable to deploy or start application";
+	private static String ERROR_RESULT_MESSAGE = " - Unable to deploy or start application";
+
+	private static final String PRE_STAGING_MESSAGE = "Staging application. Please wait while staging completes";
+
+	private static final String APP_PUSH_MESSAGE = "Pushing application to Cloud Foundry server";
 
 	private CloudFoundryOperations client;
 
@@ -764,55 +768,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	public ApplicationOperation getStopAppOperation(IModule[] modules) {
-		return new ApplicationOperation(modules) {
-
-			@Override
-			protected void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
-					throws CoreException {
-				Server server = (Server) getServer();
-				boolean succeeded = false;
-				try {
-					server.setModuleState(modules, IServer.STATE_STOPPING);
-
-					CloudFoundryServer cloudServer = getCloudFoundryServer();
-					final CloudFoundryApplicationModule cloudModule = cloudServer.getExistingCloudModule(modules[0]);
-
-					if (cloudModule == null) {
-						throw CloudErrorUtil
-								.toCoreException("Unable to stop application as no cloud module found for: "
-										+ modules[0].getName());
-					}
-
-					// CloudFoundryPlugin.getCallback().applicationStopping(getCloudFoundryServer(),
-					// cloudModule);
-					new Request<Void>() {
-						@Override
-						protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-							client.stopApplication(cloudModule.getDeployedApplicationName());
-							return null;
-						}
-					}.run(monitor);
-
-					server.setModuleState(modules, IServer.STATE_STOPPED);
-					succeeded = true;
-					CloudFoundryPlugin.getCallback().stopApplicationConsole(cloudModule, cloudServer);
-
-					// If succeeded, stop all Caldecott tunnels if the app is
-					// the
-					// Caldecott app
-					if (TunnelBehaviour.isCaldecottApp(cloudModule.getDeployedApplicationName())) {
-						TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
-						handler.stopAndDeleteAllTunnels(monitor);
-					}
-				}
-				finally {
-					if (!succeeded) {
-						server.setModuleState(modules, IServer.STATE_UNKNOWN);
-					}
-				}
-
-			}
-		};
+		return new StopApplicationOperation(modules);
 	}
 
 	/**
@@ -1931,6 +1887,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			return appModule;
 		}
 
+		abstract protected String getOperationName();
+
 		protected void performOperation(IProgressMonitor monitor) throws CoreException {
 
 			appModule = prepareForDeployment(monitor);
@@ -1952,6 +1910,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, cloudServer);
 
 				boolean debug = appModule.getDeploymentInfo().getDeploymentMode() == ApplicationAction.DEBUG;
+
+				printlnToConsole(appModule, getOperationName(), true);
 
 				performDeployment(appModule, monitor);
 
@@ -2173,6 +2133,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			this.incrementalPublish = incrementalPublish;
 		}
 
+		@Override
+		protected String getOperationName() {
+			return "Starting application";
+		}
+
 		protected CloudFoundryApplicationModule prepareForDeployment(IProgressMonitor monitor) throws CoreException {
 
 			CloudFoundryApplicationModule appModule = super.prepareForDeployment(monitor);
@@ -2212,6 +2177,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				if (!modules[0].isExternal()) {
 
+					printlnToConsole(
+							appModule,
+							"Generating application archive",
+							false);
+
 					final ApplicationArchive applicationArchive = generateApplicationArchiveFile(
 							appModule.getDeploymentInfo(), appModule, modules, server, monitor);
 					File warFile = null;
@@ -2246,6 +2216,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					final File warFileFin = warFile;
 					final CloudFoundryApplicationModule appModuleFin = appModule;
 					// Now push the application resources to the server
+
+					printlnToConsole(appModule, APP_PUSH_MESSAGE, false);
+
 					new Request<Void>("Pushing the application: " + deploymentName) {
 						@Override
 						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
@@ -2386,6 +2359,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return archive;
 	}
 
+	protected void printlnToConsole(CloudFoundryApplicationModule appModule, String message, boolean clearConsole)
+			throws CoreException {
+		message += "...\n";
+		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, clearConsole);
+	}
+
 	protected ApplicationArchive getIncrementalPublishArchive(final ApplicationDeploymentInfo deploymentInfo,
 			IModule[] modules) {
 		IModuleResource[] allResources = getResources(modules);
@@ -2448,7 +2427,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// logs or refreshing app instance stats after an app has
 					// started).
 
-					CloudFoundryPlugin.getCallback().applicationAboutToStart(getCloudFoundryServer(), cloudModule);
+					printlnToConsole(cloudModule, PRE_STAGING_MESSAGE, false);
 
 					new Request<Void>("Starting application " + deploymentName) {
 						@Override
@@ -2530,6 +2509,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		}
 
+		@Override
+		protected String getOperationName() {
+			return "Restarting application";
+		}
 	}
 
 	abstract class FileRequest<T> extends StagingAwareRequest<T> {
@@ -2623,6 +2606,64 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		}
 
+	}
+
+	class StopApplicationOperation extends ApplicationOperation {
+
+		protected StopApplicationOperation(IModule[] modules) {
+			super(modules);
+		}
+
+		@Override
+		protected void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
+				throws CoreException {
+			Server server = (Server) getServer();
+			boolean succeeded = false;
+			try {
+				server.setModuleState(modules, IServer.STATE_STOPPING);
+
+				CloudFoundryServer cloudServer = getCloudFoundryServer();
+				final CloudFoundryApplicationModule cloudModule = cloudServer.getExistingCloudModule(modules[0]);
+
+				if (cloudModule == null) {
+					throw CloudErrorUtil.toCoreException("Unable to stop application as no cloud module found for: "
+							+ modules[0].getName());
+				}
+
+				// CloudFoundryPlugin.getCallback().applicationStopping(getCloudFoundryServer(),
+				// cloudModule);
+				new Request<Void>() {
+					@Override
+					protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+						client.stopApplication(cloudModule.getDeployedApplicationName());
+						return null;
+					}
+				}.run(monitor);
+
+				server.setModuleState(modules, IServer.STATE_STOPPED);
+				succeeded = true;
+				CloudFoundryPlugin.getCallback().stopApplicationConsole(cloudModule, cloudServer);
+
+				// If succeeded, stop all Caldecott tunnels if the app is
+				// the
+				// Caldecott app
+				if (TunnelBehaviour.isCaldecottApp(cloudModule.getDeployedApplicationName())) {
+					TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
+					handler.stopAndDeleteAllTunnels(monitor);
+				}
+			}
+			finally {
+				if (!succeeded) {
+					server.setModuleState(modules, IServer.STATE_UNKNOWN);
+				}
+			}
+
+		}
+
+		@Override
+		protected String getOperationName() {
+			return "Stopping application";
+		}
 	}
 
 }
