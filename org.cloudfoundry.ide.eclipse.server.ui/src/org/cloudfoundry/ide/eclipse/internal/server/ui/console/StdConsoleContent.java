@@ -12,33 +12,23 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.swt.SWT;
 
 /**
- * Simple console content that displays a message to a console associated with a
- * particular deployed application instance.
+ * Console content for local standard output and error. It is meant write
+ * content to the console via the {@link #write(String, IProgressMonitor)} API,
+ * instead of fetching content remotely to be displayed to the console. A use
+ * case for this is an CF Eclipse component that wishes to display content to
+ * the console.
  * 
  */
-public class SingleMessageConsoleContent extends AbstractConsoleContent {
+public abstract class StdConsoleContent extends ConsoleContent {
 
-	private final String message;
-
-	public SingleMessageConsoleContent(String message) {
-		super(null, SWT.COLOR_DARK_MAGENTA, null, -1);
-		this.message = message;
+	public StdConsoleContent(int swtColour) {
+		super(null, swtColour, null, -1);
 	}
 
 	protected String getContent(IProgressMonitor monitor) throws CoreException {
-		return message;
-	}
-
-	@Override
-	public String write(IProgressMonitor monitor) throws CoreException {
-		// Write content once, then close.
-		final String content = super.write(monitor);
-
-		close();
-		return content;
+		return null;
 	}
 
 }

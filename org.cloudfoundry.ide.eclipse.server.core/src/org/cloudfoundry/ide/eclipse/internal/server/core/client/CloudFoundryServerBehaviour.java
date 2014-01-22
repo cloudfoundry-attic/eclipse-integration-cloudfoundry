@@ -117,7 +117,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private static String ERROR_RESULT_MESSAGE = " - Unable to deploy or start application";
 
-	private static final String PRE_STAGING_MESSAGE = "Staging application. Please wait while staging completes";
+	private static final String PRE_STAGING_MESSAGE = "Staging application";
 
 	private static final String APP_PUSH_MESSAGE = "Pushing application to Cloud Foundry server";
 
@@ -1911,7 +1911,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				boolean debug = appModule.getDeploymentInfo().getDeploymentMode() == ApplicationAction.DEBUG;
 
-				printlnToConsole(appModule, getOperationName(), true);
+				printlnToConsole(appModule, getOperationName(), true, true);
 
 				performDeployment(appModule, monitor);
 
@@ -2177,10 +2177,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				if (!modules[0].isExternal()) {
 
-					printlnToConsole(
-							appModule,
-							"Generating application archive",
-							false);
+					printlnToConsole(appModule, "Generating application archive", false, true);
 
 					final ApplicationArchive applicationArchive = generateApplicationArchiveFile(
 							appModule.getDeploymentInfo(), appModule, modules, server, monitor);
@@ -2217,7 +2214,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					final CloudFoundryApplicationModule appModuleFin = appModule;
 					// Now push the application resources to the server
 
-					printlnToConsole(appModule, APP_PUSH_MESSAGE, false);
+					printlnToConsole(appModule, APP_PUSH_MESSAGE, false, true);
 
 					new Request<Void>("Pushing the application: " + deploymentName) {
 						@Override
@@ -2359,10 +2356,21 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return archive;
 	}
 
-	protected void printlnToConsole(CloudFoundryApplicationModule appModule, String message, boolean clearConsole)
-			throws CoreException {
-		message += "...\n";
-		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, clearConsole);
+	/**
+	 * 
+	 * @param appModule consoles are associated with a particular deployed application. This must not be null.
+	 * @param message
+	 * @param clearConsole true if console should be cleared. False, if message should be tailed to existing content in the console.
+	 * @param runningOperation if it is a message related to an ongoing operation, which will append "..." to the message
+	 * @throws CoreException
+	 */
+	protected void printlnToConsole(CloudFoundryApplicationModule appModule, String message, boolean clearConsole,
+			boolean runningOperation) throws CoreException {
+		if (runningOperation) {
+			message += "...";
+		}
+		message += '\n';
+		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, clearConsole, false);
 	}
 
 	protected ApplicationArchive getIncrementalPublishArchive(final ApplicationDeploymentInfo deploymentInfo,
@@ -2427,7 +2435,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// logs or refreshing app instance stats after an app has
 					// started).
 
-					printlnToConsole(cloudModule, PRE_STAGING_MESSAGE, false);
+					printlnToConsole(cloudModule, PRE_STAGING_MESSAGE, false, true);
 
 					new Request<Void>("Starting application " + deploymentName) {
 						@Override
@@ -2642,6 +2650,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				server.setModuleState(modules, IServer.STATE_STOPPED);
 				succeeded = true;
+				printlnToConsole(appModule, "Application stopped.", true, false);
 				CloudFoundryPlugin.getCallback().stopApplicationConsole(cloudModule, cloudServer);
 
 				// If succeeded, stop all Caldecott tunnels if the app is

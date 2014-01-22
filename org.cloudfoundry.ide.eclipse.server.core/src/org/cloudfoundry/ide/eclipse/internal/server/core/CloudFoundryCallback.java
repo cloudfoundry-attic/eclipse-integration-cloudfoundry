@@ -30,7 +30,7 @@ import org.eclipse.core.runtime.OperationCanceledException;
 public abstract class CloudFoundryCallback {
 
 	public void printToConsole(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule, String message,
-			boolean clearConsole) {
+			boolean clearConsole, boolean isError) {
 		// Optional
 	}
 

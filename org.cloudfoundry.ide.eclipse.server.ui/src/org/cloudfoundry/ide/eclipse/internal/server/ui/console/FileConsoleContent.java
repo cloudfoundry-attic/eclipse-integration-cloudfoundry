@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
+import java.io.StringWriter;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
@@ -26,19 +27,17 @@ import org.springframework.http.HttpStatus;
  * terminate any further streaming (e.g., application is deleted or stopped, or
  * enough errors have been encountered)
  */
-public class FileConsoleContent extends AbstractConsoleContent {
+public class FileConsoleContent extends ConsoleContent {
 
-	protected int offset = 0;
+	protected int tailingOffset = 0;
 
-	private String path;
-
-	private long startingWait = -1;
-
-	private String id;
+	private final String path;
 
 	private static final int MAX_COUNT = 50;
 
-	private int errorCount = MAX_COUNT;
+	private int attemptsRemaining;
+
+	private static final IContentType FILE_CONTENT_TYPE = new FileStreamContentType();
 
 	/**
 	 * 
@@ -51,38 +50,45 @@ public class FileConsoleContent extends AbstractConsoleContent {
 	 * @param instanceIndex must be valid and greater than -1.
 	 */
 	public FileConsoleContent(String path, int swtColour, CloudFoundryServer server, String appName, int instanceIndex) {
-		this(path, swtColour, server, appName, instanceIndex, -1);
-	}
-
-	public FileConsoleContent(String path, int swtColour, CloudFoundryServer server, String appName, int instanceIndex,
-			long startingWait) {
 		super(server, swtColour, appName, instanceIndex);
 		this.path = path;
-
-		this.startingWait = startingWait;
+		attemptsRemaining = getMaximumErrorCount();
 	}
 
 	/**
 	 * 
-	 * @return How long to wait before streaming starts. -1 if no waiting
-	 * required.
+	 * @return true if still active, stream open and is able to stream content.
+	 * False otherwise
 	 */
-	public long startingWait() {
-		return startingWait;
+	public synchronized boolean isActive() {
+		return attemptsRemaining > 0 && !isClosed();
 	}
 
-	public List<IConsoleContent> getNextContent() {
+	public synchronized List<IConsoleContent> getNextContent() {
 		return null;
+	}
+
+	protected String getFilePath() {
+		return path;
+	}
+
+	protected int getMaximumErrorCount() {
+		return MAX_COUNT;
 	}
 
 	protected String getContent(IProgressMonitor monitor) throws CoreException {
 
+		if (!isActive()) {
+			return null;
+		}
+
 		try {
 			String content = getContentFromFile(monitor);
+
 			// Note that if no error was thrown, reset the error count. The
 			// stream should only terminate if N number of errors are met in
 			// a row.
-			errorCount = MAX_COUNT;
+			attemptsRemaining = getMaximumErrorCount();
 			return content;
 		}
 		catch (CoreException ce) {
@@ -102,23 +108,8 @@ public class FileConsoleContent extends AbstractConsoleContent {
 				return null;
 			}
 
-			// If stream is still active, handle the error.
-			if (!isClosed() && adjustErrorCount()) {
-				close();
-				// FIXNS: For CF 1.6.0, do not log the error in the console.
-				// Leaving it commented in case it needs to be reenabled again
-				// in the future.
-				// String actualErrorMessage = ce.getMessage() != null ?
-				// ce.getMessage()
-				// : "Unknown error while obtaining content for " + path;
-				// throw new CoreException(CloudFoundryPlugin.getErrorStatus(
-				// "Too many failures trying to stream content from " + path +
-				// ". Closing stream due to: "
-				// + actualErrorMessage, ce));
-			}
+			return handleErrorCount(ce);
 		}
-
-		return null;
 	}
 
 	/**
@@ -132,9 +123,9 @@ public class FileConsoleContent extends AbstractConsoleContent {
 	 */
 	protected String getContentFromFile(IProgressMonitor monitor) throws CoreException {
 		try {
-			String content = server.getBehaviour().getFile(appName, instanceIndex, path, offset, monitor);
+			String content = server.getBehaviour().getFile(appName, instanceIndex, path, tailingOffset, monitor);
 			if (content != null) {
-				offset += content.length();
+				tailingOffset += content.length();
 			}
 			return content;
 		}
@@ -144,22 +135,88 @@ public class FileConsoleContent extends AbstractConsoleContent {
 	}
 
 	/**
+	 * Handling error has to options:
 	 * 
-	 * @return true if errors have reached a limit after adjusting the current
-	 * count. False otherwise
+	 * <p/>
+	 * 
+	 * 1. The error is non-fatal, and a message related to that error should be
+	 * displayed to the user.
+	 * 
+	 * <p/>
+	 * 
+	 * 2. Error is fatal, and the error is thrown again, causing the streaming
+	 * operation to halt.
+	 * <p/>
+	 * 
+	 * If the error is encountered when the stream is no longer active, nothing
+	 * happens and null is returned.
+	 * 
+	 * @return a message to be streamed to the console based on the current
+	 * error. Or null if no message should be streamed.
 	 */
-	protected boolean adjustErrorCount() {
-		// Otherwise an error occurred
-		if (errorCount > 0) {
-			errorCount--;
+	protected String handleErrorCount(CoreException ce) throws CoreException {
+
+		if (!isActive()) {
+			return null;
 		}
-		return errorCount == 0;
+
+		// If error count maximum has been reached, display the error and close
+		// stream
+		String errorMessage = null;
+		if (adjustErrorCount()) {
+			errorMessage = reachedMaximumErrors(ce);
+			throw new CoreException(CloudFoundryPlugin.getErrorStatus(errorMessage, ce));
+		}
+		else {
+			errorMessage = getMessageOnRetry(ce, attemptsRemaining);
+		}
+
+		if (errorMessage != null) {
+			errorMessage += '\n';
+		}
+
+		return errorMessage;
+
 	}
 
-	/*
-	 * @Overrride
+	protected String getMessageOnRetry(CoreException ce, int attemptsRemaining) {
+		return null;
+	}
+
+	/**
+	 * Gets invoked when maximum errors have been reached. Return an error
+	 * message that gets displayed in the console.
+	 * @param ce
+	 * @return error message that gets displayed in the console when maximum
+	 * errors are reached.
 	 */
-	public String toString() {
-		return id;
+	protected String reachedMaximumErrors(CoreException ce) {
+		StringWriter writer = new StringWriter();
+		writer.append("ERROR: ");
+		writer.append(getMaximumErrorMessage());
+		writer.append('\n');
+		writer.append("      Cause - ");
+		writer.append(ce.getMessage());
+		writer.append('\n');
+		return writer.toString();
+	}
+
+	protected String getMaximumErrorMessage() {
+		return "Taking too long to fetch file contents";
+	}
+
+	/**
+	 * 
+	 * @return true if maximum number of errors reached. False otherwise
+	 */
+	protected boolean adjustErrorCount() {
+		if (attemptsRemaining > 0) {
+			attemptsRemaining--;
+		}
+		return attemptsRemaining == 0;
+	}
+
+	public IContentType getConsoleType() {
+		return FILE_CONTENT_TYPE;
 	}
 }

@@ -49,8 +49,8 @@ public class StagingFileConsoleContent extends FileConsoleContent {
 		if (receivedStagingContent && !requestNextContent) {
 			requestNextContent = true;
 			List<IConsoleContent> content = new ArrayList<IConsoleContent>();
-			content.add(new FileConsoleContent(STD_ERROR_LOG, SWT.COLOR_RED, server, appName, instanceIndex, -1));
-			content.add(new FileConsoleContent(STD_OUT_LOG, -1, server, appName, instanceIndex, -1));
+			content.add(new StdLogFileConsoleContent(STD_ERROR_LOG, SWT.COLOR_RED, server, appName, instanceIndex));
+			content.add(new StdLogFileConsoleContent(STD_OUT_LOG, -1, server, appName, instanceIndex));
 			return content;
 		}
 		return null;
@@ -62,6 +62,48 @@ public class StagingFileConsoleContent extends FileConsoleContent {
 			receivedStagingContent = true;
 		}
 		return content;
+	}
+
+	protected String reachedMaximumErrors(CoreException ce) {
+		// Schedule next logs after too many failed attempts to fetch staging
+		// logs
+		receivedStagingContent = true;
+		return super.reachedMaximumErrors(ce);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.cloudfoundry.ide.eclipse.internal.server.ui.console.FileConsoleContent#getMessageOnRetry(org.eclipse.core.runtime.CoreException, int)
+	 */
+	@Override
+	protected String getMessageOnRetry(CoreException ce, int currentErrorCount) {
+		// If no staging content has been received so far, application is still starting
+		if (!receivedStagingContent && currentErrorCount > 0 && currentErrorCount % 3 == 0) {
+			return "Waiting for application to start...";
+		}
+		return null;
+	}
+
+	@Override
+	protected String getMaximumErrorMessage() {
+		return "Taking too long to fetch staging log content from : " + STAGING_LOG;
+	}
+
+	static class StdLogFileConsoleContent extends FileConsoleContent {
+
+		public StdLogFileConsoleContent(String path, int swtColour, CloudFoundryServer server, String appName,
+				int instanceIndex) {
+			super(path, swtColour, server, appName, instanceIndex);
+		}
+
+		protected int getMaximumErrorCount() {
+			return 5;
+		}
+
+		protected String getMaximumErrorMessage() {
+			return "Taking too long to fetch log content from : " + getFilePath()
+					+ ". The application may not be running correctly.";
+		}
 	}
 
 }

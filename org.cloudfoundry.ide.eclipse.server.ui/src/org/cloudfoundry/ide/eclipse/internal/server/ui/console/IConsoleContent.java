@@ -23,12 +23,42 @@ import org.eclipse.ui.console.IOConsoleOutputStream;
  */
 public interface IConsoleContent {
 
+	/**
+	 * 
+	 * @param monitor
+	 * @return content that is written to the console output stream on each call
+	 * to the method
+	 * @throws CoreException if error occurred writing to output stream. This
+	 * may not necessarily close the stream, as some cases may require
+	 * re-attempts even with errors. To have the content manager close the
+	 * stream, see {@link #isActive()}
+	 */
 	public String write(IProgressMonitor monitor) throws CoreException;
 
+	/**
+	 * Link the console content to an actual Eclipse console output stream.
+	 * @param outputStream to the Eclipse console.
+	 */
 	public void initialiseStream(IOConsoleOutputStream outputStream);
 
+	/**
+	 * Permanently close the content stream. A closed content is always
+	 * inactive.
+	 */
 	public void close();
 
-	public boolean isClosed();
+	/**
+	 * 
+	 * @return true if stream is open and can still stream content. False
+	 * otherwise. Console content managers will use this API to determine if
+	 * further streaming requests should be made on the content.
+	 */
+	public boolean isActive();
 
+	/**
+	 * 
+	 * @return non-null content type. Identifies the console content and may
+	 * enable additional management on the content.
+	 */
+	public IContentType getConsoleType();
 }

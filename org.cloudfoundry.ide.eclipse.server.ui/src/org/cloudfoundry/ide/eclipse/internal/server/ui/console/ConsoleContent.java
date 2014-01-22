@@ -21,9 +21,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 
-public abstract class AbstractConsoleContent implements IConsoleContent {
+public abstract class ConsoleContent implements IConsoleContent {
 
-	private int swtColour;
+	private final int swtConsoleColour;
 
 	protected final String appName;
 
@@ -33,19 +33,28 @@ public abstract class AbstractConsoleContent implements IConsoleContent {
 
 	protected final CloudFoundryServer server;
 
-	public AbstractConsoleContent(CloudFoundryServer server, int swtColour, String appName, int instanceIndex) {
+	public ConsoleContent(CloudFoundryServer server, int swtColour, String appName, int instanceIndex) {
 		this.server = server;
 		this.appName = appName;
 		this.instanceIndex = instanceIndex;
-		this.swtColour = swtColour;
+		this.swtConsoleColour = swtColour;
 	}
 
 	public CloudFoundryServer getServer() {
 		return server;
 	}
 
-	public String write(IProgressMonitor monitor) throws CoreException {
-		final String content = getContent(monitor);
+	public synchronized String write(IProgressMonitor monitor) throws CoreException {
+
+		String content = getContent(monitor);
+
+		return write(content, monitor);
+	}
+
+	public synchronized String write(String content, IProgressMonitor monitor) throws CoreException {
+		if (!isActive()) {
+			return null;
+		}
 
 		if (content != null && content.length() > 0) {
 			try {
@@ -60,18 +69,18 @@ public abstract class AbstractConsoleContent implements IConsoleContent {
 		return null;
 	}
 
-	public void initialiseStream(IOConsoleOutputStream outputStream) {
+	public synchronized void initialiseStream(IOConsoleOutputStream outputStream) {
 		this.outputStream = outputStream;
-		if (this.outputStream != null) {
+		if (this.outputStream != null && !this.outputStream.isClosed()) {
 			Display.getDefault().syncExec(new Runnable() {
 				public void run() {
-					AbstractConsoleContent.this.outputStream.setColor(Display.getDefault().getSystemColor(swtColour));
+					ConsoleContent.this.outputStream.setColor(Display.getDefault().getSystemColor(swtConsoleColour));
 				}
 			});
 		}
 	}
 
-	public void close() {
+	public synchronized void close() {
 		if (outputStream != null && !outputStream.isClosed()) {
 			try {
 				outputStream.close();
@@ -82,8 +91,19 @@ public abstract class AbstractConsoleContent implements IConsoleContent {
 		}
 	}
 
-	public boolean isClosed() {
+	protected synchronized boolean isClosed() {
 		return outputStream == null || outputStream.isClosed();
+	}
+
+	public synchronized boolean isActive() {
+		return !isClosed();
+	}
+
+	/*
+	 * @Overrride
+	 */
+	public String toString() {
+		return getConsoleType().toString();
 	}
 
 	abstract protected String getContent(IProgressMonitor monitor) throws CoreException;

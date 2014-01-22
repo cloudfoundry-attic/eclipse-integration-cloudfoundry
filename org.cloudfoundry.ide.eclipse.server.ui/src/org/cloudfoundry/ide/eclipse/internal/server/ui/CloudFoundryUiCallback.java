@@ -21,7 +21,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContents;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.console.SingleMessageConsoleContent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryCredentialsWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.DeleteServicesWizard;
@@ -72,10 +71,8 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	}
 
 	public void printToConsole(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule, String message,
-			boolean clearConsole) {
-
-		ConsoleManager.getInstance().startConsole(server,
-				new ConsoleContents(new SingleMessageConsoleContent(message)), cloudModule, 0, true, clearConsole);
+			boolean clearConsole, boolean isError) {
+		   ConsoleManager.getInstance().writeStd(message, server, cloudModule, 0, clearConsole, isError);
 	}
 
 	@Override

@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     GoPivotal, Inc. - initial API and implementation
+ *     Pivotal Software, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
@@ -44,7 +44,8 @@ public class ConsoleManager {
 					Object server = ((MessageConsole) console).getAttribute(CloudFoundryConsole.ATTRIBUTE_SERVER);
 					Object app = ((MessageConsole) console).getAttribute(CloudFoundryConsole.ATTRIBUTE_APP);
 					Object index = ((MessageConsole) console).getAttribute(CloudFoundryConsole.ATTRIBUTE_INSTANCE);
-					if (server instanceof IServer && app instanceof CloudFoundryApplicationModule && index instanceof Integer) {
+					if (server instanceof IServer && app instanceof CloudFoundryApplicationModule
+							&& index instanceof Integer) {
 						stopConsole((IServer) server, (CloudFoundryApplicationModule) app, (Integer) index);
 					}
 				}
@@ -75,17 +76,9 @@ public class ConsoleManager {
 	 * Start console if show is true, otherwise reset and start only if console
 	 * was previously created already
 	 */
-	public void startConsole(CloudFoundryServer server, ConsoleContents contents, CloudFoundryApplicationModule appModule,
-			int instanceIndex, boolean show, boolean clear) {
-		String appUrl = getConsoleId(server.getServer(), appModule, instanceIndex);
-		CloudFoundryConsole serverLogTail = consoleByUri.get(appUrl);
-		if (serverLogTail == null && show) {
-
-			MessageConsole appConsole = getOrCreateConsole(server.getServer(), appModule, instanceIndex);
-
-			serverLogTail = new CloudFoundryConsole(appModule, appConsole);
-			consoleByUri.put(getConsoleId(server.getServer(), appModule, instanceIndex), serverLogTail);
-		}
+	public void startConsole(CloudFoundryServer server, ConsoleContents contents,
+			CloudFoundryApplicationModule appModule, int instanceIndex, boolean show, boolean clear) {
+		CloudFoundryConsole serverLogTail = getCloudFoundryConsole(server, appModule, instanceIndex);
 
 		if (serverLogTail != null) {
 			if (clear) {
@@ -95,6 +88,39 @@ public class ConsoleManager {
 		}
 
 		if (show && serverLogTail != null) {
+			consoleManager.showConsoleView(serverLogTail.getConsole());
+		}
+	}
+
+	protected CloudFoundryConsole getCloudFoundryConsole(CloudFoundryServer server,
+			CloudFoundryApplicationModule appModule, int instanceIndex) {
+		String appUrl = getConsoleId(server.getServer(), appModule, instanceIndex);
+		CloudFoundryConsole serverLogTail = consoleByUri.get(appUrl);
+		if (serverLogTail == null) {
+
+			MessageConsole appConsole = getOrCreateConsole(server.getServer(), appModule, instanceIndex);
+
+			serverLogTail = new CloudFoundryConsole(appModule, appConsole);
+			consoleByUri.put(getConsoleId(server.getServer(), appModule, instanceIndex), serverLogTail);
+		}
+		return serverLogTail;
+	}
+
+	public void writeStd(String message, CloudFoundryServer server, CloudFoundryApplicationModule appModule,
+			int instanceIndex, boolean clear, boolean isError) {
+		CloudFoundryConsole serverLogTail = getCloudFoundryConsole(server, appModule, instanceIndex);
+
+		if (serverLogTail != null) {
+			if (clear) {
+				serverLogTail.getConsole().clearConsole();
+			}
+
+			if (isError) {
+				serverLogTail.writeToStdError(message);
+			}
+			else {
+				serverLogTail.writeToStdOut(message);
+			}
 			consoleManager.showConsoleView(serverLogTail.getConsole());
 		}
 	}
@@ -112,9 +138,11 @@ public class ConsoleManager {
 		for (Entry<String, CloudFoundryConsole> tailEntry : consoleByUri.entrySet()) {
 			tailEntry.getValue().stop();
 		}
+		consoleByUri.clear();
 	}
 
-	public static MessageConsole getOrCreateConsole(IServer server, CloudFoundryApplicationModule appModule, int instanceIndex) {
+	public static MessageConsole getOrCreateConsole(IServer server, CloudFoundryApplicationModule appModule,
+			int instanceIndex) {
 		MessageConsole appConsole = null;
 		String consoleName = getConsoleId(server, appModule, instanceIndex);
 		for (IConsole console : ConsolePlugin.getDefault().getConsoleManager().getConsoles()) {
@@ -123,8 +151,8 @@ public class ConsoleManager {
 			}
 		}
 		if (appConsole == null) {
-			appConsole = new MessageConsole(server.getName() + " - " + appModule.getDeployedApplicationName() + "#" + instanceIndex, CloudFoundryConsole.CONSOLE_TYPE,
-					null, true);
+			appConsole = new MessageConsole(server.getName() + " - " + appModule.getDeployedApplicationName() + "#"
+					+ instanceIndex, CloudFoundryConsole.CONSOLE_TYPE, null, true);
 			appConsole.setAttribute(CloudFoundryConsole.ATTRIBUTE_SERVER, server);
 			appConsole.setAttribute(CloudFoundryConsole.ATTRIBUTE_APP, appModule);
 			appConsole.setAttribute(CloudFoundryConsole.ATTRIBUTE_INSTANCE, instanceIndex);
