@@ -10,17 +10,25 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
+import org.eclipse.swt.SWT;
 
 /**
- * Console content type indicating that content is coming from a remote file and
- * should be streamed to the console.
+ * 
+ * Local std error content for the Eclipse console. Intention is to write
+ * local content to the console using the
+ * {@link #write(String, org.eclipse.core.runtime.IProgressMonitor)}
+ * <p/>
+ * To fetch std error content from a remote server (e.g. a std  log file), use
+ * {@link FileConsoleStream} instead.
  */
-public class FileStreamContentType implements IContentType {
+public class LocalStdErrorConsoleStream extends LocalConsoleStream {
 
-	private final String id = "file_stream";
+	public LocalStdErrorConsoleStream() {
+		super(SWT.COLOR_RED);
+	}
 
-	public String getId() {
-		return id;
+	public IContentType getConsoleType() {
+		return StdContentType.STD_ERROR;
 	}
 
 }

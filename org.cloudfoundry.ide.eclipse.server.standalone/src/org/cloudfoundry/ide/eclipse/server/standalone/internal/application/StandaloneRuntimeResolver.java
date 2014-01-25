@@ -44,10 +44,14 @@ import org.eclipse.jdt.launching.JavaRuntime;
  * dependencies once, caching the results. If update runtime source and
  * dependency locations need to be obtain, a new resolver should be created.
  * 
+ * @deprecated As of CF 1.6.0 Java applications are now packaged into jars prior
+ *             to deployment to Cloud Foundry. See
+ *             {@link JavaCloudFoundryArchiver}
  */
 public class StandaloneRuntimeResolver {
 
-	public static final IPath[] TEST_SOURCE_NAME_PATTERNS = { new Path("src/test") };
+	public static final IPath[] TEST_SOURCE_NAME_PATTERNS = { new Path(
+			"src/test") };
 
 	private final boolean skipTestSources;
 
@@ -57,7 +61,8 @@ public class StandaloneRuntimeResolver {
 
 	private List<String> runtimeDependencies;
 
-	public StandaloneRuntimeResolver(IJavaProject javaProject, boolean skipTestSources) {
+	public StandaloneRuntimeResolver(IJavaProject javaProject,
+			boolean skipTestSources) {
 		this.javaProject = javaProject;
 		this.skipTestSources = skipTestSources;
 	}
@@ -79,8 +84,10 @@ public class StandaloneRuntimeResolver {
 					if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
 						IPath path = entry.getPath();
 						if (path != null) {
-							boolean isTestSource = isTestSource(path.toOSString());
-							if ((istest && isTestSource) || (!istest && !isTestSource)) {
+							boolean isTestSource = isTestSource(path
+									.toOSString());
+							if ((istest && isTestSource)
+									|| (!istest && !isTestSource)) {
 								sourceEntries.add(entry);
 							}
 						}
@@ -88,8 +95,7 @@ public class StandaloneRuntimeResolver {
 				}
 				return sourceEntries;
 			}
-		}
-		catch (JavaModelException e) {
+		} catch (JavaModelException e) {
 			CloudFoundryPlugin.log(e);
 		}
 		return Collections.emptyList();
@@ -127,8 +133,7 @@ public class StandaloneRuntimeResolver {
 			if (location != null) {
 				nonTestOutput.add(location.toOSString());
 			}
-		}
-		catch (JavaModelException e) {
+		} catch (JavaModelException e) {
 			CloudFoundryPlugin.log(e);
 		}
 		return nonTestOutput;
@@ -137,6 +142,7 @@ public class StandaloneRuntimeResolver {
 	/**
 	 * Gets full path for workspace paths. The path may be a path to a project
 	 * relative folder, or to a project itself
+	 * 
 	 * @param relativePath
 	 * @return
 	 */
@@ -147,13 +153,14 @@ public class StandaloneRuntimeResolver {
 		IPath path = relativePath;
 		if (path.segmentCount() == 1) {
 			// The path may be the project itself
-			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(path.segment(0));
+			IProject project = ResourcesPlugin.getWorkspace().getRoot()
+					.getProject(path.segment(0));
 			if (project.isAccessible()) {
 				path = project.getLocation();
 			}
-		}
-		else {
-			IFolder folder = ResourcesPlugin.getWorkspace().getRoot().getFolder(path);
+		} else {
+			IFolder folder = ResourcesPlugin.getWorkspace().getRoot()
+					.getFolder(path);
 
 			if (folder.isAccessible()) {
 				path = folder.getLocation();
@@ -164,9 +171,10 @@ public class StandaloneRuntimeResolver {
 
 	/**
 	 * 
-	 * @param location should be an OS specific location
+	 * @param location
+	 *            should be an OS specific location
 	 * @return true if the OS path location contains a test source pattern like
-	 * "src/test"
+	 *         "src/test"
 	 */
 	protected boolean isTestSource(String location) {
 		if (location != null) {
@@ -196,8 +204,7 @@ public class StandaloneRuntimeResolver {
 	public boolean hasRuntimeDependencies() {
 		try {
 			return !getRuntimeDependencyLocations().isEmpty();
-		}
-		catch (CoreException e) {
+		} catch (CoreException e) {
 			CloudFoundryPlugin.log(e);
 		}
 		return false;
@@ -206,8 +213,10 @@ public class StandaloneRuntimeResolver {
 	protected void computeRuntimeClassPath() throws CoreException {
 		runtimeDependencies = new ArrayList<String>();
 
-		IRuntimeClasspathEntry[] unresolved = JavaRuntime.computeUnresolvedRuntimeClasspath(javaProject);
-		IRuntimeClasspathEntry jreEntry = JavaRuntime.computeJREEntry(javaProject);
+		IRuntimeClasspathEntry[] unresolved = JavaRuntime
+				.computeUnresolvedRuntimeClasspath(javaProject);
+		IRuntimeClasspathEntry jreEntry = JavaRuntime
+				.computeJREEntry(javaProject);
 		List<IRuntimeClasspathEntry> resolved = new ArrayList<IRuntimeClasspathEntry>();
 
 		// Resolve all runtime entries, and skip the jre entry
@@ -215,9 +224,9 @@ public class StandaloneRuntimeResolver {
 
 			if (rcEntry.equals(jreEntry)) {
 				continue;
-			}
-			else {
-				IRuntimeClasspathEntry[] entries = JavaRuntime.resolveRuntimeClasspathEntry(rcEntry, javaProject);
+			} else {
+				IRuntimeClasspathEntry[] entries = JavaRuntime
+						.resolveRuntimeClasspathEntry(rcEntry, javaProject);
 
 				if (entries != null) {
 					resolved.addAll(Arrays.asList(entries));
@@ -226,7 +235,8 @@ public class StandaloneRuntimeResolver {
 		}
 
 		// Separate dependency entries like archives from other runtime entries
-		List<IRuntimeClasspathEntry> toSeparate = new ArrayList<IRuntimeClasspathEntry>(resolved);
+		List<IRuntimeClasspathEntry> toSeparate = new ArrayList<IRuntimeClasspathEntry>(
+				resolved);
 
 		for (IRuntimeClasspathEntry entry : resolved) {
 
@@ -247,19 +257,22 @@ public class StandaloneRuntimeResolver {
 			// for that entry is NOT also used by a non test source entry
 			Collection<String> testSourceOutputLocations = getTestSourceOutputLocations();
 			Collection<String> nonTestSourceOutputLocations = getNonTestSourceOutputLocations();
-			List<IRuntimeClasspathEntry> nonTestEntries = new ArrayList<IRuntimeClasspathEntry>(resolved);
+			List<IRuntimeClasspathEntry> nonTestEntries = new ArrayList<IRuntimeClasspathEntry>(
+					resolved);
 			for (IRuntimeClasspathEntry entry : resolved) {
 
 				String entryLocation = entry.getLocation();
 				if (testSourceOutputLocations.contains(entryLocation)
-						&& !nonTestSourceOutputLocations.contains(entryLocation)) {
+						&& !nonTestSourceOutputLocations
+								.contains(entryLocation)) {
 					nonTestEntries.remove(entry);
 				}
 			}
 			resolved = nonTestEntries;
 		}
 
-		Set<String> resolvedEntryLocations = new HashSet<String>(resolved.size());
+		Set<String> resolvedEntryLocations = new HashSet<String>(
+				resolved.size());
 		for (IRuntimeClasspathEntry entry : resolved) {
 			resolvedEntryLocations.add(entry.getLocation());
 		}
@@ -272,8 +285,7 @@ public class StandaloneRuntimeResolver {
 		File file = new File(location);
 		try {
 			return file.exists() && file.isFile();
-		}
-		catch (SecurityException e) {
+		} catch (SecurityException e) {
 			// Ignore
 		}
 		return false;

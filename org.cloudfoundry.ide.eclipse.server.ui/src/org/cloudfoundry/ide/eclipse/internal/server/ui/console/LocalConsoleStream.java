@@ -21,9 +21,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
  * the console.
  * 
  */
-public abstract class StdConsoleContent extends ConsoleContent {
+public abstract class LocalConsoleStream extends CloudFoundryConsoleStream {
 
-	public StdConsoleContent(int swtColour) {
+	public LocalConsoleStream(int swtColour) {
 		super(null, swtColour, null, -1);
 	}
 

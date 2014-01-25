@@ -11,29 +11,11 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 
-public class ConsoleContents {
-
-	private final List<IConsoleContent> content;
-
-	public static final long STD_LOG_INITIAL_WAIT = 1000;
-
-	public ConsoleContents(List<IConsoleContent> content) {
-		this.content = content;
-	}
-
-	public ConsoleContents(IConsoleContent singleContent) {
-		this.content = Arrays.asList(singleContent);
-	}
-
-	public List<IConsoleContent> getContents() {
-		return content;
-	}
+public class StagingConsoleContents implements IConsoleContents {
 
 	/**
 	 * Return a list of File contents that should be shown to the user, like
@@ -43,13 +25,14 @@ public class ConsoleContents {
 	 * @param app
 	 * @return
 	 */
-	public static ConsoleContents getStandardLogContent(final CloudFoundryServer cloudServer,
-			final CloudApplication app, final int instanceIndex) {
+	public List<ICloudFoundryConsoleStream> getContents(final CloudFoundryServer cloudServer, String appName,
+			final int instanceIndex) {
 
-		List<IConsoleContent> content = new ArrayList<IConsoleContent>();
-		content.add(new StagingFileConsoleContent(cloudServer, app.getName(), instanceIndex));
+		List<ICloudFoundryConsoleStream> contents = new ArrayList<ICloudFoundryConsoleStream>();
 
-		return new ConsoleContents(content);
+		contents.add(new StagingFileConsoleStream(cloudServer, appName, instanceIndex));
+
+		return contents;
 	}
 
 }

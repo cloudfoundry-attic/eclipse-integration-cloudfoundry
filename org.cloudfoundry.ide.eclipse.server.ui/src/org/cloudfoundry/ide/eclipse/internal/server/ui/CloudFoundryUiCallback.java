@@ -19,8 +19,10 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleContents;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.IConsoleContents;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.StagingConsoleContents;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.StdConsoleContents;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryCredentialsWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.DeleteServicesWizard;
@@ -45,11 +47,11 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
 	public void applicationStarted(final CloudFoundryServer server, final CloudFoundryApplicationModule cloudModule) {
-		startApplicationConsole(server, cloudModule, 0);
+		startApplicationConsole(server, new StagingConsoleContents(), cloudModule, 0);
 	}
 
-	public void startApplicationConsole(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
-			int showIndex) {
+	protected void startApplicationConsole(CloudFoundryServer cloudServer, IConsoleContents contents,
+			CloudFoundryApplicationModule cloudModule, int showIndex) {
 		if (cloudModule == null || cloudModule.getApplication() == null) {
 			CloudFoundryPlugin
 					.logError("No application content to display to the console while starting application in the Cloud Foundry server.");
@@ -63,16 +65,20 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			// have been already sent to the console
 			// output
 			boolean shouldClearConsole = false;
-			ConsoleContents content = ConsoleContents.getStandardLogContent(cloudServer, cloudModule.getApplication(),
-					i);
-			ConsoleManager.getInstance().startConsole(cloudServer, content, cloudModule, i, i == showIndex,
+
+			ConsoleManager.getInstance().startConsole(cloudServer, contents, cloudModule, i, i == showIndex,
 					shouldClearConsole);
 		}
 	}
 
+	public void showCloudFoundryLogs(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
+			int showIndex) {
+		startApplicationConsole(cloudServer, new StdConsoleContents(), cloudModule, showIndex);
+	}
+
 	public void printToConsole(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule, String message,
-			boolean clearConsole, boolean isError) {
-		   ConsoleManager.getInstance().writeStd(message, server, cloudModule, 0, clearConsole, isError);
+			boolean clearConsole, boolean isError, IProgressMonitor monitor) {
+		ConsoleManager.getInstance().synchWriteToStd(message, server, cloudModule, 0, clearConsole, isError, monitor);
 	}
 
 	@Override

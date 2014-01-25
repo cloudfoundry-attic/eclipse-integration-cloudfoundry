@@ -10,25 +10,20 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
-import org.eclipse.swt.SWT;
+import java.util.List;
 
-/**
- * 
- * Local std out content for the Eclipse console. Intention is to write local
- * content to the console using the
- * {@link #write(String, org.eclipse.core.runtime.IProgressMonitor)}
- * <p/>
- * To fetch std out content from a remote server (e.g. a std log file), use
- * {@link FileConsoleContent} instead.
- */
-public class AppStdOutConsoleContent extends StdConsoleContent {
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 
-	public AppStdOutConsoleContent() {
-		super(SWT.COLOR_DARK_MAGENTA);
-	}
+public interface IConsoleContents {
 
-	public IContentType getConsoleType() {
-		return StdContentType.STD_OUT;
-	}
+	/**
+	 * Return a list of streams that provide content to the Cloud Foundry
+	 * console. user.
+	 * @param cloudServer
+	 * @param appName
+	 * @return
+	 */
+	public List<ICloudFoundryConsoleStream> getContents(CloudFoundryServer cloudServer, String appName,
+			int instanceIndex);
 
 }

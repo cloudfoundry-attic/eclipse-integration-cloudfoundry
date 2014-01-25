@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
+import org.cloudfoundry.ide.eclipse.internal.server.ui.console.IContentType;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ui.console.IOConsoleOutputStream;
@@ -21,7 +22,7 @@ import org.eclipse.ui.console.IOConsoleOutputStream;
  * content from a CF server for a particular file and sends it as output to the
  * Eclipse CF console output stream.
  */
-public interface IConsoleContent {
+public interface ICloudFoundryConsoleStream {
 
 	/**
 	 * 

@@ -257,7 +257,6 @@ public class CloudApplicationUrlPart extends UIPart {
 		catch (CoreException e) {
 			// Otherwise, perform simple validation
 			status = urlLookup.simpleValidation(appURL);
-
 		}
 
 		modifyEventSource = null;

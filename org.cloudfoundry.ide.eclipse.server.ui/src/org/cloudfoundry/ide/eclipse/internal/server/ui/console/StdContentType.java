@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
+
 public enum StdContentType implements IContentType {
 
 	STD_OUT("local_std_out"), STD_ERROR("local_std_error");

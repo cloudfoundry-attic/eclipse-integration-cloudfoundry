@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
-import java.io.StringWriter;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
@@ -27,13 +26,13 @@ import org.springframework.http.HttpStatus;
  * terminate any further streaming (e.g., application is deleted or stopped, or
  * enough errors have been encountered)
  */
-public class FileConsoleContent extends ConsoleContent {
+public class FileConsoleStream extends CloudFoundryConsoleStream {
 
 	protected int tailingOffset = 0;
 
 	private final String path;
 
-	private static final int MAX_COUNT = 50;
+	private static final int MAX_COUNT = 40;
 
 	private int attemptsRemaining;
 
@@ -49,7 +48,7 @@ public class FileConsoleContent extends ConsoleContent {
 	 * @param appName must not be null
 	 * @param instanceIndex must be valid and greater than -1.
 	 */
-	public FileConsoleContent(String path, int swtColour, CloudFoundryServer server, String appName, int instanceIndex) {
+	public FileConsoleStream(String path, int swtColour, CloudFoundryServer server, String appName, int instanceIndex) {
 		super(server, swtColour, appName, instanceIndex);
 		this.path = path;
 		attemptsRemaining = getMaximumErrorCount();
@@ -64,7 +63,11 @@ public class FileConsoleContent extends ConsoleContent {
 		return attemptsRemaining > 0 && !isClosed();
 	}
 
-	public synchronized List<IConsoleContent> getNextContent() {
+	/**
+	 * 
+	 * @return basic chaining API.
+	 */
+	public synchronized List<ICloudFoundryConsoleStream> getNextContent() {
 		return null;
 	}
 
@@ -151,7 +154,7 @@ public class FileConsoleContent extends ConsoleContent {
 	 * If the error is encountered when the stream is no longer active, nothing
 	 * happens and null is returned.
 	 * 
-	 * @return a message to be streamed to the console based on the current
+	 * @return a message to be streamed to the console based on the current.
 	 * error. Or null if no message should be streamed.
 	 */
 	protected String handleErrorCount(CoreException ce) throws CoreException {
@@ -163,23 +166,42 @@ public class FileConsoleContent extends ConsoleContent {
 		// If error count maximum has been reached, display the error and close
 		// stream
 		String errorMessage = null;
-		if (adjustErrorCount()) {
+		boolean maxReached = adjustErrorCount();
+		if (maxReached) {
 			errorMessage = reachedMaximumErrors(ce);
-			throw new CoreException(CloudFoundryPlugin.getErrorStatus(errorMessage, ce));
+			if (errorMessage != null) {
+				throw new CoreException(CloudFoundryPlugin.getErrorStatus(errorMessage, ce));
+			}
+			else {
+				throw ce;
+			}
 		}
-		else {
+
+		if (errorMessage == null) {
 			errorMessage = getMessageOnRetry(ce, attemptsRemaining);
 		}
 
-		if (errorMessage != null) {
-			errorMessage += '\n';
-		}
-
 		return errorMessage;
-
 	}
 
-	protected String getMessageOnRetry(CoreException ce, int attemptsRemaining) {
+	/**
+	 * Return a message based on the current number of consecutive attempts made
+	 * to fetch streaming content from the file due to errors. If the message is
+	 * not meant to be an error, return it, and it will be displayed in the same
+	 * format as the file content. </p> If the message should be displayed as an
+	 * error to the user, throw a {@link CoreException}. This will not stop the
+	 * streaming process, but simply allow the content manager to handle the
+	 * error (e.g. display in std error console output).
+	 * @param ce error that will result in a further attempt to stream content
+	 * from the file.
+	 * @param attemptsRemaining how many consecutive attempts still remain
+	 * before any further streaming attempts are stopped.
+	 * @return optional message related to the attempt and associated error, or
+	 * null.
+	 * @throws CoreException if the error requires the content manager to handle
+	 * the error. Otherwise return a message or null.
+	 */
+	protected String getMessageOnRetry(CoreException ce, int attemptsRemaining) throws CoreException {
 		return null;
 	}
 
@@ -191,17 +213,6 @@ public class FileConsoleContent extends ConsoleContent {
 	 * errors are reached.
 	 */
 	protected String reachedMaximumErrors(CoreException ce) {
-		StringWriter writer = new StringWriter();
-		writer.append("ERROR: ");
-		writer.append(getMaximumErrorMessage());
-		writer.append('\n');
-		writer.append("      Cause - ");
-		writer.append(ce.getMessage());
-		writer.append('\n');
-		return writer.toString();
-	}
-
-	protected String getMaximumErrorMessage() {
 		return "Taking too long to fetch file contents";
 	}
 

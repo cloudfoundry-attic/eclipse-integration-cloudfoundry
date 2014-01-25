@@ -168,13 +168,6 @@ public class CloudFoundryPlugin extends Plugin {
 
 		}
 
-		@Override
-		public void startApplicationConsole(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
-				int showIndex) {
-			// TODO Auto-generated method stub
-			
-		}
-
 	}
 
 	// public static final String CLOUD_CONTROLLER_DEFAULT_URL_ATTRIBUTE =

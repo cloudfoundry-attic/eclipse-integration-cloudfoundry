@@ -30,8 +30,8 @@ import org.eclipse.core.runtime.OperationCanceledException;
 public abstract class CloudFoundryCallback {
 
 	public void printToConsole(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule, String message,
-			boolean clearConsole, boolean isError) {
-		// Optional
+			boolean clearConsole, boolean isError, IProgressMonitor monitor) {
+		// optional
 	}
 
 	public abstract void applicationStarted(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
@@ -39,14 +39,15 @@ public abstract class CloudFoundryCallback {
 	public abstract void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
 
 	/**
-	 * Starts application instances console (log files shown in console), and
-	 * shows the specified console in the Eclipse console.
+	 * Show deployed application's  Cloud Foundry log files locally.
 	 * @param cloudServer
 	 * @param cloudModule
 	 * @param showIndex if -1 shows the first app instance
 	 */
-	public abstract void startApplicationConsole(CloudFoundryServer cloudServer,
-			CloudFoundryApplicationModule cloudModule, int showIndex);
+	public  void showCloudFoundryLogs(CloudFoundryServer cloudServer, 
+			CloudFoundryApplicationModule cloudModule, int showIndex) {
+		
+	}
 
 	/**
 	 * Stops all consoles for the given application for all application

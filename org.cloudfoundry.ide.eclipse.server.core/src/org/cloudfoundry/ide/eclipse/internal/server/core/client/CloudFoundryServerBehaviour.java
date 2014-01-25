@@ -1911,7 +1911,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				boolean debug = appModule.getDeploymentInfo().getDeploymentMode() == ApplicationAction.DEBUG;
 
-				printlnToConsole(appModule, getOperationName(), true, true);
+				printlnToConsole(appModule, getOperationName(), true, true, monitor);
 
 				performDeployment(appModule, monitor);
 
@@ -2177,7 +2177,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				if (!modules[0].isExternal()) {
 
-					printlnToConsole(appModule, "Generating application archive", false, true);
+					printlnToConsole(appModule, "Generating application archive", false, true, monitor);
 
 					final ApplicationArchive applicationArchive = generateApplicationArchiveFile(
 							appModule.getDeploymentInfo(), appModule, modules, server, monitor);
@@ -2214,7 +2214,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					final CloudFoundryApplicationModule appModuleFin = appModule;
 					// Now push the application resources to the server
 
-					printlnToConsole(appModule, APP_PUSH_MESSAGE, false, true);
+					printlnToConsole(appModule, APP_PUSH_MESSAGE, false, true, monitor);
 
 					new Request<Void>("Pushing the application: " + deploymentName) {
 						@Override
@@ -2365,12 +2365,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @throws CoreException
 	 */
 	protected void printlnToConsole(CloudFoundryApplicationModule appModule, String message, boolean clearConsole,
-			boolean runningOperation) throws CoreException {
+			boolean runningOperation,IProgressMonitor monitor) throws CoreException {
 		if (runningOperation) {
 			message += "...";
 		}
 		message += '\n';
-		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, clearConsole, false);
+		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, clearConsole, false, monitor);
 	}
 
 	protected ApplicationArchive getIncrementalPublishArchive(final ApplicationDeploymentInfo deploymentInfo,
@@ -2435,7 +2435,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// logs or refreshing app instance stats after an app has
 					// started).
 
-					printlnToConsole(cloudModule, PRE_STAGING_MESSAGE, false, true);
+					printlnToConsole(cloudModule, PRE_STAGING_MESSAGE, false, true, monitor);
 
 					new Request<Void>("Starting application " + deploymentName) {
 						@Override
@@ -2530,7 +2530,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 
 		FileRequest(String label) {
-			super(label, ClientRequestOperation.SHORT_INTERVAL);
+			super(label, ClientRequestOperation.ONE_SECOND_INTERVAL * 2);
 		}
 
 	}
@@ -2650,7 +2650,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				server.setModuleState(modules, IServer.STATE_STOPPED);
 				succeeded = true;
-				printlnToConsole(appModule, "Application stopped.", true, false);
+				printlnToConsole(appModule, "Application stopped.", true, false, monitor);
 				CloudFoundryPlugin.getCallback().stopApplicationConsole(cloudModule, cloudServer);
 
 				// If succeeded, stop all Caldecott tunnels if the app is

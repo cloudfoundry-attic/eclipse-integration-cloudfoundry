@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 GoPivotal, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -37,7 +37,7 @@ public class ShowConsoleAction extends Action {
 	public void run() {
 		if (CloudFoundryPlugin.getCallback() != null) {
 			CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, server);
-			CloudFoundryPlugin.getCallback().startApplicationConsole(server, appModule, instanceIndex);
+			CloudFoundryPlugin.getCallback().showCloudFoundryLogs(server, appModule, instanceIndex);
 		}
 		else {
 			CloudFoundryPlugin

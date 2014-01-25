@@ -61,6 +61,7 @@ import org.eclipse.wst.server.core.util.ProjectModule;
  * 
  * @see StandAloneModuleFactory
  * @see IModule
+ * @deprecated As of CF 1.6.0 Java applications are now packaged into jars prior to deployment to Cloud Foundry. See {@link JavaCloudFoundryArchiver}
  */
 public class StandaloneModuleDelegate extends ProjectModule {
 

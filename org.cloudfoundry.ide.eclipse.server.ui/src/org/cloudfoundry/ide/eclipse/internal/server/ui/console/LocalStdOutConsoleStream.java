@@ -14,21 +14,21 @@ import org.eclipse.swt.SWT;
 
 /**
  * 
- * Local std error content for the Eclipse console. Intention is to write
- * local content to the console using the
+ * Local std out content for the Eclipse console. Intention is to write local
+ * content to the console using the
  * {@link #write(String, org.eclipse.core.runtime.IProgressMonitor)}
  * <p/>
- * To fetch std error content from a remote server (e.g. a std  log file), use
- * {@link FileConsoleContent} instead.
+ * To fetch std out content from a remote server (e.g. a std log file), use
+ * {@link FileConsoleStream} instead.
  */
-public class AppStdErrorConsoleContent extends StdConsoleContent {
+public class LocalStdOutConsoleStream extends LocalConsoleStream {
 
-	public AppStdErrorConsoleContent() {
-		super(SWT.COLOR_RED);
+	public LocalStdOutConsoleStream() {
+		super(SWT.COLOR_DARK_MAGENTA);
 	}
 
 	public IContentType getConsoleType() {
-		return StdContentType.STD_ERROR;
+		return StdContentType.STD_OUT;
 	}
 
 }

@@ -121,10 +121,4 @@ public class TestCallback extends CloudFoundryCallback {
 		// TODO Auto-generated method stub
 	}
 
-	@Override
-	public void startApplicationConsole(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
-			int showIndex) {
-		// TODO Auto-generated method stub
-	}
-
 }

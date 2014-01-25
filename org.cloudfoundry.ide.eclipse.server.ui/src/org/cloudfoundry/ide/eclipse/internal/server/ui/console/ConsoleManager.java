@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleListener;
@@ -76,7 +77,7 @@ public class ConsoleManager {
 	 * Start console if show is true, otherwise reset and start only if console
 	 * was previously created already
 	 */
-	public void startConsole(CloudFoundryServer server, ConsoleContents contents,
+	public void startConsole(CloudFoundryServer server, IConsoleContents contents,
 			CloudFoundryApplicationModule appModule, int instanceIndex, boolean show, boolean clear) {
 		CloudFoundryConsole serverLogTail = getCloudFoundryConsole(server, appModule, instanceIndex);
 
@@ -84,7 +85,8 @@ public class ConsoleManager {
 			if (clear) {
 				serverLogTail.getConsole().clearConsole();
 			}
-			serverLogTail.startTailing(contents.getContents());
+			serverLogTail.startTailing(contents.getContents(server, appModule.getDeployedApplicationName(),
+					instanceIndex));
 		}
 
 		if (show && serverLogTail != null) {
@@ -106,8 +108,8 @@ public class ConsoleManager {
 		return serverLogTail;
 	}
 
-	public void writeStd(String message, CloudFoundryServer server, CloudFoundryApplicationModule appModule,
-			int instanceIndex, boolean clear, boolean isError) {
+	public void synchWriteToStd(String message, CloudFoundryServer server, CloudFoundryApplicationModule appModule,
+			int instanceIndex, boolean clear, boolean isError, IProgressMonitor monitor) {
 		CloudFoundryConsole serverLogTail = getCloudFoundryConsole(server, appModule, instanceIndex);
 
 		if (serverLogTail != null) {
@@ -116,10 +118,10 @@ public class ConsoleManager {
 			}
 
 			if (isError) {
-				serverLogTail.writeToStdError(message);
+				serverLogTail.synchWriteToStdError(message, monitor);
 			}
 			else {
-				serverLogTail.writeToStdOut(message);
+				serverLogTail.synchWriteToStdOut(message, monitor);
 			}
 			consoleManager.showConsoleView(serverLogTail.getConsole());
 		}

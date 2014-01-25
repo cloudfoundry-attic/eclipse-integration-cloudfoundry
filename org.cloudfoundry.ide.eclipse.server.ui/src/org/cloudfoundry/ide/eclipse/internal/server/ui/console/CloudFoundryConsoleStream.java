@@ -21,7 +21,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 
-public abstract class ConsoleContent implements IConsoleContent {
+public abstract class CloudFoundryConsoleStream implements ICloudFoundryConsoleStream {
 
 	private final int swtConsoleColour;
 
@@ -33,7 +33,7 @@ public abstract class ConsoleContent implements IConsoleContent {
 
 	protected final CloudFoundryServer server;
 
-	public ConsoleContent(CloudFoundryServer server, int swtColour, String appName, int instanceIndex) {
+	public CloudFoundryConsoleStream(CloudFoundryServer server, int swtColour, String appName, int instanceIndex) {
 		this.server = server;
 		this.appName = appName;
 		this.instanceIndex = instanceIndex;
@@ -74,7 +74,7 @@ public abstract class ConsoleContent implements IConsoleContent {
 		if (this.outputStream != null && !this.outputStream.isClosed()) {
 			Display.getDefault().syncExec(new Runnable() {
 				public void run() {
-					ConsoleContent.this.outputStream.setColor(Display.getDefault().getSystemColor(swtConsoleColour));
+					CloudFoundryConsoleStream.this.outputStream.setColor(Display.getDefault().getSystemColor(swtConsoleColour));
 				}
 			});
 		}
