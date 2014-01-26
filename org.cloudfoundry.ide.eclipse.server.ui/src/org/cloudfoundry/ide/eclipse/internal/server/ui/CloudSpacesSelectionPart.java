@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     GoPivotal, Inc. - initial API and implementation
+ *     Pivotal Software, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
@@ -42,7 +42,7 @@ import org.eclipse.wst.server.ui.wizard.IWizardHandle;
 
 public class CloudSpacesSelectionPart extends UIPart {
 
-	private static final String DEFAULT_DESCRIPTION = "Select an organization and space";
+	private static final String DEFAULT_DESCRIPTION = "Select an organization and space.";
 
 	private TreeViewer orgsSpacesViewer;
 
@@ -149,7 +149,11 @@ public class CloudSpacesSelectionPart extends UIPart {
 
 			if (orgInput.isEmpty()) {
 				notifyStatusChange(CloudFoundryPlugin
-						.getErrorStatus("Failed to resolve list of organizations and spaces from the server. Please check your connection or credentials."));
+						.getStatus(
+								"Please check your credentials or connection if list of organizations and spaces remains empty.",
+								IStatus.INFO));
+			} else {
+				notifyStatusChange(CloudFoundryPlugin.getStatus(DEFAULT_DESCRIPTION, IStatus.OK));
 			}
 
 		}
