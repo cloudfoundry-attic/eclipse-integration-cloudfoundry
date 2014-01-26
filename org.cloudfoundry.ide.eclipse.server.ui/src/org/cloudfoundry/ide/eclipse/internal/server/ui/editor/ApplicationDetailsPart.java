@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     GoPivotal, Inc. - initial API and implementation
+ *     Pivotal Software, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
@@ -39,7 +39,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryEditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DebugApplicationEditorAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.RemoveServicesFromApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ShowConsoleAction;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ShowConsoleEditorAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.StartStopApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateApplicationMemoryAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateInstanceCountAction;
@@ -1338,7 +1338,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			if (stats != null) {
 				try {
 					CloudFoundryApplicationModule appModule = getExistingApplication();
-					manager.add(new ShowConsoleAction(cloudServer, appModule, Integer.parseInt(stats.getId())));
+					manager.add(new ShowConsoleEditorAction(cloudServer, appModule, Integer.parseInt(stats.getId())));
 				}
 				catch (CoreException ce) {
 					logApplicationModuleFailureError("Unable to generate application instances context menu");

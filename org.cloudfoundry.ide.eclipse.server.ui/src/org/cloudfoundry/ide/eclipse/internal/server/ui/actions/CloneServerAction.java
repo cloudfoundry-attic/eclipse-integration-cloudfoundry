@@ -1,17 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2013 GoPivotal, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     GoPivotal, Inc. - initial API and implementation
+ *     Pivotal Software, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.OrgsAndSpacesWizard;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -35,7 +36,7 @@ public class CloneServerAction extends AbstractCloudFoundryServerAction {
 		return "Cloning serve to selected space";
 	}
 
-	public void run(IAction action) {
+	public void doRun(final CloudFoundryServer cloudServer, CloudFoundryApplicationModule appModule, IAction action) {
 		final Shell shell = activePart != null && activePart.getSite() != null ? activePart.getSite().getShell()
 				: CloudUiUtil.getShell();
 
@@ -43,7 +44,6 @@ public class CloneServerAction extends AbstractCloudFoundryServerAction {
 			UIJob job = new UIJob(getJobName()) {
 
 				public IStatus runInUIThread(IProgressMonitor monitor) {
-					CloudFoundryServer cloudServer = getCloudFoundryServer();
 					OrgsAndSpacesWizard wizard = new OrgsAndSpacesWizard(cloudServer);
 					WizardDialog dialog = new WizardDialog(shell, wizard);
 					dialog.open();
@@ -60,10 +60,9 @@ public class CloneServerAction extends AbstractCloudFoundryServerAction {
 
 	}
 
-	protected void serverSelectionChanged(IAction action) {
-
-		action.setEnabled(getCloudFoundryServer() != null);
-
+	protected void serverSelectionChanged(CloudFoundryServer server, CloudFoundryApplicationModule appModule,
+			IAction action) {
+		action.setEnabled(server != null);
 	}
 
 	public void setActivePart(IAction action, IWorkbenchPart activePart) {

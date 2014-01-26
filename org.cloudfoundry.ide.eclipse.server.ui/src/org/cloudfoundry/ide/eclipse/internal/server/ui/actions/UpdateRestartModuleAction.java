@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     GoPivotal, Inc. - initial API and implementation
+ *     Pivotal Software, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
@@ -40,12 +40,13 @@ public class UpdateRestartModuleAction extends AbstractCloudFoundryServerAction 
 		return "Unable to update and restart module";
 	}
 
-	public void run(IAction action) {
+	protected void doRun(CloudFoundryServer server, CloudFoundryApplicationModule appModule, IAction action) {
+		final CloudFoundryServer cloudServer = server;
+		final CloudFoundryApplicationModule selectedModule = appModule;
 		Job job = new Job(getJobName()) {
 
 			protected IStatus run(IProgressMonitor monitor) {
-				CloudFoundryServer cloudServer = (CloudFoundryServer) selectedServer.loadAdapter(
-						CloudFoundryServer.class, null);
+
 				try {
 					IModule[] modules = new IModule[] { selectedModule };
 					// FIXNS: Disabled debug for CF 1.5.0 until v2 supports
@@ -81,19 +82,20 @@ public class UpdateRestartModuleAction extends AbstractCloudFoundryServerAction 
 	public void setActivePart(IAction action, IWorkbenchPart targetPart) {
 	}
 
-	protected void serverSelectionChanged(IAction action) {
-		if (selectedServer != null && (selectedServer.getServerState() == IServer.STATE_STARTED)) {
-			CloudFoundryApplicationModule cloudModule = getSelectedCloudAppModule();
-			if (cloudModule != null) {
-				int state = cloudModule.getState();
+	protected void serverSelectionChanged(CloudFoundryServer cloudServer, CloudFoundryApplicationModule appModule,
+			IAction action) {
+
+		if (cloudServer != null && (cloudServer.getServer().getServerState() == IServer.STATE_STARTED)) {
+			if (appModule != null) {
+				int state = appModule.getState();
 				// Do not enable the action if the associated module project is
 				// not accessible, as users shoudln't
 				// be able to modify files within Eclipse if the project is not
 				// accessible (i.e it is not open and writable in the workspace)
 				if (state == IServer.STATE_STARTED
-						&& !cloudModule.isExternal()
+						&& !appModule.isExternal()
 						&& CloudFoundryProperties.isModuleProjectAccessible.testProperty(
-								new IModule[] { selectedModule }, getCloudFoundryServer())) {
+								new IModule[] { appModule.getLocalModule() }, cloudServer)) {
 					action.setEnabled(true);
 					return;
 				}

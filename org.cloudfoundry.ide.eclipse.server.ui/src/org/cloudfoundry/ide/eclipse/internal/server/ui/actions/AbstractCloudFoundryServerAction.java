@@ -1,15 +1,16 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 GoPivotal, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     GoPivotal, Inc. - initial API and implementation
+ *     Pivotal Software, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.jface.action.IAction;
@@ -20,16 +21,19 @@ import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.ui.IServerModule;
 
-
 public abstract class AbstractCloudFoundryServerAction implements IObjectActionDelegate {
 
-	protected IModule selectedModule;
+	private IModule selectedModule;
 
-	protected IServer selectedServer;
+	private IServer selectedServer;
 
 	public void selectionChanged(IAction action, ISelection selection) {
 		selectedServer = getSelectedServer(selection);
-		serverSelectionChanged(action);
+		CloudFoundryServer cloudServer = selectedServer != null ? (CloudFoundryServer) selectedServer.loadAdapter(
+				CloudFoundryServer.class, null) : null;
+		CloudFoundryApplicationModule appModule = cloudServer != null && selectedModule != null ? cloudServer
+				.getExistingCloudModule(selectedModule) : null;
+		serverSelectionChanged(cloudServer, appModule, action);
 	}
 
 	/**
@@ -37,10 +41,35 @@ public abstract class AbstractCloudFoundryServerAction implements IObjectActionD
 	 * server selection, like enabling/disabling the action.
 	 * @param action
 	 */
-	protected void serverSelectionChanged(IAction action) {
+	protected void serverSelectionChanged(CloudFoundryServer cloudServer, CloudFoundryApplicationModule appModule,
+			IAction action) {
 		// Do nothing
 	}
+
+	public void run(IAction action) {
+
 	
+		String error = null;
+		CloudFoundryServer cloudServer = selectedServer != null ? (CloudFoundryServer) selectedServer.loadAdapter(
+				CloudFoundryServer.class, null) : null;
+		CloudFoundryApplicationModule appModule = cloudServer != null && selectedModule != null ? cloudServer
+				.getExistingCloudModule(selectedModule) : null;
+		if (selectedServer == null) {
+			error = "No Cloud Foundry server instance available to run the selected action.";
+		}
+
+		if (error == null) {
+			doRun(cloudServer, appModule, action);
+		}
+		else {
+			error += " - " + action.getText();
+			CloudFoundryPlugin.logError(error);
+		}
+	}
+
+	abstract void doRun(CloudFoundryServer cloudServer, CloudFoundryApplicationModule appModule, IAction action);
+
+
 
 	protected IServer getSelectedServer(ISelection selection) {
 		IServer server = null;
@@ -62,22 +91,6 @@ public abstract class AbstractCloudFoundryServerAction implements IObjectActionD
 			}
 		}
 		return server;
-	}
-
-	protected CloudFoundryServer getCloudFoundryServer() {
-		if (selectedServer == null) {
-			return null;
-		}
-		return (CloudFoundryServer) selectedServer.loadAdapter(CloudFoundryServer.class, null);
-
-	}
-
-	protected CloudFoundryApplicationModule getSelectedCloudAppModule() {
-		CloudFoundryServer cloudServer = getCloudFoundryServer();
-		if (cloudServer == null || selectedModule == null) {
-			return null;
-		}
-		return cloudServer.getExistingCloudModule(selectedModule);
 	}
 
 }

@@ -172,13 +172,14 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 			if (errorMessage != null) {
 				throw new CoreException(CloudFoundryPlugin.getErrorStatus(errorMessage, ce));
 			}
-			else {
-				throw ce;
-			}
 		}
 
 		if (errorMessage == null) {
 			errorMessage = getMessageOnRetry(ce, attemptsRemaining);
+		}
+		
+		if (maxReached && errorMessage == null) {
+			throw ce;
 		}
 
 		return errorMessage;

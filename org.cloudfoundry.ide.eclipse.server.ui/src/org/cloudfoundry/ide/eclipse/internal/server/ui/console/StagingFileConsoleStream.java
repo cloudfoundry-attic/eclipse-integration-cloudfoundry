@@ -73,11 +73,11 @@ public class StagingFileConsoleStream extends FileConsoleStream {
 		// Schedule next logs after too many failed attempts to fetch staging
 		// logs
 		scheduleNextContent = true;
-		return null;
+		return "Failed to fetch staging contents from: " + getFilePath();
 	}
 
 	protected int getMaximumErrorCount() {
-		return 100;
+		return 60;
 	}
 
 	/*
@@ -98,16 +98,23 @@ public class StagingFileConsoleStream extends FileConsoleStream {
 		// staging
 		if (!scheduleNextContent) {
 
-			// Note that the first attempt to stream is not a "retry" attempt to stream, therefore
+			// Note that the first attempt to stream is not a "retry" attempt to
+			// stream, therefore
 			// the first RETRY attempt will always be maximum error count - 1.
 			if (currentAttemptsRemaining == getMaximumErrorCount() - 1) {
-				return "Waiting for the application to start...";
+				return "Waiting for application to start...";
 			}
 			else if (currentAttemptsRemaining > 0) {
 				// Append progress dot
-				return ".";
-			} else if (currentAttemptsRemaining == 0) {
-				return "Still waiting for the applicaiton to start...";
+				if (currentAttemptsRemaining % 20 == 0) {
+					return "\n.";
+				}
+				else {
+					return ".";
+				}
+			}
+			else if (currentAttemptsRemaining == 0) {
+				return "Still waiting for applicaiton to start...";
 			}
 		}
 		return null;
