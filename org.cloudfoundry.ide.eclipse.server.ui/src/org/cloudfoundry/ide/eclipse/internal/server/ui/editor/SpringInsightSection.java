@@ -27,7 +27,7 @@ public class SpringInsightSection extends ServerEditorSection {
 
 	public void createSection(Composite parent) {
 
-		// Don't create section if CF server is not the VMware CF server
+		// Don't create section if CF server is not the Pivotal CF server
 		if (!CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(getCloudFoundryServer())) {
 			return;
 		}
