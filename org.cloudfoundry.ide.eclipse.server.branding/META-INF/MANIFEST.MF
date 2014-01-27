@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Cloud Foundry Integration for Eclipse
 Bundle-SymbolicName: org.cloudfoundry.ide.eclipse.server.branding;singleton:=true
 Bundle-Version: 1.6.0.qualifier
-Bundle-Vendor: GoPivotal, Inc.
+Bundle-Vendor: Pivotal Software, Inc.
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.eclipse.ui,
