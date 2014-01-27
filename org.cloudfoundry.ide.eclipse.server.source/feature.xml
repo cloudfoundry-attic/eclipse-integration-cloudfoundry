@@ -54,7 +54,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.cloudfoundry.ide.eclipse.server.standalone"
+         id="org.cloudfoundry.ide.eclipse.server.standalone.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
