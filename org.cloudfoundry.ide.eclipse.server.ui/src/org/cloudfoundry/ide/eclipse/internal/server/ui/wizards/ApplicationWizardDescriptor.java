@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,7 +15,7 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
-import org.springframework.util.Assert;
+import org.eclipse.core.runtime.Assert;
 
 /**
  * 
@@ -37,7 +37,7 @@ public class ApplicationWizardDescriptor {
 	private boolean persistDeploymentInfo;
 
 	public ApplicationWizardDescriptor(ApplicationDeploymentInfo deploymentInfo) {
-		Assert.notNull(deploymentInfo);
+		Assert.isNotNull(deploymentInfo);
 
 		this.deploymentInfo = deploymentInfo;
 	}

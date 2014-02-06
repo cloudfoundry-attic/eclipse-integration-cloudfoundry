@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -39,6 +39,7 @@ public abstract class AbstractWaitWithProgressJob<T> {
 	/**
 	 * To continue waiting, return an invalid result that is checked as invalid
 	 * by the isValid(...) API
+	 * @param monitor may be  null
 	 * @return
 	 */
 	abstract protected T runInWait(IProgressMonitor monitor) throws CoreException;
@@ -57,7 +58,7 @@ public abstract class AbstractWaitWithProgressJob<T> {
 	 * only re-throw the last exception that was thrown. Note that the result
 	 * may still be null.
 	 * 
-	 * @param monitor
+	 * @param monitor it may be null
 	 * @return
 	 * @throws CoreException
 	 */
@@ -67,7 +68,11 @@ public abstract class AbstractWaitWithProgressJob<T> {
 
 		T result = null;
 		int i = 0;
-		while (i < attempts && !monitor.isCanceled()) {
+		while (i < attempts) {
+			
+			if (monitor != null && monitor.isCanceled()) {
+				break;
+			}
 			boolean reattempt = false;
 			// Two conditions which results in a reattempt:
 			// 1. Result is not valid

@@ -18,7 +18,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.springframework.http.HttpStatus;
 
 /**
  * Streams file content to the Cloud Foundry console. It continues to check for
@@ -102,7 +101,7 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 			// not
 			// found for instance
 			if (cfe != null
-					&& (HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE.equals(cfe.getStatusCode()) || CloudErrorUtil
+					&& (CloudErrorUtil.isRequestedFileRangeNotSatisfiable(cfe) || CloudErrorUtil
 							.isFileNotFoundForInstance(cfe))) {
 				// These types of errors are "valid" meaning they don't indicate
 				// a problem. Return null to let the caller know that there is

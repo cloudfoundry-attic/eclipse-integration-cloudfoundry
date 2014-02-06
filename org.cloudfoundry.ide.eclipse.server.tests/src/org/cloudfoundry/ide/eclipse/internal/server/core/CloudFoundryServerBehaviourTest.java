@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,9 +28,11 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
-import org.junit.Assert;
 
 /**
+ * 
+ * Each individual test creates only ONE application module, and checks that
+ * only one module exists in the server instance.
  * @author Steffen Pingel
  * @author Nieraj Singh
  */
@@ -49,6 +50,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 				return serverState[0] == IServer.STATE_STARTED;
 			}
 
+			@Override
 			protected boolean shouldRetryOnError(Throwable t) {
 				return true;
 			}
@@ -59,38 +61,47 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		assertEquals(Collections.emptyList(), Arrays.asList(server.getModules()));
 	}
 
-	// XXX this test fails on the build server for an unknown reason
 	public void testStartModule() throws Exception {
-		harness.createProjectAndAddModule("dynamic-webapp");
+		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
 
+		// There should only be one module
 		IModule[] modules = server.getModules();
-		assertEquals("Expected dynamic-webapp module, got " + Arrays.toString(modules), 1, modules.length);
-		int moduleState = server.getModulePublishState(modules);
-		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
 		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
-		moduleState = server.getModuleState(modules);
-		assertEquals(IServer.STATE_STARTED, moduleState);
-		moduleState = server.getModulePublishState(modules);
-		// assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
-		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
-		List<String> uris = appModule.getApplication().getUris();
-		assertEquals(Collections.singletonList(harness.getUrl("dynamic-webapp")), uris);
-
-		// wait 1s until app is actually started
-		URI uri = new URI("http://" + harness.getUrl("dynamic-webapp") + "/index.html");
-		assertEquals("Hello World.", getContent(uri, appModule.getApplication(), serverBehavior));
+		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
+		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
 	}
 
-	// XXX this test fails on the build server for an unknown reason
-	public void testStartModuleInvalidToken() throws Exception {
-		harness.createProjectAndAddModule("dynamic-webapp");
-
+	public void testServerBehaviourIsApplicationRunning() throws Exception {
+		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
 		IModule[] modules = server.getModules();
-		assertEquals("Expected dynamic-webapp module, got " + Arrays.toString(modules), 1, modules.length);
-		int moduleState = server.getModulePublishState(modules);
-		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
+
+		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
+
+		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
+		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
+
+		// Verify that the Server Behaviour API to check that an app is
+		// validates against
+		// expected conditions
+
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
+
+		// Verify that the server behaviour API to determine that an app is
+		// running tests correctly
+		assertTrue(serverBehavior.isApplicationRunning(appModule, new NullProgressMonitor()));
+
+		// The following are the expected conditions for the server behaviour to
+		// determine that the app is running
+		assertTrue(appModule.getState() == IServer.STATE_STARTED);
+		assertNotNull(serverBehavior.getApplicationStats(DYNAMIC_WEBAPP_NAME, new NullProgressMonitor()));
+		assertNotNull(serverBehavior.getInstancesInfo(DYNAMIC_WEBAPP_NAME, new NullProgressMonitor()));
+	}
+
+	public void testStartModuleInvalidToken() throws Exception {
+		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
+		IModule[] modules = server.getModules();
 
 		try {
 			serverBehavior.resetClient();
@@ -111,30 +122,17 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		serverBehavior.resetClient();
 		getClient();
 
-		// moduleState = server.getModuleState(modules);
-		// assertEquals(IServer.STATE_STARTED, moduleState);
-		// moduleState = server.getModulePublishState(modules);
-		// // assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
-		//
-		// ApplicationModule appModule = cloudServer.getApplication(modules[0]);
-		// List<String> uris = appModule.getApplication().getUris();
-		// assertEquals(Collections.singletonList(harness.getUrl("dynamic-webapp")),
-		// uris);
-		//
-		// // wait 1s until app is actually started
-		// URI uri = new URI("http://" + harness.getUrl("dynamic-webapp") +
-		// "/index.html");
-		// assertEquals("Hello World.", getContent(uri));
+		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
+
+		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
+		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
+
 	}
 
 	public void testStartModuleInvalidPassword() throws Exception {
 
-		harness.createProjectAndAddModule("dynamic-webapp");
-
+		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
 		IModule[] modules = server.getModules();
-		assertEquals("Expected dynamic-webapp module, got " + Arrays.toString(modules), 1, modules.length);
-		int moduleState = server.getModulePublishState(modules);
-		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
 		try {
 			serverBehavior.resetClient();
@@ -152,28 +150,30 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 			assertEquals("403 Error requesting access token.", e.getMessage());
 		}
 
-		// Set the client again
 		serverBehavior.resetClient();
 		getClient();
+
+		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
+
+		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
+		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
 
 	}
 
 	public void testDeleteModuleExternally() throws Exception {
-		harness.createProjectAndAddModule("dynamic-webapp");
-
+		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
 		IModule[] modules = server.getModules();
+
 		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 
-		// wait 1s until app is actually started
-		URI uri = new URI("http://" + harness.getUrl("dynamic-webapp") + "/index.html");
-		assertEquals("Hello World.",
-				getContent(uri, serverBehavior.getApplication("dynamic-webapp", null), serverBehavior));
+		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
+		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
 
 		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
 		boolean found = false;
 
 		for (CloudApplication application : applications) {
-			if (application.getName().equals("dynamic-webapp")) {
+			if (application.getName().equals(DYNAMIC_WEBAPP_NAME)) {
 				found = true;
 				break;
 			}
@@ -184,14 +184,14 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 				.getNonUAACloudFoundryOperations(CloudFoundryTestFixture.PIVOTAL_CF.getCredentials().userEmail,
 						CloudFoundryTestFixture.PIVOTAL_CF.getCredentials().password, url);
 		client.login();
-		client.deleteApplication("dynamic-webapp");
+		client.deleteApplication(DYNAMIC_WEBAPP_NAME);
 
 		serverBehavior.refreshModules(new NullProgressMonitor());
 		applications = serverBehavior.getApplications(new NullProgressMonitor());
 		found = false;
 
 		for (CloudApplication application : applications) {
-			if (application.getName().equals("dynamic-webapp")) {
+			if (application.getName().equals(DYNAMIC_WEBAPP_NAME)) {
 				found = true;
 				break;
 			}
@@ -205,27 +205,13 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
 		serverBehavior = (CloudFoundryServerBehaviour) server.loadAdapter(CloudFoundryServerBehaviour.class, null);
 
-		harness.createProjectAndAddModule("dynamic-webapp");
-
+		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
 		IModule[] modules = server.getModules();
-		assertEquals("Expected dynamic-webapp module, got " + Arrays.toString(modules), 1, modules.length);
-		int moduleState = server.getModulePublishState(modules);
-		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
 		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 
-		moduleState = server.getModuleState(modules);
-		assertEquals(IServer.STATE_STARTED, moduleState);
-		moduleState = server.getModulePublishState(modules);
-		// assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
-
-		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
-		List<String> uris = appModule.getApplication().getUris();
-		assertEquals(Collections.singletonList(harness.getUrl("dynamic-webapp")), uris);
-
-		// wait 1s until app is actually started
-		URI uri = new URI("http://" + harness.getUrl("dynamic-webapp") + "/index.html");
-		assertEquals("Hello World.", getContent(uri, appModule.getApplication(), serverBehavior));
+		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
+		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
 
 		serverBehavior.refreshModules(new NullProgressMonitor());
 		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
@@ -239,107 +225,6 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		}
 		assertTrue(found);
 	}
-
-	public void testStartModuleWithUsedUrl() throws Exception {
-		getClient().deleteAllApplications();
-
-		harness.createProjectAndAddModule("dynamic-webapp");
-
-		IModule[] modules = server.getModules();
-		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
-
-		CloudFoundryApplicationModule module = cloudServer.getExistingCloudModule(modules[0]);
-
-		// wait 1s until app is actually started
-		URI uri = new URI("http://" + harness.getUrl("dynamic-webapp") + "/index.html");
-		assertEquals("Hello World.", getContent(uri, module.getApplication(), serverBehavior));
-
-		Assert.assertNull(module.getErrorMessage());
-
-		harness = CloudFoundryTestFixture.current("dynamic-webapp-with-appclient-module",
-				"dynamic-webapp.cloudfoundry.com").harness();
-		server = harness.createServer();
-		cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
-		serverBehavior = (CloudFoundryServerBehaviour) server.loadAdapter(CloudFoundryServerBehaviour.class, null);
-
-		harness.createProjectAndAddModule("dynamic-webapp-with-appclient-module");
-		modules = server.getModules();
-
-		// FIXME: once we verify what the proper behavior is, we should fail
-		// appropriately
-		// try {
-		// serverBehavior.deployOrStartModule(modules, true, null);
-		// Assert.fail("Expects CoreException due to duplicate URL");
-		// }
-		// catch (CoreException e) {
-		// }
-		//
-		// module = cloudServer.getApplication(modules[0]);
-		// Assert.assertNotNull(module.getErrorMessage());
-		// try {
-		// serverBehavior.getClient().deleteApplication("dynamic-webapp-with-appclient-module");
-		// }
-		// catch (Exception e) {
-		//
-		// }
-	}
-
-	// This case should never pass since the wizard should guard against
-	// duplicate ID
-	// public void testStartModuleWithDuplicatedId() throws Exception {
-	// harness =
-	// CloudFoundryTestFixture.current("dynamic-webapp-test").harness();
-	// server = harness.createServer();
-	// cloudServer = (CloudFoundryServer)
-	// server.loadAdapter(CloudFoundryServer.class, null);
-	// serverBehavior = (CloudFoundryServerBehaviour)
-	// server.loadAdapter(CloudFoundryServerBehaviour.class, null);
-	//
-	// harness.createProjectAndAddModule("dynamic-webapp");
-	//
-	// IModule[] modules = server.getModules();
-	// serverBehavior.deployOrStartModule(modules, true, null);
-	//
-	// // wait 1s until app is actually started
-	// URI uri = new URI("http://" + harness.getUrl("dynamic-webapp") +
-	// "/index.html");
-	// assertEquals("Hello World.", getContent(uri));
-	//
-	// serverBehavior.refreshModules(new NullProgressMonitor());
-	// List<CloudApplication> applications = serverBehavior.getApplications(new
-	// NullProgressMonitor());
-	// boolean found = false;
-	//
-	// for (CloudApplication application : applications) {
-	// if (application.getName().equals("dynamic-webapp-test")) {
-	// found = true;
-	// }
-	// }
-	//
-	// Assert.assertTrue(found);
-	//
-	// harness.createProjectAndAddModule("dynamic-webapp-with-appclient-module");
-	//
-	// modules = server.getModules();
-	// serverBehavior.deployOrStartModule(modules, true, null);
-	//
-	// // wait 1s until app is actually started
-	// uri = new URI("http://" +
-	// harness.getUrl("dynamic-webapp-with-appclient-module") + "/index.html");
-	// assertEquals("Hello World.", getContent(uri));
-	//
-	// serverBehavior.refreshModules(new NullProgressMonitor());
-	// applications = serverBehavior.getApplications(new NullProgressMonitor());
-	// found = false;
-	//
-	// for (CloudApplication application : applications) {
-	// if (application.getName().equals("dynamic-webapp-test")) {
-	// found = true;
-	// }
-	// }
-	//
-	// Assert.assertTrue(found);
-	// }
 
 	@Override
 	protected Harness createHarness() {

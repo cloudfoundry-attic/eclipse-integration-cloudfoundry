@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,10 +14,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryDebugTest.AbstractDebugLaunchAppHandler;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryDebugTest.AbstractLaunchAppHandler;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryDebugTest.CreateAppAndDebug;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryDebugTest.RestartInDebugHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;

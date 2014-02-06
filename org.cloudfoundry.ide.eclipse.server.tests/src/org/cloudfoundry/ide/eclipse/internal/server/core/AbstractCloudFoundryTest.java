@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,22 +11,20 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
-import org.cloudfoundry.client.lib.NotFinishedStagingException;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.AbstractWaitWithProgressJob;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.WaitApplicationToStartOp;
@@ -40,6 +38,8 @@ import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 
 public abstract class AbstractCloudFoundryTest extends TestCase {
+
+	static final String DYNAMIC_WEBAPP_NAME = "basic-dynamic-webapp";
 
 	protected Harness harness;
 
@@ -84,76 +84,49 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		harness.dispose();
 	}
 
-	protected String getContent(final URI uri, final CloudApplication app, final CloudFoundryServerBehaviour behaviour)
+	protected void assertIsApplicationRunningServerBehaviour(IModule module, CloudFoundryServerBehaviour serverBehaviour)
 			throws Exception {
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
-		String value = null;
+		int attempts = 5;
+		long wait = 2000;
+		boolean running = false;
+		for (; !running && attempts > 0; attempts--) {
+			running = serverBehaviour.isApplicationRunning(appModule, new NullProgressMonitor());
 
-		try {
-
-			value = new AbstractWaitWithProgressJob<String>(5, 2000) {
-
-				boolean stagingCompleted = false;
-
-				@Override
-				protected String runInWait(IProgressMonitor monitor) throws CoreException {
-					// InputStream in = uri.toURL().openStream();
-					CloudFoundryPlugin.trace("Probing " + uri);
-
-					try {
-						if (!stagingCompleted) {
-							behaviour.getInstancesInfo(app.getName(), monitor);
-							stagingCompleted = true;
-						}
-
-						BufferedReader reader = new BufferedReader(new InputStreamReader(download(uri,
-								new NullProgressMonitor())));
-						try {
-							String val = reader.readLine();
-							return val;
-						}
-						finally {
-							if (reader != null) {
-								reader.close();
-							}
-						}
-					}
-					catch (NotFinishedStagingException t) {
-						throw new CoreException(CloudFoundryPlugin.getErrorStatus(t));
-					}
-					catch (IOException t) {
-						throw new CoreException(CloudFoundryPlugin.getErrorStatus(t));
-					}
+			if (!running) {
+				try {
+					Thread.sleep(wait);
 				}
-
-				// Set it to fix build errors that fail because it takes too
-				// long to
-				// get a result
-				protected boolean shouldRetryOnError(Throwable t) {
-					if (t instanceof CoreException) {
-						Throwable cause = ((CoreException) t).getCause();
-						return cause instanceof NotFinishedStagingException || cause instanceof IOException;
-					}
-					return false;
+				catch (InterruptedException e) {
 
 				}
-
-			}.run(new NullProgressMonitor());
-
-		}
-		catch (CoreException ce) {
-
-			if (ce.getCause() instanceof FileNotFoundException) {
-				AssertionFailedError e = new AssertionFailedError("Failed to download " + uri
-						+ " within 3 min: 404 not found");
-				e.initCause(ce.getCause());
-				CloudFoundryPlugin.trace("Not found: " + uri);
 			}
 
-			throw ce;
 		}
 
-		return value;
+		if (!running) {
+			throw CloudErrorUtil.toCoreException("Application has not started after waiting for (ms): "
+					+ (wait * attempts) + ". Unable to fetch content from application URL");
+		}
+	}
+
+	protected String getContent(final URI uri, IModule module, CloudFoundryServerBehaviour behaviour) throws Exception {
+
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
+		// wait for app to be running before fetching content
+		assertIsApplicationRunningServerBehaviour(appModule, behaviour);
+
+		BufferedReader reader = new BufferedReader(new InputStreamReader(download(uri, new NullProgressMonitor())));
+		try {
+			String val = reader.readLine();
+			return val;
+		}
+		finally {
+			if (reader != null) {
+				reader.close();
+			}
+		}
 
 	}
 
@@ -166,18 +139,29 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	abstract protected Harness createHarness();
 
 	protected CloudApplication createAndAssertTestApp() throws Exception {
-		return createWebApplication("dynamic-webapp");
+		return createDefaultWebApplication(DYNAMIC_WEBAPP_NAME);
 	}
 
 	// Utility methods
-	protected CloudApplication createWebApplication(String appName) throws Exception {
+	protected CloudApplication createDefaultWebApplication(String appName) throws Exception {
 
 		harness.createProjectAndAddModule(appName);
 
 		IModule module = getModule(appName);
-		CloudApplication cloudApplication = deployAndStartModule(module);
+		CloudApplication cloudApplication = deployAndStartModule(module, appName);
 		return cloudApplication;
+	}
 
+	protected void assertCreateApplication(String appName) throws Exception {
+		harness.createProjectAndAddModule(appName);
+
+		IModule[] modules = server.getModules();
+		assertEquals(
+				"Expected only 1 web application module created by local Cloud server instance, but got "
+						+ Arrays.toString(modules) + ". Modules from previous deployments may be present.", 1,
+				modules.length);
+		int moduleState = server.getModulePublishState(modules);
+		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 	}
 
 	protected void assertStartApplication(CloudApplication cloudApplication) throws Exception {
@@ -226,6 +210,27 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		assertFalse(found);
 	}
 
+	protected void assertApplicationIsRunning(IModule[] modules, String appName) throws Exception {
+		int moduleState = server.getModuleState(modules);
+		assertEquals(IServer.STATE_STARTED, moduleState);
+
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
+		assertNotNull("No Cloud Application mapping in Cloud module. Failed to refresh deployed application",
+				appModule.getApplication());
+
+		assertTrue(serverBehavior.isApplicationRunning(appModule, new NullProgressMonitor()));
+	}
+
+	protected void assertWebApplicationURL(IModule[] modules, String appName) throws Exception {
+
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
+		assertNotNull("No Cloud Application mapping in Cloud module. Failed to refresh deployed application",
+				appModule.getApplication());
+
+		List<String> uris = appModule.getApplication().getUris();
+		assertEquals(Collections.singletonList(harness.getUrl(appName)), uris);
+	}
+
 	/**
 	 * 
 	 * @param appName
@@ -241,10 +246,10 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		}
 	}
 
-	protected CloudApplication deployAndStartModule(IModule module) throws CoreException {
+	protected CloudApplication deployAndStartModule(IModule module, String appName) throws Exception {
 		serverBehavior.startModuleWaitForDeployment(new IModule[] { module }, null);
 
-		// wait 1s until app is actually started
+		assertApplicationIsRunning(new IModule[] { module }, appName);
 		return getCloudApplication(module);
 	}
 

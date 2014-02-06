@@ -2,7 +2,7 @@
 <?eclipse version="3.4"?>
 <!--
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -21,7 +21,7 @@
  	        vendor="Pivotal"
             class="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerRuntime">
             <moduleType types="wst.web" versions="1.0" />
-         	<moduleType types="jst.web" versions="2.2, 2.3, 2.4, 2.5"/>
+         	<moduleType types="jst.web" versions="2.2, 2.3, 2.4, 2.5, 3.0"/>
          	<moduleType types="jst.utility" versions="1.0"/>
 		</runtimeType>
 	</extension>
@@ -74,7 +74,7 @@
 			<runtime-component
          id="org.cloudfoundry.cloudfoundryserver.test"
          version="1.0"/>
-			<facet id="jst.web" version="2.2,2.3,2.4,2.5"/>
+			<facet id="jst.web" version="2.2,2.3,2.4,2.5,3.0"/>
       		<facet id="jst.utility" version="1.0"/>
 			<facet id="grails.app" version="1.0"/>
 		</supported>

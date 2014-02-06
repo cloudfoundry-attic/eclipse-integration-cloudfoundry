@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -28,6 +28,8 @@ import org.springframework.web.client.RestClientException;
  * 
  */
 public class CloudErrorUtil {
+
+	private static final String ERROR_UNKNOWN = "Unknown Cloud Foundry error";
 
 	private CloudErrorUtil() {
 		// Util class
@@ -133,6 +135,10 @@ public class CloudErrorUtil {
 		return false;
 	}
 
+	public static boolean isRequestedFileRangeNotSatisfiable(CloudFoundryException cfe) {
+		return cfe != null && HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE.equals(cfe.getStatusCode());
+	}
+
 	/**
 	 * 
 	 * @param e to check if it is a Bad Request 400 HTTP Error.
@@ -223,10 +229,26 @@ public class CloudErrorUtil {
 	}
 
 	public static CoreException toCoreException(String message) {
+		return toCoreException(message, null);
+	}
+
+	public static CoreException toCoreException(String message, Throwable error) {
 		if (message == null) {
-			message = "Unknown Cloud Foundry framework error.";
+			message = ERROR_UNKNOWN;
 		}
-		return new CoreException(CloudFoundryPlugin.getErrorStatus(message));
+		if (error != null) {
+			if (error.getMessage() != null) {
+				message += " - " + error.getMessage();
+			}
+			return new CoreException(CloudFoundryPlugin.getErrorStatus(message, error));
+		}
+		else {
+			return new CoreException(CloudFoundryPlugin.getErrorStatus(message));
+		}
+	}
+
+	public static String getCloudFoundryErrorMessage(CloudFoundryException cfe) {
+		return cfe.getMessage();
 	}
 
 }

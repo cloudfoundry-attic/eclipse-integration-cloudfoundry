@@ -115,6 +115,8 @@ import org.springframework.web.client.RestClientException;
 @SuppressWarnings("restriction")
 public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
+	private static final String ERROR_NO_CLOUD_APPLICATION_FOUND = "No cloud module specified when attempting to update application instance stats.";
+
 	private static String ERROR_RESULT_MESSAGE = " - Unable to deploy or start application";
 
 	private static final String PRE_STAGING_MESSAGE = "Staging application";
@@ -1419,19 +1421,31 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			CloudFoundryApplicationModule appModule = getCloudFoundryServer().getExistingCloudModule(module);
 
 			if (appModule != null) {
-				try {
-					// Update the CloudApplication in the cloud module.
-					CloudApplication application = getApplication(appModule.getDeployedApplicationName(), monitor);
-					appModule.setCloudApplication(application);
-				}
-				catch (CoreException e) {
-					// application is not deployed to server yet
-				}
-
-				internalUpdateApplicationInstanceStats(appModule, monitor);
+				internalRefreshAppStats(appModule, monitor);
 			}
-
 		}
+	}
+
+	/**
+	 * True if the application is running. False otherwise. Note that an
+	 * application refresh is performed on the cloud module, therefore the
+	 * mapping between the cloud application and the module will always be
+	 * updated with this call.
+	 * @param appModule
+	 * @param monitor
+	 * @return true if application is running. False otherwise.
+	 */
+	public boolean isApplicationRunning(CloudFoundryApplicationModule appModule, IProgressMonitor monitor) {
+		try {
+			// Refresh the stats FIRST before checking for the app state, as
+			// stat refresh will upate the cloud application mapping (and
+			// therefore also update the app state)
+			return internalRefreshAppStats(appModule, monitor) && appModule.getState() == IServer.STATE_STARTED;
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		return false;
 	}
 
 	/**
@@ -1442,25 +1456,39 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param monitor
 	 * @throws CoreException error in retrieving application instances stats
 	 * from the server.
+	 * @return true if application stats are refreshed (application is running).
+	 * False is application is not running and stats could not be fetched.
 	 */
-	protected void internalUpdateApplicationInstanceStats(CloudFoundryApplicationModule appModule,
+	protected boolean internalRefreshAppStats(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
+			throws CoreException {
+
+		// Update the CloudApplication in the cloud module.
+		CloudApplication application = getApplication(appModule.getDeployedApplicationName(), monitor);
+		appModule.setCloudApplication(application);
+
+		if (application == null) {
+			throw CloudErrorUtil.toCoreException(ERROR_NO_CLOUD_APPLICATION_FOUND);
+		}
+
+		InstancesInfo info = internalRefreshInstancesInfo(appModule, monitor);
+		ApplicationStats stats = internalRefreshStats(appModule, monitor);
+		return info != null && stats != null;
+	}
+
+	protected ApplicationStats internalRefreshStats(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
+			throws CoreException {
+		ApplicationStats stats = getApplicationStats(appModule.getDeployedApplicationName(), monitor);
+		appModule.setApplicationStats(stats);
+
+		return stats;
+	}
+
+	protected InstancesInfo internalRefreshInstancesInfo(CloudFoundryApplicationModule appModule,
 			IProgressMonitor monitor) throws CoreException {
+		InstancesInfo info = getInstancesInfo(appModule.getDeployedApplicationName(), monitor);
+		appModule.setInstancesInfo(info);
 
-		if (appModule == null) {
-			throw CloudErrorUtil
-					.toCoreException("No cloud module specified when attempting to update application instance stats.");
-		}
-
-		if (appModule.getApplication() != null) {
-			// refresh application stats
-			ApplicationStats stats = getApplicationStats(appModule.getDeployedApplicationName(), monitor);
-			InstancesInfo info = getInstancesInfo(appModule.getDeployedApplicationName(), monitor);
-			appModule.setApplicationStats(stats);
-			appModule.setInstancesInfo(info);
-		}
-		else {
-			appModule.setApplicationStats(null);
-		}
+		return info;
 	}
 
 	public static void validate(String location, String userName, String password, IProgressMonitor monitor)
@@ -1930,7 +1958,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				// Refresh the application instance stats as well
 				try {
-					internalUpdateApplicationInstanceStats(appModule, monitor);
+					internalRefreshAppStats(appModule, monitor);
 				}
 				catch (CoreException e) {
 					// Don't let errors in app instance stats stop the
@@ -1993,7 +2021,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		 * @throws CoreException if error creating the application
 		 */
 		protected void pushApplication(CloudFoundryOperations client, final CloudFoundryApplicationModule appModule,
-				File warFile, ApplicationArchive applicationArchive, IProgressMonitor monitor) throws CoreException {
+				File warFile, ApplicationArchive applicationArchive, final IProgressMonitor monitor)
+				throws CoreException {
 
 			String appName = appModule.getDeploymentInfo().getDeploymentName();
 
@@ -2048,6 +2077,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							public void onCheckResources() {
 
 							}
+
+							public boolean onProgress(String status) {
+								return false;
+							}
 						});
 
 						// Once the application has run, do a clean up of the
@@ -2056,7 +2089,32 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 					}
 					else {
-						client.uploadApplication(appName, applicationArchive);
+						printlnToConsole(appModule, "\nProcessing payload...", false, false, monitor);
+						client.uploadApplication(appName, applicationArchive, new UploadStatusCallback() {
+
+							public void onProcessMatchedResources(int length) {
+
+							}
+
+							public void onMatchedFileNames(Set<String> matchedFileNames) {
+								try {
+									printlnToConsole(appModule, ".", false, false, monitor);
+								}
+								catch (CoreException e) {
+									CloudFoundryPlugin.logError(e);
+								}
+							}
+
+							public void onCheckResources() {
+
+							}
+
+							public boolean onProgress(String status) {
+								return false;
+							}
+						});
+						printlnToConsole(appModule, "\nFINSHED Processing payload...", false, false, monitor);
+
 					}
 				}
 				else {
@@ -2358,19 +2416,23 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	/**
 	 * 
-	 * @param appModule consoles are associated with a particular deployed application. This must not be null.
+	 * @param appModule consoles are associated with a particular deployed
+	 * application. This must not be null.
 	 * @param message
-	 * @param clearConsole true if console should be cleared. False, if message should be tailed to existing content in the console.
-	 * @param runningOperation if it is a message related to an ongoing operation, which will append "..." to the message
+	 * @param clearConsole true if console should be cleared. False, if message
+	 * should be tailed to existing content in the console.
+	 * @param runningOperation if it is a message related to an ongoing
+	 * operation, which will append "..." to the message
 	 * @throws CoreException
 	 */
 	protected void printlnToConsole(CloudFoundryApplicationModule appModule, String message, boolean clearConsole,
-			boolean runningOperation,IProgressMonitor monitor) throws CoreException {
+			boolean runningOperation, IProgressMonitor monitor) throws CoreException {
 		if (runningOperation) {
 			message += "...";
 		}
 		message += '\n';
-		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, clearConsole, false, monitor);
+		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, clearConsole,
+				false, monitor);
 	}
 
 	protected ApplicationArchive getIncrementalPublishArchive(final ApplicationDeploymentInfo deploymentInfo,

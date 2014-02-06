@@ -15,17 +15,17 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 
 public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 
-	public static final String MYSQL_SERVICE_NAME = "mysqlTestService";
+	public static final String SERVICE_NAME = "cfEclipseRegressionTestService";
 
 	public void testCreateAndDeleteMysqlService() throws Exception {
-		CloudService service = createMysqlService();
+		CloudService service = createService();
 		assertServiceExists(service);
 		deleteService(service);
-		assertServiceNotExist(MYSQL_SERVICE_NAME);
+		assertServiceNotExist(SERVICE_NAME);
 	}
 
 	public void testServiceBinding() throws Exception {
-		CloudService service = createMysqlService();
+		CloudService service = createService();
 
 		CloudApplication app = createAndAssertTestApp();
 		assertStopApplication(app);
@@ -37,12 +37,12 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		assertRemoveApplication(app);
 		deleteService(service);
 
-		assertServiceNotExist(MYSQL_SERVICE_NAME);
+		assertServiceNotExist(SERVICE_NAME);
 
 	}
 
 	public void testServiceUnBinding() throws Exception {
-		CloudService service = createMysqlService();
+		CloudService service = createService();
 
 		CloudApplication app = createAndAssertTestApp();
 		assertStopApplication(app);
@@ -58,17 +58,17 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		assertRemoveApplication(app);
 		deleteService(service);
 
-		assertServiceNotExist(MYSQL_SERVICE_NAME);
+		assertServiceNotExist(SERVICE_NAME);
 
 	}
 
 	public void testNoService() throws Exception {
 		// There should be no service with this name. make sure there was proper
 		// tear down
-		assertServiceNotExist(MYSQL_SERVICE_NAME);
+		assertServiceNotExist(SERVICE_NAME);
 	}
 
-	protected CloudService createMysqlService() throws Exception {
-		return createCloudService(MYSQL_SERVICE_NAME, "mysql");
+	protected CloudService createService() throws Exception {
+		return createCloudService(SERVICE_NAME, "mongolab");
 	}
 }

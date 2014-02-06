@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,12 +16,12 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.Wizard;
-import org.springframework.util.Assert;
 
 /**
  * Allows an application's environment variables to be edited and set in the
@@ -38,8 +38,10 @@ public class EnvVarsWizard extends Wizard {
 	private CloudFoundryApplicationEnvVarWizardPage envVarPage;
 
 	public EnvVarsWizard(CloudFoundryServer server, CloudFoundryApplicationModule appModule) {
-		Assert.notNull(server);
-		Assert.notNull(appModule);
+
+		Assert.isNotNull(server);
+		Assert.isNotNull(appModule);
+
 		this.cloudServer = server;
 		setWindowTitle(server.getServer().getName());
 		setNeedsProgressMonitor(true);

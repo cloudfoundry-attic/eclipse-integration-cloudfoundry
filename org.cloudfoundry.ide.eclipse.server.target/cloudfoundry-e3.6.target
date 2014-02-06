@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.6"?>
+<?pde version="3.8"?>
 
 <target name="cloudfoundry-e3.6" sequenceNumber="8">
 <locations>
-<location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.emf.codegen.feature.group" version="2.6.0.v20100914-1218"/>
 <unit id="org.eclipse.emf.common.feature.group" version="2.6.0.v20100914-1218"/>
 <unit id="org.eclipse.emf.common.ui.feature.group" version="2.6.0.v20100914-1218"/>
@@ -39,7 +39,7 @@
 <unit id="org.eclipse.datatools.sqldevtools.sqlbuilder.feature.feature.group" version="1.8.2.v201010181125-79-4EVVFJoFwKcN-L_"/>
 <repository location="http://download.eclipse.org/releases/helios"/>
 </location>
-<location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.aopalliance" version="1.0.0.v201105210816"/>
 <unit id="org.codehaus.jackson.core" version="1.6.0.v20101005-0925"/>
 <unit id="org.codehaus.jackson.mapper" version="1.6.0.v20101005-0925"/>
@@ -49,14 +49,7 @@
 <unit id="org.apache.commons.httpclient" version="3.1.0.v201012070820"/>
 <repository location="http://download.eclipse.org/tools/orbit/downloads/drops/R20120119162704/repository/"/>
 </location>
-<location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<unit id="org.springframework.aop" version="3.1.1.RELEASE"/>
-<unit id="org.springframework.asm" version="3.1.1.RELEASE"/>
-<unit id="org.springframework.beans" version="3.1.1.RELEASE"/>
-<unit id="org.springframework.context" version="3.1.1.RELEASE"/>
-<unit id="org.springframework.core" version="3.1.1.RELEASE"/>
-<unit id="org.springframework.expression" version="3.1.1.RELEASE"/>
-<unit id="org.springframework.web" version="3.1.1.RELEASE"/>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.springframework.ide.eclipse.uaa.feature.feature.group" version="3.0.0.201208090942-RELEASE"/>
 <repository location="http://dist.springsource.com/release/TOOLS/eclipse-integration-commons/3.0.0.RELEASE/"/>
 </location>

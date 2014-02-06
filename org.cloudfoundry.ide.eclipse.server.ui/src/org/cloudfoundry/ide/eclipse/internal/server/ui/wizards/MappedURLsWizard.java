@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.application.Application
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.RepublishApplicationHandler;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -28,7 +29,6 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.wst.server.core.IModule;
-import org.springframework.util.Assert;
 
 /**
  * @author Terry Denney
@@ -51,7 +51,7 @@ public class MappedURLsWizard extends Wizard {
 
 	public MappedURLsWizard(CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule,
 			List<String> existingURIs) {
-		Assert.notNull(applicationModule);
+		Assert.isNotNull(applicationModule);
 		this.cloudServer = cloudServer;
 		this.appName = applicationModule.getDeployedApplicationName();
 		this.applicationModule = applicationModule;

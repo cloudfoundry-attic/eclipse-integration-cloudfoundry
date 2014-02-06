@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,12 +16,12 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.EnvironmentVariablesPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
-import org.springframework.util.Assert;
 
 public class CloudFoundryApplicationEnvVarWizardPage extends PartsWizardPage {
 
@@ -34,7 +34,8 @@ public class CloudFoundryApplicationEnvVarWizardPage extends PartsWizardPage {
 	public CloudFoundryApplicationEnvVarWizardPage(CloudFoundryServer cloudServer,
 			ApplicationDeploymentInfo deploymentInfo) {
 		super("Environment Variables Wizard Page", null, null);
-		Assert.notNull(deploymentInfo);
+		Assert.isNotNull(deploymentInfo);
+
 		this.cloudServer = cloudServer;
 		this.deploymentInfo = deploymentInfo;
 	}
