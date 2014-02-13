@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,7 +15,7 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
@@ -36,6 +36,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -88,7 +89,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	static final int APP_NAME_INIT = 100;
 
 	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
-			ApplicationWizardDescriptor descriptor, CloudApplicationUrlLookup urlLookup,
+			ApplicationWizardDescriptor descriptor, ApplicationUrlLookupService urlLookup,
 			ApplicationWizardDelegate wizardDelegate) {
 		super("deployment", null, null, urlLookup);
 		this.server = server;
@@ -210,7 +211,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 		urlPart.addPartChangeListener(this);
 	}
 
-	protected CloudApplicationUrlPart createUrlPart(CloudApplicationUrlLookup urlLookup) {
+	protected CloudApplicationUrlPart createUrlPart(ApplicationUrlLookupService urlLookup) {
 		return new CloudApplicationUrlPart(urlLookup);
 	}
 
@@ -404,7 +405,19 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 
 				if (selectedDomain == null) {
 					// use a default URL
-					CloudApplicationURL appURL = getApplicationUrlLookup().getDefaultApplicationURL(appName);
+					CloudApplicationURL appURL = null;
+					try {
+						appURL = getApplicationUrlLookup().getDefaultApplicationURL(appName);
+					}
+					catch (CoreException e) {
+						// Do not disable the wizard. Users can still enter a
+						// domain manually.
+						update(false,
+								CloudFoundryPlugin
+										.getStatus(NLS.bind(
+												"Unable to resolve a domain due to {0} - Enter a domain manually to continue deploying the application", e.getMessage()),
+												IStatus.WARNING));
+					}
 
 					if (appURL != null) {
 						url = appURL.getUrl();

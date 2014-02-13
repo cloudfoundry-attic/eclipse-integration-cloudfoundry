@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
 import org.eclipse.core.runtime.CoreException;
@@ -29,7 +29,7 @@ import org.eclipse.swt.widgets.Display;
 public abstract class AbstractURLWizardPage extends PartsWizardPage {
 
 	protected AbstractURLWizardPage(String pageName, String title, ImageDescriptor titleImage,
-			CloudApplicationUrlLookup urlLookup) {
+			ApplicationUrlLookupService urlLookup) {
 		super(pageName, title, titleImage);
 		this.urlLookup = urlLookup;
 	}
@@ -40,9 +40,9 @@ public abstract class AbstractURLWizardPage extends PartsWizardPage {
 
 	protected boolean refreshedDomains = false;
 
-	private CloudApplicationUrlLookup urlLookup;
+	private ApplicationUrlLookupService urlLookup;
 
-	protected CloudApplicationUrlLookup getApplicationUrlLookup() {
+	protected ApplicationUrlLookupService getApplicationUrlLookup() {
 		return urlLookup;
 	}
 
@@ -63,7 +63,7 @@ public abstract class AbstractURLWizardPage extends PartsWizardPage {
 
 	protected void refreshApplicationUrlDomains() {
 
-		final CloudApplicationUrlLookup urlLookup = getApplicationUrlLookup();
+		final ApplicationUrlLookupService urlLookup = getApplicationUrlLookup();
 		if (urlLookup == null) {
 			update(false,
 					CloudFoundryPlugin

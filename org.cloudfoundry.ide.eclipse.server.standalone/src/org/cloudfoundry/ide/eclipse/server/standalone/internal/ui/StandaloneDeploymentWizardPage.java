@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,7 +13,7 @@ package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
@@ -28,14 +28,14 @@ public class StandaloneDeploymentWizardPage extends
 	public StandaloneDeploymentWizardPage(CloudFoundryServer server,
 			CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor,
-			CloudApplicationUrlLookup urlLookup,
+			ApplicationUrlLookupService urlLookup,
 			ApplicationWizardDelegate delegate) {
 		super(server, module, descriptor, urlLookup, delegate);
 	}
 
 	@Override
 	protected CloudApplicationUrlPart createUrlPart(
-			CloudApplicationUrlLookup urlLookup) {
+			ApplicationUrlLookupService urlLookup) {
 		return new StandaloneAppUrlPart(urlLookup);
 	}
 

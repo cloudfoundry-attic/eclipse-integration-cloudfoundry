@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import org.cloudfoundry.client.lib.domain.CloudDomain;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.osgi.util.NLS;
 
 /**
  * Verifies if a given application URL is valid, and checks if the host and
@@ -24,7 +25,7 @@ import org.eclipse.core.runtime.IStatus;
  * domain portion (the last segments of the URL: e.g, "cfapps.io" in
  * "myapp.cfapps.io") actually exists in the server.
  */
-public class CloudApplicationUrlLookup {
+public class ApplicationUrlLookupService {
 
 	private final CloudFoundryServer cloudServer;
 
@@ -32,7 +33,7 @@ public class CloudApplicationUrlLookup {
 
 	private ApplicationUrlValidator validator;
 
-	public CloudApplicationUrlLookup(CloudFoundryServer cloudServer) {
+	public ApplicationUrlLookupService(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
 		validator = new ApplicationUrlValidator();
 	}
@@ -56,15 +57,18 @@ public class CloudApplicationUrlLookup {
 	 * @param subDomain
 	 * @return Valid, available Cloud Application URL.
 	 */
-	public CloudApplicationURL getDefaultApplicationURL(String subDomain) {
+	public CloudApplicationURL getDefaultApplicationURL(String subDomain) throws CoreException {
 
 		List<CloudDomain> domains = getDomains();
 		if (domains == null || domains.isEmpty()) {
-			return null;
+
+			throw CloudErrorUtil.toCoreException(NLS.bind(
+					"No application domains resolved for {0}. Unable to generate a default application URL for {1}",
+					cloudServer.getServerId(), subDomain));
 		}
 
 		CloudApplicationURL appURL = null;
-
+		CoreException lastError = null;
 		for (CloudDomain domain : domains) {
 			String suggestedURL = subDomain + "." + domain.getName();
 			try {
@@ -72,8 +76,16 @@ public class CloudApplicationUrlLookup {
 				break;
 			}
 			catch (CoreException ce) {
-				// Ignore. Move on to the next one
+				lastError = ce;
 			}
+		}
+		if (appURL == null) {
+			if (lastError == null) {
+				lastError = CloudErrorUtil.toCoreException(NLS.bind(
+						"Unable to generate a default application URL for {0} in server {1}", subDomain,
+						cloudServer.getServerId()));
+			}
+			throw lastError;
 		}
 
 		return appURL;
@@ -117,7 +129,7 @@ public class CloudApplicationUrlLookup {
 		if (domainsPerActiveSpace == null || domainsPerActiveSpace.isEmpty()) {
 			throw new CoreException(
 					CloudFoundryPlugin
-							.getErrorStatus("No domains found for the current active space. Unable to map the URL to the application."));
+							.getErrorStatus("No domains found for the current active space. Unable to generate a default application URL."));
 		}
 
 		// String url = domain.getName();
@@ -156,12 +168,14 @@ public class CloudApplicationUrlLookup {
 	/**
 	 * 
 	 * @param cloudServer
-	 * @return Non-null Cloud application URL lookup. Will attempt to fetch a
-	 * cached version in the server if available, or create a new one if not.
+	 * @return Cloud Application URL look service. Is never null.
 	 */
-	public static CloudApplicationUrlLookup getCurrentLookup(CloudFoundryServer cloudServer) {
-		return cloudServer.getBehaviour().getApplicationUrlLookup() != null ? cloudServer.getBehaviour()
-				.getApplicationUrlLookup() : new CloudApplicationUrlLookup(cloudServer);
+	public static ApplicationUrlLookupService getCurrentLookup(CloudFoundryServer cloudServer) {
+		ApplicationUrlLookupService service = cloudServer.getBehaviour().getApplicationUrlLookup();
+		if (service == null) {
+			service = new ApplicationUrlLookupService(cloudServer);
+		}
+		return service;
 	}
 
 }

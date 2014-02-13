@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,9 +13,9 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
@@ -38,23 +38,24 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 
 	public static final String VALID_V1_HTTPS_URL = "https://api.cloudfoundry.com";
 
-	public void testCreateApplicationInvalidProxyWithClientReset() throws Exception {
-		// ensure valid session
-		getClient();
+	public void testInvalidProxyDirectClient() throws Exception {
 
 		final boolean[] ran = { false };
 		new ProxyHandler("invalid.proxy.test", 8080) {
 
 			@Override
 			protected void handleProxyChange() {
-				serverBehavior.resetClient();
 
 				// Create app. Should fail
 				CloudFoundryOperations client = null;
 				try {
 					List<String> uris = new ArrayList<String>();
 					uris.add("test-proxy-upload.cloudfoundry.com");
-					client = getClient();
+
+					// Do a direct client test with the proxy settings
+					client = createClient(new CloudCredentials(serverBehavior.getCloudFoundryServer().getUsername(),
+							serverBehavior.getCloudFoundryServer().getPassword()), serverBehavior
+							.getCloudFoundryServer().getUrl());
 					client.createApplication("test", new Staging(), 128, uris, new ArrayList<String>());
 					fail("Expected ResourceAccessException due to invalid proxy configuration");
 				}
@@ -72,22 +73,15 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 		assertTrue(ran[0]);
 	}
 
-	public void testCreateApplicationInvalidProxyWithoutClientReset() throws Exception {
-		// ensure valid session
-		getClient();
+	public void testInvalidProxyServerInstance() throws Exception {
 
-		harness.createProjectAndAddModule("dynamic-webapp");
-
+		// Verify that connection and operations can be performed without the proxy change
+		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
 		final IModule[] modules = server.getModules();
-		assertEquals("Expected dynamic-webapp module, got " + Arrays.toString(modules), 1, modules.length);
-		int moduleState = server.getModulePublishState(modules);
-		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
 
 		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
-		moduleState = server.getModuleState(modules);
-		assertEquals(IServer.STATE_STARTED, moduleState);
-		CloudApplication cloudApplication = getCloudApplication(modules[0]);
-		assertEquals(cloudApplication.getState(), CloudApplication.AppState.STARTED);
+		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
+		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
 
 		final boolean[] ran = { false };
 
@@ -301,8 +295,12 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 	}
 
 	@Override
-	protected Harness createHarness() {
+	protected Harness createHarness() throws CoreException {
 		return CloudFoundryTestFixture.current().harness();
+	}
+
+	protected CloudFoundryOperations createClient(CloudCredentials credentials, String url) throws Exception {
+		return CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(credentials, new URL(url));
 	}
 
 }

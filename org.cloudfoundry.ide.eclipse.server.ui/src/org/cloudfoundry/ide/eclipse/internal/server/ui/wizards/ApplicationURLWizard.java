@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudApplicationUrlPart;
@@ -58,7 +58,7 @@ public class ApplicationURLWizard extends Wizard {
 
 		ImageDescriptor imageDescriptor = CloudFoundryImages.getWizardBanner(serverTypeId);
 		// Use the cached version if possible.
-		CloudApplicationUrlLookup urlLookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
+		ApplicationUrlLookupService urlLookup = ApplicationUrlLookupService.getCurrentLookup(cloudServer);
 		urlPage = createPage(imageDescriptor, urlLookup);
 		urlPage.setWizard(this);
 		addPage(urlPage);
@@ -68,7 +68,7 @@ public class ApplicationURLWizard extends Wizard {
 		return editedUrl;
 	}
 
-	protected ApplicationURLWizardPage createPage(ImageDescriptor imageDescriptor, CloudApplicationUrlLookup urlLookup) {
+	protected ApplicationURLWizardPage createPage(ImageDescriptor imageDescriptor, ApplicationUrlLookupService urlLookup) {
 		CloudApplicationUrlPart urlPart = new CloudApplicationUrlPart(urlLookup);
 		return new ApplicationURLWizardPage(imageDescriptor, urlLookup, urlPart);
 	}
@@ -77,7 +77,7 @@ public class ApplicationURLWizard extends Wizard {
 
 		private final CloudApplicationUrlPart urlPart;
 
-		protected ApplicationURLWizardPage(ImageDescriptor titleImage, CloudApplicationUrlLookup urlLookup,
+		protected ApplicationURLWizardPage(ImageDescriptor titleImage, ApplicationUrlLookupService urlLookup,
 				CloudApplicationUrlPart urlPart) {
 			super("Application URL Page", title, titleImage, urlLookup);
 			setDescription("Add or edit application URL.");

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -87,7 +87,7 @@ public abstract class CloudFoundryEditorAction extends Action {
 	 * @return operation to execute.
 	 * @throws CoreException
 	 */
-	protected abstract ICloudFoundryOperation getOperation() throws CoreException;
+	protected abstract ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException;
 
 	public boolean isUserAction() {
 		return userAction;
@@ -120,7 +120,7 @@ public abstract class CloudFoundryEditorAction extends Action {
 			protected IStatus run(IProgressMonitor monitor) {
 				IStatus status = Status.OK_STATUS;
 				try {
-					ICloudFoundryOperation operation = getOperation();
+					ICloudFoundryOperation operation = getOperation(monitor);
 					if (operation == null) {
 						return CloudFoundryPlugin.getStatus("No editor operation to execute.", IStatus.WARNING);
 					}

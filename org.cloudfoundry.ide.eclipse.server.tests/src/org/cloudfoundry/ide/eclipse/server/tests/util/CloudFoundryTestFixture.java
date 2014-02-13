@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,16 +15,22 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.cloudfoundry.client.lib.CloudCredentials;
+import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudDomain;
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.client.lib.domain.CloudSpace;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudOrgsAndSpaces;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerDescriptor;
@@ -83,6 +89,18 @@ public class CloudFoundryTestFixture {
 			return project;
 		}
 
+		protected String getDomain() throws CoreException {
+			if (applicationDomain == null) {
+
+				List<CloudDomain> domains = getBehaviour().getDomainsForSpace(new NullProgressMonitor());
+
+				// Get a default domain
+				applicationDomain = domains.get(0).getName();
+				applicationDomain = applicationDomain.replace("http://", "");
+			}
+			return applicationDomain;
+		}
+
 		public void addModule(IProject project) throws CoreException {
 			Assert.isNotNull(server, "Invoke createServer() first");
 
@@ -103,24 +121,56 @@ public class CloudFoundryTestFixture {
 			IServerWorkingCopy serverWC = server.createWorkingCopy();
 			CloudFoundryServer cloudFoundryServer = (CloudFoundryServer) serverWC.loadAdapter(CloudFoundryServer.class,
 					null);
+			CredentialProperties credentials = getCredentials();
 			cloudFoundryServer.setPassword(credentials.password);
 			cloudFoundryServer.setUsername(credentials.userEmail);
 
 			cloudFoundryServer.setUrl(getUrl());
 
-			setDefaultCloudSpace(cloudFoundryServer);
+			setDefaultCloudSpace(cloudFoundryServer, credentials.organization, credentials.space);
 
 			serverWC.save(true, null);
 			return server;
 		}
 
-		protected void setDefaultCloudSpace(CloudFoundryServer cloudServer) throws CoreException {
+		protected void setDefaultCloudSpace(CloudFoundryServer cloudServer, String orgName, String spaceName)
+				throws CoreException {
 			CloudOrgsAndSpaces spaces = CloudUiUtil.getCloudSpaces(cloudServer.getUsername(),
 					cloudServer.getPassword(), cloudServer.getUrl(), false, null);
 			Assert.isTrue(spaces != null, "Failed to resolve orgs and spaces.");
 			Assert.isTrue(spaces.getDefaultCloudSpace() != null,
 					"No default space selected in cloud space lookup handler.");
-			cloudServer.setSpace(spaces.getDefaultCloudSpace());
+
+			CloudSpace cloudSpace = spaces.getSpace(orgName, spaceName);
+			if (cloudSpace == null) {
+				throw CloudErrorUtil.toCoreException("Failed to resolve cloud space when running junits: " + orgName
+						+ " - " + spaceName);
+			}
+			cloudServer.setSpace(cloudSpace);
+		}
+
+		/**
+		 * 
+		 * @return standalone client based on the harness credentials, org and
+		 * space. This is not the client used by the server instance, but a new
+		 * client for testing purposes only.
+		 */
+		public CloudFoundryOperations createStandaloneClient() throws CoreException {
+			CloudFoundryServer cloudFoundryServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class,
+					null);
+			CloudFoundrySpace space = cloudFoundryServer.getCloudFoundrySpace();
+			if (space == null) {
+				throw CloudErrorUtil.toCoreException("No org and space was set in test harness for: "
+						+ cloudFoundryServer.getServerId());
+			}
+			try {
+				return CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
+						new CloudCredentials(cloudFoundryServer.getUsername(), cloudFoundryServer.getPassword()),
+						new URL(cloudFoundryServer.getUrl()), space.getOrgName(), space.getSpaceName());
+			}
+			catch (MalformedURLException e) {
+				throw CloudErrorUtil.toCoreException(e);
+			}
 		}
 
 		public String getUrl() {
@@ -148,12 +198,6 @@ public class CloudFoundryTestFixture {
 
 				// Delete all services
 				deleteAllServices();
-
-				List<CloudDomain> domains = serverBehavior.getDomainsForSpace(new NullProgressMonitor());
-
-				// Get a default domain
-				applicationDomain = domains.get(0).getName();
-				applicationDomain = applicationDomain.replace("http://", "");
 
 			}
 		}
@@ -221,8 +265,8 @@ public class CloudFoundryTestFixture {
 			}
 		}
 
-		public String getUrl(String projectName) {
-			return projectName + "." + applicationDomain;
+		public String getExpectedURL(String projectName) throws CoreException {
+			return projectName + "." + getDomain();
 		}
 
 		public TestServlet startMockServer() throws Exception {
@@ -245,38 +289,28 @@ public class CloudFoundryTestFixture {
 
 	public static final String PLUGIN_ID = "org.cloudfoundry.ide.eclipse.server.tests";
 
-	public static final CredentialProperties USER_CREDENTIALS = getUserTestCredentials();
+	private static CloudFoundryTestFixture current;
 
-	// public static final CloudFoundryTestFixture VCLOUDLABS = new
-	// CloudFoundryTestFixture(DOMAIN,
-	// USER_CREDENTIALS.getUserEmail(), USER_CREDENTIALS.getPassword());
+	private static CloudFoundryTestFixture getTestFixture() throws CoreException {
+		if (current == null) {
+			current = new CloudFoundryTestFixture("run.pivotal.io");
+		}
+		return current;
+	}
 
-	// public static final CloudFoundryTestFixture LOCAL = new
-	// CloudFoundryTestFixture("localhost", "user",
-	// PASSWORD_PROPERTY);
-	//
-	// public static final CloudFoundryTestFixture LOCAL_CLOUD = new
-	// CloudFoundryTestFixture("vcap.me",
-	// USER_CREDENTIALS.getUserEmail(), USER_CREDENTIALS.getPassword());
-
-	public static final CloudFoundryTestFixture PIVOTAL_CF = new CloudFoundryTestFixture("run.pivotal.io",
-			USER_CREDENTIALS);
-
-	private static CloudFoundryTestFixture current = PIVOTAL_CF;
-
-	public static CloudFoundryTestFixture current() {
+	public static CloudFoundryTestFixture current() throws CoreException {
 		CloudFoundryPlugin.setCallback(new TestCallback());
-		return current;
+		return getTestFixture();
 	}
 
-	public static CloudFoundryTestFixture current(String appName) {
+	public static CloudFoundryTestFixture current(String appName) throws CoreException {
 		CloudFoundryPlugin.setCallback(new TestCallback(appName));
-		return current;
+		return getTestFixture();
 	}
 
-	public static CloudFoundryTestFixture current(String appName, String url) {
+	public static CloudFoundryTestFixture current(String appName, String url) throws CoreException {
 		CloudFoundryPlugin.setCallback(new TestCallback(appName, url));
-		return current;
+		return getTestFixture();
 	}
 
 	public static CloudFoundryTestFixture currentLocalDebug() {
@@ -286,14 +320,13 @@ public class CloudFoundryTestFixture {
 
 	private final ServerHandler handler;
 
-	private final CredentialProperties credentials;
+	private static CredentialProperties credentials;
 
 	private final String url;
 
-	public CloudFoundryTestFixture(String serverDomain, CredentialProperties credentials) {
+	public CloudFoundryTestFixture(String serverDomain) {
 
 		this.url = "http://api." + serverDomain;
-		this.credentials = credentials;
 
 		ServerDescriptor descriptor = new ServerDescriptor("server") {
 			{
@@ -307,7 +340,10 @@ public class CloudFoundryTestFixture {
 		handler = new ServerHandler(descriptor);
 	}
 
-	public CredentialProperties getCredentials() {
+	public CredentialProperties getCredentials() throws CoreException {
+		if (credentials == null) {
+			credentials = getUserTestCredentials();
+		}
 		return credentials;
 	}
 
@@ -343,7 +379,7 @@ public class CloudFoundryTestFixture {
 	 * empty if failed to read credentials
 	 * @return
 	 */
-	public static CredentialProperties getUserTestCredentials() {
+	private static CredentialProperties getUserTestCredentials() throws CoreException {
 		String propertiesLocation = System.getProperty(CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY);
 		String userEmail = null;
 		String password = null;
@@ -366,10 +402,10 @@ public class CloudFoundryTestFixture {
 				}
 			}
 			catch (FileNotFoundException e) {
-				e.printStackTrace();
+				throw CloudErrorUtil.toCoreException(e);
 			}
 			catch (IOException e) {
-				e.printStackTrace();
+				throw CloudErrorUtil.toCoreException(e);
 			}
 			finally {
 				try {
@@ -388,10 +424,28 @@ public class CloudFoundryTestFixture {
 			password = System.getProperty("vcap.passwd", "");
 		}
 
-		if (userEmail == null || password == null || org == null || space == null) {
+		String missingInfo = "";
+		if (userEmail == null) {
+			missingInfo += "-Username-";
+		}
 
-			System.out
-					.println("Unable to read user email or password. Ensure Cloud Foundry credentials are set as properties in a properties file and passed as an argument to the VM using \"-D"
+		if (password == null) {
+			missingInfo += "-Password-";
+		}
+
+		if (org == null) {
+			missingInfo += "-Org-";
+		}
+
+		if (space == null) {
+			missingInfo += "-Space-";
+		}
+
+		if (missingInfo.length() > 0) {
+			missingInfo = "Failed to run tests due to missing information: " + missingInfo;
+			throw CloudErrorUtil
+					.toCoreException(missingInfo
+							+ ". Ensure Cloud Foundry credentials are set as properties in a properties file and passed as an argument to the VM using \"-D"
 							+ CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY + "=[full file location]\"");
 		}
 

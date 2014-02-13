@@ -24,6 +24,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.application.Application
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
@@ -258,13 +259,16 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 	 * copy will be generated from the app's deployment default values. A new
 	 * copy is always returned. No changes take effect in the app modules'
 	 * deployment info unless the working copy is saved.
-	 * 
+	 * <p/>
 	 * @return a new working copy with either existing deployment information,
 	 * or default deployment information, if an deployment information does not
 	 * exist.
 	 */
-	public synchronized DeploymentInfoWorkingCopy getDeploymentInfoWorkingCopy() {
-		return new ModuleDeploymentInfoWorkingCopy(this);
+	public synchronized DeploymentInfoWorkingCopy getDeploymentInfoWorkingCopy(IProgressMonitor monitor)
+			throws CoreException {
+		DeploymentInfoWorkingCopy wc = new ModuleDeploymentInfoWorkingCopy(this);
+		wc.fill(monitor);
+		return wc;
 	}
 
 	/**
@@ -481,13 +485,13 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 	 * @return non-null default deployment info. This default information is
 	 * also set in the module as the module's current deployment information.
 	 */
-	protected ApplicationDeploymentInfo getDefaultDeploymentInfo() {
+	protected ApplicationDeploymentInfo getDefaultDeploymentInfo(IProgressMonitor monitor) throws CoreException {
 
 		IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(getLocalModule());
 		ApplicationDeploymentInfo defaultInfo = null;
 
 		if (delegate != null) {
-			defaultInfo = delegate.getDefaultApplicationDeploymentInfo(this, getCloudFoundryServer());
+			defaultInfo = delegate.getDefaultApplicationDeploymentInfo(this, getCloudFoundryServer(), monitor);
 		}
 
 		if (defaultInfo == null) {

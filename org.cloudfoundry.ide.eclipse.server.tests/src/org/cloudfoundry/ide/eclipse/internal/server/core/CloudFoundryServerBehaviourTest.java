@@ -20,11 +20,9 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.WaitWithProgressJob;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
@@ -38,31 +36,21 @@ import org.eclipse.wst.server.core.IServer;
  */
 public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
-	public void testConnect() throws Exception {
-		serverBehavior.connect(null);
+	public void testBaseSetupConnect() throws Exception {
 
-		final int[] serverState = new int[1];
-		new WaitWithProgressJob(5, 2000) {
-
-			@Override
-			protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
-				serverState[0] = server.getServerState();
-				return serverState[0] == IServer.STATE_STARTED;
-			}
-
-			@Override
-			protected boolean shouldRetryOnError(Throwable t) {
-				return true;
-			}
-
-		}.run(new NullProgressMonitor());
-
-		assertEquals(IServer.STATE_STARTED, serverState[0]);
+		assertEquals(IServer.STATE_STARTED, serverBehavior.getServer().getServerState());
 		assertEquals(Collections.emptyList(), Arrays.asList(server.getModules()));
 	}
 
+	public void testDisconnect() throws Exception {
+		assertEquals(IServer.STATE_STARTED, serverBehavior.getServer().getServerState());
+		assertEquals(Collections.emptyList(), Arrays.asList(server.getModules()));
+		serverBehavior.disconnect(new NullProgressMonitor());
+		assertEquals(IServer.STATE_STOPPED, serverBehavior.getServer().getServerState());
+	}
+
 	public void testStartModule() throws Exception {
-		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
+		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
 
 		// There should only be one module
 		IModule[] modules = server.getModules();
@@ -74,7 +62,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 	}
 
 	public void testServerBehaviourIsApplicationRunning() throws Exception {
-		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
+		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
 		IModule[] modules = server.getModules();
 
 		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
@@ -100,27 +88,30 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 	}
 
 	public void testStartModuleInvalidToken() throws Exception {
-		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
+		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
 		IModule[] modules = server.getModules();
 
 		try {
-			serverBehavior.resetClient();
-			getClient("invalid", "invalidPassword");
+			connectClient("invalid", "invalidPassword");
 		}
 		catch (Exception e) {
-			assertEquals("403 Error requesting access token.", e.getMessage());
+			assertTrue(e.getMessage().contains("403 Access token denied"));
 		}
 
 		try {
 			serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 		}
-		catch (Throwable e) {
-			assertEquals("Operation not permitted (403 Forbidden)", e.getMessage());
+		catch (CoreException ce) {
+			assertNotNull(ce);
 		}
 
-		// Set the client again
-		serverBehavior.resetClient();
-		getClient();
+		// Deploying application should have failed, so it must not exist in the
+		// server
+		assertNull("Expecting no deployed application: " + DYNAMIC_WEBAPP_NAME + " but it exists in the server",
+				getUpdatedApplication(DYNAMIC_WEBAPP_NAME));
+
+		// Set the client again with the correct server-stored credentials
+		connectClient();
 
 		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 
@@ -131,28 +122,25 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 	public void testStartModuleInvalidPassword() throws Exception {
 
-		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
+		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
 		IModule[] modules = server.getModules();
 
 		try {
-			serverBehavior.resetClient();
 			CloudFoundryServer cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
 
 			String userName = cloudServer.getUsername();
 			CloudCredentials credentials = new CloudCredentials(userName, "invalid-password");
-			getClient(credentials);
+			connectClient(credentials);
 
 			serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 
 			fail("Expected CoreException due to invalid password");
 		}
 		catch (Throwable e) {
-			assertEquals("403 Error requesting access token.", e.getMessage());
+			assertTrue(e.getMessage().contains("403 Access token denied"));
 		}
 
-		serverBehavior.resetClient();
-		getClient();
-
+		connectClient();
 		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 
 		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
@@ -161,7 +149,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 	}
 
 	public void testDeleteModuleExternally() throws Exception {
-		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
+		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
 		IModule[] modules = server.getModules();
 
 		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
@@ -179,10 +167,10 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 			}
 		}
 		assertTrue(found);
-		URL url = new URL(CloudFoundryTestFixture.PIVOTAL_CF.getUrl());
-		CloudFoundryOperations client = CloudFoundryPlugin.getCloudFoundryClientFactory()
-				.getNonUAACloudFoundryOperations(CloudFoundryTestFixture.PIVOTAL_CF.getCredentials().userEmail,
-						CloudFoundryTestFixture.PIVOTAL_CF.getCredentials().password, url);
+		URL url = new URL(CloudFoundryTestFixture.current().getUrl());
+		CloudFoundryOperations client = CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
+				new CloudCredentials(CloudFoundryTestFixture.current().getCredentials().userEmail,
+						CloudFoundryTestFixture.current().getCredentials().password), url);
 		client.login();
 		client.deleteApplication(DYNAMIC_WEBAPP_NAME);
 
@@ -205,7 +193,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
 		serverBehavior = (CloudFoundryServerBehaviour) server.loadAdapter(CloudFoundryServerBehaviour.class, null);
 
-		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
+		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
 		IModule[] modules = server.getModules();
 
 		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
@@ -227,7 +215,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 	}
 
 	@Override
-	protected Harness createHarness() {
+	protected Harness createHarness() throws CoreException {
 		return CloudFoundryTestFixture.current().harness();
 	}
 

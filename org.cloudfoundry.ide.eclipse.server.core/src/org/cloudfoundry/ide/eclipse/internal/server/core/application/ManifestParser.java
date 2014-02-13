@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,8 +27,8 @@ import java.util.Map.Entry;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.Staging;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
@@ -42,6 +42,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.SubMonitor;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.DumperOptions.FlowStyle;
 import org.yaml.snakeyaml.Yaml;
@@ -301,42 +302,59 @@ public class ManifestParser {
 	 * @throws CoreException if error occurred while loading an existing
 	 * manifest file.
 	 */
-	public DeploymentInfoWorkingCopy load() throws CoreException {
+	public DeploymentInfoWorkingCopy load(IProgressMonitor monitor) throws CoreException {
+		SubMonitor subMonitor = SubMonitor.convert(monitor);
+		subMonitor.beginTask("Parsing and loading application manifest file", 5);
+		DeploymentInfoWorkingCopy workingCopy;
+		try {
+			workingCopy = appModule.getDeploymentInfoWorkingCopy(subMonitor);
 
-		DeploymentInfoWorkingCopy workingCopy = appModule.getDeploymentInfoWorkingCopy();
+			Map<?, ?> application = getApplication(null);
 
-		Map<?, ?> application = getApplication(null);
+			subMonitor.worked(1);
+			if (application == null) {
+				return null;
+			}
 
-		if (application == null) {
-			return null;
+			// NOTE: When reading from manifest, the manifest may be INCOMPLETE,
+			// therefore do not automatically
+			// set all properties in the deployment info. Check if the value of
+			// the
+			// property is actually set before set value
+			// in the info
+			String appName = getStringValue(application, NAME_PROP);
+
+			subMonitor.worked(1);
+			if (appName != null) {
+				workingCopy.setDeploymentName(appName);
+			}
+
+			readMemory(application, workingCopy);
+			subMonitor.worked(1);
+
+
+			readApplicationURL(application, workingCopy, appName);
+			subMonitor.worked(1);
+
+
+			String buildpackurl = getStringValue(application, BUILDPACK_PROP);
+			if (buildpackurl != null) {
+				Staging staging = new Staging(null, buildpackurl);
+				workingCopy.setStaging(staging);
+			}
+
+			readServices(workingCopy, application);
+			subMonitor.worked(1);
+
+
+			String archiveURL = getStringValue(application, PATH_PROP);
+			if (archiveURL != null) {
+				workingCopy.setArchive(archiveURL);
+			}
+			
 		}
-
-		// NOTE: When reading from manifest, the manifest may be INCOMPLETE,
-		// therefore do not automatically
-		// set all properties in the deployment info. Check if the value of the
-		// property is actually set before set value
-		// in the info
-		String appName = getStringValue(application, NAME_PROP);
-
-		if (appName != null) {
-			workingCopy.setDeploymentName(appName);
-		}
-
-		readMemory(application, workingCopy);
-
-		readApplicationURL(application, workingCopy, appName);
-
-		String buildpackurl = getStringValue(application, BUILDPACK_PROP);
-		if (buildpackurl != null) {
-			Staging staging = new Staging(null, buildpackurl);
-			workingCopy.setStaging(staging);
-		}
-
-		readServices(workingCopy, application);
-
-		String archiveURL = getStringValue(application, PATH_PROP);
-		if (archiveURL != null) {
-			workingCopy.setArchive(archiveURL);
+		finally {
+			subMonitor.done();
 		}
 
 		return workingCopy;
@@ -383,7 +401,8 @@ public class ManifestParser {
 		}
 	}
 
-	protected void readApplicationURL(Map<?, ?> application, DeploymentInfoWorkingCopy workingCopy, String appName) {
+	protected void readApplicationURL(Map<?, ?> application, DeploymentInfoWorkingCopy workingCopy, String appName)
+			throws CoreException {
 		String subdomain = getStringValue(application, SUB_DOMAIN_PROP);
 		String domain = getStringValue(application, DOMAIN_PROP);
 
@@ -396,7 +415,7 @@ public class ManifestParser {
 			}
 			else {
 				// Get a default domain since no domain has been specified
-				CloudApplicationUrlLookup lookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
+				ApplicationUrlLookupService lookup = ApplicationUrlLookupService.getCurrentLookup(cloudServer);
 				CloudApplicationURL cloudURL = lookup.getDefaultApplicationURL(subdomain);
 				if (cloudURL != null) {
 					url = cloudURL.getUrl();
@@ -652,7 +671,7 @@ public class ManifestParser {
 			// Persist only the first URL
 			String url = urls.get(0);
 
-			CloudApplicationUrlLookup lookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
+			ApplicationUrlLookupService lookup = ApplicationUrlLookupService.getCurrentLookup(cloudServer);
 			CloudApplicationURL cloudUrl = lookup.getCloudApplicationURL(url);
 			String subdomain = cloudUrl.getSubdomain();
 			String domain = cloudUrl.getDomain();

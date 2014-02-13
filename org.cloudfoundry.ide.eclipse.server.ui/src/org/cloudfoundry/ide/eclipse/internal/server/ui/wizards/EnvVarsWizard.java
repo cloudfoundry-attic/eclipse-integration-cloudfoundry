@@ -37,11 +37,14 @@ public class EnvVarsWizard extends Wizard {
 
 	private CloudFoundryApplicationEnvVarWizardPage envVarPage;
 
-	public EnvVarsWizard(CloudFoundryServer server, CloudFoundryApplicationModule appModule) {
+	public EnvVarsWizard(CloudFoundryServer server, CloudFoundryApplicationModule appModule,
+			DeploymentInfoWorkingCopy workingCopy) {
 
 		Assert.isNotNull(server);
 		Assert.isNotNull(appModule);
+		Assert.isNotNull(workingCopy);
 
+		this.infoWorkingCopy = workingCopy;
 		this.cloudServer = server;
 		setWindowTitle(server.getServer().getName());
 		setNeedsProgressMonitor(true);
@@ -50,7 +53,6 @@ public class EnvVarsWizard extends Wizard {
 
 	@Override
 	public void addPages() {
-		infoWorkingCopy = appModule.getDeploymentInfoWorkingCopy();
 
 		envVarPage = new CloudFoundryApplicationEnvVarWizardPage(cloudServer, infoWorkingCopy);
 		envVarPage.setWizard(this);

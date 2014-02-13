@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -32,7 +32,7 @@ import org.springframework.ide.eclipse.uaa.UaaPlugin;
  * operations prior to invoking client API, including automatic client login and
  * proxy setting handling.
  * 
- * @see org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour.Request
+ * @see org.cloudfoundry.ide.eclipse.internal.server.core.client.ClientRequest
  * 
  * 
  */
@@ -71,6 +71,19 @@ public class CloudFoundryClientFactory {
 			return session != null ? new CloudFoundryClient(credentials, url, session) : new CloudFoundryClient(
 					credentials, url, proxyConfiguration);
 		}
+	}
+
+	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, String orgName,
+			String spaceName) {
+
+		// Proxies are always updated on each client call by the
+		// CloudFoundryServerBehaviour Request as well as the client login
+		// handler
+		// therefore it is not critical to set the proxy in the client on
+		// client
+		// creation
+		HttpProxyConfiguration proxyConfiguration = getProxy(url);
+		return new CloudFoundryClient(credentials, url, orgName, spaceName, proxyConfiguration);
 	}
 
 	/**

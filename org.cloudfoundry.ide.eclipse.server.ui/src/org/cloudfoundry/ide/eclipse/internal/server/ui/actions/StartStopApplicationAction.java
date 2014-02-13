@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServ
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 
 /**
@@ -65,7 +66,7 @@ public class StartStopApplicationAction extends CloudFoundryEditorAction {
 		return jobName.toString();
 	}
 
-	public ICloudFoundryOperation getOperation() throws CoreException {
+	public ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
 		ICloudFoundryOperation operation = null;
 		IModule[] modules = new IModule[] { module };
 		switch (action) {

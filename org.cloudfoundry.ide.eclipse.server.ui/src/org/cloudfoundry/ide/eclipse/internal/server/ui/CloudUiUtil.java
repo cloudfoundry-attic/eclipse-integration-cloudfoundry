@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -30,7 +30,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudOrgsAndSpaces;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpaceServerLookup;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -257,7 +256,7 @@ public class CloudUiUtil {
 				return null;
 			}
 			catch (CoreException e) {
-				String message = CloudErrorUtil.getValidationErrorMessage(e);
+				String message = CloudErrorUtil.getConnectionError(e);
 				return message;
 			}
 			catch (OperationCanceledException e) {
@@ -294,8 +293,8 @@ public class CloudUiUtil {
 					if (displayURL) {
 						url = getUrlFromDisplayText(urlText);
 					}
-					supportsSpaces[0] = CloudSpaceServerLookup.getCloudOrgsAndSpaces(new CloudCredentials(userName,
-							password), url, monitor);
+					supportsSpaces[0] = CloudFoundryServerBehaviour.getCloudSpacesExternalClient(new CloudCredentials(
+							userName, password), url, monitor);
 				}
 			};
 			if (context != null) {
@@ -517,7 +516,7 @@ public class CloudUiUtil {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Returns the current shell or null.
 	 * @return

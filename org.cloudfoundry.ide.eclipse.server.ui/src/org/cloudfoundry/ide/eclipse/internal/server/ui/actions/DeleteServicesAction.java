@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,6 +16,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServicesHandler;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 
@@ -47,7 +48,7 @@ public class DeleteServicesAction extends CloudFoundryEditorAction {
 	}
 
 	@Override
-	public ICloudFoundryOperation getOperation() throws CoreException {
+	public ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
 		return serverBehaviour.getDeleteServicesOperation(servicesHandler.getServiceNames());
 	}
 

@@ -490,9 +490,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		int state = appModule.getState();
 
-		// FIXNS: Uncomment when stagin updates are supported in CF client
-		// refreshStandaloneCommandArea();
-
 		setCurrentStartDebugApplicationAction();
 		instanceSpinner.setSelection(appModule.getInstanceCount());
 
@@ -580,42 +577,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			editorPage.reflow();
 		}
 
-		if (provideServices) {
-			// servicesViewer.getTable().setEnabled(cloudApplication != null);
-
-			// Update the mapping of bound services in the application
-			List<CloudService> updatedServices = new ArrayList<CloudService>();
-
-			DeploymentInfoWorkingCopy deploymentInfo = appModule.getDeploymentInfoWorkingCopy();
-
-			List<String> serviceNames = deploymentInfo.asServiceBindingList();
-
-			if (serviceNames == null) {
-				serviceNames = Collections.emptyList();
-			}
-
-			List<CloudService> allServices = editorPage.getServices();
-
-			// Only show bound services that actually exist
-			if (allServices != null && !serviceNames.isEmpty()) {
-				for (CloudService service : allServices) {
-					if (serviceNames.contains(service.getName())) {
-						updatedServices.add(service);
-					}
-				}
-
-				// Update the bound services mapping in the application
-				if (!updatedServices.isEmpty()) {
-					deploymentInfo.setServices(updatedServices);
-					deploymentInfo.save();
-				}
-			}
-			servicesViewer.setInput(updatedServices.toArray(new CloudService[updatedServices.size()]));
-
-			servicesDropListener.setModule(appModule);
-			servicesViewer.refresh(true);
-
-		}
+		refreshServices(appModule);
 		instancesViewer.refresh(true);
 
 		canUpdate = true;
@@ -625,6 +587,66 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		}
 		else {
 			editorPage.setMessage(null, IMessageProvider.ERROR);
+		}
+	}
+
+	private void refreshServices(final CloudFoundryApplicationModule appModule) {
+		if (provideServices) {
+			UIJob uiJob = new UIJob("Refreshing Services") {
+
+				@Override
+				public IStatus runInUIThread(IProgressMonitor monitor) {
+					// servicesViewer.getTable().setEnabled(cloudApplication !=
+					// null);
+
+					// Update the mapping of bound services in the application
+					List<CloudService> updatedServices = new ArrayList<CloudService>();
+
+					DeploymentInfoWorkingCopy deploymentInfo = null;
+					List<String> serviceNames = null;
+					try {
+						deploymentInfo = appModule.getDeploymentInfoWorkingCopy(monitor);
+
+						serviceNames = deploymentInfo.asServiceBindingList();
+					}
+					catch (CoreException e) {
+						logError(NLS
+								.bind("Failed to resolve bound services in {0} from the application's deployment descriptor. The displayed services may not be correct.",
+										appModule.getDeployedApplicationName()));
+					}
+
+					if (serviceNames == null) {
+						serviceNames = Collections.emptyList();
+					}
+
+					List<CloudService> allServices = editorPage.getServices();
+
+					// Only show bound services that actually exist
+					if (allServices != null && !serviceNames.isEmpty()) {
+						for (CloudService service : allServices) {
+							if (serviceNames.contains(service.getName())) {
+								updatedServices.add(service);
+							}
+						}
+
+						// Update the bound services mapping in the application
+						if (!updatedServices.isEmpty() && deploymentInfo != null) {
+							deploymentInfo.setServices(updatedServices);
+							deploymentInfo.save();
+						}
+					}
+					servicesViewer.setInput(updatedServices.toArray(new CloudService[updatedServices.size()]));
+
+					servicesDropListener.setModule(appModule);
+					servicesViewer.refresh(true);
+					return Status.OK_STATUS;
+
+				}
+			};
+			uiJob.setSystem(true);
+			uiJob.setPriority(Job.INTERACTIVE);
+			uiJob.schedule();
+
 		}
 	}
 
@@ -851,11 +873,31 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		envVarsButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				try {
-					CloudFoundryApplicationModule appModule = getExistingApplication();
+					final CloudFoundryApplicationModule appModule = getExistingApplication();
 					if (appModule != null) {
-						EnvVarsWizard wizard = new EnvVarsWizard(cloudServer, appModule);
-						WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(), wizard);
-						dialog.open();
+						UIJob uiJob = new UIJob("Edit enivornment variables") {
+
+							public IStatus runInUIThread(IProgressMonitor monitor) {
+								try {
+									DeploymentInfoWorkingCopy infoWorkingCopy = appModule
+											.getDeploymentInfoWorkingCopy(monitor);
+
+									EnvVarsWizard wizard = new EnvVarsWizard(cloudServer, appModule, infoWorkingCopy);
+									WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(),
+											wizard);
+									dialog.open();
+									return Status.OK_STATUS;
+								}
+								catch (CoreException e) {
+									return e.getStatus();
+								}
+							}
+
+						};
+						uiJob.setSystem(true);
+						uiJob.setPriority(Job.INTERACTIVE);
+						uiJob.schedule();
+
 					}
 				}
 				catch (CoreException ce) {

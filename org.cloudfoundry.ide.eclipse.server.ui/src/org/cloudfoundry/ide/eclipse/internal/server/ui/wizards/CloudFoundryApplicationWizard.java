@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -47,8 +47,7 @@ public class CloudFoundryApplicationWizard extends Wizard {
 	 * @param module must not be null.
 	 * @param workingCopy a working copy that should be edited by the wizard. If
 	 * a user clicks "OK", the working copy will be saved into its corresponding
-	 * app module. If no working copy is specified, one will be requested from
-	 * the app module.
+	 * app module. Must not be null.
 	 * @param wizard delegate that provides wizard pages for the application
 	 * module. If null, default Java web wizard delegate will be used.
 	 */
@@ -56,11 +55,12 @@ public class CloudFoundryApplicationWizard extends Wizard {
 			DeploymentInfoWorkingCopy workingCopy, IApplicationWizardDelegate wizardDelegate) {
 		Assert.isNotNull(server);
 		Assert.isNotNull(module);
+		Assert.isNotNull(workingCopy);
 		this.server = server;
 		this.module = module;
 		this.wizardDelegate = wizardDelegate;
 
-		this.workingCopy = workingCopy != null ? workingCopy : module.getDeploymentInfoWorkingCopy();
+		this.workingCopy = workingCopy;
 		applicationDescriptor = new ApplicationWizardDescriptor(this.workingCopy);
 		setNeedsProgressMonitor(true);
 		setWindowTitle("Application");

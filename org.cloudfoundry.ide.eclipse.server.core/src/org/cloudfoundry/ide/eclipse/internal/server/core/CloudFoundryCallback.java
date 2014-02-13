@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.wst.server.core.IModule;
 
 /**
  * Callback interface to support clients to hook into CloudFoundry Server
@@ -65,6 +66,20 @@ public abstract class CloudFoundryCallback {
 	public abstract void displayCaldecottTunnelConnections(CloudFoundryServer server,
 			List<CaldecottTunnelDescriptor> descriptors);
 
+	/**
+	 * Prepares an application to either be deployed, started or restarted.
+	 * The main purpose to ensure that the application's deployment
+	 * information is complete. If incomplete, it will prompt the user for
+	 * missing information.
+	 * @param monitor
+	 * @return Cloud Foundry application mapped to the deployed WST
+	 * {@link IModule}. Must not be null. If null, it indicates error,
+	 * therefore throw {@link CoreException} instead.
+	 * @throws CoreException if failure while preparing the application for deployment
+	 * @throws OperationCanceledException if the user cancelled deploying or
+	 * starting the application. The application's deployment information
+	 * should not be modified in this case.
+	 */
 	public abstract void prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			IProgressMonitor monitor) throws CoreException, OperationCanceledException;
 

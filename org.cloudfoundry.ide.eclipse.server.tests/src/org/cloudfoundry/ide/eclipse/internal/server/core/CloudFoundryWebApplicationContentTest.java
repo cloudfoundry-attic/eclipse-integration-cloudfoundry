@@ -18,6 +18,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 import org.junit.Assert;
@@ -25,25 +26,25 @@ import org.junit.Assert;
 public class CloudFoundryWebApplicationContentTest extends AbstractCloudFoundryTest {
 
 	@Override
-	protected Harness createHarness() {
+	protected Harness createHarness() throws CoreException {
 		return CloudFoundryTestFixture.current().harness();
 	}
 
 	public void testStartModuleCheckWebContent() throws Exception {
-		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
+		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
 		IModule[] modules = server.getModules();
 
 		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
 		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
-		URI uri = new URI("http://" + harness.getUrl(AbstractCloudFoundryTest.DYNAMIC_WEBAPP_NAME) + "/index.html");
+		URI uri = new URI("http://" + harness.getExpectedURL(AbstractCloudFoundryTest.DYNAMIC_WEBAPP_NAME)
+				+ "/index.html");
 		assertEquals("Hello World.", getContent(uri, modules[0], serverBehavior));
 	}
 
 	public void testStartModuleWithUsedUrl() throws Exception {
-		getClient().deleteAllApplications();
 
-		assertCreateApplication(AbstractCloudFoundryTest.DYNAMIC_WEBAPP_NAME);
+		assertCreateLocalAppModule(AbstractCloudFoundryTest.DYNAMIC_WEBAPP_NAME);
 		IModule[] modules = server.getModules();
 
 		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
@@ -56,7 +57,7 @@ public class CloudFoundryWebApplicationContentTest extends AbstractCloudFoundryT
 		Assert.assertNull(module.getErrorMessage());
 
 		harness = CloudFoundryTestFixture.current("dynamic-webapp-with-appclient-module",
-				harness.getUrl(AbstractCloudFoundryTest.DYNAMIC_WEBAPP_NAME)).harness();
+				harness.getExpectedURL(AbstractCloudFoundryTest.DYNAMIC_WEBAPP_NAME)).harness();
 		server = harness.createServer();
 		cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
 		serverBehavior = (CloudFoundryServerBehaviour) server.loadAdapter(CloudFoundryServerBehaviour.class, null);
@@ -91,7 +92,7 @@ public class CloudFoundryWebApplicationContentTest extends AbstractCloudFoundryT
 		cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
 		serverBehavior = (CloudFoundryServerBehaviour) server.loadAdapter(CloudFoundryServerBehaviour.class, null);
 
-		assertCreateApplication(DYNAMIC_WEBAPP_NAME);
+		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
 
 		// There should only be one module
 		IModule[] modules = server.getModules();
@@ -119,7 +120,7 @@ public class CloudFoundryWebApplicationContentTest extends AbstractCloudFoundryT
 		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 
 		// wait 1s until app is actually started
-		URI uri = new URI("http://" + harness.getUrl("dynamic-webapp-with-appclient-module") + "/index.html");
+		URI uri = new URI("http://" + harness.getExpectedURL("dynamic-webapp-with-appclient-module") + "/index.html");
 		assertEquals("Hello World.", getContent(uri, modules[0], serverBehavior));
 
 		serverBehavior.refreshModules(new NullProgressMonitor());

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,6 +9,9 @@
  *     Pivotal Software, Inc. - initial API and implementation
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.client;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 
 /**
  * A working copy of an application's {@link ApplicationDeploymentInfo}. If the
@@ -26,11 +29,19 @@ public abstract class DeploymentInfoWorkingCopy extends ApplicationDeploymentInf
 		super(appModule.getDeployedApplicationName());
 		this.appModule = appModule;
 
+	}
+
+	/**
+	 * Fill the working copy with either values of an existing deployment
+	 * information in the associated application module, or default values if
+	 * the no existing deployment information exists for the application module.
+	 */
+	public void fill(IProgressMonitor monitor) throws CoreException {
 		if (appModule.getDeploymentInfo() != null) {
 			setInfo(appModule.getDeploymentInfo());
 		}
 		else {
-			setInfo(appModule.getDefaultDeploymentInfo());
+			setInfo(appModule.getDefaultDeploymentInfo(monitor));
 		}
 	}
 

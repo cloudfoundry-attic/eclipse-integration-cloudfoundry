@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudApplicationUrlPart;
 import org.eclipse.core.runtime.IStatus;
@@ -22,7 +22,7 @@ import org.eclipse.core.runtime.Status;
  */
 public class StandaloneAppUrlPart extends CloudApplicationUrlPart {
 
-	public StandaloneAppUrlPart(CloudApplicationUrlLookup urlLookUp) {
+	public StandaloneAppUrlPart(ApplicationUrlLookupService urlLookUp) {
 		super(urlLookUp);
 	}
 

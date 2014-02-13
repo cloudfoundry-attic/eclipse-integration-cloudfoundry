@@ -35,21 +35,13 @@ public class CloudErrorUtil {
 		// Util class
 	}
 
-	public static String getValidationErrorMessage(CoreException e) {
-		if (isForbiddenException(e)) {
-			return "Validation failed: Wrong email or password";
-		}
-		else if (isUnknownHostException(e)) {
-			return "Validation failed: Unable to establish connection";
-		}
-		else if (isRestClientException(e)) {
-			return "Validation failed: Unknown URL";
-		}
-
-		return "Validation failed";
-	}
-
-	public static String getV2ValidationErrorMessage(CoreException e) {
+	/**
+	 * 
+	 * @param e error to check if it is a connection error.
+	 * @return User-friendly error message IFF the error is a validation error due to wrong
+	 * credentials or connection error. Return null otherwise.
+	 */
+	public static String getConnectionError(CoreException e) {
 		if (isUnauthorisedException(e)) {
 			return "Validation failed: Wrong email or password";
 		}

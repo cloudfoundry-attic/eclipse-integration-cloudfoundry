@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,7 +19,9 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 
 /**
@@ -68,7 +70,7 @@ public class TestCallback extends CloudFoundryCallback {
 
 	@Override
 	public void prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
-			IProgressMonitor monitor) {
+			IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		String appName;
 
 		if (this.appName != null) {
@@ -78,9 +80,9 @@ public class TestCallback extends CloudFoundryCallback {
 			appName = module.getName();
 		}
 
-		DeploymentInfoWorkingCopy copy = module.getDeploymentInfoWorkingCopy();
+		DeploymentInfoWorkingCopy copy = module.getDeploymentInfoWorkingCopy(new NullProgressMonitor());
 		copy.setDeploymentName(appName);
-		copy.setMemory(128);
+		copy.setMemory(512);
 		copy.setDeploymentMode(ApplicationAction.START);
 
 		if (url != null) {

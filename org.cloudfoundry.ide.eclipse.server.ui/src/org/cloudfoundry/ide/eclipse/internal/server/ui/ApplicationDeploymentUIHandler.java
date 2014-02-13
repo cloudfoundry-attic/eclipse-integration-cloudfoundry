@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -77,7 +77,7 @@ public class ApplicationDeploymentUIHandler {
 		if (repModule != null) {
 			ApplicationDeploymentInfo republishDeploymentInfo = repModule.getDeploymentInfo();
 			if (republishDeploymentInfo != null) {
-				DeploymentInfoWorkingCopy copy = appModule.getDeploymentInfoWorkingCopy();
+				DeploymentInfoWorkingCopy copy = appModule.getDeploymentInfoWorkingCopy(monitor);
 				copy.setInfo(republishDeploymentInfo);
 				copy.save();
 			}
@@ -115,7 +115,6 @@ public class ApplicationDeploymentUIHandler {
 						+ appModule.getLocalModule().getModuleType().getId());
 			}
 
-				
 			// Now parse the manifest file, if it exists, and load into a
 			// deployment info working copy.
 			// Do NOT save the working copy yet, as a user may cancel the
@@ -124,7 +123,7 @@ public class ApplicationDeploymentUIHandler {
 			// clicks "OK".
 			DeploymentInfoWorkingCopy workingCopy = null;
 			try {
-				workingCopy = new ManifestParser(appModule, server).load();
+				workingCopy = new ManifestParser(appModule, server).load(monitor);
 			}
 			catch (Throwable ce) {
 				// Some failure occurred reading the manifest file. Proceed
@@ -132,11 +131,19 @@ public class ApplicationDeploymentUIHandler {
 				// values.
 				CloudFoundryPlugin.logError(ce);
 			}
-			
-			// Get the old working copy in case during the deployment wizard, the app name changes
-			// Apps are looked up by app name in the manifest, therefore if the app name changed,
-			// the old entry in the manifest 
-			ApplicationDeploymentInfo oldInfo = workingCopy != null ? workingCopy.copy() : null;
+
+			// A working copy of the deployment descriptor is needed in order to
+			// prepopulate the application deployment wizard.
+			if (workingCopy == null) {
+				workingCopy = appModule.getDeploymentInfoWorkingCopy(monitor);
+			}
+
+			// Get the old working copy in case during the deployment wizard,
+			// the app name changes
+			// Apps are looked up by app name in the manifest, therefore if the
+			// app name changed,
+			// the old entry in the manifest
+			ApplicationDeploymentInfo oldInfo = workingCopy.copy();
 
 			final boolean[] cancelled = { false };
 			final boolean[] writeToManifest = { false };

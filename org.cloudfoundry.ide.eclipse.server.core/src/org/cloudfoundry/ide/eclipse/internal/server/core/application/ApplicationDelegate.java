@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -25,6 +25,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.LocalCloudService;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
@@ -37,10 +39,11 @@ public abstract class ApplicationDelegate implements IApplicationDelegate {
 	 * IApplicationDelegate
 	 * #getDefaultApplicationDeploymentInfo(org.cloudfoundry.
 	 * ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule,
-	 * org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer)
+	 * org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer,
+	 * org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public ApplicationDeploymentInfo getDefaultApplicationDeploymentInfo(CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer) {
+			CloudFoundryServer cloudServer, IProgressMonitor monitor) throws CoreException {
 
 		// Set default values.
 		String appName = appModule.getDeployedApplicationName();

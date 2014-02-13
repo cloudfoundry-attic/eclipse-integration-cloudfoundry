@@ -166,7 +166,7 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 
 			CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
 			List<String> uris = appModule.getApplication().getUris();
-			assertEquals(Collections.singletonList(harness.getUrl("dynamic-webapp")), uris);
+			assertEquals(Collections.singletonList(harness.getExpectedURL("dynamic-webapp")), uris);
 
 			// wait 1s until app is actually started
 			// FIXNS: for now skip testing content for debug launches

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -173,7 +173,7 @@ public class TunnelBehaviour {
 
 		final List<CaldecottTunnelDescriptor> tunnel = new ArrayList<CaldecottTunnelDescriptor>(1);
 
-		cloudServer.getBehaviour().new Request<CaldecottTunnelDescriptor>("Opening Tunnel") {
+		new LocalServerRequest<CaldecottTunnelDescriptor>("Opening Tunnel") {
 
 			@Override
 			protected CaldecottTunnelDescriptor doRun(final CloudFoundryOperations client, SubMonitor progress)
@@ -283,6 +283,11 @@ public class TunnelBehaviour {
 				return descriptor;
 			}
 
+			@Override
+			protected CloudFoundryServer getCloudServer() throws CoreException {
+				return cloudServer;
+			}
+
 		}.run(monitor);
 
 		return tunnel.size() > 0 ? tunnel.get(0) : null;
@@ -359,7 +364,7 @@ public class TunnelBehaviour {
 
 		if (appModule != null) {
 
-			DeploymentInfoWorkingCopy deploymentInfo = appModule.getDeploymentInfoWorkingCopy();
+			DeploymentInfoWorkingCopy deploymentInfo = appModule.getDeploymentInfoWorkingCopy(monitor);
 
 			if (deploymentInfo != null) {
 				List<CloudService> existingServices = deploymentInfo.getServices();

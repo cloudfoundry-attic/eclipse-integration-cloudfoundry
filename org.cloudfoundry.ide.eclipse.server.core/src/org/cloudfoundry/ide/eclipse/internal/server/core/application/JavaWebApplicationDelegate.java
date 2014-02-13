@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
@@ -199,25 +199,24 @@ public class JavaWebApplicationDelegate extends ApplicationDelegate {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.cloudfoundry.ide.eclipse.internal.server.core.application.
-	 * IApplicationDelegate
-	 * #getDefaultApplicationDeploymentInfo(org.cloudfoundry.
-	 * ide.eclipse.internal.server.core.CloudFoundryServer,
-	 * org.cloudfoundry.ide.
-	 * eclipse.internal.server.core.client.CloudFoundryApplicationModule)
+	 * ApplicationDelegate
+	 * #getDefaultApplicationDeploymentInfo(org.cloudfoundry.ide
+	 * .eclipse.internal.server.core.client.CloudFoundryApplicationModule,
+	 * org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer,
+	 * org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
 	public ApplicationDeploymentInfo getDefaultApplicationDeploymentInfo(CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer) {
-		ApplicationDeploymentInfo info = super.getDefaultApplicationDeploymentInfo(appModule, cloudServer);
+			CloudFoundryServer cloudServer, IProgressMonitor monitor) throws CoreException {
+		ApplicationDeploymentInfo info = super.getDefaultApplicationDeploymentInfo(appModule, cloudServer, monitor);
 
 		// Set a default URL for the application.
 		if ((info.getUris() == null || info.getUris().isEmpty()) && info.getDeploymentName() != null) {
-			CloudApplicationUrlLookup urlLookup = CloudApplicationUrlLookup.getCurrentLookup(cloudServer);
-			if (urlLookup != null) {
-				CloudApplicationURL url = urlLookup.getDefaultApplicationURL(info.getDeploymentName());
-				if (url != null) {
-					info.setUris(Arrays.asList(url.getUrl()));
-				}
+			ApplicationUrlLookupService urlLookup = ApplicationUrlLookupService.getCurrentLookup(cloudServer);
+			urlLookup.refreshDomains(monitor);
+			CloudApplicationURL url = urlLookup.getDefaultApplicationURL(info.getDeploymentName());
+			if (url != null) {
+				info.setUris(Arrays.asList(url.getUrl()));
 			}
 
 		}

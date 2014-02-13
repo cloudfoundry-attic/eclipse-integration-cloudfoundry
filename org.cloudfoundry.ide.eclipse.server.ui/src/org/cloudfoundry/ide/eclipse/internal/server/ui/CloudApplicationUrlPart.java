@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,7 +16,7 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudDomain;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationUrlLookup;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -40,7 +40,7 @@ import org.eclipse.swt.widgets.Text;
  */
 public class CloudApplicationUrlPart extends UIPart {
 
-	protected final CloudApplicationUrlLookup urlLookup;
+	protected final ApplicationUrlLookupService urlLookup;
 
 	private String appURL;
 
@@ -62,7 +62,7 @@ public class CloudApplicationUrlPart extends UIPart {
 
 	private List<String> domains = new ArrayList<String>();
 
-	public CloudApplicationUrlPart(CloudApplicationUrlLookup urlLookup) {
+	public CloudApplicationUrlPart(ApplicationUrlLookupService urlLookup) {
 		this.urlLookup = urlLookup;
 	}
 
