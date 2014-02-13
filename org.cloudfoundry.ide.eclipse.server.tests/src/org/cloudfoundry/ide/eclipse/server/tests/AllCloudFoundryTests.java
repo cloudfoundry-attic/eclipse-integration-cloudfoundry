@@ -14,7 +14,6 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryClientConnectionTest;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConsoleTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProxyTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviourTest;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerTest;
@@ -47,7 +46,6 @@ public class AllCloudFoundryTests {
 		// TODO: Enable when Caldecott is fixed post CF 1.5.1
 		// suite.addTestSuite(CaldecottTunnelTest.class);
 
-		// FIXNS: DISABLED FOR CF 1.5.1 Nightly
 		if (!heartbeat) {
 			// XXX fails for on build server for unknown reasons
 			if (!StsTestUtil.isOnBuildSite()) {
@@ -62,7 +60,6 @@ public class AllCloudFoundryTests {
 
 		suite.addTestSuite(DeploymentURLTest.class);
 		suite.addTestSuite(CloudFoundryServicesTest.class);
-		suite.addTestSuite(CloudFoundryConsoleTest.class);
 		suite.addTestSuite(CloudFoundryClientConnectionTest.class);
 
 		return suite;

@@ -75,7 +75,8 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 
 	public void testInvalidProxyServerInstance() throws Exception {
 
-		// Verify that connection and operations can be performed without the proxy change
+		// Verify that connection and operations can be performed without the
+		// proxy change
 		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
 		final IModule[] modules = server.getModules();
 
@@ -91,6 +92,9 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 			protected void handleProxyChange() throws CoreException {
 				IProxyService proxyService = getProxyService();
 				try {
+					// Reset the client to use the new proxy settings
+					connectClient();
+
 					// Should fail, as its now going through invalid proxy
 					serverBehavior.stopModule(modules, null);
 

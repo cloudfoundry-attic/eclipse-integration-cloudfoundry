@@ -161,7 +161,7 @@ public class CloudFoundryClientConnectionTest extends TestCase {
 
 		CloudFoundryException cfe = (CloudFoundryException) cause;
 
-		assertEquals("403 Error requesting access token.", CloudErrorUtil.getCloudFoundryErrorMessage(cfe));
+		assertTrue(CloudErrorUtil.getCloudFoundryErrorMessage(cfe).contains("403"));
 	}
 
 	protected CloudFoundryOperations createClient(CloudCredentials credentials, String url) throws Exception {

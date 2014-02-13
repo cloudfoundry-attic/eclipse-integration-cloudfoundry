@@ -39,6 +39,7 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 			service.setName(name);
 			service.setLabel(vendor);
 			service.setVersion(serviceConfiguration.getVersion());
+			service.setPlan(serviceConfiguration.getCloudServicePlans().get(0).getName());
 
 			createService(service);
 			return service;
