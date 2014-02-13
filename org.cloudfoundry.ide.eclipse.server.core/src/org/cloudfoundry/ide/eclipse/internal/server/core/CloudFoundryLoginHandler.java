@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -107,8 +107,7 @@ public class CloudFoundryLoginHandler {
 				return true;
 			}
 			catch (MalformedURLException e) {
-				// Ignore. If URL is incorrect, other
-				// mechanisms exit to prompt user for correct values.
+				throw CloudErrorUtil.toCoreException("Failed to update proxy settings due to " + e.getMessage(), e);
 			}
 		}
 		return false;

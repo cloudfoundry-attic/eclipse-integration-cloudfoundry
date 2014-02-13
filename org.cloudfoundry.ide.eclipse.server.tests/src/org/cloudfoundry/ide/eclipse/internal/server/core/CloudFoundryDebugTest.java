@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 
+//NOTE: These do not run until debug support is re-enabled in CF servers (Debug support has been disable since CF 1.5.0)
 public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 
 	@Override

@@ -28,7 +28,6 @@ import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.NotFinishedStagingException;
-import org.cloudfoundry.client.lib.StagingErrorException;
 import org.cloudfoundry.client.lib.StartingInfo;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
@@ -1528,7 +1527,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * API.
 	 * @return resolved orgs and spaces for the given credential and server URL.
 	 */
-	public static CloudOrgsAndSpaces getCloudSpacesExternalClient(CloudCredentials credentials, String url,
+	public static CloudOrgsAndSpaces getCloudSpacesExternalClient(CloudCredentials credentials, final String url,
 			IProgressMonitor monitor) throws CoreException {
 
 		final CloudFoundryOperations operations = CloudFoundryServerBehaviour.createClient(url, credentials.getEmail(),
@@ -1544,13 +1543,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			protected CloudFoundryOperations getClient(IProgressMonitor monitor) throws CoreException {
 				return operations;
 			}
+
+			protected String getCloudServerUrl() throws CoreException {
+				return url;
+			}
 		}.run(monitor);
 
 	}
 
 	/**
-	 * This should be called within a {@link ClientRequest}, as it makes a direct
-	 * client call.
+	 * This should be called within a {@link ClientRequest}, as it makes a
+	 * direct client call.
 	 * @param client
 	 * @return
 	 */
@@ -1674,8 +1677,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	/**
 	 * Creates a standalone client with no association with a server behaviour.
 	 * This is used only for connecting to a Cloud Foundry server for credential
-	 * verification. The session client for the server behaviour is created when the
-	 * latter is created
+	 * verification. The session client for the server behaviour is created when
+	 * the latter is created
 	 * @param location
 	 * @param userName
 	 * @param password
@@ -2714,6 +2717,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			return CloudFoundryServerBehaviour.this.getCloudFoundryServer();
 		}
 
+		@Override
+		protected String getCloudServerUrl() throws CoreException {
+			return getCloudServer().getUrl();
+		}
 	}
 
 }

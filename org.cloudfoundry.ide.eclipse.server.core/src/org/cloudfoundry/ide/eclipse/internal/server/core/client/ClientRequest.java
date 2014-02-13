@@ -96,9 +96,15 @@ public abstract class ClientRequest<T> {
 		// Check that a user is logged in and proxy is updated
 		String cloudURL = getCloudServerUrl();
 		CloudFoundryLoginHandler handler = new CloudFoundryLoginHandler(client, cloudURL);
-
-		// Always check if proxy settings have changed.
-		handler.updateProxyInClient(client);
+		try {
+			// Always check if proxy settings have changed.
+			handler.updateProxyInClient(client);
+		}
+		catch (CoreException e) {
+			// Failed to handle proxy change. Do not stop the operation, but log
+			// the error to let the user know of the proxy change failure
+			CloudFoundryPlugin.logError(e.getMessage());
+		}
 
 		try {
 			return runAndWait(client, subProgress);
@@ -216,12 +222,11 @@ public abstract class ClientRequest<T> {
 
 	/**
 	 * 
-	 * @return the Cloud Foundry server URL. If null, some request checks may
-	 * not be available (e.g. proxy connections)
+	 * @return the Cloud Foundry server URL. Can be null, but if null, some
+	 * request checks like proxy handling may not be available.
+	 * @throw {@link CoreException} if error occurred while resolving server URL
 	 */
-	protected String getCloudServerUrl() {
-		return null;
-	}
+	protected abstract String getCloudServerUrl() throws CoreException;
 
 	/**
 	 * Total amount of time to wait. If less than the wait interval length, only
