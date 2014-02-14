@@ -20,14 +20,13 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.Staging;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryClientFactory;
 import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ProxyHandler;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
-import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.springframework.web.client.ResourceAccessException;
@@ -38,7 +37,7 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 
 	public static final String VALID_V1_HTTPS_URL = "https://api.cloudfoundry.com";
 
-	public void testInvalidProxyDirectClient() throws Exception {
+	public void testInvalidProxyJavaCFClient() throws Exception {
 
 		final boolean[] ran = { false };
 		new ProxyHandler("invalid.proxy.test", 8080) {
@@ -53,9 +52,10 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 					uris.add("test-proxy-upload.cloudfoundry.com");
 
 					// Do a direct client test with the proxy settings
-					client = createClient(new CloudCredentials(serverBehavior.getCloudFoundryServer().getUsername(),
-							serverBehavior.getCloudFoundryServer().getPassword()), serverBehavior
-							.getCloudFoundryServer().getUrl());
+					client = CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
+							new CloudCredentials(serverBehavior.getCloudFoundryServer().getUsername(), serverBehavior
+									.getCloudFoundryServer().getPassword()),
+							new URL(serverBehavior.getCloudFoundryServer().getUrl()));
 					client.createApplication("test", new Staging(), 128, uris, new ArrayList<String>());
 					fail("Expected ResourceAccessException due to invalid proxy configuration");
 				}
@@ -73,16 +73,15 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 		assertTrue(ran[0]);
 	}
 
-	public void testInvalidProxyServerInstance() throws Exception {
+	public void testInvalidProxyThroughServerInstance() throws Exception {
 
 		// Verify that connection and operations can be performed without the
 		// proxy change
-		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
-		final IModule[] modules = server.getModules();
+		String prefix = "InvalidProxyThroughServerInstance";
+		createPerTestWebApplication(prefix);
 
-		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
-		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
-		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
+		CloudFoundryApplicationModule appModule = assertDeployAndStartApplication(prefix);
+		final String appName = appModule.getDeployedApplicationName();
 
 		final boolean[] ran = { false };
 
@@ -90,6 +89,9 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 
 			@Override
 			protected void handleProxyChange() throws CoreException {
+
+				IModule[] modules = server.getModules();
+
 				IProxyService proxyService = getProxyService();
 				try {
 					// Reset the client to use the new proxy settings
@@ -98,7 +100,6 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 					// Should fail, as its now going through invalid proxy
 					serverBehavior.stopModule(modules, null);
 
-					getCloudApplication(modules[0]);
 					fail("Expected invalid.proxy.test failure");
 
 				}
@@ -116,7 +117,7 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 
 				int moduleState = server.getModuleState(modules);
 				assertEquals(IServer.STATE_STOPPED, moduleState);
-				CloudApplication cloudApplication = getCloudApplication(modules[0]);
+				CloudApplication cloudApplication = getUpdatedApplication(appName);
 				assertEquals(cloudApplication.getState(), CloudApplication.AppState.STOPPED);
 			}
 
@@ -299,12 +300,8 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 	}
 
 	@Override
-	protected Harness createHarness() throws CoreException {
-		return CloudFoundryTestFixture.current().harness();
-	}
-
-	protected CloudFoundryOperations createClient(CloudCredentials credentials, String url) throws Exception {
-		return CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(credentials, new URL(url));
+	protected CloudFoundryTestFixture getTestFixture() throws CoreException {
+		return CloudFoundryTestFixture.getTestFixture();
 	}
 
 }

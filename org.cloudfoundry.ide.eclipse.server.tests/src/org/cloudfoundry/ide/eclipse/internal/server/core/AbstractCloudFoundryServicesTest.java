@@ -17,7 +17,6 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
-import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
@@ -25,11 +24,6 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 
 	protected void deleteService(CloudService service) throws CoreException {
 		harness.deleteService(service);
-	}
-
-	@Override
-	protected Harness createHarness() throws CoreException {
-		return CloudFoundryTestFixture.current().harness();
 	}
 
 	protected CloudService createCloudService(String name, String vendor) throws CoreException {
@@ -155,6 +149,11 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 	protected void assertServiceEquals(CloudService expectedService, CloudService actualService) throws Exception {
 		assertEquals(actualService.getName(), expectedService.getName());
 		assertEquals(actualService.getLabel(), expectedService.getLabel());
+	}
+
+	@Override
+	protected CloudFoundryTestFixture getTestFixture() throws CoreException {
+		return CloudFoundryTestFixture.getTestFixture();
 	}
 
 }

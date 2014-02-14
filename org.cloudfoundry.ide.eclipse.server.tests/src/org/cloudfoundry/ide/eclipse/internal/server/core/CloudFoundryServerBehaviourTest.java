@@ -19,12 +19,9 @@ import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
-import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 
 /**
@@ -49,32 +46,18 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		assertEquals(IServer.STATE_STOPPED, serverBehavior.getServer().getServerState());
 	}
 
-	public void testStartModule() throws Exception {
-		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
+	public void testCreateStartAppHarness() throws Exception {
+		String prefix = "testStart";
+		createPerTestWebApplication(prefix);
 
-		// There should only be one module
-		IModule[] modules = server.getModules();
-
-		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
-
-		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
-		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
+		assertApplicationFromDefaultProjectIsRunning(prefix);
 	}
 
 	public void testServerBehaviourIsApplicationRunning() throws Exception {
-		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
-		IModule[] modules = server.getModules();
+		String prefix = "isApplicationRunning";
+		createPerTestWebApplication(prefix);
 
-		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
-
-		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
-		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
-
-		// Verify that the Server Behaviour API to check that an app is
-		// validates against
-		// expected conditions
-
-		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
+		CloudFoundryApplicationModule appModule = assertApplicationFromDefaultProjectIsRunning(prefix);
 
 		// Verify that the server behaviour API to determine that an app is
 		// running tests correctly
@@ -82,15 +65,16 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		// The following are the expected conditions for the server behaviour to
 		// determine that the app is running
+		String appName = getTestFixture().harness().getDefaultWebAppName(prefix);
 		assertTrue(appModule.getState() == IServer.STATE_STARTED);
-		assertNotNull(serverBehavior.getApplicationStats(DYNAMIC_WEBAPP_NAME, new NullProgressMonitor()));
-		assertNotNull(serverBehavior.getInstancesInfo(DYNAMIC_WEBAPP_NAME, new NullProgressMonitor()));
+		assertNotNull(serverBehavior.getApplicationStats(appName, new NullProgressMonitor()));
+		assertNotNull(serverBehavior.getInstancesInfo(appName, new NullProgressMonitor()));
 	}
 
 	public void testStartModuleInvalidToken() throws Exception {
-		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
-		IModule[] modules = server.getModules();
+		String prefix = "startModuleInvalidToken";
 
+		createPerTestWebApplication(prefix);
 		try {
 			connectClient("invalid", "invalidPassword");
 		}
@@ -99,7 +83,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		}
 
 		try {
-			serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
+			assertDeployAndStartApplication(prefix);
 		}
 		catch (CoreException ce) {
 			assertNotNull(ce);
@@ -107,23 +91,23 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		// Deploying application should have failed, so it must not exist in the
 		// server
-		assertNull("Expecting no deployed application: " + DYNAMIC_WEBAPP_NAME + " but it exists in the server",
-				getUpdatedApplication(DYNAMIC_WEBAPP_NAME));
+		String appName = getTestFixture().harness().getDefaultWebAppName(prefix);
+		assertNull("Expecting no deployed application: " + appName + " but it exists in the server",
+				getUpdatedApplication(appName));
 
 		// Set the client again with the correct server-stored credentials
 		connectClient();
 
-		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
-
-		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
-		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
+		// Starting the app should now pass without errors
+		assertDeployAndStartApplication(prefix);
 
 	}
 
 	public void testStartModuleInvalidPassword() throws Exception {
 
-		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
-		IModule[] modules = server.getModules();
+		String prefix = "startModuleInvalidPassword";
+
+		createPerTestWebApplication(prefix);
 
 		try {
 			CloudFoundryServer cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
@@ -132,7 +116,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 			CloudCredentials credentials = new CloudCredentials(userName, "invalid-password");
 			connectClient(credentials);
 
-			serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
+			assertDeployAndStartApplication(prefix);
 
 			fail("Expected CoreException due to invalid password");
 		}
@@ -141,45 +125,46 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		}
 
 		connectClient();
-		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
 
-		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
-		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
+		assertDeployAndStartApplication(prefix);
 
 	}
 
 	public void testDeleteModuleExternally() throws Exception {
-		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
-		IModule[] modules = server.getModules();
+		String prefix = "deleteModuleExternally";
+		String appName = getTestFixture().harness().getDefaultWebAppName(prefix);
+		createPerTestWebApplication(prefix);
 
-		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
-
-		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
-		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
+		assertApplicationFromDefaultProjectIsRunning(prefix);
 
 		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
 		boolean found = false;
 
 		for (CloudApplication application : applications) {
-			if (application.getName().equals(DYNAMIC_WEBAPP_NAME)) {
+			if (application.getName().equals(appName)) {
 				found = true;
 				break;
 			}
 		}
 		assertTrue(found);
-		URL url = new URL(CloudFoundryTestFixture.current().getUrl());
-		CloudFoundryOperations client = CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
-				new CloudCredentials(CloudFoundryTestFixture.current().getCredentials().userEmail,
-						CloudFoundryTestFixture.current().getCredentials().password), url);
-		client.login();
-		client.deleteApplication(DYNAMIC_WEBAPP_NAME);
 
+		// Now create a separate external standalone client (external to the WST
+		// CF Server instance) to delete the app
+		URL url = new URL(getTestFixture().getUrl());
+		CloudFoundryOperations client = CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
+				new CloudCredentials(getTestFixture().getCredentials().userEmail,
+						getTestFixture().getCredentials().password), url);
+		client.login();
+		client.deleteApplication(appName);
+
+		// Now check if the app is indeed deleted through the server behaviour
+		// delegate
 		serverBehavior.refreshModules(new NullProgressMonitor());
 		applications = serverBehavior.getApplications(new NullProgressMonitor());
 		found = false;
 
 		for (CloudApplication application : applications) {
-			if (application.getName().equals(DYNAMIC_WEBAPP_NAME)) {
+			if (application.getName().equals(appName)) {
 				found = true;
 				break;
 			}
@@ -187,36 +172,9 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		assertFalse(found);
 	}
 
-	public void testStartModuleWithDifferentId() throws Exception {
-		harness = CloudFoundryTestFixture.current("dynamic-webapp-test").harness();
-		server = harness.createServer();
-		cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
-		serverBehavior = (CloudFoundryServerBehaviour) server.loadAdapter(CloudFoundryServerBehaviour.class, null);
-
-		assertCreateLocalAppModule(DYNAMIC_WEBAPP_NAME);
-		IModule[] modules = server.getModules();
-
-		serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
-
-		assertWebApplicationURL(modules, DYNAMIC_WEBAPP_NAME);
-		assertApplicationIsRunning(modules, DYNAMIC_WEBAPP_NAME);
-
-		serverBehavior.refreshModules(new NullProgressMonitor());
-		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
-		boolean found = false;
-
-		for (CloudApplication application : applications) {
-			if (application.getName().equals("dynamic-webapp-test")) {
-				found = true;
-				break;
-			}
-		}
-		assertTrue(found);
-	}
-
 	@Override
-	protected Harness createHarness() throws CoreException {
-		return CloudFoundryTestFixture.current().harness();
+	protected CloudFoundryTestFixture getTestFixture() throws CoreException {
+		return CloudFoundryTestFixture.getTestFixture();
 	}
 
 }

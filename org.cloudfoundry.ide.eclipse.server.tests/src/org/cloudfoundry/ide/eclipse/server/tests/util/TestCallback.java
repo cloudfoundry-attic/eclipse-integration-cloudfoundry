@@ -33,11 +33,6 @@ public class TestCallback extends CloudFoundryCallback {
 
 	private final String url;
 
-	public TestCallback() {
-		this.appName = null;
-		this.url = null;
-	}
-
 	public TestCallback(String appName) {
 		this.appName = appName;
 		this.url = null;
@@ -71,14 +66,6 @@ public class TestCallback extends CloudFoundryCallback {
 	@Override
 	public void prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			IProgressMonitor monitor) throws CoreException, OperationCanceledException {
-		String appName;
-
-		if (this.appName != null) {
-			appName = this.appName;
-		}
-		else {
-			appName = module.getName();
-		}
 
 		DeploymentInfoWorkingCopy copy = module.getDeploymentInfoWorkingCopy(new NullProgressMonitor());
 		copy.setDeploymentName(appName);

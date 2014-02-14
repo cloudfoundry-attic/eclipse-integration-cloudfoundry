@@ -12,6 +12,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 
 public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 
@@ -26,8 +27,11 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 
 	public void testServiceBinding() throws Exception {
 		CloudService service = createService();
+		String prefix = "serviceBinding";
+		createPerTestWebApplication(prefix);
+		CloudFoundryApplicationModule appModule = assertDeployAndStartApplication(prefix);
 
-		CloudApplication app = createAndAssertTestApp();
+		CloudApplication app = appModule.getApplication();
 		assertStopApplication(app);
 
 		bindServiceToApp(app, service);
@@ -44,7 +48,12 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 	public void testServiceUnBinding() throws Exception {
 		CloudService service = createService();
 
-		CloudApplication app = createAndAssertTestApp();
+		String prefix = "serviceBinding";
+		createPerTestWebApplication(prefix);
+		CloudFoundryApplicationModule appModule = assertDeployAndStartApplication(prefix);
+
+		CloudApplication app = appModule.getApplication();
+
 		assertStopApplication(app);
 		bindServiceToApp(app, service);
 

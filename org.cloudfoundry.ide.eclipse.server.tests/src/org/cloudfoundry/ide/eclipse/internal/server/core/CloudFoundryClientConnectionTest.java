@@ -47,7 +47,7 @@ public class CloudFoundryClientConnectionTest extends TestCase {
 
 	public void testValidPasswordOperationHandler() throws Exception {
 
-		CredentialProperties credentials = CloudFoundryTestFixture.current().getCredentials();
+		CredentialProperties credentials = getTestFixture().getCredentials();
 		CloudCredentials cloudCredentials = new CloudCredentials(credentials.userEmail, credentials.password);
 
 		CloudFoundryOperations client = createClient(cloudCredentials,
@@ -66,7 +66,7 @@ public class CloudFoundryClientConnectionTest extends TestCase {
 
 	public void testInvalidPasswordOperationHandler() throws Exception {
 
-		CredentialProperties credentials = CloudFoundryTestFixture.current().getCredentials();
+		CredentialProperties credentials = getTestFixture().getCredentials();
 
 		String invalidPassword = "invalid password";
 
@@ -89,7 +89,7 @@ public class CloudFoundryClientConnectionTest extends TestCase {
 
 	public void testInvalidUsernameOperationHandler() throws Exception {
 
-		CredentialProperties credentials = CloudFoundryTestFixture.current().getCredentials();
+		CredentialProperties credentials = getTestFixture().getCredentials();
 
 		String invalidUsername = "invalid username";
 
@@ -111,7 +111,7 @@ public class CloudFoundryClientConnectionTest extends TestCase {
 	}
 
 	public void testInvalidAndValidCredentials() throws Exception {
-		CredentialProperties credentials = CloudFoundryTestFixture.current().getCredentials();
+		CredentialProperties credentials = getTestFixture().getCredentials();
 
 		String invalidUsername = "invalid username";
 
@@ -166,5 +166,9 @@ public class CloudFoundryClientConnectionTest extends TestCase {
 
 	protected CloudFoundryOperations createClient(CloudCredentials credentials, String url) throws Exception {
 		return CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(credentials, new URL(url));
+	}
+
+	protected CloudFoundryTestFixture getTestFixture() throws CoreException {
+		return CloudFoundryTestFixture.getTestFixture();
 	}
 }

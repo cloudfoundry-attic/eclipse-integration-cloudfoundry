@@ -58,6 +58,8 @@ import org.osgi.framework.Bundle;
  */
 public class CloudFoundryTestFixture {
 
+	public static final String DYNAMIC_WEBAPP_NAME = "basic-dynamic-webapp";
+
 	public static final String PASSWORD_PROPERTY = "password";
 
 	public static final String USEREMAIL_PROPERTY = "username";
@@ -72,6 +74,29 @@ public class CloudFoundryTestFixture {
 
 	public static final String CF_PIVOTAL_SERVER_URL_HTTPS = "https://api.run.pivotal.io";
 
+	/**
+	 * 
+	 * The intention of the harness is to create a web project, server instance,
+	 * and define common components for applications deployed to this server,
+	 * like using the same domain when computing an application's URL.
+	 * <p/>
+	 * In addition, the harness provides a default web project creation, that
+	 * can be reused in each test case, and deploys an application based on the
+	 * same web project, but using different application names each time. Note
+	 * that application names need not match the project name, as application
+	 * names can be user defined rather than generated.
+	 * <p/>
+	 * The harness provides a mechanism to generate an application name and URL
+	 * based on the default web project by requiring callers to pass in an
+	 * application name "prefix"
+	 * <p/>
+	 * The purpose of the prefix is to reuse the same web project for each tests
+	 * but assign a different name to avoid "URL taken/Host taken" errors in
+	 * case the server does not clear the routing of the app by the time the
+	 * next test runs that will deploy the same project. By having different
+	 * names for each application deployment, the routing problem is avoided or
+	 * minimised.
+	 */
 	public class Harness {
 
 		private boolean projectCreated;
@@ -82,8 +107,16 @@ public class CloudFoundryTestFixture {
 
 		private String applicationDomain;
 
-		public IProject createProjectAndAddModule(String projectName) throws Exception {
-			IProject project = createProject(projectName);
+		/**
+		 * Creates a default web application project in the workspace, and
+		 * prepares it for deployment by creating WST IModule for it. This does
+		 * NOT do the actual application deployment to the CF server, it only
+		 * prepares it for deployment locally.
+		 * @return
+		 * @throws Exception
+		 */
+		public IProject createDefaultProjectAndAddModule() throws Exception {
+			IProject project = createProject(getDefaultWebAppProjectName());
 			projectCreated = true;
 			addModule(project);
 			return project;
@@ -265,8 +298,38 @@ public class CloudFoundryTestFixture {
 			}
 		}
 
-		public String getExpectedURL(String projectName) throws CoreException {
-			return projectName + "." + getDomain();
+		/**
+		 * Given a prefix for an application name (e.g. "test01" in
+		 * "test01myprojectname") constructs the expected URL based on the
+		 * default web project name ("myprojectname") and the domain. E.g:
+		 * 
+		 * <p/>
+		 * Arg = test01
+		 * <p/>
+		 * Default project name = myprojectname
+		 * <p/>
+		 * domain = run.pivotal.io URL = test01myprojectname.run.pivotal.io
+		 * <p/>
+		 * The purpose of the prefix is to reuse the same web project for each
+		 * tests but assign a different name to avoid "URL taken/Host taken"
+		 * errors in case the server does not clear the routing of the app by
+		 * the time the next test runs that will deploy the same project. By
+		 * having different names for each application deployment, the routing
+		 * problem is avoided or minimised.
+		 * @param appPrefix
+		 * @return
+		 * @throws CoreException
+		 */
+		public String getExpectedDefaultURL(String appPrefix) throws CoreException {
+			return getDefaultWebAppName(appPrefix) + '.' + getDomain();
+		}
+
+		public String getDefaultWebAppProjectName() {
+			return DYNAMIC_WEBAPP_NAME;
+		}
+
+		public String getDefaultWebAppName(String appPrefix) {
+			return appPrefix + getDefaultWebAppProjectName();
 		}
 
 		public TestServlet startMockServer() throws Exception {
@@ -291,31 +354,51 @@ public class CloudFoundryTestFixture {
 
 	private static CloudFoundryTestFixture current;
 
-	private static CloudFoundryTestFixture getTestFixture() throws CoreException {
+	public static CloudFoundryTestFixture getTestFixture() throws CoreException {
 		if (current == null) {
 			current = new CloudFoundryTestFixture("run.pivotal.io");
 		}
 		return current;
 	}
 
-	public static CloudFoundryTestFixture current() throws CoreException {
-		CloudFoundryPlugin.setCallback(new TestCallback());
+	/**
+	 * This test fixture hould not be used to configure to application
+	 * deployment. Use {@link #current(String)} or
+	 * {@link #current(String, String)} instead
+	 * @return
+	 * @throws CoreException
+	 */
+	public CloudFoundryTestFixture baseConfiguration() throws CoreException {
+		CloudFoundryPlugin.setCallback(new TestCallback(null));
 		return getTestFixture();
 	}
 
-	public static CloudFoundryTestFixture current(String appName) throws CoreException {
+	/**
+	 * Configures a test fixture to deploy an application with the given
+	 * application prefix.
+	 * @param appPrefix
+	 * @return
+	 * @throws CoreException
+	 */
+	public CloudFoundryTestFixture configureForApplicationDeployment(String appPrefix) throws CoreException {
+		String appName = harness().getDefaultWebAppName(appPrefix);
 		CloudFoundryPlugin.setCallback(new TestCallback(appName));
 		return getTestFixture();
 	}
 
-	public static CloudFoundryTestFixture current(String appName, String url) throws CoreException {
+	/**
+	 * Configures a test fixture for deploying an application with the given
+	 * appPrefix and URL.
+	 * @see #applicationDeployment(String)
+	 * @param appPrefix
+	 * @param url
+	 * @return
+	 * @throws CoreException
+	 */
+	public CloudFoundryTestFixture configureForApplicationDeployment(String appPrefix, String url) throws CoreException {
+		String appName = harness().getDefaultWebAppName(appPrefix);
 		CloudFoundryPlugin.setCallback(new TestCallback(appName, url));
 		return getTestFixture();
-	}
-
-	public static CloudFoundryTestFixture currentLocalDebug() {
-		CloudFoundryPlugin.setCallback(new TestCallback());
-		return null;
 	}
 
 	private final ServerHandler handler;

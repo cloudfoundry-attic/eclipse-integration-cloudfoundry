@@ -28,7 +28,9 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.WaitForApplicationToStopOp;
 import org.cloudfoundry.ide.eclipse.server.tests.server.TestServlet;
+import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -36,8 +38,6 @@ import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 
 public abstract class AbstractCloudFoundryTest extends TestCase {
-
-	static final String DYNAMIC_WEBAPP_NAME = "basic-dynamic-webapp";
 
 	protected Harness harness;
 
@@ -51,7 +51,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	@Override
 	protected void setUp() throws Exception {
-		harness = createHarness();
+		harness = getTestFixture().harness();
 		server = harness.createServer();
 		cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
 		serverBehavior = (CloudFoundryServerBehaviour) server.loadAdapter(CloudFoundryServerBehaviour.class, null);
@@ -154,31 +154,40 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		return connection.getInputStream();
 	}
 
-	abstract protected Harness createHarness() throws CoreException;
-
-	protected CloudApplication createAndAssertTestApp() throws Exception {
-		return createDefaultWebApplication(DYNAMIC_WEBAPP_NAME);
-	}
-
-	// Utility methods
-	protected CloudApplication createDefaultWebApplication(String appName) throws Exception {
-
-		harness.createProjectAndAddModule(appName);
-
-		IModule module = getModule(appName);
-		CloudApplication cloudApplication = deployAndStartModule(module, appName);
-		return cloudApplication;
-	}
-
 	/**
-	 * Creates the application and local application module, but does NOT deploy
-	 * to the Cloud Foundry Server.
-	 * @param appName
+	 * 
+	 * Creates an application with the given prefix in the application based off
+	 * a default web app project defined in the test fixture harness. NOTE that
+	 * this assumes there is ONLY ONE app deployed in the server. Do not use
+	 * this to test multiple application deployments in the same test case.
+	 * @param appPrefix
+	 * 
 	 * @throws Exception
 	 */
-	protected void assertCreateLocalAppModule(String appName) throws Exception {
-		harness.createProjectAndAddModule(appName);
+	protected CloudFoundryApplicationModule createPerTestWebApplication(String appPrefix) throws Exception {
 
+		// NOTE: application name is NOT necessarily equal to the web app
+		// project name
+		// The application name can be different, and for test purposes, it is
+		// different, and it's derived
+		// from the given application name prefix, as defined by the harness
+		// (typically by appending the prefix to the
+		// project name)
+		CloudFoundryTestFixture fixture = getTestFixture();
+
+		fixture.configureForApplicationDeployment(appPrefix);
+
+		// Create the default web project in the workspace and create the local
+		// IModule for it. This does NOT create the application remotely, it
+		// only
+		// creates a "pre-deployment" WST IModule for the given project.
+		IProject project = fixture.harness().createDefaultProjectAndAddModule();
+		String projectName = fixture.harness().getDefaultWebAppProjectName();
+
+		assertEquals(project.getName(), projectName);
+
+		// There should only be one module available in the WST CF local server
+		// instance
 		IModule[] modules = server.getModules();
 		assertEquals(
 				"Expected only 1 web application module created by local Cloud server instance, but got "
@@ -186,6 +195,16 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 				modules.length);
 		int moduleState = server.getModulePublishState(modules);
 		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
+
+		// Verify that the WST module that exists matches the app project app
+		IModule module = getModule(projectName);
+
+		assertNotNull(module);
+		assertTrue(module.getName().equals(projectName));
+
+		CloudFoundryApplicationModule appModule = assertCloudApplicationModuleIsValid(module, appPrefix);
+
+		return appModule;
 	}
 
 	protected void assertStartApplication(CloudApplication cloudApplication) throws Exception {
@@ -229,70 +248,105 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		assertFalse(found);
 	}
 
-	protected void assertApplicationIsRunning(IModule[] modules, String appName) throws Exception {
-		int moduleState = server.getModuleState(modules);
+	protected CloudFoundryApplicationModule assertApplicationFromDefaultProjectIsRunning(String appPrefix)
+			throws Exception {
+		IModule module = getModule(getTestFixture().harness().getDefaultWebAppProjectName());
+		int moduleState = server.getModuleState(new IModule[] { module });
 		assertEquals(IServer.STATE_STARTED, moduleState);
 
-		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
+		// Once the application is started, verify that the Cloud module (the
+		// "Enhanced" WST
+		// Imodule that contains additional CF related information) is valid,
+		// and mapped to
+		// an actual CloudApplication representing the deployed application.
+		CloudFoundryApplicationModule appModule = assertCloudApplicationModuleIsValid(module, appPrefix);
+
 		assertNotNull("No Cloud Application mapping in Cloud module. Failed to refresh deployed application",
 				appModule.getApplication());
+
+		// The app state in the cloud module must be correct
+		assertEquals(IServer.STATE_STARTED, appModule.getState());
 
 		assertTrue(serverBehavior.isApplicationRunning(appModule, new NullProgressMonitor()));
+
+		assertRunningApplicationURL(module, appPrefix);
+
+		return appModule;
 	}
 
-	protected void assertWebApplicationURL(IModule[] modules, String appName) throws Exception {
+	protected CloudFoundryApplicationModule assertCloudApplicationModuleIsValid(IModule module, String appPrefix)
+			throws Exception {
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
-		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
-		assertNotNull("No Cloud Application mapping in Cloud module. Failed to refresh deployed application",
-				appModule.getApplication());
+		assertNotNull(appModule);
+
+		// The deployed application name in the Cloud module MUST match the
+		// expected application name
+		assertEquals(getTestFixture().harness().getDefaultWebAppName(appPrefix), appModule.getDeployedApplicationName());
+
+		return appModule;
+	}
+
+	protected void assertRunningApplicationURL(IModule module, String appPrefix) throws Exception {
+
+		CloudFoundryApplicationModule appModule = assertCloudApplicationModuleIsValid(module, appPrefix);
 
 		List<String> uris = appModule.getApplication().getUris();
-		assertEquals(Collections.singletonList(harness.getExpectedURL(appName)), uris);
+		assertEquals(Collections.singletonList(harness.getExpectedDefaultURL(appPrefix)), uris);
 	}
 
 	/**
-	 * 
-	 * @param appName
+	 * Finds the {@link CloudApplication} for an already deployed application
+	 * with the given name. The name MUST be the full application name.
+	 * @param appName. Must pass the FULL application name, not just the app
+	 * name prefix.
 	 * @return Application if found, or null if application is no longer in
 	 * server
 	 */
-	protected CloudApplication getUpdatedApplication(String appName) {
-		try {
-			return serverBehavior.getApplication(appName, new NullProgressMonitor());
-		}
-		catch (CoreException ce) {
-			return null;
-		}
+	protected CloudApplication getUpdatedApplication(String appName) throws CoreException {
+		return serverBehavior.getApplication(appName, new NullProgressMonitor());
+
 	}
 
-	protected CloudApplication deployAndStartModule(IModule module, String appName) throws Exception {
+	protected CloudFoundryApplicationModule assertDeployAndStartApplication(String appPrefix) throws Exception {
+		Harness harness = getTestFixture().harness();
+
+		String projectName = harness.getDefaultWebAppProjectName();
+
+		String expectedAppName = harness.getDefaultWebAppName(appPrefix);
+
+		IModule module = getModule(projectName);
+
+		assertNotNull(module);
+
 		serverBehavior.startModuleWaitForDeployment(new IModule[] { module }, null);
 
-		assertApplicationIsRunning(new IModule[] { module }, appName);
-		return getCloudApplication(module);
+		CloudFoundryApplicationModule appModule = assertApplicationFromDefaultProjectIsRunning(appPrefix);
+
+		// Do a separate check to verify that there is in fact a
+		// CloudApplication for the
+		// given app (i.e. verify that is is indeed deployed, even though this
+		// has been checked
+		// above, this is another way to verify all is OK.
+		CloudApplication actualCloudApp = getUpdatedApplication(expectedAppName);
+
+		assertNotNull(actualCloudApp);
+		assertEquals(actualCloudApp.getName(), expectedAppName);
+
+		return appModule;
 	}
 
-	protected CloudApplication getCloudApplication(IModule module) throws CoreException {
-		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
-		CloudApplication cloudApp = null;
+	protected IModule getModule(String projectName) {
 
-		for (CloudApplication application : applications) {
-			if (application.getName().equals(module.getName())) {
-				cloudApp = application;
-				break;
-			}
-		}
-		return cloudApp;
-	}
-
-	protected IModule getModule(String appName) {
 		IModule[] modules = server.getModules();
 		for (IModule module : modules) {
-			if (appName.equals(module.getName())) {
+			if (projectName.equals(module.getName())) {
 				return module;
 			}
 		}
 		return null;
 	}
+
+	abstract protected CloudFoundryTestFixture getTestFixture() throws CoreException;
 
 }

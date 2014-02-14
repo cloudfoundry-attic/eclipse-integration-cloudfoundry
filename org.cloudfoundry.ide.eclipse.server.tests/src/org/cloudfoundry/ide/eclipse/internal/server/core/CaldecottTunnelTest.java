@@ -13,11 +13,11 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 import org.cloudfoundry.caldecott.client.TunnelHelper;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ProxyHandler;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
-import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
@@ -29,11 +29,6 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 	public static final String POSTGRESQL_SERVICE_NAME = "postgresqlCaldecottTestService";
 
 	public static final String LOCAL_HOST = "127.0.0.1";
-
-	@Override
-	protected Harness createHarness() throws CoreException {
-		return CloudFoundryTestFixture.current().harness();
-	}
 
 	public void testCreateMysqlTunnel() throws Exception {
 		CloudService service = getMysqlService();
@@ -141,7 +136,10 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 	 * service also has a Caldecott tunnel, the tunnel does not get closed.
 	 */
 	public void testNonCaldecottServiceUnbinding_STS_2767() throws Exception {
-		CloudApplication nonCaldecottApp = createAndAssertTestApp();
+		CloudFoundryApplicationModule appModule = createPerTestWebApplication("nonCaldecottServiceUnbinding");
+
+		CloudApplication nonCaldecottApp = appModule.getApplication();
+
 		CloudService service = getMysqlService();
 		assertServiceExists(MYSQL_SERVICE_NAME);
 
@@ -271,7 +269,7 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 	 * server
 	 * @throws CoreException
 	 */
-	protected CloudApplication getCaldecottApplication() {
+	protected CloudApplication getCaldecottApplication() throws CoreException {
 		return getUpdatedApplication(TunnelHelper.getTunnelAppName());
 	}
 
@@ -318,6 +316,11 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 	protected CaldecottTunnelDescriptor createCaldecottTunnel(String serviceName) throws CoreException {
 		TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
 		return handler.startCaldecottTunnel(serviceName, new NullProgressMonitor(), false);
+	}
+
+	@Override
+	protected CloudFoundryTestFixture getTestFixture() throws CoreException {
+		return CloudFoundryTestFixture.getTestFixture();
 	}
 
 }

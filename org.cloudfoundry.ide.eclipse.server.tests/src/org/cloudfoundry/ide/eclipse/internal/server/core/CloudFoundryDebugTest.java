@@ -17,7 +17,7 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
-import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
@@ -25,18 +25,13 @@ import org.eclipse.wst.server.core.IServer;
 //NOTE: These do not run until debug support is re-enabled in CF servers (Debug support has been disable since CF 1.5.0)
 public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 
-	@Override
-	protected Harness createHarness() {
-		return CloudFoundryTestFixture.currentLocalDebug().harness();
-	}
-
 	/*
 	 * 
 	 * 
 	 * Helper methods and types.
 	 */
 
-	protected void assertStarted(final DebugModeType expectedType) throws Exception {
+	protected void assertStarted(final DebugModeType expectedType, String appPrefix) throws Exception {
 		new CreateAppAndDebug() {
 
 			@Override
@@ -50,10 +45,10 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 				assertEquals(IServer.STATE_STARTED, moduleState);
 			}
 
-		}.launch();
+		}.launch(appPrefix);
 	}
 
-	protected void assertRestarted(final DebugModeType expectedType) throws Exception {
+	protected void assertRestarted(final DebugModeType expectedType, String appPrefix) throws Exception {
 		new RestartInDebugHandler() {
 
 			@Override
@@ -63,7 +58,7 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 				assertIsOfDebugModeType(modules, DebugModeType.SUSPEND);
 			}
 
-		}.launch();
+		}.launch(appPrefix);
 	}
 
 	protected void assertIsOfDebugModeType(IModule[] modules, DebugModeType expectedType) {
@@ -83,10 +78,10 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 	protected final AbstractLaunchAppHandler REGULAR_START = new AbstractLaunchAppHandler() {
 
 		@Override
-		public IModule[] launch() throws Exception {
+		public IModule[] launch(String appPrefix) throws Exception {
 			// Create the app first
-			harness.createProjectAndAddModule("dynamic-webapp");
-			return super.launch();
+			createPerTestWebApplication(appPrefix);
+			return super.launch(appPrefix);
 		}
 
 		@Override
@@ -114,16 +109,15 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 	 * 
 	 * Create and deploy an application in the specified Debug mode
 	 * 
-	 * @author Nieraj Singh
 	 * 
 	 */
 	abstract class CreateAppAndDebug extends AbstractDebugLaunchAppHandler {
 
 		@Override
-		public IModule[] launch() throws Exception {
+		public IModule[] launch(String appPrefix) throws Exception {
 			// Create the app first before launching
-			harness.createProjectAndAddModule("dynamic-webapp");
-			return super.launch();
+			createPerTestWebApplication(appPrefix);
+			return super.launch(appPrefix);
 		}
 
 		@Override
@@ -155,10 +149,10 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 	 * 
 	 */
 	abstract class AbstractLaunchAppHandler {
-		public IModule[] launch() throws Exception {
+		public IModule[] launch(String appPrefix) throws Exception {
 
 			IModule[] modules = server.getModules();
-			assertEquals("Expected dynamic-webapp module, got " + Arrays.toString(modules), 1, modules.length);
+			assertEquals("Expected 1 module, got " + Arrays.toString(modules), 1, modules.length);
 
 			launchInModeType(modules);
 
@@ -167,7 +161,7 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 
 			CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
 			List<String> uris = appModule.getApplication().getUris();
-			assertEquals(Collections.singletonList(harness.getExpectedURL("dynamic-webapp")), uris);
+			assertEquals(Collections.singletonList(getTestFixture().harness().getExpectedDefaultURL(appPrefix)), uris);
 
 			// wait 1s until app is actually started
 			// FIXNS: for now skip testing content for debug launches
@@ -190,8 +184,8 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 	 */
 	abstract class AbstractDebugLaunchAppHandler extends AbstractLaunchAppHandler {
 		@Override
-		public IModule[] launch() throws Exception {
-			IModule[] modules = super.launch();
+		public IModule[] launch(String appPrefix) throws Exception {
+			IModule[] modules = super.launch(appPrefix);
 
 			performTestBeforeStopping(modules);
 
@@ -206,6 +200,11 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 
 		abstract protected void performTestBeforeStopping(IModule[] modules) throws Exception;
 
+	}
+
+	@Override
+	protected CloudFoundryTestFixture getTestFixture() throws CoreException {
+		return CloudFoundryTestFixture.getTestFixture();
 	}
 
 }

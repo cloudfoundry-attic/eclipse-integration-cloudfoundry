@@ -27,7 +27,7 @@ public class CloudFoundryServerBehaviourDebugTest extends CloudFoundryDebugTest 
 
 	public void testDebugStartSuspendModule() throws Exception {
 
-		assertStarted(DebugModeType.SUSPEND);
+		assertStarted(DebugModeType.SUSPEND, "debugStartSuspend");
 
 	}
 
@@ -36,11 +36,11 @@ public class CloudFoundryServerBehaviourDebugTest extends CloudFoundryDebugTest 
 	 * @throws Exception
 	 */
 	public void testDebugSuspendRestartSuspendModule() throws Exception {
-
-		assertStarted(DebugModeType.SUSPEND);
+		String prefix = "debugSuspendRestart";
+		assertStarted(DebugModeType.SUSPEND, prefix);
 
 		// Restart Module
-		assertRestarted(DebugModeType.SUSPEND);
+		assertRestarted(DebugModeType.SUSPEND, prefix);
 
 	}
 
@@ -50,11 +50,12 @@ public class CloudFoundryServerBehaviourDebugTest extends CloudFoundryDebugTest 
 	 */
 	public void testDebugSuspendRestartRegularModule() throws Exception {
 
-		assertStarted(DebugModeType.SUSPEND);
+		String prefix = "debugSuspendRestartRegular";
+		assertStarted(DebugModeType.SUSPEND, prefix);
 
 		// Restart Module in regular mode
 
-		IModule[] modules = REGULAR_RESTART.launch();
+		IModule[] modules = REGULAR_RESTART.launch(prefix);
 
 		// Verify that the application was deployed in the correct Debug Mode
 		assertIsOfDebugModeType(modules, null);
@@ -67,7 +68,8 @@ public class CloudFoundryServerBehaviourDebugTest extends CloudFoundryDebugTest 
 	 */
 	public void testRegularStartRestartSuspendModule() throws Exception {
 
-		IModule[] modules = REGULAR_START.launch();
+		String prefix = "regularStartRestartSuspended";
+		IModule[] modules = REGULAR_START.launch(prefix);
 
 		// Verify that the application was deployed in regular mode
 		assertIsOfDebugModeType(modules, null);
@@ -78,7 +80,7 @@ public class CloudFoundryServerBehaviourDebugTest extends CloudFoundryDebugTest 
 
 		// Restart Module
 
-		assertRestarted(DebugModeType.SUSPEND);
+		assertRestarted(DebugModeType.SUSPEND, prefix);
 
 	}
 
