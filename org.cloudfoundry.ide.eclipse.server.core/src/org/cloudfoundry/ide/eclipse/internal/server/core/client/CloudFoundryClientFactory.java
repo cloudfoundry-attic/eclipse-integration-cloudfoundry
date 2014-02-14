@@ -19,10 +19,8 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.uaa.UaaAwareCloudFoundryClient;
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
-import org.springframework.ide.eclipse.uaa.UaaPlugin;
 
 /**
  * Create Cloud Foundry clients, including clients that are UAA aware.Note that
@@ -47,30 +45,21 @@ public class CloudFoundryClientFactory {
 		return sessionFactory;
 	}
 
-	// Must match the import package for the UAA plugin used for Spring UAA
-	// services
-	public static final String SPRING_IDE_UAA_BUNDLE_SYMBOLIC_NAME = "org.springframework.ide.eclipse.uaa";
-
 	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url) {
 		return getCloudFoundryOperations(credentials, url, null);
 	}
 
 	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, CloudSpace session) {
 
-		if (CloudFoundryPlugin.isUAAIDEAvailable()) {
-			return new UaaAwareCloudFoundryClientAccessor().getCloudFoundryOperations(credentials, url, session);
-		}
-		else {
-			// Proxies are always updated on each client call by the
-			// CloudFoundryServerBehaviour Request as well as the client login
-			// handler
-			// therefore it is not critical to set the proxy in the client on
-			// client
-			// creation
-			HttpProxyConfiguration proxyConfiguration = getProxy(url);
-			return session != null ? new CloudFoundryClient(credentials, url, session) : new CloudFoundryClient(
-					credentials, url, proxyConfiguration);
-		}
+		// Proxies are always updated on each client call by the
+		// CloudFoundryServerBehaviour Request as well as the client login
+		// handler
+		// therefore it is not critical to set the proxy in the client on
+		// client
+		// creation
+		HttpProxyConfiguration proxyConfiguration = getProxy(url);
+		return session != null ? new CloudFoundryClient(credentials, url, session) : new CloudFoundryClient(
+				credentials, url, proxyConfiguration);
 	}
 
 	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, String orgName,
@@ -111,34 +100,6 @@ public class CloudFoundryClientFactory {
 
 	protected static CloudCredentials getCredentials(String userName, String password) {
 		return new CloudCredentials(userName, password);
-	}
-
-	static class UaaAwareCloudFoundryClientAccessor {
-
-		public CloudFoundryOperations getCloudFoundryOperations(String userName, String password, URL url) {
-			return getCloudFoundryOperations(getCredentials(userName, password), url);
-		}
-
-		public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url) {
-			return getCloudFoundryOperations(credentials, url, null);
-		}
-
-		public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url,
-				CloudSpace session) {
-			try {
-				HttpProxyConfiguration proxyConfiguration = getProxy(url);
-				// If proxy is not updated now, it will still be updated on each
-				// client request, so setting the proxy right now is not
-				// critical
-				return session != null ? new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url,
-						session) : new UaaAwareCloudFoundryClient(UaaPlugin.getUaaService(), credentials, url,
-						proxyConfiguration);
-			}
-			catch (MalformedURLException e) {
-				CloudFoundryPlugin.logError("Failed to obtain Cloud Foundry operations for " + url.toString(), e);
-			}
-			return null;
-		}
 	}
 
 	protected static String getNormalisedProtocol(String protocol) {

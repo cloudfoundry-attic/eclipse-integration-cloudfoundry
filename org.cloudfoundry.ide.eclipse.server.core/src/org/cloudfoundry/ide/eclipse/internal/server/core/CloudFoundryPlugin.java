@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -32,11 +32,9 @@ import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.util.tracker.ServiceTracker;
-import org.springframework.util.ClassUtils;
 
 /**
  * @author Christian Dupuis
@@ -55,9 +53,6 @@ public class CloudFoundryPlugin extends Plugin {
 	// still be running while the workbench is shutting down. If adding API
 	// to access the plugin instance (e.g. logging an error), always check
 	// if the plugin activator is available (i.e not null)
-
-	private static final boolean UAA_AVAILABLE = ClassUtils.isPresent("org.springframework.uaa.client.UaaService",
-			CloudFoundryPlugin.class.getClassLoader());
 
 	private static class ExtensionPointReader {
 
@@ -101,21 +96,6 @@ public class CloudFoundryPlugin extends Plugin {
 			return null;
 		}
 
-	}
-
-	public static final boolean isUAAIDEAvailable() {
-
-		boolean isAvailable = UAA_AVAILABLE;
-		if (isAvailable) {
-			Bundle bundle = Platform.getBundle(CloudFoundryClientFactory.SPRING_IDE_UAA_BUNDLE_SYMBOLIC_NAME);
-			// If it is available in any state, assume it is available. Further
-			// checks can be performed for bundle in RESOLVED, STARTING or
-			// ACTIVE
-			// state.
-			isAvailable = bundle != null;
-		}
-
-		return isAvailable;
 	}
 
 	private static class NullCallback extends CloudFoundryCallback {
