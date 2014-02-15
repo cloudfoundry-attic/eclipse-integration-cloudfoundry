@@ -103,6 +103,7 @@ import org.eclipse.ui.forms.events.HyperlinkEvent;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.ImageHyperlink;
 import org.eclipse.ui.forms.widgets.Section;
+import org.eclipse.ui.internal.progress.ProgressManager;
 import org.eclipse.ui.progress.UIJob;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
@@ -592,61 +593,55 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	private void refreshServices(final CloudFoundryApplicationModule appModule) {
 		if (provideServices) {
-			UIJob uiJob = new UIJob("Refreshing Services") {
+			// servicesViewer.getTable().setEnabled(cloudApplication !=
+			// null);
 
-				@Override
-				public IStatus runInUIThread(IProgressMonitor monitor) {
-					// servicesViewer.getTable().setEnabled(cloudApplication !=
-					// null);
+			// Update the mapping of bound services in the application
+			List<CloudService> updatedServices = new ArrayList<CloudService>();
 
-					// Update the mapping of bound services in the application
-					List<CloudService> updatedServices = new ArrayList<CloudService>();
+			DeploymentInfoWorkingCopy deploymentInfo = null;
+			List<String> serviceNames = null;
+			try {
+				// FIXNS: Not ideal to pass a default monitor, but this also cannot be
+				// run asynchronously as a Job, as refreshing the viewer
+				// asynchronously may result in the job running after the viewer
+				// is disposed (e.g. the editor is closed between scheduling the
+				// job and the job actually running)
+				deploymentInfo = appModule.getDeploymentInfoWorkingCopy(ProgressManager.getInstance()
+						.getDefaultMonitor());
 
-					DeploymentInfoWorkingCopy deploymentInfo = null;
-					List<String> serviceNames = null;
-					try {
-						deploymentInfo = appModule.getDeploymentInfoWorkingCopy(monitor);
+				serviceNames = deploymentInfo.asServiceBindingList();
+			}
+			catch (CoreException e) {
+				logError(NLS
+						.bind("Failed to resolve bound services in {0} from the application's deployment descriptor. The displayed services may not be correct.",
+								appModule.getDeployedApplicationName()));
+			}
 
-						serviceNames = deploymentInfo.asServiceBindingList();
+			if (serviceNames == null) {
+				serviceNames = Collections.emptyList();
+			}
+
+			List<CloudService> allServices = editorPage.getServices();
+
+			// Only show bound services that actually exist
+			if (allServices != null && !serviceNames.isEmpty()) {
+				for (CloudService service : allServices) {
+					if (serviceNames.contains(service.getName())) {
+						updatedServices.add(service);
 					}
-					catch (CoreException e) {
-						logError(NLS
-								.bind("Failed to resolve bound services in {0} from the application's deployment descriptor. The displayed services may not be correct.",
-										appModule.getDeployedApplicationName()));
-					}
-
-					if (serviceNames == null) {
-						serviceNames = Collections.emptyList();
-					}
-
-					List<CloudService> allServices = editorPage.getServices();
-
-					// Only show bound services that actually exist
-					if (allServices != null && !serviceNames.isEmpty()) {
-						for (CloudService service : allServices) {
-							if (serviceNames.contains(service.getName())) {
-								updatedServices.add(service);
-							}
-						}
-
-						// Update the bound services mapping in the application
-						if (!updatedServices.isEmpty() && deploymentInfo != null) {
-							deploymentInfo.setServices(updatedServices);
-							deploymentInfo.save();
-						}
-					}
-					servicesViewer.setInput(updatedServices.toArray(new CloudService[updatedServices.size()]));
-
-					servicesDropListener.setModule(appModule);
-					servicesViewer.refresh(true);
-					return Status.OK_STATUS;
-
 				}
-			};
-			uiJob.setSystem(true);
-			uiJob.setPriority(Job.INTERACTIVE);
-			uiJob.schedule();
 
+				// Update the bound services mapping in the application
+				if (!updatedServices.isEmpty() && deploymentInfo != null) {
+					deploymentInfo.setServices(updatedServices);
+					deploymentInfo.save();
+				}
+			}
+			servicesViewer.setInput(updatedServices.toArray(new CloudService[updatedServices.size()]));
+
+			servicesDropListener.setModule(appModule);
+			servicesViewer.refresh(true);
 		}
 	}
 
