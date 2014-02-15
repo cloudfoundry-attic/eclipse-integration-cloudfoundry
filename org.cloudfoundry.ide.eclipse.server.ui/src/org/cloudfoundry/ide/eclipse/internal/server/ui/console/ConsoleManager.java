@@ -10,12 +10,14 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
@@ -100,7 +102,7 @@ public class ConsoleManager {
 		CloudFoundryConsole serverLogTail = consoleByUri.get(appUrl);
 		if (serverLogTail == null) {
 
-			MessageConsole appConsole = getOrCreateConsole(server.getServer(), appModule, instanceIndex);
+			MessageConsole appConsole = getOrCreateConsole(server, appModule, instanceIndex);
 
 			serverLogTail = new CloudFoundryConsole(appModule, appConsole);
 			consoleByUri.put(getConsoleId(server.getServer(), appModule, instanceIndex), serverLogTail);
@@ -143,18 +145,18 @@ public class ConsoleManager {
 		consoleByUri.clear();
 	}
 
-	public static MessageConsole getOrCreateConsole(IServer server, CloudFoundryApplicationModule appModule,
+	public static MessageConsole getOrCreateConsole(CloudFoundryServer server, CloudFoundryApplicationModule appModule,
 			int instanceIndex) {
 		MessageConsole appConsole = null;
-		String consoleName = getConsoleId(server, appModule, instanceIndex);
+		String consoleName = getConsoleId(server.getServer(), appModule, instanceIndex);
 		for (IConsole console : ConsolePlugin.getDefault().getConsoleManager().getConsoles()) {
 			if (console instanceof MessageConsole && console.getName().equals(consoleName)) {
 				appConsole = (MessageConsole) console;
 			}
 		}
 		if (appConsole == null) {
-			appConsole = new MessageConsole(server.getName() + " - " + appModule.getDeployedApplicationName() + "#"
-					+ instanceIndex, CloudFoundryConsole.CONSOLE_TYPE, null, true);
+			appConsole = new MessageConsole(getConsoleDisplayName(server, appModule, instanceIndex),
+					CloudFoundryConsole.CONSOLE_TYPE, null, true);
 			appConsole.setAttribute(CloudFoundryConsole.ATTRIBUTE_SERVER, server);
 			appConsole.setAttribute(CloudFoundryConsole.ATTRIBUTE_APP, appModule);
 			appConsole.setAttribute(CloudFoundryConsole.ATTRIBUTE_INSTANCE, instanceIndex);
@@ -165,8 +167,31 @@ public class ConsoleManager {
 	}
 
 	public static String getConsoleId(IServer server, CloudFoundryApplicationModule appModule, int instanceIndex) {
-		// Note that the server ID SHOULD contain the org and the space as well.
 		return server.getId() + "/" + appModule.getDeployedApplicationName() + "#" + instanceIndex;
+	}
+
+	public static String getConsoleDisplayName(CloudFoundryServer server, CloudFoundryApplicationModule appModule,
+			int instanceIndex) {
+		StringWriter writer = new StringWriter();
+		writer.append(server.getServer().getName());
+		writer.append('-');
+
+		CloudFoundrySpace space = server.getCloudFoundrySpace();
+
+		if (space != null) {
+			writer.append('-');
+			writer.append(space.getOrgName());
+			writer.append('-');
+			writer.append('-');
+			writer.append(space.getSpaceName());
+			writer.append('-');
+			writer.append('-');
+		}
+		
+		writer.append(appModule.getDeployedApplicationName());
+		writer.append('#');
+		writer.append(instanceIndex + "");
+		return writer.toString();
 	}
 
 }
