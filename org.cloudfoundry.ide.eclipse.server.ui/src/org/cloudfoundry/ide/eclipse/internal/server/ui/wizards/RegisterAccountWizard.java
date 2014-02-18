@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -24,7 +24,6 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.statushandlers.StatusManager;
-
 
 /**
  * @author Steffen Pingel
@@ -54,11 +53,11 @@ public class RegisterAccountWizard extends Wizard {
 	public String getEmail() {
 		return email;
 	}
-	
+
 	public String getPassword() {
 		return password;
 	}
-	
+
 	@Override
 	public boolean performFinish() {
 		final String url = cloudServer.getUrl();
@@ -68,7 +67,8 @@ public class RegisterAccountWizard extends Wizard {
 			getContainer().run(true, false, new IRunnableWithProgress() {
 				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 					try {
-						CloudFoundryServerBehaviour.register(url, email, password, monitor);
+						CloudFoundryServerBehaviour.register(url, email, password,
+								cloudServer.getSelfSignedCertificate(), monitor);
 					}
 					catch (CoreException e) {
 						throw new InvocationTargetException(e);
@@ -85,16 +85,16 @@ public class RegisterAccountWizard extends Wizard {
 		}
 		catch (InvocationTargetException e) {
 			if (e.getCause() instanceof CoreException) {
-				String message = NLS.bind("Registering account failed for {0}: {1}", cloudServer.getServer()
-						.getName(), e.getCause().getMessage());
+				String message = NLS.bind("Registering account failed for {0}: {1}", cloudServer.getServer().getName(),
+						e.getCause().getMessage());
 				page.setErrorMessage(message);
 				Status status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, message, e);
 				StatusManager.getManager().handle(status, StatusManager.LOG);
 
 			}
 			else {
-				Status status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-						NLS.bind("Unexpected error registering account: {0}", e.getMessage()), e);
+				Status status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
+						"Unexpected error registering account: {0}", e.getMessage()), e);
 				StatusManager.getManager().handle(status, StatusManager.SHOW | StatusManager.BLOCK | StatusManager.LOG);
 			}
 		}

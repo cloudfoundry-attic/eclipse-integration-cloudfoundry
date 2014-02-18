@@ -303,7 +303,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					}
 
 					client.deleteApplication(appModule.getDeployedApplicationName());
-					
+
 					CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, cloudServer);
 
 					cloudServer.removeApplication(appModule);
@@ -1094,12 +1094,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			CloudFoundrySpace cloudFoundrySpace = cloudServer.getCloudFoundrySpace();
 
 			if (credentials != null) {
-				client = createClient(url, credentials, cloudFoundrySpace);
+				client = createClient(url, credentials, cloudFoundrySpace, cloudServer.getSelfSignedCertificate());
 			}
 			else {
 				String userName = getCloudFoundryServer().getUsername();
 				String password = getCloudFoundryServer().getPassword();
-				client = createClient(url, userName, password, cloudFoundrySpace);
+				client = createClient(url, userName, password, cloudFoundrySpace,
+						cloudServer.getSelfSignedCertificate());
 			}
 		}
 		return client;
@@ -1496,16 +1497,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * from an existing server instance, please use
 	 * {@link CloudFoundryServerBehaviour#getCloudSpaces(IProgressMonitor)}.
 	 * @param client
+	 * @param selfSigned true if connecting to a self-signing server. False
+	 * otherwise
 	 * @param monitor which performs client login checks, and basic error
 	 * handling. False if spaces should be obtained directly from the client
 	 * API.
+	 * 
 	 * @return resolved orgs and spaces for the given credential and server URL.
 	 */
 	public static CloudOrgsAndSpaces getCloudSpacesExternalClient(CloudCredentials credentials, final String url,
-			IProgressMonitor monitor) throws CoreException {
+			boolean selfSigned, IProgressMonitor monitor) throws CoreException {
 
 		final CloudFoundryOperations operations = CloudFoundryServerBehaviour.createClient(url, credentials.getEmail(),
-				credentials.getPassword());
+				credentials.getPassword(), selfSigned);
 
 		return new ClientRequest<CloudOrgsAndSpaces>("Getting orgs and spaces") {
 			@Override
@@ -1585,12 +1589,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return info;
 	}
 
-	public static void validate(String location, String userName, String password, IProgressMonitor monitor)
+	public static void validate(String location, String userName, String password, boolean selfSigned, IProgressMonitor monitor)
 			throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor);
 		progress.beginTask("Connecting", IProgressMonitor.UNKNOWN);
 		try {
-			CloudFoundryOperations client = createClient(location, userName, password);
+			CloudFoundryOperations client = createClient(location, userName, password, selfSigned);
 			CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client, null);
 			operationsHandler.login(progress);
 		}
@@ -1617,12 +1621,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 	}
 
-	public static void register(String location, String userName, String password, IProgressMonitor monitor)
+	public static void register(String location, String userName, String password, boolean selfSigned, IProgressMonitor monitor)
 			throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor);
 		progress.beginTask("Connecting", IProgressMonitor.UNKNOWN);
 		try {
-			CloudFoundryOperations client = createClient(location, userName, password);
+			CloudFoundryOperations client = createClient(location, userName, password, selfSigned);
 			client.register(userName, password);
 		}
 		catch (RestClientException e) {
@@ -1656,11 +1660,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param location
 	 * @param userName
 	 * @param password
+	 * @param selfSigned true if connecting to self-signing server. False
+	 * otherwise
 	 * @return
 	 * @throws CoreException
 	 */
-	static CloudFoundryOperations createClient(String location, String userName, String password) throws CoreException {
-		return createClient(location, userName, password, null);
+	static CloudFoundryOperations createClient(String location, String userName, String password, boolean selfSigned)
+			throws CoreException {
+		return createClient(location, userName, password, null, selfSigned);
 	}
 
 	/**
@@ -1674,17 +1681,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param cloudSpace optional, as a valid client can still be created
 	 * without org/space (for example, a client can be used to do an org/space
 	 * lookup.
+	 * @param selfSigned true if connecting to self-signed server. False
+	 * otherwise
 	 * @return Non-null client.
 	 * @throws CoreException if failed to create the client.
 	 */
 	private static CloudFoundryOperations createClient(String serverURL, String userName, String password,
-			CloudFoundrySpace cloudSpace) throws CoreException {
+			CloudFoundrySpace cloudSpace, boolean selfSigned) throws CoreException {
 		if (password == null) {
 			// lost the password, start with an empty one to avoid assertion
 			// error
 			password = "";
 		}
-		return createClient(serverURL, new CloudCredentials(userName, password), cloudSpace);
+		return createClient(serverURL, new CloudCredentials(userName, password), cloudSpace, selfSigned);
 	}
 
 	/**
@@ -1697,11 +1706,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param cloudSpace optional. Can be null, as a client can be created
 	 * without specifying an org/space (e.g. a client can be created for the
 	 * purpose of looking up all the orgs/spaces in a server)
+	 * @param selfSigned true if connecting to a server with self signed
+	 * certificate. False otherwise
 	 * @return non-null client.
 	 * @throws CoreException if failed to create client.
 	 */
 	private static CloudFoundryOperations createClient(String serverURL, CloudCredentials credentials,
-			CloudFoundrySpace cloudSpace) throws CoreException {
+			CloudFoundrySpace cloudSpace, boolean selfSigned) throws CoreException {
 
 		URL url;
 		try {
@@ -1717,8 +1728,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			// in errors as that API will
 			// expect valid org and space values.
 			return cloudSpace != null ? CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
-					credentials, url, cloudSpace.getOrgName(), cloudSpace.getSpaceName()) : CloudFoundryPlugin
-					.getCloudFoundryClientFactory().getCloudFoundryOperations(credentials, url);
+					credentials, url, cloudSpace.getOrgName(), cloudSpace.getSpaceName(), selfSigned)
+					: CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(credentials, url,
+							selfSigned);
 		}
 		catch (MalformedURLException e) {
 			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(

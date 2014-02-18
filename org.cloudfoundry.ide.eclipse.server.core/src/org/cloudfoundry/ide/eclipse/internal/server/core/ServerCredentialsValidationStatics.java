@@ -19,6 +19,8 @@ public class ServerCredentialsValidationStatics {
 	public static final int EVENT_SPACE_VALID = 1002;
 
 	public static final int EVENT_SPACE_SELECTED = 1003;
+	
+	public static final int EVENT_SELF_SIGNED_ERROR = 1004;
 
 	public static final int EVENT_NONE = -1;
 

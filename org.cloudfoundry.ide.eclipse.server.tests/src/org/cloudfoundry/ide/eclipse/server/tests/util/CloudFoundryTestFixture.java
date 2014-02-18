@@ -190,7 +190,8 @@ public class CloudFoundryTestFixture {
 		protected void setDefaultCloudSpace(CloudFoundryServer cloudServer, String orgName, String spaceName)
 				throws CoreException {
 			CloudOrgsAndSpaces spaces = CloudUiUtil.getCloudSpaces(cloudServer.getUsername(),
-					cloudServer.getPassword(), cloudServer.getUrl(), false, null);
+					cloudServer.getPassword(), cloudServer.getUrl(), false, cloudServer.getSelfSignedCertificate(),
+					null);
 			Assert.isTrue(spaces != null, "Failed to resolve orgs and spaces.");
 			Assert.isTrue(spaces.getDefaultCloudSpace() != null,
 					"No default space selected in cloud space lookup handler.");
@@ -220,7 +221,8 @@ public class CloudFoundryTestFixture {
 			try {
 				return CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
 						new CloudCredentials(cloudFoundryServer.getUsername(), cloudFoundryServer.getPassword()),
-						new URL(cloudFoundryServer.getUrl()), space.getOrgName(), space.getSpaceName());
+						new URL(cloudFoundryServer.getUrl()), space.getOrgName(), space.getSpaceName(),
+						cloudFoundryServer.getSelfSignedCertificate());
 			}
 			catch (MalformedURLException e) {
 				throw CloudErrorUtil.toCoreException(e);

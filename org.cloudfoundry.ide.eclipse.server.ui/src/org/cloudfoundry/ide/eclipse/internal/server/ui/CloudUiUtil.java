@@ -63,6 +63,7 @@ import org.eclipse.ui.internal.browser.WorkbenchBrowserSupport;
 import org.eclipse.ui.views.IViewDescriptor;
 import org.eclipse.ui.views.IViewRegistry;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
+import org.springframework.web.client.ResourceAccessException;
 
 /**
  * @author Steffen Pingel
@@ -233,17 +234,33 @@ public class CloudUiUtil {
 		return null;
 	}
 
+	/**
+	 * Validates the given credentials. If an error occurred, it either returns
+	 * a validation message if the error can be recognised, or throws
+	 * {@link CoreException} if error cannot be recognised.
+	 * @param cfServer
+	 * @param userName
+	 * @param password
+	 * @param urlText
+	 * @param displayURL
+	 * @param context
+	 * @return null if validation was successful. Error message if validation
+	 * error is recognised
+	 * @throws CoreException if validation failed and error type cannot be
+	 * determined
+	 */
 	public static String validateCredentials(CloudFoundryServer cfServer, final String userName, final String password,
-			final String urlText, final boolean displayURL, IRunnableContext context) {
+			final String urlText, final boolean displayURL, IRunnableContext context) throws CoreException {
 		if (cfServer != null) {
 			try {
+				final boolean selfSigned = cfServer.getSelfSignedCertificate();
 				ICoreRunnable coreRunner = new ICoreRunnable() {
 					public void run(IProgressMonitor monitor) throws CoreException {
 						String url = urlText;
 						if (displayURL) {
 							url = getUrlFromDisplayText(urlText);
 						}
-						CloudFoundryServerBehaviour.validate(url, userName, password, monitor);
+						CloudFoundryServerBehaviour.validate(url, userName, password, selfSigned, monitor);
 					}
 				};
 				if (context != null) {
@@ -255,9 +272,17 @@ public class CloudUiUtil {
 
 				return null;
 			}
-			catch (CoreException e) {
-				String message = CloudErrorUtil.getConnectionError(e);
-				return message;
+			catch (CoreException ce) {
+				if (ce.getCause() instanceof ResourceAccessException
+						&& ce.getCause().getCause() instanceof javax.net.ssl.SSLPeerUnverifiedException) {
+					// Self-signed error. Re-throw as it will involve a client
+					// change
+					throw CloudErrorUtil.toCoreException(ce.getCause().getCause());
+				}
+				else {
+					String message = CloudErrorUtil.getConnectionError(ce);
+					return message;
+				}
 			}
 			catch (OperationCanceledException e) {
 			}
@@ -283,7 +308,7 @@ public class CloudUiUtil {
 	 * @throws CoreException
 	 */
 	public static CloudOrgsAndSpaces getCloudSpaces(final String userName, final String password, final String urlText,
-			final boolean displayURL, IRunnableContext context) throws CoreException {
+			final boolean displayURL, final boolean selfSigned, IRunnableContext context) throws CoreException {
 
 		try {
 			final CloudOrgsAndSpaces[] supportsSpaces = new CloudOrgsAndSpaces[1];
@@ -294,7 +319,7 @@ public class CloudUiUtil {
 						url = getUrlFromDisplayText(urlText);
 					}
 					supportsSpaces[0] = CloudFoundryServerBehaviour.getCloudSpacesExternalClient(new CloudCredentials(
-							userName, password), url, monitor);
+							userName, password), url, selfSigned, monitor);
 				}
 			};
 			if (context != null) {

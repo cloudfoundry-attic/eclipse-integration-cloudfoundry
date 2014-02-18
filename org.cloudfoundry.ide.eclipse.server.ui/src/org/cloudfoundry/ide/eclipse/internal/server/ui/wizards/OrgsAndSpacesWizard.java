@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -180,8 +180,7 @@ public class OrgsAndSpacesWizard extends Wizard {
 				}
 			});
 			WizardChangeListener listener = new WizardPageChangeListener(this);
-			spacesPart = new CloudSpacesSelectionPart(cloudServerSpaceDelegate, listener, cloudServer,
-					this);
+			spacesPart = new CloudSpacesSelectionPart(cloudServerSpaceDelegate, listener, cloudServer, this);
 			spacesPart.createPart(mainComposite);
 
 			// Make sure the description is set after the part is created, to
@@ -258,7 +257,8 @@ public class OrgsAndSpacesWizard extends Wizard {
 				String userName = cloudServer.getUsername();
 				String password = cloudServer.getPassword();
 				try {
-					cloudServerSpaceDelegate.getUpdatedDescriptor(url, userName, password, getWizard().getContainer());
+					cloudServerSpaceDelegate.getUpdatedDescriptor(url, userName, password,
+							cloudServer.getSelfSignedCertificate(), getWizard().getContainer());
 					return Status.OK_STATUS;
 				}
 				catch (CoreException e) {

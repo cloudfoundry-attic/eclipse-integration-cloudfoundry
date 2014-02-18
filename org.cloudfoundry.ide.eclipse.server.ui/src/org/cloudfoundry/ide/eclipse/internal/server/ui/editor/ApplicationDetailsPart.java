@@ -25,6 +25,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.Messages;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
@@ -813,7 +814,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		memoryText = new Text(memoryArea, SWT.BORDER);
 
-		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.FILL).hint(60, SWT.DEFAULT).applyTo(memoryText);
+		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.FILL).hint(50, SWT.DEFAULT).applyTo(memoryText);
 
 		final Button button = createGeneralPushButton(memoryArea, "Set");
 
@@ -834,11 +835,11 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 							new UpdateApplicationMemoryAction(editorPage, memory, appModule).run();
 						}
 						catch (CoreException ce) {
-							logApplicationModuleFailureError(CloudErrorUtil.ERROR_FAILED_MEMORY_UPDATE);
+							logApplicationModuleFailureError(Messages.ERROR_FAILED_MEMORY_UPDATE);
 						}
 					}
 					else {
-						logApplicationModuleFailureError(CloudErrorUtil.ERROR_INVALID_MEMORY);
+						logApplicationModuleFailureError(Messages.ERROR_INVALID_MEMORY);
 					}
 				}
 			}

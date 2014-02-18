@@ -55,7 +55,7 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 					client = CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
 							new CloudCredentials(serverBehavior.getCloudFoundryServer().getUsername(), serverBehavior
 									.getCloudFoundryServer().getPassword()),
-							new URL(serverBehavior.getCloudFoundryServer().getUrl()));
+							new URL(serverBehavior.getCloudFoundryServer().getUrl()), false);
 					client.createApplication("test", new Staging(), 128, uris, new ArrayList<String>());
 					fail("Expected ResourceAccessException due to invalid proxy configuration");
 				}

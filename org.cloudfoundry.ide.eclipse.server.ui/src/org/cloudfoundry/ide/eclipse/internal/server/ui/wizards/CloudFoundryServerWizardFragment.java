@@ -30,7 +30,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.ServerCore;
 import org.eclipse.wst.server.core.TaskModel;
@@ -125,17 +124,9 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		// they are
 		// valid, there is no need to send a server request.
 		if (!validator.validate(false).getStatus().isOK()) {
-			final IStatus[] validationStatus = { Status.OK_STATUS };
-			// Must run in UI thread since errors result in a dialogue opening.
-			Display.getDefault().syncExec(new Runnable() {
-
-				public void run() {
-					ValidationStatus status = validator.validate(true);
-					validationStatus[0] = status.getStatus();
-				}
-			});
-			if (!validationStatus[0].isOK()) {
-				throw new CoreException(validationStatus[0]);
+			ValidationStatus status = validator.validateInUI();
+			if (!status.getStatus().isOK()) {
+				throw new CoreException(status.getStatus());
 			}
 		}
 

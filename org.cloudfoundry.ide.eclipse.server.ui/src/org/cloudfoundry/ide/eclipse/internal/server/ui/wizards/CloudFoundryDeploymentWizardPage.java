@@ -16,10 +16,10 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.Messages;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
@@ -129,7 +129,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 			update(true, Status.OK_STATUS);
 		}
 		else {
-			update(true, CloudFoundryPlugin.getErrorStatus(CloudErrorUtil.ERROR_INVALID_MEMORY));
+			update(true, CloudFoundryPlugin.getErrorStatus(Messages.ERROR_INVALID_MEMORY));
 		}
 	}
 

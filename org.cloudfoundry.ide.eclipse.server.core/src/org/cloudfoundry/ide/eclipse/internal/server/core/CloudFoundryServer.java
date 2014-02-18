@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -86,6 +86,8 @@ public class CloudFoundryServer extends ServerDelegate {
 	 */
 	static final String PROP_PASSWORD_ID = "org.cloudfoundry.ide.eclipse.password";
 
+	static final String PROP_SELF_SIGNED_ID = "org.cloudfoundry.ide.eclipse.selfsigned";
+
 	/**
 	 * Attribute key for the API url.
 	 */
@@ -97,10 +99,6 @@ public class CloudFoundryServer extends ServerDelegate {
 	static final String PROP_USERNAME_ID = "org.cloudfoundry.ide.eclipse.username";
 
 	static final String PROP_ORG_ID = "org.cloudfoundry.ide.eclipse.org";
-
-	static final String PROP_ORG_GUID = "org.cloudfoundry.ide.eclipse.org.guid";
-
-	static final String PROP_SPACE_GUID = "org.cloudfoundry.ide.eclipse.space.guid";
 
 	static final String PROP_SPACE_ID = "org.cloudfoundry.ide.eclipse.space";
 
@@ -464,8 +462,11 @@ public class CloudFoundryServer extends ServerDelegate {
 							return Status.CANCEL_STATUS;
 						}
 						catch (CoreException e) {
-							// Do not automatically delete apps on errors, even if critical errors
-							// as there may be features that may allow an app to be redeployed without drag/drop (i.e. clicking "Start").
+							// Do not automatically delete apps on errors, even
+							// if critical errors
+							// as there may be features that may allow an app to
+							// be redeployed without drag/drop (i.e. clicking
+							// "Start").
 							IStatus errorStatus = CloudFoundryPlugin.getErrorStatus("Failed to deploy module - "
 									+ e.getMessage());
 							CloudFoundryPlugin.log(errorStatus);
@@ -562,6 +563,14 @@ public class CloudFoundryServer extends ServerDelegate {
 
 	protected String getSpace() {
 		return getAttribute(PROP_SPACE_ID, (String) null);
+	}
+
+	public boolean getSelfSignedCertificate() {
+		return getAttribute(PROP_SELF_SIGNED_ID, false);
+	}
+
+	public void setSelfSignedCertificate(boolean selfSignedCertificate) {
+		setAttribute(PROP_SELF_SIGNED_ID, selfSignedCertificate);
 	}
 
 	private void updateServerId() {

@@ -10,14 +10,20 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
+
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.Messages;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsValidationStatics;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.widgets.Display;
 
 /**
  * Validates a username, password and orgs and spaces selection, both locally
@@ -42,7 +48,8 @@ public class ServerWizardValidator implements ServerValidator {
 	}
 
 	/**
-	 * True if username and password were filled without errors in the last validation.
+	 * True if username and password were filled without errors in the last
+	 * validation.
 	 * 
 	 */
 	public synchronized boolean areCredentialsFilled() {
@@ -72,6 +79,34 @@ public class ServerWizardValidator implements ServerValidator {
 		return validate(validateAgainstServer, null);
 	}
 
+	public ValidationStatus validateInUI() {
+		final ValidationStatus[] validationStatus = new ValidationStatus[1];
+
+		// Must run in UI thread since errors result in a dialogue opening.
+		Display.getDefault().syncExec(new Runnable() {
+
+			public void run() {
+				validationStatus[0] = internalValidate(true, null);
+				IStatus status = validationStatus[0].getStatus();
+				if (validationStatus[0].getValidationType() == ServerCredentialsValidationStatics.EVENT_SELF_SIGNED_ERROR
+						&& !status.isOK() && status.getException() instanceof SSLPeerUnverifiedException) {
+					// Prompt the user if the wish to proceed
+					String message = NLS.bind(Messages.WARNING_SELF_SIGNED_PROMPT_USER, cfServer.getUrl());
+					if (MessageDialog.openQuestion(Display.getDefault().getActiveShell(),
+							Messages.TITLE_SELF_SIGNED_PROMPT_USER, message)) {
+						cfServer.setSelfSignedCertificate(true);
+						// Assume its valid if the user clicks "OK", therefore
+						// return OK status.
+						validationStatus[0] = new ValidationStatus(Status.OK_STATUS,
+								ServerCredentialsValidationStatics.EVENT_NONE);
+					}
+				}
+
+			}
+		});
+		return validationStatus[0];
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -80,6 +115,15 @@ public class ServerWizardValidator implements ServerValidator {
 	 * #validate(boolean, org.eclipse.jface.operation.IRunnableContext)
 	 */
 	public synchronized ValidationStatus validate(boolean validateAgainstServer, IRunnableContext runnableContext) {
+		if (validateAgainstServer) {
+			return validateInUI();
+		}
+		else {
+			return internalValidate(validateAgainstServer, runnableContext);
+		}
+	}
+
+	protected ValidationStatus internalValidate(boolean validateAgainstServer, IRunnableContext runnableContext) {
 		IStatus localValidation = validateLocally(cfServer);
 
 		String userName = cfServer.getUsername();
@@ -91,6 +135,7 @@ public class ServerWizardValidator implements ServerValidator {
 
 		int validationType = ServerCredentialsValidationStatics.EVENT_NONE;
 
+		IStatus eventStatus = null;
 		if (localValidation.isOK()) {
 
 			// First check if a space is already selected, and credentials
@@ -109,55 +154,65 @@ public class ServerWizardValidator implements ServerValidator {
 			}
 
 			if (validateAgainstServer) {
-				errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, url, true, runnableContext);
+				try {
+					errorMsg = CloudUiUtil
+							.validateCredentials(cfServer, userName, password, url, true, runnableContext);
 
-				// No credential errors, so now do a orgs and spaces lookup for
-				// the newly validated credentials.
-				if (errorMsg == null) {
+					// No credential errors, so now do a orgs and spaces lookup
+					// for
+					// the newly validated credentials.
+					if (errorMsg == null) {
 
-					try {
-						CloudSpacesDescriptor descriptor = cloudServerSpaceDelegate.getUpdatedDescriptor(url, userName, password,
-								runnableContext);
-						if (descriptor == null) {
-							errorMsg = "Failed to resolve organizations and spaces for the given credentials. Please contact Cloud Foundry support.";
+						try {
+							CloudSpacesDescriptor descriptor = cloudServerSpaceDelegate.getUpdatedDescriptor(url,
+									userName, password, cfServer.getSelfSignedCertificate(), runnableContext);
+							if (descriptor == null) {
+								errorMsg = "Failed to resolve organizations and spaces for the given credentials. Please contact Cloud Foundry support.";
+							}
+							else if (cloudServerSpaceDelegate.hasSetSpace()) {
+								validationType = ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
+							}
+							else {
+								message = "No Cloud space selected. Please select a valid Cloud space";
+								validationType = ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED;
+							}
 						}
-						else if (cloudServerSpaceDelegate.hasSetSpace()) {
-							validationType = ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
+						catch (CoreException e) {
+							errorMsg = "Failed to resolve organization and spaces "
+									+ (e.getMessage() != null ? " due to " + e.getMessage()
+											: ". Unknown error occurred while requesting list of spaces from the server")
+									+ ". Please contact Cloud Foundry support.";
 						}
-						else {
-							message = "No Cloud space selected. Please select a valid Cloud space";
-							validationType = ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED;
-						}
-					}
-					catch (CoreException e) {
-						errorMsg = "Failed to resolve organization and spaces "
-								+ (e.getMessage() != null ? " due to " + e.getMessage()
-										: ". Unknown error occurred while requesting list of spaces from the server")
-								+ ". Please contact Cloud Foundry support.";
 					}
 				}
+				catch (CoreException e) {
+					if (e.getCause() instanceof javax.net.ssl.SSLPeerUnverifiedException) {
+						validationType = ServerCredentialsValidationStatics.EVENT_SELF_SIGNED_ERROR;
+					}
+					eventStatus = e.getStatus();
+				}
+			}
+		}
+
+		if (eventStatus == null) {
+			int statusType = IStatus.OK;
+			if (errorMsg != null) {
+				message = errorMsg;
+				statusType = IStatus.ERROR;
+			}
+			else if (validationType == ServerCredentialsValidationStatics.EVENT_SPACE_VALID) {
+				message = ServerCredentialsValidationStatics.VALID_ACCOUNT_MESSAGE;
+			}
+			else {
+				statusType = IStatus.INFO;
 			}
 
+			eventStatus = CloudFoundryPlugin.getStatus(message, statusType);
 		}
-
-		int statusType = IStatus.OK;
-		if (errorMsg != null) {
-			message = errorMsg;
-			statusType = IStatus.ERROR;
-		}
-		else if (validationType == ServerCredentialsValidationStatics.EVENT_SPACE_VALID) {
-			message = ServerCredentialsValidationStatics.VALID_ACCOUNT_MESSAGE;
-		}
-		else {
-			statusType = IStatus.INFO;
-		}
-
-		IStatus eventStatus = CloudFoundryPlugin.getStatus(message, statusType);
 
 		previousStatus = new ValidationStatus(eventStatus, validationType);
 
 		return previousStatus;
-
 	}
 
 	protected IStatus validateLocally(CloudFoundryServer cfServer) {
@@ -180,7 +235,8 @@ public class ServerWizardValidator implements ServerValidator {
 		}
 		else {
 			valuesFilled = true;
-			message = NLS.bind(ServerCredentialsValidationStatics.DEFAULT_DESCRIPTION, cloudServerSpaceDelegate.serverServiceName);
+			message = NLS.bind(ServerCredentialsValidationStatics.DEFAULT_DESCRIPTION,
+					cloudServerSpaceDelegate.serverServiceName);
 		}
 
 		int statusType = valuesFilled ? IStatus.OK : IStatus.ERROR;

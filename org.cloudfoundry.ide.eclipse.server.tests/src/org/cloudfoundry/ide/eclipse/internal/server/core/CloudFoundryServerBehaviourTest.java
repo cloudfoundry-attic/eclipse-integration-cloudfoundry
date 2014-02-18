@@ -269,7 +269,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		URL url = new URL(getTestFixture().getUrl());
 		CloudFoundryOperations client = CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
 				new CloudCredentials(getTestFixture().getCredentials().userEmail,
-						getTestFixture().getCredentials().password), url);
+						getTestFixture().getCredentials().password), url, false);
 		client.login();
 		client.deleteApplication(appName);
 

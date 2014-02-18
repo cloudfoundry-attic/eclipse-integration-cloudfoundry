@@ -45,11 +45,11 @@ public class CloudFoundryClientFactory {
 		return sessionFactory;
 	}
 
-	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url) {
-		return getCloudFoundryOperations(credentials, url, null);
+	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, boolean selfSigned) {
+		return getCloudFoundryOperations(credentials, url, null, selfSigned);
 	}
 
-	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, CloudSpace session) {
+	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, CloudSpace session, boolean selfSigned) {
 
 		// Proxies are always updated on each client call by the
 		// CloudFoundryServerBehaviour Request as well as the client login
@@ -59,12 +59,12 @@ public class CloudFoundryClientFactory {
 		// creation
 
 		HttpProxyConfiguration proxyConfiguration = getProxy(url);
-		return session != null ? new CloudFoundryClient(credentials, url, session) : new CloudFoundryClient(
-				credentials, url, proxyConfiguration);
+		return session != null ? new CloudFoundryClient(credentials, url, session, selfSigned) : new CloudFoundryClient(
+				credentials, url, proxyConfiguration, selfSigned);
 	}
 
 	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, String orgName,
-			String spaceName) {
+			String spaceName, boolean selfsigned) {
 
 		// Proxies are always updated on each client call by the
 		// CloudFoundryServerBehaviour Request as well as the client login
@@ -73,7 +73,7 @@ public class CloudFoundryClientFactory {
 		// client
 		// creation
 		HttpProxyConfiguration proxyConfiguration = getProxy(url);
-		return new CloudFoundryClient(credentials, url, orgName, spaceName, proxyConfiguration);
+		return new CloudFoundryClient(credentials, url, orgName, spaceName, proxyConfiguration, selfsigned);
 	}
 
 	public CloudFoundryOperations getCloudFoundryOperations(String cloudControllerUrl) throws MalformedURLException {

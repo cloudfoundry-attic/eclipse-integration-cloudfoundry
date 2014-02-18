@@ -29,20 +29,7 @@ import org.springframework.web.client.RestClientException;
  */
 public class CloudErrorUtil {
 
-	public static final String ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION = "Error performing Cloud Foundry operation: {0}";
-
-	public static final String ERROR_WRONG_EMAIL_OR_PASSWORD = "Wrong email or password";
-
-	public static final String ERROR_UNABLE_TO_ESTABLISH_CONNECTION = "Unable to establish connection";
-
-	public static final String ERROR_FAILED_REST_CLIENT = "Client error: {0}";
-
-	public static final String ERROR_UNKNOWN = "Unknown Cloud Foundry error";
-
-	public static final String ERROR_INVALID_MEMORY = "Invalid memory. Please enter a valid integer value over 0.";
-
-	public static final String ERROR_FAILED_MEMORY_UPDATE = "Unable to update application memory";
-
+	
 	private CloudErrorUtil() {
 		// Util class
 	}
@@ -55,16 +42,16 @@ public class CloudErrorUtil {
 	 */
 	public static String getConnectionError(CoreException e) {
 		if (isUnauthorisedException(e)) {
-			return ERROR_WRONG_EMAIL_OR_PASSWORD;
+			return Messages.ERROR_WRONG_EMAIL_OR_PASSWORD;
 		}
 		else if (isForbiddenException(e)) {
-			return ERROR_WRONG_EMAIL_OR_PASSWORD;
+			return Messages.ERROR_WRONG_EMAIL_OR_PASSWORD;
 		}
 		else if (isUnknownHostException(e)) {
-			return ERROR_UNABLE_TO_ESTABLISH_CONNECTION;
+			return Messages.ERROR_UNABLE_TO_ESTABLISH_CONNECTION;
 		}
 		else if (isRestClientException(e)) {
-			return NLS.bind(ERROR_FAILED_REST_CLIENT, e.getMessage());
+			return NLS.bind(Messages.ERROR_FAILED_REST_CLIENT, e.getMessage());
 		}
 		return null;
 	}
@@ -182,7 +169,7 @@ public class CloudErrorUtil {
 			}
 		}
 		return new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-				ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION, e.getMessage()), e));
+				Messages.ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION, e.getMessage()), e));
 	}
 
 	// check if error is 403 - take CoreException
@@ -238,7 +225,7 @@ public class CloudErrorUtil {
 
 	public static CoreException toCoreException(String message, Throwable error) {
 		if (message == null) {
-			message = ERROR_UNKNOWN;
+			message = Messages.ERROR_UNKNOWN;
 		}
 		if (error != null) {
 			if (error.getMessage() != null) {

@@ -96,13 +96,14 @@ public class CloudServerSpaceDelegate {
 	 * @param userName username to use to find list of spaces
 	 * @param password password to user to find list of spaces
 	 * @param context a runnable UI context, like a wizard.
+	 * @paramg selfSigned true if connecting to self-signed certificate.
 	 * @return descriptor with list of cloud spaces for the given url and
 	 * credentials, or null if failed to resolve
 	 * @throws CoreException if credentials and URL do not match the current
 	 * credentials and URL in the server, are invalid, or failed to retrieve
 	 * list of spaces
 	 */
-	public CloudSpacesDescriptor getUpdatedDescriptor(String urlText, String userName, String password,
+	public CloudSpacesDescriptor getUpdatedDescriptor(String urlText, String userName, String password, boolean selfSigned,
 			IRunnableContext context) throws CoreException {
 		String actualURL = CloudUiUtil.getUrlFromDisplayText(urlText);
 
@@ -111,7 +112,7 @@ public class CloudServerSpaceDelegate {
 		String cachedDescriptorID = CloudSpacesDescriptor.getDescriptorID(userName, password, actualURL);
 		spacesDescriptor = cachedDescriptors.get(cachedDescriptorID);
 		if (spacesDescriptor == null) {
-			CloudOrgsAndSpaces orgsAndSpaces = CloudUiUtil.getCloudSpaces(userName, password, actualURL, true, context);
+			CloudOrgsAndSpaces orgsAndSpaces = CloudUiUtil.getCloudSpaces(userName, password, actualURL, true, selfSigned, context);
 
 			if (orgsAndSpaces != null) {
 				spacesDescriptor = new CloudSpacesDescriptor(orgsAndSpaces, userName, password, actualURL);

@@ -72,6 +72,14 @@ public abstract class ClientRequest<T> {
 		try {
 			result = runAsClientRequestCheckConnection(client, subProgress);
 		}
+		catch (CoreException ce) {
+			// Translate to a error message that the user can understand
+			String connectionError = CloudErrorUtil.getConnectionError(ce);
+			if (connectionError != null) {
+				ce = new CoreException(CloudFoundryPlugin.getErrorStatus(connectionError));
+			}
+			throw ce;
+		}
 		finally {
 			subProgress.done();
 		}
@@ -116,14 +124,7 @@ public abstract class ClientRequest<T> {
 				handler.login(subProgress, 3, CloudOperationsConstants.LOGIN_INTERVAL);
 				return runAndWait(client, subProgress);
 			}
-			else {
-				// Translate to a error message that the user can understand
-				String validationMessage = CloudErrorUtil.getConnectionError(ce);
-				if (validationMessage != null) {
-					ce = new CoreException(CloudFoundryPlugin.getErrorStatus(validationMessage));
-				}
-				throw ce;
-			}
+			throw ce;
 		}
 	}
 

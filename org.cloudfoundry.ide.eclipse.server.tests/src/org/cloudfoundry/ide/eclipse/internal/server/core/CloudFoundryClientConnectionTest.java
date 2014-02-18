@@ -165,7 +165,8 @@ public class CloudFoundryClientConnectionTest extends TestCase {
 	}
 
 	protected CloudFoundryOperations createClient(CloudCredentials credentials, String url) throws Exception {
-		return CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(credentials, new URL(url));
+		return CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(credentials, new URL(url),
+				false);
 	}
 
 	protected CloudFoundryTestFixture getTestFixture() throws CoreException {

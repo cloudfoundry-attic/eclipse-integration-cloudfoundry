@@ -135,7 +135,7 @@ public class TargetURLDialog extends Dialog {
 					shouldProceed[0] = true;
 				}
 				catch (Exception e) {
-					shouldProceed[0] = MessageDialog.openQuestion(getParentShell(), "Invalid Cloud URL", "Connection to " + url + " failed. Would you like to keep the URL anyways?");
+					shouldProceed[0] = MessageDialog.openQuestion(getParentShell(), "Invalid Cloud URL", "Connection to " + url + " failed. Would you like to keep the URL anyway?");
 				}
 			}
 		});

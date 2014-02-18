@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.UpdatePasswordDialog;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.OrgsAndSpacesWizard;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.operations.AbstractOperation;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -259,21 +260,27 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 				final String password = passwordText.getText();
 				final String org = orgText.getText();
 				final String space = spaceText.getText();
-				String errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, url, false, null);
+				try {
+					String errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, url, false, null);
 
-				if (errorMsg == null && org != null && space != null) {
-					validateLabel.setText("Account information is valid.");
-					validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_BLACK));
-				}
-				else {
-					if (org == null || space == null) {
-						errorMsg = "Invalid organization or space.";
+					if (errorMsg == null && org != null && space != null) {
+						validateLabel.setText("Account information is valid.");
+						validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_BLACK));
 					}
-					validateLabel.setText(errorMsg);
-					validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
-				}
+					else {
+						if (org == null || space == null) {
+							errorMsg = "Invalid organization or space.";
+						}
+						validateLabel.setText(errorMsg);
+						validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
+					}
 
+				}
+				catch (CoreException e) {
+					validateLabel.setText(e.getMessage());
+				}
 				buttonComposite.layout(new Control[] { validateLabel, validateButton });
+
 			}
 		});
 
