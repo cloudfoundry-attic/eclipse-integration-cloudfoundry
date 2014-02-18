@@ -82,6 +82,7 @@ public class OrgsAndSpacesWizard extends Wizard {
 				final String password = cloudServer.getPassword();
 				final String userName = cloudServer.getUsername();
 				final String url = cloudServer.getUrl();
+				final boolean selfSignedCert = cloudServer.getSelfSignedCertificate();
 
 				CloudUiUtil.runForked(new ICoreRunnable() {
 					public void run(final IProgressMonitor monitor) throws CoreException {
@@ -100,6 +101,7 @@ public class OrgsAndSpacesWizard extends Wizard {
 									cloudServer.setUsername(userName);
 									cloudServer.setUrl(url);
 									cloudServer.setSpace(selectedSpace);
+									cloudServer.setSelfSignedCertificate(selfSignedCert);
 									cloudServer.saveConfiguration(monitor);
 								}
 

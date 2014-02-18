@@ -26,6 +26,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.application.Application
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.SelfSignedStore;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -86,8 +87,6 @@ public class CloudFoundryServer extends ServerDelegate {
 	 */
 	static final String PROP_PASSWORD_ID = "org.cloudfoundry.ide.eclipse.password";
 
-	static final String PROP_SELF_SIGNED_ID = "org.cloudfoundry.ide.eclipse.selfsigned";
-
 	/**
 	 * Attribute key for the API url.
 	 */
@@ -125,6 +124,8 @@ public class CloudFoundryServer extends ServerDelegate {
 	private String password;
 
 	private CloudFoundrySpace cloudSpace;
+
+	private Boolean isSelfSigned = null;
 
 	public CloudFoundryServer() {
 		// constructor
@@ -565,12 +566,37 @@ public class CloudFoundryServer extends ServerDelegate {
 		return getAttribute(PROP_SPACE_ID, (String) null);
 	}
 
+	/**
+	 * 
+	 * @return true if server uses self-signed certificates. False otherwise,
+	 * including if server preference can't be resolved.
+	 */
 	public boolean getSelfSignedCertificate() {
-		return getAttribute(PROP_SELF_SIGNED_ID, false);
+		try {
+			// Lazily read the preference
+			if (isSelfSigned == null) {
+				isSelfSigned = new SelfSignedStore(getUrl()).isSelfSignedCert();
+			}
+			return isSelfSigned;
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		return false;
 	}
 
-	public void setSelfSignedCertificate(boolean selfSignedCertificate) {
-		setAttribute(PROP_SELF_SIGNED_ID, selfSignedCertificate);
+	public void setSelfSignedCertificate(boolean isSelfSigned) {
+		try {
+			// Regardless of whether preference is stored or not, save it in the
+			// server session so
+			// that subsequent requests to check if using self-signed do not
+			// have to attempt to read from storage.
+			this.isSelfSigned = isSelfSigned;
+			new SelfSignedStore(getUrl()).setSelfSignedCert(isSelfSigned);
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
 	}
 
 	private void updateServerId() {
