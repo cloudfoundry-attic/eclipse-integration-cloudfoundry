@@ -48,7 +48,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryLoginHandle
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleResourceDeltaWrapper;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
@@ -304,6 +303,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					}
 
 					client.deleteApplication(appModule.getDeployedApplicationName());
+					
+					CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, cloudServer);
 
 					cloudServer.removeApplication(appModule);
 
@@ -506,33 +507,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			@Override
 			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getFile(applicationId, instanceIndex, filePath, startPosition);
-			}
-		}.run(monitor);
-	}
-
-	public int[] getApplicationMemoryChoices(IProgressMonitor monitor) throws CoreException {
-		return new BehaviourRequest<int[]>("Getting memory choices") {
-
-			@Override
-			protected int[] doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-				return client.getApplicationMemoryChoices();
-			}
-
-		}.run(monitor);
-
-	}
-
-	public DeploymentConfiguration getDeploymentConfiguration(IProgressMonitor monitor) throws CoreException {
-		return new BehaviourRequest<DeploymentConfiguration>("Getting available service options") {
-			@Override
-			protected DeploymentConfiguration doRun(CloudFoundryOperations client, SubMonitor progress)
-					throws CoreException {
-				DeploymentConfiguration configuration = new DeploymentConfiguration(
-						client.getApplicationMemoryChoices());
-				// XXX make bogus call that triggers login if needed to work
-				// around NPE in client.getApplicationMemoryChoices()
-				client.getServices();
-				return configuration;
 			}
 		}.run(monitor);
 	}

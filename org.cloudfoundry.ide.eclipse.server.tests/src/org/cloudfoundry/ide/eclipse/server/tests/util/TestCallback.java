@@ -19,6 +19,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupSer
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
@@ -77,7 +78,7 @@ public class TestCallback extends CloudFoundryCallback {
 		// where deployment info is modified by the user
 		DeploymentInfoWorkingCopy copy = module.resolveDeploymentInfoWorkingCopy(monitor);
 		copy.setDeploymentName(appName);
-		copy.setMemory(512);
+		copy.setMemory(CloudUtil.DEFAULT_MEMORY);
 		copy.setDeploymentMode(deployStopped ? ApplicationAction.STOP : ApplicationAction.START);
 
 		if (url != null) {

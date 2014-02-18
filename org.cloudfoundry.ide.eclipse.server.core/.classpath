@@ -10,7 +10,7 @@
 	<classpathentry exported="true" kind="lib" path="lib/spring-expression-3.2.2.RELEASE.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/spring-web-3.2.2.RELEASE.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/snakeyaml-1.13.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-client-lib-1.0.2.BUILD-SNAPSHOT.jar" sourcepath="/cloudfoundry-client-lib/src/main/java"/>
+	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-client-lib-1.0.2.jar" sourcepath="/cloudfoundry-client-lib/src/main/java"/>
 	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-caldecott-lib-0.1.4.BUILD-SNAPSHOT.jar" sourcepath="/cloudfoundry-caldecott-lib/src/main/java"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-io-2.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/spring-context-3.2.2.RELEASE.jar"/>

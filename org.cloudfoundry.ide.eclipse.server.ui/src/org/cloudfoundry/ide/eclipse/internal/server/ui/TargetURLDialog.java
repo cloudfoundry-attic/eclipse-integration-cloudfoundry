@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -131,7 +131,7 @@ public class TargetURLDialog extends Dialog {
 			public void run() {
 				url = replaceWildcard(cloudUrl.getUrl(), wildcard, value);
 				try {
-					CloudFoundryPlugin.getDefault().getCloudFoundryClientFactory().getCloudFoundryOperations(url).getCloudInfo();
+					CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(url).getCloudInfo();
 					shouldProceed[0] = true;
 				}
 				catch (Exception e) {

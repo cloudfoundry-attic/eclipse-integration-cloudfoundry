@@ -29,11 +29,19 @@ import org.springframework.web.client.RestClientException;
  */
 public class CloudErrorUtil {
 
-	private static final String ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION = "Error performing Cloud Foundry operation: {0}";
-	private static final String ERROR_WRONG_EMAIL_OR_PASSWORD = "Wrong email or password";
-	private static final String ERROR_UNABLE_TO_ESTABLISH_CONNECTION = "Unable to establish connection";
-	private static final String ERROR_FAILED_REST_CLIENT = "Client error: {0}";
-	private static final String ERROR_UNKNOWN = "Unknown Cloud Foundry error";
+	public static final String ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION = "Error performing Cloud Foundry operation: {0}";
+
+	public static final String ERROR_WRONG_EMAIL_OR_PASSWORD = "Wrong email or password";
+
+	public static final String ERROR_UNABLE_TO_ESTABLISH_CONNECTION = "Unable to establish connection";
+
+	public static final String ERROR_FAILED_REST_CLIENT = "Client error: {0}";
+
+	public static final String ERROR_UNKNOWN = "Unknown Cloud Foundry error";
+
+	public static final String ERROR_INVALID_MEMORY = "Invalid memory. Please enter a valid integer value over 0.";
+
+	public static final String ERROR_FAILED_MEMORY_UPDATE = "Unable to update application memory";
 
 	private CloudErrorUtil() {
 		// Util class
@@ -42,8 +50,8 @@ public class CloudErrorUtil {
 	/**
 	 * 
 	 * @param e error to check if it is a connection error.
-	 * @return User-friendly error message IFF the error is a validation error due to wrong
-	 * credentials or connection error. Return null otherwise.
+	 * @return User-friendly error message IFF the error is a validation error
+	 * due to wrong credentials or connection error. Return null otherwise.
 	 */
 	public static String getConnectionError(CoreException e) {
 		if (isUnauthorisedException(e)) {

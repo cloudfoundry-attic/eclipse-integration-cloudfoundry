@@ -14,41 +14,38 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentConfiguration;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudApplicationUrlPart;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.ui.progress.UIJob;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.wst.server.core.IModule;
 
 /**
@@ -63,10 +60,6 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	protected final String serverTypeId;
 
 	protected final CloudFoundryServer server;
-
-	protected DeploymentConfiguration deploymentConfiguration;
-
-	protected Combo memoryCombo;
 
 	protected Composite runDebugOptions;
 
@@ -88,6 +81,8 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 
 	static final int APP_NAME_INIT = 100;
 
+	private static final String DEFAULT_MEMORY = CloudUtil.DEFAULT_MEMORY + "";
+
 	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor, ApplicationUrlLookupService urlLookup,
 			ApplicationWizardDelegate wizardDelegate) {
@@ -105,64 +100,37 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	 */
 	protected void performWhenPageVisible() {
 
-		fetchDeploymentConfiguration();
+		refreshMemoryOptions();
 		// Only refresh Domains once.
 		if (!refreshedDomains) {
 			refreshApplicationUrlDomains();
 		}
 	}
 
-	protected void fetchDeploymentConfiguration() {
-		// Only get a deployment if it doesn't yet exist.
-		if (deploymentConfiguration != null) {
-			return;
-		}
-		final String jobLabel = "Fetching list of memory options.";
-		UIJob job = new UIJob(jobLabel) {
-
-			@Override
-			public IStatus runInUIThread(IProgressMonitor arg0) {
-				try {
-					CloudUiUtil.runForked(new ICoreRunnable() {
-						public void run(IProgressMonitor monitor) throws CoreException {
-
-							SubMonitor subProgress = SubMonitor.convert(monitor, jobLabel, 100);
-
-							try {
-								deploymentConfiguration = server.getBehaviour().getDeploymentConfiguration(subProgress);
-							}
-
-							catch (OperationCanceledException e) {
-								throw new CoreException(CloudFoundryPlugin.getErrorStatus(e));
-							}
-							finally {
-								subProgress.done();
-							}
-
-						}
-					}, getWizard().getContainer());
-					memoryPart.refreshMemoryOptions();
-
-				}
-
-				catch (CoreException ce) {
-					update(true, ce.getStatus());
-				}
-				return Status.OK_STATUS;
-			}
-
-		};
-		job.setSystem(true);
-		job.schedule();
-
+	protected void refreshMemoryOptions() {
+		memoryPart.refreshMemoryOptions();
 	}
 
 	protected Point getRunDebugControlIndentation() {
 		return new Point(15, 5);
 	}
 
-	protected void setMemory(int memory) {
-		descriptor.getDeploymentInfo().setMemory(memory);
+	protected void setMemory(String memoryVal) {
+
+		int memory = -1;
+		try {
+			memory = Integer.parseInt(memoryVal);
+		}
+		catch (NumberFormatException e) {
+			// ignore. error is handled below
+		}
+		if (memory > 0) {
+			descriptor.getDeploymentInfo().setMemory(memory);
+			update(true, Status.OK_STATUS);
+		}
+		else {
+			update(true, CloudFoundryPlugin.getErrorStatus(CloudErrorUtil.ERROR_INVALID_MEMORY));
+		}
 	}
 
 	protected void setDeploymentMode(ApplicationAction deploymentMode) {
@@ -413,10 +381,10 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 						// Do not disable the wizard. Users can still enter a
 						// domain manually.
 						update(false,
-								CloudFoundryPlugin
-										.getStatus(NLS.bind(
-												"Unable to resolve a domain due to {0} - Enter a domain manually to continue deploying the application", e.getMessage()),
-												IStatus.WARNING));
+								CloudFoundryPlugin.getStatus(
+										NLS.bind(
+												"Unable to resolve a domain due to {0} - Enter a domain manually to continue deploying the application",
+												e.getMessage()), IStatus.WARNING));
 					}
 
 					if (appURL != null) {
@@ -438,77 +406,37 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	}
 
 	class MemoryPart extends UIPart {
+
+		protected Text memory;
+
 		@Override
 		public Control createPart(Composite parent) {
 			Label label = new Label(parent, SWT.NONE);
 			label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 			label.setText("Memory Reservation:");
 
-			memoryCombo = new Combo(parent, SWT.BORDER | SWT.READ_ONLY);
-			memoryCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-			memoryCombo.setEnabled(false);
-			memoryCombo.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent event) {
-					// should always parse correctly
-					int selectionIndex = memoryCombo.getSelectionIndex();
-					if (selectionIndex != -1) {
-						int memory = deploymentConfiguration.getMemoryOptions()[selectionIndex];
-						setMemory(memory);
-					}
+			memory = new Text(parent, SWT.BORDER);
+			memory.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+			memory.addModifyListener(new ModifyListener() {
+
+				public void modifyText(ModifyEvent e) {
+					setMemory(memory.getText());
 				}
 			});
 			return parent;
 		}
 
 		public void refreshMemoryOptions() {
-
-			// Select the default memory first
-			if (deploymentConfiguration == null || deploymentConfiguration.getMemoryOptions() == null
-					|| deploymentConfiguration.getMemoryOptions().length == 0) {
-				notifyStatusChange(CloudFoundryPlugin
-						.getErrorStatus("Unable to retrieve list of memory options from the server. Please check connection or account settings."));
-			}
-			else {
-				memoryCombo.removeAll();
-				int memory = 0;
+			if (memory != null && !memory.isDisposed()) {
 				int currentMemory = descriptor.getDeploymentInfo().getMemory();
-				int defaultIndex = -1;
-				for (int option : deploymentConfiguration.getMemoryOptions()) {
-					memoryCombo.add(option + "M");
-
-					int index = memoryCombo.getItemCount() - 1;
-
-					// Label the default memory
-					if (option == deploymentConfiguration.getDefaultMemory()) {
-						defaultIndex = index;
-						memoryCombo.setItem(index, option + "M (Default)");
-					}
-
-					// select a current memory setting
-					if (option == currentMemory) {
-						memoryCombo.select(index);
-						memory = option;
-					}
+				if (currentMemory <= 0) {
+					memory.setText(DEFAULT_MEMORY);
 				}
-				// If no memory is yet selected, select either the default
-				// memory, or the first memory
-				if (memory == 0 && deploymentConfiguration.getMemoryOptions().length > 0) {
-
-					if (defaultIndex >= 0 && defaultIndex < deploymentConfiguration.getMemoryOptions().length) {
-						memoryCombo.select(defaultIndex);
-						memory = deploymentConfiguration.getMemoryOptions()[defaultIndex];
-					}
-					else {
-						memoryCombo.select(0);
-						memory = deploymentConfiguration.getMemoryOptions()[0];
-					}
-
+				else {
+					memory.setText(currentMemory + "");
 				}
-				memoryCombo.setEnabled(true);
-				setMemory(memory);
-				notifyStatusChange(Status.OK_STATUS);
 			}
+
 		}
 	}
 

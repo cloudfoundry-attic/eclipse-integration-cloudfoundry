@@ -671,6 +671,15 @@ public class CloudFoundryServer extends ServerDelegate {
 				}
 			}
 
+			// FIXNS: This seems to trigger an infinite "recursion", since
+			// deleteModules(..) delegates to the server behaviour, which then
+			// attempts to delete modules in a server instance that is not saved
+			// and when server behaviour delete operation is complete, it will
+			// trigger a refresh operation which then proceeds to update
+			// modules, but since WST still indicates that the module has not
+			// been deleted
+			// deleteModule size will not be empty, which will again invoke the
+			// server behaviour...
 			// update state for deleted applications to trigger a refresh
 			if (deletedModules.size() > 0) {
 				for (IModule module : deletedModules) {

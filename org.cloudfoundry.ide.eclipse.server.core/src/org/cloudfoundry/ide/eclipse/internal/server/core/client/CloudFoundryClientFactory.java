@@ -57,6 +57,7 @@ public class CloudFoundryClientFactory {
 		// therefore it is not critical to set the proxy in the client on
 		// client
 		// creation
+
 		HttpProxyConfiguration proxyConfiguration = getProxy(url);
 		return session != null ? new CloudFoundryClient(credentials, url, session) : new CloudFoundryClient(
 				credentials, url, proxyConfiguration);
@@ -73,18 +74,6 @@ public class CloudFoundryClientFactory {
 		// creation
 		HttpProxyConfiguration proxyConfiguration = getProxy(url);
 		return new CloudFoundryClient(credentials, url, orgName, spaceName, proxyConfiguration);
-	}
-
-	/**
-	 * For testing purposes only.
-	 * @param userName
-	 * @param password
-	 * @param url
-	 * @return
-	 */
-	public CloudFoundryOperations getNonUAACloudFoundryOperations(String userName, String password, URL url) {
-		CloudCredentials credentials = getCredentials(userName, password);
-		return getCloudFoundryOperations(credentials, url, null);
 	}
 
 	public CloudFoundryOperations getCloudFoundryOperations(String cloudControllerUrl) throws MalformedURLException {

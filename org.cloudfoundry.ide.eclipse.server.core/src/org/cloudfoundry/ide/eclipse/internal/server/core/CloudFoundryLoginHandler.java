@@ -102,8 +102,15 @@ public class CloudFoundryLoginHandler {
 			try {
 				URL actualUrl = new URL(cloudURL);
 				HttpProxyConfiguration proxyConfiguration = CloudFoundryClientFactory.getProxy(actualUrl);
+				// FIXNS: As of CF Java client-lib version 1.0.2, update proxy
+				// API has been removed. Therefore unless a new client
+				// is created on proxy change, or the client indirectly detects
+				// proxy changes via system properties
+				// Proxy support for CF Eclipse will not work unless a user
+				// reconnects the server instance when the client
+				// is created.
+//				client.updateHttpProxyConfiguration(proxyConfiguration);
 
-				client.updateHttpProxyConfiguration(proxyConfiguration);
 				return true;
 			}
 			catch (MalformedURLException e) {

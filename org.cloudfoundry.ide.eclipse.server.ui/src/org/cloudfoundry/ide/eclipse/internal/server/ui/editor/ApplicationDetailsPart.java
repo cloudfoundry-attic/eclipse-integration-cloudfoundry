@@ -84,7 +84,6 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
@@ -169,7 +168,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	private Button saveManifest;
 
-	private Combo memoryCombo;
+	private Text memoryText;
 
 	/**
 	 * This must NOT be set directly. Use appropriate setter
@@ -186,8 +185,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	private List<String> URIs;
 
 	private final boolean provideServices;
-
-	private int memory;
 
 	private boolean isPublished = false;
 
@@ -506,33 +503,12 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		instancesViewer.setInput(null);
 
-		memoryCombo.setEnabled(cloudApplication != null);
+		memoryText.setEnabled(cloudApplication != null);
 		if (cloudApplication != null) {
 			int appMemory = appModule.getApplication().getMemory();
 
-			int[] applicationMemoryChoices = editorPage.getApplicationMemoryChoices();
-			if (applicationMemoryChoices != null && applicationMemoryChoices.length > 0) {
-				boolean found = false;
-
-				// Only clear memory combo if a new list is obtained. Otherwise
-				// the memory combo shrinks
-				memoryCombo.removeAll();
-				for (int option : applicationMemoryChoices) {
-					memoryCombo.add(option + "M");
-					if (option == appMemory) {
-						int index = memoryCombo.getItemCount() - 1;
-						memoryCombo.select(index);
-						found = true;
-					}
-				}
-
-				if (!found && appMemory != 0) {
-					memoryCombo.add(appMemory + "M", 0);
-					memoryCombo.select(0);
-				}
-				memoryCombo.setEnabled(true);
-				memoryCombo.redraw();
-
+			if (appMemory > 0) {
+				memoryText.setText(appMemory + "");
 			}
 		}
 
@@ -602,7 +578,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			DeploymentInfoWorkingCopy deploymentInfo = null;
 			List<String> serviceNames = null;
 			try {
-				// FIXNS: Not ideal to pass a default monitor, but this also cannot be
+				// FIXNS: Not ideal to pass a default monitor, but this also
+				// cannot be
 				// run asynchronously as a Job, as refreshing the viewer
 				// asynchronously may result in the job running after the viewer
 				// is disposed (e.g. the editor is closed between scheduling the
@@ -804,9 +781,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		// Manifest area
 		createLabel(client, "Manifest:", SWT.CENTER);
-		saveManifest = toolkit.createButton(client, "Save", SWT.PUSH);
-
-		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(saveManifest);
+		saveManifest = createGeneralPushButton(client, "Save");
 
 		saveManifest.setEnabled(false);
 		saveManifest.addSelectionListener(new SelectionAdapter() {
@@ -832,38 +807,45 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		generalSectionRestartRequired.setClient(client);
 
 		createLabel(client, "Memory limit:", SWT.CENTER);
+		Composite memoryArea = toolkit.createComposite(client);
+		GridLayoutFactory.fillDefaults().numColumns(2).margins(0, 0).applyTo(memoryArea);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(memoryArea);
 
-		memoryCombo = new Combo(client, SWT.BORDER);
+		memoryText = new Text(memoryArea, SWT.BORDER);
 
-		// Set minimum so combo doesn't shrink on refresh.
-		int comboMinimumWidth = 70;
-		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.FILL).hint(comboMinimumWidth, SWT.DEFAULT)
-				.applyTo(memoryCombo);
-		memoryCombo.addSelectionListener(new SelectionAdapter() {
+		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.FILL).hint(60, SWT.DEFAULT).applyTo(memoryText);
 
+		final Button button = createGeneralPushButton(memoryArea, "Set");
+
+		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				if (canUpdate) {
-					int selectionIndex = memoryCombo.getSelectionIndex();
-					if (selectionIndex != -1) {
-						memory = editorPage.getApplicationMemoryChoices()[selectionIndex];
-
+				if (canUpdate && memoryText != null && !memoryText.isDisposed()) {
+					int memory = -1;
+					try {
+						memory = Integer.parseInt(memoryText.getText());
+					}
+					catch (NumberFormatException nfe) {
+						// ignore. error is handled below
+					}
+					if (memory > 0) {
 						try {
 							CloudFoundryApplicationModule appModule = getExistingApplication();
 							new UpdateApplicationMemoryAction(editorPage, memory, appModule).run();
 						}
 						catch (CoreException ce) {
-							logApplicationModuleFailureError("Unable to update application memory");
+							logApplicationModuleFailureError(CloudErrorUtil.ERROR_FAILED_MEMORY_UPDATE);
 						}
+					}
+					else {
+						logApplicationModuleFailureError(CloudErrorUtil.ERROR_INVALID_MEMORY);
 					}
 				}
 			}
-
 		});
 
 		createLabel(client, "Environment Variables:", SWT.CENTER);
-		Button envVarsButton = toolkit.createButton(client, "Edit...", SWT.PUSH);
-		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(envVarsButton);
+		Button envVarsButton = createGeneralPushButton(client, "Edit...");
 
 		envVarsButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
@@ -987,6 +969,12 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		// FIXNS: Disabled until debug support is present in v2
 		// createDebugArea(buttonComposite);
 
+	}
+
+	protected Button createGeneralPushButton(Composite parent, String text) {
+		Button button = toolkit.createButton(parent, text, SWT.PUSH);
+		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).hint(50, SWT.DEFAULT).applyTo(button);
+		return button;
 	}
 
 	protected void writeToManifest() {
