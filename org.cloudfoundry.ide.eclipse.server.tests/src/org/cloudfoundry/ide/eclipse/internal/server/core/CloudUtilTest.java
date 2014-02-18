@@ -43,7 +43,7 @@ public class CloudUtilTest extends TestCase {
 
 	@Override
 	protected void setUp() throws Exception {
-		harness = CloudFoundryTestFixture.getTestFixture().harness();
+		harness = CloudFoundryTestFixture.getTestFixture().createHarness();
 		server = harness.createServer();
 	}
 

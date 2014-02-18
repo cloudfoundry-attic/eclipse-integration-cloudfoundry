@@ -77,7 +77,7 @@ public class RepublishApplicationHandler {
 		if (project != null) {
 
 			// Get the descriptor from the existing application module
-			DeploymentInfoWorkingCopy workingCopy = appModule.getDeploymentInfoWorkingCopy(monitor);
+			DeploymentInfoWorkingCopy workingCopy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
 			workingCopy.setUris(uris);
 			workingCopy.save();
 			IServer server = cloudServer.getServer();

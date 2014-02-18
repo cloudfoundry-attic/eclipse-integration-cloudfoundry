@@ -60,7 +60,7 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 
 		final List<String> updatedServices = new ArrayList<String>();
 
-		DeploymentInfoWorkingCopy workingCopy = appModule.getDeploymentInfoWorkingCopy(monitor);
+		DeploymentInfoWorkingCopy workingCopy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
 
 		// Check the deployment information to see if it has an existing list of
 		// bound services.

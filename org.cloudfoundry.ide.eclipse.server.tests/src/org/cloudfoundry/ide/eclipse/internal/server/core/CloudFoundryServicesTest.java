@@ -28,14 +28,16 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 	public void testServiceBinding() throws Exception {
 		CloudService service = createService();
 		String prefix = "serviceBinding";
-		createPerTestWebApplication(prefix);
-		CloudFoundryApplicationModule appModule = assertDeployAndStartApplication(prefix);
+		createWebApplicationProject();
+		CloudFoundryApplicationModule appModule = deployApplicationStartMode(prefix);
 
 		CloudApplication app = appModule.getApplication();
-		assertStopApplication(app);
+		assertStopModule(appModule);
 
 		bindServiceToApp(app, service);
-		assertStartApplication(app);
+
+		assertStartModule(appModule);
+
 		assertServiceBound(service.getName(), app);
 
 		assertRemoveApplication(app);
@@ -49,18 +51,20 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		CloudService service = createService();
 
 		String prefix = "serviceBinding";
-		createPerTestWebApplication(prefix);
-		CloudFoundryApplicationModule appModule = assertDeployAndStartApplication(prefix);
+		createWebApplicationProject();
+
+		CloudFoundryApplicationModule appModule = deployApplicationStartMode(prefix);
 
 		CloudApplication app = appModule.getApplication();
 
-		assertStopApplication(app);
+		assertStopModule(appModule);
 		bindServiceToApp(app, service);
 
-		assertStartApplication(app);
+		assertStartModule(appModule);
+
 		assertServiceBound(service.getName(), app);
 
-		assertStopApplication(app);
+		assertStopModule(appModule);
 		unbindServiceToApp(app, service);
 		assertServiceNotBound(service.getName(), app);
 

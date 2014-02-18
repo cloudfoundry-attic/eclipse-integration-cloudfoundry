@@ -29,6 +29,10 @@ import org.springframework.web.client.RestClientException;
  */
 public class CloudErrorUtil {
 
+	private static final String ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION = "Error performing Cloud Foundry operation: {0}";
+	private static final String ERROR_WRONG_EMAIL_OR_PASSWORD = "Wrong email or password";
+	private static final String ERROR_UNABLE_TO_ESTABLISH_CONNECTION = "Unable to establish connection";
+	private static final String ERROR_FAILED_REST_CLIENT = "Client error: {0}";
 	private static final String ERROR_UNKNOWN = "Unknown Cloud Foundry error";
 
 	private CloudErrorUtil() {
@@ -43,16 +47,16 @@ public class CloudErrorUtil {
 	 */
 	public static String getConnectionError(CoreException e) {
 		if (isUnauthorisedException(e)) {
-			return "Validation failed: Wrong email or password";
+			return ERROR_WRONG_EMAIL_OR_PASSWORD;
 		}
 		else if (isForbiddenException(e)) {
-			return "Validation failed: Wrong email or password";
+			return ERROR_WRONG_EMAIL_OR_PASSWORD;
 		}
 		else if (isUnknownHostException(e)) {
-			return "Validation failed: Unable to establish connection";
+			return ERROR_UNABLE_TO_ESTABLISH_CONNECTION;
 		}
 		else if (isRestClientException(e)) {
-			return "Validation failed: Unknown URL";
+			return NLS.bind(ERROR_FAILED_REST_CLIENT, e.getMessage());
 		}
 		return null;
 	}
@@ -170,7 +174,7 @@ public class CloudErrorUtil {
 			}
 		}
 		return new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-				"Error performing Cloud Foundry operation: {0}", e.getMessage()), e));
+				ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION, e.getMessage()), e));
 	}
 
 	// check if error is 403 - take CoreException

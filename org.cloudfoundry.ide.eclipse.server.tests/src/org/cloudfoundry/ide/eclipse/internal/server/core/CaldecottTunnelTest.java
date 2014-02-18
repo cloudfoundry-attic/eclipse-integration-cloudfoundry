@@ -136,14 +136,17 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 	 * service also has a Caldecott tunnel, the tunnel does not get closed.
 	 */
 	public void testNonCaldecottServiceUnbinding_STS_2767() throws Exception {
-		CloudFoundryApplicationModule appModule = createPerTestWebApplication("nonCaldecottServiceUnbinding");
+		String prefix = "nonCaldecottServiceUnbinding";
+		createWebApplicationProject();
+
+		CloudFoundryApplicationModule appModule = deployApplicationStartMode(prefix);
 
 		CloudApplication nonCaldecottApp = appModule.getApplication();
 
 		CloudService service = getMysqlService();
 		assertServiceExists(MYSQL_SERVICE_NAME);
 
-		assertStopApplication(nonCaldecottApp);
+		assertStopModule(appModule);
 
 		bindServiceToApp(nonCaldecottApp, service);
 
@@ -151,10 +154,10 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 		assertNotNull(descriptor);
 		assertTunnel(MYSQL_SERVICE_NAME);
 
-		assertStartApplication(nonCaldecottApp);
+		assertStartModule(appModule);
 		assertServiceBound(service.getName(), nonCaldecottApp);
 
-		assertStopApplication(nonCaldecottApp);
+		assertStopModule(appModule);
 		unbindServiceToApp(nonCaldecottApp, service);
 		assertServiceNotBound(service.getName(), nonCaldecottApp);
 
@@ -168,26 +171,6 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 
 		assertRemoveApplication(nonCaldecottApp);
 
-	}
-
-	public void testTunnelCloseOnCaldecottStop() throws Exception {
-
-		CloudService service = getMysqlService();
-		assertServiceExists(MYSQL_SERVICE_NAME);
-
-		CaldecottTunnelDescriptor descriptor = createCaldecottTunnel(MYSQL_SERVICE_NAME);
-		assertNotNull(descriptor);
-		assertTunnel(MYSQL_SERVICE_NAME);
-
-		CloudApplication caldecottApp = getCaldecottApplication();
-		assertNotNull(caldecottApp);
-
-		assertStopApplication(caldecottApp);
-
-		assertNoTunnel(MYSQL_SERVICE_NAME);
-
-		deleteService(service);
-		assertServiceNotExist(MYSQL_SERVICE_NAME);
 	}
 
 	public void testTunnelCloseOnCaldecottDeletion() throws Exception {

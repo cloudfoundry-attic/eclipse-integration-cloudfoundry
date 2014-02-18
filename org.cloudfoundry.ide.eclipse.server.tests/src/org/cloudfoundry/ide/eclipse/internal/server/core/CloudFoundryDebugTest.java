@@ -80,7 +80,7 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 		@Override
 		public IModule[] launch(String appPrefix) throws Exception {
 			// Create the app first
-			createPerTestWebApplication(appPrefix);
+			createWebApplicationProject();
 			return super.launch(appPrefix);
 		}
 
@@ -116,7 +116,7 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 		@Override
 		public IModule[] launch(String appPrefix) throws Exception {
 			// Create the app first before launching
-			createPerTestWebApplication(appPrefix);
+			createWebApplicationProject();
 			return super.launch(appPrefix);
 		}
 
@@ -161,7 +161,7 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 
 			CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(modules[0]);
 			List<String> uris = appModule.getApplication().getUris();
-			assertEquals(Collections.singletonList(getTestFixture().harness().getExpectedDefaultURL(appPrefix)), uris);
+			assertEquals(Collections.singletonList(harness.getExpectedDefaultURL(appPrefix)), uris);
 
 			// wait 1s until app is actually started
 			// FIXNS: for now skip testing content for debug launches

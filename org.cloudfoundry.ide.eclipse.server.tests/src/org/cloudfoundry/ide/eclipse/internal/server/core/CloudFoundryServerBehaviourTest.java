@@ -18,11 +18,14 @@ import java.util.List;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
+import org.eclipse.wst.server.core.internal.Server;
 
 /**
  * 
@@ -46,18 +49,119 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		assertEquals(IServer.STATE_STOPPED, serverBehavior.getServer().getServerState());
 	}
 
-	public void testCreateStartAppHarness() throws Exception {
-		String prefix = "testStart";
-		createPerTestWebApplication(prefix);
+	public void testCreateDeployAppHelpersStartMode() throws Exception {
+		String prefix = "testCreateDeployAppHelpers";
+		createWebApplicationProject();
+		boolean stopMode = false;
+		deployApplication(prefix, stopMode);
 
-		assertApplicationFromDefaultProjectIsRunning(prefix);
+		// Invoke the helper method
+		CloudFoundryApplicationModule appModule = assertApplicationIsDeployed(prefix);
+		assertNotNull("Expected non-null Cloud Foundry application module", appModule);
+
+		IModule module = getModule(harness.getDefaultWebAppProjectName());
+		int moduleState = server.getModuleState(new IModule[] { module });
+		assertEquals(IServer.STATE_STARTED, moduleState);
+
+		// Invoke the helper method
+		assertApplicationIsRunning(module, prefix);
+
+		// Now CHECK that the expected conditions in the helper method assert to
+		// expected values
+		appModule = assertCloudFoundryModuleExists(module, prefix);
+
+		assertNotNull(
+				"No Cloud Application mapping in Cloud module. Application mapping failed or application did not deploy",
+				appModule.getApplication());
+
+		assertEquals(IServer.STATE_STARTED, appModule.getState());
+		assertEquals(AppState.STARTED, appModule.getApplication().getState());
+
+	}
+
+	public void testCreateDeployAppHelpersStopMode() throws Exception {
+		String prefix = "testCreateDeployAppHelpers";
+		createWebApplicationProject();
+
+		boolean stopMode = true;
+
+		deployApplication(prefix, stopMode);
+
+		// Invoke the helper method
+		CloudFoundryApplicationModule appModule = assertApplicationIsDeployed(prefix);
+		assertNotNull("Expected non-null Cloud Foundry application module", appModule);
+
+		// Now CHECK that the expected conditions in the helper method assert to
+		// expected values
+		IModule module = getModule(harness.getDefaultWebAppProjectName());
+
+		appModule = assertCloudFoundryModuleExists(module, prefix);
+
+		assertNotNull(
+				"No Cloud Application mapping in Cloud module. Application mapping failed or application did not deploy",
+				appModule.getApplication());
+
+		assertEquals(IServer.STATE_STOPPED, appModule.getState());
+		assertEquals(AppState.STOPPED, appModule.getApplication().getState());
+
+		Exception error = null;
+		try {
+			assertApplicationIsRunning(module, prefix);
+		}
+		catch (Exception e) {
+			error = e;
+		}
+
+		assertNotNull("Expected error when checking if application is running", error);
+
+	}
+
+	public void testStopApplication() throws Exception {
+		String prefix = "stopApplication";
+		createWebApplicationProject();
+		deployApplicationStartMode(prefix);
+
+		CloudFoundryApplicationModule appModule = assertApplicationIsDeployed(prefix);
+		assertApplicationIsRunning(appModule);
+
+		assertStopModule(appModule);
+
+		// Check the helper method assertions have correct values
+		assertTrue("Expected application to be stopped", appModule.getApplication().getState().equals(AppState.STOPPED));
+		assertTrue("Expected application to be stopped", appModule.getState() == Server.STATE_STOPPED);
+	}
+
+	public void testStartStopAfterDeployment() throws Exception {
+		// Tests that after an application has been deployed and started, if
+		// stopped and restarted, the application starts without problems
+		String prefix = "stopApplication";
+		createWebApplicationProject();
+		deployApplicationStartMode(prefix);
+
+		CloudFoundryApplicationModule appModule = assertApplicationIsDeployed(prefix);
+		assertApplicationIsRunning(appModule);
+
+		assertStopModule(appModule);
+
+		// Check the helper method assertions have correct values
+		assertTrue("Expected application to be stopped", appModule.getApplication().getState().equals(AppState.STOPPED));
+		assertTrue("Expected application to be stopped", appModule.getState() == Server.STATE_STOPPED);
+
+		assertStartModule(appModule);
+
+		assertTrue("Expected application to be started", appModule.getApplication().getState().equals(AppState.STARTED));
+		assertTrue("Expected application to be started", appModule.getState() == Server.STATE_STARTED);
+
 	}
 
 	public void testServerBehaviourIsApplicationRunning() throws Exception {
+		// Tests the server behaviour API that checks if the application is
+		// running
 		String prefix = "isApplicationRunning";
-		createPerTestWebApplication(prefix);
+		createWebApplicationProject();
+		deployApplicationStartMode(prefix);
 
-		CloudFoundryApplicationModule appModule = assertApplicationFromDefaultProjectIsRunning(prefix);
+		CloudFoundryApplicationModule appModule = assertApplicationIsDeployed(prefix);
 
 		// Verify that the server behaviour API to determine that an app is
 		// running tests correctly
@@ -65,7 +169,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		// The following are the expected conditions for the server behaviour to
 		// determine that the app is running
-		String appName = getTestFixture().harness().getDefaultWebAppName(prefix);
+		String appName = harness.getDefaultWebAppName(prefix);
 		assertTrue(appModule.getState() == IServer.STATE_STARTED);
 		assertNotNull(serverBehavior.getApplicationStats(appName, new NullProgressMonitor()));
 		assertNotNull(serverBehavior.getInstancesInfo(appName, new NullProgressMonitor()));
@@ -74,7 +178,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 	public void testStartModuleInvalidToken() throws Exception {
 		String prefix = "startModuleInvalidToken";
 
-		createPerTestWebApplication(prefix);
+		createWebApplicationProject();
 		try {
 			connectClient("invalid", "invalidPassword");
 		}
@@ -83,7 +187,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		}
 
 		try {
-			assertDeployAndStartApplication(prefix);
+			deployApplicationStartMode(prefix);
 		}
 		catch (CoreException ce) {
 			assertNotNull(ce);
@@ -91,7 +195,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		// Deploying application should have failed, so it must not exist in the
 		// server
-		String appName = getTestFixture().harness().getDefaultWebAppName(prefix);
+		String appName = harness.getDefaultWebAppName(prefix);
 		assertNull("Expecting no deployed application: " + appName + " but it exists in the server",
 				getUpdatedApplication(appName));
 
@@ -99,7 +203,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		connectClient();
 
 		// Starting the app should now pass without errors
-		assertDeployAndStartApplication(prefix);
+		deployApplicationStartMode(prefix);
 
 	}
 
@@ -107,7 +211,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		String prefix = "startModuleInvalidPassword";
 
-		createPerTestWebApplication(prefix);
+		createWebApplicationProject();
 
 		try {
 			CloudFoundryServer cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
@@ -116,7 +220,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 			CloudCredentials credentials = new CloudCredentials(userName, "invalid-password");
 			connectClient(credentials);
 
-			assertDeployAndStartApplication(prefix);
+			deployApplicationStartMode(prefix);
 
 			fail("Expected CoreException due to invalid password");
 		}
@@ -126,16 +230,28 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		connectClient();
 
-		assertDeployAndStartApplication(prefix);
+		// Should now deploy without errors
+		deployApplicationStartMode(prefix);
+
+		assertApplicationIsDeployed(prefix);
 
 	}
 
+	/*
+	 * Creates an application through the Cloud Foundry server instance, and
+	 * then deletes the application using an external standalone client not
+	 * associated with the Cloud Foundry server instance to simulate deleting
+	 * the application outside of Eclipse or the runtime workbench.
+	 */
 	public void testDeleteModuleExternally() throws Exception {
-		String prefix = "deleteModuleExternally";
-		String appName = getTestFixture().harness().getDefaultWebAppName(prefix);
-		createPerTestWebApplication(prefix);
 
-		assertApplicationFromDefaultProjectIsRunning(prefix);
+		String prefix = "deleteModuleExternally";
+		String appName = harness.getDefaultWebAppName(prefix);
+		createWebApplicationProject();
+
+		deployApplicationStartMode(prefix);
+
+		assertApplicationIsDeployed(prefix);
 
 		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
 		boolean found = false;

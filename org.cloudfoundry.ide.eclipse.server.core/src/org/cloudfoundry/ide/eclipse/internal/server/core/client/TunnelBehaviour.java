@@ -369,7 +369,7 @@ public class TunnelBehaviour {
 
 		if (appModule != null) {
 
-			DeploymentInfoWorkingCopy deploymentInfo = appModule.getDeploymentInfoWorkingCopy(monitor);
+			DeploymentInfoWorkingCopy deploymentInfo = appModule.resolveDeploymentInfoWorkingCopy(monitor);
 
 			if (deploymentInfo != null) {
 				List<CloudService> existingServices = deploymentInfo.getServices();

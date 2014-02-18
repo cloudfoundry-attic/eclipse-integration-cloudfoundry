@@ -77,10 +77,11 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 
 		// Verify that connection and operations can be performed without the
 		// proxy change
-		String prefix = "InvalidProxyThroughServerInstance";
-		createPerTestWebApplication(prefix);
+		String prefix = "InvalidProxyServerInstance";
+		createWebApplicationProject();
 
-		CloudFoundryApplicationModule appModule = assertDeployAndStartApplication(prefix);
+		CloudFoundryApplicationModule appModule = deployApplicationStartMode(prefix);
+		assertApplicationIsRunning(appModule.getLocalModule(), prefix);
 		final String appName = appModule.getDeployedApplicationName();
 
 		final boolean[] ran = { false };

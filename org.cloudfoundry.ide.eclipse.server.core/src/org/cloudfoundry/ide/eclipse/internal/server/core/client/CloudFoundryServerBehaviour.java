@@ -664,7 +664,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				CloudFoundryApplicationModule appModule = super.prepareForDeployment(monitor);
 
-				DeploymentInfoWorkingCopy workingCopy = appModule.getDeploymentInfoWorkingCopy(monitor);
+				DeploymentInfoWorkingCopy workingCopy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
 				workingCopy.setDeploymentMode(ApplicationAction.DEBUG);
 				workingCopy.save();
 				return appModule;
@@ -869,7 +869,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				CloudFoundryApplicationModule appModule = super.prepareForDeployment(monitor);
 
-				DeploymentInfoWorkingCopy workingCopy = appModule.getDeploymentInfoWorkingCopy(monitor);
+				DeploymentInfoWorkingCopy workingCopy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
 				workingCopy.setDeploymentMode(ApplicationAction.DEBUG);
 				workingCopy.save();
 
@@ -1014,7 +1014,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public void refreshApplicationBoundServices(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
 			throws CoreException {
-		DeploymentInfoWorkingCopy copy = appModule.getDeploymentInfoWorkingCopy(monitor);
+		DeploymentInfoWorkingCopy copy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
 		List<CloudService> boundServices = copy.getServices();
 		if (boundServices != null && !boundServices.isEmpty()) {
 
@@ -2169,7 +2169,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			CloudFoundryApplicationModule appModule = super.prepareForDeployment(monitor);
 
-			DeploymentInfoWorkingCopy workingCopy = appModule.getDeploymentInfoWorkingCopy(monitor);
+			DeploymentInfoWorkingCopy workingCopy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
 			workingCopy.setIncrementalPublish(incrementalPublish);
 			workingCopy.save();
 			return appModule;

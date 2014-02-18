@@ -607,7 +607,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				// asynchronously may result in the job running after the viewer
 				// is disposed (e.g. the editor is closed between scheduling the
 				// job and the job actually running)
-				deploymentInfo = appModule.getDeploymentInfoWorkingCopy(ProgressManager.getInstance()
+				deploymentInfo = appModule.resolveDeploymentInfoWorkingCopy(ProgressManager.getInstance()
 						.getDefaultMonitor());
 
 				serviceNames = deploymentInfo.asServiceBindingList();
@@ -875,7 +875,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 							public IStatus runInUIThread(IProgressMonitor monitor) {
 								try {
 									DeploymentInfoWorkingCopy infoWorkingCopy = appModule
-											.getDeploymentInfoWorkingCopy(monitor);
+											.resolveDeploymentInfoWorkingCopy(monitor);
 
 									EnvVarsWizard wizard = new EnvVarsWizard(cloudServer, appModule, infoWorkingCopy);
 									WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(),

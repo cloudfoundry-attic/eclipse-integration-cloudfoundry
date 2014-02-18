@@ -264,7 +264,7 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 	 * or default deployment information, if an deployment information does not
 	 * exist.
 	 */
-	public synchronized DeploymentInfoWorkingCopy getDeploymentInfoWorkingCopy(IProgressMonitor monitor)
+	public synchronized DeploymentInfoWorkingCopy resolveDeploymentInfoWorkingCopy(IProgressMonitor monitor)
 			throws CoreException {
 		DeploymentInfoWorkingCopy wc = new ModuleDeploymentInfoWorkingCopy(this);
 		wc.fill(monitor);

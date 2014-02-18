@@ -52,7 +52,21 @@ import org.eclipse.wst.server.core.ServerUtil;
 import org.osgi.framework.Bundle;
 
 /**
- * Holds connection properties and provides utility methods for testing.
+ * Holds connection properties and provides utility methods for testing. The
+ * Fixture is intended to set up parts of the CF Eclipse plugin prior to a test
+ * case performing an operation, that would normally require user input via UI
+ * (for example, the deployment wizard). The fixture is also responsible for
+ * creating a per-test-case Harness, that sets up a server instance and web
+ * project for deployment
+ * <p/>
+ * Only one instance of a test fixture is intended to exist for a set of test
+ * cases, as opposed to a test {@link Harness} , which is created for EACH test
+ * case. The fixture is not intended to hold per-test-case state, but rather
+ * common properties (like credentials) that are only loaded once for a set of
+ * test cases (in other words, for the entire junit runtime).
+ * <p/>
+ * If state needs to be held on a per-test-case basis, use the {@link Harness}
+ * to store state.
  * 
  * @author Steffen Pingel
  */
@@ -76,9 +90,16 @@ public class CloudFoundryTestFixture {
 
 	/**
 	 * 
-	 * The intention of the harness is to create a web project, server instance,
-	 * and define common components for applications deployed to this server,
-	 * like using the same domain when computing an application's URL.
+	 * The intention of the harness is to create a web project and server
+	 * instance PER test case, and which holds state that is relevant only
+	 * during the lifetime of a single test case. It should NOT hold state that
+	 * is shared across different test cases. This means that a new harness
+	 * should be created for each test case that is run.
+	 * <p/>
+	 * IMPORTANT: Since the harness is responsible for creating the server
+	 * instance and project, to ensure proper behaviour of each test case, it's
+	 * important to use the SAME harness instance throughout the entire test
+	 * case.
 	 * <p/>
 	 * In addition, the harness provides a default web project creation, that
 	 * can be reused in each test case, and deploys an application based on the
@@ -329,7 +350,7 @@ public class CloudFoundryTestFixture {
 		}
 
 		public String getDefaultWebAppName(String appPrefix) {
-			return appPrefix + getDefaultWebAppProjectName();
+			return appPrefix + '_' + getDefaultWebAppProjectName();
 		}
 
 		public TestServlet startMockServer() throws Exception {
@@ -369,35 +390,22 @@ public class CloudFoundryTestFixture {
 	 * @throws CoreException
 	 */
 	public CloudFoundryTestFixture baseConfiguration() throws CoreException {
-		CloudFoundryPlugin.setCallback(new TestCallback(null));
+		CloudFoundryPlugin.setCallback(new TestCallback(null, false));
 		return getTestFixture();
 	}
 
 	/**
 	 * Configures a test fixture to deploy an application with the given
-	 * application prefix.
-	 * @param appPrefix
+	 * application name. The full application name must be used.
+	 * @param fullApplicationName
+	 * @param deployStopped true if the application should be deployed in
+	 * stopped state. False if it should also be started
 	 * @return
 	 * @throws CoreException
 	 */
-	public CloudFoundryTestFixture configureForApplicationDeployment(String appPrefix) throws CoreException {
-		String appName = harness().getDefaultWebAppName(appPrefix);
-		CloudFoundryPlugin.setCallback(new TestCallback(appName));
-		return getTestFixture();
-	}
-
-	/**
-	 * Configures a test fixture for deploying an application with the given
-	 * appPrefix and URL.
-	 * @see #applicationDeployment(String)
-	 * @param appPrefix
-	 * @param url
-	 * @return
-	 * @throws CoreException
-	 */
-	public CloudFoundryTestFixture configureForApplicationDeployment(String appPrefix, String url) throws CoreException {
-		String appName = harness().getDefaultWebAppName(appPrefix);
-		CloudFoundryPlugin.setCallback(new TestCallback(appName, url));
+	public CloudFoundryTestFixture configureForApplicationDeployment(String fullApplicationName, boolean deployStopped)
+			throws CoreException {
+		CloudFoundryPlugin.setCallback(new TestCallback(fullApplicationName, deployStopped));
 		return getTestFixture();
 	}
 
@@ -434,7 +442,15 @@ public class CloudFoundryTestFixture {
 		return url;
 	}
 
-	public Harness harness() {
+	/**
+	 * New harness is created. To ensure proper behaviour for each test case.
+	 * Create the harness in the test setup, and use this SAME harness
+	 * throughout the lifetime of the same test case. Therefore, a harness
+	 * should ideally only be created ONCE throughout the lifetime of a single
+	 * test case.
+	 * @return new Harness. Never null
+	 */
+	public Harness createHarness() {
 		return new Harness();
 	}
 

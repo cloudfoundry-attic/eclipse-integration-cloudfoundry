@@ -13,6 +13,9 @@ package org.cloudfoundry.ide.eclipse.internal.server.core;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.eclipse.core.runtime.CoreException;
 
+/**
+ * Disabled for now until web content can be retrieved for an application URL
+ */
 public class CloudFoundryWebApplicationContentTest extends AbstractCloudFoundryTest {
 
 	// public void testStartModuleCheckWebContent() throws Exception {
@@ -143,5 +146,35 @@ public class CloudFoundryWebApplicationContentTest extends AbstractCloudFoundryT
 	protected CloudFoundryTestFixture getTestFixture() throws CoreException {
 		return CloudFoundryTestFixture.getTestFixture();
 	}
+
+	// protected String getContent(final URI uri, IModule module) throws
+	// Exception {
+	//
+	// CloudFoundryApplicationModule appModule =
+	// cloudServer.getExistingCloudModule(module);
+	// // wait for app to be running before fetching content
+	// assertApplicationIsRunning(appModule);
+	//
+	// BufferedReader reader = new BufferedReader(new
+	// InputStreamReader(download(uri, new NullProgressMonitor())));
+	// try {
+	// String val = reader.readLine();
+	// return val;
+	// }
+	// finally {
+	// if (reader != null) {
+	// reader.close();
+	// }
+	// }
+	//
+	// }
+	//
+	// public InputStream download(java.net.URI uri, IProgressMonitor
+	// progressMonitor) throws IOException {
+	// HttpURLConnection connection = (HttpURLConnection)
+	// uri.toURL().openConnection();
+	// connection.setUseCaches(false);
+	// return connection.getInputStream();
+	// }
 
 }

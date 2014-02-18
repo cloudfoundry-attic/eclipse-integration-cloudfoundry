@@ -10,10 +10,13 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.tests.util;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
@@ -21,7 +24,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWo
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 
 /**
@@ -33,14 +35,18 @@ public class TestCallback extends CloudFoundryCallback {
 
 	private final String url;
 
-	public TestCallback(String appName) {
+	private final boolean deployStopped;
+
+	public TestCallback(String appName, boolean deployStopped) {
 		this.appName = appName;
 		this.url = null;
+		this.deployStopped = deployStopped;
 	}
 
 	public TestCallback(String appName, String url) {
 		this.appName = appName;
 		this.url = url;
+		deployStopped = false;
 	}
 
 	@Override
@@ -66,14 +72,38 @@ public class TestCallback extends CloudFoundryCallback {
 	@Override
 	public void prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			IProgressMonitor monitor) throws CoreException, OperationCanceledException {
-
-		DeploymentInfoWorkingCopy copy = module.getDeploymentInfoWorkingCopy(new NullProgressMonitor());
+		// NOTE: This section here is a substitute for the Application
+		// Deployment wizard
+		// where deployment info is modified by the user
+		DeploymentInfoWorkingCopy copy = module.resolveDeploymentInfoWorkingCopy(monitor);
 		copy.setDeploymentName(appName);
 		copy.setMemory(512);
-		copy.setDeploymentMode(ApplicationAction.START);
+		copy.setDeploymentMode(deployStopped ? ApplicationAction.STOP : ApplicationAction.START);
 
 		if (url != null) {
 			copy.setUris(Collections.singletonList(url));
+		}
+		else {
+			// Derive the URL from the app name specified in the test call back.
+			// NOTE that although the working copy SHOULD have a default URL
+			// generated from a default application name
+			// (generally, the project name), since the appname and project name
+			// can be different,
+			// and such difference would be specified manually by the user in
+			// the deployment wizard,
+			// be sure to generate a URL from the actual app name specified in
+			// this Test call back, to be sure
+			// the URL is built off the app name rather than the project name,
+			// as the test case may have specified
+			// a different app name than the default app name from the project
+			// name.
+
+			ApplicationUrlLookupService urlLookup = ApplicationUrlLookupService.getCurrentLookup(server);
+			urlLookup.refreshDomains(monitor);
+			CloudApplicationURL url = urlLookup.getDefaultApplicationURL(copy.getDeploymentName());
+			if (url != null) {
+				copy.setUris(Arrays.asList(url.getUrl()));
+			}
 		}
 
 		copy.save();

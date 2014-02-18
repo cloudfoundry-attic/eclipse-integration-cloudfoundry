@@ -10,12 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +18,7 @@ import junit.framework.TestCase;
 
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.WaitForApplicationToStopOp;
@@ -32,13 +27,28 @@ import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
+import org.eclipse.wst.server.core.internal.Server;
 
+/**
+ * The base test setup for all Cloud Foundry tests involves creating a NEW
+ * harness each time {@link #setUp()} is run, which mean, a new harness is
+ * created for each test case. The harness is responsible for creating the
+ * server instance used to deploy applications during each test case, so it is
+ * IMPORTANT to use the same harness that is created during setup through the
+ * entire test case, including any helper methods invoked by the test case.
+ * 
+ */
 public abstract class AbstractCloudFoundryTest extends TestCase {
 
+	/**
+	 * IMPORTANT: Since each {@link #setUp()} is invoked on EACH test case, be
+	 * sure to reference the harness created during setup as to use the same
+	 * harness that created the server instance throughout all the helper
+	 * methods that may be invoked by a particular test case.
+	 */
 	protected Harness harness;
 
 	protected IServer server;
@@ -51,7 +61,13 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	@Override
 	protected void setUp() throws Exception {
-		harness = getTestFixture().harness();
+
+		// This same harness MUST be used through out the entire lifetime of the
+		// test case,
+		// therefore if the test case or any helper methods need to reference
+		// the harness
+		// they must all reference this instance variable.
+		harness = getTestFixture().createHarness();
 		server = harness.createServer();
 		cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
 		serverBehavior = (CloudFoundryServerBehaviour) server.loadAdapter(CloudFoundryServerBehaviour.class, null);
@@ -102,15 +118,23 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		harness.dispose();
 	}
 
-	protected void assertIsApplicationRunningServerBehaviour(IModule module, CloudFoundryServerBehaviour serverBehaviour)
-			throws Exception {
+	protected void assertApplicationIsRunning(IModule module, String prefix) throws Exception {
 		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
+		assertApplicationIsRunning(appModule);
+		// Verify that the Application URL is set
+		List<String> uris = appModule.getApplication().getUris();
+		assertEquals(Collections.singletonList(harness.getExpectedDefaultURL(prefix)), uris);
+	}
+
+	protected void assertApplicationIsRunning(CloudFoundryApplicationModule appModule) throws Exception {
 		int attempts = 5;
 		long wait = 2000;
 		boolean running = false;
+
+		// Test the Server behaviour API that checks if application is running
 		for (; !running && attempts > 0; attempts--) {
-			running = serverBehaviour.isApplicationRunning(appModule, new NullProgressMonitor());
+			running = cloudServer.getBehaviour().isApplicationRunning(appModule, new NullProgressMonitor());
 
 			if (!running) {
 				try {
@@ -123,66 +147,31 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 		}
 
-		if (!running) {
-			throw CloudErrorUtil.toCoreException("Application has not started after waiting for (ms): "
-					+ (wait * attempts) + ". Unable to fetch content from application URL");
-		}
-	}
+		// Verify separately that the app did indeed start
+		assertTrue("Application has not started after waiting for (ms): " + (wait * attempts), running);
+		assertEquals(IServer.STATE_STARTED, appModule.getState());
+		assertEquals(AppState.STARTED, appModule.getApplication().getState());
 
-	protected String getContent(final URI uri, IModule module, CloudFoundryServerBehaviour behaviour) throws Exception {
-
-		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
-		// wait for app to be running before fetching content
-		assertIsApplicationRunningServerBehaviour(appModule, behaviour);
-
-		BufferedReader reader = new BufferedReader(new InputStreamReader(download(uri, new NullProgressMonitor())));
-		try {
-			String val = reader.readLine();
-			return val;
-		}
-		finally {
-			if (reader != null) {
-				reader.close();
-			}
-		}
-
-	}
-
-	public InputStream download(java.net.URI uri, IProgressMonitor progressMonitor) throws IOException {
-		HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
-		connection.setUseCaches(false);
-		return connection.getInputStream();
 	}
 
 	/**
 	 * 
-	 * Creates an application with the given prefix in the application based off
-	 * a default web app project defined in the test fixture harness. NOTE that
-	 * this assumes there is ONLY ONE app deployed in the server. Do not use
-	 * this to test multiple application deployments in the same test case.
-	 * @param appPrefix
+	 * Creates an application project based on the default project name defined
+	 * in the test fixture harness. Does NOT deploy the application. Also
+	 * creates the {@link IModule} associated with the application (but it does
+	 * not create the actual Cloud Foundry module or application, as these are
+	 * only created upon actual deployment)
 	 * 
 	 * @throws Exception
 	 */
-	protected CloudFoundryApplicationModule createPerTestWebApplication(String appPrefix) throws Exception {
-
-		// NOTE: application name is NOT necessarily equal to the web app
-		// project name
-		// The application name can be different, and for test purposes, it is
-		// different, and it's derived
-		// from the given application name prefix, as defined by the harness
-		// (typically by appending the prefix to the
-		// project name)
-		CloudFoundryTestFixture fixture = getTestFixture();
-
-		fixture.configureForApplicationDeployment(appPrefix);
+	protected void createWebApplicationProject() throws Exception {
 
 		// Create the default web project in the workspace and create the local
 		// IModule for it. This does NOT create the application remotely, it
 		// only
 		// creates a "pre-deployment" WST IModule for the given project.
-		IProject project = fixture.harness().createDefaultProjectAndAddModule();
-		String projectName = fixture.harness().getDefaultWebAppProjectName();
+		IProject project = harness.createDefaultProjectAndAddModule();
+		String projectName = harness.getDefaultWebAppProjectName();
 
 		assertEquals(project.getName(), projectName);
 
@@ -202,32 +191,32 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		assertNotNull(module);
 		assertTrue(module.getName().equals(projectName));
 
-		CloudFoundryApplicationModule appModule = assertCloudApplicationModuleIsValid(module, appPrefix);
-
-		return appModule;
 	}
 
-	protected void assertStartApplication(CloudApplication cloudApplication) throws Exception {
+	protected void assertStartModule(CloudFoundryApplicationModule appModule) throws Exception {
 
-		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(cloudApplication.getName());
-		assertNotNull(appModule);
-		assertNotNull(appModule.getLocalModule());
 		serverBehavior.startModule(new IModule[] { appModule.getLocalModule() }, new NullProgressMonitor());
 
+		assertApplicationIsRunning(appModule);
+
 	}
 
-	protected void assertStopApplication(CloudApplication cloudApplication) throws Exception {
+	protected void assertRestartModule(CloudFoundryApplicationModule appModule) throws Exception {
 
-		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(cloudApplication.getName());
-		assertNotNull(appModule);
-		assertNotNull(appModule.getLocalModule());
+		serverBehavior.restartModule(new IModule[] { appModule.getLocalModule() }, new NullProgressMonitor());
+
+		assertApplicationIsRunning(appModule);
+
+	}
+
+	protected void assertStopModule(CloudFoundryApplicationModule appModule) throws Exception {
 		serverBehavior.stopModule(new IModule[] { appModule.getLocalModule() }, new NullProgressMonitor());
 
 		boolean stopped = new WaitForApplicationToStopOp(cloudServer, appModule).run(new NullProgressMonitor());
+		assertTrue("Expected application to be stopped", stopped);
+		assertTrue("Expected application to be stopped", appModule.getApplication().getState().equals(AppState.STOPPED));
+		assertTrue("Expected application to be stopped", appModule.getState() == Server.STATE_STOPPED);
 
-		serverBehavior.refreshModules(new NullProgressMonitor());
-
-		assertTrue(stopped);
 	}
 
 	protected void assertRemoveApplication(CloudApplication cloudApplication) throws Exception {
@@ -248,9 +237,19 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		assertFalse(found);
 	}
 
-	protected CloudFoundryApplicationModule assertApplicationFromDefaultProjectIsRunning(String appPrefix)
-			throws Exception {
-		IModule module = getModule(getTestFixture().harness().getDefaultWebAppProjectName());
+	/**
+	 * Asserts that the application is deployed although it may not necessarily
+	 * be started.
+	 * @param appPrefix
+	 * @return
+	 * @throws Exception
+	 */
+	protected CloudFoundryApplicationModule assertApplicationIsDeployed(String appPrefix) throws Exception {
+		// Get the local WST IModule. NOTE that the PROJECT name needs to be
+		// used as opposed to the
+		// app name, as the project name and app name may differ, and the
+		// IModule is mapped to the project.
+		IModule module = getModule(harness.getDefaultWebAppProjectName());
 		int moduleState = server.getModuleState(new IModule[] { module });
 		assertEquals(IServer.STATE_STARTED, moduleState);
 
@@ -259,7 +258,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		// Imodule that contains additional CF related information) is valid,
 		// and mapped to
 		// an actual CloudApplication representing the deployed application.
-		CloudFoundryApplicationModule appModule = assertCloudApplicationModuleIsValid(module, appPrefix);
+		CloudFoundryApplicationModule appModule = assertCloudFoundryModuleExists(module, appPrefix);
 
 		assertNotNull("No Cloud Application mapping in Cloud module. Failed to refresh deployed application",
 				appModule.getApplication());
@@ -267,32 +266,35 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		// The app state in the cloud module must be correct
 		assertEquals(IServer.STATE_STARTED, appModule.getState());
 
-		assertTrue(serverBehavior.isApplicationRunning(appModule, new NullProgressMonitor()));
-
-		assertRunningApplicationURL(module, appPrefix);
-
 		return appModule;
 	}
 
-	protected CloudFoundryApplicationModule assertCloudApplicationModuleIsValid(IModule module, String appPrefix)
+	/**
+	 * Verifies that a {@link CloudFoundryApplicationModule} associated with the
+	 * given {@link IModule} exists. Note that
+	 * {@link CloudFoundryApplicationModule} are ONLY created after an attempted
+	 * deployment or application start/restart. This should only be called after
+	 * an app has been:
+	 * <p/>
+	 * 1. Created locally
+	 * <p/>
+	 * 2. Deployed or started
+	 * @param module
+	 * @param appPrefix
+	 * @return
+	 * @throws Exception
+	 */
+	protected CloudFoundryApplicationModule assertCloudFoundryModuleExists(IModule module, String appPrefix)
 			throws Exception {
 		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
-		assertNotNull(appModule);
+		assertNotNull("Expected non-null Cloud Foundry application module", appModule);
 
 		// The deployed application name in the Cloud module MUST match the
 		// expected application name
-		assertEquals(getTestFixture().harness().getDefaultWebAppName(appPrefix), appModule.getDeployedApplicationName());
+		assertEquals(harness.getDefaultWebAppName(appPrefix), appModule.getDeployedApplicationName());
 
 		return appModule;
-	}
-
-	protected void assertRunningApplicationURL(IModule module, String appPrefix) throws Exception {
-
-		CloudFoundryApplicationModule appModule = assertCloudApplicationModuleIsValid(module, appPrefix);
-
-		List<String> uris = appModule.getApplication().getUris();
-		assertEquals(Collections.singletonList(harness.getExpectedDefaultURL(appPrefix)), uris);
 	}
 
 	/**
@@ -308,20 +310,40 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	}
 
-	protected CloudFoundryApplicationModule assertDeployAndStartApplication(String appPrefix) throws Exception {
-		Harness harness = getTestFixture().harness();
+	/**
+	 * Deploys application and starts it in the CF server.
+	 * @param appPrefix
+	 * @return
+	 * @throws Exception
+	 */
+	protected CloudFoundryApplicationModule deployApplicationStartMode(String appPrefix) throws Exception {
+		return deployApplication(appPrefix, false);
+	}
+
+	/**
+	 * Deploys an app with the given prefix name and asserts it is deployed
+	 * @param appPrefix
+	 * @param deployStopped if the app is to be deployed in stopped mode.
+	 * @return
+	 * @throws Exception
+	 */
+	protected CloudFoundryApplicationModule deployApplication(String appPrefix, boolean deployStopped) throws Exception {
 
 		String projectName = harness.getDefaultWebAppProjectName();
 
 		String expectedAppName = harness.getDefaultWebAppName(appPrefix);
 
+		// Configure the test fixture for deployment.
+		// This step is a substitute for the Application deployment wizard
+		getTestFixture().configureForApplicationDeployment(expectedAppName, deployStopped);
+
 		IModule module = getModule(projectName);
 
-		assertNotNull(module);
+		assertNotNull("Expected non-null IModule when deploying application", module);
 
 		serverBehavior.startModuleWaitForDeployment(new IModule[] { module }, null);
 
-		CloudFoundryApplicationModule appModule = assertApplicationFromDefaultProjectIsRunning(appPrefix);
+		CloudFoundryApplicationModule appModule = assertApplicationIsDeployed(appPrefix);
 
 		// Do a separate check to verify that there is in fact a
 		// CloudApplication for the
@@ -330,7 +352,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		// above, this is another way to verify all is OK.
 		CloudApplication actualCloudApp = getUpdatedApplication(expectedAppName);
 
-		assertNotNull(actualCloudApp);
+		assertNotNull("Expected non-null CloudApplication when checking if application is deployed", actualCloudApp);
 		assertEquals(actualCloudApp.getName(), expectedAppName);
 
 		return appModule;

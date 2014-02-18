@@ -307,7 +307,7 @@ public class ManifestParser {
 		subMonitor.beginTask("Parsing and loading application manifest file", 5);
 		DeploymentInfoWorkingCopy workingCopy;
 		try {
-			workingCopy = appModule.getDeploymentInfoWorkingCopy(subMonitor);
+			workingCopy = appModule.resolveDeploymentInfoWorkingCopy(subMonitor);
 
 			Map<?, ?> application = getApplication(null);
 

@@ -77,7 +77,7 @@ public class ApplicationDeploymentUIHandler {
 		if (repModule != null) {
 			ApplicationDeploymentInfo republishDeploymentInfo = repModule.getDeploymentInfo();
 			if (republishDeploymentInfo != null) {
-				DeploymentInfoWorkingCopy copy = appModule.getDeploymentInfoWorkingCopy(monitor);
+				DeploymentInfoWorkingCopy copy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
 				copy.setInfo(republishDeploymentInfo);
 				copy.save();
 			}
@@ -135,7 +135,7 @@ public class ApplicationDeploymentUIHandler {
 			// A working copy of the deployment descriptor is needed in order to
 			// prepopulate the application deployment wizard.
 			if (workingCopy == null) {
-				workingCopy = appModule.getDeploymentInfoWorkingCopy(monitor);
+				workingCopy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
 			}
 
 			// Get the old working copy in case during the deployment wizard,
