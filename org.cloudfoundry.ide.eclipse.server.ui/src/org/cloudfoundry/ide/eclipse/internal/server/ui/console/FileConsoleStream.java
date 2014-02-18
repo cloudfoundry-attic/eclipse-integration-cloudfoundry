@@ -137,17 +137,16 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 	}
 
 	/**
-	 * Handling error has to options:
+	 * Handling error has two options:
 	 * 
 	 * <p/>
 	 * 
-	 * 1. The error is non-fatal, and a message related to that error should be
-	 * displayed to the user.
+	 * 1. Retry on error. If a message should be displayed due to the error, that message is returned
+	 * to be streamed to the console.
 	 * 
 	 * <p/>
 	 * 
-	 * 2. Error is fatal, and the error is thrown again, causing the streaming
-	 * operation to halt.
+	 * 2. Maximum errors reached. Exception is thrown.
 	 * <p/>
 	 * 
 	 * If the error is encountered when the stream is no longer active, nothing
@@ -164,24 +163,29 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 
 		// If error count maximum has been reached, display the error and close
 		// stream
-		String errorMessage = null;
+		String message = null;
 		boolean maxReached = adjustErrorCount();
 		if (maxReached) {
-			errorMessage = reachedMaximumErrors(ce);
-			if (errorMessage != null) {
-				throw new CoreException(CloudFoundryPlugin.getErrorStatus(errorMessage, ce));
+			message = reachedMaximumErrors(ce);
+			if (message != null) {
+				throw new CoreException(CloudFoundryPlugin.getErrorStatus(message, ce));
 			}
 		}
 
-		if (errorMessage == null) {
-			errorMessage = getMessageOnRetry(ce, attemptsRemaining);
+		// Otherwise see if there is a message on retry that should be sent to
+		// the console
+		if (message == null) {
+			message = getMessageOnRetry(ce, attemptsRemaining);
 		}
-		
-		if (maxReached && errorMessage == null) {
+
+		// If maximum error reached and nothing to stream to the console, throw
+		// the error
+		// and let the console manager handle the stream
+		if (maxReached && message == null) {
 			throw ce;
 		}
 
-		return errorMessage;
+		return message;
 	}
 
 	/**

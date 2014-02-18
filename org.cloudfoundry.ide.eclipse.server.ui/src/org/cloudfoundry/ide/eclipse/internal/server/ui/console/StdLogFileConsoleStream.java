@@ -12,11 +12,11 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.osgi.util.NLS;
 
 class StdLogFileConsoleStream extends FileConsoleStream {
 
-	public static final String MAXIMUM_ERROR = "Unable to fetch contents for: {0}. The application may no longer be responsive.";
+	// public static final String MAXIMUM_ERROR =
+	// "Unable to fetch contents for: {0}. The application may no longer be responsive.";
 
 	public StdLogFileConsoleStream(String path, int swtColour, CloudFoundryServer server, String appName,
 			int instanceIndex) {
@@ -34,6 +34,8 @@ class StdLogFileConsoleStream extends FileConsoleStream {
 
 	@Override
 	protected String reachedMaximumErrors(CoreException ce) {
-		return NLS.bind(MAXIMUM_ERROR, getFilePath());
+		return null;
+
+//		return NLS.bind(MAXIMUM_ERROR, getFilePath());
 	}
 }
