@@ -141,12 +141,14 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 	 * 
 	 * <p/>
 	 * 
-	 * 1. Retry on error. If a message should be displayed due to the error, that message is returned
-	 * to be streamed to the console.
+	 * 1. Retry on error. If a message should be displayed due to the error,
+	 * that message is returned to be streamed to the console.
 	 * 
 	 * <p/>
 	 * 
-	 * 2. Maximum errors reached. Exception is thrown.
+	 * 2. Maximum errors reached. Exception is thrown if there is a message
+	 * associated with the last error that needs to be displayed to the user.
+	 * Otherwise, the stream deactives itself after maximum errors are reached.
 	 * <p/>
 	 * 
 	 * If the error is encountered when the stream is no longer active, nothing
@@ -161,11 +163,19 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 			return null;
 		}
 
+		if (isFatalError(ce)) {
+			// NOTE: closing within the stream appears to throw exceptions. To
+			// "deactivate" the stream, set
+			// attempts to zero instead
+			// close();
+			attemptsRemaining = 0;
+			throw ce;
+		}
+
 		// If error count maximum has been reached, display the error and close
 		// stream
 		String message = null;
-		boolean maxReached = adjustErrorCount();
-		if (maxReached) {
+		if (adjustErrorCount()) {
 			message = reachedMaximumErrors(ce);
 			if (message != null) {
 				throw new CoreException(CloudFoundryPlugin.getErrorStatus(message, ce));
@@ -176,13 +186,6 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 		// the console
 		if (message == null) {
 			message = getMessageOnRetry(ce, attemptsRemaining);
-		}
-
-		// If maximum error reached and nothing to stream to the console, throw
-		// the error
-		// and let the console manager handle the stream
-		if (maxReached && message == null) {
-			throw ce;
 		}
 
 		return message;
@@ -214,10 +217,20 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 	 * message that gets displayed in the console.
 	 * @param ce
 	 * @return error message that gets displayed in the console when maximum
-	 * errors are reached.
+	 * errors are reached. return Null if nothing should be displayed if maximum
+	 * errors are reached @
 	 */
 	protected String reachedMaximumErrors(CoreException ce) {
 		return "Taking too long to fetch file contents";
+	}
+
+	/**
+	 * 
+	 * @param ce
+	 * @return true if error is fatal and streaming should stop. False otherwise
+	 */
+	protected boolean isFatalError(CoreException ce) {
+		return false;
 	}
 
 	/**
