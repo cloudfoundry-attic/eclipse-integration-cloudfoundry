@@ -27,7 +27,7 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 
 	public void testServiceBinding() throws Exception {
 		CloudService service = createService();
-		String prefix = "serviceBinding";
+		String prefix = "testServiceBinding";
 		createWebApplicationProject();
 		CloudFoundryApplicationModule appModule = deployApplicationStartMode(prefix);
 
@@ -40,17 +40,12 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 
 		assertServiceBound(service.getName(), app);
 
-		assertRemoveApplication(app);
-		deleteService(service);
-
-		assertServiceNotExist(SERVICE_NAME);
-
 	}
 
 	public void testServiceUnBinding() throws Exception {
 		CloudService service = createService();
 
-		String prefix = "serviceBinding";
+		String prefix = "testServiceUnbinding";
 		createWebApplicationProject();
 
 		CloudFoundryApplicationModule appModule = deployApplicationStartMode(prefix);
@@ -67,11 +62,6 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		assertStopModule(appModule);
 		unbindServiceToApp(app, service);
 		assertServiceNotBound(service.getName(), app);
-
-		assertRemoveApplication(app);
-		deleteService(service);
-
-		assertServiceNotExist(SERVICE_NAME);
 
 	}
 

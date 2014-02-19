@@ -24,6 +24,7 @@ import java.util.Properties;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudDomain;
+import org.cloudfoundry.client.lib.domain.CloudRoute;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
@@ -255,6 +256,22 @@ public class CloudFoundryTestFixture {
 				// Delete all services
 				deleteAllServices();
 
+				// Clear all domains and routes to avoid host taken errors
+				clearTestDomainAndRoutes();
+
+			}
+
+		}
+
+		private void clearTestDomainAndRoutes() throws CoreException {
+			CloudFoundryOperations client = createStandaloneClient();
+			client.login();
+			String domain = getDomain();
+			if (domain != null) {
+				List<CloudRoute> routes = client.getRoutes(domain);
+				for (CloudRoute route : routes) {
+					client.deleteRoute(route.getHost(), route.getDomain().getName());
+				}
 			}
 		}
 
