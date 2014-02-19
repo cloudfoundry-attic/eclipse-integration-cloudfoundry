@@ -413,7 +413,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 		public Control createPart(Composite parent) {
 			Label label = new Label(parent, SWT.NONE);
 			label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-			label.setText("Memory Reservation:");
+			label.setText(org.cloudfoundry.ide.eclipse.internal.server.ui.Messages.LABEL_MEMORY_LIMIT);
 
 			memory = new Text(parent, SWT.BORDER);
 			memory.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));

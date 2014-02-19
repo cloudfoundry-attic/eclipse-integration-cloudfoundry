@@ -807,18 +807,31 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(client);
 		generalSectionRestartRequired.setClient(client);
 
-		createLabel(client, "Memory limit:", SWT.CENTER);
+		createLabel(client, org.cloudfoundry.ide.eclipse.internal.server.ui.Messages.LABEL_MEMORY_LIMIT, SWT.CENTER);
 		Composite memoryArea = toolkit.createComposite(client);
 		GridLayoutFactory.fillDefaults().numColumns(2).margins(0, 0).applyTo(memoryArea);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(memoryArea);
 
 		memoryText = new Text(memoryArea, SWT.BORDER);
+		
+		memoryText.addModifyListener(new ModifyListener() {
+			
+			public void modifyText(ModifyEvent e) {
+				try {
+					Integer.parseInt(memoryText.getText());
+					logError(null);
+				}
+				catch (NumberFormatException nfe) {
+					logError(Messages.ERROR_INVALID_MEMORY);
+				}
+			}
+		});
 
 		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.FILL).hint(50, SWT.DEFAULT).applyTo(memoryText);
 
-		final Button button = createGeneralPushButton(memoryArea, "Set");
+		final Button setMemoryButton = createGeneralPushButton(memoryArea, "Set");
 
-		button.addSelectionListener(new SelectionAdapter() {
+		setMemoryButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				if (canUpdate && memoryText != null && !memoryText.isDisposed()) {
@@ -833,13 +846,14 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 						try {
 							CloudFoundryApplicationModule appModule = getExistingApplication();
 							new UpdateApplicationMemoryAction(editorPage, memory, appModule).run();
+							logError(null);
 						}
 						catch (CoreException ce) {
-							logApplicationModuleFailureError(Messages.ERROR_FAILED_MEMORY_UPDATE);
+							logError(Messages.ERROR_FAILED_MEMORY_UPDATE);
 						}
 					}
 					else {
-						logApplicationModuleFailureError(Messages.ERROR_INVALID_MEMORY);
+						logError(Messages.ERROR_INVALID_MEMORY);
 					}
 				}
 			}
