@@ -125,8 +125,6 @@ public class CloudFoundryServer extends ServerDelegate {
 
 	private CloudFoundrySpace cloudSpace;
 
-	private Boolean isSelfSigned = null;
-
 	public CloudFoundryServer() {
 		// constructor
 	}
@@ -573,11 +571,7 @@ public class CloudFoundryServer extends ServerDelegate {
 	 */
 	public boolean getSelfSignedCertificate() {
 		try {
-			// Lazily read the preference
-			if (isSelfSigned == null) {
-				isSelfSigned = new SelfSignedStore(getUrl()).isSelfSignedCert();
-			}
-			return isSelfSigned;
+			return new SelfSignedStore(getUrl()).isSelfSignedCert();
 		}
 		catch (CoreException e) {
 			CloudFoundryPlugin.logError(e);
@@ -586,17 +580,7 @@ public class CloudFoundryServer extends ServerDelegate {
 	}
 
 	public void setSelfSignedCertificate(boolean isSelfSigned) {
-		try {
-			// Regardless of whether preference is stored or not, save it in the
-			// server session so
-			// that subsequent requests to check if using self-signed do not
-			// have to attempt to read from storage.
-			this.isSelfSigned = isSelfSigned;
-			new SelfSignedStore(getUrl()).setSelfSignedCert(isSelfSigned);
-		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
-		}
+		setSelfSignedCertificate(isSelfSigned, getUrl());
 	}
 
 	private void updateServerId() {
@@ -831,5 +815,20 @@ public class CloudFoundryServer extends ServerDelegate {
 			}
 		}
 		return appModule;
+	}
+
+	/**
+	 * Convinience method to set signed certificate for server URLs that do not
+	 * yet have a server instance (e.g. when managing server URLs)
+	 * @param isSelfSigned true if server uses self-signed certificate
+	 * @param cloudServerURL non-null Cloud Foundry server URL
+	 */
+	public static void setSelfSignedCertificate(boolean isSelfSigned, String cloudServerURL) {
+		try {
+			new SelfSignedStore(cloudServerURL).setSelfSignedCert(isSelfSigned);
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
 	}
 }

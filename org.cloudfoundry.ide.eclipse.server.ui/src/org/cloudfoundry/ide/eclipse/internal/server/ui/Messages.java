@@ -13,9 +13,16 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui;
 public class Messages {
 
 	/*
+	 * Errors
+	 */
+	public static final String ERROR_NO_VALIDATOR_PRESENT = "Internal Error: No validator present to validate credentials. Please check with technical support.";
+
+	/*
 	 * UI Labels
 	 */
 
 	public static final String LABEL_MEMORY_LIMIT = "Memory Limit (MB):";
+
+	public static final String SERVER_WIZARD_VALIDATOR_CLICK_TO_VALIDATE = "Press 'Validate Account', 'Next' or 'Finish' to validate credentials.";
 
 }

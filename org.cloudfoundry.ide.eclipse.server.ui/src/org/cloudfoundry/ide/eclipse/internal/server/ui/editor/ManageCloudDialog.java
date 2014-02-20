@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,9 +16,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudUrlWizard;
 import org.eclipse.core.runtime.CoreException;
@@ -63,14 +63,17 @@ public class ManageCloudDialog extends Dialog {
 
 	private List<CloudServerURL> cloudUrls;
 
-	private Set<IServer> serversToDelete;
+	private Set<String> urlsToDelete;
+
+	private Set<CloudFoundryServer> serversToDelete;
 
 	private CloudServerURL lastAddedEditedURL;
 
 	protected ManageCloudDialog(Shell parentShell, String serverTypeId) {
 		super(parentShell);
 		this.serverTypeId = serverTypeId;
-		serversToDelete = new HashSet<IServer>();
+		serversToDelete = new HashSet<CloudFoundryServer>();
+		urlsToDelete = new HashSet<String>();
 	}
 
 	private TableViewer createTableViewer(Composite parent, String[] columnNames, int[] columnWeights) {
@@ -104,8 +107,8 @@ public class ManageCloudDialog extends Dialog {
 	 * @return Cloud URL if successfully prompted and entered by user. Null
 	 * otherwise
 	 */
-	protected CloudServerURL promptForCloudURL(String serverID, Shell shell, List<CloudServerURL> allURLs, String existingURL,
-			String existingName) {
+	protected CloudServerURL promptForCloudURL(String serverID, Shell shell, List<CloudServerURL> allURLs,
+			String existingURL, String existingName) {
 		CloudUrlWizard wizard = new CloudUrlWizard(serverID, allURLs, existingURL, existingName);
 		WizardDialog dialog = new WizardDialog(shell, wizard);
 		if (dialog.open() == Dialog.OK) {
@@ -189,7 +192,8 @@ public class ManageCloudDialog extends Dialog {
 		addButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				CloudServerURL cloudURL = promptForCloudURL(serverTypeId, e.display.getActiveShell(), cloudUrls, null, null);
+				CloudServerURL cloudURL = promptForCloudURL(serverTypeId, e.display.getActiveShell(), cloudUrls, null,
+						null);
 				if (cloudURL != null) {
 					addURL(cloudURL);
 					viewer.refresh(true);
@@ -213,8 +217,8 @@ public class ManageCloudDialog extends Dialog {
 
 						if (cloudUrl.getUserDefined()) {
 							cloudUrls.remove(cloudUrl);
-							CloudServerURL newUrl = promptForCloudURL(serverTypeId, e.display.getActiveShell(), cloudUrls,
-									cloudUrl.getUrl(), cloudUrl.getName());
+							CloudServerURL newUrl = promptForCloudURL(serverTypeId, e.display.getActiveShell(),
+									cloudUrls, cloudUrl.getUrl(), cloudUrl.getName());
 							if (newUrl != null) {
 
 								if (cloudUrl.getUrl().equals(newUrl.getUrl()) || canUpdateUrl(cloudUrl, newUrl)) {
@@ -254,16 +258,13 @@ public class ManageCloudDialog extends Dialog {
 					for (Object selectedItem : selectedItems) {
 						if (selectedItem instanceof CloudServerURL) {
 							CloudServerURL cloudUrl = (CloudServerURL) selectedItem;
-							if (cloudUrl.getUserDefined()) {
-								if (canUpdateUrl(cloudUrl, null)) {
-									cloudUrls.remove(cloudUrl);
-								}
-							}
+							removeCloudUrl(cloudUrl);
 						}
 					}
 				}
 				viewer.refresh(true);
 			}
+
 		});
 
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
@@ -302,7 +303,19 @@ public class ManageCloudDialog extends Dialog {
 	protected void addURL(CloudServerURL urlToAdd) {
 		if (cloudUrls != null) {
 			cloudUrls.add(urlToAdd);
+			if (urlsToDelete != null) {
+				urlsToDelete.remove(urlToAdd.getUrl());
+			}
 			lastAddedEditedURL = urlToAdd;
+		}
+	}
+
+	protected void removeCloudUrl(CloudServerURL cloudUrl) {
+		if (cloudUrl != null && cloudUrl.getUserDefined() && canUpdateUrl(cloudUrl, null)) {
+			cloudUrls.remove(cloudUrl);
+			if (urlsToDelete != null) {
+				urlsToDelete.add(cloudUrl.getUrl());
+			}
 		}
 	}
 
@@ -329,7 +342,7 @@ public class ManageCloudDialog extends Dialog {
 					+ "removing is used in an existing server. Removing the URL will also remove the server."
 					+ " Are you sure you want to continue?")) {
 				for (CloudFoundryServer matchedServer : matchedServers) {
-					serversToDelete.add(matchedServer.getServerOriginal());
+					serversToDelete.add(matchedServer);
 				}
 				return true;
 			}
@@ -340,7 +353,7 @@ public class ManageCloudDialog extends Dialog {
 			if (answer == 0) {
 				if (dialog.getAction() == EditUrlConfirmationDialog.Action.REMOVE_SERVER) {
 					for (CloudFoundryServer matchedServer : matchedServers) {
-						serversToDelete.add(matchedServer.getServerOriginal());
+						serversToDelete.add(matchedServer);
 					}
 					return true;
 				}
@@ -412,15 +425,24 @@ public class ManageCloudDialog extends Dialog {
 	@Override
 	protected void okPressed() {
 		CloudUiUtil.storeUserDefinedUrls(serverTypeId, cloudUrls);
-
-		try {
-			for (IServer server : serversToDelete) {
-				server.delete();
+		// Servers to delete are servers that were previously created using a
+		// URL that has been deleted.
+		for (CloudFoundryServer server : serversToDelete) {
+			try {
+				IServer serverOriginal = server.getServerOriginal();
+				serverOriginal.delete();
+			}
+			catch (CoreException e) {
+				CloudFoundryPlugin.getDefault().getLog()
+						.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, "Unable to delete server", e));
 			}
 		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.getDefault().getLog()
-					.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, "Unable to delete server", e));
+
+		// Also remove the self-signed settings for cloud URL
+		if (urlsToDelete != null) {
+			for (String url : urlsToDelete) {
+				CloudFoundryServer.setSelfSignedCertificate(false, url);
+			}
 		}
 
 		super.okPressed();

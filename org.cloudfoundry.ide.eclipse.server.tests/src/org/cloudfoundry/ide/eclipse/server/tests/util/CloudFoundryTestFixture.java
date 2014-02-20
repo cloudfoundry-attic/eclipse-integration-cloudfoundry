@@ -20,6 +20,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
@@ -128,6 +129,13 @@ public class CloudFoundryTestFixture {
 		private WebApplicationContainerBean webContainer;
 
 		private String applicationDomain;
+
+		// Added to the application name in order to avoid host name taken
+		// errors
+		// Even when clearing routes, host name taken errors are occasionally
+		// thrown
+		// if the tests are run within short intervals of one another.
+		private int randomPrefix = 0;
 
 		/**
 		 * Creates a default web application project in the workspace, and
@@ -244,6 +252,10 @@ public class CloudFoundryTestFixture {
 		}
 
 		public void setup() throws CoreException {
+
+			Random random = new Random(100);
+			randomPrefix = Math.abs(random.nextInt());
+
 			// Clean up all projects from workspace
 			StsTestUtil.cleanUpProjects();
 
@@ -369,7 +381,7 @@ public class CloudFoundryTestFixture {
 		}
 
 		public String getDefaultWebAppName(String appPrefix) {
-			return appPrefix + '_' + getDefaultWebAppProjectName();
+			return appPrefix + '_' + randomPrefix + '_' + getDefaultWebAppProjectName();
 		}
 
 		public TestServlet startMockServer() throws Exception {

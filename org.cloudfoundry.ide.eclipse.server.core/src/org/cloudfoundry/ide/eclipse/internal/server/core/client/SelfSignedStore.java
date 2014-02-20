@@ -45,11 +45,11 @@ public class SelfSignedStore {
 	/**
 	 * 
 	 * @return True if server uses self-signed certificates. False otherwise.
-	 * @throws CoreException if error occurred while dep
+	 * @throws CoreException if error occurred
 	 */
 	public boolean isSelfSignedCert() throws CoreException {
 		SelfSignedServers servers = getStoredServers();
-		return servers != null && servers.getServers().containsKey(serverURL) && servers.getServers().get(serverURL);
+		return servers != null && servers.getServers().get(serverURL) != null && servers.getServers().get(serverURL);
 	}
 
 	/**
@@ -63,7 +63,14 @@ public class SelfSignedStore {
 		if (servers == null) {
 			servers = new SelfSignedServers();
 		}
-		servers.getServers().put(serverURL, selfSigned);
+		if (selfSigned) {
+			servers.getServers().put(serverURL, selfSigned);
+		}
+		else {
+			// Remove it instead of retaining the entry. Only store servers that
+			// require self-signed certificates
+			servers.getServers().remove(serverURL);
+		}
 
 		String asString = null;
 		if (mapper.canSerialize(servers.getClass())) {

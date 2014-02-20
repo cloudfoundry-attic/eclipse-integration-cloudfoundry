@@ -15,6 +15,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudSpacesSelectionPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator.ValidationStatus;
 import org.eclipse.jface.dialogs.DialogPage;
+import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -68,8 +69,9 @@ public class CloudFoundrySpacesWizardFragment extends WizardFragment {
 							"Resolving list of Cloud Foundry organizations and spaces. Please wait while the operation completes.",
 							DialogPage.NONE);
 		}
-
-		ValidationStatus status = validator.validate(true);
+		IRunnableContext context = wizardHandle != null ? new WizardHandleContext(wizardHandle).getRunnableContext()
+				: null;
+		ValidationStatus status = validator.validate(true, context);
 		if (listener != null) {
 			listener.handleChange(status.getStatus());
 		}

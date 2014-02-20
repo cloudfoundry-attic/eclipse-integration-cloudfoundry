@@ -63,11 +63,11 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-		validator = new ServerWizardValidator(cloudServer, new CloudServerSpaceDelegate(cloudServer));
-
-		spacesFragment = new CloudFoundrySpacesWizardFragment(cloudServer, validator);
 		wizardListener = new WizardFragmentChangeListener(wizardHandle);
-		credentialsPart = new CloudFoundryCredentialsPart(cloudServer, validator, wizardListener, wizardHandle);
+		// Dont set the validator yet, as it is dependant on the server created
+		// by the wizard.
+		credentialsPart = new CloudFoundryCredentialsPart(cloudServer, null, wizardListener, new WizardHandleContext(
+				wizardHandle));
 
 		credentialsPart.createPart(composite);
 
@@ -77,7 +77,11 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 	@Override
 	public void enter() {
 		initServer();
+		validator = new ServerWizardValidator(cloudServer, new CloudServerSpaceDelegate(cloudServer));
+		spacesFragment = new CloudFoundrySpacesWizardFragment(cloudServer, validator);
+
 		credentialsPart.setServer(cloudServer);
+		credentialsPart.setValidator(validator);
 
 		// Validate currently credentials but not against the server
 		if (validator != null && wizardListener != null) {
@@ -86,7 +90,7 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 			if (lastStatus == null || lastStatus.getStatus().getSeverity() != IStatus.ERROR) {
 				// Otherwise validate locally
-				lastStatus = validator.validate(false);
+				lastStatus = validator.localValidation();
 			}
 			wizardListener.handleChange(lastStatus.getStatus());
 		}
@@ -113,6 +117,18 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		super.createChildFragments(list);
 	}
 
+	protected void dispose() {
+		validator = null;
+		spacesFragment = null;
+	}
+
+	@Override
+	public void performCancel(IProgressMonitor monitor) throws CoreException {
+		// TODO Auto-generated method stub
+		super.performCancel(monitor);
+		dispose();
+	}
+
 	@Override
 	public void performFinish(IProgressMonitor monitor) throws CoreException {
 		if (validator == null) {
@@ -123,8 +139,8 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		// Check the current credentials without server validation first, as if
 		// they are
 		// valid, there is no need to send a server request.
-		if (!validator.validate(false).getStatus().isOK()) {
-			ValidationStatus status = validator.validateInUI();
+		if (!validator.localValidation().getStatus().isOK()) {
+			ValidationStatus status = validator.validateInUI(null);
 			if (!status.getStatus().isOK()) {
 				throw new CoreException(status.getStatus());
 			}
@@ -143,6 +159,7 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 			}
 		};
 		ServerCore.addServerLifecycleListener(listener);
+		dispose();
 	}
 
 	private void initServer() {

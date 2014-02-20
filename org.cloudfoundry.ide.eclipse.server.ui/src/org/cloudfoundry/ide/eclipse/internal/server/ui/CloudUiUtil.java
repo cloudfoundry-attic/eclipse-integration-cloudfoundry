@@ -238,54 +238,52 @@ public class CloudUiUtil {
 	 * Validates the given credentials. If an error occurred, it either returns
 	 * a validation message if the error can be recognised, or throws
 	 * {@link CoreException} if error cannot be recognised.
-	 * @param cfServer
 	 * @param userName
 	 * @param password
 	 * @param urlText
 	 * @param displayURL
+	 * @param selfSigned true if its a server using self-signed certificate. If
+	 * this information is not known, set this to false
 	 * @param context
 	 * @return null if validation was successful. Error message if validation
 	 * error is recognised
 	 * @throws CoreException if validation failed and error type cannot be
 	 * determined
 	 */
-	public static String validateCredentials(CloudFoundryServer cfServer, final String userName, final String password,
-			final String urlText, final boolean displayURL, IRunnableContext context) throws CoreException {
-		if (cfServer != null) {
-			try {
-				final boolean selfSigned = cfServer.getSelfSignedCertificate();
-				ICoreRunnable coreRunner = new ICoreRunnable() {
-					public void run(IProgressMonitor monitor) throws CoreException {
-						String url = urlText;
-						if (displayURL) {
-							url = getUrlFromDisplayText(urlText);
-						}
-						CloudFoundryServerBehaviour.validate(url, userName, password, selfSigned, monitor);
+	public static String validateCredentials(final String userName, final String password, final String urlText,
+			final boolean displayURL, final boolean selfSigned, IRunnableContext context) throws CoreException {
+		try {
+			ICoreRunnable coreRunner = new ICoreRunnable() {
+				public void run(IProgressMonitor monitor) throws CoreException {
+					String url = urlText;
+					if (displayURL) {
+						url = getUrlFromDisplayText(urlText);
 					}
-				};
-				if (context != null) {
-					runForked(coreRunner, context);
+					CloudFoundryServerBehaviour.validate(url, userName, password, selfSigned, monitor);
 				}
-				else {
-					runForked(coreRunner);
-				}
+			};
+			if (context != null) {
+				runForked(coreRunner, context);
+			}
+			else {
+				runForked(coreRunner);
+			}
 
-				return null;
+			return null;
+		}
+		catch (CoreException ce) {
+			if (ce.getCause() instanceof ResourceAccessException
+					&& ce.getCause().getCause() instanceof javax.net.ssl.SSLPeerUnverifiedException) {
+				// Self-signed error. Re-throw as it will involve a client
+				// change
+				throw CloudErrorUtil.toCoreException(ce.getCause().getCause());
 			}
-			catch (CoreException ce) {
-				if (ce.getCause() instanceof ResourceAccessException
-						&& ce.getCause().getCause() instanceof javax.net.ssl.SSLPeerUnverifiedException) {
-					// Self-signed error. Re-throw as it will involve a client
-					// change
-					throw CloudErrorUtil.toCoreException(ce.getCause().getCause());
-				}
-				else {
-					String message = CloudErrorUtil.getConnectionError(ce);
-					return message;
-				}
+			else {
+				String message = CloudErrorUtil.getConnectionError(ce);
+				return message;
 			}
-			catch (OperationCanceledException e) {
-			}
+		}
+		catch (OperationCanceledException e) {
 		}
 
 		return "Can't validate credentials with server";

@@ -143,7 +143,7 @@ public class CloudServerSpaceDelegate {
 				&& spacesDescriptor.getID().equals(cachedDescriptorID);
 	}
 
-	public void clearSetDescriptor() {
+	public void clearDescriptor() {
 		spacesDescriptor = null;
 	}
 

@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
@@ -21,13 +19,14 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryURLNavigation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.Messages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerValidator;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator.ValidationStatus;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.RegisterAccountWizard;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.WizardHandleContext;
 import org.eclipse.jface.operation.IRunnableContext;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -101,8 +100,9 @@ public class CloudFoundryCredentialsPart extends UIPart {
 	}
 
 	public CloudFoundryCredentialsPart(CloudFoundryServer cfServer, ServerValidator validator,
-			IPartChangeListener changeListener, final IWizardHandle wizardHandle) {
+			IPartChangeListener changeListener, final WizardHandleContext context) {
 		this(cfServer, validator, changeListener);
+		IWizardHandle wizardHandle = context.getWizardHandle();
 		if (wizardHandle != null) {
 			wizardHandle.setTitle(NLS.bind("{0} Account", service));
 			wizardHandle.setDescription(NLS.bind(ServerCredentialsValidationStatics.DEFAULT_DESCRIPTION, service));
@@ -111,12 +111,7 @@ public class CloudFoundryCredentialsPart extends UIPart {
 				wizardHandle.setImageDescriptor(banner);
 			}
 
-			runnableContext = new IRunnableContext() {
-				public void run(boolean fork, boolean cancelable, IRunnableWithProgress runnable)
-						throws InvocationTargetException, InterruptedException {
-					wizardHandle.run(fork, cancelable, runnable);
-				}
-			};
+			runnableContext = context.getRunnableContext();
 		}
 	}
 
@@ -133,6 +128,19 @@ public class CloudFoundryCredentialsPart extends UIPart {
 		}
 
 		runnableContext = PlatformUI.getWorkbench().getProgressService();
+	}
+
+	/**
+	 * Note that this may be null. Validators may not be set when the part is
+	 * created, therefore callers should check for null validator.
+	 * @return validator used to validate credentials. May be null.
+	 */
+	protected ServerValidator getValidator() {
+		return validator;
+	}
+
+	public void setValidator(ServerValidator validator) {
+		this.validator = validator;
 	}
 
 	public Control createPart(Composite parent) {
@@ -280,7 +288,9 @@ public class CloudFoundryCredentialsPart extends UIPart {
 	}
 
 	protected PartChangeEvent validateAndGetEvent(boolean validateAgainstServer) {
-		ValidationStatus status = validator.validate(validateAgainstServer, runnableContext);
+		ValidationStatus status = getValidator() != null ? getValidator().validate(validateAgainstServer,
+				runnableContext) : new ValidationStatus(CloudFoundryPlugin.getErrorStatus(Messages.ERROR_NO_VALIDATOR_PRESENT),
+				ServerCredentialsValidationStatics.EVENT_NONE);
 		PartChangeEvent validationEvent = new PartChangeEvent(null, status.getStatus(), this,
 				status.getValidationType());
 		return validationEvent;
@@ -298,7 +308,8 @@ public class CloudFoundryCredentialsPart extends UIPart {
 
 		PartChangeEvent validationEvent = validateAndGetEvent(validateAgainstServer);
 		boolean valuesFilled = validationEvent.getType() == ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED
-				|| validationEvent.getType() == ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
+				|| validationEvent.getType() == ServerCredentialsValidationStatics.EVENT_SPACE_VALID
+				|| validationEvent.getType() == ServerCredentialsValidationStatics.EVENT_SELF_SIGNED_ERROR;
 
 		if (CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(url)) {
 			cfSignupButton.setVisible(true);

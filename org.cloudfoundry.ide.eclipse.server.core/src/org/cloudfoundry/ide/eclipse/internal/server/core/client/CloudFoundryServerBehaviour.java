@@ -48,6 +48,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryLoginHandle
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.Messages;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleResourceDeltaWrapper;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
@@ -1087,7 +1088,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			if (!cloudServer.hasCloudSpace()) {
 				throw CloudErrorUtil
 						.toCoreException(NLS
-								.bind("Unable to resolve locally stored organisation and space for the server instance {0}. The server instance may have to be cloned or created again.",
+								.bind(Messages.ERROR_FAILED_CLIENT_CREATION_NO_SPACE,
 										cloudServer.getServerId()));
 			}
 

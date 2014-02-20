@@ -33,6 +33,10 @@ public class Messages {
 
 	public static final String ERROR_FAILED_STORE_SELF_SIGNED_PREFS = "Failed to store self-signed certificate preference for {0}";
 
+	public static final String ERROR_UNABLE_CONNECT_SERVER_CREDENTIALS = "Unable to connect to the server to validate credentials";
+
+	public static final String ERROR_FAILED_CLIENT_CREATION_NO_SPACE = "Unable to resolve locally stored organisation and space for the server instance {0}. The server instance may have to be cloned or created again.";
+
 	/*
 	 * Warnings
 	 */

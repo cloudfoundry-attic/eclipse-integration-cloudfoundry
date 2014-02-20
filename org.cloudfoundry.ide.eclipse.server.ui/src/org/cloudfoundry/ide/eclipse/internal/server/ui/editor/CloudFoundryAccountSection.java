@@ -261,7 +261,8 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 				final String org = orgText.getText();
 				final String space = spaceText.getText();
 				try {
-					String errorMsg = CloudUiUtil.validateCredentials(cfServer, userName, password, url, false, null);
+					String errorMsg = CloudUiUtil.validateCredentials(userName, password, url, false,
+							cfServer.getSelfSignedCertificate(), null);
 
 					if (errorMsg == null && org != null && space != null) {
 						validateLabel.setText("Account information is valid.");
