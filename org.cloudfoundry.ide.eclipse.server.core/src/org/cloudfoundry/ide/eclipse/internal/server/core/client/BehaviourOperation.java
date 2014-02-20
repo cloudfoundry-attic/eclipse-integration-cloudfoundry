@@ -28,14 +28,9 @@ public abstract class BehaviourOperation implements ICloudFoundryOperation {
 
 	public void run(IProgressMonitor monitor) throws CoreException {
 		behaviour.stopRefreshModules();
-
-		try {
-			performOperation(monitor);
-		}
-		finally {
-			behaviour.refreshModules(monitor);
-		}
-
+		performOperation(monitor);
+		// Only trigger a refresh IF the operation succeeded. 
+		behaviour.refreshModules(monitor);
 	}
 
 	protected abstract void performOperation(IProgressMonitor monitor) throws CoreException;

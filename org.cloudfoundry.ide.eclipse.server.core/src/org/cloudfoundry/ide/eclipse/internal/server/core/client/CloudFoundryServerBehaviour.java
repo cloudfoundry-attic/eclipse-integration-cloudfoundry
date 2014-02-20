@@ -261,70 +261,89 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
-	protected void internalDeleteModules(final IModule[] modules, final boolean deleteServices, IProgressMonitor monitor)
+ 	protected void internalDeleteModules(final IModule[] modules, final boolean deleteServices, IProgressMonitor monitor)
 			throws CoreException {
+
+		// NOTE that modules do NOT necessarily have to have deployed
+		// applications, so it's incorrect to assume
+		// that any module being deleted will also have a corresponding
+		// CloudApplication.
+		// A case for this is if a user cancels an application deployment. The
+		// IModule would have already been created
+		// but there would be no corresponding CloudApplication.
 		final CloudFoundryServer cloudServer = getCloudFoundryServer();
 
+		List<CloudApplication> updatedApplications = getApplications(monitor);
+
+		for (IModule module : modules) {
+			final CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
+
+			if (appModule == null) {
+				continue;
+			}
+
+			List<String> servicesToDelete = new ArrayList<String>();
+
+			// Fetch an updated application so that it has the lastest
+			// service list
+			CloudApplication application = null;
+			if (updatedApplications != null) {
+				for (CloudApplication app : updatedApplications) {
+					if (app.getName().equals(appModule.getDeployedApplicationName())) {
+						application = app;
+						break;
+					}
+				}
+			}
+
+			// ONLY delete a remote application if an application is found.
+			if (application != null) {
+				List<String> actualServices = application.getServices();
+				if (actualServices != null) {
+					// This has to be used instead of addAll(..), as
+					// there is a chance the list is non-empty but
+					// contains null entries
+					for (String serviceName : actualServices) {
+						if (serviceName != null) {
+							servicesToDelete.add(serviceName);
+						}
+					}
+				}
+
+				deleteApplication(application.getName(), monitor);
+
+			}
+
+			CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, cloudServer);
+
+			// Delete the module locally
+			cloudServer.removeApplication(appModule);
+
+			// Be sure the cloud application mapping is removed
+			// in case other components still have a reference to
+			// the
+			// module
+			appModule.setCloudApplication(null);
+
+			// Prompt the user to delete services as well
+			if (deleteServices && !servicesToDelete.isEmpty()) {
+				CloudFoundryPlugin.getCallback().deleteServices(servicesToDelete, cloudServer);
+				ServerEventHandler.getDefault().fireServicesUpdated(cloudServer);
+			}
+		}
+	}
+
+	protected void deleteApplication(String appName, IProgressMonitor monitor) throws CoreException {
+		final String applicationName = appName;
 		new BehaviourRequest<Void>("Deleting applications") {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-				for (IModule module : modules) {
-					final CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
+				client.deleteApplication(applicationName);
 
-					if (appModule == null) {
-						continue;
-					}
-
-					List<String> servicesToDelete = new ArrayList<String>();
-
-					CloudApplication application = client.getApplication(appModule.getDeployedApplicationName());
-
-					// Fix for STS-2416: Get the CloudApplication from
-					// the client again, as the CloudApplication
-					// mapped to the local Cloud application module may be
-					// out of date and have an out of date list of
-					// services.
-					List<String> actualServices = application.getServices();
-					if (actualServices != null) {
-						// This has to be used instead of addAll(..), as
-						// there is a chance the list is non-empty but
-						// contains null entries
-						for (String serviceName : actualServices) {
-							if (serviceName != null) {
-								servicesToDelete.add(serviceName);
-							}
-						}
-					}
-
-					// Close any Caldecott tunnels before deleting app
-					if (TunnelBehaviour.isCaldecottApp(appModule.getDeployedApplicationName())) {
-						// Delete all tunnels if the Caldecott app is
-						// removed
-						new TunnelBehaviour(cloudServer).stopAndDeleteAllTunnels(progress);
-					}
-
-					client.deleteApplication(appModule.getDeployedApplicationName());
-
-					CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, cloudServer);
-
-					cloudServer.removeApplication(appModule);
-
-					// Be sure the cloud application mapping is removed
-					// in case other components still have a reference to
-					// the
-					// module
-					appModule.setCloudApplication(null);
-
-					// Prompt the user to delete services as well
-					if (deleteServices && !servicesToDelete.isEmpty()) {
-						CloudFoundryPlugin.getCallback().deleteServices(servicesToDelete, cloudServer);
-						ServerEventHandler.getDefault().fireServicesUpdated(cloudServer);
-					}
-
-				}
 				return null;
 			}
 		}.run(monitor);
+
 	}
 
 	/**
@@ -1086,10 +1105,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			String url = cloudServer.getUrl();
 			if (!cloudServer.hasCloudSpace()) {
-				throw CloudErrorUtil
-						.toCoreException(NLS
-								.bind(Messages.ERROR_FAILED_CLIENT_CREATION_NO_SPACE,
-										cloudServer.getServerId()));
+				throw CloudErrorUtil.toCoreException(NLS.bind(Messages.ERROR_FAILED_CLIENT_CREATION_NO_SPACE,
+						cloudServer.getServerId()));
 			}
 
 			CloudFoundrySpace cloudFoundrySpace = cloudServer.getCloudFoundrySpace();
@@ -1590,8 +1607,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return info;
 	}
 
-	public static void validate(String location, String userName, String password, boolean selfSigned, IProgressMonitor monitor)
-			throws CoreException {
+	public static void validate(String location, String userName, String password, boolean selfSigned,
+			IProgressMonitor monitor) throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor);
 		progress.beginTask("Connecting", IProgressMonitor.UNKNOWN);
 		try {
@@ -1622,8 +1639,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 	}
 
-	public static void register(String location, String userName, String password, boolean selfSigned, IProgressMonitor monitor)
-			throws CoreException {
+	public static void register(String location, String userName, String password, boolean selfSigned,
+			IProgressMonitor monitor) throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor);
 		progress.beginTask("Connecting", IProgressMonitor.UNKNOWN);
 		try {
