@@ -15,6 +15,7 @@ public class Messages {
 	/*
 	 * Errors
 	 */
+
 	public static final String ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION = "Error performing Cloud Foundry operation: {0}";
 
 	public static final String ERROR_WRONG_EMAIL_OR_PASSWORD = "Wrong email or password";
@@ -36,6 +37,18 @@ public class Messages {
 	public static final String ERROR_UNABLE_CONNECT_SERVER_CREDENTIALS = "Unable to connect to the server to validate credentials";
 
 	public static final String ERROR_FAILED_CLIENT_CREATION_NO_SPACE = "Unable to resolve locally stored organisation and space for the server instance {0}. The server instance may have to be cloned or created again.";
+
+	public static final String ERROR_FAILED_MODULE_REFRESH = "Failed to refresh list of applications. Application list may not be accurate. Check connection and try a manual refresh - Reason: {0}";
+
+	public static final String ERROR_FIRE_REFRESH = "Internal Error: Failed to resolve Cloud Foundry server from WST IServer. Manual server disconnect and reconnect may be required - Reason: {0}";
+
+	public static final String ERROR_INITIALISE_REFRESH_NO_SERVER = "Failed to initialise Cloud Foundry refresh job. Unable to resolve a Cloud Foundry server - {0}";
+
+	public static final String ERROR_APP_DEPLOYMENT_VALIDATION_ERROR = "Invalid application deployment information for: {0} - Unable to deploy or start application - {1}";
+
+	public static final String ERROR_NO_WST_MODULE = "Internal Error: No WST IModule specified - Unable to deploy or start application";
+
+	public static final String ERROR_NO_MAPPED_CLOUD_MODULE = "Internal Error: No mapped Cloud Foundry application module found for: {0} - Unable to deploy or start application";
 
 	/*
 	 * Warnings

@@ -415,14 +415,12 @@ public class CloudFoundryTestFixture {
 
 	/**
 	 * This test fixture hould not be used to configure to application
-	 * deployment. Use {@link #current(String)} or
-	 * {@link #current(String, String)} instead
+	 * deployment.
 	 * @return
 	 * @throws CoreException
 	 */
 	public CloudFoundryTestFixture baseConfiguration() throws CoreException {
-		CloudFoundryPlugin.setCallback(new TestCallback(null, false));
-		return getTestFixture();
+		return configureForApplicationDeployment(null, false);
 	}
 
 	/**

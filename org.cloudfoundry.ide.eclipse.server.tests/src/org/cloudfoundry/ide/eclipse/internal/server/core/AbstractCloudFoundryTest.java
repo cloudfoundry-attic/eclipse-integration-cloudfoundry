@@ -67,6 +67,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		// therefore if the test case or any helper methods need to reference
 		// the harness
 		// they must all reference this instance variable.
+		getTestFixture().baseConfiguration();
 		harness = getTestFixture().createHarness();
 		server = harness.createServer();
 		cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);

@@ -271,13 +271,17 @@ public abstract class CloudFoundryEditorAction extends Action {
 		}
 
 		protected void performOperation(IProgressMonitor monitor) throws CoreException {
-
 			performEditorOperation(monitor);
+		}
 
+		@Override
+		protected void refresh(IProgressMonitor monitor) throws CoreException {
+			
 			// Many operations affect app instances therefore updated the
 			// instances after the operation
-			editorPage.getCloudServer().getBehaviour().refreshApplicationInstanceStats(getModule(), monitor);
-
+			editorPage.getCloudServer().getBehaviour().updateApplicationInstanceStats(getModule(), monitor);
+			
+			super.refresh(monitor);
 		}
 
 		abstract protected void performEditorOperation(IProgressMonitor monitor) throws CoreException;

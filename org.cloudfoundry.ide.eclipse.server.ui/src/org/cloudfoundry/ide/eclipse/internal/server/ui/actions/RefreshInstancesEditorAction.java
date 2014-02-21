@@ -31,8 +31,7 @@ public abstract class RefreshInstancesEditorAction extends CloudFoundryEditorAct
 
 			@Override
 			protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
-				// Do Nothing. Use the base editor operation refreshing
-				// mechanism as the refresh action
+				getBehavior().refreshModules(monitor);
 			}
 		};
 	}
