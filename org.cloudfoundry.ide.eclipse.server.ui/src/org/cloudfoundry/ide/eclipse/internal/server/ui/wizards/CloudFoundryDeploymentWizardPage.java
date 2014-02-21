@@ -129,6 +129,8 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 			update(true, Status.OK_STATUS);
 		}
 		else {
+			// Set an invalid memory so next time page opens, it restores a valid value
+			descriptor.getDeploymentInfo().setMemory(-1);
 			update(true, CloudFoundryPlugin.getErrorStatus(Messages.ERROR_INVALID_MEMORY));
 		}
 	}

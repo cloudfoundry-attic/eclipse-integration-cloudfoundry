@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -45,13 +45,22 @@ import org.eclipse.ui.progress.UIJob;
  */
 public abstract class PartsWizardPage extends WizardPage implements IPartChangeListener {
 
-	private boolean canFinish;
-
 	protected Map<UIPart, IStatus> partStatus = new HashMap<UIPart, IStatus>();
 
 	protected PartsWizardPage(String pageName, String title, ImageDescriptor titleImage) {
 		super(pageName, title, titleImage);
+	}
 
+	protected IStatus getNextNonOKStatus() {
+		// Check if there are other errors that haven't yet been resolved
+		IStatus status = null;
+		for (Entry<UIPart, IStatus> entry : partStatus.entrySet()) {
+			status = entry.getValue();
+			if (status != null && !status.isOK()) {
+				break;
+			}
+		}
+		return status;
 	}
 
 	public void handleChange(PartChangeEvent event) {
@@ -85,7 +94,8 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 
 	@Override
 	public boolean isPageComplete() {
-		return canFinish;
+		IStatus status = getNextNonOKStatus();
+		return status == null;
 	}
 
 	/**
@@ -108,8 +118,9 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 	 * @param status if status is OK, the wizard can complete. False otherwise.
 	 */
 	protected void update(boolean updateButtons, IStatus status) {
-
-		canFinish = status.isOK();
+		if (status == null) {
+			status = Status.OK_STATUS;
+		}
 
 		if (status.isOK()) {
 			setErrorMessage(null);
@@ -166,8 +177,6 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 		if (operationLabel == null) {
 			operationLabel = "";
 		}
-		update(false, CloudFoundryPlugin.getStatus(operationLabel + " - Please wait while operation completes.",
-				IStatus.INFO));
 
 		// Asynch launch as a UI job, as the wizard messages get updated before
 		// and after the forked operation
@@ -175,15 +184,21 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 
 			@Override
 			public IStatus runInUIThread(IProgressMonitor monitor) {
+				CoreException cex = null;
 				try {
 					// Fork in a worker thread.
 					CloudUiUtil.runForked(runnable, getWizard().getContainer());
 				}
 				catch (OperationCanceledException e) {
-					update(true, CloudFoundryPlugin.getErrorStatus(e));
+					// Not an error. User can still enter manual values
 				}
 				catch (CoreException ce) {
-					update(true, ce.getStatus());
+					cex = ce;
+				}
+				// Do not update the wizard with an error, as users can still
+				// complete the wizard with manual values.
+				if (cex != null) {
+					CloudFoundryPlugin.logError(cex);
 				}
 
 				return Status.OK_STATUS;
