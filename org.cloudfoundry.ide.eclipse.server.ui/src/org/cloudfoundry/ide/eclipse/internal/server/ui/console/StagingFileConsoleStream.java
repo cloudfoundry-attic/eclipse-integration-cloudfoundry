@@ -14,6 +14,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.Messages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.SWT;
@@ -73,7 +74,7 @@ public class StagingFileConsoleStream extends FileConsoleStream {
 		// Schedule next logs after too many failed attempts to fetch staging
 		// logs
 		scheduleNextContent = true;
-		return "Failed to fetch staging contents from: " + getFilePath();
+		return null;
 	}
 
 	protected int getMaximumErrorCount() {
@@ -102,7 +103,7 @@ public class StagingFileConsoleStream extends FileConsoleStream {
 			// stream, therefore
 			// the first RETRY attempt will always be maximum error count - 1.
 			if (currentAttemptsRemaining == getMaximumErrorCount() - 1) {
-				return "Waiting for application to start...";
+				return Messages.CONSOLE_WAITING_FOR_APPLICATION_TO_START + '\n';
 			}
 			else if (currentAttemptsRemaining > 0) {
 				// Append progress dot
@@ -114,7 +115,7 @@ public class StagingFileConsoleStream extends FileConsoleStream {
 				}
 			}
 			else if (currentAttemptsRemaining == 0) {
-				return "Still waiting for applicaiton to start...";
+				return '\n' + Messages.CONSOLE_STILL_WAITING_FOR_APPLICAITON_TO_START;
 			}
 		}
 		return null;

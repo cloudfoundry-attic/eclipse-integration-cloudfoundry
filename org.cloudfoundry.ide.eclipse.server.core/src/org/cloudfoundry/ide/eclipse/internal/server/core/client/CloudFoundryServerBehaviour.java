@@ -119,10 +119,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private static final String ERROR_NO_CLOUD_APPLICATION_FOUND = "No cloud module specified when attempting to update application instance stats.";
 
-	private static final String PRE_STAGING_MESSAGE = "Staging application";
-
-	private static final String APP_PUSH_MESSAGE = "Pushing application to Cloud Foundry server";
-
+	
 	private CloudFoundryOperations client;
 
 	private RefreshHandler refreshHandler;
@@ -1917,7 +1914,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 					}
 					else {
-						printlnToConsole(appModule, "\nProcessing payload...", false, false, monitor);
+						printlnToConsole(appModule, '\n' + Messages.CONSOLE_PROCESSING_PAYLOAD, false, false, monitor);
 						client.uploadApplication(appName, applicationArchive, new UploadStatusCallback() {
 
 							public void onProcessMatchedResources(int length) {
@@ -2020,7 +2017,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		@Override
 		protected String getOperationName() {
-			return "Starting application";
+			return Messages.CONSOLE_DEPLOYING_APP;
 		}
 
 		protected CloudFoundryApplicationModule prepareForDeployment(IProgressMonitor monitor) throws CoreException {
@@ -2062,7 +2059,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				if (!modules[0].isExternal()) {
 
-					printlnToConsole(appModule, "Generating application archive", false, true, monitor);
+					printlnToConsole(appModule, Messages.CONSOLE_GENERATING_ARCHIVE , false, true, monitor);
 
 					final ApplicationArchive applicationArchive = generateApplicationArchiveFile(
 							appModule.getDeploymentInfo(), appModule, modules, server, monitor);
@@ -2099,7 +2096,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					final CloudFoundryApplicationModule appModuleFin = appModule;
 					// Now push the application resources to the server
 
-					printlnToConsole(appModule, APP_PUSH_MESSAGE, false, true, monitor);
+					printlnToConsole(appModule, Messages.CONSOLE_APP_PUSH_MESSAGE, false, true, monitor);
 
 					new BehaviourRequest<Void>(NLS.bind("Pushing the application {0} ", deploymentName)) {
 						@Override
@@ -2324,7 +2321,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// logs or refreshing app instance stats after an app has
 					// started).
 
-					printlnToConsole(cloudModule, PRE_STAGING_MESSAGE, false, true, monitor);
+					printlnToConsole(cloudModule, Messages.CONSOLE_PRE_STAGING_MESSAGE, false, true, monitor);
 
 					new BehaviourRequest<Void>(NLS.bind("Starting application {0}", deploymentName)) {
 						@Override
@@ -2407,7 +2404,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		@Override
 		protected String getOperationName() {
-			return "Restarting application";
+			return Messages.CONSOLE_RESTARTING_APP;
 		}
 	}
 
@@ -2453,7 +2450,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				server.setModuleState(modules, IServer.STATE_STOPPED);
 				succeeded = true;
-				printlnToConsole(appModule, "Application stopped.", true, false, monitor);
+				printlnToConsole(appModule, Messages.CONSOLE_APP_STOPPED, true, false, monitor);
 				CloudFoundryPlugin.getCallback().stopApplicationConsole(cloudModule, cloudServer);
 
 				// If succeeded, stop all Caldecott tunnels if the app is
@@ -2474,7 +2471,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		@Override
 		protected String getOperationName() {
-			return "Stopping application";
+			return Messages.CONSOLE_STOPPING_APPLICATION;
 		}
 	}
 
