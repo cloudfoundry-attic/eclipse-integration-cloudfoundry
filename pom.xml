@@ -12,10 +12,10 @@
   <packaging>pom</packaging>
 
   <scm>
-    <connection>scm:git:ssh://git@github.com:SpringSource/eclipse-integration-cloudfoundry.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com:SpringSource/eclipse-integration-cloudfoundry.git</developerConnection>
+    <connection>scm:git:ssh://git@github.com:cloudfoundry/eclipse-integration-cloudfoundry.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com:cloudfoundry/eclipse-integration-cloudfoundry.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/SpringSource/eclipse-integration-cloudfoundry</url>
+    <url>https://github.com/cloudfoundry/eclipse-integration-cloudfoundry</url>
   </scm>
 
   <modules>
