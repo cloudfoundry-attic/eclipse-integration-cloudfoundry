@@ -5,10 +5,6 @@
   workspace to a running Pivotal CF instance, view and manage deployed applications and services,
   start and stop applications and allows direct debugging when using a Micro Cloud Foundry.
 
-  It also contains Spring UAA (User Agent Analysis), an optional component that help us to
-  collect some usage data. This is completely anonymous and helps us to understand better how
-  the tooling is used and how to improve it in the future.
-
 ## Installation (Release)
 
 ### when using Eclipse
@@ -82,6 +78,10 @@
 
   If you have a question that Google can't answer, the best way is to go to the Cloud Foundry
   community forum:
+  
+  https://groups.google.com/a/cloudfoundry.org/forum/#!forum/cf-eclipse
+
+  or 
 
   http://support.cloudfoundry.com/home
 
