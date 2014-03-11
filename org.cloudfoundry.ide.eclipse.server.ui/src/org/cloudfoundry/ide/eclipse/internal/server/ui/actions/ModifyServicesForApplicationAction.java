@@ -102,8 +102,8 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 
 			if (appModule.getApplication() != null) {
 				// update services right away, if app is already deployed
-				return new EditorOperation() {
-					protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
+				return new ModifyEditorOperation() {
+					protected void performOperation(IProgressMonitor monitor) throws CoreException {
 						ModifyServicesForApplicationAction.this.updateServicesInClient(monitor, appModule,
 								serverBehaviour, updatedServices);
 					}

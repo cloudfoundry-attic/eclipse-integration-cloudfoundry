@@ -20,6 +20,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.RepublishModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardRegistry;
@@ -60,9 +61,13 @@ public class ApplicationDeploymentUIHandler {
 	 * @param monitor
 	 * @throws CoreException if invalid deployment info.
 	 * @throws OperationCanceledException if user canceled deployment.
+	 * @return {@link DeploymentConfiguration} local deployment configuration
+	 * for the app, or null if app should be deployed with default
+	 * configuration.
 	 */
-	public void prepareForDeployment(final CloudFoundryServer server, final CloudFoundryApplicationModule appModule,
-			final IProgressMonitor monitor) throws CoreException, OperationCanceledException {
+	public DeploymentConfiguration prepareForDeployment(final CloudFoundryServer server,
+			final CloudFoundryApplicationModule appModule, final IProgressMonitor monitor) throws CoreException,
+			OperationCanceledException {
 
 		// First check if the module is set for automatic republish (i.e. a
 		// prior publish for the application
@@ -147,9 +152,9 @@ public class ApplicationDeploymentUIHandler {
 
 			final boolean[] cancelled = { false };
 			final boolean[] writeToManifest = { false };
-			final IStatus status[] = { Status.OK_STATUS };
+			final IStatus[] status = { Status.OK_STATUS };
 			final DeploymentInfoWorkingCopy finWorkingCopy = workingCopy;
-
+			final DeploymentConfiguration[] configuration = new DeploymentConfiguration[1];
 			Display.getDefault().syncExec(new Runnable() {
 				public void run() {
 
@@ -166,6 +171,7 @@ public class ApplicationDeploymentUIHandler {
 							// First add any new services to the server
 							final List<CloudService> addedServices = wizard.getCloudServicesToCreate();
 							writeToManifest[0] = wizard.persistManifestChanges();
+							configuration[0] = wizard.getDeploymentConfiguration();
 
 							if (addedServices != null && !addedServices.isEmpty()) {
 								IProgressMonitor subMonitor = new SubProgressMonitor(monitor, addedServices.size());
@@ -174,12 +180,15 @@ public class ApplicationDeploymentUIHandler {
 											subMonitor);
 								}
 								catch (CoreException e) {
+									// Do not let service creation errors
+									// stop the application deployment
 									CloudFoundryPlugin.log(e);
 								}
 								finally {
 									subMonitor.done();
 								}
 							}
+
 						}
 						else {
 							cancelled[0] = true;
@@ -223,7 +232,10 @@ public class ApplicationDeploymentUIHandler {
 						subMonitor.done();
 					}
 				}
+
+				return configuration[0];
 			}
 		}
+		return null;
 	}
 }

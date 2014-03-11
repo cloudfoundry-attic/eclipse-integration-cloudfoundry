@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryClientFactory;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelCache;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.PredefinedServiceCommands;
@@ -121,8 +122,8 @@ public class CloudFoundryPlugin extends Plugin {
 		}
 
 		@Override
-		public void prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
-				IProgressMonitor monitor) throws CoreException {
+		public DeploymentConfiguration prepareForDeployment(CloudFoundryServer server,
+				CloudFoundryApplicationModule module, IProgressMonitor monitor) throws CoreException {
 			throw new OperationCanceledException();
 		}
 

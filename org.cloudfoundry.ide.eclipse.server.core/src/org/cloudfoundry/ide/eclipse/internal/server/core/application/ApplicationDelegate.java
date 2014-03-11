@@ -17,7 +17,6 @@ import java.util.Map.Entry;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
@@ -49,7 +48,6 @@ public abstract class ApplicationDelegate implements IApplicationDelegate {
 		String appName = appModule.getDeployedApplicationName();
 		ApplicationDeploymentInfo deploymentInfo = new ApplicationDeploymentInfo(appName);
 		deploymentInfo.setMemory(CloudUtil.DEFAULT_MEMORY);
-		deploymentInfo.setDeploymentMode(ApplicationAction.START);
 
 		return deploymentInfo;
 	}
@@ -101,7 +99,6 @@ public abstract class ApplicationDelegate implements IApplicationDelegate {
 
 			deploymentInfo.setStaging(cloudApplication.getStaging());
 			deploymentInfo.setMemory(cloudApplication.getMemory());
-			deploymentInfo.setDeploymentMode(ApplicationAction.START);
 			List<String> boundServiceNames = cloudApplication.getServices();
 			if (boundServiceNames != null) {
 				List<CloudService> services = new ArrayList<CloudService>();

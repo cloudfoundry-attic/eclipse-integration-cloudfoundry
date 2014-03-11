@@ -14,15 +14,18 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 /**
- * Behaviour operation that stops the refresh job prior to executing the
- * operation, and restarts it afterward.
+ * Operation that modifies the server and triggers a refresh event. Note that
+ * this should not be used for operations that simply fetch information from the
+ * server. It should only be used for operations that change values, like for
+ * instance scaling an application, changing mapped application URLs, as it may
+ * fire a server changed event.
  * 
  */
-public abstract class BehaviourOperation implements ICloudFoundryOperation {
+public abstract class ModifyOperation implements ICloudFoundryOperation {
 
 	protected final CloudFoundryServerBehaviour behaviour;
 
-	public BehaviourOperation(CloudFoundryServerBehaviour behaviour) {
+	public ModifyOperation(CloudFoundryServerBehaviour behaviour) {
 		this.behaviour = behaviour;
 	}
 
@@ -32,8 +35,6 @@ public abstract class BehaviourOperation implements ICloudFoundryOperation {
 		refresh(monitor);
 	}
 
-
-
 	/**
 	 * Gets invoked after the operation completes. Does not get called if an
 	 * operation failed.
@@ -41,6 +42,7 @@ public abstract class BehaviourOperation implements ICloudFoundryOperation {
 	 * @throws CoreException
 	 */
 	protected void refresh(IProgressMonitor monitor) throws CoreException {
+
 		behaviour.getRefreshHandler().fireRefreshEvent(monitor);
 	}
 

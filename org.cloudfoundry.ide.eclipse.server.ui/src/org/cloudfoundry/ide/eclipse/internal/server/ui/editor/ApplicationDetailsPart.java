@@ -1452,7 +1452,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	private void startStopApplication(ApplicationAction action) {
 		try {
 			CloudFoundryApplicationModule appModule = getExistingApplication();
-			new StartStopApplicationAction(editorPage, action, appModule, serverBehaviour, module).run();
+			new StartStopApplicationAction(editorPage, action, appModule, serverBehaviour).run();
 		}
 		catch (CoreException ce) {
 			logApplicationModuleFailureError("Unable to perform " + action.getDisplayName());

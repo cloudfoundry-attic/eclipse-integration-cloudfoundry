@@ -14,12 +14,12 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.wst.server.core.IModule;
 
 /**
  * Callback interface to support clients to hook into CloudFoundry Server
@@ -40,14 +40,14 @@ public abstract class CloudFoundryCallback {
 	public abstract void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
 
 	/**
-	 * Show deployed application's  Cloud Foundry log files locally.
+	 * Show deployed application's Cloud Foundry log files locally.
 	 * @param cloudServer
 	 * @param cloudModule
 	 * @param showIndex if -1 shows the first app instance
 	 */
-	public  void showCloudFoundryLogs(CloudFoundryServer cloudServer, 
-			CloudFoundryApplicationModule cloudModule, int showIndex) {
-		
+	public void showCloudFoundryLogs(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
+			int showIndex) {
+
 	}
 
 	/**
@@ -67,21 +67,24 @@ public abstract class CloudFoundryCallback {
 			List<CaldecottTunnelDescriptor> descriptors);
 
 	/**
-	 * Prepares an application to either be deployed, started or restarted.
-	 * The main purpose to ensure that the application's deployment
-	 * information is complete. If incomplete, it will prompt the user for
-	 * missing information.
+	 * Prepares an application to either be deployed, started or restarted. The
+	 * main purpose to ensure that the application's deployment information is
+	 * complete. If incomplete, it will prompt the user for missing information.
 	 * @param monitor
-	 * @return Cloud Foundry application mapped to the deployed WST
-	 * {@link IModule}. Must not be null. If null, it indicates error,
-	 * therefore throw {@link CoreException} instead.
-	 * @throws CoreException if failure while preparing the application for deployment
+	 * @return {@link DeploymentConfiguration} Defines local deployment
+	 * configuration of the application, for example which deployment mode
+	 * should be used like starting an application, restarting, etc..May be
+	 * null. If null, the framework will attempt to determine an appropriate
+	 * deployment configuration.
+	 * @throws CoreException if failure while preparing the application for
+	 * deployment
 	 * @throws OperationCanceledException if the user cancelled deploying or
-	 * starting the application. The application's deployment information
-	 * should not be modified in this case.
+	 * starting the application. The application's deployment information should
+	 * not be modified in this case.
 	 */
-	public abstract void prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
-			IProgressMonitor monitor) throws CoreException, OperationCanceledException;
+	public abstract DeploymentConfiguration prepareForDeployment(CloudFoundryServer server,
+			CloudFoundryApplicationModule module, IProgressMonitor monitor) throws CoreException,
+			OperationCanceledException;
 
 	public abstract void deleteServices(List<String> services, CloudFoundryServer cloudServer);
 

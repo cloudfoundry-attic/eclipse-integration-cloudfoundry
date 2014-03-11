@@ -81,7 +81,6 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 		createWebApplicationProject();
 
 		CloudFoundryApplicationModule appModule = deployApplicationStartMode(prefix);
-		assertApplicationIsRunning(appModule.getLocalModule(), prefix);
 		final String appName = appModule.getDeployedApplicationName();
 
 		final boolean[] ran = { false };

@@ -378,23 +378,9 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 			// are updated from the cloud application
 			ApplicationDeploymentInfo cloudApplicationInfo = resolveDeployedApplicationInformation();
 			if (cloudApplicationInfo != null) {
-
-				ApplicationDeploymentInfo currentInfo = getDeploymentInfo();
-
-				if (currentInfo != null) {
-					// Merge the two, where current Eclipse-specific info
-					// settings
-					// are copied
-					// to the info generated from the cloud application.
-					cloudApplicationInfo.setDeploymentMode(currentInfo.getDeploymentMode());
-					cloudApplicationInfo.setIncrementalPublish(currentInfo.isIncrementalPublish());
-				}
-
 				internalSetDeploymentInfo(cloudApplicationInfo);
 			}
-
 		}
-
 	}
 
 	/**
@@ -509,7 +495,6 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 	 */
 	protected ApplicationDeploymentInfo createGeneralDefaultInfo() {
 		ApplicationDeploymentInfo info = new ApplicationDeploymentInfo(getDeployedApplicationName());
-		info.setDeploymentMode(ApplicationAction.START);
 		info.setMemory(CloudUtil.DEFAULT_MEMORY);
 		return info;
 	}
@@ -541,4 +526,5 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 			}
 		}
 	}
+
 }

@@ -119,7 +119,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private static final String ERROR_NO_CLOUD_APPLICATION_FOUND = "No cloud module specified when attempting to update application instance stats.";
 
-	
 	private CloudFoundryOperations client;
 
 	private RefreshHandler refreshHandler;
@@ -273,7 +272,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @throws CoreException if error occurred during service deletion.
 	 */
 	public ICloudFoundryOperation getDeleteServicesOperation(final List<String> services) throws CoreException {
-		return new BehaviourOperation(CloudFoundryServerBehaviour.this) {
+		return new ModifyOperation(CloudFoundryServerBehaviour.this) {
 
 			@Override
 			protected void performOperation(IProgressMonitor monitor) throws CoreException {
@@ -585,14 +584,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					stopModule(modules, monitor);
 				}
 
-				CloudFoundryApplicationModule appModule = super.prepareForDeployment(monitor);
-
-				DeploymentInfoWorkingCopy workingCopy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
-				workingCopy.setDeploymentMode(ApplicationAction.DEBUG);
-				workingCopy.save();
-				return appModule;
+				return super.prepareForDeployment(monitor);
 			}
 
+			@Override
+			protected DeploymentConfiguration getDefaultDeploymentConfiguration() {
+				return new DeploymentConfiguration(ApplicationAction.DEBUG);
+			}
 		};
 		op.run(monitor);
 		return op.getApplicationModule();
@@ -617,10 +615,18 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return internalGetDeployStartApplicationOperation(modules, waitForDeployment);
 	}
 
+	/**
+	 * Get an operation to deploy an application in start mode.
+	 * @param modules
+	 * @param waitForDeployment
+	 * @return
+	 * @throws CoreException
+	 */
 	protected ApplicationOperation internalGetDeployStartApplicationOperation(IModule[] modules,
 			boolean waitForDeployment) throws CoreException {
+		// Start operations always perform a full publish
 		boolean incrementalPublish = false;
-		return getDeployStartApplicationOperation(incrementalPublish, modules, waitForDeployment);
+		return getDeployApplicationOperation(incrementalPublish, modules, waitForDeployment);
 	}
 
 	/**
@@ -635,7 +641,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * run.
 	 * @throws CoreException
 	 */
-	protected ApplicationOperation getDeployStartApplicationOperation(boolean isIncremental, final IModule[] modules,
+	protected ApplicationOperation getDeployApplicationOperation(boolean isIncremental, final IModule[] modules,
 			boolean waitForDeployment) throws CoreException {
 		return new StartOrDeployOperation(waitForDeployment, isIncremental, modules);
 	}
@@ -678,7 +684,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	@Override
 	public void startModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		ICloudFoundryOperation operation = getDeployStartApplicationOperation(modules, false);
+		ICloudFoundryOperation operation = internalGetDeployStartApplicationOperation(modules, false);
 		operation.run(monitor);
 	}
 
@@ -735,7 +741,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		getStopAppOperation(modules).run(monitor);
 	}
 
-	public ApplicationOperation getStopAppOperation(IModule[] modules) {
+	public ICloudFoundryOperation getStopAppOperation(IModule[] modules) {
 		return new StopApplicationOperation(modules);
 	}
 
@@ -791,13 +797,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// connections are terminated prior to starting a new connection
 				stopModule(modules, monitor);
 
-				CloudFoundryApplicationModule appModule = super.prepareForDeployment(monitor);
+				return super.prepareForDeployment(monitor);
+			}
 
-				DeploymentInfoWorkingCopy workingCopy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
-				workingCopy.setDeploymentMode(ApplicationAction.DEBUG);
-				workingCopy.save();
-
-				return appModule;
+			@Override
+			protected DeploymentConfiguration getDefaultDeploymentConfiguration() {
+				return new DeploymentConfiguration(ApplicationAction.DEBUG);
 			}
 		}.run(monitor);
 	}
@@ -817,7 +822,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public ICloudFoundryOperation getUpdateRestartOperation(IModule[] modules, boolean isIncrementalPublishing)
 			throws CoreException {
-		return getDeployStartApplicationOperation(isIncrementalPublishing, modules, false);
+		return getDeployApplicationOperation(isIncrementalPublishing, modules, false);
 	}
 
 	/**
@@ -1714,6 +1719,45 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
+	 * Returns an executable application operation based on the given Cloud
+	 * Foundry application module and an application start mode (
+	 * {@link ApplicationAction} ).
+	 * <p/>
+	 * Throws error if failure occurred while attempting to resolve an
+	 * operation. If no operation is resolved and no errors occurred while
+	 * attempting to resolve an operation, null is returned, meaning that no
+	 * operation is currently defined for the given deployment mode.
+	 * <p/>
+	 * It does NOT execute the operation.
+	 * @param application
+	 * @param action
+	 * @return resolved executable operation associated with the given
+	 * deployment mode, or null if an operation could not be resolved.
+	 * @throws CoreException
+	 */
+	public ICloudFoundryOperation getApplicationOperation(CloudFoundryApplicationModule application,
+			ApplicationAction action) throws CoreException {
+		ICloudFoundryOperation operation = null;
+		// Set the deployment mode
+		IModule[] modules = new IModule[] { application.getLocalModule() };
+		switch (action) {
+		case START:
+			operation = getDeployStartApplicationOperation(modules, false);
+			break;
+		case STOP:
+			operation = getStopAppOperation(modules);
+			break;
+		case RESTART:
+			operation = getRestartOperation(modules);
+			break;
+		case UPDATE_RESTART:
+			operation = getUpdateRestartOperation(modules, CloudFoundryPlugin.getDefault().getIncrementalPublish());
+			break;
+		}
+		return operation;
+	}
+
+	/**
 	 * Deploys an application and or starts it in regular or debug mode. If
 	 * deployed in debug mode, an attempt will be made to connect the deployed
 	 * application to a debugger. An operation should performed atomically PER
@@ -1731,6 +1775,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		private CloudFoundryApplicationModule appModule;
 
+		private DeploymentConfiguration configuration;
+
 		protected ApplicationOperation(IModule[] modules) {
 			super(CloudFoundryServerBehaviour.this);
 			this.modules = modules;
@@ -1741,6 +1787,20 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 
 		abstract protected String getOperationName();
+
+		/**
+		 * The local configuration for the app. It indicates what deployment
+		 * mode the app should be launched in (e.g. START, STOP..). If a
+		 * configuration cannot be resolved, a default one will be returned
+		 * instead.
+		 * @return deployment configuration. Never null.
+		 */
+		protected DeploymentConfiguration getDeploymentConfiguration() {
+			if (configuration == null) {
+				configuration = getDefaultDeploymentConfiguration();
+			}
+			return configuration;
+		}
 
 		protected void performOperation(IProgressMonitor monitor) throws CoreException {
 
@@ -1762,13 +1822,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// Stop any consoles
 				CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, cloudServer);
 
-				boolean debug = appModule.getDeploymentInfo().getDeploymentMode() == ApplicationAction.DEBUG;
-
 				printlnToConsole(appModule, getOperationName(), true, true, monitor);
 
 				performDeployment(appModule, monitor);
 
-				if (debug) {
+				if (getDeploymentConfiguration().getApplicationStartMode() == ApplicationAction.DEBUG) {
 					new DebugCommandBuilder(modules, cloudServer).getDebugCommand(
 							ApplicationAction.CONNECT_TO_DEBUGGER, null).run(monitor);
 				}
@@ -1821,11 +1879,18 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			CloudFoundryServer cloudServer = getCloudFoundryServer();
 
 			// prompt user for missing details
-			CloudFoundryPlugin.getCallback().prepareForDeployment(cloudServer, appModule, monitor);
+			configuration = CloudFoundryPlugin.getCallback().prepareForDeployment(cloudServer, appModule, monitor);
 
 			return appModule;
-
 		}
+
+		/**
+		 * 
+		 * @return default deployment configuration, that among other things
+		 * determines the deployment mode of an application (for example, START,
+		 * STOP, RESTART). Must not be null.
+		 */
+		protected abstract DeploymentConfiguration getDefaultDeploymentConfiguration();
 
 		/**
 		 * This performs the primary operation of creating an application and
@@ -2009,6 +2074,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		final protected boolean incrementalPublish;
 
+		/**
+		 * 
+		 * @param waitForDeployment
+		 * @param incrementalPublish
+		 * @param modules
+		 * @param alwaysStart if true, application will always start. if false,
+		 */
 		public StartOrDeployOperation(boolean waitForDeployment, boolean incrementalPublish, IModule[] modules) {
 			super(modules);
 			this.waitForDeployment = waitForDeployment;
@@ -2020,16 +2092,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			return Messages.CONSOLE_DEPLOYING_APP;
 		}
 
-		protected CloudFoundryApplicationModule prepareForDeployment(IProgressMonitor monitor) throws CoreException {
-
-			CloudFoundryApplicationModule appModule = super.prepareForDeployment(monitor);
-
-			DeploymentInfoWorkingCopy workingCopy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
-			workingCopy.setIncrementalPublish(incrementalPublish);
-			workingCopy.save();
-			return appModule;
+		@Override
+		protected DeploymentConfiguration getDefaultDeploymentConfiguration() {
+			return new DeploymentConfiguration(ApplicationAction.START);
 		}
 
+		@Override
 		protected void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
 				throws CoreException {
 			final Server server = (Server) getServer();
@@ -2059,10 +2127,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				if (!modules[0].isExternal()) {
 
-					printlnToConsole(appModule, Messages.CONSOLE_GENERATING_ARCHIVE , false, true, monitor);
+					printlnToConsole(appModule, Messages.CONSOLE_GENERATING_ARCHIVE, false, true, monitor);
 
 					final ApplicationArchive applicationArchive = generateApplicationArchiveFile(
-							appModule.getDeploymentInfo(), appModule, modules, server, monitor);
+							appModule.getDeploymentInfo(), appModule, modules, server, incrementalPublish, monitor);
 					File warFile = null;
 					if (applicationArchive == null) {
 						// Create a full war archive
@@ -2115,6 +2183,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 					}.run(monitor);
 
+					printlnToConsole(appModule, Messages.CONSOLE_APP_PUSHED_MESSAGE, false, true, monitor);
+
 				}
 
 				// Verify the application exists in the server
@@ -2166,14 +2236,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param cloudModule the Cloud Foundry wrapper around the application
 	 * module to be pushed to the server
 	 * @param modules list of WTP modules.
-	 * @param cloudServer cloud server where app should be pushed to
+	 * @param server where app should be pushed to
+	 * @param
 	 * @param monitor
 	 * @throws CoreException if failure occurred while generated an archive file
 	 * containing the application's payload
 	 */
 	protected ApplicationArchive generateApplicationArchiveFile(ApplicationDeploymentInfo deploymentInfo,
-			CloudFoundryApplicationModule cloudModule, IModule[] modules, Server server, IProgressMonitor monitor)
-			throws CoreException {
+			CloudFoundryApplicationModule cloudModule, IModule[] modules, Server server, boolean incrementalPublish,
+			IProgressMonitor monitor) throws CoreException {
 
 		// Perform local operations like building an archive file
 		// and payload for the application
@@ -2199,7 +2270,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		// If no application archive was provided,then attempt an incremental
 		// publish. Incremental publish is only supported for apps without child
 		// modules.
-		if (archive == null && deploymentInfo.isIncrementalPublish() && !hasChildModules(modules)) {
+		if (archive == null && incrementalPublish && !hasChildModules(modules)) {
 			// Determine if an incremental publish
 			// should
 			// occur
@@ -2313,7 +2384,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							.toCoreException("Unable to start application. Missing application deployment name in application deployment information.");
 				}
 
-				if (cloudModule.getDeploymentInfo().getDeploymentMode() != null) {
+				final ApplicationAction deploymentMode = getDeploymentConfiguration().getApplicationStartMode();
+				if (deploymentMode != ApplicationAction.STOP) {
 					// Start the application. Use a regular request rather than
 					// a staging-aware request, as any staging errors should not
 					// result in a reattempt, unlike other cases (e.g. get the
@@ -2329,7 +2401,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 								throws CoreException {
 							CloudFoundryPlugin.trace("Application " + deploymentName + " starting");
 
-							switch (cloudModule.getDeploymentInfo().getDeploymentMode()) {
+							switch (deploymentMode) {
 							case DEBUG:
 								// Only launch in Suspend mode
 								client.debugApplication(deploymentName, DebugModeType.SUSPEND.getDebugMode());
@@ -2388,12 +2460,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					}.run(monitor);
 				}
 				else {
-					// Missing a deployment mode is acceptable, as the
-					// user may have elected
-					// to push the application but not start it.
+					// User has selected to deploy the app in STOP mode
+
 					server.setModuleState(modules, IServer.STATE_STOPPED);
 				}
-
 			}
 			catch (CoreException e) {
 				appModule.setErrorStatus(e);
@@ -2406,6 +2476,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		protected String getOperationName() {
 			return Messages.CONSOLE_RESTARTING_APP;
 		}
+
+		@Override
+		protected DeploymentConfiguration getDefaultDeploymentConfiguration() {
+			return new DeploymentConfiguration(ApplicationAction.RESTART);
+		}
 	}
 
 	abstract class FileRequest<T> extends StagingAwareRequest<T> {
@@ -2415,15 +2490,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 	}
 
-	class StopApplicationOperation extends ApplicationOperation {
+	class StopApplicationOperation extends AbstractDeploymentOperation {
+
+		private final IModule[] modules;
 
 		protected StopApplicationOperation(IModule[] modules) {
-			super(modules);
+			super(CloudFoundryServerBehaviour.this);
+			this.modules = modules;
 		}
 
 		@Override
-		protected void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
-				throws CoreException {
+		protected void performOperation(IProgressMonitor monitor) throws CoreException {
 			Server server = (Server) getServer();
 			boolean succeeded = false;
 			try {
@@ -2437,10 +2514,13 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							+ modules[0].getName());
 				}
 
+				String stoppingApplicationMessage = NLS.bind(Messages.CONSOLE_STOPPING_APPLICATION,
+						cloudModule.getDeployedApplicationName());
+
+				printlnToConsole(cloudModule, stoppingApplicationMessage, true, false, monitor);
 				// CloudFoundryPlugin.getCallback().applicationStopping(getCloudFoundryServer(),
 				// cloudModule);
-				new BehaviourRequest<Void>(NLS.bind("Stopping application {0}",
-						cloudModule.getDeployedApplicationName())) {
+				new BehaviourRequest<Void>(stoppingApplicationMessage) {
 					@Override
 					protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 						client.stopApplication(cloudModule.getDeployedApplicationName());
@@ -2450,7 +2530,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				server.setModuleState(modules, IServer.STATE_STOPPED);
 				succeeded = true;
-				printlnToConsole(appModule, Messages.CONSOLE_APP_STOPPED, true, false, monitor);
+
+				printlnToConsole(cloudModule, Messages.CONSOLE_APP_STOPPED, true, false, monitor);
 				CloudFoundryPlugin.getCallback().stopApplicationConsole(cloudModule, cloudServer);
 
 				// If succeeded, stop all Caldecott tunnels if the app is
@@ -2469,10 +2550,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		}
 
-		@Override
-		protected String getOperationName() {
-			return Messages.CONSOLE_STOPPING_APPLICATION;
-		}
 	}
 
 	abstract class BehaviourRequest<T> extends LocalServerRequest<T> {

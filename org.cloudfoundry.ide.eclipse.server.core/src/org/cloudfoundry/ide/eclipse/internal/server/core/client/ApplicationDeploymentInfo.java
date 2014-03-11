@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Pivotal Software, Inc.
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,7 +16,6 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.Staging;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.EnvironmentVariable;
 
 /**
@@ -26,18 +25,12 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.application.Environment
  * This is the primary model of an application's metadata, and includes the
  * application's name, staging, URIs, and list of bound services. It mirrors a
  * {@link CloudApplication} , but unlike the latter, it is available for
- * applications that are not yet deployed. Additional information is contained
- * that is specific to the Eclipse plug-in, like deployment mode. Generally
- * speaking, the deployment info models an application's manifest file.
- * <p/>
- * However, values specific to the Eclipse plug-in should not be persisted in an
- * app's manifest file.
+ * applications that are not yet deployed. Note that properties that are NOT
+ * part of an application deployment manifest (e.g. that are transient and only
+ * applicable when an operation is being performed on the application, like
+ * selecting its deployment mode) should not be defined here).
  */
 public class ApplicationDeploymentInfo {
-
-	private ApplicationAction deploymentMode;
-
-	private boolean isIncrementalPublish;
 
 	private Staging staging;
 
@@ -52,33 +45,11 @@ public class ApplicationDeploymentInfo {
 	private List<CloudService> services;
 
 	private int memory;
-	
+
 	private String archive;
 
 	public ApplicationDeploymentInfo(String appName) {
 		setDeploymentName(appName);
-	}
-
-	/**
-	 * Eclipse-specific property that is not persisted in an application's
-	 * manifest, or sent to the server. It indicates whether an application
-	 * should be started or not. If null, it means an application should not be
-	 * started when deployed.
-	 * @return Application deployment mode. Null if an application should not be
-	 * started in the CF server.
-	 */
-	public ApplicationAction getDeploymentMode() {
-		return deploymentMode;
-	}
-
-	/**
-	 * Eclipse-specific property that is not persisted in an application's
-	 * manifest, or sent to the server. It indicates whether an application
-	 * should be started or not. If null, it means an application should not be
-	 * started when deployed.
-	 */
-	public void setDeploymentMode(ApplicationAction deploymentMode) {
-		this.deploymentMode = deploymentMode;
 	}
 
 	public void setEnvVariables(List<EnvironmentVariable> envVars) {
@@ -95,28 +66,6 @@ public class ApplicationDeploymentInfo {
 
 	public void setInstances(int instances) {
 		this.instances = instances;
-	}
-
-	/**
-	 * Eclipse-specific property. It is not persisted in an application's
-	 * manifest, or sent to the server. If true, the application should be
-	 * incrementally published (i.e. only changed resources are pushed to the
-	 * server). If false, the entire application will be pushed to the server.
-	 * @return true if the application should be incrementally published. False
-	 * otherwise.
-	 */
-	public boolean isIncrementalPublish() {
-		return isIncrementalPublish;
-	}
-
-	/**
-	 * Eclipse-specific property. It is not persisted in an application's
-	 * manifest, or sent to the server. If true, the application should be
-	 * incrementally published (i.e. only changed resources are pushed to the
-	 * server). If false, the entire application will be pushed to the server.
-	 */
-	public void setIncrementalPublish(boolean isIncrementalPublish) {
-		this.isIncrementalPublish = isIncrementalPublish;
 	}
 
 	public Staging getStaging() {
@@ -173,11 +122,11 @@ public class ApplicationDeploymentInfo {
 	public void setMemory(int memory) {
 		this.memory = memory;
 	}
-	
+
 	public String getArchive() {
 		return this.archive;
 	}
-	
+
 	public void setArchive(String archive) {
 		this.archive = archive;
 	}
@@ -191,9 +140,7 @@ public class ApplicationDeploymentInfo {
 		if (info == null) {
 			return;
 		}
-		setDeploymentMode(info.getDeploymentMode());
 		setDeploymentName(info.getDeploymentName());
-		setIncrementalPublish(info.isIncrementalPublish());
 		setMemory(info.getMemory());
 		setStaging(info.getStaging());
 		setInstances(info.getInstances());
@@ -230,8 +177,7 @@ public class ApplicationDeploymentInfo {
 	 */
 	public ApplicationDeploymentInfo copy() {
 		ApplicationDeploymentInfo info = new ApplicationDeploymentInfo(getDeploymentName());
-		info.setDeploymentMode(getDeploymentMode());
-		info.setIncrementalPublish(isIncrementalPublish());
+
 		info.setMemory(getMemory());
 		info.setStaging(getStaging());
 		info.setInstances(getInstances());

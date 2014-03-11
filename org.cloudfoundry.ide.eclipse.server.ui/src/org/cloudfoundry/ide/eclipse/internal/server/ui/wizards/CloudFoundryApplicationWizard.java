@@ -13,9 +13,11 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.wizard.IWizardPage;
@@ -62,6 +64,9 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 		this.workingCopy = workingCopy;
 		applicationDescriptor = new ApplicationWizardDescriptor(this.workingCopy);
+		
+		// By default applications are started after being pushed to the server
+		applicationDescriptor.setApplicationStartMode(ApplicationAction.START);
 		setNeedsProgressMonitor(true);
 		setWindowTitle("Application");
 	}
@@ -120,6 +125,13 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 	public boolean persistManifestChanges() {
 		return applicationDescriptor.shouldPersistDeploymentInfo();
+	}
+
+	public DeploymentConfiguration getDeploymentConfiguration() {
+		if (applicationDescriptor.getApplicationStartMode() != null) {
+			return new DeploymentConfiguration(applicationDescriptor.getApplicationStartMode());
+		}
+		return null;
 	}
 
 	@Override

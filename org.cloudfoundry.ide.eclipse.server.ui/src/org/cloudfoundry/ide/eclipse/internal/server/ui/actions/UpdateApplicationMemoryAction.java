@@ -39,10 +39,10 @@ public class UpdateApplicationMemoryAction extends CloudFoundryEditorAction {
 
 	@Override
 	public ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
-		return new EditorOperation() {
+		return new ModifyEditorOperation() {
 
 			@Override
-			protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
+			protected void performOperation(IProgressMonitor monitor) throws CoreException {
 				getBehavior().updateApplicationMemory(module, memory, monitor);
 			}
 		};

@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.Staging;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
 import org.eclipse.core.runtime.Assert;
 
@@ -35,6 +36,8 @@ public class ApplicationWizardDescriptor {
 	private List<CloudService> createdCloudServices;
 
 	private boolean persistDeploymentInfo;
+
+	private ApplicationAction applicationStartMode;
 
 	public ApplicationWizardDescriptor(ApplicationDeploymentInfo deploymentInfo) {
 		Assert.isNotNull(deploymentInfo);
@@ -69,6 +72,20 @@ public class ApplicationWizardDescriptor {
 
 	public void setCloudServicesToCreate(List<CloudService> createdCloudServices) {
 		this.createdCloudServices = createdCloudServices;
+	}
+
+	/**
+	 * Sets the start mode for the application.
+	 */
+	public void setApplicationStartMode(ApplicationAction applicationStartMode) {
+		this.applicationStartMode = applicationStartMode;
+	}
+
+	/**
+	 * Get the start mode for the application.
+	 */
+	public ApplicationAction getApplicationStartMode() {
+		return applicationStartMode;
 	}
 
 	/**

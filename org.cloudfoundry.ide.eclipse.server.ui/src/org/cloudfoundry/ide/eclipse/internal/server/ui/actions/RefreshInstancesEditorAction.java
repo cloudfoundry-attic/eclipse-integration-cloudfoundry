@@ -27,10 +27,10 @@ public abstract class RefreshInstancesEditorAction extends CloudFoundryEditorAct
 
 	@Override
 	protected ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
-		return new EditorOperation() {
+		return new ModifyEditorOperation() {
 
 			@Override
-			protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
+			protected void performOperation(IProgressMonitor monitor) throws CoreException {
 				getBehavior().refreshModules(monitor);
 			}
 		};

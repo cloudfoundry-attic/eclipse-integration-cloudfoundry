@@ -14,10 +14,10 @@ import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.NotFinishedStagingException;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.ICloudFoundryOperation;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.ModifyOperation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationMasterDetailsBlock;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage;
@@ -259,19 +259,16 @@ public abstract class CloudFoundryEditorAction extends Action {
 	}
 
 	/**
-	 * Editor operations should only be created AFTER the editor page is
+	 * Operation to modify server values from the editor. Should be used for operations
+	 * th
+	 * NOTE:Editor operations should only be created AFTER the editor page is
 	 * accessible.
 	 * 
 	 */
-	protected abstract class EditorOperation extends BehaviourOperation {
+	protected abstract class ModifyEditorOperation extends ModifyOperation {
 
-		public EditorOperation() {
+		public ModifyEditorOperation() {
 			super(editorPage.getCloudServer().getBehaviour());
-
-		}
-
-		protected void performOperation(IProgressMonitor monitor) throws CoreException {
-			performEditorOperation(monitor);
 		}
 
 		@Override
@@ -283,9 +280,6 @@ public abstract class CloudFoundryEditorAction extends Action {
 			
 			super.refresh(monitor);
 		}
-
-		abstract protected void performEditorOperation(IProgressMonitor monitor) throws CoreException;
-
 	}
 
 }

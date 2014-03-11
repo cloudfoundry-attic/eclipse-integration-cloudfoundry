@@ -90,8 +90,6 @@ public class ApplicationMasterPart extends SectionPart {
 
 	private Section servicesSection;
 
-	private boolean userExpanded;
-
 	public ApplicationMasterPart(CloudFoundryApplicationsEditorPage editorPage, IManagedForm managedForm,
 			Composite parent, CloudFoundryServer cloudServer) {
 		super(parent, managedForm.getToolkit(), Section.TITLE_BAR | Section.DESCRIPTION);

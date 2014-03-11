@@ -18,6 +18,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.IConsoleContents;
@@ -156,9 +157,9 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public void prepareForDeployment(final CloudFoundryServer server, final CloudFoundryApplicationModule appModule,
-			final IProgressMonitor monitor) throws CoreException, OperationCanceledException {
-		new ApplicationDeploymentUIHandler().prepareForDeployment(server, appModule, monitor);
+	public DeploymentConfiguration prepareForDeployment(CloudFoundryServer server,
+			CloudFoundryApplicationModule module, IProgressMonitor monitor) throws CoreException {
+		return new ApplicationDeploymentUIHandler().prepareForDeployment(server, module, monitor);
 	}
 
 	@Override

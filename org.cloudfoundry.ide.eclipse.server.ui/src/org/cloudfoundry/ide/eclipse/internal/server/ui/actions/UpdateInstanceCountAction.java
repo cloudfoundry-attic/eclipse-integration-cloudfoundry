@@ -47,10 +47,10 @@ public class UpdateInstanceCountAction extends CloudFoundryEditorAction {
 	@Override
 	public ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
 
-		return new EditorOperation() {
+		return new ModifyEditorOperation() {
 
 			@Override
-			protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
+			protected void performOperation(IProgressMonitor monitor) throws CoreException {
 
 				Display.getDefault().syncExec(new Runnable() {
 

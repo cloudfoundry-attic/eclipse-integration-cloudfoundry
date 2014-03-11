@@ -21,6 +21,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentInfoWorkingCopy;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
@@ -71,15 +72,23 @@ public class TestCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public void prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
-			IProgressMonitor monitor) throws CoreException, OperationCanceledException {
-		// NOTE: This section here is a substitute for the Application
-		// Deployment wizard
-		// where deployment info is modified by the user
+	public DeploymentConfiguration prepareForDeployment(CloudFoundryServer server,
+			CloudFoundryApplicationModule module, IProgressMonitor monitor) throws CoreException {
+
+		// NOTE:
+		// This
+		// section
+		// here
+		// is
+		// a
+		// substitute
+		// for
+		// the
+		// Application
+
 		DeploymentInfoWorkingCopy copy = module.resolveDeploymentInfoWorkingCopy(monitor);
 		copy.setDeploymentName(appName);
 		copy.setMemory(CloudUtil.DEFAULT_MEMORY);
-		copy.setDeploymentMode(deployStopped ? ApplicationAction.STOP : ApplicationAction.START);
 
 		if (url != null) {
 			copy.setUris(Collections.singletonList(url));
@@ -108,6 +117,10 @@ public class TestCallback extends CloudFoundryCallback {
 		}
 
 		copy.save();
+
+		ApplicationAction mode = deployStopped ? ApplicationAction.STOP : ApplicationAction.START;
+
+		return new DeploymentConfiguration(mode);
 	}
 
 	@Override

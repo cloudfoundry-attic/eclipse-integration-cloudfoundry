@@ -129,14 +129,11 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 			update(true, Status.OK_STATUS);
 		}
 		else {
-			// Set an invalid memory so next time page opens, it restores a valid value
+			// Set an invalid memory so next time page opens, it restores a
+			// valid value
 			descriptor.getDeploymentInfo().setMemory(-1);
 			update(true, CloudFoundryPlugin.getErrorStatus(Messages.ERROR_INVALID_MEMORY));
 		}
-	}
-
-	protected void setDeploymentMode(ApplicationAction deploymentMode) {
-		descriptor.getDeploymentInfo().setDeploymentMode(deploymentMode);
 	}
 
 	public void createControl(Composite parent) {
@@ -197,7 +194,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 
 		regularStartOnDeploymentButton = new Button(parent, SWT.CHECK);
 		regularStartOnDeploymentButton.setText(startLabelText);
-		ApplicationAction deploymentMode = descriptor.getDeploymentInfo().getDeploymentMode();
+		ApplicationAction deploymentMode = descriptor.getApplicationStartMode();
 
 		regularStartOnDeploymentButton.setSelection(deploymentMode == ApplicationAction.START);
 
@@ -231,10 +228,9 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 				// deploymentMode = start ? ApplicationAction.START : null;
 				// }
 
-				deploymentMode = start ? ApplicationAction.START : null;
+				deploymentMode = start ? ApplicationAction.START : ApplicationAction.STOP;
 
-				setDeploymentMode(deploymentMode);
-
+				descriptor.setApplicationStartMode(deploymentMode);
 			}
 		});
 		// TODO: Uncomment when debug support is available once again (post CF

@@ -72,16 +72,18 @@ public class Messages {
 
 	public static final String CONSOLE_PROCESSING_PAYLOAD = "Processing payload...";
 
-	public static final String CONSOLE_APP_STOPPED = "Application stopped.";
+	public static final String CONSOLE_APP_STOPPED = "Application stopped";
 
 	public static final String CONSOLE_PRE_STAGING_MESSAGE = "Staging application";
 
 	public static final String CONSOLE_APP_PUSH_MESSAGE = "Pushing application to Cloud Foundry server";
 
+	public static final String CONSOLE_APP_PUSHED_MESSAGE = "Application successfully pushed to Cloud Foundry server";
+
 	public static final String CONSOLE_STILL_WAITING_FOR_APPLICAITON_TO_START = "Still waiting for applicaiton to start...";
 
 	public static final String CONSOLE_WAITING_FOR_APPLICATION_TO_START = "Waiting for application to start...";
 
-	public static final String CONSOLE_STOPPING_APPLICATION = "Stopping application";
+	public static final String CONSOLE_STOPPING_APPLICATION = "Stopping application {0}";
 
 }

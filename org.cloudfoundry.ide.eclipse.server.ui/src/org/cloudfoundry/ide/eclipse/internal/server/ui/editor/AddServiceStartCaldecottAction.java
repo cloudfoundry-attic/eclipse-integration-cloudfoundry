@@ -71,10 +71,10 @@ public class AddServiceStartCaldecottAction extends CloudFoundryEditorAction {
 	public ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
 
 		if (services != null && !services.isEmpty()) {
-			return new EditorOperation() {
+			return new ModifyEditorOperation() {
 
 				@Override
-				protected void performEditorOperation(IProgressMonitor monitor) throws CoreException {
+				protected void performOperation(IProgressMonitor monitor) throws CoreException {
 						TunnelBehaviour handler = new TunnelBehaviour(getBehavior().getCloudFoundryServer());
 					handler.startCaldecottTunnel(services.get(0), monitor, true);
 				}

@@ -31,17 +31,14 @@ public class StartStopApplicationAction extends CloudFoundryEditorAction {
 
 	private final CloudFoundryApplicationModule application;
 
-	private final IModule module;
-
 	private final CloudFoundryServerBehaviour serverBehaviour;
 
 	public StartStopApplicationAction(CloudFoundryApplicationsEditorPage editorPage, ApplicationAction action,
-			CloudFoundryApplicationModule application, CloudFoundryServerBehaviour serverBehaviour, IModule module) {
+			CloudFoundryApplicationModule application, CloudFoundryServerBehaviour serverBehaviour) {
 		super(editorPage, RefreshArea.DETAIL);
 		this.action = action;
 		this.application = application;
 		this.serverBehaviour = serverBehaviour;
-		this.module = module;
 	}
 
 	@Override
@@ -67,27 +64,7 @@ public class StartStopApplicationAction extends CloudFoundryEditorAction {
 	}
 
 	public ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
-		ICloudFoundryOperation operation = null;
-		IModule[] modules = new IModule[] { module };
-		switch (action) {
-		case START:
-			operation = serverBehaviour.getDeployStartApplicationOperation(modules, false);
-			break;
-		case STOP:
-			operation = serverBehaviour.getStopAppOperation(modules);
-			break;
-		case RESTART:
-			operation = serverBehaviour.getRestartOperation(modules);
-			break;
-		case UPDATE_RESTART:
-			operation = serverBehaviour.getUpdateRestartOperation(modules, getIncrementalPublish());
-			break;
-		}
-		return operation;
-	}
-
-	protected boolean getIncrementalPublish() {
-		return CloudFoundryPlugin.getDefault().getIncrementalPublish();
+		return serverBehaviour.getApplicationOperation(application, action);
 	}
 
 }

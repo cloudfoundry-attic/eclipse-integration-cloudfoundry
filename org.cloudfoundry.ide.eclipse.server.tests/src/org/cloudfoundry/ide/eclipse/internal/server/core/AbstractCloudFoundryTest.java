@@ -130,7 +130,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	protected void assertApplicationIsRunning(CloudFoundryApplicationModule appModule) throws Exception {
 		int attempts = 5;
-		long wait = 2000;
+		long wait = 10000;
 		boolean running = false;
 
 		// Test the Server behaviour API that checks if application is running
@@ -245,14 +245,15 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	 * @return
 	 * @throws Exception
 	 */
-	protected CloudFoundryApplicationModule assertApplicationIsDeployed(String appPrefix) throws Exception {
+	protected CloudFoundryApplicationModule assertApplicationIsDeployed(String appPrefix, int expectedAppState)
+			throws Exception {
 		// Get the local WST IModule. NOTE that the PROJECT name needs to be
 		// used as opposed to the
 		// app name, as the project name and app name may differ, and the
 		// IModule is mapped to the project.
 		IModule module = getModule(harness.getDefaultWebAppProjectName());
 		int moduleState = server.getModuleState(new IModule[] { module });
-		assertEquals(IServer.STATE_STARTED, moduleState);
+		assertEquals(expectedAppState, moduleState);
 
 		// Once the application is started, verify that the Cloud module (the
 		// "Enhanced" WST
@@ -265,7 +266,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 				appModule.getApplication());
 
 		// The app state in the cloud module must be correct
-		assertEquals(IServer.STATE_STARTED, appModule.getState());
+		assertEquals(expectedAppState, appModule.getState());
 
 		return appModule;
 	}
@@ -318,7 +319,9 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	 * @throws Exception
 	 */
 	protected CloudFoundryApplicationModule deployApplicationStartMode(String appPrefix) throws Exception {
-		return deployApplication(appPrefix, false);
+		CloudFoundryApplicationModule appModule = deployApplication(appPrefix, false);
+		assertApplicationIsRunning(appModule.getLocalModule(), appPrefix);
+		return appModule;
 	}
 
 	/**
@@ -344,7 +347,9 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 		serverBehavior.startModuleWaitForDeployment(new IModule[] { module }, null);
 
-		CloudFoundryApplicationModule appModule = assertApplicationIsDeployed(appPrefix);
+		int expectedAppState = deployStopped ? IServer.STATE_STOPPED : IServer.STATE_STARTED;
+
+		CloudFoundryApplicationModule appModule = assertApplicationIsDeployed(appPrefix, expectedAppState);
 
 		// Do a separate check to verify that there is in fact a
 		// CloudApplication for the
