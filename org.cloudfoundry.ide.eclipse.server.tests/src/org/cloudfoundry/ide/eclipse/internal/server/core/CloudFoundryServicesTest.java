@@ -29,7 +29,7 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		CloudService service = createService();
 		String prefix = "testServiceBinding";
 		createWebApplicationProject();
-		CloudFoundryApplicationModule appModule = deployApplicationStartMode(prefix);
+		CloudFoundryApplicationModule appModule = assertDeployApplicationStartMode(prefix);
 
 		CloudApplication app = appModule.getApplication();
 		assertStopModule(appModule);
@@ -48,7 +48,7 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		String prefix = "testServiceUnbinding";
 		createWebApplicationProject();
 
-		CloudFoundryApplicationModule appModule = deployApplicationStartMode(prefix);
+		CloudFoundryApplicationModule appModule = assertDeployApplicationStartMode(prefix);
 
 		CloudApplication app = appModule.getApplication();
 

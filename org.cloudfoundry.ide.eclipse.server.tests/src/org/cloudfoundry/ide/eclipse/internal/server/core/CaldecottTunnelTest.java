@@ -139,7 +139,7 @@ public class CaldecottTunnelTest extends AbstractCloudFoundryServicesTest {
 		String prefix = "nonCaldecottServiceUnbinding";
 		createWebApplicationProject();
 
-		CloudFoundryApplicationModule appModule = deployApplicationStartMode(prefix);
+		CloudFoundryApplicationModule appModule = assertDeployApplicationStartMode(prefix);
 
 		CloudApplication nonCaldecottApp = appModule.getApplication();
 

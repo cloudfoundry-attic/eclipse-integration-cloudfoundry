@@ -75,12 +75,19 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 
 	public void testInvalidProxyThroughServerInstance() throws Exception {
 
+		// NOTE: As of CF 1.6.0 (Cloud Foundry Java client 1.0.2), proxy changes
+		// REQUIRE a client change. They can no longer be changed during the
+		// same
+		// client session used by the CF server instance. Therefore, proxy
+		// changes
+		// require a new connection.
+
 		// Verify that connection and operations can be performed without the
 		// proxy change
 		String prefix = "InvalidProxyServerInstance";
 		createWebApplicationProject();
 
-		CloudFoundryApplicationModule appModule = deployApplicationStartMode(prefix);
+		CloudFoundryApplicationModule appModule = assertDeployApplicationStartMode(prefix);
 		final String appName = appModule.getDeployedApplicationName();
 
 		final boolean[] ran = { false };
@@ -90,13 +97,12 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 			@Override
 			protected void handleProxyChange() throws CoreException {
 
-				IModule[] modules = server.getModules();
-
 				IProxyService proxyService = getProxyService();
 				try {
 					// Reset the client to use the new proxy settings
 					connectClient();
 
+					IModule[] modules = server.getModules();
 					// Should fail, as its now going through invalid proxy
 					serverBehavior.stopModule(modules, null);
 
@@ -112,6 +118,9 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 				proxyService.setSystemProxiesEnabled(getOriginalSystemProxiesEnabled());
 				proxyService.setProxiesEnabled(getOriginalProxiesEnabled());
 				proxyService.setProxyData(getOriginalProxyData());
+
+				connectClient();
+				IModule[] modules = server.getModules();
 
 				serverBehavior.stopModule(modules, null);
 

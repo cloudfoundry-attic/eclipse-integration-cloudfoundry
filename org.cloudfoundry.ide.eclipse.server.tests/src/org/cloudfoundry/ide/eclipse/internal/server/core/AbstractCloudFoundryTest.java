@@ -102,7 +102,8 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	/**
 	 * Resets the client in the server behaviour based on the given credentials.
-	 * If passing null, the stored server credentials will be used instead
+	 * This will disconnect any existing session. If passing null, the stored
+	 * server credentials will be used instead
 	 * @param credentials
 	 * @return
 	 * @throws CoreException
@@ -129,7 +130,8 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	}
 
 	protected void assertApplicationIsRunning(CloudFoundryApplicationModule appModule) throws Exception {
-		int attempts = 5;
+		int total = 10;
+		int attempts = total;
 		long wait = 10000;
 		boolean running = false;
 
@@ -149,7 +151,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		}
 
 		// Verify separately that the app did indeed start
-		assertTrue("Application has not started after waiting for (ms): " + (wait * attempts), running);
+		assertTrue("Application has not started after waiting for (ms): " + (wait * total), running);
 		assertEquals(IServer.STATE_STARTED, appModule.getState());
 		assertEquals(AppState.STARTED, appModule.getApplication().getState());
 
@@ -313,12 +315,13 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	}
 
 	/**
-	 * Deploys application and starts it in the CF server.
+	 * Deploys application and starts it in the CF server. Verifies the
+	 * application is running.
 	 * @param appPrefix
-	 * @return
+	 * @return deployed app.
 	 * @throws Exception
 	 */
-	protected CloudFoundryApplicationModule deployApplicationStartMode(String appPrefix) throws Exception {
+	protected CloudFoundryApplicationModule assertDeployApplicationStartMode(String appPrefix) throws Exception {
 		CloudFoundryApplicationModule appModule = deployApplication(appPrefix, false);
 		assertApplicationIsRunning(appModule.getLocalModule(), appPrefix);
 		return appModule;

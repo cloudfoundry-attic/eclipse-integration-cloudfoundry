@@ -341,6 +341,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 	}
 
+	/**
+	 * Disconnects the local server from the remote CF server, and terminate the
+	 * session. Note that this will stop any refresh operations, or console
+	 * streaming, but will NOT stop any apps that are currently running. It may
+	 * also clear any application module caches associated with the session.
+	 * @param monitor
+	 * @throws CoreException
+	 */
 	public void disconnect(IProgressMonitor monitor) throws CoreException {
 		CloudFoundryPlugin.getCallback().disconnecting(getCloudFoundryServer());
 
