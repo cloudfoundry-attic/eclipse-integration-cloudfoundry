@@ -326,4 +326,16 @@
             providerID="org.cloudfoundry.ide.eclipse.server.application.javaweb">
       </applicationWizardDelegate>
    </extension>
+   <extension
+         point="org.eclipse.wst.server.ui.serverCreationWizardPageExtension">
+      <serverCreationWizardPageExtension
+            id="org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.serverCreationWizardPageExtension"
+            class="org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryServerWizardUIControl"/>
+   </extension>
+      <extension
+         point="org.eclipse.wst.server.ui.serverEditorOverviewPageModifier">
+      <serverEditorOverviewPageModifier
+            id="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.serverEditorOverviewPageExtension"
+            class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryServerEditorOverviewPageUIControl"/>
+   </extension>
 </plugin>

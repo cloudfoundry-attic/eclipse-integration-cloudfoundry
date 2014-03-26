@@ -37,6 +37,7 @@
             name="Cloud Foundry Test Server"
             runtime="true"
             runtimeTypeId="org.cloudfoundry.cloudfoundryserver.test.runtime.10"
+            supportsRemoteHosts="true"
             startTimeout="600000"
             stopTimeout="60000">
 		</serverType>

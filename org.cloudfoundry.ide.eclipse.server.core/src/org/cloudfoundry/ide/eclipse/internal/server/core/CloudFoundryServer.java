@@ -459,6 +459,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 			i++;
 		}
 		getServerWorkingCopy().setName(name);
+		getServerWorkingCopy().setHost("Cloud");
 
 		setAttribute("auto-publish-setting", 1);
 	}

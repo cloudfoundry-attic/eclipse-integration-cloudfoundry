@@ -52,6 +52,8 @@ public class CloudFoundryBrandingExtensionPoint {
 	public static String POINT_ID = "org.cloudfoundry.ide.eclipse.server.core.branding";
 
 	private static Map<String, IConfigurationElement> brandingDefinitions = new HashMap<String, IConfigurationElement>();
+	
+	private static List<String> brandingServerTypeIds = new ArrayList<String>();
 
 	private static boolean read;
 
@@ -173,6 +175,14 @@ public class CloudFoundryBrandingExtensionPoint {
 		}
 		return false;
 	}
+	
+	public static List<String> getServerTypeIds() {
+		if (!read) {
+			readBrandingDefinitions();
+		}
+
+		return brandingServerTypeIds;
+	}
 
 	public static String getWizardBannerPath(String serverTypeId) {
 		if (!read) {
@@ -188,6 +198,7 @@ public class CloudFoundryBrandingExtensionPoint {
 	private static void readBrandingDefinitions() {
 		IExtensionPoint brandingExtPoint = Platform.getExtensionRegistry().getExtensionPoint(POINT_ID);
 		if (brandingExtPoint != null) {
+			brandingServerTypeIds.clear();
 			for (IExtension extension : brandingExtPoint.getExtensions()) {
 				for (IConfigurationElement config : extension.getConfigurationElements()) {
 					String serverId = config.getAttribute(ATTR_SERVER_TYPE_ID);
@@ -196,6 +207,7 @@ public class CloudFoundryBrandingExtensionPoint {
 						IConfigurationElement[] urls = config.getChildren(ELEM_DEFAULT_URL);
 						if (urls != null && urls.length > 0) {
 							brandingDefinitions.put(serverId, config);
+							brandingServerTypeIds.add(serverId);
 						}
 					}
 				}

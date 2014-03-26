@@ -38,6 +38,7 @@
 	        initialState="stopped"
 	        name="Cloud Foundry"
 	        runtime="true"
+	        supportsRemoteHosts="true"
 	        runtimeTypeId="org.cloudfoundry.appcloudserver.runtime.10"
 	        startTimeout="600000"
 	        stopTimeout="60000">
