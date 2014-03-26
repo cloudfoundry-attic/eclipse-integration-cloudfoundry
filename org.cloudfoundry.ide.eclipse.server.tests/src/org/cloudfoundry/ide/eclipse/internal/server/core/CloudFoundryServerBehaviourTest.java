@@ -68,7 +68,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		assertNotNull("Expected non-null IModule when deploying application", module);
 
-		serverBehavior.startModuleWaitForDeployment(new IModule[] { module }, null);
+		serverBehavior.startModule(new IModule[] { module }, null);
 
 		Collection<CloudFoundryApplicationModule> appModules = cloudServer.getExistingCloudModules();
 		assertNotNull("Expected list of cloud modules after deploying: " + appPrefix, appModules);

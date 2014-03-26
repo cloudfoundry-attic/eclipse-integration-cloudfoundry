@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
-import java.util.List;
+import java.net.URL;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
@@ -22,6 +22,7 @@ import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
+import org.eclipse.wst.server.core.model.IURLProvider;
 import org.eclipse.wst.server.ui.IServerModule;
 
 /**
@@ -34,10 +35,11 @@ public class OpenHomePageAction implements IObjectActionDelegate {
 	private IModule selectedModule;
 
 	private IServer selectedServer;
+	
+	private URL homePageUrl;
 
 	public void run(IAction action) {
-		CloudFoundryApplicationModule cloudApp = getSelectedCloudAppModule();
-		open(cloudApp);
+		CloudUiUtil.openUrl(homePageUrl.toExternalForm());
 	}
 
 	/**
@@ -68,10 +70,10 @@ public class OpenHomePageAction implements IObjectActionDelegate {
 			if (cloudModule != null) {
 				int state = cloudModule.getState();
 				if (state == IServer.STATE_STARTED) {
-
-					List<String> uris = cloudModule != null && cloudModule.getApplication() != null ? cloudModule
-							.getApplication().getUris() : null;
-					if (uris != null && !uris.isEmpty()) {
+					IURLProvider cloudServer = (IURLProvider)selectedServer
+							.loadAdapter(IURLProvider.class, null);
+					homePageUrl = cloudServer.getModuleRootURL(selectedModule);
+					if (homePageUrl != null) {
 						action.setEnabled(true);
 						return;
 					}
@@ -88,16 +90,5 @@ public class OpenHomePageAction implements IObjectActionDelegate {
 		CloudFoundryServer cloudServer = (CloudFoundryServer) selectedServer
 				.loadAdapter(CloudFoundryServer.class, null);
 		return cloudServer.getExistingCloudModule(selectedModule);
-	}
-
-	public static boolean open(CloudFoundryApplicationModule cloudApp) {
-		// verify that URIs are set, as it may be a standalone application with
-		// no URI
-		List<String> uris = cloudApp != null && cloudApp.getApplication() != null ? cloudApp.getApplication().getUris()
-				: null;
-		if (uris != null && !uris.isEmpty()) {
-			CloudUiUtil.openUrl("http://" + uris.get(0));
-		}
-		return true;
 	}
 }

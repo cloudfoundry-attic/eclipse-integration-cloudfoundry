@@ -23,9 +23,11 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DeleteServicesAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.RefreshApplicationEditorAction;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryServiceWizard;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -170,13 +172,48 @@ public class ApplicationMasterPart extends SectionPart {
 
 		@Override
 		public boolean performDrop(final Object data) {
-			UIJob job = new UIJob("Deploying application") {
+			final String jobName = "Deploying application";
+			UIJob job = new UIJob(jobName) {
 
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
-					ApplicationViewersDropAdapter.super.performDrop(data);
 
-					return Status.OK_STATUS;
+					if (data instanceof IStructuredSelection) {
+						Object modObj = ((IStructuredSelection) data).getFirstElement();
+						if (modObj instanceof IProject) {
+							final IProject project = (IProject) modObj;
+							final CloudFoundryServer cloudServer = (CloudFoundryServer) editorPage.getServer()
+									.getOriginal().loadAdapter(CloudFoundryServer.class, monitor);
+
+							if (cloudServer != null) {
+								// Make sure parent performs the drop first to
+								// create the IModule. Unsupported modules will
+								// not proceed result in IModule creation
+								// therefore checks on the IProject are not
+								// necessary
+								ApplicationViewersDropAdapter.super.performDrop(data);
+
+								// Now do a publish AFTER the IModule is
+								// created. If no IModule is created (either
+								// user cancels or project
+								// is not supported), the publish operation will
+								// do nothing.
+								Job job = new Job(jobName) {
+
+									@Override
+									protected IStatus run(IProgressMonitor monitor) {
+										cloudServer.getBehaviour().publish(project.getName(), monitor);
+										return Status.OK_STATUS;
+									}
+
+								};
+								job.setPriority(Job.INTERACTIVE);
+								job.schedule();
+								return Status.OK_STATUS;
+							}
+						}
+					}
+					return Status.CANCEL_STATUS;
 				}
 			};
 			job.schedule();

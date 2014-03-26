@@ -50,6 +50,10 @@ public class Messages {
 
 	public static final String ERROR_NO_MAPPED_CLOUD_MODULE = "Internal Error: No mapped Cloud Foundry application module found for: {0} - Unable to deploy or start application";
 
+	public static final String ERROR_FAILED_TO_PUSH_APP = "Failed to push application - {0}";
+
+	public static final String ERROR_NO_CLOUD_APPLICATION_FOUND = "No cloud module specified when attempting to update application instance stats.";
+
 	/*
 	 * Warnings
 	 */
@@ -64,13 +68,13 @@ public class Messages {
 	/*
 	 * Console messages
 	 */
+	public static final String CONSOLE_ERROR_MESSAGE = "Error: {0}";
+
 	public static final String CONSOLE_RESTARTING_APP = "Restarting application";
 
-	public static final String CONSOLE_DEPLOYING_APP = "Deploying application";
+	public static final String CONSOLE_DEPLOYING_APP = "Starting application operation";
 
 	public static final String CONSOLE_GENERATING_ARCHIVE = "Generating application archive";
-
-	public static final String CONSOLE_PROCESSING_PAYLOAD = "Processing payload...";
 
 	public static final String CONSOLE_APP_STOPPED = "Application stopped";
 
@@ -78,12 +82,22 @@ public class Messages {
 
 	public static final String CONSOLE_APP_PUSH_MESSAGE = "Pushing application to Cloud Foundry server";
 
+	public static final String CONSOLE_APP_CREATION = "Creating application in Cloud Foundry server";
+
+	public static final String CONSOLE_APP_FOUND = "Existing application found in Cloud Foundry server";
+
+	public static final String CONSOLE_APP_MAPPING_STARTED = "Updating application mapping";
+
+	public static final String CONSOLE_APP_MAPPING_COMPLETED = "Application mapping updated";
+
 	public static final String CONSOLE_APP_PUSHED_MESSAGE = "Application successfully pushed to Cloud Foundry server";
+
+	public static final String CONSOLE_PREPARING_APP = "Checking application - {0}";
 
 	public static final String CONSOLE_STILL_WAITING_FOR_APPLICAITON_TO_START = "Still waiting for applicaiton to start...";
 
 	public static final String CONSOLE_WAITING_FOR_APPLICATION_TO_START = "Waiting for application to start...";
 
-	public static final String CONSOLE_STOPPING_APPLICATION = "Stopping application {0}";
+	public static final String CONSOLE_STOPPING_APPLICATION = "Stopping application - {0}";
 
 }

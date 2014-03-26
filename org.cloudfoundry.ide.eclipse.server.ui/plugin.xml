@@ -199,6 +199,7 @@
           typeIds="org.cloudfoundry.appcloudserver*">
     </launchableAdapter>
  </extension>
+ <!-- 
  <extension
        point="org.eclipse.wst.server.core.clients">
     <client
@@ -208,6 +209,7 @@
           name="Cloud Foundry Server">
     </client>
  </extension>
+ -->
  <extension
        point="org.eclipse.wst.server.ui.editorPages">
     <page

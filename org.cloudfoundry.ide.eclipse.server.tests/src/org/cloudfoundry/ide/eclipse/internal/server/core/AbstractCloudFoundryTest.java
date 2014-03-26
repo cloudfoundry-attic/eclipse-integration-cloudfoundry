@@ -348,7 +348,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 		assertNotNull("Expected non-null IModule when deploying application", module);
 
-		serverBehavior.startModuleWaitForDeployment(new IModule[] { module }, null);
+		serverBehavior.publish(IServer.PUBLISH_INCREMENTAL, new NullProgressMonitor());
 
 		int expectedAppState = deployStopped ? IServer.STATE_STOPPED : IServer.STATE_STARTED;
 

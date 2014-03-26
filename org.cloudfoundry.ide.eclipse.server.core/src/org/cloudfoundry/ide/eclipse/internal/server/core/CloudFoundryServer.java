@@ -11,8 +11,9 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.io.StringWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +24,6 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ModuleCache.ServerData;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.SelfSignedStore;
@@ -31,7 +31,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpac
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jst.server.core.FacetUtil;
@@ -42,6 +41,7 @@ import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
 import org.eclipse.wst.server.core.internal.Server;
 import org.eclipse.wst.server.core.internal.ServerPlugin;
+import org.eclipse.wst.server.core.model.IURLProvider;
 import org.eclipse.wst.server.core.model.ServerDelegate;
 
 /**
@@ -68,7 +68,7 @@ import org.eclipse.wst.server.core.model.ServerDelegate;
  * @author Kris De Volder
  */
 @SuppressWarnings("restriction")
-public class CloudFoundryServer extends ServerDelegate {
+public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 
 	private static ThreadLocal<Boolean> deleteServicesOnModuleRemove = new ThreadLocal<Boolean>() {
 		protected Boolean initialValue() {
@@ -442,40 +442,6 @@ public class CloudFoundryServer extends ServerDelegate {
 					getData().tagAsUndeployed(module);
 				}
 			}
-
-			// callback to disable auto deploy when testing
-			if (CloudFoundryPlugin.getCallback().isAutoDeployEnabled()) {
-				Job deployModules = new Job("Deploying application to Cloud Foundry") {
-					@Override
-					protected IStatus run(IProgressMonitor monitor2) {
-						Set<IModule> pending = new HashSet<IModule>(Arrays.asList(add));
-						try {
-							for (IModule module : add) {
-								getBehaviour().startModuleWaitForDeployment(new IModule[] { module }, monitor2);
-								pending.remove(module);
-							}
-						}
-						catch (OperationCanceledException e) {
-							// remove module from server
-							doDeleteModules(pending);
-							return Status.CANCEL_STATUS;
-						}
-						catch (CoreException e) {
-							// Do not automatically delete apps on errors, even
-							// if critical errors
-							// as there may be features that may allow an app to
-							// be redeployed without drag/drop (i.e. clicking
-							// "Start").
-							IStatus errorStatus = CloudFoundryPlugin.getErrorStatus("Failed to deploy module - "
-									+ e.getMessage());
-							CloudFoundryPlugin.log(errorStatus);
-							CloudFoundryPlugin.getCallback().handleError(errorStatus, BehaviourEventType.APP_START);
-						}
-						return Status.OK_STATUS;
-					}
-				};
-				deployModules.schedule();
-			}
 		}
 	}
 
@@ -768,7 +734,7 @@ public class CloudFoundryServer extends ServerDelegate {
 		super.saveConfiguration(monitor);
 	}
 
-	private IStatus doDeleteModules(final Set<IModule> deletedModules) {
+	public IStatus doDeleteModules(final Collection<IModule> deletedModules) {
 		IServerWorkingCopy wc = getServer().createWorkingCopy();
 		try {
 			deleteServicesOnModuleRemove.set(Boolean.FALSE);
@@ -830,5 +796,27 @@ public class CloudFoundryServer extends ServerDelegate {
 		catch (CoreException e) {
 			CloudFoundryPlugin.logError(e);
 		}
+	}
+
+	public URL getModuleRootURL(final IModule curModule) {
+		// Only publish if the server publish state is not synchronized.
+		CloudFoundryApplicationModule cloudModule = getCloudModule(curModule);
+		if (cloudModule == null) {
+			return null;
+		}
+
+		// verify that URIs are set, as it may be a standalone application with
+		// no URI
+		List<String> uris = cloudModule != null && cloudModule.getApplication() != null ? cloudModule.getApplication()
+				.getUris() : null;
+		if (uris != null && !uris.isEmpty()) {
+			try {
+				return new URL("http://" + uris.get(0));
+			}
+			catch (MalformedURLException e) {
+				CloudFoundryPlugin.logError(e);
+			}
+		}
+		return null;
 	}
 }

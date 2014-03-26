@@ -384,6 +384,15 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 	}
 
 	/**
+	 * 
+	 * @return true if the application is published to the Cloud Foundry server.
+	 * False otherwise.
+	 */
+	public synchronized boolean isPublished() {
+		return getApplication() != null;
+	}
+
+	/**
 	 * Sets a deployment information for the application. Note that if the
 	 * application is already deployed (i.e. a {@link CloudApplication} mapping
 	 * exists for this module), this will overwrite the deployment information

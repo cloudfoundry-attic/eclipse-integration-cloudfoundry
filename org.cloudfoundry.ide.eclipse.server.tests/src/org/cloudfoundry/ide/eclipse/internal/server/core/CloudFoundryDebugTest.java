@@ -86,7 +86,7 @@ public class CloudFoundryDebugTest extends AbstractCloudFoundryTest {
 
 		@Override
 		protected void launchInModeType(IModule[] modules) throws Exception {
-			serverBehavior.startModuleWaitForDeployment(modules, new NullProgressMonitor());
+			serverBehavior.startModule(modules, new NullProgressMonitor());
 		}
 
 	};
