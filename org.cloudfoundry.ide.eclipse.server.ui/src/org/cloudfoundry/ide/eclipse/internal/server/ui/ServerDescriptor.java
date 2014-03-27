@@ -7,14 +7,18 @@
  *
  * Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     Keith Chong, IBM - Server Descriptor has hardcoded runtime and server type IDs/properties
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerRuntime;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.ui.internal.WorkbenchPlugin;
+import org.eclipse.wst.server.core.IRuntime;
+import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
 
 /**
@@ -281,9 +285,17 @@ public class ServerDescriptor {
 
 	public static ServerDescriptor getServerDescriptor(CloudFoundryServer server, String serverName) {
 		ServerDescriptor descriptor = new ServerDescriptor("space server");
-		descriptor.setRuntimeTypeId("org.cloudfoundry.appcloudserver.runtime.10");
-		descriptor.setServerTypeId("org.cloudfoundry.appcloudserver.10");
-		descriptor.setRuntimeName("Cloud Foundry (Runtime) v1.0");
+		// Loads the CF Server Runtime Adapter
+		CloudFoundryServerRuntime cfServerRuntime = server.getRuntime();
+		if (cfServerRuntime != null) {
+			IRuntime runtime = cfServerRuntime.getRuntime();
+			descriptor.setRuntimeTypeId(runtime.getRuntimeType().getId());  // eg. "org.cloudfoundry.appcloudserver.runtime.10"
+			descriptor.setRuntimeName(runtime.getName());  // eg. "Cloud Foundry (Runtime) v1.0"
+		}
+		IServer iServer = server.getServer();
+		if (iServer != null) {
+			descriptor.setServerTypeId(iServer.getServerType().getId());  // eg. "org.cloudfoundry.appcloudserver.10"
+		}
 		descriptor.setServerName(serverName);
 		descriptor.setForceCreateRuntime(true);
 		return descriptor;
