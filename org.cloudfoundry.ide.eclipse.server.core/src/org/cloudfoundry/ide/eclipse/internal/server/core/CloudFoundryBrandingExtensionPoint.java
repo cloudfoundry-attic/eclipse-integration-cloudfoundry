@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     Keith Chong, IBM - Modify Sign-up so it's more brand-friendly
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -49,6 +50,8 @@ public class CloudFoundryBrandingExtensionPoint {
 
 	public static String ELEM_SERVICE = "service";
 
+	public static String ATTR_SIGNUP_URL = "signupURL";
+
 	public static String POINT_ID = "org.cloudfoundry.ide.eclipse.server.core.branding";
 
 	private static Map<String, IConfigurationElement> brandingDefinitions = new HashMap<String, IConfigurationElement>();
@@ -64,11 +67,18 @@ public class CloudFoundryBrandingExtensionPoint {
 		private final String url;
 
 		private final boolean userDefined;
+		
+		private final String signupURL;
 
 		public CloudServerURL(String name, String url, boolean userDefined) {
+			this(name, url, userDefined, null);
+		}
+
+		public CloudServerURL(String name, String url, boolean userDefined, String signupURL) {
 			this.name = name;
 			this.url = url;
 			this.userDefined = userDefined;
+			this.signupURL = signupURL;
 		}
 
 		public String getName() {
@@ -81,6 +91,10 @@ public class CloudFoundryBrandingExtensionPoint {
 
 		public boolean getUserDefined() {
 			return userDefined;
+		}
+
+		public String getSignupURL() {
+			return signupURL;
 		}
 
 	}
@@ -103,6 +117,7 @@ public class CloudFoundryBrandingExtensionPoint {
 			for (IConfigurationElement defaultUrl : defaultUrls) {
 				String urlName = defaultUrl.getAttribute(ATTR_NAME);
 				String url = defaultUrl.getAttribute(ATTR_URL);
+				String signupURL = defaultUrl.getAttribute(ATTR_SIGNUP_URL);
 
 				if (urlName != null && urlName.length() > 0 && url != null && url.length() > 0) {
 					IConfigurationElement[] wildcards = defaultUrl.getChildren(ELEM_WILDCARD);
@@ -110,7 +125,7 @@ public class CloudFoundryBrandingExtensionPoint {
 						String wildcardName = wildcard.getAttribute(ATTR_NAME);
 						url = url.replaceAll(wildcardName, "{" + wildcardName + "}");
 					}
-					result.add(new CloudServerURL(urlName, url, false));
+					result.add(new CloudServerURL(urlName, url, false, signupURL));
 				}
 			}
 			return result;
@@ -219,6 +234,24 @@ public class CloudFoundryBrandingExtensionPoint {
 
 	public static boolean supportsRegistration(String serverTypeId, String url) {
 		return url != null && (url.endsWith("cloudfoundry.me") || url.endsWith("vcap.me"));
+	}
+	
+	public static String getSignupURL(String serverTypeId, String url) {
+	    if (url != null) {
+	    	// First check the defaultURL to see if there is an associated signup URL
+			CloudServerURL defaultUrl = getDefaultUrl(serverTypeId);
+			if (defaultUrl.getUrl().equals(url)) {
+				return defaultUrl.getSignupURL();
+			}
+			// Then check if the cloudURLs have it
+			List<CloudServerURL> cloudUrls = getCloudUrls(serverTypeId);
+			for (CloudServerURL aUrl : cloudUrls) {
+				if (aUrl.getUrl().equals(url)) {
+					return aUrl.getSignupURL();
+				}
+			}
+	    }
+		return null;
 	}
 
 }

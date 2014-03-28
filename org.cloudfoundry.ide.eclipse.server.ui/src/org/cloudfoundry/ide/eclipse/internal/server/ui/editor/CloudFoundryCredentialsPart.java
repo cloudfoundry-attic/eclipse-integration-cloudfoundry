@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     Keith Chong, IBM - Modify Sign-up so it's more brand-friendly
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
@@ -278,7 +279,12 @@ public class CloudFoundryCredentialsPart extends UIPart {
 		cfSignupButton.addSelectionListener(new SelectionAdapter() {
 
 			public void widgetSelected(SelectionEvent event) {
-				CloudFoundryURLNavigation.CF_SIGNUP_URL.navigateExternal();
+				String signupURL = CloudFoundryBrandingExtensionPoint.getSignupURL(serverTypeId, cfServer.getUrl());
+				if (signupURL != null)
+				{
+					CloudFoundryURLNavigation nav = new CloudFoundryURLNavigation(signupURL);
+					nav.navigateExternal();
+				}
 			}
 		});
 
@@ -311,12 +317,7 @@ public class CloudFoundryCredentialsPart extends UIPart {
 				|| validationEvent.getType() == ServerCredentialsValidationStatics.EVENT_SPACE_VALID
 				|| validationEvent.getType() == ServerCredentialsValidationStatics.EVENT_SELF_SIGNED_ERROR;
 
-		if (CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(url)) {
-			cfSignupButton.setVisible(true);
-		}
-		else {
-			cfSignupButton.setVisible(false);
-		}
+		cfSignupButton.setEnabled(CloudFoundryURLNavigation.canEnableCloudFoundryNavigation(serverTypeId, url));
 
 		// If the credentials have changed and do not match those used to
 		// previously

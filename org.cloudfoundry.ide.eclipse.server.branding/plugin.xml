@@ -106,6 +106,7 @@
            wizardBanner="icons/wizban/wizban_cloudfoundry.png">
         <defaultUrl
               name="Pivotal Cloud Foundry Hosted Developer Edition"
+              signupURL="https://console.run.pivotal.io/register"
               url="https://api.run.pivotal.io">
         </defaultUrl>
 <!-- Renable when V2 MCF and local clouds are available

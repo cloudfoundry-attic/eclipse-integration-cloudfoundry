@@ -7,9 +7,11 @@
  *
  * Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     Keith Chong, IBM - Modify Sign-up so it's more brand-friendly
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.editor;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
@@ -49,6 +51,7 @@ import org.eclipse.ui.forms.IFormColors;
 import org.eclipse.ui.forms.widgets.ExpandableComposite;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.Section;
+import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.ui.editor.ServerEditorSection;
 
 /**
@@ -293,7 +296,14 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 			cfSignup.addSelectionListener(new SelectionAdapter() {
 
 				public void widgetSelected(SelectionEvent event) {
-					CloudFoundryURLNavigation.CF_SIGNUP_URL.navigate();
+					IServer iServer = cfServer.getServer();
+					if (iServer != null) {
+						String signupURL = CloudFoundryBrandingExtensionPoint.getSignupURL(cfServer.getServerId(), cfServer.getUrl());
+						if (signupURL != null) {
+							CloudFoundryURLNavigation nav = new CloudFoundryURLNavigation(signupURL);
+							nav.navigate();
+						}
+					}
 				}
 			});
 		}
