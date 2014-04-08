@@ -54,14 +54,14 @@
 	  </then>
 	</if>
 
-	<get src="http://www.apache.org/dist/maven/maven-2/2.2.1/binaries/apache-maven-2.2.1-bin.zip" 
-		 dest="${project.build.directory}/../apache-maven-2.2.1-bin.zip"
+	<get src="http://apache.mirror.nexicom.net/maven/maven-3/3.2.1/binaries/apache-maven-3.2.1-bin.zip" 
+		 dest="${project.build.directory}/../apache-maven-3.2.1-bin.zip"
 		 verbose="true"
 		 skipexisting="true"/>
 	<if>
-	  <available file="${project.build.directory}/../apache-maven-2.2.1-bin.zip" />
+	  <available file="${project.build.directory}/../apache-maven-3.2.1-bin.zip" />
 	  <then>
-		<unzip src="${project.build.directory}/../apache-maven-2.2.1-bin.zip" dest="${project.build.directory}">
+		<unzip src="${project.build.directory}/../apache-maven-3.2.1-bin.zip" dest="${project.build.directory}">
 		  <mapper>
 			<globmapper from="apache-maven*" to="maven*" />
 		  </mapper>
