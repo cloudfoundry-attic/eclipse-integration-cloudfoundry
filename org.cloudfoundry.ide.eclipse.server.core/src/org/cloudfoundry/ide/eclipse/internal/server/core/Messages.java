@@ -99,5 +99,11 @@ public class Messages {
 	public static final String CONSOLE_WAITING_FOR_APPLICATION_TO_START = "Waiting for application to start...";
 
 	public static final String CONSOLE_STOPPING_APPLICATION = "Stopping application - {0}";
+	
+	/*
+	 * Jobs
+	 */
+	
+	public static final String REFRESHING_MODULES = "Initialising and refreshing modules for - {0}";
 
 }

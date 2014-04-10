@@ -243,7 +243,8 @@ public class ServerWizardValidator implements ServerValidator {
 								validationType = ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
 							}
 							else {
-								message = "No Cloud space selected. Please select a valid Cloud space";
+								// Although technically an error, mark this as an info message to allow the user to select a cloud space
+								message = "No cloud space selected. Please select a valid cloud space.";
 								validationType = ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED;
 							}
 						}

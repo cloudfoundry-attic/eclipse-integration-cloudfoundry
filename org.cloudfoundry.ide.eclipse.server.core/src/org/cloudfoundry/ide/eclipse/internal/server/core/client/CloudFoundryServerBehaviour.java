@@ -1166,7 +1166,20 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			// in the list of Server apps until after some manual refresh
 			// occurs, or another operation
 			// triggers a refresh.
-			refreshModules(monitor);
+			// Launch in Job as it could be long-running
+			Job job = new Job(NLS.bind(Messages.REFRESHING_MODULES, getServer().getName())) {
+
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					refreshModules(monitor);
+					return Status.OK_STATUS;
+				}
+
+			};
+
+			job.setPriority(Job.INTERACTIVE);
+			job.schedule();
+
 		}
 		catch (CoreException e) {
 			CloudFoundryPlugin.logError(Messages.ERROR_INITIALISE_REFRESH_NO_SERVER);

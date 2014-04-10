@@ -113,7 +113,6 @@ public class CloudSpacesSelectionPart extends UIPart {
 			}
 		});
 
-		setInput();
 		return tableArea;
 	}
 
@@ -134,25 +133,25 @@ public class CloudSpacesSelectionPart extends UIPart {
 
 			CloudSpace selectedSpace = cloudSpaceServerDelegate.getCurrentCloudSpace();
 			if (selectedSpace == null) {
-				// Attempt to select a space that does not yet have a server instance.
+				// Attempt to select a space that does not yet have a server
+				// instance.
 				selectedSpace = cloudSpaceServerDelegate.getSpaceWithNoServerInstance();
 			}
 
 			// First set the default cloud space as the selected space
 			if (setSpaceSelection(selectedSpace)) {
 				setSelectionInViewer(selectedSpace);
-			}
-
-			if (orgInput.isEmpty()) {
-				notifyStatusChange(CloudFoundryPlugin
-						.getStatus(
-								"Please check your credentials or connection if list of organizations and spaces remains empty.",
-								IStatus.INFO));
-			}
-			else {
 				notifyStatusChange(CloudFoundryPlugin.getStatus(DEFAULT_DESCRIPTION, IStatus.OK));
 			}
-
+			else {
+				if (orgInput.isEmpty()) {
+					notifyStatusChange(CloudFoundryPlugin.getErrorStatus(Messages.ERROR_CHECK_CONNECTION_NO_SPACES));
+				}
+				else if (selectedSpace == null) {
+					notifyStatusChange(CloudFoundryPlugin
+							.getErrorStatus(Messages.ERROR_ALL_SPACES_ASSOCIATED_SERVER_INSTANCES));
+				}
+			}
 		}
 	}
 

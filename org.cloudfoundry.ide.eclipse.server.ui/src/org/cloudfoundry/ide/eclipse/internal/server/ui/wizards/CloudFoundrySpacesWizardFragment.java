@@ -16,7 +16,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudSpacesSelectionPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator.ValidationStatus;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.swt.SWT;
@@ -72,8 +71,7 @@ public class CloudFoundrySpacesWizardFragment extends WizardFragment {
 			return false;
 		}
 		ValidationStatus status = validator.getPreviousValidationStatus();
-		return status != null && status.getStatus().getSeverity() != IStatus.ERROR
-				&& status.getValidationType() == ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
+		return status != null && status.getStatus().isOK();
 	}
 
 	@Override
