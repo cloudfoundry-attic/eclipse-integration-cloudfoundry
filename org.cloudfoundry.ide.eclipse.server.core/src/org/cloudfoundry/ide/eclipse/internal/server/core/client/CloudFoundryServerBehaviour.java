@@ -1159,6 +1159,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		getServer().addServerListener(serverListener, ServerEvent.SERVER_CHANGE);
 		try {
 			refreshHandler = new RefreshHandler(getCloudFoundryServer());
+
+			// Be sure to refresh list of all deployed applications when a
+			// server instance is initialised. Otherwise, external modules may
+			// not appear
+			// in the list of Server apps until after some manual refresh
+			// occurs, or another operation
+			// triggers a refresh.
+			refreshModules(monitor);
 		}
 		catch (CoreException e) {
 			CloudFoundryPlugin.logError(Messages.ERROR_INITIALISE_REFRESH_NO_SERVER);
@@ -1882,7 +1890,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		 * missing information.
 		 * @param monitor
 		 * @return Deployment configuration, or null if default configuration
-		 * should be used. 
+		 * should be used.
 		 * @throws CoreException if any failure during or after the operation.
 		 * @throws OperationCanceledException if the user cancelled deploying or
 		 * starting the application. The application's deployment information
