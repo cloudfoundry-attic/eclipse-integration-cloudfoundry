@@ -154,7 +154,8 @@ public class ServerWizardValidator implements ServerValidator {
 						selfSigned = storedSelfSign;
 					}
 
-					// Re-validate if the user has selected to continue with self-signed certificate
+					// Re-validate if the user has selected to continue with
+					// self-signed certificate
 					if (selfSigned) {
 						validationStatus[0] = internalValidate(true, selfSigned, context);
 					}
@@ -313,7 +314,6 @@ public class ServerWizardValidator implements ServerValidator {
 	}
 
 	public static class ValidationStatus {
-		
 
 		private final IStatus status;
 
@@ -328,6 +328,14 @@ public class ServerWizardValidator implements ServerValidator {
 			return status;
 		}
 
+		/**
+		 * @return one of the following:
+		 * {@link ServerCredentialsValidationStatics#EVENT_CREDENTIALS_FILLED},
+		 * {@link ServerCredentialsValidationStatics#EVENT_NONE},
+		 * {@link ServerCredentialsValidationStatics#EVENT_SELF_SIGNED_ERROR},
+		 * {@link ServerCredentialsValidationStatics#EVENT_SPACE_CHANGED},
+		 * {@link ServerCredentialsValidationStatics#EVENT_SPACE_VALID}
+		 */
 		public int getValidationType() {
 			return validationType;
 		}

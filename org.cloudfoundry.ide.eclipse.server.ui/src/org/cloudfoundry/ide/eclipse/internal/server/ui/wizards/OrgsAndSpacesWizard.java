@@ -227,13 +227,6 @@ public class OrgsAndSpacesWizard extends Wizard {
 					public IStatus runInUIThread(IProgressMonitor monitor) {
 						updateSpacesDescriptor();
 						refreshListOfSpaces();
-						CloudSpace defaultSpace = cloudServerSpaceDelegate.getCurrentSpacesDescriptor() != null ? cloudServerSpaceDelegate
-								.getCurrentSpacesDescriptor().getOrgsAndSpaces().getDefaultCloudSpace()
-								: null;
-
-						if (defaultSpace != null) {
-							setServerNameInUI(defaultSpace.getName());
-						}
 
 						return Status.OK_STATUS;
 					}

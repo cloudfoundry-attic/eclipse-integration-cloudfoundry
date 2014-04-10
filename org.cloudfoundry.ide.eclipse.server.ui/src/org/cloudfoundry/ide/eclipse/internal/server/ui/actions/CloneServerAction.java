@@ -33,7 +33,7 @@ public class CloneServerAction extends AbstractCloudFoundryServerAction {
 	private IWorkbenchPart activePart;
 
 	protected String getJobName() {
-		return "Cloning serve to selected space";
+		return "Cloning server to selected space";
 	}
 
 	public void doRun(final CloudFoundryServer cloudServer, CloudFoundryApplicationModule appModule, IAction action) {
@@ -51,7 +51,7 @@ public class CloneServerAction extends AbstractCloudFoundryServerAction {
 					return Status.OK_STATUS;
 				}
 			};
-
+			job.setSystem(true);
 			job.schedule();
 		}
 		else {

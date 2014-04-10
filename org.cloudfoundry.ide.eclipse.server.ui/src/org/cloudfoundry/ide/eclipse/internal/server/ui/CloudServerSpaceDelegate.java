@@ -11,16 +11,20 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudOrgsAndSpaces;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.osgi.util.NLS;
 
@@ -103,8 +107,8 @@ public class CloudServerSpaceDelegate {
 	 * credentials and URL in the server, are invalid, or failed to retrieve
 	 * list of spaces
 	 */
-	public CloudSpacesDescriptor getUpdatedDescriptor(String urlText, String userName, String password, boolean selfSigned,
-			IRunnableContext context) throws CoreException {
+	public CloudSpacesDescriptor getUpdatedDescriptor(String urlText, String userName, String password,
+			boolean selfSigned, IRunnableContext context) throws CoreException {
 		String actualURL = CloudUiUtil.getUrlFromDisplayText(urlText);
 
 		validateCredentials(actualURL, userName, password);
@@ -112,7 +116,8 @@ public class CloudServerSpaceDelegate {
 		String cachedDescriptorID = CloudSpacesDescriptor.getDescriptorID(userName, password, actualURL);
 		spacesDescriptor = cachedDescriptors.get(cachedDescriptorID);
 		if (spacesDescriptor == null) {
-			CloudOrgsAndSpaces orgsAndSpaces = CloudUiUtil.getCloudSpaces(userName, password, actualURL, true, selfSigned, context);
+			CloudOrgsAndSpaces orgsAndSpaces = CloudUiUtil.getCloudSpaces(userName, password, actualURL, true,
+					selfSigned, context);
 
 			if (orgsAndSpaces != null) {
 				spacesDescriptor = new CloudSpacesDescriptor(orgsAndSpaces, userName, password, actualURL);
@@ -186,15 +191,14 @@ public class CloudServerSpaceDelegate {
 	}
 
 	/**
-	 * Force notify that the spaces descriptor has changed. Since the descriptor
-	 * is assumed to be changed, a new default space obtained from that
-	 * descriptor will be set in the server
+	 * Invoked if the descriptor containing list of orgs and spaces has changed.
+	 * If available, a default space will be set in the server
 	 */
 	protected void internalDescriptorChanged() {
 
 		// Set a default space, if one is available
 		if (spacesDescriptor != null) {
-			CloudSpace defaultCloudSpace = spacesDescriptor.getOrgsAndSpaces().getDefaultCloudSpace();
+			CloudSpace defaultCloudSpace = getSpaceWithNoServerInstance();
 			setSelectedSpace(defaultCloudSpace);
 		}
 		else {
@@ -226,6 +230,75 @@ public class CloudServerSpaceDelegate {
 
 	public boolean hasSetSpace() {
 		return cloudServer.hasCloudSpace();
+	}
+
+	/**
+	 * Given space selection, determine if it is valid. For example, a user
+	 * wishes to create a server instance to the selected cloudSpace, if the
+	 * cloud space is valid, return
+	 * {@link org.eclipse.core.runtime.Status#OK_STATUS}.
+	 * @param selectionObj a potential space selection.
+	 * @return if valid, return
+	 * {@link org.eclipse.core.runtime.Status#OK_STATUS}. Otherwise return
+	 * appropriate error status. Must not be null.
+	 */
+	public IStatus validateSpaceSelection(CloudSpace selectedCloudSpace) {
+		String errorMessage = null;
+
+		if (selectedCloudSpace == null) {
+			errorMessage = Messages.ERROR_NO_CLOUD_SPACE_SELECTED;
+		}
+		else {
+			List<CloudFoundryServer> cloudServers = CloudServerUtil.getCloudServers();
+			if (cloudServers != null) {
+				for (CloudFoundryServer cloudServer : cloudServers) {
+					if (matchesExisting(selectedCloudSpace, cloudServer.getCloudFoundrySpace())) {
+						errorMessage = NLS.bind(Messages.ERROR_SERVER_INSTANCE_CLOUD_SPACE_EXISTS, cloudServer
+								.getServer().getName(), selectedCloudSpace.getName());
+						break;
+					}
+				}
+			}
+		}
+		return (errorMessage != null) ? CloudFoundryPlugin.getErrorStatus(errorMessage) : Status.OK_STATUS;
+	}
+
+	/**
+	 * @return the first space available that has no corresponding server
+	 * instance. If null, no space found that is not already associated with a
+	 * server instance.
+	 */
+	public CloudSpace getSpaceWithNoServerInstance() {
+		CloudSpacesDescriptor descriptor = getCurrentSpacesDescriptor();
+		CloudOrgsAndSpaces orgsSpaces = descriptor != null ? descriptor.getOrgsAndSpaces() : null;
+
+		if (orgsSpaces != null) {
+
+			List<CloudFoundryServer> cloudServers = CloudServerUtil.getCloudServers();
+			if (cloudServers == null || cloudServers.isEmpty()) {
+				return orgsSpaces.getDefaultCloudSpace();
+			}
+			else {
+				List<CloudSpace> spaces = orgsSpaces.getAllSpaces();
+				if (spaces != null) {
+					// Find a space that does not have a corresponding server
+					// instance.
+					for (CloudSpace space : spaces) {
+						CloudFoundryServer existingServer = null;
+						for (CloudFoundryServer cloudServer : cloudServers) {
+							if (matchesExisting(space, cloudServer.getCloudFoundrySpace())) {
+								existingServer = cloudServer;
+								break;
+							}
+						}
+						if (existingServer == null) {
+							return space;
+						}
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	public CloudSpace getCurrentCloudSpace() {

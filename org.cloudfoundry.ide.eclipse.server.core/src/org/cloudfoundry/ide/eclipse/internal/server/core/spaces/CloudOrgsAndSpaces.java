@@ -98,4 +98,12 @@ public class CloudOrgsAndSpaces {
 		}
 		return null;
 	}
+
+	/**
+	 * @return all spaces available for the given account. Never null, although
+	 * may be empty if no spaces are resolved.
+	 */
+	public List<CloudSpace> getAllSpaces() {
+		return originalSpaces != null ? new ArrayList<CloudSpace>(originalSpaces) : new ArrayList<CloudSpace>(0);
+	}
 }

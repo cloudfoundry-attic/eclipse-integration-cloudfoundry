@@ -11,9 +11,12 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsValidationStatics;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudSpacesSelectionPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator.ValidationStatus;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.swt.SWT;
@@ -47,14 +50,30 @@ public class CloudFoundrySpacesWizardFragment extends WizardFragment {
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		listener = new WizardFragmentChangeListener(wizardHandle);
+		listener = new WizardFragmentChangeListener(wizardHandle) {
+
+			@Override
+			public void handleChange(PartChangeEvent event) {
+
+				// Validate if there is a space change
+				if (validator != null && event.getType() == ServerCredentialsValidationStatics.EVENT_SPACE_CHANGED) {
+					validator.localValidation();
+				}
+				super.handleChange(event);
+			}
+		};
 		spacesPart = new CloudSpacesSelectionPart(validator.getSpaceDelegate(), listener, cloudServer, wizardHandle);
 		spacesPart.createPart(composite);
 		return composite;
 	}
 
 	public boolean isComplete() {
-		return validator != null && validator.areCredentialsFilled();
+		if (validator == null) {
+			return false;
+		}
+		ValidationStatus status = validator.getPreviousValidationStatus();
+		return status != null && status.getStatus().getSeverity() != IStatus.ERROR
+				&& status.getValidationType() == ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
 	}
 
 	@Override

@@ -19,6 +19,10 @@ public class Messages {
 
 	public static final String ERROR_NO_CALLBACK_UNABLE_TO_REFRESH_CONSOLE = "No Cloud Foundry console callback available. Unable to refresh console contents.";
 
+	public static final String ERROR_NO_CLOUD_SPACE_SELECTED = "Please select a valid cloud space.";
+
+	public static final String ERROR_SERVER_INSTANCE_CLOUD_SPACE_EXISTS = "A Cloud Foundry server instance ({0}) for space: {1} - already exists. Please select another cloud space if available.";
+
 	/*
 	 * UI Labels
 	 */

@@ -18,9 +18,9 @@ import org.cloudfoundry.client.lib.domain.CloudOrganization;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsValidationStatics;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -134,16 +134,12 @@ public class CloudSpacesSelectionPart extends UIPart {
 
 			CloudSpace selectedSpace = cloudSpaceServerDelegate.getCurrentCloudSpace();
 			if (selectedSpace == null) {
-				// Attempt to select a default value
-				selectedSpace = cloudSpaceServerDelegate.getCurrentSpacesDescriptor() != null ? cloudSpaceServerDelegate
-						.getCurrentSpacesDescriptor().getOrgsAndSpaces().getDefaultCloudSpace()
-						: null;
+				// Attempt to select a space that does not yet have a server instance.
+				selectedSpace = cloudSpaceServerDelegate.getSpaceWithNoServerInstance();
 			}
 
-			if (selectedSpace != null) {
-				// First set the default cloud space as the selected space
-				setSpaceSelection(selectedSpace);
-
+			// First set the default cloud space as the selected space
+			if (setSpaceSelection(selectedSpace)) {
 				setSelectionInViewer(selectedSpace);
 			}
 
@@ -152,7 +148,8 @@ public class CloudSpacesSelectionPart extends UIPart {
 						.getStatus(
 								"Please check your credentials or connection if list of organizations and spaces remains empty.",
 								IStatus.INFO));
-			} else {
+			}
+			else {
 				notifyStatusChange(CloudFoundryPlugin.getStatus(DEFAULT_DESCRIPTION, IStatus.OK));
 			}
 
@@ -194,15 +191,28 @@ public class CloudSpacesSelectionPart extends UIPart {
 		}
 	}
 
-	protected void setSpaceSelection(CloudSpace selectedSpace) {
+	/**
+	 * 
+	 * @param selectedSpace
+	 * @return true if the specified space was set. False otherwise.
+	 */
+	protected boolean setSpaceSelection(CloudSpace selectedSpace) {
+		boolean set = false;
+
 		if (cloudSpaceServerDelegate != null) {
-			cloudSpaceServerDelegate.setSelectedSpace(selectedSpace);
-			String errorMessage = selectedSpace == null ? "Please select a space." : null;
-
-			IStatus status = errorMessage != null ? CloudFoundryPlugin.getErrorStatus(errorMessage) : Status.OK_STATUS;
-			notifyStatusChange(selectedSpace, status);
-
+			IStatus status = cloudSpaceServerDelegate.validateSpaceSelection(selectedSpace);
+			if (status.isOK()) {
+				// Only set the space if it is valid
+				cloudSpaceServerDelegate.setSelectedSpace(selectedSpace);
+				set = true;
+			}
+			else {
+				// Clear the space selection to invalidate the selection
+				cloudSpaceServerDelegate.setSelectedSpace(null);
+			}
+			notifyStatusChange(selectedSpace, status, ServerCredentialsValidationStatics.EVENT_SPACE_CHANGED);
 		}
+		return set;
 	}
 
 	protected void refresh() {
@@ -213,12 +223,8 @@ public class CloudSpacesSelectionPart extends UIPart {
 			if (selectedItems != null && selectedItems.length > 0) {
 				// It's a single selection tree, so only get the first selection
 				Object selectedObj = selectedItems[0].getData();
-				if (selectedObj instanceof CloudSpace) {
-					setSpaceSelection((CloudSpace) selectedObj);
-				}
-				else if (selectedObj instanceof CloudOrganization) {
-					setSpaceSelection(null);
-				}
+				CloudSpace selectedSpace = selectedObj instanceof CloudSpace ? (CloudSpace) selectedObj : null;
+				setSpaceSelection(selectedSpace);
 			}
 		}
 	}
