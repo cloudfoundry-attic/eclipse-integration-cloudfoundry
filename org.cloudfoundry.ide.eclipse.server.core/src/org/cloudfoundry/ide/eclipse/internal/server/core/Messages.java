@@ -53,6 +53,8 @@ public class Messages {
 	public static final String ERROR_FAILED_TO_PUSH_APP = "Failed to push application - {0}";
 
 	public static final String ERROR_NO_CLOUD_APPLICATION_FOUND = "No cloud module specified when attempting to update application instance stats.";
+	
+	public static final String ERROR_NO_MODULES_TO_PUBLISH = "Publish request failed. No modules to publish.";
 
 	/*
 	 * Warnings
@@ -105,5 +107,7 @@ public class Messages {
 	 */
 	
 	public static final String REFRESHING_MODULES = "Initialising and refreshing modules for - {0}";
+		
+	public static final String PUBLISHING_MODULE = "Publishing module - {0}";
 
 }

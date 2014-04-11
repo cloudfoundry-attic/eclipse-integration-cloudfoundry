@@ -50,12 +50,12 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		assertEquals(Collections.emptyList(), cloudServer.getExistingCloudModules());
 	}
 
-	public void testCloudFoundryModuleCreation() throws Exception {
+	public void testCloudFoundryModuleCreationNonWSTPublish() throws Exception {
 		// Test that a cloud foundry module is created when an application is
 		// pushed
 		// using framework API rather than test harness API.
 
-		String appPrefix = "testCloudFoundryModuleCreation";
+		String appPrefix = "testCloudFoundryModuleCreationNonWSTPublish";
 		createWebApplicationProject();
 
 		// Configure the test fixture for deployment.
@@ -68,7 +68,39 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		assertNotNull("Expected non-null IModule when deploying application", module);
 
-		serverBehavior.startModule(new IModule[] { module }, null);
+		// Publish with non-WST publish API (i.e. publish that is not invoked by WST framework)
+		serverBehavior.publishAdd(module.getName(), new NullProgressMonitor());
+
+		Collection<CloudFoundryApplicationModule> appModules = cloudServer.getExistingCloudModules();
+		assertNotNull("Expected list of cloud modules after deploying: " + appPrefix, appModules);
+		assertTrue("Expected one application module for " + appPrefix + " but got: " + appModules.size(),
+				appModules.size() == 1);
+
+		CloudFoundryApplicationModule applicationModule = appModules.iterator().next();
+		assertEquals(expectedAppName, applicationModule.getDeployedApplicationName());
+
+	}
+
+	public void testCloudFoundryModuleCreationWSTPublish() throws Exception {
+		// Test that a cloud foundry module is created when an application is
+		// pushed
+		// using framework API rather than test harness API.
+
+		String appPrefix = "testCloudFoundryModuleCreationWSTPublish";
+		createWebApplicationProject();
+
+		// Configure the test fixture for deployment.
+		// This step is a substitute for the Application deployment wizard
+		String projectName = harness.getDefaultWebAppProjectName();
+		String expectedAppName = harness.getDefaultWebAppName(appPrefix);
+		getTestFixture().configureForApplicationDeployment(expectedAppName, false);
+
+		IModule module = getModule(projectName);
+
+		assertNotNull("Expected non-null IModule when deploying application", module);
+
+		// Publish through WST publish method
+		serverBehavior.publish(IServer.PUBLISH_INCREMENTAL, new NullProgressMonitor());
 
 		Collection<CloudFoundryApplicationModule> appModules = cloudServer.getExistingCloudModules();
 		assertNotNull("Expected list of cloud modules after deploying: " + appPrefix, appModules);

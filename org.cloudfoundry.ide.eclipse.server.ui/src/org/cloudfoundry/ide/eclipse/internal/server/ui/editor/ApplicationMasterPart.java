@@ -202,7 +202,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 									@Override
 									protected IStatus run(IProgressMonitor monitor) {
-										cloudServer.getBehaviour().publish(project.getName(), monitor);
+										cloudServer.getBehaviour().publishAdd(project.getName(), monitor);
 										return Status.OK_STATUS;
 									}
 

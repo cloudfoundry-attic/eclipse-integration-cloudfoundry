@@ -388,7 +388,7 @@ public class CloudFoundryApplicationModule extends ExternalModule {
 	 * @return true if the application is published to the Cloud Foundry server.
 	 * False otherwise.
 	 */
-	public synchronized boolean isPublished() {
+	public synchronized boolean isDeployed() {
 		return getApplication() != null;
 	}
 

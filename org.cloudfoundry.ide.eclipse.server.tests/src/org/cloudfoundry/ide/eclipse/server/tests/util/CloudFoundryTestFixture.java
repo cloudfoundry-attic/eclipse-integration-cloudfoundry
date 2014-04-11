@@ -254,7 +254,7 @@ public class CloudFoundryTestFixture {
 		public void setup() throws CoreException {
 
 			Random random = new Random(100);
-			randomPrefix = Math.abs(random.nextInt());
+			randomPrefix = Math.abs(random.nextInt(1000000));
 
 			// Clean up all projects from workspace
 			StsTestUtil.cleanUpProjects();

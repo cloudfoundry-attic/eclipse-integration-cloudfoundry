@@ -105,6 +105,15 @@ import org.springframework.web.client.RestClientException;
  * <p/>
  * 4. Handles any common errors associated with these operations, in particular
  * staging errors.
+ * <p/>
+ * WST framework publishing of applications (e.g. drag/drop to Servers view, or
+ * Run On Server), rely on
+ * {@link #publishModule(int, int, IModule[], IProgressMonitor)}. It's important
+ * to note that as of CF 1.6.1, all WST framework-based publishings will result
+ * in server-level publishing, so even if deploying a particular application,
+ * other applications that are already deployed and not external (i.e. have a
+ * corresponding workspace project) that need republishing may be republished as
+ * well.
  * 
  * 
  * @author Christian Dupuis
@@ -789,15 +798,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * changes. It will only update restart an application in regular run mode.
 	 * It does not support debug mode.Publishing of changes is done
 	 * incrementally.
-	 * @param modules
+	 * @param module to update
 	 * 
-	 * @param isIncrementalPublishing true if optimised incremental publishing
-	 * should be enabled. False otherwise
 	 * @throws CoreException
 	 */
-	public ICloudFoundryOperation getUpdateRestartOperation(IModule[] modules, boolean isIncrementalPublishing)
-			throws CoreException {
-		return getDeployApplicationOperation(isIncrementalPublishing, modules);
+	public ICloudFoundryOperation getUpdateRestartOperation(IModule[] modules) throws CoreException {
+		return getDeployApplicationOperation(CloudFoundryPlugin.getDefault().getIncrementalPublish(), modules);
 	}
 
 	/**
@@ -1186,56 +1192,26 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 	}
 
-	@Override
-	public IStatus publish(int kind, IProgressMonitor monitor) {
-		try {
-			if (kind == IServer.PUBLISH_CLEAN) {
-				List<IModule[]> allModules = getAllModules();
-				for (IModule[] module : allModules) {
-					if (!module[0].isExternal()) {
-						publishModule(module, monitor);
-					}
-				}
-				return Status.OK_STATUS;
-			}
-			else if (kind == IServer.PUBLISH_INCREMENTAL) {
-				List<IModule[]> allModules = getAllModules();
-				for (IModule[] module : allModules) {
-					int publishState = getServer().getModulePublishState(module);
-					// Only publish modules that have not been published and
-					// have workspace projects
-					if (!module[0].isExternal() && (publishState == IServer.PUBLISH_STATE_UNKNOWN)) {
-						publishModule(module, monitor);
-					}
-				}
-				((Server) getServer()).setServerPublishState(IServer.PUBLISH_STATE_NONE);
-			}
-		}
-		catch (CoreException e) {
-			handlePublishError(e);
-			return Status.CANCEL_STATUS;
-		}
-
-		return Status.OK_STATUS;
-		// return super.publish(kind, monitor);
-	}
-
 	/**
-	 * If found, will attempt to publish module with the given name.
+	 * If found, will attempt to publish module with the given name, and it
+	 * assumes it is being added for the first time. NOTE: This method is only
+	 * intended to bypass the WST framework in cases not supported by WST (for
+	 * example, drag/drop an application to a non-WST view or UI control).
+	 * Otherwise, WST-based deployments of applications (e.g. Run on Server,
+	 * drag/drop to Servers view) should rely on the framework to invoke the
+	 * appropriate publish method in the behaviour.
+	 * 
+	 * @see #publishModule(int, int, IModule[], IProgressMonitor)
 	 * @param moduleName
 	 * @param monitor
 	 * @return status of publish
 	 */
-	public IStatus publish(String moduleName, IProgressMonitor monitor) {
+	public IStatus publishAdd(String moduleName, IProgressMonitor monitor) {
 		List<IModule[]> allModules = getAllModules();
 		try {
 			for (IModule[] module : allModules) {
 				if (module[0].getName().equals(moduleName)) {
-					if (!module[0].isExternal()) {
-						publishModule(module, monitor);
-
-						((Server) getServer()).setServerPublishState(IServer.PUBLISH_STATE_NONE);
-					}
+					new PushApplicationOperation(module).run(monitor);
 					return Status.OK_STATUS;
 				}
 			}
@@ -1260,51 +1236,81 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	}
 
-	/**
-	 * Publishes the given set of modules. Unlike
-	 * {@link #publish(int, IProgressMonitor)}, which may iterate through all
-	 * modules to determine which ones to publish (e.g doing a full publish on
-	 * the server rather individual modules), this method is only intended to
-	 * publish specific module selections.
-	 * @param modules
-	 * @param monitor
-	 * @throws CoreException
-	 */
-	protected void publishModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		new PushApplicationOperation(modules).run(monitor);
-	}
-
 	@Override
 	protected void publishModule(int kind, int deltaKind, IModule[] module, IProgressMonitor monitor)
 			throws CoreException {
 		super.publishModule(kind, deltaKind, module, monitor);
 
-		// If the delta indicates that the module has been removed, remove it
-		// from the server.
-		// Note that although the "module" parameter is of IModule[] type,
-		// documentation
-		// (and the name of the parameter) indicates that it is always one
-		// module
-		if (deltaKind == REMOVED) {
-			final CloudFoundryServer cloudServer = getCloudFoundryServer();
-			final CloudFoundryApplicationModule cloudModule = cloudServer.getCloudModule(module[0]);
-			if (cloudModule.getApplication() != null) {
-				new BehaviourRequest<Void>(NLS.bind("Deleting application {0}",
-						cloudModule.getDeployedApplicationName())) {
-					@Override
-					protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-						client.deleteApplication(cloudModule.getDeployedApplicationName());
-						return null;
-					}
-				}.run(monitor);
+		try {
+			// If the delta indicates that the module has been removed, remove
+			// it
+			// from the server.
+			// Note that although the "module" parameter is of IModule[] type,
+			// documentation
+			// (and the name of the parameter) indicates that it is always one
+			// module
+			if (deltaKind == REMOVED) {
+				final CloudFoundryServer cloudServer = getCloudFoundryServer();
+				final CloudFoundryApplicationModule cloudModule = cloudServer.getCloudModule(module[0]);
+				if (cloudModule.getApplication() != null) {
+					new BehaviourRequest<Void>(NLS.bind("Deleting application {0}",
+							cloudModule.getDeployedApplicationName())) {
+						@Override
+						protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+							client.deleteApplication(cloudModule.getDeployedApplicationName());
+							return null;
+						}
+					}.run(monitor);
+				}
+
 			}
-			// } else if (deltaKind == ADDED | deltaKind == CHANGED) {
-			// IModuleResourceDelta[] delta = getPublishedResourceDelta(module);
-			// if (delta.length > 0 &&
-			// getCloudFoundryServer().getApplication(module[0]).getApplication()
-			// != null) {
-			// deployOrStartModule(module, false, monitor);
-			// }
+			else if (!module[0].isExternal()) {
+				// These operations must ONLY be performed on NON-EXTERNAL
+				// applications (apps with associated accessible workspace
+				// projects).
+				// Do not perform any updates or restarts on non-workspace
+				// (external) apps, as some spaces may contain long-running
+				// applications that
+				// should not be restarted.
+				int publishState = getServer().getModulePublishState(module);
+				ICloudFoundryOperation op = null;
+				if (deltaKind == ServerBehaviourDelegate.ADDED || publishState == IServer.PUBLISH_STATE_UNKNOWN) {
+					// Application has not been published, so do a full
+					// publish
+					op = new PushApplicationOperation(module);
+				}
+				else if (deltaKind == ServerBehaviourDelegate.CHANGED
+						|| publishState == IServer.PUBLISH_STATE_INCREMENTAL) {
+					op = getApplicationOperation(module, ApplicationAction.UPDATE_RESTART);
+				}
+
+				if (op != null) {
+					final ICloudFoundryOperation opToRun = op;
+					// Run as Job as to not block other modules that also need
+					// to be published
+					Job job = new Job(NLS.bind(Messages.PUBLISHING_MODULE, module[0].getName())) {
+
+						@Override
+						protected IStatus run(IProgressMonitor monitor) {
+							try {
+								opToRun.run(monitor);
+							}
+							catch (CoreException e) {
+								handlePublishError(e);
+								return Status.CANCEL_STATUS;
+							}
+							return Status.OK_STATUS;
+						}
+
+					};
+					job.setPriority(Job.INTERACTIVE);
+					job.schedule();
+				}
+			}
+		}
+		catch (CoreException e) {
+			handlePublishError(e);
+			throw e;
 		}
 	}
 
@@ -1785,9 +1791,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public ICloudFoundryOperation getApplicationOperation(CloudFoundryApplicationModule application,
 			ApplicationAction action) throws CoreException {
+		IModule[] modules = new IModule[] { application.getLocalModule() };
+
+		return getApplicationOperation(modules, action);
+	}
+
+	public ICloudFoundryOperation getApplicationOperation(IModule[] modules, ApplicationAction action)
+			throws CoreException {
 		ICloudFoundryOperation operation = null;
 		// Set the deployment mode
-		IModule[] modules = new IModule[] { application.getLocalModule() };
 		switch (action) {
 		case START:
 			operation = internalGetDeployStartApplicationOperation(modules);
@@ -1799,7 +1811,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			operation = getRestartOperation(modules);
 			break;
 		case UPDATE_RESTART:
-			operation = getUpdateRestartOperation(modules, CloudFoundryPlugin.getDefault().getIncrementalPublish());
+			operation = getUpdateRestartOperation(modules);
 			break;
 		}
 		return operation;
@@ -2228,8 +2240,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
-	 * Pushes, and if necessary, creates an application in a Cloud Foundry
-	 * server:
+	 * Operation publish an application. If the application is already deployed
+	 * and synchronised, it will only update the mapping between the module and
+	 * the {@link CloudApplication}.
 	 * 
 	 * <p/>
 	 * 1. Prompts for deployment information.
@@ -2245,8 +2258,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * {@link CloudFoundryApplicationModule}. It will NOT re-create, re-publish,
 	 * or restart the application.
 	 * <p/>
-	 * This operation is only meant to be run during publishing requests, not
-	 * start or restart requests.
 	 *
 	 */
 	protected class PushApplicationOperation extends StartOperation {
@@ -2260,8 +2271,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				IProgressMonitor monitor) throws CoreException {
 			// If the app is already published, just refresh the application
 			// mapping.
-
-			if (appModule.isPublished()) {
+			int moduleState = getServer().getModulePublishState(new IModule[] { appModule.getLocalModule() });
+			if (appModule.isDeployed() && moduleState == IServer.PUBLISH_STATE_NONE) {
 
 				printlnToConsole(appModule, Messages.CONSOLE_APP_FOUND, monitor);
 
@@ -2338,7 +2349,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		@Override
 		protected void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
 				throws CoreException {
-			if (!appModule.isPublished()) {
+			if (!appModule.isDeployed()) {
 				super.performDeployment(appModule, monitor);
 			}
 		}

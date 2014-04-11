@@ -60,7 +60,7 @@ public class UpdateRestartModuleAction extends AbstractCloudFoundryServerAction 
 					// else {
 					// }
 
-					cloudServer.getBehaviour().getUpdateRestartOperation(modules, getIncrementalPublish()).run(monitor);
+					cloudServer.getBehaviour().getUpdateRestartOperation(modules).run(monitor);
 
 				}
 				catch (CoreException e) {
