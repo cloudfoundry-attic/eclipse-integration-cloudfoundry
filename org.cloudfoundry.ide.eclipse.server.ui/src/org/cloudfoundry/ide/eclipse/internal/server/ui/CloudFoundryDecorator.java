@@ -7,12 +7,14 @@
  *
  * Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     Elson Yuen, IBM - Improve logic in determining whether a server type is a Cloud Foundry Server
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
@@ -162,7 +164,7 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 
 	private boolean isCloudFoundryServerType(IServer server) {
 		IServerType serverType = server.getServerType();
-		return serverType != null && serverType.getId().startsWith("org.cloudfoundry.appcloudserver");
+		return serverType != null && CloudFoundryBrandingExtensionPoint.getServerTypeIds().contains(serverType.getId());
 	}
 
 }
