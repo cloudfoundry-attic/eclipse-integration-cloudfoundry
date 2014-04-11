@@ -38,7 +38,6 @@ import org.eclipse.jst.server.core.FacetUtil;
 import org.eclipse.jst.server.core.internal.J2EEUtil;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
-import org.eclipse.wst.server.core.IModule2;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
 import org.eclipse.wst.server.core.internal.Server;
@@ -150,16 +149,21 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 				}
 
 				IStatus status;
-				// If the module, in a non-faceted project, has been determined to be deployable to CF (ie. a single zip application archive), then
+				// If the module, in a non-faceted project, has been determined
+				// to be deployable to CF (ie. a single zip application
+				// archive), then
 				// this facet check is unnecessary.
 				boolean ignoreFacetCheck = false;
-				if (module instanceof IModule2) {
-					String property = ((IModule2)module).getProperty(CloudFoundryConstants.PROPERTY_PROJECT_INDEPENDENT);
-					if (property != null && property.equals("true")) {
-					   ignoreFacetCheck = true;
-					}
-				}
-				
+				// FIXNS: Enable with IModule2 workaround is in place, as its
+				// not available in Eclipse 4.3 and older.
+				// if (module instanceof IModule2) {
+				// String property =
+				// ((IModule2)module).getProperty(CloudFoundryConstants.PROPERTY_PROJECT_INDEPENDENT);
+				// if (property != null && property.equals("true")) {
+				// ignoreFacetCheck = true;
+				// }
+				// }
+
 				if (module.getProject() != null && !ignoreFacetCheck) {
 					status = FacetUtil.verifyFacets(module.getProject(), getServer());
 					if (status != null && !status.isOK()) {
