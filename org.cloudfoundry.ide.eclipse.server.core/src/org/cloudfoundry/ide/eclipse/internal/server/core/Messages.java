@@ -109,5 +109,7 @@ public class Messages {
 	public static final String REFRESHING_MODULES = "Initialising and refreshing modules for - {0}";
 		
 	public static final String PUBLISHING_MODULE = "Publishing module - {0}";
+	
+	public static final String DELETING_MODULE = "Deleting module - {0}";
 
 }

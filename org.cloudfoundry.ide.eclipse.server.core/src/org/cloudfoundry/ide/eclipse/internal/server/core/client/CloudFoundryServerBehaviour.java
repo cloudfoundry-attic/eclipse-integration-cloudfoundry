@@ -1253,7 +1253,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				final CloudFoundryServer cloudServer = getCloudFoundryServer();
 				final CloudFoundryApplicationModule cloudModule = cloudServer.getCloudModule(module[0]);
 				if (cloudModule.getApplication() != null) {
-					new BehaviourRequest<Void>(NLS.bind("Deleting application {0}",
+					new BehaviourRequest<Void>(NLS.bind(Messages.DELETING_MODULE,
 							cloudModule.getDeployedApplicationName())) {
 						@Override
 						protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
@@ -1279,8 +1279,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// publish
 					op = new PushApplicationOperation(module);
 				}
-				else if (deltaKind == ServerBehaviourDelegate.CHANGED
-						|| publishState == IServer.PUBLISH_STATE_INCREMENTAL) {
+				else if (deltaKind == ServerBehaviourDelegate.CHANGED) {
 					op = getApplicationOperation(module, ApplicationAction.UPDATE_RESTART);
 				}
 
