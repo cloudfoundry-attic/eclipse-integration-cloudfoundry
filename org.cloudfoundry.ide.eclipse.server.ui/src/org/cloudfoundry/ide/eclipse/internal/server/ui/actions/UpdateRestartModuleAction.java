@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM - fixed menu item on published modules.
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.actions;
 
@@ -31,6 +32,8 @@ import org.eclipse.wst.server.core.IServer;
  * 
  */
 public class UpdateRestartModuleAction extends AbstractCloudFoundryServerAction {
+	
+	private IModule[] selectedModule = null; 
 
 	protected String getJobName() {
 		return "Update and restarting module";
@@ -42,13 +45,11 @@ public class UpdateRestartModuleAction extends AbstractCloudFoundryServerAction 
 
 	protected void doRun(CloudFoundryServer server, CloudFoundryApplicationModule appModule, IAction action) {
 		final CloudFoundryServer cloudServer = server;
-		final CloudFoundryApplicationModule selectedModule = appModule;
 		Job job = new Job(getJobName()) {
 
 			protected IStatus run(IProgressMonitor monitor) {
 
 				try {
-					IModule[] modules = new IModule[] { selectedModule };
 					// FIXNS: Disabled debug for CF 1.5.0 until v2 supports
 					// debug
 					// if
@@ -60,7 +61,7 @@ public class UpdateRestartModuleAction extends AbstractCloudFoundryServerAction 
 					// else {
 					// }
 
-					cloudServer.getBehaviour().getUpdateRestartOperation(modules).run(monitor);
+					cloudServer.getBehaviour().getUpdateRestartOperation(selectedModule).run(monitor);
 
 				}
 				catch (CoreException e) {
@@ -92,10 +93,11 @@ public class UpdateRestartModuleAction extends AbstractCloudFoundryServerAction 
 				// not accessible, as users shoudln't
 				// be able to modify files within Eclipse if the project is not
 				// accessible (i.e it is not open and writable in the workspace)
+				selectedModule = new IModule[] { appModule.getLocalModule() };
 				if (state == IServer.STATE_STARTED
 						&& !appModule.isExternal()
 						&& CloudFoundryProperties.isModuleProjectAccessible.testProperty(
-								new IModule[] { appModule.getLocalModule() }, cloudServer)) {
+								selectedModule, cloudServer)) {
 					action.setEnabled(true);
 					return;
 				}
