@@ -31,6 +31,6 @@ public class CloudFoundryConstants {
 	// Does this have to be vendor specific?  Removing Pivotal CF
 	public static final String PUBLIC_CF_SERVER_SIGNUP_LABEL = "Sign Up";
 
-    public static final String PROPERTY_PROJECT_INDEPENDENT = "org.cloudfoundry.ide.eclipse.server.core.property.ProjectIndependent";
+	public static final String PROPERTY_MODULE_NO_FACET = "org.cloudfoundry.ide.eclipse.server.core.property.PROPERTY_MODULE_NO_FACET";
 
 }

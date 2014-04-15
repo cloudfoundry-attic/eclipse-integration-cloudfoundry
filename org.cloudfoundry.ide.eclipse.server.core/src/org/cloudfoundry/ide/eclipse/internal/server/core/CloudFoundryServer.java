@@ -12,6 +12,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -156,13 +157,30 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 				boolean ignoreFacetCheck = false;
 				// FIXNS: Enable with IModule2 workaround is in place, as its
 				// not available in Eclipse 4.3 and older.
-				// if (module instanceof IModule2) {
-				// String property =
-				// ((IModule2)module).getProperty(CloudFoundryConstants.PROPERTY_PROJECT_INDEPENDENT);
-				// if (property != null && property.equals("true")) {
-				// ignoreFacetCheck = true;
-				// }
-				// }
+//				 if (module instanceof IModule2) {
+//					 String property = ((IModule2)module).getProperty(CloudFoundryConstants.PROPERTY_MODULE_NO_FACET);
+//					 if (property != null && property.equals("true")) {
+//						 ignoreFacetCheck = true;
+//					 }
+//				 }
+
+// Workaround - Remove the following and use the above commented out code
+				ClassLoader classLoader = module.getClass().getClassLoader();
+				if (classLoader != null) {
+					try {
+						Class iModule2 = classLoader.loadClass("org.eclipse.wst.server.core.IModule2");
+						if (iModule2 != null) {
+							Method getProperty = iModule2.getMethod("getProperty", String.class);
+							Object o = getProperty.invoke(module, CloudFoundryConstants.PROPERTY_MODULE_NO_FACET);
+							if (o instanceof String && ((String)o).equals("true")) {
+								ignoreFacetCheck = true;
+							}
+						}
+					} catch (Exception e) {
+						// If any issues, just go ahead and do the facet check below
+					}
+				}
+// End of workaround
 
 				if (module.getProject() != null && !ignoreFacetCheck) {
 					status = FacetUtil.verifyFacets(module.getProject(), getServer());
