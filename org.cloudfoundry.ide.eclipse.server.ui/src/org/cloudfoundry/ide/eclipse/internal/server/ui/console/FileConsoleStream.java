@@ -59,7 +59,7 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 	 * False otherwise
 	 */
 	public synchronized boolean isActive() {
-		return attemptsRemaining > 0 && !isClosed();
+		return attemptsRemaining > 0 && super.isActive();
 	}
 
 	/**
@@ -244,7 +244,7 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 		return attemptsRemaining == 0;
 	}
 
-	public IContentType getConsoleType() {
+	public IContentType getContentType() {
 		return FILE_CONTENT_TYPE;
 	}
 }

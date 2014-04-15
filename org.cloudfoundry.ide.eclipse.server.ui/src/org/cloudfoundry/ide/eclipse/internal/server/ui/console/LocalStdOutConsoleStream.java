@@ -27,7 +27,7 @@ public class LocalStdOutConsoleStream extends LocalConsoleStream {
 		super(SWT.COLOR_DARK_MAGENTA);
 	}
 
-	public IContentType getConsoleType() {
+	public IContentType getContentType() {
 		return StdContentType.STD_OUT;
 	}
 

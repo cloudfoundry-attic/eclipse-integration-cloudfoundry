@@ -36,6 +36,8 @@ public interface ICloudFoundryConsoleStream {
 	 */
 	public String write(IProgressMonitor monitor) throws CoreException;
 
+	public String write(String content, IProgressMonitor monitor) throws CoreException;
+
 	/**
 	 * Link the console content to an actual Eclipse console output stream.
 	 * @param outputStream to the Eclipse console.
@@ -61,5 +63,5 @@ public interface ICloudFoundryConsoleStream {
 	 * @return non-null content type. Identifies the console content and may
 	 * enable additional management on the content.
 	 */
-	public IContentType getConsoleType();
+	public IContentType getContentType();
 }

@@ -21,6 +21,12 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 
+/**
+ * Base console stream that writes to an Eclipse IO console stream. The console
+ * stream may be accessed by different threads therefore write and stop
+ * operations should be synchronized.
+ *
+ */
 public abstract class CloudFoundryConsoleStream implements ICloudFoundryConsoleStream {
 
 	private final int swtConsoleColour;
@@ -74,7 +80,8 @@ public abstract class CloudFoundryConsoleStream implements ICloudFoundryConsoleS
 		if (this.outputStream != null && !this.outputStream.isClosed()) {
 			Display.getDefault().syncExec(new Runnable() {
 				public void run() {
-					CloudFoundryConsoleStream.this.outputStream.setColor(Display.getDefault().getSystemColor(swtConsoleColour));
+					CloudFoundryConsoleStream.this.outputStream.setColor(Display.getDefault().getSystemColor(
+							swtConsoleColour));
 				}
 			});
 		}
@@ -91,19 +98,17 @@ public abstract class CloudFoundryConsoleStream implements ICloudFoundryConsoleS
 		}
 	}
 
-	protected synchronized boolean isClosed() {
-		return outputStream == null || outputStream.isClosed();
-	}
+
 
 	public synchronized boolean isActive() {
-		return !isClosed();
+		return outputStream != null && !outputStream.isClosed();
 	}
 
 	/*
 	 * @Overrride
 	 */
 	public String toString() {
-		return getConsoleType().toString();
+		return getContentType().toString();
 	}
 
 	abstract protected String getContent(IProgressMonitor monitor) throws CoreException;

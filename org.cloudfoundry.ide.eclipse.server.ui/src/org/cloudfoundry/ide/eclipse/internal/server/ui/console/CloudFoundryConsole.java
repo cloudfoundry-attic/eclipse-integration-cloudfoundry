@@ -11,10 +11,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
@@ -84,10 +81,10 @@ class CloudFoundryConsole extends JobChangeAdapter {
 
 	private final CloudFoundryApplicationModule app;
 
-	private Map<IContentType, List<IConsoleJob>> activeStreams = new HashMap<IContentType, List<IConsoleJob>>();
+	private ActiveStreams activeStreams;
 
 	/** How frequently to check for log changes; defaults to 3 seconds */
-	private long sampleInterval = 3000;
+	private static long POLL_INTERVAL = 3000;
 
 	private final MessageConsole console;
 
@@ -96,34 +93,11 @@ class CloudFoundryConsole extends JobChangeAdapter {
 		this.console = console;
 	}
 
-	protected StdConsoleStreamJob getStdStreamJob(StdContentType contentType) {
-
-		StdConsoleStreamJob job = null;
-		List<IConsoleJob> errorJobs = activeStreams.get(contentType);
-		if (errorJobs != null && errorJobs.size() > 0 && errorJobs.get(0) instanceof StdConsoleStreamJob) {
-			job = (StdConsoleStreamJob) errorJobs.get(0);
+	protected ActiveStreams getActiveStreams() {
+		if (activeStreams == null) {
+			activeStreams = new ActiveStreams();
 		}
-
-		// Lazily create the std streaming jobs, only when needed, as to not
-		// have running jobs that are not used. Only one job
-		// per std out content should exist per tailing session
-		if (job == null && contentType != null) {
-			LocalConsoleStream stdContent = null;
-			switch (contentType) {
-			case STD_ERROR:
-				stdContent = new LocalStdErrorConsoleStream();
-				break;
-			case STD_OUT:
-				stdContent = new LocalStdOutConsoleStream();
-				break;
-			}
-			if (stdContent != null) {
-				job = new StdConsoleStreamJob(stdContent);
-				startTailing(job);
-			}
-		}
-		return job;
-
+		return activeStreams;
 	}
 
 	/**
@@ -132,70 +106,21 @@ class CloudFoundryConsole extends JobChangeAdapter {
 	 * @param contents to stream to the console
 	 */
 	public synchronized void startTailing(List<ICloudFoundryConsoleStream> consoleContents) {
-
 		// Add any new streams to the list of active streams
-		if (consoleContents != null) {
-
-			for (ICloudFoundryConsoleStream content : consoleContents) {
-				if (content != null) {
-					startTailing(new ConsoleStreamJob(app.getDeployedApplicationName() + " - "
-							+ content.getConsoleType().getId(), content));
-				}
-			}
-		}
-	}
-
-	protected synchronized void startTailing(IConsoleJob job) {
-		if (job == null || job.getConsoleContent() == null) {
+		// External requests to start tailing should always active a new active
+		// stream, if not already active
+		if (consoleContents == null) {
 			return;
 		}
-
-		IContentType contentType = job.getConsoleContent().getConsoleType();
-
-		IOConsoleOutputStream stream = console.newOutputStream();
-		if (stream != null) {
-
-			List<IConsoleJob> streamJobs = activeStreams.get(contentType);
-			if (streamJobs == null) {
-				streamJobs = new ArrayList<CloudFoundryConsole.IConsoleJob>();
-				activeStreams.put(contentType, streamJobs);
-			}
-
-			ICloudFoundryConsoleStream content = job.getConsoleContent();
-			content.initialiseStream(stream);
-
-			streamJobs.add(job);
-			((Job) job).schedule();
-		}
-
-	}
-
-	protected synchronized void remove(IContentType type, IConsoleJob toRemove) {
-		List<IConsoleJob> jobsPerType = activeStreams.get(type);
-		if (jobsPerType != null) {
-			jobsPerType.remove(toRemove);
-		}
-
-		if (toRemove != null) {
-			toRemove.close();
-		}
+		List<IConsoleJob> jobs = getJobs(consoleContents);
+		getActiveStreams().startTailing(jobs);
 	}
 
 	/**
 	 * Stops any further streaming of file content. Stream jobs are terminated.
 	 */
 	public synchronized void stop() {
-
-		for (Entry<IContentType, List<IConsoleJob>> entry : activeStreams.entrySet()) {
-			List<IConsoleJob> jobs = entry.getValue();
-			if (jobs != null) {
-				for (IConsoleJob job : jobs) {
-					job.close();
-				}
-			}
-		}
-
-		activeStreams.clear();
+		getActiveStreams().close();
 	}
 
 	static String getConsoleName(CloudFoundryApplicationModule app) {
@@ -210,34 +135,6 @@ class CloudFoundryConsole extends JobChangeAdapter {
 	}
 
 	/**
-	 * Asynchronous write to console. The message is not guaranteed to be
-	 * written immediately, but at the shortest available moment.
-	 * @param message if null, nothing gets written
-	 */
-	public void writeToStdError(String message) {
-		writeToStd(message, StdContentType.STD_ERROR);
-	}
-
-	/**
-	 * Asynchronous write to console. The message is not guaranteed to be
-	 * written immediately, but at the shortest available moment.
-	 * @param message if null, nothing gets written
-	 */
-	public void writeToStdOut(String message) {
-		writeToStd(message, StdContentType.STD_OUT);
-	}
-
-	protected void writeToStd(String message, StdContentType contentType) {
-		if (message == null) {
-			return;
-		}
-		StdConsoleStreamJob stdJob = getStdStreamJob(contentType);
-		if (stdJob != null) {
-			stdJob.write(message);
-		}
-	}
-
-	/**
 	 * Synchronously writes to Std Error. This is run in the same thread where
 	 * it is invoked, therefore use with caution as to not send a large volume
 	 * of text.
@@ -245,7 +142,7 @@ class CloudFoundryConsole extends JobChangeAdapter {
 	 * @param monitor
 	 */
 	public void synchWriteToStdError(String message, IProgressMonitor monitor) {
-		synchWriteToStd(message, StdContentType.STD_ERROR, monitor);
+		writeToStdStream(message, StdContentType.STD_ERROR, monitor);
 	}
 
 	/**
@@ -256,27 +153,89 @@ class CloudFoundryConsole extends JobChangeAdapter {
 	 * @param monitor
 	 */
 	public void synchWriteToStdOut(String message, IProgressMonitor monitor) {
-		synchWriteToStd(message, StdContentType.STD_OUT, monitor);
+		writeToStdStream(message, StdContentType.STD_OUT, monitor);
 	}
 
-	protected void synchWriteToStd(String message, StdContentType type, IProgressMonitor monitor) {
-		if (message == null) {
-			return;
-		}
-		StdConsoleStreamJob errorJob = getStdStreamJob(type);
-		if (errorJob != null) {
-			ICloudFoundryConsoleStream content = errorJob.getConsoleContent();
-			if (content instanceof LocalConsoleStream) {
-				try {
-					((LocalConsoleStream) content).write(message, monitor);
-				}
-				catch (CoreException ce) {
-					CloudFoundryPlugin.logError(ce);
-				}
+	protected void writeToStdStream(String message, StdContentType type, IProgressMonitor monitor) {
+		IConsoleJob job = getStdStreamJob(type);
+		if (job != null) {
+			try {
+				job.write(message, monitor);
+			}
+			catch (CoreException e) {
+				CloudFoundryPlugin.logError(e);
 			}
 		}
 	}
 
+	protected List<IConsoleJob> getJobs(List<ICloudFoundryConsoleStream> consoleContents) {
+		if (consoleContents == null) {
+			return null;
+		}
+		List<IConsoleJob> jobs = new ArrayList<IConsoleJob>();
+		for (ICloudFoundryConsoleStream stream : consoleContents) {
+			IConsoleJob job = createConsoleJob(stream);
+			if (job != null) {
+				jobs.add(job);
+			}
+		}
+		return jobs;
+	}
+
+	protected IConsoleJob createConsoleJob(ICloudFoundryConsoleStream stream) {
+		IOConsoleOutputStream outputStream = console.newOutputStream();
+		IConsoleJob job = null;
+		if (outputStream != null) {
+			job = new ConsoleStreamJob(app.getDeployedApplicationName() + " - " + stream.getContentType().getId(),
+					stream);
+			stream.initialiseStream(outputStream);
+		}
+		return job;
+	}
+
+	protected IConsoleJob getStdStreamJob(StdContentType contentType) {
+		if (contentType == null) {
+			return null;
+		}
+
+		IConsoleJob job = getActiveStreams().getFirst(contentType);
+
+		// Lazily create the std streaming jobs, only when needed, as to not
+		// have running jobs that are not used. Only one job
+		// per std out content should exist per tailing session
+		if (job == null) {
+
+			LocalConsoleStream stdContent = null;
+			switch (contentType) {
+			case STD_ERROR:
+				stdContent = new LocalStdErrorConsoleStream();
+				break;
+			case STD_OUT:
+				stdContent = new LocalStdOutConsoleStream();
+				break;
+			}
+			if (stdContent != null) {
+				IOConsoleOutputStream outputStream = console.newOutputStream();
+				if (outputStream != null) {
+					stdContent.initialiseStream(outputStream);
+
+					job = new StdConsoleStreamJob(stdContent);
+					getActiveStreams().addJob(job);
+				}
+			}
+		}
+		return job;
+
+	}
+
+	/**
+	 * 
+	 * NOTE: The job API may be accessed by multiple threads. To avoid
+	 * deadlocks, the API of the job should not be synchronized. Instead,
+	 * synchronization should occur around the content stream writer itself,
+	 * {@link ICloudFoundryConsoleStream}.
+	 *
+	 */
 	class ConsoleStreamJob extends Job implements IConsoleJob {
 
 		protected final ICloudFoundryConsoleStream content;
@@ -287,10 +246,15 @@ class CloudFoundryConsole extends JobChangeAdapter {
 			setSystem(true);
 		}
 
+		protected boolean isActive() {
+			return activeStreams.contains(this) && content.isActive();
+		}
+
 		@Override
 		protected synchronized IStatus run(IProgressMonitor monitor) {
-			if (!content.isActive()) {
-				remove(content.getConsoleType(), this);
+
+			if (!isActive()) {
+				content.close();
 			}
 			else {
 
@@ -316,87 +280,36 @@ class CloudFoundryConsole extends JobChangeAdapter {
 
 				// re-schedule even if an error is thrown, as the stream may
 				// want to attempt again regardless of error.
-				if (content.isActive()) {
-					schedule(sampleInterval);
+				if (isActive()) {
+					schedule(POLL_INTERVAL);
 				}
 
 				// Fetch next ordered content that should follow the current
-				// one, even if error occurred, as errors in one content may
+				// one, even if error occurred, or stream has closed, as errors
+				// in one content may
 				// still schedule additional contents for other files
-
 				if (content instanceof FileConsoleStream) {
 					List<ICloudFoundryConsoleStream> nextContent = ((FileConsoleStream) content).getNextContent();
+
 					if (nextContent != null) {
-						startTailing(nextContent);
+
+						List<IConsoleJob> jobs = getJobs(nextContent);
+						activeStreams.startTailing(jobs);
 					}
 				}
 			}
 			return Status.OK_STATUS;
+
 		}
 
-		protected void streamToConsole(IProgressMonitor monitor) throws CoreException {
-			content.write(monitor);
-		}
-
-		public synchronized void close() {
-			content.close();
-		}
-
-		public synchronized ICloudFoundryConsoleStream getConsoleContent() {
-			return content;
-		}
-
-	}
-
-	class StdConsoleStreamJob extends Job implements IConsoleJob {
-
-		private String toStream;
-
-		private LocalConsoleStream content;
-
-		public StdConsoleStreamJob(LocalConsoleStream content) {
-			super(content.getConsoleType().getId());
-			this.content = content;
-		}
-
-		protected synchronized IStatus run(IProgressMonitor monitor) {
-
-			if (toStream != null) {
-				try {
-					content.write(toStream, monitor);
-					toStream = null;
-				}
-				catch (CoreException e) {
-					CloudFoundryPlugin.logError(
-							"Failed to write message to Cloud Foundry console due to - " + e.getMessage(), e);
-				}
-			}
-
-			return Status.OK_STATUS;
-		}
-
-		public synchronized void write(String message) {
-			this.toStream = message;
-			if (this.toStream != null) {
-				schedule();
+		public synchronized void write(String message, IProgressMonitor monitor) throws CoreException {
+			if (isActive()) {
+				content.write(message, monitor);
 			}
 		}
 
-		public synchronized void close() {
-			content.close();
+		public IContentType getContentType() {
+			return content.getContentType();
 		}
-
-		public synchronized ICloudFoundryConsoleStream getConsoleContent() {
-			return content;
-		}
-
 	}
-
-	interface IConsoleJob {
-		public void close();
-
-		public ICloudFoundryConsoleStream getConsoleContent();
-
-	}
-
 }

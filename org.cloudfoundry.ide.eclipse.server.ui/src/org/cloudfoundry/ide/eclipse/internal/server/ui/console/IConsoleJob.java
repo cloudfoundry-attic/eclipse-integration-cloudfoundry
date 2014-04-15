@@ -10,25 +10,23 @@
  *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
-import org.eclipse.swt.SWT;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 
-/**
- * 
- * Local std error content for the Eclipse console. Intention is to write
- * local content to the console using the
- * {@link #write(String, org.eclipse.core.runtime.IProgressMonitor)}
- * <p/>
- * To fetch std error content from a remote server (e.g. a std  log file), use
- * {@link FileConsoleStream} instead.
- */
-public class LocalStdErrorConsoleStream extends LocalConsoleStream {
+interface IConsoleJob {
 
-	public LocalStdErrorConsoleStream() {
-		super(SWT.COLOR_RED);
-	}
+	/**
+	 * 
+	 * @return non-null {@link IContentType}
+	 */
+	public IContentType getContentType();
 
-	public IContentType getContentType() {
-		return StdContentType.STD_ERROR;
-	}
+	/**
+	 * Writes a message to the console.
+	 * @param message
+	 * @param monitor
+	 * @throws CoreException
+	 */
+	public void write(String message, IProgressMonitor monitor) throws CoreException;
 
 }
