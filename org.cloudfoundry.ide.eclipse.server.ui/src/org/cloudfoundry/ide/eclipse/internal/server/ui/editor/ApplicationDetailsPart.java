@@ -1201,13 +1201,13 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		GridLayoutFactory.fillDefaults().applyTo(container);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(container);
 
-		String[] columnNames = new String[] { "ID", "Host", "CPU", "Memory", "Disk", "Uptime" };
-		String[] columnTooltips = new String[] { "ID", "Host", "CPU (Cores)", "Memory (Limit)", "Disk (Limit)",
+		String[] columnNames = new String[] { "ID", "Host", "Port", "CPU", "Memory", "Disk", "Uptime" };
+		String[] columnTooltips = new String[] { "ID", "Host", "Port", "CPU (Cores)", "Memory (Limit)", "Disk (Limit)",
 				"Uptime"
 
 		};
 
-		int[] columnWidths = new int[] { 25, 105, 60, 85, 85, 75 };
+		int[] columnWidths = new int[] { 25, 105, 40, 60, 85, 85, 75 };
 		// weights new int[] { 6, 21, 14, 19, 19, 21 };
 
 		instancesViewer = createTableViewer(container, columnNames, columnTooltips, columnWidths);

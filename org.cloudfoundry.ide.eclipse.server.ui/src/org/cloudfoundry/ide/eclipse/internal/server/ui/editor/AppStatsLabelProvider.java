@@ -48,12 +48,14 @@ public class AppStatsLabelProvider extends LabelProvider implements ITableLabelP
 			case 1:
 				return stats.getHost();
 			case 2:
-				return String.valueOf(cpu) + "% (" + String.valueOf(stats.getCores()) + ")";
+				return stats.getPort() + "";
 			case 3:
-				return memory + " (" + getFormattedMemory(stats.getMemQuota() / 1024) + ")";
+				return String.valueOf(cpu) + "% (" + String.valueOf(stats.getCores()) + ")";
 			case 4:
-				return disk + " (" + getFormattedMemory(stats.getDiskQuota() / 1024) + ")";
+				return memory + " (" + getFormattedMemory(stats.getMemQuota() / 1024) + ")";
 			case 5:
+				return disk + " (" + getFormattedMemory(stats.getDiskQuota() / 1024) + ")";
+			case 6:
 				return getFormattedDuration(Math.round(stats.getUptime()));
 			}
 		}
