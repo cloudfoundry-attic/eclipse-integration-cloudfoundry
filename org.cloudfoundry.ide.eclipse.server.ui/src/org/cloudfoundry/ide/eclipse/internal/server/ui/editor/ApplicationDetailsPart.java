@@ -1207,7 +1207,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		};
 
-		int[] columnWidths = new int[] { 25, 105, 40, 60, 85, 85, 75 };
+		int[] columnWidths = new int[] { 25, 105, 60, 60, 85, 85, 75 };
 		// weights new int[] { 6, 21, 14, 19, 19, 21 };
 
 		instancesViewer = createTableViewer(container, columnNames, columnTooltips, columnWidths);

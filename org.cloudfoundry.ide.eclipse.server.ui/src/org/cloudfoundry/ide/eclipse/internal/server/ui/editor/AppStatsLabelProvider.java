@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,7 +16,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AppStatsContentPro
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.graphics.Image;
-
 
 /**
  * @author Terry Denney
@@ -39,7 +38,7 @@ public class AppStatsLabelProvider extends LabelProvider implements ITableLabelP
 			String disk = "0M";
 			if (usage != null) {
 				cpu = usage.getCpu();
-				memory = getFormattedMemory(usage.getMem());
+				memory = getFormattedMemory(usage.getMem() / 1024);
 				disk = getFormattedMemory(usage.getDisk() / 1024);
 			}
 			switch (columnIndex) {
