@@ -1,13 +1,22 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc.
+ * Copyright (c) 2014 Pivotal Software, Inc. 
+ * 
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * are made available under the terms of the Apache License, 
+ * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * with the License. You may obtain a copy of the License at
  *
- * Contributors:
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *  
+ *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
- *******************************************************************************/
+ ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
 public class Messages {
@@ -53,7 +62,7 @@ public class Messages {
 	public static final String ERROR_FAILED_TO_PUSH_APP = "Failed to push application - {0}";
 
 	public static final String ERROR_NO_CLOUD_APPLICATION_FOUND = "No cloud module specified when attempting to update application instance stats.";
-	
+
 	public static final String ERROR_NO_MODULES_TO_PUBLISH = "Publish request failed. No modules to publish.";
 
 	/*
@@ -101,15 +110,15 @@ public class Messages {
 	public static final String CONSOLE_WAITING_FOR_APPLICATION_TO_START = "Waiting for application to start...";
 
 	public static final String CONSOLE_STOPPING_APPLICATION = "Stopping application - {0}";
-	
+
 	/*
 	 * Jobs
 	 */
-	
+
 	public static final String REFRESHING_MODULES = "Initialising and refreshing modules for - {0}";
-		
+
 	public static final String PUBLISHING_MODULE = "Publishing module - {0}";
-	
+
 	public static final String DELETING_MODULE = "Deleting module - {0}";
 
 }
