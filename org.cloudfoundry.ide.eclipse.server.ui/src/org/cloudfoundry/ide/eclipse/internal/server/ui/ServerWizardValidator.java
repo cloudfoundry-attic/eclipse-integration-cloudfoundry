@@ -29,6 +29,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsValida
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.osgi.util.NLS;
@@ -198,6 +199,9 @@ public class ServerWizardValidator implements ServerValidator {
 	 */
 	protected ValidationStatus internalValidate(boolean validateAgainstServer, boolean selfSigned,
 			IRunnableContext runnableContext) {
+
+		// Check for valid username, password, and server URL syntax first
+		// before attempting a remote validation
 		IStatus localValidation = validateLocally(cfServer);
 
 		String userName = cfServer.getUsername();
@@ -205,11 +209,18 @@ public class ServerWizardValidator implements ServerValidator {
 		String url = cfServer.getUrl();
 
 		String message = localValidation.getMessage();
-		String errorMsg = null;
 
-		int validationType = ServerCredentialsValidationStatics.EVENT_NONE;
+		// CF-specific validation type that is not represented in a standard
+		// IStatus.
+		// This enables/disables additional wizard behaviour
+		int cfValidationType = ServerCredentialsValidationStatics.EVENT_NONE;
 
 		IStatus eventStatus = null;
+
+		// If local validation is not OK, treat as INFO rather than ERROR. INFO
+		// will still keep wizard buttons disabled. A general
+		// INFO event status is created later with the local validation error
+		// message obtained above.
 		if (localValidation.isOK()) {
 
 			// First check if a space is already selected, and credentials
@@ -218,10 +229,10 @@ public class ServerWizardValidator implements ServerValidator {
 			if (!cloudServerSpaceDelegate.matchesCurrentDescriptor(url, userName, password)) {
 				cloudServerSpaceDelegate.clearDescriptor();
 				message = CREDENTIALS_SET_VALIDATION_STATUS.getStatus().getMessage();
-				validationType = CREDENTIALS_SET_VALIDATION_STATUS.getValidationType();
+				cfValidationType = CREDENTIALS_SET_VALIDATION_STATUS.getValidationType();
 			}
 			else if (cloudServerSpaceDelegate.hasSetSpace()) {
-				validationType = ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
+				cfValidationType = ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
 				// No need to validate as credentials haven't changed and space
 				// is the same
 				validateAgainstServer = false;
@@ -234,63 +245,77 @@ public class ServerWizardValidator implements ServerValidator {
 					// the validation will convert
 					// it to an actual URL)
 					boolean displayURL = true;
-					errorMsg = CloudUiUtil.validateCredentials(userName, password, url, displayURL, selfSigned,
-							runnableContext);
 
-					// No credential errors, so now do a orgs and spaces lookup
-					// for
-					// the newly validated credentials.
-					if (errorMsg == null) {
+					// Credential validation errors result in CoreExceptions
+					// handled below.
+					// Likewise, OperationCanceledExceptions are handled below.
+					CloudUiUtil.validateCredentials(userName, password, url, displayURL, selfSigned, runnableContext);
 
-						try {
-							CloudSpacesDescriptor descriptor = cloudServerSpaceDelegate.getUpdatedDescriptor(url,
-									userName, password, selfSigned, runnableContext);
-							if (descriptor == null) {
-								errorMsg = "Failed to resolve organizations and spaces for the given credentials. Please contact Cloud Foundry support.";
-							}
-							else if (cloudServerSpaceDelegate.hasSetSpace()) {
-								validationType = ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
-							}
-							else {
-								// Although technically an error, mark this as an info message to allow the user to select a cloud space
-								message = "No cloud space selected. Please select a valid cloud space.";
-								validationType = ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED;
-							}
+					// At this stage, credentials have been validated. Now check
+					// orgs and spaces.
+					String orgSpacesErrorMessage = null;
+
+					try {
+						CloudSpacesDescriptor descriptor = cloudServerSpaceDelegate.getUpdatedDescriptor(url, userName,
+								password, selfSigned, runnableContext);
+						if (descriptor == null) {
+							orgSpacesErrorMessage = Messages.ERROR_FAILED_RESOLVE_ORGS_SPACES;
 						}
-						catch (CoreException e) {
-							errorMsg = "Failed to resolve organization and spaces "
-									+ (e.getMessage() != null ? " due to " + e.getMessage()
-											: ". Unknown error occurred while requesting list of spaces from the server")
-									+ ". Please contact Cloud Foundry support.";
+						else if (cloudServerSpaceDelegate.hasSetSpace()) {
+							cfValidationType = ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
 						}
+						else {
+							// Don't treat this as an error. By default
+							// non-error that are also not OK are treated as
+							// INFO status.
+							message = Messages.ERROR_NO_VALID_CLOUD_SPACE_SELECTED;
+							cfValidationType = ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED;
+						}
+					}
+					catch (CoreException e) {
+						// Handle orgs and spaces errors separately from other
+						// errors (e.g. credential validation errors) to convert
+						// them to user-friendly messages.
+						orgSpacesErrorMessage = e.getMessage() != null ? NLS.bind(
+								Messages.ERROR_FAILED_RESOLVE_ORGS_SPACES_DUE_TO_ERROR, e.getMessage())
+								: Messages.ERROR_FAILED_RESOLVE_ORGS_SPACES;
+					}
+
+					if (orgSpacesErrorMessage != null) {
+						int statusType = IStatus.ERROR;
+						eventStatus = CloudFoundryPlugin.getStatus(orgSpacesErrorMessage, statusType);
 					}
 				}
 				catch (CoreException e) {
 					if (e.getCause() instanceof javax.net.ssl.SSLPeerUnverifiedException) {
-						validationType = ServerCredentialsValidationStatics.EVENT_SELF_SIGNED_ERROR;
+						cfValidationType = ServerCredentialsValidationStatics.EVENT_SELF_SIGNED_ERROR;
 					}
 					eventStatus = e.getStatus();
+				}
+				catch (OperationCanceledException oce) {
+					eventStatus = null;
 				}
 			}
 		}
 
 		if (eventStatus == null) {
-			int statusType = IStatus.OK;
-			if (errorMsg != null) {
-				message = errorMsg;
-				statusType = IStatus.ERROR;
-			}
-			else if (validationType == ServerCredentialsValidationStatics.EVENT_SPACE_VALID) {
+
+			// By default status are marked as INFO, unless they are explicit
+			// errors or OK validations. This allows the wizard to retain its
+			// current state (and show the default wizard page
+			// message) in case neither OK or ERROR status are received (for
+			// example, a credentials validation operation has been cancelled).
+			int statusType = IStatus.INFO;
+
+			if (cfValidationType == ServerCredentialsValidationStatics.EVENT_SPACE_VALID) {
 				message = ServerCredentialsValidationStatics.VALID_ACCOUNT_MESSAGE;
-			}
-			else {
-				statusType = IStatus.INFO;
+				statusType = IStatus.OK;
 			}
 
 			eventStatus = CloudFoundryPlugin.getStatus(message, statusType);
 		}
 
-		return new ValidationStatus(eventStatus, validationType);
+		return new ValidationStatus(eventStatus, cfValidationType);
 
 	}
 

@@ -45,7 +45,7 @@ public abstract class LocalServerRequest<T> extends ClientRequest<T> {
 	}
 
 	@Override
-	public T runAsClientRequestCheckConnection(CloudFoundryOperations client, SubMonitor monitor) throws CoreException {
+	public T runAndWait(CloudFoundryOperations client, SubMonitor monitor) throws CoreException {
 		CloudFoundryServer cloudServer = getCloudServer();
 		if (cloudServer.getUsername() == null || cloudServer.getUsername().length() == 0
 				|| cloudServer.getPassword() == null || cloudServer.getPassword().length() == 0) {
@@ -61,7 +61,7 @@ public abstract class LocalServerRequest<T> extends ClientRequest<T> {
 		}
 
 		try {
-			T result = super.runAsClientRequestCheckConnection(client, monitor);
+			T result = super.runAndWait(client, monitor);
 
 			// No errors at this stage, therefore assume operation was completed
 			// successfully, and update
@@ -77,7 +77,7 @@ public abstract class LocalServerRequest<T> extends ClientRequest<T> {
 			// the operation was
 			// attempted, but the operation failed
 			// set the server state back to stopped.
-			if (CloudErrorUtil.getConnectionError(ce) != null && server.getServerState() == IServer.STATE_STARTING) {
+			if (CloudErrorUtil.isConnectionError(ce) && server.getServerState() == IServer.STATE_STARTING) {
 				server.setServerState(IServer.STATE_STOPPED);
 			}
 			// server.setServerPublishState(IServer.PUBLISH_STATE_NONE);

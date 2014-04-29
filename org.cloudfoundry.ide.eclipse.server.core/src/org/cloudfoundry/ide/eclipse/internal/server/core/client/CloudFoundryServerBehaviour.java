@@ -1458,9 +1458,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				return operations;
 			}
 
-			protected String getCloudServerUrl() throws CoreException {
-				return url;
-			}
 		}.run(monitor);
 
 	}
@@ -1525,17 +1522,29 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return info;
 	}
 
-	public static void validate(String location, String userName, String password, boolean selfSigned,
+	public static void validate(final String location, String userName, String password, boolean selfSigned,
 			IProgressMonitor monitor) throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor);
 		progress.beginTask("Connecting", IProgressMonitor.UNKNOWN);
 		try {
-			CloudFoundryOperations client = createClient(location, userName, password, selfSigned);
-			CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client, null);
-			operationsHandler.login(progress);
-		}
-		catch (RestClientException e) {
-			throw CloudErrorUtil.toCoreException(e);
+			final CloudFoundryOperations client = createClient(location, userName, password, selfSigned);
+
+			new ClientRequest<Void>(Messages.VALIDATING_CREDENTIALS) {
+
+				@Override
+				protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+					CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client);
+					int attempts = 5;
+					operationsHandler.login(progress, attempts, CloudOperationsConstants.LOGIN_INTERVAL);
+					return null;
+				}
+
+				@Override
+				protected CloudFoundryOperations getClient(IProgressMonitor monitor) throws CoreException {
+					return client;
+				}
+
+			}.run(monitor);
 		}
 		catch (RuntimeException e) {
 			// try to guard against IOException in parsing response
@@ -2715,10 +2724,5 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			return CloudFoundryServerBehaviour.this.getCloudFoundryServer();
 		}
 
-		@Override
-		protected String getCloudServerUrl() throws CoreException {
-			return getCloudServer().getUrl();
-		}
 	}
-
 }

@@ -244,9 +244,8 @@ public class CloudUiUtil {
 	}
 
 	/**
-	 * Validates the given credentials. If an error occurred, it either returns
-	 * a validation message if the error can be recognised, or throws
-	 * {@link CoreException} if error cannot be recognised.
+	 * Validates the given credentials. Throws {@link CoreException} if error
+	 * occurred during validation.
 	 * @param userName
 	 * @param password
 	 * @param urlText
@@ -254,13 +253,14 @@ public class CloudUiUtil {
 	 * @param selfSigned true if its a server using self-signed certificate. If
 	 * this information is not known, set this to false
 	 * @param context
-	 * @return null if validation was successful. Error message if validation
-	 * error is recognised
+	 * 
 	 * @throws CoreException if validation failed and error type cannot be
 	 * determined
+	 * @throws OperationCanceledException if validation is cancelled.
 	 */
-	public static String validateCredentials(final String userName, final String password, final String urlText,
-			final boolean displayURL, final boolean selfSigned, IRunnableContext context) throws CoreException {
+	public static void validateCredentials(final String userName, final String password, final String urlText,
+			final boolean displayURL, final boolean selfSigned, IRunnableContext context) throws CoreException,
+			OperationCanceledException {
 		try {
 			ICoreRunnable coreRunner = new ICoreRunnable() {
 				public void run(IProgressMonitor monitor) throws CoreException {
@@ -277,8 +277,6 @@ public class CloudUiUtil {
 			else {
 				runForked(coreRunner);
 			}
-
-			return null;
 		}
 		catch (CoreException ce) {
 			if (ce.getCause() instanceof ResourceAccessException
@@ -288,14 +286,10 @@ public class CloudUiUtil {
 				throw CloudErrorUtil.toCoreException(ce.getCause().getCause());
 			}
 			else {
-				String message = CloudErrorUtil.getConnectionError(ce);
-				return message;
+				throw ce;
 			}
 		}
-		catch (OperationCanceledException e) {
-		}
 
-		return "Can't validate credentials with server";
 	}
 
 	/**

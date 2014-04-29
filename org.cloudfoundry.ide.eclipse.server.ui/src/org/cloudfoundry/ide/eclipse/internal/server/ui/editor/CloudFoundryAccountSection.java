@@ -24,6 +24,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerListener;
+import org.cloudfoundry.ide.eclipse.internal.server.core.Messages;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryURLNavigation;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
@@ -272,16 +273,20 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 				final String org = orgText.getText();
 				final String space = spaceText.getText();
 				try {
-					String errorMsg = CloudUiUtil.validateCredentials(userName, password, url, false,
+					CloudUiUtil.validateCredentials(userName, password, url, false,
 							cfServer.getSelfSignedCertificate(), null);
 
-					if (errorMsg == null && org != null && space != null) {
-						validateLabel.setText("Account information is valid.");
+					if (org != null && space != null) {
+						validateLabel.setText(Messages.VALID_ACCOUNT);
 						validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_BLACK));
 					}
 					else {
-						if (org == null || space == null) {
-							errorMsg = "Invalid organization or space.";
+						String errorMsg = null;
+						if (org == null) {
+							errorMsg = Messages.ERROR_INVALID_ORG;
+						}
+						else if (space == null) {
+							errorMsg = Messages.ERROR_INVALID_SPACE;
 						}
 						validateLabel.setText(errorMsg);
 						validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
@@ -306,7 +311,8 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 				public void widgetSelected(SelectionEvent event) {
 					IServer iServer = cfServer.getServer();
 					if (iServer != null) {
-						String signupURL = CloudFoundryBrandingExtensionPoint.getSignupURL(cfServer.getServerId(), cfServer.getUrl());
+						String signupURL = CloudFoundryBrandingExtensionPoint.getSignupURL(cfServer.getServerId(),
+								cfServer.getUrl());
 						if (signupURL != null) {
 							CloudFoundryURLNavigation nav = new CloudFoundryURLNavigation(signupURL);
 							nav.navigate();

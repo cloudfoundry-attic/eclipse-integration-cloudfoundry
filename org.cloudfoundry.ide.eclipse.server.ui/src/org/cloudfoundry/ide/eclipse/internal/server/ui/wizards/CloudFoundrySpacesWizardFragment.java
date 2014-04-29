@@ -65,6 +65,7 @@ public class CloudFoundrySpacesWizardFragment extends WizardFragment {
 
 				// Validate if there is a space change
 				if (validator != null && event.getType() == ServerCredentialsValidationStatics.EVENT_SPACE_CHANGED) {
+					// Possible error: credentials may be invalid due to earlier error. show this error
 					validator.localValidation();
 				}
 				super.handleChange(event);

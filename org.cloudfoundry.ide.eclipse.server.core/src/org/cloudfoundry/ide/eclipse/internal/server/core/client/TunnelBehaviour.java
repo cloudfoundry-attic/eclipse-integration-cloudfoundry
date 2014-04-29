@@ -297,11 +297,6 @@ public class TunnelBehaviour {
 				return cloudServer;
 			}
 
-			@Override
-			protected String getCloudServerUrl() throws CoreException {
-				return getCloudServer().getUrl();
-			}
-
 		}.run(monitor);
 
 		return tunnel.size() > 0 ? tunnel.get(0) : null;

@@ -19,24 +19,15 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
-import org.cloudfoundry.client.lib.HttpProxyConfiguration;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryClientFactory;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.WaitWithProgressJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
-import org.springframework.http.HttpStatus;
 
 public class CloudFoundryLoginHandler {
 
 	private final CloudFoundryOperations operations;
-
-	private final String cloudURL;
 
 	private static final String DEFAULT_PROGRESS_LABEL = "Performing Cloud Foundry operation";
 
@@ -47,9 +38,8 @@ public class CloudFoundryLoginHandler {
 	 * @param operations must not be null
 	 * @param cloudServer can be null if no server has been created yet
 	 */
-	public CloudFoundryLoginHandler(CloudFoundryOperations operations, String cloudURL) {
+	public CloudFoundryLoginHandler(CloudFoundryOperations operations) {
 		this.operations = operations;
-		this.cloudURL = cloudURL;
 	}
 
 	/**
@@ -85,7 +75,7 @@ public class CloudFoundryLoginHandler {
 
 			@Override
 			protected boolean shouldRetryOnError(Throwable t) {
-				return (t instanceof CloudFoundryException) && shouldAttemptClientLogin((CloudFoundryException) t);
+				return shouldAttemptClientLogin(t);
 			}
 
 		}.run(monitor);
@@ -97,8 +87,8 @@ public class CloudFoundryLoginHandler {
 				progressMonitor, DEFAULT_PROGRESS_LABEL, DEFAULT_PROGRESS_TICKS);
 	}
 
-	public boolean shouldAttemptClientLogin(CloudFoundryException cfe) {
-		return HttpStatus.UNAUTHORIZED.equals(cfe.getStatusCode()) || HttpStatus.FORBIDDEN.equals(cfe.getStatusCode());
+	public boolean shouldAttemptClientLogin(Throwable t) {
+		return CloudErrorUtil.getInvalidCredentialsError(t) != null;
 	}
 
 	/**
@@ -107,25 +97,28 @@ public class CloudFoundryLoginHandler {
 	 * @throws CoreException
 	 */
 	public boolean updateProxyInClient(CloudFoundryOperations client) throws CoreException {
-		if (client != null && cloudURL != null) {
-			try {
-				URL actualUrl = new URL(cloudURL);
-				HttpProxyConfiguration proxyConfiguration = CloudFoundryClientFactory.getProxy(actualUrl);
-				// FIXNS: As of CF Java client-lib version 1.0.2, update proxy
-				// API has been removed. Therefore unless a new client
-				// is created on proxy change, or the client indirectly detects
-				// proxy changes via system properties
-				// Proxy support for CF Eclipse will not work unless a user
-				// reconnects the server instance when the client
-				// is created.
-//				client.updateHttpProxyConfiguration(proxyConfiguration);
-
-				return true;
-			}
-			catch (MalformedURLException e) {
-				throw CloudErrorUtil.toCoreException("Failed to update proxy settings due to " + e.getMessage(), e);
-			}
-		}
+		// if (client != null && cloudURL != null) {
+		// try {
+		// URL actualUrl = new URL(cloudURL);
+		// HttpProxyConfiguration proxyConfiguration =
+		// CloudFoundryClientFactory.getProxy(actualUrl);
+		// // FIXNS: As of CF Java client-lib version 1.0.2, update proxy
+		// // API has been removed. Therefore unless a new client
+		// // is created on proxy change, or the client indirectly detects
+		// // proxy changes via system properties
+		// // Proxy support for CF Eclipse will not work unless a user
+		// // reconnects the server instance when the client
+		// // is created.
+		// client.updateHttpProxyConfiguration(proxyConfiguration);
+		//
+		// return true;
+		// }
+		// catch (MalformedURLException e) {
+		// throw
+		// CloudErrorUtil.toCoreException("Failed to update proxy settings due to "
+		// + e.getMessage(), e);
+		// }
+		// }
 		return false;
 	}
 

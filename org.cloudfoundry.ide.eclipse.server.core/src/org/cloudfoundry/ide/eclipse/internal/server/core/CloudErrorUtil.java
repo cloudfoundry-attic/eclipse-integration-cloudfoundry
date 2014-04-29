@@ -38,29 +38,57 @@ import org.springframework.web.client.RestClientException;
  */
 public class CloudErrorUtil {
 
-	
 	private CloudErrorUtil() {
 		// Util class
 	}
 
 	/**
-	 * 
+	 * Parses a error message if and only if the error is due to a request
+	 * failure because of a connection error. For example, if a request failed
+	 * due to 401, 403, or unknown host errors. Returns null otherwise.
 	 * @param e error to check if it is a connection error.
-	 * @return User-friendly error message IFF the error is a validation error
-	 * due to wrong credentials or connection error. Return null otherwise.
+	 * @return User-friendly error message IFF the error is due to a connection
+	 * error that resulted in a failed request to the server. Return null
+	 * otherwise.
 	 */
 	public static String getConnectionError(CoreException e) {
-		if (isUnauthorisedException(e)) {
-			return Messages.ERROR_WRONG_EMAIL_OR_PASSWORD;
+
+		String error = getInvalidCredentialsError(e);
+		if (error == null) {
+			if (isUnknownHostException(e)) {
+				error = Messages.ERROR_UNABLE_TO_ESTABLISH_CONNECTION_UNKNOWN_HOST;
+			}
+			else if (isRestClientException(e)) {
+				error = NLS.bind(Messages.ERROR_FAILED_REST_CLIENT, e.getMessage());
+			}
 		}
-		else if (isForbiddenException(e)) {
-			return Messages.ERROR_WRONG_EMAIL_OR_PASSWORD;
+
+		return error;
+	}
+
+	/**
+	 * True if a request error occurred due to connection issues. For example,
+	 * 401, 403, or unknown host.
+	 * @param e error to check if it is a connection error.
+	 * @return true if a request error occurred due to connection issues. False
+	 * otherwise
+	 */
+	public static boolean isConnectionError(CoreException e) {
+		return getConnectionError(e) != null;
+	}
+
+	/**
+	 * Error due to invalid credentials, typically 401 or 403 HTTP errors.
+	 * Returns null if the error is NOT an invalid credentials error.
+	 * @param t error to parse
+	 * @return Error message if invalid credentials error (401 or 403), or null.
+	 */
+	public static String getInvalidCredentialsError(Throwable t) {
+		if (isUnauthorisedException(t)) {
+			return Messages.ERROR_WRONG_EMAIL_OR_PASSWORD_UNAUTHORISED;
 		}
-		else if (isUnknownHostException(e)) {
-			return Messages.ERROR_UNABLE_TO_ESTABLISH_CONNECTION;
-		}
-		else if (isRestClientException(e)) {
-			return NLS.bind(Messages.ERROR_FAILED_REST_CLIENT, e.getMessage());
+		else if (isForbiddenException(t)) {
+			return Messages.ERROR_WRONG_EMAIL_OR_PASSWORD_FORBIDDEN;
 		}
 		return null;
 	}
@@ -146,28 +174,33 @@ public class CloudErrorUtil {
 	 * If so, returns it the corresponding HttpClientErrorException. Otherwise
 	 * returns null.
 	 */
-	public static HttpClientErrorException getBadRequestException(Exception e) {
-		if (e == null) {
-			return null;
-		}
-		HttpClientErrorException httpException = null;
-		if (e instanceof HttpClientErrorException) {
-			httpException = (HttpClientErrorException) e;
-		}
-		else {
-			Throwable cause = e.getCause();
-			if (cause instanceof HttpClientErrorException) {
-				httpException = (HttpClientErrorException) cause;
-			}
-		}
-
+	public static HttpClientErrorException getBadRequestException(Exception t) {
+		HttpClientErrorException httpException = getHttpClientError(t);
 		if (httpException != null) {
 			HttpStatus statusCode = httpException.getStatusCode();
-			if (statusCode.equals(HttpStatus.BAD_REQUEST)) {
+			if (HttpStatus.BAD_REQUEST.equals(statusCode)) {
 				return httpException;
 			}
 		}
 		return null;
+	}
+
+	protected static HttpClientErrorException getHttpClientError(Throwable t) {
+		if (t == null) {
+			return null;
+		}
+		HttpClientErrorException httpException = null;
+		if (t instanceof HttpClientErrorException) {
+			httpException = (HttpClientErrorException) t;
+		}
+		else {
+			Throwable cause = t.getCause();
+			if (cause instanceof HttpClientErrorException) {
+				httpException = (HttpClientErrorException) cause;
+			}
+		}
+		return httpException;
+
 	}
 
 	public static CoreException toCoreException(Throwable e) {
@@ -181,37 +214,42 @@ public class CloudErrorUtil {
 				Messages.ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION, e.getMessage()), e));
 	}
 
-	// check if error is 403 - take CoreException
-	public static boolean isForbiddenException(CoreException e) {
-		Throwable cause = e.getCause();
-		if (cause instanceof HttpClientErrorException) {
-			HttpClientErrorException httpException = (HttpClientErrorException) cause;
-			HttpStatus statusCode = httpException.getStatusCode();
-			return statusCode.equals(HttpStatus.FORBIDDEN);
-
-		}
-		return false;
+	/**
+	 * check 403 error due to invalid credentials
+	 * @param t
+	 * @return true if 403. False otherwise
+	 */
+	public static boolean isForbiddenException(Throwable t) {
+		return isHttpException(t, HttpStatus.FORBIDDEN);
 	}
 
-	// check 401 error due to invalid credentials
-	public static boolean isUnauthorisedException(CoreException e) {
-		Throwable cause = e.getCause();
-		if (cause instanceof HttpClientErrorException) {
-			HttpClientErrorException httpException = (HttpClientErrorException) cause;
-			HttpStatus statusCode = httpException.getStatusCode();
-			return statusCode.equals(HttpStatus.UNAUTHORIZED);
-		}
-		return false;
+	/**
+	 * check 401 error due to invalid credentials
+	 * @param t
+	 * @return true if 401. False otherwise
+	 */
+	public static boolean isUnauthorisedException(Throwable t) {
+		return isHttpException(t, HttpStatus.UNAUTHORIZED);
 	}
 
-	// check if error is 404 - take CoreException
-	public static boolean isNotFoundException(CoreException e) {
-		Throwable cause = e.getCause();
-		if (cause instanceof HttpClientErrorException) {
-			HttpClientErrorException httpException = (HttpClientErrorException) cause;
+	/**
+	 * check 404 error.
+	 * @param t
+	 * @return true if 404 error. False otherwise
+	 */
+	public static boolean isNotFoundException(Throwable t) {
+		return isHttpException(t, HttpStatus.NOT_FOUND);
+	}
+
+	public static boolean isHttpException(Throwable t, HttpStatus status) {
+
+		HttpClientErrorException httpException = getHttpClientError(t);
+
+		if (httpException != null) {
 			HttpStatus statusCode = httpException.getStatusCode();
-			return statusCode.equals(HttpStatus.NOT_FOUND);
+			return statusCode.equals(status);
 		}
+
 		return false;
 	}
 
@@ -244,6 +282,56 @@ public class CloudErrorUtil {
 		}
 		else {
 			return new CoreException(CloudFoundryPlugin.getErrorStatus(message));
+		}
+	}
+
+	/**
+	 * Wraps the given error as a {@link CoreException} under these two
+	 * conditions:
+	 * 
+	 * <p/>
+	 * 1. Additional error message is provided that should be added to the
+	 * CoreException. If the error is already a CoreException, the cause of the
+	 * error will be added to the new CoreException
+	 * <p/>
+	 * 2. If no error message is provided, and the error is not a CoreException,
+	 * a new CoreExpception will be created with the error as the cause.
+	 * <p/>
+	 * Otherwise, if the error already is a CoreException and no additional
+	 * message is provided, the same CoreException is returned.
+	 * @param message optional. Additional message to add to the CoreException.
+	 * @param error must not be null
+	 * @param replaceMessage true if existing messages in the error should be
+	 * replaced by the given message. False if given message should be appended
+	 * to existing message
+	 * @return error as {@link CoreException}, with the additional error message
+	 * added if provided.
+	 */
+	public static CoreException asCoreException(String message, Throwable error, boolean replaceMessage) {
+
+		if (message != null) {
+
+			IStatus oldStatus = error instanceof CoreException ? ((CoreException) error).getStatus() : null;
+
+			IStatus newStatus = null;
+			if (oldStatus == null) {
+				newStatus = CloudFoundryPlugin.getErrorStatus(message, error);
+			}
+			else {
+				String enhancedMessage = replaceMessage ? message : message + " - " + oldStatus.getMessage();
+				newStatus = new Status(oldStatus.getSeverity(), oldStatus.getPlugin(), oldStatus.getCode(),
+						enhancedMessage, oldStatus.getException());
+			}
+
+			return new CoreException(newStatus);
+		}
+		else {
+			if (error instanceof CoreException) {
+				return (CoreException) error;
+			}
+			else {
+				return new CoreException(CloudFoundryPlugin.getErrorStatus(error));
+			}
 		}
 	}
 

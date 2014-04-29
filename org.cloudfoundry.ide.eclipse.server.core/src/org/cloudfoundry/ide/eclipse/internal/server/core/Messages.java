@@ -27,11 +27,23 @@ public class Messages {
 
 	public static final String ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION = "Error performing Cloud Foundry operation: {0}";
 
-	public static final String ERROR_WRONG_EMAIL_OR_PASSWORD = "Wrong email or password";
+	public static final String ERROR_WRONG_EMAIL_OR_PASSWORD_UNAUTHORISED = "Wrong email or password - 401 (Unauthorised)";
 
-	public static final String ERROR_UNABLE_TO_ESTABLISH_CONNECTION = "Unable to establish connection";
+	public static final String ERROR_WRONG_EMAIL_OR_PASSWORD_FORBIDDEN = "Wrong email or password - 403 (Forbidden)";
 
-	public static final String ERROR_FAILED_REST_CLIENT = "Client error: {0}";
+	public static final String ERROR_UNABLE_TO_ESTABLISH_CONNECTION_UNKNOWN_HOST = "Unable to establish connection - Unknown host";
+
+	public static final String ERROR_FAILED_REST_CLIENT = "Client error - {0}";
+
+	public static final String ERROR_FAILED_RESOLVE_ORGS_SPACES = "Failed to resolve organizations and spaces for the given credentials";
+
+	public static final String ERROR_FAILED_RESOLVE_ORGS_SPACES_DUE_TO_ERROR = "Failed to resolve organizations and spaces - {0}";
+
+	public static final String ERROR_NO_VALID_CLOUD_SPACE_SELECTED = "No cloud space selected. Please select a valid cloud space.";
+	
+	public static final String ERROR_INVALID_ORG = "Invalid organization";
+	
+	public static final String ERROR_INVALID_SPACE = "Invalid space";
 
 	public static final String ERROR_UNKNOWN = "Unknown Cloud Foundry error";
 
@@ -64,6 +76,8 @@ public class Messages {
 	public static final String ERROR_NO_CLOUD_APPLICATION_FOUND = "No cloud module specified when attempting to update application instance stats.";
 
 	public static final String ERROR_NO_MODULES_TO_PUBLISH = "Publish request failed. No modules to publish.";
+
+	public static final String ERROR_NO_CLIENT = "No Cloud Foundry client available to process the following request - {0} ";
 
 	/*
 	 * Warnings
@@ -120,5 +134,15 @@ public class Messages {
 	public static final String PUBLISHING_MODULE = "Publishing module - {0}";
 
 	public static final String DELETING_MODULE = "Deleting module - {0}";
+
+	public static final String VALIDATING_CREDENTIALS = "Validating credentials";
+	
+	
+	/*
+	 * Labels
+	 * 
+	 */
+	
+	public static final String VALID_ACCOUNT = "Account information is valid.";
 
 }

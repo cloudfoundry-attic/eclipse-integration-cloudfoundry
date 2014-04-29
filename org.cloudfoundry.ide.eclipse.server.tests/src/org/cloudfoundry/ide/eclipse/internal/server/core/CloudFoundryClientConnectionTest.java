@@ -61,8 +61,7 @@ public class CloudFoundryClientConnectionTest extends TestCase {
 
 		CloudFoundryOperations client = createClient(cloudCredentials,
 				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
-		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client,
-				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
+		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client);
 
 		try {
 			operationsHandler.login(new NullProgressMonitor());
@@ -82,8 +81,7 @@ public class CloudFoundryClientConnectionTest extends TestCase {
 		CloudFoundryOperations client = createClient(new CloudCredentials(credentials.userEmail, invalidPassword),
 				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
 
-		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client,
-				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
+		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client);
 		CoreException error = null;
 
 		try {
@@ -105,8 +103,7 @@ public class CloudFoundryClientConnectionTest extends TestCase {
 		CloudFoundryOperations client = createClient(new CloudCredentials(invalidUsername, credentials.password),
 				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
 
-		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client,
-				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
+		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client);
 		CoreException error = null;
 
 		try {
@@ -127,8 +124,7 @@ public class CloudFoundryClientConnectionTest extends TestCase {
 		CloudFoundryOperations client = createClient(new CloudCredentials(invalidUsername, credentials.password),
 				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
 
-		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client,
-				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
+		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client);
 		CoreException error = null;
 
 		try {
@@ -147,7 +143,7 @@ public class CloudFoundryClientConnectionTest extends TestCase {
 		client = createClient(new CloudCredentials(credentials.userEmail, credentials.password),
 				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
 
-		operationsHandler = new CloudFoundryLoginHandler(client, CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
+		operationsHandler = new CloudFoundryLoginHandler(client);
 
 		try {
 			operationsHandler.login(new NullProgressMonitor());
