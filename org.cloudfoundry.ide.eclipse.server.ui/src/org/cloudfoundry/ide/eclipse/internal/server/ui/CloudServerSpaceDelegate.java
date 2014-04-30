@@ -16,6 +16,7 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM - Fix duplicate space check
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
@@ -246,22 +247,32 @@ public class CloudServerSpaceDelegate {
 	 * wishes to create a server instance to the selected cloudSpace, if the
 	 * cloud space is valid, return
 	 * {@link org.eclipse.core.runtime.Status#OK_STATUS}.
+	 * @param cloudServerURL target server URL containing the selected cloud
+	 * space. Used to check if other existing server instances with that server
+	 * URL already target the selected org/space. If null, a check will be
+	 * performed against the delegate's associated cloud server.
 	 * @param selectionObj a potential space selection.
 	 * @return if valid, return
 	 * {@link org.eclipse.core.runtime.Status#OK_STATUS}. Otherwise return
 	 * appropriate error status. Must not be null.
 	 */
-	public IStatus validateSpaceSelection(CloudSpace selectedCloudSpace) {
+	public IStatus validateSpaceSelection(String cloudServerURL, CloudSpace selectedCloudSpace) {
 		String errorMessage = null;
+
+		if (cloudServerURL == null) {
+			cloudServerURL = getCloudServer().getUrl();
+		}
 
 		if (selectedCloudSpace == null) {
 			errorMessage = Messages.ERROR_NO_CLOUD_SPACE_SELECTED;
 		}
-		else {
+		else if (cloudServerURL != null) {
 			List<CloudFoundryServer> cloudServers = CloudServerUtil.getCloudServers();
 			if (cloudServers != null) {
 				for (CloudFoundryServer cloudServer : cloudServers) {
-					if (matchesExisting(selectedCloudSpace, cloudServer.getCloudFoundrySpace())) {
+					// Can ignore the cloud space check if the URL is different.
+					if (cloudServerURL.equals(cloudServer.getUrl())
+							&& matchesExisting(selectedCloudSpace, cloudServer.getCloudFoundrySpace())) {
 						errorMessage = NLS.bind(Messages.ERROR_SERVER_INSTANCE_CLOUD_SPACE_EXISTS, cloudServer
 								.getServer().getName(), selectedCloudSpace.getName());
 						break;
@@ -269,7 +280,22 @@ public class CloudServerSpaceDelegate {
 				}
 			}
 		}
+
 		return (errorMessage != null) ? CloudFoundryPlugin.getErrorStatus(errorMessage) : Status.OK_STATUS;
+	}
+
+	/**
+	 * Given space selection, determine if it is valid. For example, a user
+	 * wishes to create a server instance to the selected cloudSpace, if the
+	 * cloud space is valid, return
+	 * {@link org.eclipse.core.runtime.Status#OK_STATUS}.
+	 * @param selectionObj a potential space selection.
+	 * @return if valid, return
+	 * {@link org.eclipse.core.runtime.Status#OK_STATUS}. Otherwise return
+	 * appropriate error status. Must not be null.
+	 */
+	public IStatus validateSpaceSelection(CloudSpace selectedCloudSpace) {
+		return validateSpaceSelection(null, selectedCloudSpace);
 	}
 
 	/**

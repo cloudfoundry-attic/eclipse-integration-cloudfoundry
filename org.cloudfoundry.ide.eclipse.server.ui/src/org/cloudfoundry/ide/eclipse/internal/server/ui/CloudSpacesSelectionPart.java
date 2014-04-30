@@ -16,6 +16,7 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM - Fix duplicate space check
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
