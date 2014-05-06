@@ -318,9 +318,9 @@
          point="org.eclipse.ui.preferencePages">
       <page
             category="org.cloudfoundry.ide.eclipse.server.ui.CloudFoundryPreferencePage"
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.tunnel.ServiceTunnelCommandPreferencePage"
-            id="org.cloudfoundry.ide.eclipse.server.ui.ServicesCommandPreferencePage"
-            name="Service Tunnel External Application Commands">
+            class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryTracePreferencePage"
+            id="org.cloudfoundry.ide.eclipse.server.ui.CloudFoundryTracePreferencePage"
+            name="HTTP Tracing">
       </page>
       <page
             class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryPreferencePage"

@@ -24,6 +24,7 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentConfiguration;
+import org.cloudfoundry.ide.eclipse.internal.server.core.trace.ITraceType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -41,6 +42,14 @@ public abstract class CloudFoundryCallback {
 
 	public void printToConsole(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule, String message,
 			boolean clearConsole, boolean isError, IProgressMonitor monitor) {
+		// optional
+	}
+
+	public void trace(String message, ITraceType type, CloudFoundryServer server, boolean clear) {
+		// optional
+	}
+
+	public void showTraceView(boolean showTrace) {
 		// optional
 	}
 

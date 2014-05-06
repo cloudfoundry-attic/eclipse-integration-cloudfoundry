@@ -42,6 +42,10 @@ public class Messages {
 
 	public static final String LABEL_MEMORY_LIMIT = "Memory Limit (MB):";
 
+	public static final String LABEL_ENABLE_TRACING = "HTTP Tracing";
+
+	public static final String TOOLTIP_ENABLE_TRACING = "Enables HTTP Tracing in a Cloud Foundry tracing console";
+
 	/*
 	 * Dialogue messages
 	 */

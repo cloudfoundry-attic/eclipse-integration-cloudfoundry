@@ -53,6 +53,7 @@ Export-Package: org.cloudfoundry.caldecott.client,
  org.cloudfoundry.ide.eclipse.internal.server.core.client,
  org.cloudfoundry.ide.eclipse.internal.server.core.debug,
  org.cloudfoundry.ide.eclipse.internal.server.core.spaces,
+ org.cloudfoundry.ide.eclipse.internal.server.core.trace,
  org.cloudfoundry.ide.eclipse.internal.server.core.tunnel,
  org.springframework.web.client
 Import-Package: org.apache.commons.codec;version="1.3.0",

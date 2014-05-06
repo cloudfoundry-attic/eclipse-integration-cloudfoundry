@@ -24,9 +24,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
+import org.cloudfoundry.ide.eclipse.internal.server.core.trace.ITraceType;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
@@ -42,6 +44,10 @@ import org.eclipse.wst.server.core.IServer;
 public class ConsoleManager {
 
 	private IConsoleManager consoleManager;
+
+	Map<String, CloudFoundryConsole> consoleByUri;
+
+	private CloudFoundryTraceConsole traceConsole;
 
 	private final IConsoleListener listener = new IConsoleListener() {
 
@@ -61,6 +67,11 @@ public class ConsoleManager {
 						stopConsole((IServer) server, (CloudFoundryApplicationModule) app, (Integer) index);
 					}
 				}
+				else if (CloudFoundryTraceConsole.TRACE_CONSOLE_ID.equals(console.getType())
+						&& (traceConsole != null)) {
+					traceConsole.close();
+					traceConsole = null;
+				}
 			}
 		}
 	};
@@ -70,8 +81,6 @@ public class ConsoleManager {
 	public static ConsoleManager getInstance() {
 		return instance;
 	}
-
-	Map<String, CloudFoundryConsole> consoleByUri;
 
 	public ConsoleManager() {
 		consoleByUri = new HashMap<String, CloudFoundryConsole>();
@@ -111,7 +120,7 @@ public class ConsoleManager {
 		CloudFoundryConsole serverLogTail = consoleByUri.get(appUrl);
 		if (serverLogTail == null) {
 
-			MessageConsole appConsole = getOrCreateConsole(server, appModule, instanceIndex);
+			MessageConsole appConsole = getApplicationConsole(server, appModule, instanceIndex);
 
 			serverLogTail = new CloudFoundryConsole(appModule, appConsole);
 			consoleByUri.put(getConsoleId(server.getServer(), appModule, instanceIndex), serverLogTail);
@@ -138,6 +147,44 @@ public class ConsoleManager {
 		}
 	}
 
+	/**
+	 * Makes the general Cloud Foundry trace console visible in the console
+	 * view.
+	 */
+	public void setTraceVisible() {
+		CloudFoundryTraceConsole console = getTraceConsoleStream();
+		if (console != null) {
+			consoleManager.showConsoleView(console.getMessageConsole());
+		}
+	}
+
+	/**
+	 * Sends a trace message to a Cloud Foundry trace console.
+	 * 
+	 * @param message if null, nothing is written to trace console.
+	 * @param type type of trace. It is used to determine whether a specific
+	 * format/colour should be used for the message.
+	 * @param server Cloud Foundry server where tracing should occur. If null,
+	 * tracing message will be sent to the general Cloud Foundry trace console.
+	 * @param clear whether trace console should be cleared prior to displaying
+	 * the trace message.
+	 */
+	public synchronized void writeTrace(String message, ITraceType type, CloudFoundryServer server, boolean clear) {
+		try {
+			CloudFoundryTraceConsole console = getTraceConsoleStream();
+
+			if (console != null) {
+				// Do not make trace visible as another console may be visible
+				// while
+				// tracing is occuring.
+				console.tail(message, type);
+			}
+		}
+		catch (Throwable e) {
+			CloudFoundryPlugin.logError(e);
+		}
+	}
+
 	public void stopConsole(IServer server, CloudFoundryApplicationModule appModule, int instanceIndex) {
 		String appUrl = getConsoleId(server, appModule, instanceIndex);
 		CloudFoundryConsole serverLogTail = consoleByUri.get(appUrl);
@@ -152,10 +199,14 @@ public class ConsoleManager {
 			tailEntry.getValue().stop();
 		}
 		consoleByUri.clear();
+		if (traceConsole != null) {
+			traceConsole.close();
+			traceConsole = null;
+		}
 	}
 
-	public static MessageConsole getOrCreateConsole(CloudFoundryServer server, CloudFoundryApplicationModule appModule,
-			int instanceIndex) {
+	public static MessageConsole getApplicationConsole(CloudFoundryServer server,
+			CloudFoundryApplicationModule appModule, int instanceIndex) {
 		MessageConsole appConsole = null;
 		String consoleName = getConsoleId(server.getServer(), appModule, instanceIndex);
 		for (IConsole console : ConsolePlugin.getDefault().getConsoleManager().getConsoles()) {
@@ -173,6 +224,30 @@ public class ConsoleManager {
 		}
 
 		return appConsole;
+	}
+
+	protected synchronized CloudFoundryTraceConsole getTraceConsoleStream() {
+
+		if (traceConsole == null) {
+			MessageConsole messageConsole = null;
+			for (IConsole console : ConsolePlugin.getDefault().getConsoleManager().getConsoles()) {
+				if (console instanceof MessageConsole
+						&& console.getName().equals(CloudFoundryTraceConsole.CLOUD_FOUNDRY_TRACE_CONSOLE_NAME)) {
+					messageConsole = (MessageConsole) console;
+				}
+			}
+			if (messageConsole == null) {
+				messageConsole = new MessageConsole(CloudFoundryTraceConsole.CLOUD_FOUNDRY_TRACE_CONSOLE_NAME,
+						CloudFoundryTraceConsole.TRACE_CONSOLE_ID, null, true);
+			}
+			traceConsole = new CloudFoundryTraceConsole(messageConsole);
+			traceConsole.initialiseStreams();
+
+			ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[] { messageConsole });
+
+		}
+
+		return traceConsole;
 	}
 
 	public static String getConsoleId(IServer server, CloudFoundryApplicationModule appModule, int instanceIndex) {
@@ -196,7 +271,7 @@ public class ConsoleManager {
 			writer.append('-');
 			writer.append('-');
 		}
-		
+
 		writer.append(appModule.getDeployedApplicationName());
 		writer.append('#');
 		writer.append(instanceIndex + "");

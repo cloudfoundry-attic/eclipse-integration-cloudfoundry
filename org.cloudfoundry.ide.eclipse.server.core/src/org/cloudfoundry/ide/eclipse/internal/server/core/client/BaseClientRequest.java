@@ -22,6 +22,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.Messages;
+import org.cloudfoundry.ide.eclipse.internal.server.core.trace.HttpTracer;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -64,6 +65,7 @@ public abstract class BaseClientRequest<T> {
 			throw CloudErrorUtil.toCoreException(NLS.bind(Messages.ERROR_NO_CLIENT, label));
 		}
 
+		HttpTracer.getCurrent().trace(client);
 		try {
 			return runAndWait(client, subProgress);
 		}

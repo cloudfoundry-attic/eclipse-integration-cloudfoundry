@@ -28,6 +28,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.DeploymentConfiguration;
+import org.cloudfoundry.ide.eclipse.internal.server.core.trace.ITraceType;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.IConsoleContents;
@@ -89,6 +90,16 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	public void printToConsole(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule, String message,
 			boolean clearConsole, boolean isError, IProgressMonitor monitor) {
 		ConsoleManager.getInstance().synchWriteToStd(message, server, cloudModule, 0, clearConsole, isError, monitor);
+	}
+
+	public void trace(String message, ITraceType type, CloudFoundryServer server, boolean clear) {
+		ConsoleManager.getInstance().writeTrace(message, type, server, clear);
+	}
+	
+	public void showTraceView(boolean showTrace) {
+		if (showTrace) {
+			ConsoleManager.getInstance().setTraceVisible();
+		}
 	}
 
 	@Override
