@@ -16,6 +16,7 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM - wait for all module publish complete before finish up publish operation.
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
@@ -71,10 +72,13 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudOrgsAndSpac
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jst.server.core.IWebModule;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
@@ -139,6 +143,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private RefreshHandler refreshHandler;
 
 	private ApplicationUrlLookupService applicationUrlLookup;
+	
+	private PublishJobMonitor publishJobMonitor = new PublishJobMonitor();
 
 	/*
 	 * FIXNS: Until V2 MCF is released, disable debugging support for V2, as
@@ -1242,8 +1248,18 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				e.getMessage()));
 		CloudFoundryPlugin.log(errorStatus);
 		CloudFoundryPlugin.getCallback().handleError(errorStatus, BehaviourEventType.APP_START);
-
 	}
+
+	@Override
+	protected void publishModules(int kind, List modules, List deltaKind2, MultiStatus multi, IProgressMonitor monitor) {
+		// Reset the publish job list.
+		publishJobMonitor.init();
+		
+		super.publishModules(kind, modules, deltaKind2, multi, monitor);
+
+		// Wait for all publish job complete before finishing the publish operation.
+		publishJobMonitor.waitForJobCompletion(monitor);
+}
 
 	@Override
 	protected void publishModule(int kind, int deltaKind, IModule[] module, IProgressMonitor monitor)
@@ -1312,6 +1328,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 					};
 					job.setPriority(Job.INTERACTIVE);
+					publishJobMonitor.monitorJob(job);
 					job.schedule();
 				}
 			}
@@ -2706,6 +2723,56 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		}
 
+	}
+	
+	/**
+	 * Keep track on all the publish operation to be completed 
+	 * @author eyuen
+	 */
+	class PublishJobMonitor extends JobChangeAdapter {
+		
+		private List<Job> jobLst = new ArrayList<Job>();
+		
+		void init() {
+			// Clean all existing jobs
+			synchronized (jobLst) {
+				jobLst.clear();
+			}
+		}
+		
+		@Override
+		public void done(IJobChangeEvent event) {
+			super.done(event);
+			synchronized (jobLst) {
+				jobLst.remove(event.getJob());
+			}
+		}
+
+		void monitorJob(Job curJob) {
+			curJob.addJobChangeListener(this);
+			synchronized (jobLst) {
+				jobLst.add(curJob);
+			}
+		}
+		
+		boolean isAllJobCompleted() {
+			return jobLst.size() == 0;
+		}
+		
+		/**
+		 * Wait for all job to be completed or the monitor is cancelled.
+		 * @param monitor
+		 */
+		void waitForJobCompletion(IProgressMonitor monitor) {
+			while ((monitor == null || !monitor.isCanceled()) && jobLst.size() > 0) {
+				try {
+					Thread.sleep(500);
+				}
+				catch (InterruptedException e) {
+					// Do nothing
+				}
+			}
+		}
 	}
 
 	abstract class BehaviourRequest<T> extends LocalServerRequest<T> {
