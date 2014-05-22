@@ -72,7 +72,6 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudOrgsAndSpac
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
@@ -143,8 +142,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private RefreshHandler refreshHandler;
 
 	private ApplicationUrlLookupService applicationUrlLookup;
-	
-	private PublishJobMonitor publishJobMonitor = new PublishJobMonitor();
 
 	/*
 	 * FIXNS: Until V2 MCF is released, disable debugging support for V2, as
@@ -1251,17 +1248,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	@Override
-	protected void publishModules(int kind, List modules, List deltaKind2, MultiStatus multi, IProgressMonitor monitor) {
-		// Reset the publish job list.
-		publishJobMonitor.init();
-		
-		super.publishModules(kind, modules, deltaKind2, multi, monitor);
-
-		// Wait for all publish job complete before finishing the publish operation.
-		publishJobMonitor.waitForJobCompletion(monitor);
-}
-
-	@Override
 	protected void publishModule(int kind, int deltaKind, IModule[] module, IProgressMonitor monitor)
 			throws CoreException {
 		super.publishModule(kind, deltaKind, module, monitor);
@@ -1308,28 +1294,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					op = getApplicationOperation(module, ApplicationAction.UPDATE_RESTART);
 				}
 
+				// NOTE: No need to run this as a separate Job, as publish
+				// operations
+				// are already run in a PublishJob. To better integrate with
+				// WST, ensure publish operation
+				// is run to completion in the PublishJob, unless launching
+				// asynch events to notify other components while the main
+				// publish operation is being run (e.g refresh UI, etc..).
 				if (op != null) {
-					final ICloudFoundryOperation opToRun = op;
-					// Run as Job as to not block other modules that also need
-					// to be published
-					Job job = new Job(NLS.bind(Messages.PUBLISHING_MODULE, module[0].getName())) {
-
-						@Override
-						protected IStatus run(IProgressMonitor monitor) {
-							try {
-								opToRun.run(monitor);
-							}
-							catch (CoreException e) {
-								handlePublishError(e);
-								return Status.CANCEL_STATUS;
-							}
-							return Status.OK_STATUS;
-						}
-
-					};
-					job.setPriority(Job.INTERACTIVE);
-					publishJobMonitor.monitorJob(job);
-					job.schedule();
+					op.run(monitor);
 				}
 			}
 		}
@@ -2724,22 +2697,24 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 
 	}
-	
+
 	/**
-	 * Keep track on all the publish operation to be completed 
+	 * Keep track on all the publish operation to be completed
+	 * <p/>
+	 * NS: Keeping in case a similar job monitor is needed in the future.
 	 * @author eyuen
 	 */
-	class PublishJobMonitor extends JobChangeAdapter {
-		
+	static class PublishJobMonitor extends JobChangeAdapter {
+
 		private List<Job> jobLst = new ArrayList<Job>();
-		
+
 		void init() {
 			// Clean all existing jobs
 			synchronized (jobLst) {
 				jobLst.clear();
 			}
 		}
-		
+
 		@Override
 		public void done(IJobChangeEvent event) {
 			super.done(event);
@@ -2754,11 +2729,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				jobLst.add(curJob);
 			}
 		}
-		
+
 		boolean isAllJobCompleted() {
 			return jobLst.size() == 0;
 		}
-		
+
 		/**
 		 * Wait for all job to be completed or the monitor is cancelled.
 		 * @param monitor
