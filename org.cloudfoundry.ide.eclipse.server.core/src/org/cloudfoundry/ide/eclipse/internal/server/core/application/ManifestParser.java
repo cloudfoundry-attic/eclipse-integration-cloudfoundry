@@ -84,6 +84,8 @@ public class ManifestParser {
 
 	public static final String BUILDPACK_PROP = "buildpack";
 
+	public static final String ENV_PROP = "env";
+
 	private final String relativePath;
 
 	private final CloudFoundryApplicationModule appModule;
@@ -313,7 +315,7 @@ public class ManifestParser {
 	 */
 	public DeploymentInfoWorkingCopy load(IProgressMonitor monitor) throws CoreException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor);
-		subMonitor.beginTask("Parsing and loading application manifest file", 5);
+		subMonitor.beginTask("Parsing and loading application manifest file", 6);
 		DeploymentInfoWorkingCopy workingCopy;
 		try {
 			workingCopy = appModule.resolveDeploymentInfoWorkingCopy(subMonitor);
@@ -341,10 +343,8 @@ public class ManifestParser {
 			readMemory(application, workingCopy);
 			subMonitor.worked(1);
 
-
 			readApplicationURL(application, workingCopy, appName);
 			subMonitor.worked(1);
-
 
 			String buildpackurl = getStringValue(application, BUILDPACK_PROP);
 			if (buildpackurl != null) {
@@ -352,21 +352,42 @@ public class ManifestParser {
 				workingCopy.setStaging(staging);
 			}
 
-			readServices(workingCopy, application);
+			readEnvars(workingCopy, application);
 			subMonitor.worked(1);
 
+			readServices(workingCopy, application);
+			subMonitor.worked(1);
 
 			String archiveURL = getStringValue(application, PATH_PROP);
 			if (archiveURL != null) {
 				workingCopy.setArchive(archiveURL);
 			}
-			
+
 		}
 		finally {
 			subMonitor.done();
 		}
 
 		return workingCopy;
+	}
+
+	protected void readEnvars(DeploymentInfoWorkingCopy workingCopy, Map<?, ?> applications) {
+		Map<?, ?> propertiesMap = getContainingPropertiesMap(applications, ENV_PROP);
+
+		List<EnvironmentVariable> variables = new ArrayList<EnvironmentVariable>();
+		for (Entry<?, ?> entry : propertiesMap.entrySet()) {
+			if ((entry.getKey() instanceof String) && (entry.getValue() instanceof String)) {
+				String varName = (String) entry.getKey();
+				String varValue = (String) entry.getValue();
+				if (varName != null && varValue != null) {
+					EnvironmentVariable variable = new EnvironmentVariable();
+					variable.setVariable(varName);
+					variable.setValue(varValue);
+					variables.add(variable);
+				}
+			}
+		}
+		workingCopy.setEnvVariables(variables);
 	}
 
 	protected void readServices(DeploymentInfoWorkingCopy workingCopy, Map<?, ?> applications) {
@@ -694,6 +715,18 @@ public class ManifestParser {
 			}
 		}
 
+		List<EnvironmentVariable> envvars = deploymentInfo.getEnvVariables();
+
+		Map<Object, Object> varMap = new LinkedHashMap<Object, Object>();
+
+		// Clear the list of environment variables first.
+		application.put(ENV_PROP, varMap);
+		if (envvars != null) {
+			for (EnvironmentVariable var : envvars) {
+				varMap.put(var.getVariable(), var.getValue());
+			}
+		}
+
 		Staging staging = deploymentInfo.getStaging();
 		if (staging != null && staging.getBuildpackUrl() != null) {
 			application.put(BUILDPACK_PROP, staging.getBuildpackUrl());
@@ -774,11 +807,7 @@ public class ManifestParser {
 
 			outStream.write(manifestValue.getBytes());
 			outStream.flush();
-			// Refresh the associated project
-			IProject project = CloudFoundryProjectUtil.getProject(appModule);
-			if (project != null) {
-				project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-			}
+			refreshProject(monitor);
 			return true;
 
 		}
@@ -803,6 +832,14 @@ public class ManifestParser {
 			return null;
 		}
 		return memory + "M";
+	}
+
+	protected void refreshProject(IProgressMonitor monitor) throws CoreException {
+
+		IProject project = CloudFoundryProjectUtil.getProject(appModule);
+		if (project != null && project.isAccessible()) {
+			project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+		}
 	}
 
 }
