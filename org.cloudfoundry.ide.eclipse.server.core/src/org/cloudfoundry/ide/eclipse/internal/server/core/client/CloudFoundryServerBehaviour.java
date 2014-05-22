@@ -50,6 +50,7 @@ import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.client.lib.domain.Staging;
+import org.cloudfoundry.ide.eclipse.internal.server.core.AbstractAppStateTracker;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CachingApplicationArchive;
@@ -2596,11 +2597,34 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 								throw new OperationCanceledException();
 							}
 
-							server.setModuleState(modules, IServer.STATE_STARTED);
+							AbstractAppStateTracker curTracker = CloudFoundryPlugin.getAppStateTracker(getServer().getServerType().getId(), cloudModule);
+							if (curTracker != null) {
+								curTracker.setServer(getServer());
+								curTracker.startTracking(cloudModule);
+							}
 
 							CloudFoundryPlugin.trace("Application " + deploymentName + " started");
 
 							CloudFoundryPlugin.getCallback().applicationStarted(getCloudFoundryServer(), cloudModule);
+
+							if (curTracker != null) {
+								// Wait for application to be ready or getting out of the starting state.
+								boolean isAppStarting = true;
+								while (isAppStarting && !progress.isCanceled()) {
+									if (curTracker.getApplicationState(cloudModule) == IServer.STATE_STARTING) {
+										try {
+											Thread.sleep(200);
+										} catch (InterruptedException e) {
+											// Do nothing
+										}
+									} else {
+										isAppStarting = false;
+									}
+								}
+								curTracker.stopTracking(cloudModule);
+							}
+
+							server.setModuleState(modules, IServer.STATE_STARTED);
 
 							return null;
 						}

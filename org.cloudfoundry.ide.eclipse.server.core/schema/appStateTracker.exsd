@@ -1,0 +1,137 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.cloudfoundry.ide.eclipse.server.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appInfo>
+         <meta.schema plugin="org.cloudfoundry.ide.eclipse.server.core" id="appStateTracker" name="Application State Tracker"/>
+      </appInfo>
+      <documentation>
+         Defines an extension for tracking application state during a publish operation.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appInfo>
+            <meta.element />
+         </appInfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="appStateTracker"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appInfo>
+                  <meta.attribute translatable="true"/>
+               </appInfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="appStateTracker">
+      <complexType>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appInfo>
+                  <meta.attribute kind="java" basedOn="org.cloudfoundry.ide.eclipse.internal.server.core.AbstractAppStateTracker:"/>
+               </appInfo>
+            </annotation>
+         </attribute>
+         <attribute name="serverTypeIds" type="string" use="required">
+            <annotation>
+               <documentation>
+                  a comma separated list of server type ids. May include wildcards (*) at the end of an id
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="moduleTypeIds" type="string">
+            <annotation>
+               <documentation>
+                  a comma separated list of module type ids. May include wildcards (*) at the end of an id
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="since"/>
+      </appInfo>
+      <documentation>
+         1.6.2
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="examples"/>
+      </appInfo>
+      <documentation>
+         The following is an example of the extension point:
+
+&lt;pre&gt;
+ &lt;extension
+       id=&quot;com.my.module.MyModuleAppStateTracker&quot;
+       point=&quot;org.cloudfoundry.ide.eclipse.server.core.appStateTracker&quot;&gt;
+     &lt;appStateTracker
+           class=&quot;com.my.module.MyModuleAppStateTracker&quot;
+           serverTypeIds=&quot;com.my.server.type&quot;
+           moduleTypeIds=&quot;com.my.module.type&quot;&gt;
+     &lt;/appStateTracker&gt;
+  &lt;/extension&gt;
+&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="apiinfo"/>
+      </appInfo>
+      <documentation>
+         Value of the attribute &lt;b&gt;class&lt;/b&gt; must be a fully qualified name of a Java class that extends &lt;code&gt;org.cloudfoundry.ide.eclipse.internal.server.core.AbstractAppStateTracker&lt;/code&gt;.
+
+      </documentation>
+   </annotation>
+
+
+   <annotation>
+      <appInfo>
+         <meta.section type="copyright"/>
+      </appInfo>
+      <documentation>
+         Copyright (c) 2014 Pivotal Software, Inc.
+All rights reserved. This program and the accompanying materials
+are made available under the terms of the Eclipse Public License v1.0
+which accompanies this distribution, and is available at
+http://www.eclipse.org/legal/epl-v10.html
+
+Contributors:
+IBM - initial implementation
+      </documentation>
+   </annotation>
+
+
+</schema>

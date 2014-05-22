@@ -16,6 +16,7 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM - add external finder method for console
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.console;
 
@@ -126,6 +127,22 @@ public class ConsoleManager {
 			consoleByUri.put(getConsoleId(server.getServer(), appModule, instanceIndex), serverLogTail);
 		}
 		return serverLogTail;
+	}
+	
+	/**
+	 * Find the message console that corresponds to the server and a given module. If there are multiple instances
+	 * of the application, only the first one will get returned.
+	 * @param server the server for that console
+	 * @param appModule the app for that console
+	 * @return the message console. Null if no corresponding console is found.
+	 * TODO: need to expose this to formal API.
+	 */
+	public MessageConsole findCloudFoundryConsole(IServer server, CloudFoundryApplicationModule appModule) {
+		String curConsoleId = getConsoleId(server, appModule, 0);
+		if (curConsoleId != null) {
+			return consoleByUri.get(curConsoleId).getConsole();
+		}
+		return null;
 	}
 
 	public void synchWriteToStd(String message, CloudFoundryServer server, CloudFoundryApplicationModule appModule,

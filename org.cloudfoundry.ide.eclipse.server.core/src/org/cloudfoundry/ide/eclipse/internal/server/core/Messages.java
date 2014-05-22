@@ -79,6 +79,7 @@ public class Messages {
 
 	public static final String ERROR_NO_CLIENT = "No Cloud Foundry client available to process the following request - {0} ";
 
+	public static final String ERROR_FAILED_APP_START_TRACKER = "Internal Error: Failed to load application start tracker due to - {0}";
 	/*
 	 * Warnings
 	 */

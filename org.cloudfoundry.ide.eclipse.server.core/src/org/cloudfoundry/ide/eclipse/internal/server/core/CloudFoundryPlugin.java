@@ -16,10 +16,13 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM - add appStateTracker extension support
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryClientFactory;
@@ -42,6 +45,7 @@ import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.util.tracker.ServiceTracker;
@@ -71,6 +75,8 @@ public class CloudFoundryPlugin extends Plugin {
 		private static final String ELEMENT_CLASS = "class";
 
 		private static final String EXTENSION_ID_CALLBACK = PLUGIN_ID + ".callback";
+
+		private static final String EXTENSION_ID_APP_STATE_TRACKER = "appStateTracker";
 
 		public static CloudFoundryCallback readExtension() {
 			IExtensionRegistry registry = Platform.getExtensionRegistry();
@@ -106,6 +112,60 @@ public class CloudFoundryPlugin extends Plugin {
 			return null;
 		}
 
+		/**
+		 * Load the app state trackers.
+		 */
+		private static synchronized void readAppStateTrackerExtension() {
+			if (appStateTrackerEntries != null)
+				return;
+
+			// if (Trace.CONFIG) {
+			// Trace.trace(Trace.STRING_CONFIG,
+			// "->- Loading .appStateTracker extension point ->-");
+			// }
+			appStateTrackerEntries = new ArrayList<AppStateTrackerEntry>();
+			IExtensionRegistry registry = Platform.getExtensionRegistry();
+			IConfigurationElement[] cf = registry
+					.getConfigurationElementsFor(PLUGIN_ID, EXTENSION_ID_APP_STATE_TRACKER);
+
+			for (IConfigurationElement curConfigElement : cf) {
+				// load the extension in a safe environment. If there are NPEs
+				// or miss configurations they will be caught by try/catch
+				String[] curServerTypeIds = tokenize(curConfigElement.getAttribute("serverTypeIds"), ",");
+				String[] curModuleTypeIds = tokenize(curConfigElement.getAttribute("moduleTypeIds"), ",");
+				appStateTrackerEntries.add(new AppStateTrackerEntry(curServerTypeIds, curModuleTypeIds,
+						curConfigElement));
+			}
+			// if (Trace.CONFIG) {
+			// Trace.trace(Trace.STRING_CONFIG,
+			// "-<- Done loading .appStateTracker extension point -<-");
+			// }
+		}
+
+		/**
+		 * Utility method to tokenize a string into an array.
+		 * 
+		 * @param str a string to be parsed
+		 * @param delim the delimiters
+		 * @return an array containing the tokenized string
+		 */
+		private static String[] tokenize(String str, String delim) {
+			if (str == null)
+				return new String[0];
+
+			List<String> list = new ArrayList<String>();
+
+			StringTokenizer st = new StringTokenizer(str, delim);
+			while (st.hasMoreTokens()) {
+				String s = st.nextToken();
+				if (s != null && s.length() > 0)
+					list.add(s.trim());
+			}
+
+			String[] s = new String[list.size()];
+			list.toArray(s);
+			return s;
+		}
 	}
 
 	private static class NullCallback extends CloudFoundryCallback {
@@ -157,7 +217,55 @@ public class CloudFoundryPlugin extends Plugin {
 			// TODO Auto-generated method stub
 
 		}
+	}
 
+	private static class AppStateTrackerEntry {
+		private String[] serverTypeIds;
+
+		private String[] moduleTypeIds;
+
+		private IConfigurationElement configElement;
+
+		private AppStateTrackerEntry(String[] curServerTypeIds, String[] curModuleTypeIds,
+				IConfigurationElement curConfigElement) {
+			serverTypeIds = curServerTypeIds;
+			moduleTypeIds = curModuleTypeIds;
+			configElement = curConfigElement;
+		}
+
+		private String[] getModuleTypeIds() {
+			return moduleTypeIds;
+		}
+
+		private String[] getServerTypeIds() {
+			return serverTypeIds;
+		}
+
+		private IConfigurationElement getConfigElement() {
+			return configElement;
+		}
+
+		private AbstractAppStateTracker createAppStateTracker() {
+			AbstractAppStateTracker tracker = null;
+			try {
+				tracker = (AbstractAppStateTracker) configElement.createExecutableExtension("class");
+				// if (Trace.CONFIG) {
+				// Trace.trace(Trace.STRING_CONFIG,
+				// "  Loaded .appStateTracker: " +
+				// curConfigElement.getAttribute("id")
+				// + ", loaded class=" + tracker);
+				// }
+			}
+			catch (Throwable t) {
+				// if (Trace.SEVERE) {
+				// Trace.trace(Trace.STRING_SEVERE,
+				// "  Could not load .appStateTracker: " +
+				// curConfigElement.getAttribute("id"), t);
+				// }
+				CloudFoundryPlugin.logError(NLS.bind(Messages.ERROR_FAILED_APP_START_TRACKER, t.getMessage()), t);
+			}
+			return tracker;
+		}
 	}
 
 	// public static final String CLOUD_CONTROLLER_DEFAULT_URL_ATTRIBUTE =
@@ -170,6 +278,9 @@ public class CloudFoundryPlugin extends Plugin {
 	public static final boolean DEFAULT_INCREMENTAL_PUBLISH_PREFERENCE_VAL = true;
 
 	private static CloudFoundryCallback callback;
+
+	// Cached copy of app state tracker
+	private static List<AppStateTrackerEntry> appStateTrackerEntries;
 
 	private static ModuleCache moduleCache;
 
@@ -184,6 +295,39 @@ public class CloudFoundryPlugin extends Plugin {
 	private static CaldecottTunnelCache caldecottCache = new CaldecottTunnelCache();
 
 	private TunnelServiceCommandStore serviceCommandsStore;
+
+	/**
+	 * Returns the app state tracker for a given server type. Only the first
+	 * matched tracker will be return in case there are multiple tracker defined
+	 * to support a particular server type.
+	 *
+	 * @return the app state tracker or null if no app state tracker has been
+	 * registered to support the given type.
+	 */
+	public static AbstractAppStateTracker getAppStateTracker(String serverTypeId,
+			CloudFoundryApplicationModule application) {
+		if (serverTypeId == null || application == null || application.getLocalModule() == null) {
+			return null;
+		}
+
+		if (appStateTrackerEntries == null) {
+			ExtensionPointReader.readAppStateTrackerExtension();
+		}
+
+		String moduleTypeId = application.getLocalModule().getModuleType().getId();
+
+		for (AppStateTrackerEntry curTrackerEntry : appStateTrackerEntries) {
+			String[] curServerTypeIds = curTrackerEntry.getServerTypeIds();
+			if (supportsType(serverTypeId, curServerTypeIds)) {
+				String[] curModuleTypeIds = curTrackerEntry.getModuleTypeIds();
+				if (supportsType(moduleTypeId, curModuleTypeIds)) {
+					return curTrackerEntry.createAppStateTracker();
+				}
+			}
+		}
+
+		return null;
+	}
 
 	public static CaldecottTunnelCache getCaldecottTunnelCache() {
 		return caldecottCache;
@@ -301,6 +445,26 @@ public class CloudFoundryPlugin extends Plugin {
 
 		plugin = null;
 		super.stop(context);
+	}
+
+	private static boolean supportsType(String typeId, String[] supportedTypeIds) {
+		if (typeId == null || typeId.length() == 0)
+			return false;
+
+		if (supportedTypeIds == null)
+			return false;
+
+		int size = supportedTypeIds.length;
+		for (int i = 0; i < size; i++) {
+			if (supportedTypeIds[i].endsWith("*")) {
+				if (typeId.length() >= supportedTypeIds[i].length()
+						&& typeId.startsWith(supportedTypeIds[i].substring(0, supportedTypeIds[i].length() - 1)))
+					return true;
+			}
+			else if (typeId.equals(supportedTypeIds[i]))
+				return true;
+		}
+		return false;
 	}
 
 	public static void trace(String string) {
