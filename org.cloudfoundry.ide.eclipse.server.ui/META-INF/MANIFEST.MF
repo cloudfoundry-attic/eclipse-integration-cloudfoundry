@@ -27,7 +27,8 @@ Require-Bundle: org.eclipse.wst.common.project.facet.ui,
  org.eclipse.datatools.connectivity.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
-Export-Package: org.cloudfoundry.ide.eclipse.internal.server.ui,
+Export-Package: org.cloudfoundry.ide.eclipse.server.ui, 
+ org.cloudfoundry.ide.eclipse.internal.server.ui,
  org.cloudfoundry.ide.eclipse.internal.server.ui.actions,
  org.cloudfoundry.ide.eclipse.internal.server.ui.console,
  org.cloudfoundry.ide.eclipse.internal.server.ui.editor,
