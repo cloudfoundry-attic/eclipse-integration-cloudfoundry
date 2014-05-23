@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -19,49 +19,39 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValidationEvents;
 import org.eclipse.core.runtime.IStatus;
 
 /**
- * Event fired by a component, like a UI part, when state in that component has
- * changed.
+ * Contains the {@link IStatus} of a validation operation, along with a
+ * validation event type indicating an event that either occurred during or
+ * after the validation process.
+ *
  */
-public class PartChangeEvent {
+public class ValidationStatus {
 
 	private final IStatus status;
 
-	private final IEventSource<?> source;
+	private final int eventType;
 
-	private final Object data;
-
-	private final int type;
-
-	public PartChangeEvent(Object data, IStatus status, IEventSource<?> source, int type) {
-		this.source = source;
+	public ValidationStatus(IStatus status, int eventType) {
 		this.status = status;
-		this.data = data;
-
-		this.type = type;
-	}
-
-	public IEventSource<?> getSource() {
-		return source;
+		this.eventType = eventType;
 	}
 
 	public IStatus getStatus() {
 		return status;
 	}
 
-	public int getType() {
-		return type;
-	}
-
-	public Object getData() {
-		return data;
+	/**
+	 * @return an event defined in {@link ValidationEvents}
+	 */
+	public int getEventType() {
+		return eventType;
 	}
 
 	@Override
 	public String toString() {
-		return getStatus() != null ? getStatus().toString() : super.toString();
+		return getStatus() != null ? getStatus().toString() : null;
 	}
-
 }

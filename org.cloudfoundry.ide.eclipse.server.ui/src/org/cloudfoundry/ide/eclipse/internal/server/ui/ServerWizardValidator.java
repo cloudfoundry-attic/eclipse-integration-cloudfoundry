@@ -25,72 +25,55 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.Messages;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsValidationStatics;
-import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValidationEvents;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Display;
 
 /**
- * Validates a username, password and orgs and spaces selection, both locally
- * and with a Cloud Foundry server. The local option allows for quick
- * validation, since the server validation may be a long running job.
+ * Performs both local and remote server validation of server account details
+ * for a given Cloud Foundry server instance ( {@link CloudFoundryServer} ),
+ * like credentials and cloud spaces, as well as handling self-signed errors
+ * when remote server authorisations are attempted.
  * 
  */
-public class ServerWizardValidator implements ServerValidator {
-
-	/*
-	 * 
-	 * NOTE: Be sure to keep track of the previous status and that previous
-	 * status is always kept up to date
-	 */
-	private ValidationStatus previousStatus;
+public abstract class ServerWizardValidator implements ServerValidator {
 
 	private final CloudFoundryServer cfServer;
 
-	private final CloudServerSpaceDelegate cloudServerSpaceDelegate;
+	private final CloudSpacesDelegate cloudServerSpaceDelegate;
 
-	public static final ValidationStatus CREDENTIALS_SET_VALIDATION_STATUS = new ValidationStatus(
-			CloudFoundryPlugin.getStatus(
-					org.cloudfoundry.ide.eclipse.internal.server.ui.Messages.SERVER_WIZARD_VALIDATOR_CLICK_TO_VALIDATE,
-					IStatus.INFO), ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED);
+	/**
+	 * The Server validator acts as an event source (it generates events)
+	 */
+	private final IEventSource<ServerWizardValidator> validatorEventSource = new IEventSource<ServerWizardValidator>() {
+
+		public ServerWizardValidator getSource() {
+			return ServerWizardValidator.this;
+		}
+	};
 
 	// Session cache as long as the validator is used, as to not keep
 	// prompting the user multiple times
-	private boolean selfSigned = false;
+	private boolean acceptSelfSigned = false;
 
-	public ServerWizardValidator(CloudFoundryServer cloudServer, CloudServerSpaceDelegate cloudServerSpaceDelegate) {
+	public ServerWizardValidator(CloudFoundryServer cloudServer, CloudSpacesDelegate cloudServerSpaceDelegate) {
 		this.cfServer = cloudServer;
 		this.cloudServerSpaceDelegate = cloudServerSpaceDelegate;
 	}
 
-	public CloudServerSpaceDelegate getSpaceDelegate() {
+	public CloudSpacesDelegate getSpaceDelegate() {
 		return cloudServerSpaceDelegate;
 	}
 
-	/**
-	 * True if username and password were filled without errors in the last
-	 * validation.
-	 * 
-	 */
-	public synchronized boolean areCredentialsFilled() {
-
-		return previousStatus != null
-				&& previousStatus.getStatus().getSeverity() != IStatus.ERROR
-				&& (previousStatus.getValidationType() == ServerCredentialsValidationStatics.EVENT_SPACE_VALID || previousStatus
-						.getValidationType() == ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED);
-
-	}
-
-	/**
-	 * Validation from the last validation run.
-	 */
-	public synchronized ValidationStatus getPreviousValidationStatus() {
-		return previousStatus;
+	public CloudFoundryServer getCloudFoundryServer() {
+		return cfServer;
 	}
 
 	/**
@@ -103,7 +86,7 @@ public class ServerWizardValidator implements ServerValidator {
 	 * @return
 	 */
 	public ValidationStatus localValidation() {
-		return validate(false, null);
+		return validate(false, true, null);
 	}
 
 	/**
@@ -112,43 +95,48 @@ public class ServerWizardValidator implements ServerValidator {
 	 * @see org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ServerValidator
 	 * #validate(boolean, org.eclipse.jface.operation.IRunnableContext)
 	 */
-	public synchronized ValidationStatus validate(boolean validateAgainstServer, IRunnableContext runnableContext) {
-		ValidationStatus status = null;
+	public synchronized ValidationStatus validate(boolean validateAgainstServer, boolean validateSpace,
+			IRunnableContext runnableContext) {
+		ValidationStatus status = serverValidation(validateAgainstServer, validateSpace, runnableContext);
+
+		// If validating against server, also check self-signed errors.
 		if (validateAgainstServer) {
-			status = doValidateInUI(runnableContext);
+			status = checkSelfSigned(status, runnableContext);
+			if (status != null && status.getStatus().isOK()) {
+				serverValidation(validateAgainstServer, validateSpace, runnableContext);
+			}
 		}
-		else {
-			status = internalValidate(validateAgainstServer, selfSigned, runnableContext);
-		}
-		previousStatus = status;
+
 		return status;
 	}
 
 	/**
-	 * Validates the credentials against the server (will connect to the server)
-	 * in the UI thread, as dialogues may be opened to the user in this case.
-	 * @return validation of server credentials
+	 * 
+	 * @param status containing possible self-signed information. If null, no
+	 * further checks or validation will occur
+	 * @param context
+	 * @return {@link IStatus#OK} if self-signed was accepted. IStatus.ERROR if
+	 * Null if initial status is also null.
 	 */
-	public synchronized ValidationStatus validateInUI(IRunnableContext context) {
-		ValidationStatus status = doValidateInUI(context);
-		previousStatus = status;
-		return status;
-	}
+	protected ValidationStatus checkSelfSigned(final ValidationStatus status, final IRunnableContext context) {
+		// If not status is passes that may contain self-signed information, no
+		// further validation is possible
+		if (status == null) {
+			return null;
+		}
+		final ValidationStatus[] validationStatus = new ValidationStatus[] { status };
 
-	protected ValidationStatus doValidateInUI(final IRunnableContext context) {
-		final ValidationStatus[] validationStatus = new ValidationStatus[1];
+		IStatus iStatus = validationStatus[0].getStatus();
 
-		// Must run in UI thread since errors result in a dialogue opening.
-		Display.getDefault().syncExec(new Runnable() {
+		if (validationStatus[0].getEventType() == ValidationEvents.SELF_SIGNED
+				&& iStatus.getException() instanceof SSLPeerUnverifiedException) {
 
-			public void run() {
+			Display.getDefault().syncExec(new Runnable() {
 
-				validationStatus[0] = internalValidate(true, selfSigned, context);
-				IStatus status = validationStatus[0].getStatus();
+				public void run() {
 
-				if (validationStatus[0].getValidationType() == ServerCredentialsValidationStatics.EVENT_SELF_SIGNED_ERROR
-						&& status.getException() instanceof SSLPeerUnverifiedException) {
-					// Now check if for this server URL there is a stored value
+					// Now check if for this server URL there is a stored
+					// value
 					// indicating whether to user self-signed certs or not.
 					boolean storedSelfSign = cfServer.getSelfSignedCertificate();
 
@@ -157,223 +145,150 @@ public class ServerWizardValidator implements ServerValidator {
 
 						if (MessageDialog.openQuestion(Display.getDefault().getActiveShell(),
 								Messages.TITLE_SELF_SIGNED_PROMPT_USER, message)) {
-							selfSigned = true;
+							acceptSelfSigned = true;
 						}
 					}
 					else {
-						selfSigned = storedSelfSign;
+						acceptSelfSigned = storedSelfSign;
 					}
 
 					// Re-validate if the user has selected to continue with
 					// self-signed certificate
-					if (selfSigned) {
-						validationStatus[0] = internalValidate(true, selfSigned, context);
+					if (acceptSelfSigned) {
+						validationStatus[0] = new ValidationStatus(Status.OK_STATUS, ValidationEvents.VALIDATION);
 					}
 					else {
+						// If user selected not to accept self-signed server, no
+						// further validation
+						// can be possible. Indicate this as an error
 						validationStatus[0] = new ValidationStatus(CloudFoundryPlugin
 								.getErrorStatus(Messages.ERROR_UNABLE_CONNECT_SERVER_CREDENTIALS),
-								ServerCredentialsValidationStatics.EVENT_SELF_SIGNED_ERROR);
+								ValidationEvents.SELF_SIGNED);
 					}
-
 				}
+			});
+		}
 
-				// Always update the value in the server. For example, if a
-				// previous run has determined that this URL needs self-signed
-				// certificate
-				// but no SSL error was thrown, it means that Server condition
-				// has changed (i.e it no longer needs the certificate).
-				cfServer.setSelfSignedCertificate(selfSigned);
-
-			}
-		});
-
+		// Always update the value in the server. For example, if a
+		// previous run has determined that this URL needs
+		// self-signed
+		// certificate
+		// but no SSL error was thrown, it means that Server
+		// condition
+		// has changed (i.e it no longer needs the certificate).
+		cfServer.setSelfSignedCertificate(acceptSelfSigned);
 		return validationStatus[0];
 	}
 
 	/**
 	 * Validates the server credentials and URL using a standalone disposable
 	 * Java client ( {@link CloudFoundryOperations} ).
-	 * @param validateAgainstServer
+	 * @param validateAgainstServer true if credentials should be validated
+	 * against a server. False if validation should be local (e.g. checking
+	 * credential and URL syntax)
 	 * @param runnableContext
 	 * @return non-null validation status.
 	 */
-	protected ValidationStatus internalValidate(boolean validateAgainstServer, boolean selfSigned,
+	protected ValidationStatus serverValidation(boolean validateAgainstServer, boolean validateSpace,
 			IRunnableContext runnableContext) {
 
 		// Check for valid username, password, and server URL syntax first
 		// before attempting a remote validation
-		IStatus localValidation = validateLocally(cfServer);
+		ValidationStatus validationStatus = validateLocally();
 
 		String userName = cfServer.getUsername();
 		String password = cfServer.getPassword();
 		String url = cfServer.getUrl();
 
-		String message = localValidation.getMessage();
-
-		// CF-specific validation type that is not represented in a standard
-		// IStatus.
-		// This enables/disables additional wizard behaviour
-		int cfValidationType = ServerCredentialsValidationStatics.EVENT_NONE;
-
 		IStatus eventStatus = null;
 
-		// If local validation is not OK, treat as INFO rather than ERROR. INFO
-		// will still keep wizard buttons disabled. A general
-		// INFO event status is created later with the local validation error
-		// message obtained above.
-		if (localValidation.isOK()) {
+		if (validationStatus.getStatus().isOK()) {
 
-			// First check if a space is already selected, and credentials
-			// haven't changed, meaning new credentials validation and space
-			// look up is not necessary
+			// If credentials changed, clear the space descriptor. If a server
+			// validation is required later on
+			// the new credentials will be validated and a new descriptor will
+			// be obtained.
 			if (!cloudServerSpaceDelegate.matchesCurrentDescriptor(url, userName, password)) {
 				cloudServerSpaceDelegate.clearDescriptor();
-				message = CREDENTIALS_SET_VALIDATION_STATUS.getStatus().getMessage();
-				cfValidationType = CREDENTIALS_SET_VALIDATION_STATUS.getValidationType();
-			}
-			else if (cloudServerSpaceDelegate.hasSetSpace()) {
-				cfValidationType = ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
-				// No need to validate as credentials haven't changed and space
-				// is the same
-				validateAgainstServer = false;
 			}
 
-			if (validateAgainstServer) {
-				try {
+			try {
 
+				// Credential validation errors result in CoreExceptions
+				// handled below.
+				// Likewise, OperationCanceledExceptions are handled below.
+				if (validateAgainstServer) {
 					// Indicate that the URL may be a display URL (in which case
 					// the validation will convert
 					// it to an actual URL)
 					boolean displayURL = true;
-
-					// Credential validation errors result in CoreExceptions
-					// handled below.
-					// Likewise, OperationCanceledExceptions are handled below.
-					CloudUiUtil.validateCredentials(userName, password, url, displayURL, selfSigned, runnableContext);
-
-					// At this stage, credentials have been validated. Now check
-					// orgs and spaces.
-					String orgSpacesErrorMessage = null;
-
-					try {
-						CloudSpacesDescriptor descriptor = cloudServerSpaceDelegate.getUpdatedDescriptor(url, userName,
-								password, selfSigned, runnableContext);
-						if (descriptor == null) {
-							orgSpacesErrorMessage = Messages.ERROR_FAILED_RESOLVE_ORGS_SPACES;
-						}
-						else if (cloudServerSpaceDelegate.hasSetSpace()) {
-							cfValidationType = ServerCredentialsValidationStatics.EVENT_SPACE_VALID;
-						}
-						else {
-							// Don't treat this as an error. By default
-							// non-error that are also not OK are treated as
-							// INFO status.
-							message = Messages.ERROR_NO_VALID_CLOUD_SPACE_SELECTED;
-							cfValidationType = ServerCredentialsValidationStatics.EVENT_CREDENTIALS_FILLED;
-						}
-					}
-					catch (CoreException e) {
-						// Handle orgs and spaces errors separately from other
-						// errors (e.g. credential validation errors) to convert
-						// them to user-friendly messages.
-						orgSpacesErrorMessage = e.getMessage() != null ? NLS.bind(
-								Messages.ERROR_FAILED_RESOLVE_ORGS_SPACES_DUE_TO_ERROR, e.getMessage())
-								: Messages.ERROR_FAILED_RESOLVE_ORGS_SPACES;
-					}
-
-					if (orgSpacesErrorMessage != null) {
-						int statusType = IStatus.ERROR;
-						eventStatus = CloudFoundryPlugin.getStatus(orgSpacesErrorMessage, statusType);
-					}
+					CloudUiUtil.validateCredentials(userName, password, url, displayURL, acceptSelfSigned,
+							runnableContext);
 				}
-				catch (CoreException e) {
-					if (e.getCause() instanceof javax.net.ssl.SSLPeerUnverifiedException) {
-						cfValidationType = ServerCredentialsValidationStatics.EVENT_SELF_SIGNED_ERROR;
-					}
-					eventStatus = e.getStatus();
-				}
-				catch (OperationCanceledException oce) {
-					eventStatus = null;
+
+				if (validateSpace) {
+					cloudServerSpaceDelegate.validate(url, userName, password, acceptSelfSigned, runnableContext,
+							validateAgainstServer);
 				}
 			}
-		}
-
-		if (eventStatus == null) {
-
-			// By default status are marked as INFO, unless they are explicit
-			// errors or OK validations. This allows the wizard to retain its
-			// current state (and show the default wizard page
-			// message) in case neither OK or ERROR status are received (for
-			// example, a credentials validation operation has been cancelled).
-			int statusType = IStatus.INFO;
-
-			if (cfValidationType == ServerCredentialsValidationStatics.EVENT_SPACE_VALID) {
-				message = ServerCredentialsValidationStatics.VALID_ACCOUNT_MESSAGE;
-				statusType = IStatus.OK;
+			catch (CoreException e) {
+				// Even if an error occurred, classify the event as a validaiton
+				// event, UNLESS it is a
+				// self-signed error
+				int eventType = ValidationEvents.VALIDATION;
+				if (e.getCause() instanceof javax.net.ssl.SSLPeerUnverifiedException) {
+					eventType = ValidationEvents.SELF_SIGNED;
+				}
+				eventStatus = e.getStatus();
+				validationStatus = getValidationStatus(eventStatus, eventType);
+			}
+			catch (OperationCanceledException oce) {
+				eventStatus = null;
+				validationStatus = getValidationStatus(Status.OK_STATUS, ValidationEvents.EVENT_NONE);
 			}
 
-			eventStatus = CloudFoundryPlugin.getStatus(message, statusType);
 		}
-
-		return new ValidationStatus(eventStatus, cfValidationType);
+		return validationStatus;
 
 	}
 
-	protected IStatus validateLocally(CloudFoundryServer cfServer) {
-
-		String userName = cfServer.getUsername();
-		String password = cfServer.getPassword();
-		String url = cfServer.getUrl();
-		String message = null;
-
-		boolean valuesFilled = false;
-
-		if (userName == null || userName.trim().length() == 0) {
-			message = "Enter an email address.";
-		}
-		else if (password == null || password.trim().length() == 0) {
-			message = "Enter a password.";
-		}
-		else if (url == null || url.trim().length() == 0) {
-			message = NLS.bind("Select a {0} URL.", cloudServerSpaceDelegate.serverServiceName);
-		}
-		else {
-			valuesFilled = true;
-			message = NLS.bind(ServerCredentialsValidationStatics.DEFAULT_DESCRIPTION,
-					cloudServerSpaceDelegate.serverServiceName);
-		}
-
-		int statusType = valuesFilled ? IStatus.OK : IStatus.ERROR;
-
-		return CloudFoundryPlugin.getStatus(message, statusType);
+	protected ValidationStatus getValidationStatus(int statusType, String validationMessage, int eventType) {
+		IStatus status = CloudFoundryPlugin.getStatus(validationMessage, statusType);
+		return getValidationStatus(status, eventType);
 	}
 
-	public static class ValidationStatus {
-
-		private final IStatus status;
-
-		private final int validationType;
-
-		public ValidationStatus(IStatus status, int validationType) {
-			this.status = status;
-			this.validationType = validationType;
-		}
-
-		public IStatus getStatus() {
-			return status;
-		}
-
-		/**
-		 * @return one of the following:
-		 * {@link ServerCredentialsValidationStatics#EVENT_CREDENTIALS_FILLED},
-		 * {@link ServerCredentialsValidationStatics#EVENT_NONE},
-		 * {@link ServerCredentialsValidationStatics#EVENT_SELF_SIGNED_ERROR},
-		 * {@link ServerCredentialsValidationStatics#EVENT_SPACE_CHANGED},
-		 * {@link ServerCredentialsValidationStatics#EVENT_SPACE_VALID}
-		 */
-		public int getValidationType() {
-			return validationType;
-		}
+	protected ValidationStatus getValidationStatus(IStatus status, int eventType) {
+		return new ServerWizardValidationStatus(status, eventType);
 	}
 
+	/**
+	 * 
+	 * @return status of local validation of account information, without
+	 * requiring connection to a remote Cloud Foundry server. Should not be used
+	 * for long running validation. Must not return null status.
+	 */
+	protected abstract ValidationStatus validateLocally();
+
+	/**
+	 * Local validation of account values. Checks if any values (like username,
+	 * password, or server URL) are missing or have incorrect syntax.
+	 * <p/>
+	 * Does not attempt to authorise the account against the server.
+	 * @return non-null local validation status.
+	 */
+
+	private class ServerWizardValidationStatus extends ValidationStatus implements IAdaptable {
+
+		public ServerWizardValidationStatus(IStatus status, int eventType) {
+			super(status, eventType);
+		}
+
+		@SuppressWarnings("rawtypes")
+		public Object getAdapter(Class clazz) {
+			if (clazz.equals(PartChangeEvent.class)) {
+				return new PartChangeEvent(null, getStatus(), validatorEventSource, getEventType());
+			}
+			return null;
+		}
+	}
 }

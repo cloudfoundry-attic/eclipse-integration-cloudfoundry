@@ -22,14 +22,19 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.wizard.WizardPage;
 
-public class WizardPageChangeListener extends WizardChangeListener {
+/**
+ * 
+ * Updates status of a wizard if the wizard components are defined by an
+ * {@link WizardPage}
+ *
+ */
+public class WizardPageStatusHandler extends WizardStatusHandler {
 
 	private final WizardPage wizardPage;
 
-	public WizardPageChangeListener(WizardPage wizardPage) {
+	public WizardPageStatusHandler(WizardPage wizardPage) {
 		this.wizardPage = wizardPage;
 	}
-
 
 	protected void update() {
 		if (wizardPage.getWizard() != null && wizardPage.getWizard().getContainer() != null
@@ -44,12 +49,10 @@ public class WizardPageChangeListener extends WizardChangeListener {
 
 	protected void setWizardInformation(String message) {
 		wizardPage.setMessage(message, DialogPage.INFORMATION);
-
 	}
 
 	protected void setWizardMessage(String message) {
 		wizardPage.setMessage(message, DialogPage.NONE);
-
 	}
 
 }

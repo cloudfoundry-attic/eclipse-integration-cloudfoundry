@@ -25,16 +25,18 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryCredentialsPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpaceDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpacesDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.Messages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator.ValidationStatus;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ValidationEventHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -61,9 +63,11 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 	private CloudFoundrySpacesWizardFragment spacesFragment;
 
-	private ServerWizardValidator validator;
+	private ValidationEventHandler validationHandler;
 
-	private WizardFragmentChangeListener wizardListener;
+	private WizardFragmentStatusHandler statusHandler;
+
+	private IRunnableContext context;
 
 	@Override
 	public Composite createComposite(Composite parent, IWizardHandle wizardHandle) {
@@ -72,11 +76,30 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-		wizardListener = new WizardFragmentChangeListener(wizardHandle);
-		// Dont set the validator yet, as it is dependant on the server created
-		// by the wizard.
-		credentialsPart = new CloudFoundryCredentialsPart(cloudServer, null, wizardListener, new WizardHandleContext(
-				wizardHandle));
+		context = wizardHandle != null ? new WizardHandleContext(wizardHandle).getRunnableContext() : null;
+
+		// Performs validation on credentials and cloud spaces when creating a
+		// new server.
+		validationHandler = new ValidationEventHandler();
+
+		// Status handler that displays status to the wizard
+		statusHandler = new WizardFragmentStatusHandler(wizardHandle);
+
+		credentialsPart = new CloudFoundryCredentialsPart(cloudServer, new WizardHandleContext(wizardHandle));
+
+		// Changes in the credentials part (e.g. username, password, server URL)
+		// should
+		// notify the validation handler so that it can perform validations
+		credentialsPart.addPartChangeListener(validationHandler);
+
+		// The credentials part should be notified when validations are
+		// complete, as to enable/disable UI components accordingly
+		validationHandler.addValidationListener(credentialsPart);
+
+		// Must wire the wizard status handler to the validation handler, so
+		// that the wizard
+		// can be notified when to display validation status or errors.
+		validationHandler.addStatusHandler(statusHandler);
 
 		credentialsPart.createPart(composite);
 
@@ -86,22 +109,27 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 	@Override
 	public void enter() {
 		initServer();
-		validator = new ServerWizardValidator(cloudServer, new CloudServerSpaceDelegate(cloudServer));
-		spacesFragment = new CloudFoundrySpacesWizardFragment(cloudServer, validator);
+
+		// New validator should be created as the cloud server may have changed.
+
+		ServerWizardValidator validator = new CredentialsWizardValidator(cloudServer, new CloudServerSpacesDelegate(
+				cloudServer));
+		if (validationHandler != null) {
+			validationHandler.updateValidator(validator);
+		}
+
+		spacesFragment = new CloudFoundrySpacesWizardFragment(cloudServer, validator.getSpaceDelegate(),
+				validationHandler);
 
 		credentialsPart.setServer(cloudServer);
-		credentialsPart.setValidator(validator);
+	}
 
-		// Validate currently credentials but not against the server
-		if (validator != null && wizardListener != null) {
-			// Display an errors from the last validation on entering
-			ValidationStatus lastStatus = validator.getPreviousValidationStatus();
-
-			if (lastStatus == null || lastStatus.getStatus().getSeverity() != IStatus.ERROR) {
-				// Otherwise validate locally
-				lastStatus = validator.localValidation();
-			}
-			wizardListener.handleChange(lastStatus.getStatus());
+	public void exit() {
+		// Validate credentials when exiting. This covers cases when a user:
+		// 1. Clicks 'Next'
+		// 2. Clicks 'Finish'
+		if (validationHandler != null) {
+			validationHandler.validate(context);
 		}
 	}
 
@@ -112,9 +140,7 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 
 	@Override
 	public boolean isComplete() {
-		// Enable the Next and Finish buttons, even if credentials are not
-		// validated.
-		return validator != null && validator.areCredentialsFilled();
+		return validationHandler.isOK();
 	}
 
 	@Override
@@ -127,32 +153,27 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 	}
 
 	protected void dispose() {
-		validator = null;
 		spacesFragment = null;
 	}
 
 	@Override
 	public void performCancel(IProgressMonitor monitor) throws CoreException {
-		// TODO Auto-generated method stub
 		super.performCancel(monitor);
 		dispose();
 	}
 
 	@Override
 	public void performFinish(IProgressMonitor monitor) throws CoreException {
-		if (validator == null) {
-			throw new CoreException(
-					CloudFoundryPlugin
-							.getErrorStatus("Credentials validator not initialised. Error loading Cloud Foundry server wizard pages. Please close wizard and try again."));
-		}
 		// Check the current credentials without server validation first, as if
 		// they are
 		// valid, there is no need to send a server request.
-		if (!validator.localValidation().getStatus().isOK()) {
-			ValidationStatus status = validator.validateInUI(null);
-			if (!status.getStatus().isOK()) {
-				throw new CoreException(status.getStatus());
+		if (!validationHandler.isOK()) {
+
+			IStatus status = validationHandler.getNextNonOKEvent();
+			if (status == null) {
+				status = CloudFoundryPlugin.getErrorStatus(Messages.ERROR_UNKNOWN_SERVER_CREATION_ERROR);
 			}
+			throw new CoreException(status);
 		}
 
 		ServerLifecycleAdapter listener = new ServerLifecycleAdapter() {

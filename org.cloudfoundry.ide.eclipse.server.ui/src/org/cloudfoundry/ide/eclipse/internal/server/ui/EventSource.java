@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -19,49 +19,25 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
-import org.eclipse.core.runtime.IStatus;
 
-/**
- * Event fired by a component, like a UI part, when state in that component has
- * changed.
- */
-public class PartChangeEvent {
+public class EventSource<T> implements IEventSource<T> {
 
-	private final IStatus status;
+	private T source;
 
-	private final IEventSource<?> source;
+	public EventSource(T source) {
+		setSource(source);
+	}
 
-	private final Object data;
+	public EventSource() {
 
-	private final int type;
+	}
 
-	public PartChangeEvent(Object data, IStatus status, IEventSource<?> source, int type) {
+	protected void setSource(T source) {
 		this.source = source;
-		this.status = status;
-		this.data = data;
-
-		this.type = type;
 	}
 
-	public IEventSource<?> getSource() {
+	public T getSource() {
 		return source;
-	}
-
-	public IStatus getStatus() {
-		return status;
-	}
-
-	public int getType() {
-		return type;
-	}
-
-	public Object getData() {
-		return data;
-	}
-
-	@Override
-	public String toString() {
-		return getStatus() != null ? getStatus().toString() : super.toString();
 	}
 
 }

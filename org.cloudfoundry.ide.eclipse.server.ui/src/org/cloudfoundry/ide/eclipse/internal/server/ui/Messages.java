@@ -28,13 +28,17 @@ public class Messages {
 
 	public static final String ERROR_NO_CALLBACK_UNABLE_TO_REFRESH_CONSOLE = "No Cloud Foundry console callback available. Unable to refresh console contents.";
 
-	public static final String ERROR_NO_CLOUD_SPACE_SELECTED = "Please select a valid cloud space.";
+	public static final String ERROR_VALID_SERVER_NAME = "Please enter a valid server name.";
 
-	public static final String ERROR_SERVER_INSTANCE_CLOUD_SPACE_EXISTS = "A Cloud Foundry server instance ({0}) for space: {1} - already exists. Please select another cloud space if available.";
+	public static final String ERROR_SERVER_NAME_ALREADY_EXISTS = "A Cloud Foundry server instance with the specified name already exists. Please select another name.";
 
-	public static final String ERROR_ALL_SPACES_ASSOCIATED_SERVER_INSTANCES = "A server instance for each space already exists. Please delete the existing server instance to the target space before creating a new one.";
+	public static final String ERROR_UNKNOWN_SERVER_CREATION_ERROR = "Unable to create a Cloud Foundry server instance - unknown error";
 
-	public static final String ERROR_CHECK_CONNECTION_NO_SPACES = "No cloud spaces found. Please check your credentials or connection.";
+	public static final String ERROR_NO_USERNAME_SPACES = "No username found in existing server. Unable to update list of orgs and spaces for the server";
+
+	public static final String ERROR_NO_PASSWORD_SPACES = "No password found in existing server. Unable to update list of orgs and spaces for the server";
+
+	public static final String ERROR_NO_URL_SPACES = "No password found in existing server. Unable to update list of orgs and spaces for the server";
 
 	/*
 	 * UI Labels
@@ -46,11 +50,19 @@ public class Messages {
 
 	public static final String TOOLTIP_ENABLE_TRACING = "Enables HTTP Tracing in a Cloud Foundry tracing console";
 
+	public static final String ENTER_AN_EMAIL = "Enter an email address";
+
+	public static final String ENTER_A_PASSWORD = "Enter a password";
+
+	public static final String SELECT_SERVER_URL = "Select a {0} URL";
+
 	/*
 	 * Dialogue messages
 	 */
-	public static final String SERVER_WIZARD_VALIDATOR_CLICK_TO_VALIDATE = "Press 'Validate Account' or 'Next' to validate credentials.";
+	public static final String SERVER_WIZARD_VALIDATOR_CLICK_TO_VALIDATE = "Press 'Validate Account', 'Next', 'Finish' to validate credentials.";
 
 	public static final String SHOWING_CONSOLE = "Fetching console contents. Please wait...\n";
+
+	public static final String CLONE_SERVER_WIZARD_OK_MESSAGE = "Please select a cloud space and enter a server name to create a new server instance to that space.";
 
 }

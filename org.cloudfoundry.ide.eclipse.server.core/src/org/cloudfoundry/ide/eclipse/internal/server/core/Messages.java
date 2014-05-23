@@ -35,15 +35,17 @@ public class Messages {
 
 	public static final String ERROR_FAILED_REST_CLIENT = "Client error - {0}";
 
-	public static final String ERROR_FAILED_RESOLVE_ORGS_SPACES = "Failed to resolve organizations and spaces for the given credentials";
-
 	public static final String ERROR_FAILED_RESOLVE_ORGS_SPACES_DUE_TO_ERROR = "Failed to resolve organizations and spaces - {0}";
 
-	public static final String ERROR_NO_VALID_CLOUD_SPACE_SELECTED = "No cloud space selected. Please select a valid cloud space.";
-	
+	public static final String ERROR_SERVER_INSTANCE_CLOUD_SPACE_EXISTS = "A Cloud Foundry server instance ({0}) for space: {1} - already exists. Please select another cloud space if available.";
+
 	public static final String ERROR_INVALID_ORG = "Invalid organization";
-	
-	public static final String ERROR_INVALID_SPACE = "Invalid space";
+
+	public static final String ERROR_INVALID_SPACE = "Invalid cloud space";
+
+	public static final String ERROR_ALL_SPACES_ASSOCIATED_SERVER_INSTANCES = "A server instance for each space already exists. Please delete an existing server instance before creating a new one.";
+
+	public static final String ERROR_CHECK_CONNECTION_NO_SPACES = "No cloud spaces found. Please check your credentials or connection.";
 
 	public static final String ERROR_UNKNOWN = "Unknown Cloud Foundry error";
 
@@ -76,6 +78,8 @@ public class Messages {
 	public static final String ERROR_NO_CLOUD_APPLICATION_FOUND = "No cloud module specified when attempting to update application instance stats.";
 
 	public static final String ERROR_NO_MODULES_TO_PUBLISH = "Publish request failed. No modules to publish.";
+
+	public static final String ERROR_NO_CLOUD_SERVER_DESCRIPTOR = "No cloud server descriptor found that matches : {0}. Unable to create a server instance to another space.";
 
 	public static final String ERROR_NO_CLIENT = "No Cloud Foundry client available to process the following request - {0} ";
 
@@ -137,13 +141,11 @@ public class Messages {
 	public static final String DELETING_MODULE = "Deleting module - {0}";
 
 	public static final String VALIDATING_CREDENTIALS = "Validating credentials";
-	
-	
+
 	/*
 	 * Labels
-	 * 
 	 */
-	
+
 	public static final String VALID_ACCOUNT = "Account information is valid.";
 
 }

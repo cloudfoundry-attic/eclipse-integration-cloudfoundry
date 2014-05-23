@@ -46,7 +46,7 @@ public class CloudOrgsAndSpaces {
 	/**
 	 * 
 	 * @param spaces a flat list of all spaces for a given set of credentials
-	 * and server URL.
+	 * and server URL. Should not be empty or null.
 	 * @throws CoreException if given cloud server does not support orgs and
 	 * spaces
 	 */

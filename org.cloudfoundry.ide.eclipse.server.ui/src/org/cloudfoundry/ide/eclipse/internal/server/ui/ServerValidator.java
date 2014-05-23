@@ -19,7 +19,6 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
-import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator.ValidationStatus;
 import org.eclipse.jface.operation.IRunnableContext;
 
 public interface ServerValidator {
@@ -32,10 +31,12 @@ public interface ServerValidator {
 	 * space are selected for the credentials.
 	 * @param validateAgainstServer true if validation should be local, or false
 	 * if requires server validation.
+	 * @param validateSpace true if cloud space should be validated.
 	 * @param runnableContext. May be null. If null, a default runnable context
 	 * should be used.
 	 * @return non-null validation status
 	 */
-	public abstract ValidationStatus validate(boolean validateAgainstServer, IRunnableContext runnableContext);
+	public abstract ValidationStatus validate(boolean validateAgainstServer, boolean validateSpace,
+			IRunnableContext runnableContext);
 
 }

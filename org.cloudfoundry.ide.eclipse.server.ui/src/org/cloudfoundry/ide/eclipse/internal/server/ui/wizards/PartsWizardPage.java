@@ -26,9 +26,9 @@ import java.util.Map.Entry;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.ICoreRunnable;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.IEventSource;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.WizardPartChangeEvent;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -54,7 +54,7 @@ import org.eclipse.ui.progress.UIJob;
  */
 public abstract class PartsWizardPage extends WizardPage implements IPartChangeListener {
 
-	protected Map<UIPart, IStatus> partStatus = new HashMap<UIPart, IStatus>();
+	protected Map<IEventSource<?>, IStatus> partStatus = new HashMap<IEventSource<?>, IStatus>();
 
 	protected PartsWizardPage(String pageName, String title, ImageDescriptor titleImage) {
 		super(pageName, title, titleImage);
@@ -63,7 +63,7 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 	protected IStatus getNextNonOKStatus() {
 		// Check if there are other errors that haven't yet been resolved
 		IStatus status = null;
-		for (Entry<UIPart, IStatus> entry : partStatus.entrySet()) {
+		for (Entry<IEventSource<?>, IStatus> entry : partStatus.entrySet()) {
 			status = entry.getValue();
 			if (status != null && !status.isOK()) {
 				break;
@@ -85,7 +85,7 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 			partStatus.remove(event.getSource());
 
 			// Check if there are other errors that haven't yet been resolved
-			for (Entry<UIPart, IStatus> entry : partStatus.entrySet()) {
+			for (Entry<IEventSource<?>, IStatus> entry : partStatus.entrySet()) {
 				status = entry.getValue();
 				break;
 			}

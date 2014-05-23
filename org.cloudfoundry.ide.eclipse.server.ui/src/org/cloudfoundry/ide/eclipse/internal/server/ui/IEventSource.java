@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -17,24 +17,19 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.internal.server.ui;
 
 /**
- * Constants used in validating server credentials.
+ * The event source (like a UI part) that fires an event.
+ *
+ * @param <T>
  */
-public class ServerCredentialsValidationStatics {
-	public static final int EVENT_CREDENTIALS_FILLED = 1000;
+public interface IEventSource<T> {
 
-	public static final int EVENT_SPACE_VALID = 1002;
-
-	public static final int EVENT_SPACE_CHANGED = 1003;
-	
-	public static final int EVENT_SELF_SIGNED_ERROR = 1004;
-
-	public static final int EVENT_NONE = -1;
-
-	public static final String DEFAULT_DESCRIPTION = "Enter credentials to log on to a selected Cloud Foundry server.";
-
-	public static final String VALID_ACCOUNT_MESSAGE = "Account information is valid.";
+	/**
+	 * 
+	 * @return source that fires an event.
+	 */
+	public T getSource();
 
 }

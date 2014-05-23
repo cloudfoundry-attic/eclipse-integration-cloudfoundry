@@ -20,9 +20,9 @@
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpaceDelegate;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.ServerWizardValidator;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryCredentialsPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryCredentialsPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpacesDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.ValidationEventHandler;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -41,18 +41,29 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 
 	private final CloudFoundryCredentialsPart credentialsPart;
 
-	private CloudServerSpaceDelegate cloudServerSpaceDelegate;
+	private CloudServerSpacesDelegate cloudServerSpaceDelegate;
 
-	private WizardChangeListener wizardUpdateHandler;
-
-	private ServerWizardValidator validator;
+	private ValidationEventHandler validationNotifier;
 
 	protected CloudFoundryCredentialsWizardPage(CloudFoundryServer server) {
 		super(server.getServer().getName() + " Credentials");
-		cloudServerSpaceDelegate = new CloudServerSpaceDelegate(server);
-		wizardUpdateHandler = new WizardPageChangeListener(this);
-		validator = new ServerWizardValidator(server, cloudServerSpaceDelegate);
-		credentialsPart = new CloudFoundryCredentialsPart(server, validator, wizardUpdateHandler, this);
+		cloudServerSpaceDelegate = new CloudServerSpacesDelegate(server);
+		WizardStatusHandler wizardUpdateHandler = new WizardPageStatusHandler(this);
+
+		 validationNotifier = new ValidationEventHandler(new CredentialsWizardValidator(server,
+				cloudServerSpaceDelegate));
+		 validationNotifier.addStatusHandler(wizardUpdateHandler);
+
+		credentialsPart = new CloudFoundryCredentialsPart(server, this);
+
+
+		validationNotifier.addValidationListener(credentialsPart);
+
+		// The credentials part notifies the wizard as well as the validator
+		// when new input is set in the UI
+		// (e.g., credentials changed..)
+		credentialsPart.addPartChangeListener(validationNotifier);
+
 	}
 
 	public void createControl(Composite parent) {
@@ -62,10 +73,10 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 
 	@Override
 	public boolean isPageComplete() {
-		return validator.validate(false, getContainer()).getStatus().isOK();
+		return validationNotifier.isOK();
 	}
 
-	public CloudServerSpaceDelegate getServerSpaceDelegate() {
+	public CloudServerSpacesDelegate getServerSpaceDelegate() {
 		return cloudServerSpaceDelegate;
 	}
 

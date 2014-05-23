@@ -23,11 +23,16 @@ import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.wst.server.ui.wizard.IWizardHandle;
 
-public class WizardFragmentChangeListener extends WizardChangeListener {
+/**
+ * Updates status of a wizard if the wizard components are defined by WST
+ * {@link IWizardHandle}
+ *
+ */
+public class WizardFragmentStatusHandler extends WizardStatusHandler {
 
 	private final IWizardHandle wizardHandle;
 
-	public WizardFragmentChangeListener(IWizardHandle wizardHandle) {
+	public WizardFragmentStatusHandler(IWizardHandle wizardHandle) {
 		this.wizardHandle = wizardHandle;
 	}
 

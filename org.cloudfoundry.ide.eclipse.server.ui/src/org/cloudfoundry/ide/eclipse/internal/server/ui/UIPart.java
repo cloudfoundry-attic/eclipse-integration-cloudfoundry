@@ -22,7 +22,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsValidationStatics;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValidationEvents;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.widgets.Composite;
@@ -31,13 +31,23 @@ import org.eclipse.swt.widgets.Control;
 /**
  * UI Part that sends notifications on changes in the UI Part controls.
  */
-public abstract class UIPart {
+public abstract class UIPart extends EventSource<UIPart> {
+
+	public UIPart() {
+		setSource(this);
+	}
 
 	private List<IPartChangeListener> listeners = new ArrayList<IPartChangeListener>();
 
 	public void addPartChangeListener(IPartChangeListener listener) {
 		if (listener != null && !listeners.contains(listener)) {
 			listeners.add(listener);
+		}
+	}
+	
+	public void removePartChangeListener(IPartChangeListener listener) {
+		if (listeners != null) {
+			listeners.remove(listener);
 		}
 	}
 
@@ -63,7 +73,7 @@ public abstract class UIPart {
 	 * @param status reflecting change in UI part
 	 */
 	protected void notifyStatusChange(IStatus status) {
-		notifyStatusChange(null, status, ServerCredentialsValidationStatics.EVENT_NONE);
+		notifyStatusChange(null, status, ValidationEvents.EVENT_NONE);
 	}
 
 	/**
@@ -92,7 +102,7 @@ public abstract class UIPart {
 	 * @param status reflecting change in UI part
 	 */
 	protected void notifyStatusChange(Object data, IStatus status) {
-		notifyStatusChange(data, status, ServerCredentialsValidationStatics.EVENT_NONE);
+		notifyStatusChange(data, status, ValidationEvents.EVENT_NONE);
 	}
 
 	/**

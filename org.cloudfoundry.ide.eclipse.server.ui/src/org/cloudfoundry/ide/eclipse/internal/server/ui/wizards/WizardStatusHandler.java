@@ -25,14 +25,15 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
 /**
- * Handles changes to CF server credentials (e.g. changes to user name or
- * password) performed through a wizard.
+ * Handles status in a wizard, including display the status message and
+ * refreshing the wizard UI state.
  * 
  */
-public abstract class WizardChangeListener implements IPartChangeListener {
-	
+public abstract class WizardStatusHandler implements IPartChangeListener {
+
 	public void handleChange(PartChangeEvent event) {
-		handleChange(event.getStatus());
+		IStatus status = event != null ? event.getStatus() : null;
+		handleChange(status);
 	}
 
 	public void handleChange(IStatus status) {

@@ -21,8 +21,9 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpaceDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpacesDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudSpacesSelectionPart;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudSpacesDelegate;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
@@ -30,13 +31,13 @@ import org.eclipse.swt.widgets.Control;
 
 public class CloudFoundryCloudSpaceWizardpage extends WizardPage {
 
-	protected CloudServerSpaceDelegate cloudServerSpaceDelegate;
+	protected CloudSpacesDelegate cloudServerSpaceDelegate;
 
 	protected final CloudFoundryServer cloudServer;
 
 	protected CloudSpacesSelectionPart spacesPart;
 
-	public CloudFoundryCloudSpaceWizardpage(CloudFoundryServer cloudServer, CloudServerSpaceDelegate cloudServerSpaceDelegate) {
+	public CloudFoundryCloudSpaceWizardpage(CloudFoundryServer cloudServer, CloudServerSpacesDelegate cloudServerSpaceDelegate) {
 		super(cloudServer.getServer().getName() + " Organization and Spaces");
 		this.cloudServer = cloudServer;
 		this.cloudServerSpaceDelegate = cloudServerSpaceDelegate;
@@ -48,13 +49,14 @@ public class CloudFoundryCloudSpaceWizardpage extends WizardPage {
 
 	public void createControl(Composite parent) {
 
-		spacesPart = new CloudSpacesSelectionPart(cloudServerSpaceDelegate, new WizardPageChangeListener(this), cloudServer, this);
+		spacesPart = new CloudSpacesSelectionPart(cloudServerSpaceDelegate, cloudServer, this);
+		spacesPart.addPartChangeListener(new WizardPageStatusHandler(this));
 		Control composite = spacesPart.createPart(parent);
 		setControl(composite);
 	}
 
 	public boolean isPageComplete() {
-		return cloudServerSpaceDelegate != null && cloudServerSpaceDelegate.hasSetSpace();
+		return cloudServerSpaceDelegate != null && cloudServerSpaceDelegate.hasSpace();
 	}
 
 	public void refreshListOfSpaces() {

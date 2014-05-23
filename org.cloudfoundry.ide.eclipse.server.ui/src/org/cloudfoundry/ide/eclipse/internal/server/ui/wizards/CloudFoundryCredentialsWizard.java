@@ -21,7 +21,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpaceDelegate;
+import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudServerSpacesDelegate;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
@@ -84,7 +84,7 @@ public class CloudFoundryCredentialsWizard extends Wizard {
 		if (page == credentialsPage) {
 			// Only create the page if there is a cloud space descriptor set
 			// that has a list of orgs and spaces to choose from
-			CloudServerSpaceDelegate cloudServerSpaceDelegate = credentialsPage.getServerSpaceDelegate();
+			CloudServerSpacesDelegate cloudServerSpaceDelegate = credentialsPage.getServerSpaceDelegate();
 			if (cloudServerSpaceDelegate != null && cloudServerSpaceDelegate.getCurrentSpacesDescriptor() != null) {
 				cloudSpacePage = new CloudFoundryCloudSpaceWizardpage(server, cloudServerSpaceDelegate);
 				cloudSpacePage.setWizard(this);

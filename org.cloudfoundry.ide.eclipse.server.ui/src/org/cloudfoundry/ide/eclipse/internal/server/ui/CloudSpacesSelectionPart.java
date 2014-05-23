@@ -26,11 +26,10 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudEntity;
 import org.cloudfoundry.client.lib.domain.CloudOrganization;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsValidationStatics;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ValidationEvents;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudSpacesDescriptor;
-import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -54,17 +53,14 @@ public class CloudSpacesSelectionPart extends UIPart {
 
 	private static final String DEFAULT_DESCRIPTION = "Select an organization and space.";
 
-	private TreeViewer orgsSpacesViewer;
+	protected TreeViewer orgsSpacesViewer;
 
-	private CloudServerSpaceDelegate cloudSpaceServerDelegate;
+	protected final CloudSpacesDelegate cloudSpaceServerDelegate;
 
-	public CloudSpacesSelectionPart(CloudServerSpaceDelegate cloudSpaceServerDelegate, IPartChangeListener listener,
-			CloudFoundryServer cloudServer, WizardPage wizardPage) {
+	public CloudSpacesSelectionPart(CloudSpacesDelegate cloudSpaceServerDelegate, CloudFoundryServer cloudServer,
+			WizardPage wizardPage) {
 		this.cloudSpaceServerDelegate = cloudSpaceServerDelegate;
 
-		if (listener != null) {
-			addPartChangeListener(listener);
-		}
 		String serverTypeId = cloudServer.getServer().getServerType().getId();
 
 		wizardPage.setTitle("Organizations and Spaces");
@@ -75,13 +71,9 @@ public class CloudSpacesSelectionPart extends UIPart {
 		}
 	}
 
-	public CloudSpacesSelectionPart(CloudServerSpaceDelegate cloudSpaceServerDelegate, IPartChangeListener listener,
-			CloudFoundryServer cloudServer, IWizardHandle wizardHandle) {
+	public CloudSpacesSelectionPart(CloudSpacesDelegate cloudSpaceServerDelegate, CloudFoundryServer cloudServer,
+			IWizardHandle wizardHandle) {
 		this.cloudSpaceServerDelegate = cloudSpaceServerDelegate;
-
-		if (listener != null) {
-			addPartChangeListener(listener);
-		}
 
 		String serverTypeId = cloudServer.getServer().getServerType().getId();
 
@@ -141,27 +133,19 @@ public class CloudSpacesSelectionPart extends UIPart {
 			// Expand all first, so that child elements can be selected
 			orgsSpacesViewer.setExpandedElements(organizationInput);
 
-			CloudSpace selectedSpace = cloudSpaceServerDelegate.getCurrentCloudSpace();
-			if (selectedSpace == null) {
-				// Attempt to select a space that does not yet have a server
-				// instance.
-				selectedSpace = cloudSpaceServerDelegate.getSpaceWithNoServerInstance();
-			}
+			setInitialSelectionInViewer();
+		}
+	}
 
-			// First set the default cloud space as the selected space
-			if (setSpaceSelection(selectedSpace)) {
-				setSelectionInViewer(selectedSpace);
-				notifyStatusChange(CloudFoundryPlugin.getStatus(DEFAULT_DESCRIPTION, IStatus.OK));
-			}
-			else {
-				if (orgInput.isEmpty()) {
-					notifyStatusChange(CloudFoundryPlugin.getErrorStatus(Messages.ERROR_CHECK_CONNECTION_NO_SPACES));
-				}
-				else if (selectedSpace == null) {
-					notifyStatusChange(CloudFoundryPlugin
-							.getErrorStatus(Messages.ERROR_ALL_SPACES_ASSOCIATED_SERVER_INSTANCES));
-				}
-			}
+	protected void setInitialSelectionInViewer() {
+		if (cloudSpaceServerDelegate == null) {
+			return;
+		}
+
+		CloudSpace selectedSpace = cloudSpaceServerDelegate.getCurrentCloudSpace();
+
+		if (selectedSpace != null) {
+			setSelectionInViewer(selectedSpace);
 		}
 	}
 
@@ -205,23 +189,11 @@ public class CloudSpacesSelectionPart extends UIPart {
 	 * @param selectedSpace
 	 * @return true if the specified space was set. False otherwise.
 	 */
-	protected boolean setSpaceSelection(CloudSpace selectedSpace) {
-		boolean set = false;
-
+	protected void setSpaceSelection(CloudSpace selectedCloudSpace) {
 		if (cloudSpaceServerDelegate != null) {
-			IStatus status = cloudSpaceServerDelegate.validateSpaceSelection(selectedSpace);
-			if (status.isOK()) {
-				// Only set the space if it is valid
-				cloudSpaceServerDelegate.setSelectedSpace(selectedSpace);
-				set = true;
-			}
-			else {
-				// Clear the space selection to invalidate the selection
-				cloudSpaceServerDelegate.setSelectedSpace(null);
-			}
-			notifyStatusChange(selectedSpace, status, ServerCredentialsValidationStatics.EVENT_SPACE_CHANGED);
+			cloudSpaceServerDelegate.setSelectedSpace(selectedCloudSpace);
+			notifyStatusChange(selectedCloudSpace, Status.OK_STATUS, ValidationEvents.VALIDATION);
 		}
-		return set;
 	}
 
 	protected void refresh() {
