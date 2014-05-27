@@ -24,7 +24,7 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
+import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
 import org.eclipse.core.runtime.Assert;
 
 /**
@@ -36,6 +36,9 @@ import org.eclipse.core.runtime.Assert;
  * This descriptor is shared by all the pages in the application deployment
  * wizard. Some values are required, and must always be set in order to push the
  * application to the server
+ * 
+ * IMPORTANT NOTE: This class can be referred by the branding extension from adopter so this class 
+ * should not be moved or renamed to avoid breakage to adopters. 
  * 
  */
 public class ApplicationWizardDescriptor {

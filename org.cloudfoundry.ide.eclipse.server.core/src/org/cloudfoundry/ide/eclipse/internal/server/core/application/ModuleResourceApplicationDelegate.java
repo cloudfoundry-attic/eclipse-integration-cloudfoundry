@@ -23,6 +23,7 @@ import java.util.Arrays;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.ApplicationDelegate;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.IModuleResource;

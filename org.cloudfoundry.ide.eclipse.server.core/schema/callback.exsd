@@ -6,7 +6,11 @@
          <meta.schema plugin="org.cloudfoundry.ide.eclipse.server.core" id="callback" name="UI Callback"/>
       </appInfo>
       <documentation>
-         Defines an extension for invoking UI callbacks from the core.
+         INTERNAL EXTENSION POINT
+
+Defines an extension for invoking UI callbacks from the core. This is an internal extension point that should not be extended by adopters. 
+
+As this is an internal extension point, API for the Java delegate contribution through this extension point may change overtime.
       </documentation>
    </annotation>
 

@@ -35,6 +35,8 @@ import org.eclipse.wst.server.core.IRuntime;
 import org.osgi.framework.Bundle;
 
 /**
+ * IMPORTANT NOTE: This class can be referred by the branding extension from adopter so this class 
+ * should not be moved or renamed to avoid breakage to adopters.
  * @author Steffen Pingel
  * @author Christian Dupuis
  */

@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -69,7 +69,7 @@ public class MappedURLsWizardPage extends WizardPage {
 	private final CloudFoundryServer cloudServer;
 
 	public MappedURLsWizardPage(CloudFoundryServer cloudServer, List<String> existingURIs,
-			CloudFoundryApplicationModule appModule) {
+			ICloudFoundryApplicationModule appModule) {
 		super("Mapped URIs");
 
 		urls = new ArrayList<String>();

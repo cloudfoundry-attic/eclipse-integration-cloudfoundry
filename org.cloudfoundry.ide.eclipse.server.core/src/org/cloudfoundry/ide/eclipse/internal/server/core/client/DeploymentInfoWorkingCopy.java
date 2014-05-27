@@ -19,6 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
+import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 

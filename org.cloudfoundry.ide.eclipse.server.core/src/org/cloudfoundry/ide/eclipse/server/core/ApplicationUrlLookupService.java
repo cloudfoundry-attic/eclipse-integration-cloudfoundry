@@ -17,12 +17,16 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.server.core;
 
 import java.net.URI;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudDomain;
+import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlValidator;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudErrorUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;

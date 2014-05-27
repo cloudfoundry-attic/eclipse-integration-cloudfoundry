@@ -17,36 +17,32 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.rse;
+package org.cloudfoundry.ide.eclipse.server.rse.internal;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.rse.core.model.IHost;
-import org.eclipse.rse.core.subsystems.BasicConnectorService;
+import org.eclipse.rse.subsystems.files.core.servicesubsystem.AbstractRemoteFile;
+import org.eclipse.rse.subsystems.files.core.servicesubsystem.FileServiceSubSystem;
+import org.eclipse.rse.subsystems.files.core.subsystems.IRemoteFile;
+import org.eclipse.rse.subsystems.files.core.subsystems.IRemoteFileContext;
 
 /**
  * @author Leo Dos Santos
- * @author Christian Dupuis
  */
-public class CloudFoundryConnectorService extends BasicConnectorService {
+public class CloudFoundryRemoteFile extends AbstractRemoteFile {
 
-	public CloudFoundryConnectorService(IHost host) {
-		super("Cloud Service Connector", "Manages connections to a cloud service", host, 80);
+	private CloudFoundryHostFile hostFile;
+
+	public CloudFoundryRemoteFile(FileServiceSubSystem subSystem, IRemoteFileContext context, IRemoteFile parent,
+			CloudFoundryHostFile hostFile) {
+		super(subSystem, context, parent, hostFile);
+		this.hostFile = hostFile;
 	}
 
-	public boolean isConnected() {
-		return true;
+	public String getCanonicalPath() {
+		return getAbsolutePath();
 	}
 
-	@Override
-	protected void internalConnect(IProgressMonitor monitor) throws Exception {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	protected void internalDisconnect(IProgressMonitor monitor) throws Exception {
-		// TODO Auto-generated method stub
-
+	public String getClassification() {
+		return hostFile.getClassification();
 	}
 
 }

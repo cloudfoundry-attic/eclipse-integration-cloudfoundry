@@ -331,7 +331,7 @@
    <extension
          point="org.cloudfoundry.ide.eclipse.server.ui.applicationWizard">
       <applicationWizardDelegate
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.JavaWebApplicationWizardDelegate"
+            class="org.cloudfoundry.ide.eclipse.server.ui.JavaWebApplicationWizardDelegate"
             providerID="org.cloudfoundry.ide.eclipse.server.application.javaweb">
       </applicationWizardDelegate>
    </extension>

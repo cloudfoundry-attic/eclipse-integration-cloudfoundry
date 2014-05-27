@@ -22,10 +22,12 @@
  ********************************************************************************/
 -->
 <plugin>
-   <extension-point id="callback" name="UI Callback" schema="schema/callback.exsd"/>
    <extension-point id="branding" name="Cloud Foundry Service Branding" schema="schema/branding.exsd"/>
    <extension-point id="application" name="Cloud Foundry Supported Application Type" schema="schema/application.exsd"/>
    <extension-point id="appStateTracker" name="Publish Application State Tracker" schema="schema/appStateTracker.exsd"/>
+
+   <!-- Internal extension point that should not be implemented by adopter -->
+   <extension-point id="callback" name="UI Callback" schema="schema/callback.exsd"/>
 	
    <extension
 	       point="org.eclipse.wst.server.core.moduleTypes">

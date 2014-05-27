@@ -135,7 +135,6 @@ public class ConsoleManager {
 	 * @param server the server for that console
 	 * @param appModule the app for that console
 	 * @return the message console. Null if no corresponding console is found.
-	 * TODO: need to expose this to formal API.
 	 */
 	public MessageConsole findCloudFoundryConsole(IServer server, CloudFoundryApplicationModule appModule) {
 		String curConsoleId = getConsoleId(server, appModule, 0);

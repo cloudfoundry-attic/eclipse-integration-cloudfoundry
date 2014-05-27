@@ -20,6 +20,7 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
+import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
 
 /**
  * Local deployment configuration for an application that is specific to Eclipse

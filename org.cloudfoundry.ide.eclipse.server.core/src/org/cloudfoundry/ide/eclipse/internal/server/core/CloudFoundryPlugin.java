@@ -31,6 +31,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelC
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.PredefinedServiceCommands;
 import org.cloudfoundry.ide.eclipse.internal.server.core.tunnel.TunnelServiceCommandStore;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractAppStateTracker;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;

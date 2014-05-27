@@ -29,6 +29,8 @@ import org.eclipse.jst.server.core.IJavaRuntimeWorkingCopy;
 import org.eclipse.wst.server.core.model.RuntimeDelegate;
 
 /**
+ * IMPORTANT NOTE: This class can be referred by the branding extension from adopter so this class 
+ * should not be moved or renamed to avoid breakage to adopters. 
  * @author Christian Dupuis
  * @author Steffen Pingel
  */

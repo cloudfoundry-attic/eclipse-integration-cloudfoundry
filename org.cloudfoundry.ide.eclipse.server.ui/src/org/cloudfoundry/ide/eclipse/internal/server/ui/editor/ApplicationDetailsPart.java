@@ -57,7 +57,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.AppStatsContentPro
 import org.cloudfoundry.ide.eclipse.internal.server.ui.editor.ApplicationActionMenuControl.IButtonMenuListener;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.EnvVarsWizard;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.MappedURLsWizard;
-import org.cloudfoundry.ide.eclipse.server.rse.ConfigureRemoteCloudFoundryAction;
+import org.cloudfoundry.ide.eclipse.server.rse.internal.ConfigureRemoteCloudFoundryAction;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;

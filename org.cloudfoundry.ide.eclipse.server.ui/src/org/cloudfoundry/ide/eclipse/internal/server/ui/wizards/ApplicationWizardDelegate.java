@@ -19,7 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.IApplicationDelegate;
 
 /**
  * 

@@ -23,8 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
@@ -36,6 +34,8 @@ import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudApplicationUrlPart;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
+import org.cloudfoundry.ide.eclipse.server.core.ApplicationUrlLookupService;
+import org.cloudfoundry.ide.eclipse.server.core.CloudApplicationURL;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;

@@ -24,8 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudDomain;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudApplicationURL;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
+import org.cloudfoundry.ide.eclipse.server.core.ApplicationUrlLookupService;
+import org.cloudfoundry.ide.eclipse.server.core.CloudApplicationURL;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;

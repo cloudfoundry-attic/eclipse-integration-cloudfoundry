@@ -39,6 +39,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.SelfSignedStore;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
+import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -72,6 +73,9 @@ import org.eclipse.wst.server.core.model.ServerDelegate;
  * {@link CloudFoundryServerBehaviour} for ALL CF client calls. Do NOT add
  * client calls in the server instance. These should be added to the
  * {@link CloudFoundryServerBehaviour}.
+ * 
+ * IMPORTANT NOTE: This class can be referred by the branding extension from adopter so this class 
+ * should not be moved or renamed to avoid breakage to adopters. 
  * @author Christian Dupuis
  * @author Terry Denney
  * @author Leo Dos Santos
@@ -301,7 +305,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 			StringWriter writer = new StringWriter();
 
 			for (IModule module : modules) {
-				CloudFoundryApplicationModule appModule = getCloudModule(module);
+				ICloudFoundryApplicationModule appModule = getCloudModule(module);
 				if (appModule == null) {
 					writer.append("Failed to create Cloud Foundry application module for: ");
 					writer.append(module.getId());

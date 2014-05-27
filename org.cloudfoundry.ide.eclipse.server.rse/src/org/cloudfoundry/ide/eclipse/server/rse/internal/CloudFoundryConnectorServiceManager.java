@@ -17,32 +17,41 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.rse;
+package org.cloudfoundry.ide.eclipse.server.rse.internal;
 
-import org.eclipse.rse.subsystems.files.core.servicesubsystem.AbstractRemoteFile;
-import org.eclipse.rse.subsystems.files.core.servicesubsystem.FileServiceSubSystem;
-import org.eclipse.rse.subsystems.files.core.subsystems.IRemoteFile;
-import org.eclipse.rse.subsystems.files.core.subsystems.IRemoteFileContext;
+import org.eclipse.rse.core.model.IHost;
+import org.eclipse.rse.core.subsystems.AbstractConnectorServiceManager;
+import org.eclipse.rse.core.subsystems.IConnectorService;
+import org.eclipse.rse.core.subsystems.ISubSystem;
 
 /**
  * @author Leo Dos Santos
+ * @author Christian Dupuis
  */
-public class CloudFoundryRemoteFile extends AbstractRemoteFile {
+public class CloudFoundryConnectorServiceManager extends AbstractConnectorServiceManager {
 
-	private CloudFoundryHostFile hostFile;
+	private static CloudFoundryConnectorServiceManager instance;
 
-	public CloudFoundryRemoteFile(FileServiceSubSystem subSystem, IRemoteFileContext context, IRemoteFile parent,
-			CloudFoundryHostFile hostFile) {
-		super(subSystem, context, parent, hostFile);
-		this.hostFile = hostFile;
+	@Override
+	public IConnectorService createConnectorService(IHost host) {
+		return new CloudFoundryConnectorService(host);
 	}
 
-	public String getCanonicalPath() {
-		return getAbsolutePath();
+	@Override
+	public Class getSubSystemCommonInterface(ISubSystem subsystem) {
+		return IApplicationSubSystem.class;
 	}
 
-	public String getClassification() {
-		return hostFile.getClassification();
+	@Override
+	public boolean sharesSystem(ISubSystem otherSubSystem) {
+		return (otherSubSystem instanceof IApplicationSubSystem);
+	}
+
+	public static CloudFoundryConnectorServiceManager getInstance() {
+		if (instance == null) {
+			instance = new CloudFoundryConnectorServiceManager();
+		}
+		return instance;
 	}
 
 }

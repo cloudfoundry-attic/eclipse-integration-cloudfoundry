@@ -20,10 +20,11 @@
 package org.cloudfoundry.ide.eclipse.internal.server.core.client;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 
 public class BehaviourEvent<T> {
 
-	public final CloudFoundryApplicationModule appModule;
+	public final ICloudFoundryApplicationModule appModule;
 
 	public final T behaviourResult;
 
@@ -31,7 +32,7 @@ public class BehaviourEvent<T> {
 
 	public final CloudFoundryServer server;
 
-	public BehaviourEvent(CloudFoundryApplicationModule appModule, CloudFoundryServer server, T behaviourResult,
+	public BehaviourEvent(ICloudFoundryApplicationModule appModule, CloudFoundryServer server, T behaviourResult,
 			BehaviourEventType type) {
 		this.appModule = appModule;
 		this.behaviourResult = behaviourResult;
@@ -39,7 +40,7 @@ public class BehaviourEvent<T> {
 		this.server = server;
 	}
 
-	public CloudFoundryApplicationModule getApplicationModule() {
+	public ICloudFoundryApplicationModule getApplicationModule() {
 		return appModule;
 	}
 

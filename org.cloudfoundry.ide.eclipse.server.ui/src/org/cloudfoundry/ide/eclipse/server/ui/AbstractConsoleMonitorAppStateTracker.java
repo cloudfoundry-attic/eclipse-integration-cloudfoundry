@@ -21,10 +21,11 @@ package org.cloudfoundry.ide.eclipse.server.ui;
 
 import java.util.regex.Pattern;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.AbstractAppStateTracker;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.Logger;
 import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractAppStateTracker;
+import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.eclipse.ui.console.IPatternMatchListener;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.PatternMatchEvent;
@@ -106,12 +107,23 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
 	    }
 	}
 	
-	protected ConsolePatternMatchListener createPatternMatchListener(CloudFoundryApplicationModule appModule) {
+	protected ConsolePatternMatchListener createPatternMatchListener(ICloudFoundryApplicationModule appModule) {
 		return new ConsolePatternMatchListener(((IModule)appModule).getName());
 	}
 	
+	/**
+	 * Find the message console that corresponds to the server and a given module. If there are multiple instances
+	 * of the application, only the first one will get returned.
+	 * @param server the server for that console
+	 * @param appModule the app for that console
+	 * @return the message console. Null if no corresponding console is found.
+	 */
+	protected MessageConsole findCloudFoundryConsole(IServer server, CloudFoundryApplicationModule appModule) {
+		return ConsoleManager.getInstance().findCloudFoundryConsole(server, appModule);
+	}
+	
 	@Override
-	public int getApplicationState(CloudFoundryApplicationModule appModule) {
+	public int getApplicationState(ICloudFoundryApplicationModule appModule) {
 		if (Logger.DETAILS) {
 			 Logger.println(Logger.DETAILS_LEVEL, this, "getApplicationState", "Waiting for app to start: " + ((IModule)appModule).getName() + ", state=" + consoleMonitor.getApplicationState());
 		}

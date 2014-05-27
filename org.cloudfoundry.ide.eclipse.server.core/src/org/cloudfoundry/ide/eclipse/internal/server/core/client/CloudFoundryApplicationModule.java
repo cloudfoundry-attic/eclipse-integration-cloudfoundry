@@ -28,9 +28,11 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.ApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
+import org.cloudfoundry.ide.eclipse.server.core.IApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -98,6 +100,8 @@ import org.eclipse.wst.server.core.internal.ExternalModule;
  * {@link CloudApplication}), the deployment information is kept in synch any
  * time the module mapping to a {@link CloudApplication} is changed.
  * 
+ * IMPORTANT NOTE: This class can be referred by the branding extension from adopter so this class 
+ * should not be moved or renamed to avoid breakage to adopters. 
  * 
  * @author Nieraj Singh
  * @author Christian Dupuis
@@ -106,7 +110,7 @@ import org.eclipse.wst.server.core.internal.ExternalModule;
  * @author Steffen Pingel
  */
 @SuppressWarnings("restriction")
-public class CloudFoundryApplicationModule extends ExternalModule {
+public class CloudFoundryApplicationModule extends ExternalModule implements ICloudFoundryApplicationModule {
 
 	public static String APPLICATION_STATE_DEPLOYABLE = "Deployable";
 

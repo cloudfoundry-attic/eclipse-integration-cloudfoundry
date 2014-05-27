@@ -17,41 +17,36 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.rse;
+package org.cloudfoundry.ide.eclipse.server.rse.internal;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.rse.core.model.IHost;
-import org.eclipse.rse.core.subsystems.AbstractConnectorServiceManager;
-import org.eclipse.rse.core.subsystems.IConnectorService;
-import org.eclipse.rse.core.subsystems.ISubSystem;
+import org.eclipse.rse.core.subsystems.BasicConnectorService;
 
 /**
  * @author Leo Dos Santos
  * @author Christian Dupuis
  */
-public class CloudFoundryConnectorServiceManager extends AbstractConnectorServiceManager {
+public class CloudFoundryConnectorService extends BasicConnectorService {
 
-	private static CloudFoundryConnectorServiceManager instance;
+	public CloudFoundryConnectorService(IHost host) {
+		super("Cloud Service Connector", "Manages connections to a cloud service", host, 80);
+	}
 
-	@Override
-	public IConnectorService createConnectorService(IHost host) {
-		return new CloudFoundryConnectorService(host);
+	public boolean isConnected() {
+		return true;
 	}
 
 	@Override
-	public Class getSubSystemCommonInterface(ISubSystem subsystem) {
-		return IApplicationSubSystem.class;
+	protected void internalConnect(IProgressMonitor monitor) throws Exception {
+		// TODO Auto-generated method stub
+
 	}
 
 	@Override
-	public boolean sharesSystem(ISubSystem otherSubSystem) {
-		return (otherSubSystem instanceof IApplicationSubSystem);
-	}
+	protected void internalDisconnect(IProgressMonitor monitor) throws Exception {
+		// TODO Auto-generated method stub
 
-	public static CloudFoundryConnectorServiceManager getInstance() {
-		if (instance == null) {
-			instance = new CloudFoundryConnectorServiceManager();
-		}
-		return instance;
 	}
 
 }

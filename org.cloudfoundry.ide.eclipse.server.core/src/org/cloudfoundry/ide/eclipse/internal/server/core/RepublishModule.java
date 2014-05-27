@@ -19,7 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.ApplicationDeploymentInfo;
+import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
 import org.eclipse.wst.server.core.IModule;
 
 public class RepublishModule {

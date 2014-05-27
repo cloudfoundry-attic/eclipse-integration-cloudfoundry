@@ -18,7 +18,7 @@
  *     IBM - initial API and implementation
  ********************************************************************************/
 
-package org.cloudfoundry.ide.eclipse.internal.server.core;
+package org.cloudfoundry.ide.eclipse.server.core;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.eclipse.wst.server.core.IServer;
@@ -38,7 +38,7 @@ public abstract class AbstractAppStateTracker {
 	 * @return the application state. The state is expected to be server state constants that are defined in
 	 * org.eclipse.wst.server.core.IServer, e.g. IServer.STATE_STARTED.
 	 */
-	public abstract int getApplicationState(CloudFoundryApplicationModule appModule);
+	public abstract int getApplicationState(ICloudFoundryApplicationModule appModule);
 
 	/**
 	 * initialize the server object for tracking purpose

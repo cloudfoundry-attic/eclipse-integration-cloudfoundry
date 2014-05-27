@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.application.ApplicationRegistry.Priority;
+import org.cloudfoundry.ide.eclipse.server.core.IApplicationDelegate;
 import org.eclipse.core.runtime.IConfigurationElement;
 
 /**

@@ -17,7 +17,7 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.internal.server.core.client;
+package org.cloudfoundry.ide.eclipse.server.core;
 
 import java.util.ArrayList;
 import java.util.List;

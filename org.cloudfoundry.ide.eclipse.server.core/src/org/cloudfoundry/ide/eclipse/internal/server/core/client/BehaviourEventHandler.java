@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 
 /**
  * Listeners can be notified when certain types of behaviour events, like
@@ -45,7 +46,7 @@ public class BehaviourEventHandler {
 		return handler;
 	}
 
-	public synchronized <T> void notify(CloudFoundryApplicationModule appModule, CloudFoundryServer server, T result,
+	public synchronized <T> void notify(ICloudFoundryApplicationModule appModule, CloudFoundryServer server, T result,
 			BehaviourEventType type) {
 
 		if (type == null) {

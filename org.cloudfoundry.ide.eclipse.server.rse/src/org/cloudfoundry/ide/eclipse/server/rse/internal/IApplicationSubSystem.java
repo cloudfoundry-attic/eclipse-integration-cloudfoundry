@@ -17,15 +17,11 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.rse;
-
-import org.eclipse.rse.services.files.IHostFile;
+package org.cloudfoundry.ide.eclipse.server.rse.internal;
 
 /**
  * @author Leo Dos Santos
  */
-public abstract class CloudFoundryHostFile implements IHostFile {
-
-	public abstract String getClassification();
+public interface IApplicationSubSystem {
 
 }

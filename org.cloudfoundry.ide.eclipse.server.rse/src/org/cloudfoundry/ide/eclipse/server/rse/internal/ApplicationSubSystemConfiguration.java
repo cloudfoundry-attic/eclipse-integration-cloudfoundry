@@ -17,7 +17,7 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.rse;
+package org.cloudfoundry.ide.eclipse.server.rse.internal;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.eclipse.rse.core.filters.ISystemFilter;
@@ -42,6 +42,9 @@ import org.eclipse.wst.server.core.ServerCore;
 
 
 /**
+ * IMPORTANT NOTE: This class can be referred by the branding extension from adopter so this class 
+ * should not be moved or renamed to avoid breakage to adopters.
+ * 
  * @author Leo Dos Santos
  * @author Christian Dupuis
  */

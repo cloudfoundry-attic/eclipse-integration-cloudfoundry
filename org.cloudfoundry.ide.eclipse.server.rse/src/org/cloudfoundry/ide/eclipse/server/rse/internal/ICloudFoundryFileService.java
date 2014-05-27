@@ -17,11 +17,11 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.rse;
+package org.cloudfoundry.ide.eclipse.server.rse.internal;
 
 /**
  * @author Leo Dos Santos
  */
-public interface IApplicationSubSystem {
+public interface ICloudFoundryFileService {
 
 }
