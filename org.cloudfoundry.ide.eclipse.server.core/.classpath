@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry exported="true" kind="lib" path="lib/juli-6.0.39.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/protobuf-java-2.5.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/tomcat-embed-core-8.0-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/tomcat-embed-websocket-8.0-SNAPSHOT.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
@@ -11,7 +15,7 @@
 	<classpathentry exported="true" kind="lib" path="lib/commons-io-2.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/spring-context-3.2.2.RELEASE.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-caldecott-lib-0.1.4.BUILD-SNAPSHOT.jar" sourcepath="/cloudfoundry-caldecott-lib/src/main/java"/>
-	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-client-lib-1.0.2.jar" sourcepath="/cloudfoundry-client-lib/src/main/java"/>
+	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-client-lib-1.0.3.BUILD-SNAPSHOT.jar" sourcepath="/cloudfoundry-client-lib/src/main/java"/>
 	<classpathentry exported="true" kind="lib" path="lib/snakeyaml-1.13.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jackson-core-asl-1.6.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jackson-mapper-asl-1.6.2.jar"/>
