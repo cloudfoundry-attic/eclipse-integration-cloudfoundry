@@ -89,12 +89,11 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 		this.deploymentPage = deploymentPage;
 		this.module = module;
 		this.descriptor = descriptor;
-
+		this.serverTypeId = module.getServerTypeId();
 	}
 
 	protected void init() {
-		this.serverTypeId = module.getServerTypeId();
-
+		
 		appName = descriptor.getDeploymentInfo().getDeploymentName();
 		buildpack = descriptor.getDeploymentInfo().getStaging() != null ? descriptor.getDeploymentInfo().getStaging()
 				.getBuildpackUrl() : null;
