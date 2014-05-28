@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2014 Pivotal Software Inc and others 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -198,9 +198,11 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 				if (dialog.open() == Window.OK) {
 					// This cloud service does not yet exist. It will be created
 					// outside of the wizard
-					CloudService addedService = wizard.getService();
-					if (addedService != null) {
-						addService(addedService);
+					List<CloudService> addedServices = wizard.getServices();
+					if (addedServices != null && addedServices.size() > 0) {
+						for(CloudService cs : addedServices) { 
+							addService(cs);
+						}
 					}
 				}
 			}

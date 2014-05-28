@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2014 Pivotal Software Inc. and others 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -16,10 +16,12 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM Corporation - Provide hooks to new service addition wizard 
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
@@ -45,9 +47,9 @@ public class CloudFoundryServiceWizard extends Wizard {
 
 	private final CloudFoundryServer cloudServer;
 
-	private CloudFoundryServicePlanWizardPage page;
+	private CloudFoundryServiceWizardPage1 page;
 
-	private CloudService createdService;
+	private List<CloudService> createdServices = null;
 
 	/**
 	 * Set true if service should not be added during wizard completion.
@@ -75,29 +77,47 @@ public class CloudFoundryServiceWizard extends Wizard {
 		setNeedsProgressMonitor(true);
 		this.deferServiceAddition = deferServiceAddition;
 	}
+	
 
 	@Override
 	public void addPages() {
-		page = new CloudFoundryServicePlanWizardPage(cloudServer);
+		
+		CloudFoundryServiceWizardPage2 page2;
+		
+		page = new CloudFoundryServiceWizardPage1(cloudServer);
 		addPage(page);
+		page2 = new CloudFoundryServiceWizardPage2(cloudServer, page);
+		addPage(page2);
+		page.setSecondPage(page2);
 	}
 
-	@Override
+	@Override	
 	public boolean performFinish() {
-		if (!deferServiceAddition && page.getService() != null) {
+		
+		if (!deferServiceAddition && page.getSelectedList() != null) {			
+
 			try {
-				final LocalCloudService localService = page.getService();
 				getContainer().run(true, false, new IRunnableWithProgress() {
 					public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 						try {
-							cloudServer.getBehaviour().createService(new CloudService[] { localService }, monitor);
-							// Get the actual Service
-							List<CloudService> allServices = cloudServer.getBehaviour().getServices(monitor);
-							if (allServices != null) {
-								for (CloudService existingService : allServices) {
-									if (existingService.getName().equals(localService.getName())) {
-										createdService = existingService;
-										break;
+							List<CFServiceWizUI> services = page.getSelectedList();
+							
+							for(CFServiceWizUI serviceUI : services) {
+								
+								LocalCloudService localService = serviceUI.convertToLocalCloudService(); 
+							
+								cloudServer.getBehaviour().createService(new CloudService[] { localService }, monitor);
+								// Get the actual Service
+								List<CloudService> allServices = cloudServer.getBehaviour().getServices(monitor);
+								if (allServices != null) {
+									for (CloudService existingService : allServices) {
+										if (existingService.getName().equals(localService.getName())) {
+											if(createdServices == null) {
+												createdServices = new ArrayList<CloudService>();
+											}
+											createdServices.add(existingService);
+											break;
+										}
 									}
 								}
 							}
@@ -113,7 +133,7 @@ public class CloudFoundryServiceWizard extends Wizard {
 							monitor.done();
 						}
 					}
-				});
+				}); // end run
 				return true;
 			}
 			catch (InvocationTargetException e) {
@@ -127,23 +147,41 @@ public class CloudFoundryServiceWizard extends Wizard {
 			}
 			catch (InterruptedException e) {
 				// ignore
-			}
+			}				
+				
+			
 			return false;
-		}
-
+		
+		} // end if
+		
 		return true;
+
 	}
 
 	/**
-	 * Returns the service added by this wizard, or possibly null if wizard
+	 * Returns the services added by this wizard, or possibly null if wizard
 	 * hasn't completed yet or was cancelled.
-	 * @return added service or null if nothing added at the time of the call
+	 * @return added services or null if nothing added at the time of the call
 	 */
-	public CloudService getService() {
-		if (createdService != null) {
-			return createdService;
+	public List<CloudService> getServices() {
+		
+		List<CloudService> result = null;
+		
+		if (createdServices != null) {
+			result = createdServices;
+			
+		} else 	if(page != null) {
+			// Convert the UI selections to CloudService entries
+			List<CFServiceWizUI> selectedServices = page.getSelectedList();
+			if(selectedServices != null && selectedServices.size() > 0) {
+				result = new ArrayList<CloudService>();
+				for(CFServiceWizUI product : selectedServices) {
+					result.add(product.convertToLocalCloudService());
+				}
+			}
+						
 		}
-		return page != null ? page.getService() : null;
+		return result;
 	}
 
 }
