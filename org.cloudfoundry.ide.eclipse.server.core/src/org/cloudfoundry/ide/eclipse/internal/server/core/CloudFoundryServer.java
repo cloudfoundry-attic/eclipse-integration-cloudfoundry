@@ -45,9 +45,11 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jst.server.core.FacetUtil;
+import org.eclipse.jst.server.core.IWebModule;
 import org.eclipse.jst.server.core.internal.J2EEUtil;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
+import org.eclipse.wst.server.core.IModuleType;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
 import org.eclipse.wst.server.core.internal.Server;
@@ -333,7 +335,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 
 	@Override
 	public IModule[] getChildModules(IModule[] module) {
-		if (module == null) {
+		if (module == null || module.length == 0) {
 			return null;
 		}
 
@@ -349,6 +351,14 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		// }
 		// }
 
+		IModuleType moduleType = module[module.length - 1].getModuleType();
+
+		if (moduleType != null && CloudFoundryConstants.ID_WEB_MODULE.equals(moduleType.getId())) {
+			IWebModule webModule = (IWebModule) module[module.length - 1].loadAdapter(IWebModule.class, null);
+			if (webModule != null)
+				return webModule.getModules();
+		}
+		
 		return new IModule[0];
 	}
 
