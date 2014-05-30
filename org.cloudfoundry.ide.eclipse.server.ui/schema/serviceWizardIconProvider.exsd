@@ -1,0 +1,136 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.cloudfoundry.ide.eclipse.server.ui" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appInfo>
+         <meta.schema plugin="org.cloudfoundry.ide.eclipse.server.ui" id="serviceWizardIconProvider" name="Service Wizard Icon Provider"/>
+      </appInfo>
+      <documentation>
+         Allows consuming code to provide icons to the Add Service wizard to be displayed alongside services.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appInfo>
+            <meta.element />
+         </appInfo>
+      </annotation>
+      <complexType>
+         <sequence minOccurs="1" maxOccurs="unbounded">
+            <element ref="serviceIconProvider"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appInfo>
+                  <meta.attribute translatable="true"/>
+               </appInfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="serviceIconProvider">
+      <complexType>
+         <attribute name="providerClass" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appInfo>
+                  <meta.attribute kind="java" basedOn=":org.cloudfoundry.ide.eclipse.server.ui.ICloudFoundryServiceIconProvider"/>
+               </appInfo>
+            </annotation>
+         </attribute>
+         <attribute name="runtimeTypeId" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="since"/>
+      </appInfo>
+      <documentation>
+         1.6.2
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="examples"/>
+      </appInfo>
+      <documentation>
+         The following is an example of an extension point:
+
+&lt;pre&gt;
+  &lt;extension point=&quot;org.cloudfoundry.ide.eclipse.server.ui.serviceWizardIconProvider&quot;&gt;
+     &lt;serviceIconProvider runtimeTypeId=&quot;com.my.server.runtimetype.id&quot;
+           providerClass=&quot;com.my.MyServiceWizardIconProvider&quot;/&gt;
+
+		...
+  &lt;/extension&gt;
+  
+  In this sample, &apos;com.my.MyServiceWizardIconProvider&apos; would implement ICloudFoundryServiceWizardIconProvider.
+&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appInfo>
+         <meta.section type="apiinfo"/>
+      </appInfo>
+      <documentation>
+         Concrete implementations of this interface should be thread safe, allowing
+multiple concurrent calls to its member methods. Returned images will be
+cached for the lifetime of the wizard dialog, and re-acquired for subsequent
+wizard invocations.
+      </documentation>
+   </annotation>
+
+
+   <annotation>
+      <appInfo>
+         <meta.section type="copyright"/>
+      </appInfo>
+      <documentation>
+         Copyright (c) 2014 IBM Corporation
+
+All rights reserved. This program and the accompanying materials
+are made available under the terms of the Apache License, 
+Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance 
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+      </documentation>
+   </annotation>
+
+</schema>

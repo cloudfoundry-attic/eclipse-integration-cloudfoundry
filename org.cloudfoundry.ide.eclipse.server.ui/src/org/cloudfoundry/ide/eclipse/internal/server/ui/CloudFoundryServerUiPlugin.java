@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2014 Pivotal Software Inc. and others 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -52,6 +52,12 @@ public class CloudFoundryServerUiPlugin extends AbstractUIPlugin {
 	public static void logError(Throwable e) {
 		if (plugin != null) {
 			plugin.getLog().log(new Status(IStatus.ERROR, PLUGIN_ID, e.getLocalizedMessage()));
+		}
+	}
+	
+	public static void logStatus(IStatus status) {
+		if(plugin != null) {
+			plugin.getLog().log(status);
 		}
 	}
 
