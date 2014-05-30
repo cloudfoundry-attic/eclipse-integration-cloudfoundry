@@ -715,6 +715,9 @@ class CFServiceWizUI {
 
 	public CFServiceWizUI(CloudServiceOffering offering) {
 		this.offering = offering;
+		
+		// Name defaults to service name
+		setUserDefinedName(offering.getName());
 	}
 
 	public String getName() {

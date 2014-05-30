@@ -252,6 +252,8 @@ class CFWizServicePage2Validation {
 	public static final String SPECIFY_NAME = "Specify service names and select service plans for each of the services.";
 
 	public static final String INVALID_SERVICE_NAME = "Service name contains invalid characters: ";
+	
+	public static final String SERVICE_NAME_DUPE = "Services names must be unique, and should not be shared between services.";
 
 	public CFWizServicePage2Validation(CloudFoundryServiceWizardPage2 wizardPage) {
 		this.wizardPage = wizardPage;
@@ -288,8 +290,35 @@ class CFWizServicePage2Validation {
 			}
 
 		}
+		
+		if(!descriptionUpdated) {
 
+			boolean dupeFound = false;
+			// Check for dupes
+			for(int x = 0; x < list.size() && !dupeFound; x++) {
+				for(int y = x; y < list.size() && !dupeFound; y++) { // y starts at x, no need to recheck previous comparisons
+					
+					// Ignore equality case
+					if(y == x) { continue; }
+					
+					String entryXName = list.get(x).getUserDefinedName();
+					String entryYName = list.get(y).getUserDefinedName();
+					
+					if(entryXName != null && entryYName != null && entryXName.equalsIgnoreCase(entryYName)) {
+						dupeFound = true;
+					}					
+				}
+			}
+
+			if(dupeFound) {
+	 			wizardPage.setDescription(null);
+				wizardPage.setErrorMessage(SERVICE_NAME_DUPE);
+				descriptionUpdated = true;
+			}
+		}
+		
 		if (!descriptionUpdated && list.size() > 0) {
+			
 			wizardPage.setErrorMessage(null);
 			wizardPage.setDescription(SPECIFY_NAME);
 			wizardPage.setPageComplete(true);
