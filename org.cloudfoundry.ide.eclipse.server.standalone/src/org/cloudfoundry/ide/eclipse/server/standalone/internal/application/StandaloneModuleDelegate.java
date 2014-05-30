@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.startcommand.JavaStartCommand;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;

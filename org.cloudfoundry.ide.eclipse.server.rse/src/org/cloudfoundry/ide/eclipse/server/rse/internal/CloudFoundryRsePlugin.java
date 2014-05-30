@@ -19,7 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.rse.internal;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
 import org.eclipse.rse.core.IRSESystemType;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.ui.SystemBasePlugin;

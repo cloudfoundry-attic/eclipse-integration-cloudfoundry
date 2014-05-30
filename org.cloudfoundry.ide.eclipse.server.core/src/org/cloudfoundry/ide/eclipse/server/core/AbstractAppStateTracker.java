@@ -20,7 +20,7 @@
 
 package org.cloudfoundry.ide.eclipse.server.core;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.wst.server.core.IServer;
 
 /**

@@ -19,7 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.rse.internal;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.eclipse.rse.core.filters.ISystemFilter;
 import org.eclipse.rse.core.filters.ISystemFilterPool;
 import org.eclipse.rse.core.filters.ISystemFilterPoolManager;

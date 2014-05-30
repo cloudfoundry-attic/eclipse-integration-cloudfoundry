@@ -19,8 +19,8 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.rse.internal;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.rse.core.IRSECoreRegistry;

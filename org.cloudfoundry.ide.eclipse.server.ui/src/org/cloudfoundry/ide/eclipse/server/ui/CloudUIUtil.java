@@ -19,7 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui;
 
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudUiUtil;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
 
 public class CloudUIUtil {
 

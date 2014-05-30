@@ -25,7 +25,7 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.Staging;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.EnvironmentVariable;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 
 /**
  * Describes the application that is to be pushed to a CF server, or already

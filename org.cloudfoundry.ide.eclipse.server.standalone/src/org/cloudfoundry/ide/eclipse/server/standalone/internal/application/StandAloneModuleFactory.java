@@ -19,7 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.wst.server.core.IModule;

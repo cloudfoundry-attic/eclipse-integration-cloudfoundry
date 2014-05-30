@@ -19,8 +19,8 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.startcommand;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jface.layout.GridDataFactory;

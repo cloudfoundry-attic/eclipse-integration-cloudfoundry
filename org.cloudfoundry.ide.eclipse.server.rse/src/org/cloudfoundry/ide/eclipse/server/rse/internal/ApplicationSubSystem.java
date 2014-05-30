@@ -19,8 +19,8 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.rse.internal;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerListener;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerListener;
 import org.eclipse.rse.core.events.ISystemResourceChangeEvents;
 import org.eclipse.rse.core.events.SystemResourceChangeEvent;
 import org.eclipse.rse.core.model.IHost;

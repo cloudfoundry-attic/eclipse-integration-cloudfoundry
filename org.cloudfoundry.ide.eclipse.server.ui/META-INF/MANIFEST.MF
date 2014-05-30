@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
 Bundle-SymbolicName: org.cloudfoundry.ide.eclipse.server.ui;singleton:=true
 Bundle-Version: 1.6.1.qualifier
-Bundle-Activator: org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerUiPlugin
+Bundle-Activator: org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryServerUiPlugin
 Bundle-Vendor: %Bundle-Vendor
 Require-Bundle: org.eclipse.wst.common.project.facet.ui,
  org.eclipse.wst.server.core,
@@ -27,9 +27,9 @@ Require-Bundle: org.eclipse.wst.common.project.facet.ui,
  org.eclipse.datatools.connectivity.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
-Export-Package: org.cloudfoundry.ide.eclipse.server.ui, 
- org.cloudfoundry.ide.eclipse.internal.server.ui,
- org.cloudfoundry.ide.eclipse.internal.server.ui.actions,
- org.cloudfoundry.ide.eclipse.internal.server.ui.console,
- org.cloudfoundry.ide.eclipse.internal.server.ui.editor,
- org.cloudfoundry.ide.eclipse.internal.server.ui.wizards
+Export-Package: org.cloudfoundry.ide.eclipse.server.ui,
+ org.cloudfoundry.ide.eclipse.server.ui.internal,
+ org.cloudfoundry.ide.eclipse.server.ui.internal.actions,
+ org.cloudfoundry.ide.eclipse.server.ui.internal.console,
+ org.cloudfoundry.ide.eclipse.server.ui.internal.editor,
+ org.cloudfoundry.ide.eclipse.server.ui.internal.wizards

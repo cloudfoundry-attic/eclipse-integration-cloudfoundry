@@ -26,13 +26,13 @@ import java.util.Map.Entry;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.EnvironmentVariable;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.LocalCloudService;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.LocalCloudService;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -43,11 +43,11 @@ public abstract class ApplicationDelegate implements IApplicationDelegate {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.cloudfoundry.ide.eclipse.internal.server.core.application.
+	 * @see org.cloudfoundry.ide.eclipse.server.core.internal.application.
 	 * IApplicationDelegate
 	 * #getDefaultApplicationDeploymentInfo(org.cloudfoundry.
 	 * ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule,
-	 * org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer,
+	 * org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer,
 	 * org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public ApplicationDeploymentInfo getDefaultApplicationDeploymentInfo(CloudFoundryApplicationModule appModule,

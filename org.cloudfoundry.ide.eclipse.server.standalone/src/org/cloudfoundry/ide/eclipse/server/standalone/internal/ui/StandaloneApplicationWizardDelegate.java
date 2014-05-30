@@ -22,14 +22,14 @@ package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDelegate;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.ApplicationWizardDescriptor;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationEnvVarWizardPage;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationServicesWizardPage;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryApplicationWizardPage;
-import org.cloudfoundry.ide.eclipse.server.core.ApplicationUrlLookupService;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.ApplicationWizardDelegate;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.ApplicationWizardDescriptor;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryApplicationEnvVarWizardPage;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryApplicationServicesWizardPage;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryApplicationWizardPage;
 import org.eclipse.jface.wizard.IWizardPage;
 
 public class StandaloneApplicationWizardDelegate extends

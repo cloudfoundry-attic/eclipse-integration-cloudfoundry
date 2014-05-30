@@ -59,7 +59,7 @@ As this is an internal extension point, API for the Java delegate contribution t
                   
                </documentation>
                <appInfo>
-                  <meta.attribute kind="java" basedOn="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback:"/>
+                  <meta.attribute kind="java" basedOn="org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryCallback:"/>
                </appInfo>
             </annotation>
          </attribute>

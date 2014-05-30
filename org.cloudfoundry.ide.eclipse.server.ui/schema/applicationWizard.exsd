@@ -75,7 +75,7 @@ org.cloudfoundry.ide.eclipse.server.core.application
                   Provide pages to the application deployment wizard for the related application type.
                </documentation>
                <appInfo>
-                  <meta.attribute kind="java" basedOn=":org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.IApplicationWizardDelegate"/>
+                  <meta.attribute kind="java" basedOn=":org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.IApplicationWizardDelegate"/>
                </appInfo>
             </annotation>
          </attribute>

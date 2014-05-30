@@ -41,7 +41,7 @@
 		<fragment 
 			id="org.cloudfoundry.appcloudserver.runtime.10" 
 			typeIds="org.cloudfoundry.appcloudserver.runtime.10"
-			class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryServerRuntimeWizardFragment" />
+			class="org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryServerRuntimeWizardFragment" />
 	</extension-->
 
 	<extension point="org.eclipse.debug.ui.launchConfigurationTypeImages">
@@ -61,7 +61,7 @@
         <objectState name="serverType" value="org.cloudfoundry.appcloudserver.*"/>
       </visibility>
       <action
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DisconnectAction"
+            class="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.DisconnectAction"
             enablesFor="1"
             icon="icons/full/obj16/disconnect.png"
             id="org.cloudfoundry.ide.eclipse.server.ui.DisconnectAction"
@@ -69,7 +69,7 @@
             menubarPath="org.eclipse.wst.server.ui.internal.cnf.controlServerSectionStart">
       </action>
       <action
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ConnectAction"
+            class="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.ConnectAction"
             enablesFor="1"
             icon="icons/full/obj16/connect.png"
             id="org.cloudfoundry.ide.eclipse.server.ui.ConnectAction"
@@ -77,21 +77,21 @@
             menubarPath="org.eclipse.wst.server.ui.internal.cnf.controlServerSectionStart">
       </action>
       <action
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdatePasswordAction"
+            class="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.UpdatePasswordAction"
             enablesFor="1"
             id="org.cloudfoundry.ide.eclipse.server.ui.changepassword"
             label="Update Password">
       </action>
       <!-- disabled for CF 1.5.0 V2 until Insight support is available again in the future
       <action
-             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.GoToSpringInsightAction"
+             class="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.GoToSpringInsightAction"
              enablesFor="1"
              id="org.cloudfoundry.ide.eclipse.server.ui.action.gotoinsight"
              label="Go to Spring Insight">
        </action>
        -->
        <action
-             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloneServerAction"
+             class="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.CloneServerAction"
              enablesFor="1"
              id="org.cloudfoundry.ide.eclipse.server.ui.action.cloneserver"
              label="Clone Server...">
@@ -108,19 +108,19 @@
           </objectState>
        </visibility>
        <action
-             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateRestartModuleAction"
+             class="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.UpdateRestartModuleAction"
              enablesFor="1"
              id="org.cloudfoundry.ide.eclipse.server.ui.action.update.restart.module"
              label="Update and Restart">
        </action>
        <action
-             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ShowConsoleViewerAction"
+             class="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.ShowConsoleViewerAction"
              enablesFor="1"
              id="org.cloudfoundry.ide.eclipse.server.ui.action.showconsole"
              label="Show Console">
        </action>
        <action
-             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.OpenHomePageAction"
+             class="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.OpenHomePageAction"
              enablesFor="1"
              id="org.cloudfoundry.ide.eclipse.server.ui.action.openHome"
              label="Open Home Page"
@@ -143,13 +143,13 @@
   <extension
         point="org.cloudfoundry.ide.eclipse.server.core.callback">
      <callback
-           class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryUiCallback"></callback>
+           class="org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryUiCallback"></callback>
   </extension>
 
 	<extension
 	      point="org.eclipse.ui.decorators">
 	   <decorator
-	         class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryDecorator"
+	         class="org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryDecorator"
 	         icon="icons/full/obj16/single.png"
 	         id="org.cloudfoundry.ide.eclipse.server.navigatorDecorator"
 	         label="Cloud Foundry Server State Decorator"
@@ -174,14 +174,14 @@
          	order="1"
          	insertionId="org.eclipse.wst.server.editor.overview.left"
          	typeIds="org.cloudfoundry.appcloudserver.*"
-         	class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryAccountSection">
+         	class="org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryAccountSection">
       	</section>
 		<section
 			id="org.cloudfoundry.ide.eclipse.server.editor.status"
          	order="2"
          	insertionId="org.eclipse.wst.server.editor.overview.left"
          	typeIds="org.cloudfoundry.appcloudserver.*"
-         	class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryServerStatusSection">
+         	class="org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryServerStatusSection">
       	</section>
       	<!-- Removed for CF 1.5.0 
       	<section
@@ -189,11 +189,11 @@
          	order="3"
          	insertionId="org.eclipse.wst.server.editor.overview.right"
          	typeIds="org.cloudfoundry.appcloudserver.*"
-         	class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.SpringInsightSection">
+         	class="org.cloudfoundry.ide.eclipse.server.ui.internal.editor.SpringInsightSection">
       	</section>
       	-->
   <section
-        class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.DisablePublishSection"
+        class="org.cloudfoundry.ide.eclipse.server.ui.internal.editor.DisablePublishSection"
         id="org.cloudfoundry.ide.eclipse.server.editor.disable.publish"
         insertionId="org.eclipse.wst.server.editor.overview.right"
         order="1"
@@ -203,7 +203,7 @@
 	<extension
        point="org.eclipse.wst.server.core.launchableAdapters">
     <launchableAdapter
-          class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryLaunchableAdapterDelegate"
+          class="org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryLaunchableAdapterDelegate"
           id="org.cloudfoundry.ide.eclipse.server.launchableAdapter"
           typeIds="org.cloudfoundry.appcloudserver*">
     </launchableAdapter>
@@ -212,9 +212,9 @@
  <extension
        point="org.eclipse.wst.server.core.clients">
     <client
-          class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryLaunchableClient"
+          class="org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryLaunchableClient"
           id="org.cloudfoundry.ide.eclipse.server.launchClient"
-          launchable="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryLaunchable"
+          launchable="org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryLaunchable"
           name="Cloud Foundry Server">
     </client>
  </extension>
@@ -222,7 +222,7 @@
  <extension
        point="org.eclipse.wst.server.ui.editorPages">
     <page
-          class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryApplicationsEditorPage"
+          class="org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage"
           id="org.cloudfoundry.ide.eclipse.server.editor.applications"
           name="Applications and Services"
           order="1"
@@ -232,7 +232,7 @@
  <extension
        point="org.eclipse.ui.navigator.navigatorContent">
     <actionProvider
-          class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryActionProvider"
+          class="org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryActionProvider"
           id="org.cloudfoundry.ide.eclipse.server.ui.navigator.ActionProvider">
        <enablement>
           <instanceof
@@ -255,7 +255,7 @@
  <extension
        point="org.eclipse.ui.console.consolePageParticipants">
     <consolePageParticipant
-          class="org.cloudfoundry.ide.eclipse.internal.server.ui.console.CloudFoundryConsolePageParticipant"
+          class="org.cloudfoundry.ide.eclipse.server.ui.internal.console.CloudFoundryConsolePageParticipant"
           id="org.cloudfoundry.ide.eclipse.server.ui.console">
        <enablement></enablement>
     </consolePageParticipant>
@@ -300,14 +300,14 @@
 	<extension point="org.eclipse.ui.menus">
       <menuContribution
         allPopups="true"
-        class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloudFoundryActionContributionFactory"
+        class="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.CloudFoundryActionContributionFactory"
         locationURI="popup:org.eclipse.wst.server.ui.ServersView?before=additions">
       </menuContribution>
 	</extension>
  
    <extension point="org.eclipse.core.expressions.propertyTesters">
       <propertyTester
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryPropertyTester"
+            class="org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryPropertyTester"
             id="org.cloudfoundry.ide.eclipse.server.propertytester"
             namespace="org.cloudfoundry.ide.eclipse.server.ui"
             properties="isDebugEnabled, isModuleStopped, isApplicationRunningInDebugMode, isConnectedToDebugger"
@@ -318,12 +318,12 @@
          point="org.eclipse.ui.preferencePages">
       <page
             category="org.cloudfoundry.ide.eclipse.server.ui.CloudFoundryPreferencePage"
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryTracePreferencePage"
+            class="org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryTracePreferencePage"
             id="org.cloudfoundry.ide.eclipse.server.ui.CloudFoundryTracePreferencePage"
             name="HTTP Tracing">
       </page>
       <page
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryPreferencePage"
+            class="org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryPreferencePage"
             id="org.cloudfoundry.ide.eclipse.server.ui.CloudFoundryPreferencePage"
             name="Cloud Foundry">
       </page>
@@ -331,20 +331,20 @@
    <extension
          point="org.cloudfoundry.ide.eclipse.server.ui.applicationWizard">
       <applicationWizardDelegate
-            class="org.cloudfoundry.ide.eclipse.server.ui.JavaWebApplicationWizardDelegate"
+            class="org.cloudfoundry.ide.eclipse.server.ui.DefaultApplicationWizardDelegate"
             providerID="org.cloudfoundry.ide.eclipse.server.application.javaweb">
       </applicationWizardDelegate>
    </extension>
    <extension
          point="org.eclipse.wst.server.ui.serverCreationWizardPageExtension">
       <serverCreationWizardPageExtension
-            id="org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.serverCreationWizardPageExtension"
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.wizards.CloudFoundryServerWizardUIControl"/>
+            id="org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.serverCreationWizardPageExtension"
+            class="org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryServerWizardUIControl"/>
    </extension>
       <extension
          point="org.eclipse.wst.server.ui.serverEditorOverviewPageModifier">
       <serverEditorOverviewPageModifier
-            id="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.serverEditorOverviewPageExtension"
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.editor.CloudFoundryServerEditorOverviewPageUIControl"/>
+            id="org.cloudfoundry.ide.eclipse.server.ui.internal.editor.serverEditorOverviewPageExtension"
+            class="org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryServerEditorOverviewPageUIControl"/>
    </extension>
 </plugin>

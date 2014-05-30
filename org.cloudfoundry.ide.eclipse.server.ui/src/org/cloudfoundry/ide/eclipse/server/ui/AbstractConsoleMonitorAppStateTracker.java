@@ -21,11 +21,11 @@ package org.cloudfoundry.ide.eclipse.server.ui;
 
 import java.util.regex.Pattern;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.Logger;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.console.ConsoleManager;
 import org.cloudfoundry.ide.eclipse.server.core.AbstractAppStateTracker;
 import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Logger;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.console.ConsoleManager;
 import org.eclipse.ui.console.IPatternMatchListener;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.PatternMatchEvent;
@@ -34,7 +34,7 @@ import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 
 /**
- * A general implementation class of the org.cloudfoundry.ide.eclipse.internal.server.core.AbstractAppStateTracker
+ * A general implementation class of the org.cloudfoundry.ide.eclipse.server.core.internal.AbstractAppStateTracker
  * that provides easy implementation to track console output to decide whether the app is started or not. In
  * most of the cases, the adopter only need to implement the getAppStartedPattern() method.  In more complex cases, 
  * the adopter can override the createPatternMatchListener() to provide their own pattern match listener.

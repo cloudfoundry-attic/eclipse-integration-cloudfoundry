@@ -22,8 +22,8 @@ package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.ui.actions.AbstractMenuContributionFactory;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandaloneFacetHandler;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.AbstractMenuContributionFactory;
 import org.eclipse.core.expressions.IEvaluationContext;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IAdaptable;
