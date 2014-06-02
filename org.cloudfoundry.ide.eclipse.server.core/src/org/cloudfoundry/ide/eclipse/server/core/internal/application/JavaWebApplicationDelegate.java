@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.cloudfoundry.ide.eclipse.server.core.ApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudApplicationURL;
@@ -53,7 +53,7 @@ import org.eclipse.wst.server.core.model.IModuleResource;
  * <p/>
  * This application delegate supports the above Java Web frameworks.
  */
-public class JavaWebApplicationDelegate extends ApplicationDelegate {
+public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 
 	public JavaWebApplicationDelegate() {
 
@@ -177,7 +177,7 @@ public class JavaWebApplicationDelegate extends ApplicationDelegate {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.cloudfoundry.ide.eclipse.server.core.internal.application.
-	 * IApplicationDelegate
+	 * AbstractApplicationDelegate
 	 * #getApplicationArchive(org.cloudfoundry.ide.eclipse.internal
 	 * .server.core.client.CloudFoundryApplicationModule,
 	 * org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer,

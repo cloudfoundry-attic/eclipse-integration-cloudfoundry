@@ -19,7 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
-import org.cloudfoundry.ide.eclipse.server.core.IApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 
 /**
  * 
@@ -30,9 +30,9 @@ import org.cloudfoundry.ide.eclipse.server.core.IApplicationDelegate;
  */
 public abstract class ApplicationWizardDelegate implements IApplicationWizardDelegate {
 
-	private IApplicationDelegate appDelegate;
+	private AbstractApplicationDelegate appDelegate;
 
-	public void setApplicationDelegate(IApplicationDelegate appDelegate) {
+	public void setApplicationDelegate(AbstractApplicationDelegate appDelegate) {
 		this.appDelegate = appDelegate;
 	}
 
@@ -43,7 +43,7 @@ public abstract class ApplicationWizardDelegate implements IApplicationWizardDel
 	 * delegate from the CF Application framework) .
 	 * @return Corresponding Application delegate, if it exists, or null.
 	 */
-	public IApplicationDelegate getApplicationDelegate() {
+	public AbstractApplicationDelegate getApplicationDelegate() {
 		return appDelegate;
 	}
 

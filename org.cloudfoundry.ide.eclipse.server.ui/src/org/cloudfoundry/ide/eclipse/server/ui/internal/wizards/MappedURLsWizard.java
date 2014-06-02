@@ -22,7 +22,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.server.core.IApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
@@ -93,7 +93,7 @@ public class MappedURLsWizard extends Wizard {
 			return true;
 		}
 
-		IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(localModule);
+		AbstractApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(localModule);
 		if (delegate == null) {
 			return true;
 		}

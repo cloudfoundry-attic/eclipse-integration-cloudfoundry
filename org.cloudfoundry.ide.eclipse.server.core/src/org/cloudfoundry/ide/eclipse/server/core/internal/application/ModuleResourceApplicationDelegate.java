@@ -22,7 +22,7 @@ package org.cloudfoundry.ide.eclipse.server.core.internal.application;
 import java.util.Arrays;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.cloudfoundry.ide.eclipse.server.core.ApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.wst.server.core.IModule;
@@ -34,7 +34,7 @@ import org.eclipse.wst.server.core.model.IModuleResource;
  * the resources that are to be pushed to the Cloud Foundry server.
  * 
  */
-public abstract class ModuleResourceApplicationDelegate extends ApplicationDelegate {
+public abstract class ModuleResourceApplicationDelegate extends AbstractApplicationDelegate {
 
 	public ModuleResourceApplicationDelegate() {
 
@@ -48,7 +48,7 @@ public abstract class ModuleResourceApplicationDelegate extends ApplicationDeleg
 	 * (non-Javadoc)
 	 * 
 	 * @see org.cloudfoundry.ide.eclipse.server.core.internal.application.
-	 * IApplicationDelegate
+	 * AbstractApplicationDelegate
 	 * #getApplicationArchive(org.cloudfoundry.ide.eclipse.internal
 	 * .server.core.client.CloudFoundryApplicationModule,
 	 * org.eclipse.wst.server.core.model.IModuleResource[])

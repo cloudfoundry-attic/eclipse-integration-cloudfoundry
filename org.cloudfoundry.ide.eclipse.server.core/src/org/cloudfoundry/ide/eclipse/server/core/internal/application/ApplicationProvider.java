@@ -22,7 +22,7 @@ package org.cloudfoundry.ide.eclipse.server.core.internal.application;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.server.core.IApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry.Priority;
 import org.eclipse.core.runtime.IConfigurationElement;
 
@@ -37,7 +37,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
  * point attributes, like provider ID.
  * 
  */
-public class ApplicationProvider extends FrameworkProvider<IApplicationDelegate> {
+public class ApplicationProvider extends FrameworkProvider<AbstractApplicationDelegate> {
 
 	private static final String MODULE_ID_ELEMENT = "moduleID";
 

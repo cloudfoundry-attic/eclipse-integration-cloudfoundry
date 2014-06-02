@@ -52,7 +52,7 @@ import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.server.core.AbstractAppStateTracker;
 import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
-import org.cloudfoundry.ide.eclipse.server.core.IApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
@@ -2398,7 +2398,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		// resources. Use incremental publishing if
 		// possible.
 
-		IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(cloudModule.getLocalModule());
+		AbstractApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(cloudModule.getLocalModule());
 
 		ApplicationArchive archive = null;
 		if (delegate != null && delegate.providesApplicationArchive(cloudModule.getLocalModule())) {
@@ -2435,7 +2435,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	private ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule cloudModule,
-			IProgressMonitor monitor, IApplicationDelegate delegate, IModuleResource[] resources) throws CoreException {
+			IProgressMonitor monitor, AbstractApplicationDelegate delegate, IModuleResource[] resources) throws CoreException {
 		SubMonitor subProgress = SubMonitor.convert(monitor);
 		subProgress.setTaskName("Creating application archive for: " + cloudModule.getDeployedApplicationName());
 

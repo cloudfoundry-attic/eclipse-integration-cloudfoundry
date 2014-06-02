@@ -21,7 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.server.core.IApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.FrameworkProvider;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
@@ -40,7 +40,7 @@ import org.eclipse.jface.wizard.IWizardPage;
  * The wrapper converts an {@link IApplicationWizardDelegate} as defined in the
  * extension point above into an {@link ApplicationWizardDelegate}, which
  * contains additional API used by the CF plug-in framework, as well as a
- * mapping to the corresponding {@link IApplicationDelegate}.
+ * mapping to the corresponding {@link AbstractApplicationDelegate}.
  * 
  */
 public class ApplicationWizardProvider {
@@ -53,7 +53,7 @@ public class ApplicationWizardProvider {
 		internalProvider = new InternalApplicationWizardProvider(configuration, extensionPointID);
 	}
 
-	public ApplicationWizardDelegate getDelegate(IApplicationDelegate coreDelegate) {
+	public ApplicationWizardDelegate getDelegate(AbstractApplicationDelegate coreDelegate) {
 		if (wizardDelegate == null) {
 			IApplicationWizardDelegate actualDelegate = internalProvider.getDelegate();
 			if (actualDelegate instanceof ApplicationWizardDelegate) {
@@ -83,7 +83,7 @@ public class ApplicationWizardProvider {
 
 	/**
 	 * Maps an {@link IApplicationWizardDelegate} to an
-	 * {@link IApplicationDelegate}. The mapping is an internal framework
+	 * {@link AbstractApplicationDelegate}. The mapping is an internal framework
 	 * relation, and therefore not part of the
 	 * {@link IApplicationWizardDelegate} API.
 	 * 
@@ -92,7 +92,7 @@ public class ApplicationWizardProvider {
 
 		private final IApplicationWizardDelegate actualDelegate;
 
-		public ApplicationWizardDelegateImp(IApplicationWizardDelegate actualDelegate, IApplicationDelegate coreDelegate) {
+		public ApplicationWizardDelegateImp(IApplicationWizardDelegate actualDelegate, AbstractApplicationDelegate coreDelegate) {
 			this.actualDelegate = actualDelegate;
 			setApplicationDelegate(coreDelegate);
 		}

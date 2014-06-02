@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.cloudfoundry.ide.eclipse.server.core.IApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
@@ -56,7 +56,7 @@ public class ApplicationRegistry {
 
 	public static String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.core.application";
 
-	public static IApplicationDelegate getApplicationDelegate(IModule module) {
+	public static AbstractApplicationDelegate getApplicationDelegate(IModule module) {
 		ApplicationProvider provider = getApplicationProvider(module);
 		if (provider != null) {
 			return provider.getDelegate();

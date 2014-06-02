@@ -84,7 +84,7 @@ org.eclipse.wst.server.core.moduleFactories
                   Application delegate that determines the frameworks and runtimes, if applicable, for a given application type. In addition, the delegate may also contribute a means to create an archive of all resources in a project of the given application type that need to be pushed to a Cloud Foundry server, which is then used by the Cloud Foundry plugin to generate a payload when pushing the application to a Cloud Foundry server.
                </documentation>
                <appInfo>
-                  <meta.attribute kind="java" basedOn=":org.cloudfoundry.ide.eclipse.server.core.IApplicationDelegate"/>
+                  <meta.attribute kind="java" basedOn=":org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate"/>
                </appInfo>
             </annotation>
          </attribute>

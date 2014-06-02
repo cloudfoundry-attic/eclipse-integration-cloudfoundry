@@ -49,7 +49,7 @@ public class StandaloneApplicationDelegate extends
 	 * (non-Javadoc)
 	 * 
 	 * @see org.cloudfoundry.ide.eclipse.server.core.internal.application.
-	 * IApplicationDelegate
+	 * AbstractApplicationDelegate
 	 * #getApplicationArchive(org.cloudfoundry.ide.eclipse.internal
 	 * .server.core.client.CloudFoundryApplicationModule,
 	 * org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer,

@@ -24,11 +24,9 @@ import org.cloudfoundry.client.lib.domain.ApplicationStats;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
-import org.cloudfoundry.ide.eclipse.server.core.ApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
-import org.cloudfoundry.ide.eclipse.server.core.IApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
@@ -286,14 +284,14 @@ public class CloudFoundryApplicationModule extends ExternalModule implements ICl
 
 	/**
 	 * 
-	 * @see IApplicationDelegate#validateDeploymentInfo(ApplicationDeploymentInfo)
+	 * @see AbstractApplicationDelegate#validateDeploymentInfo(ApplicationDeploymentInfo)
 	 * @return OK status if deployment information is complete and valid. Error
 	 * if failed to validate, or is invalid (i.e. it is missing information).
 	 */
 	public synchronized IStatus validateDeploymentInfo() {
-		IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(getLocalModule());
+		AbstractApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(getLocalModule());
 		if (delegate == null) {
-			return ApplicationDelegate.basicValidateDeploymentInfo(deploymentInfo);
+			return AbstractApplicationDelegate.basicValidateDeploymentInfo(deploymentInfo);
 		}
 		return delegate.validateDeploymentInfo(deploymentInfo);
 	}
@@ -447,7 +445,7 @@ public class CloudFoundryApplicationModule extends ExternalModule implements ICl
 			return null;
 		}
 
-		IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(getLocalModule());
+		AbstractApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(getLocalModule());
 		ApplicationDeploymentInfo info = null;
 		CloudFoundryServer cloudServer = getCloudFoundryServer();
 
@@ -457,7 +455,7 @@ public class CloudFoundryApplicationModule extends ExternalModule implements ICl
 
 		// If no info has been resolved yet, use a default parser
 		if (info == null) {
-			info = ApplicationDelegate.parseApplicationDeploymentInfo(application);
+			info = AbstractApplicationDelegate.parseApplicationDeploymentInfo(application);
 		}
 
 		return info;
@@ -495,7 +493,7 @@ public class CloudFoundryApplicationModule extends ExternalModule implements ICl
 	 */
 	protected ApplicationDeploymentInfo getDefaultDeploymentInfo(IProgressMonitor monitor) throws CoreException {
 
-		IApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(getLocalModule());
+		AbstractApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(getLocalModule());
 		ApplicationDeploymentInfo defaultInfo = null;
 
 		if (delegate != null) {
