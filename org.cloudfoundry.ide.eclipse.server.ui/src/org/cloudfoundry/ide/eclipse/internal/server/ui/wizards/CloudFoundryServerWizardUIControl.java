@@ -24,6 +24,7 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui.wizards;
 import java.beans.PropertyChangeEvent;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerUtil;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.wst.server.core.IServerType;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
@@ -44,7 +45,7 @@ public class CloudFoundryServerWizardUIControl extends
 		if (serverType == null) {
 			return false;
 		}
-		return CloudFoundryBrandingExtensionPoint.getServerTypeIds().contains(serverType.getId());
+		return CloudServerUtil.isCloudFoundryServerType(serverType);
 	}
 
 	/**

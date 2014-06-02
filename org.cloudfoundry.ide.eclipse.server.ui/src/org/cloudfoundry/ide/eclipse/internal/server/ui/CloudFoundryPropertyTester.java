@@ -22,10 +22,11 @@ package org.cloudfoundry.ide.eclipse.internal.server.ui;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryProperties;
 import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.core.expressions.PropertyTester;
-import org.eclipse.wst.server.core.IModule;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.ui.IServerModule;
 
@@ -43,22 +44,47 @@ import org.eclipse.wst.server.ui.IServerModule;
 public class CloudFoundryPropertyTester extends PropertyTester {
 
 	public boolean test(Object receiver, String property, Object[] arg2, Object expectedValue) {
-		IServerModule serverModule = getServerModule(receiver);
-
-		if (serverModule != null) {
-			CloudFoundryServer cloudFoundryServer = getCloudFoundryServer(serverModule);
-			// Only perform property testing for Cloud Foundry servers.
-			if (cloudFoundryServer != null) {
-				CloudFoundryProperties cfProperty = CloudFoundryProperties.valueOf(property);
-
-				if (cfProperty != null && expectedValue instanceof Boolean) {
-
-					IModule[] modules = serverModule.getModule();
-					return ((Boolean) expectedValue).booleanValue() == cfProperty.testProperty(modules,
-							cloudFoundryServer);
-				}
+		// Reusing this property tester to test visibility and enablement of the 'migrated' popup menu commands/handlers.
+		// The receiver can be a structured selection (TreeSelection) or a List.
+		
+		IServerModule serverModule = null;
+		IServer server = null;
+		CloudFoundryServer cloudFoundryServer = null;
+		// Handle the TreeSelection
+		if (receiver instanceof StructuredSelection) {
+			Object obj = ((StructuredSelection)receiver).getFirstElement();
+			if (obj instanceof IServer) {
+			   server = (IServer) obj;
+			   cloudFoundryServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
+			} else if (obj instanceof IServerModule) {
+			   serverModule = (IServerModule)obj;
+			   cloudFoundryServer = getCloudFoundryServer(serverModule);
+			}
+		} // Handle the List
+		else if (receiver instanceof List) {
+			List<?> arr = (List<?>) receiver;
+			if (!arr.isEmpty()) {
+			  Object obj = arr.get(0);
+			  if (obj instanceof IServer) {
+				 server = (IServer) obj;
+				 cloudFoundryServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
+			  }
+			}
+		} else {  // This is the default behaviour, as before
+		    serverModule = getServerModule(receiver);
+			if (serverModule != null) {
+			   cloudFoundryServer = getCloudFoundryServer(serverModule);
 			}
 		}
+		// Only perform property testing for Cloud Foundry servers.
+		if (cloudFoundryServer != null) {
+			CloudFoundryProperties cfProperty = CloudFoundryProperties.valueOf(property);
+				if (cfProperty != null && expectedValue instanceof Boolean) {
+				return ((Boolean) expectedValue).booleanValue() == cfProperty.testProperty(serverModule != null ? serverModule.getModule() : null,
+						cloudFoundryServer);
+			}
+		}
+
 		return false;
 
 	}

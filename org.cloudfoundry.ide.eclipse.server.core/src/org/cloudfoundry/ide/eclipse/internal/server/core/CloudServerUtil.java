@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.wst.server.core.IServer;
+import org.eclipse.wst.server.core.IServerType;
 import org.eclipse.wst.server.core.ServerCore;
 
 public class CloudServerUtil {
@@ -81,4 +82,28 @@ public class CloudServerUtil {
 		return cfServer;
 	}
 
+	/**
+	 * Check if the server is a Cloud Foundry-based server
+	 * @param server
+	 * @return true if it is a Cloud Foundry server
+	 */
+	public static boolean isCloudFoundryServer(IServer server) {
+		if (server != null) {
+			return isCloudFoundryServerType(server.getServerType());
+		}
+		return false;
+	}
+	
+	/**
+	 * Check if the server type is a Cloud Foundry-based server type
+	 * @param serverType
+	 * @return true if it is a Cloud Foundry server type
+	 */
+	public static boolean isCloudFoundryServerType(IServerType serverType) {
+		if (serverType != null) {
+			String serverId = serverType.getId();
+			return CloudFoundryBrandingExtensionPoint.getServerTypeIds().contains(serverId);
+		}
+		return false;
+	}
 }

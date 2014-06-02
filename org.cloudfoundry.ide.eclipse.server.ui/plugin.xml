@@ -51,87 +51,254 @@
 			id="org.cloudfoundry.appcloudserver.launchimage">
 		</launchConfigurationTypeImage>
 	</extension>
-
-  <extension point="org.eclipse.ui.popupMenus">
-    <objectContribution
-      adaptable="true"
-      id="org.cloudfoundry.ide.eclipse.server.ui.serveractions"
-      objectClass="org.eclipse.wst.server.core.IServer">
-      <visibility>
-        <objectState name="serverType" value="org.cloudfoundry.appcloudserver.*"/>
-      </visibility>
-      <action
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DisconnectAction"
-            enablesFor="1"
-            icon="icons/full/obj16/disconnect.png"
-            id="org.cloudfoundry.ide.eclipse.server.ui.DisconnectAction"
-            label="Disconnect"
-            menubarPath="org.eclipse.wst.server.ui.internal.cnf.controlServerSectionStart">
-      </action>
-      <action
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ConnectAction"
-            enablesFor="1"
-            icon="icons/full/obj16/connect.png"
-            id="org.cloudfoundry.ide.eclipse.server.ui.ConnectAction"
-            label="Connect"
-            menubarPath="org.eclipse.wst.server.ui.internal.cnf.controlServerSectionStart">
-      </action>
-      <action
-            class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdatePasswordAction"
-            enablesFor="1"
-            id="org.cloudfoundry.ide.eclipse.server.ui.changepassword"
-            label="Update Password">
-      </action>
-      <!-- disabled for CF 1.5.0 V2 until Insight support is available again in the future
-      <action
+	
+	<!-- From the popupMenus extension.  This was commented out.  This is NOT ported to
+	the org.eclipse.ui.menus extension.  -->
+	<!-- disabled for CF 1.5.0 V2 until Insight support is available again in the future
+    <action
              class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.GoToSpringInsightAction"
              enablesFor="1"
              id="org.cloudfoundry.ide.eclipse.server.ui.action.gotoinsight"
              label="Go to Spring Insight">
        </action>
-       -->
-       <action
-             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloneServerAction"
-             enablesFor="1"
-             id="org.cloudfoundry.ide.eclipse.server.ui.action.cloneserver"
-             label="Clone Server...">
-       </action>
-    </objectContribution>
-    <objectContribution
-          adaptable="true"
-          id="org.cloudfoundry.ide.eclipse.server.ui.moduleactions"
-          objectClass="org.eclipse.wst.server.ui.internal.view.servers.ModuleServer">
-       <visibility>
-          <objectState
-                name="serverType"
-                value="org.cloudfoundry.appcloudserver.*">
-          </objectState>
-       </visibility>
-       <action
-             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateRestartModuleAction"
-             enablesFor="1"
-             id="org.cloudfoundry.ide.eclipse.server.ui.action.update.restart.module"
-             label="Update and Restart">
-       </action>
-       <action
-             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ShowConsoleViewerAction"
-             enablesFor="1"
-             id="org.cloudfoundry.ide.eclipse.server.ui.action.showconsole"
-             label="Show Console">
-       </action>
-       <action
-             class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.OpenHomePageAction"
-             enablesFor="1"
-             id="org.cloudfoundry.ide.eclipse.server.ui.action.openHome"
-             label="Open Home Page"
-             menubarPath="org.cloudfoundry.ide.eclipse.server.ui.menu">
-       </action>
-       <menu
-             id="org.cloudfoundry.ide.eclipse.server.ui.menu"
-             label="Open Home Page">
-       </menu>
-    </objectContribution>
-  </extension>
+     -->	
+
+	<extension
+       id="org.cloudfoundry.ide.eclipse.server.ui.menus"
+       point="org.eclipse.ui.menus">
+    	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView?after=org.eclipse.wst.server.ui.internal.cnf.controlServerSectionStart">
+     	   <command
+     	       label="Connect"
+     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.connectcommand"
+               icon="icons/full/obj16/connect.png">
+  	         <visibleWhen
+  	               checkEnabled="false">
+  	               <test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+  	         </visibleWhen>
+   	  	   </command>
+ 	   	</menuContribution>
+    	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView?after=org.eclipse.wst.server.ui.internal.cnf.controlServerSectionStart">
+     	   <command
+     	       label="Disconnect"
+     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.disconnectcommand"
+               icon="icons/full/obj16/disconnect.png">
+  	         <visibleWhen
+  	               checkEnabled="false">
+  	               <test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+  	         </visibleWhen>
+   	  	   </command>
+ 	   	</menuContribution>
+    	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
+     	   <command
+     	       label="Clone Server..."
+     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.cloneservercommand">
+  	         <visibleWhen
+  	               checkEnabled="false">
+  	               <and>
+  	               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+  	               		<count value="1"/>
+  	               </and>
+  	         </visibleWhen>
+   	  	   </command>
+ 	   	</menuContribution>
+    	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
+     	   <command
+     	       label="Update Password"
+     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.updatepasswordcommand">
+  	         <visibleWhen
+  	               checkEnabled="false">
+  	               <and>
+  	               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+  	               		<count value="1"/>
+  	               </and>
+  	         </visibleWhen>
+   	  	   </command>
+ 	   	</menuContribution>
+     	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
+     	   <command
+     	       label="Show Console"
+     	       commandId="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.showconsoleviewercommand">
+  	         <visibleWhen
+  	               checkEnabled="false">
+				   <with variable="activeMenuSelection">
+                     <and>
+                  	 	<iterate>
+                     	  <adapt
+                           	type="org.eclipse.wst.server.ui.internal.view.servers.ModuleServer">
+                     	  </adapt>
+                  	    </iterate>
+						<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+                  	 </and>
+               	   </with>
+  	         </visibleWhen>
+   	  	   </command>
+ 	   	</menuContribution>
+    	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
+     	   <command
+     	       label="Update and Restart"
+     	       commandId="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.updaterestartmodulecommand">
+  	         <visibleWhen
+  	               checkEnabled="false">
+				   <with variable="activeMenuSelection">
+                     <and>
+                  	 	<iterate>
+                     	  <adapt
+                           	type="org.eclipse.wst.server.ui.internal.view.servers.ModuleServer">
+                     	  </adapt>
+                  	    </iterate>
+						<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+                  	 </and>
+               	   </with>
+  	         </visibleWhen>
+   	  	   </command>
+ 	   	</menuContribution>
+    	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
+     	   <command
+     	       label="Open Home Page"
+     	       commandId="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.openhomepagecommand">
+  	         <visibleWhen
+  	               checkEnabled="false">
+				   <with variable="activeMenuSelection">
+                     <and>
+                  	 	<iterate>
+                     	  <adapt
+                           	type="org.eclipse.wst.server.ui.internal.view.servers.ModuleServer">
+                     	  </adapt>
+                  	    </iterate>
+						<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+                  	 </and>
+               	   </with>
+  	         </visibleWhen>
+   	  	   </command>
+ 	   	</menuContribution>	   	
+	</extension>
+	
+	<extension point="org.eclipse.ui.commands">
+		<command
+			name="Connect"
+			description="Connect to Server"
+			id="org.cloudfoundry.ide.eclipse.server.ui.connectcommand">
+		</command>
+		<command
+			name="Disconnect"
+			description="Disconnect Server"
+			id="org.cloudfoundry.ide.eclipse.server.ui.disconnectcommand">
+		</command>
+		<command
+			name="Clone Server"
+			description="Clone Server"
+			id="org.cloudfoundry.ide.eclipse.server.ui.cloneservercommand">
+		</command>
+		<command
+			name="Update Password"
+			description="Update Password"
+			id="org.cloudfoundry.ide.eclipse.server.ui.updatepasswordcommand">
+		</command>
+		<!-- Commands based on modules -->
+		<command
+			name="Show Console"
+			description="Show Console"
+			id="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.showconsoleviewercommand">
+		</command>
+		<command
+			name="Update and Restart"
+			description="Update and Restart"
+			id="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.updaterestartmodulecommand">
+		</command>
+		<command
+			name="Open Home Page"
+			description="Open Home Page"
+			id="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.openhomepagecommand">
+		</command>
+	</extension>
+	
+   <extension point="org.eclipse.ui.handlers">
+      <handler
+        class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ConnectCommand"
+        commandId="org.cloudfoundry.ide.eclipse.server.ui.connectcommand">
+ 		<enabledWhen>
+           	<with variable="selection">
+           		<count value="1" />
+               	<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStopped" value="true"/>    
+	        </with>  
+		</enabledWhen>
+      </handler>
+      <handler
+        class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.DisconnectCommand"
+        commandId="org.cloudfoundry.ide.eclipse.server.ui.disconnectcommand">
+ 		<enabledWhen>
+           	<with variable="selection">
+           	    <count value="1" />
+               	<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>    
+	        </with>  
+		</enabledWhen>
+      </handler>
+      <handler
+        class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.CloneServerCommand"
+        commandId="org.cloudfoundry.ide.eclipse.server.ui.cloneservercommand">
+ 		<enabledWhen>
+           	<with variable="selection">
+           		<count value="1" />
+               	<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>    
+	        </with>  
+		</enabledWhen>
+      </handler>
+      <handler
+        class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdatePasswordCommand"
+        commandId="org.cloudfoundry.ide.eclipse.server.ui.updatepasswordcommand">
+ 		<enabledWhen>
+           	<with variable="selection">
+           		<count value="1" />
+               	<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>    
+	        </with>  
+		</enabledWhen>
+      </handler>
+     
+      <handler
+        class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.ShowConsoleViewerCommand"
+        commandId="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.showconsoleviewercommand">
+ 		<enabledWhen>
+           	<with variable="selection">
+           		<count value="1" />
+           		<and>
+               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>
+               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isCloudModuleStarted" value="true"/>             		
+               	</and>    
+	        </with>  
+		</enabledWhen>
+      </handler>    
+      <handler
+        class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.UpdateRestartModuleCommand"
+        commandId="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.updaterestartmodulecommand">
+ 		<enabledWhen>
+           	<with variable="selection">
+           		<count value="1" />
+           		<and>
+               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>
+               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isModuleProjectAccessible" value="true"/>
+               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isCloudModuleStarted" value="true"/>
+               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isCloudModuleLocal" value="true"/>
+               	</and>    
+	        </with>  
+		</enabledWhen>
+      </handler>
+      <handler
+        class="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.OpenHomePageCommand"
+        commandId="org.cloudfoundry.ide.eclipse.internal.server.ui.actions.openhomepagecommand">
+ 		<enabledWhen>
+           	<with variable="selection">
+           		<count value="1" />
+           		<and>
+               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>
+               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isCloudModuleStarted" value="true"/>
+               	</and>    
+	        </with>  
+		</enabledWhen>
+      </handler>
+     
+      
+   </extension>
+  
   <!--extension
         point="org.eclipse.wst.server.ui.serverToolTip">
      <serverToolTip
@@ -310,7 +477,8 @@
             class="org.cloudfoundry.ide.eclipse.internal.server.ui.CloudFoundryPropertyTester"
             id="org.cloudfoundry.ide.eclipse.server.propertytester"
             namespace="org.cloudfoundry.ide.eclipse.server.ui"
-            properties="isDebugEnabled, isModuleStopped, isApplicationRunningInDebugMode, isConnectedToDebugger"
+            properties="isDebugEnabled, isModuleStopped, isApplicationRunningInDebugMode, isConnectedToDebugger, 
+            isServerSupported, isServerStopped, isServerStarted, isModuleStarted, isCloudModuleStarted, isCloudModuleLocal, isModuleProjectAccessible"
             type="java.lang.Object">
       </propertyTester>
    </extension>

@@ -28,6 +28,7 @@ import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExt
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerListener;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerUtil;
 import org.cloudfoundry.ide.eclipse.internal.server.core.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.spaces.CloudFoundrySpace;
@@ -71,7 +72,7 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 		if (element instanceof ModuleServer) {
 			ModuleServer moduleServer = (ModuleServer) element;
 			IServer s = moduleServer.getServer();
-			if (s != null && isCloudFoundryServerType(s)) {
+			if (s != null && CloudServerUtil.isCloudFoundryServer(s)) {
 				IModule[] modules = moduleServer.getModule();
 				if (modules != null && modules.length == 1) {
 					CloudFoundryServer server = getCloudFoundryServer(moduleServer.getServer());
@@ -115,7 +116,7 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 		}
 		else if (element instanceof Server) {
 			Server server = (Server) element;
-			if (isCloudFoundryServerType(server)) {
+			if (CloudServerUtil.isCloudFoundryServer(server)) {
 				CloudFoundryServer cfServer = getCloudFoundryServer(server);
 				if (cfServer != null && cfServer.getUsername() != null) {
 					// decoration.addSuffix(NLS.bind("  [{0}, {1}]",
@@ -170,10 +171,5 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 	// }
 	// return "unknown";
 	// }
-
-	private boolean isCloudFoundryServerType(IServer server) {
-		IServerType serverType = server.getServerType();
-		return serverType != null && CloudFoundryBrandingExtensionPoint.getServerTypeIds().contains(serverType.getId());
-	}
 
 }

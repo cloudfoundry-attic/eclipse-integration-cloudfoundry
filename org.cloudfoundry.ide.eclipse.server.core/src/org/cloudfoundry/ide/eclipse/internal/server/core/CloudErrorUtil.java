@@ -16,6 +16,7 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     Keith Chong, IBM - Support more general branded server type IDs.   Moved isCloudFoundryServer to CloudServerUtil.
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core;
 
@@ -91,11 +92,6 @@ public class CloudErrorUtil {
 			return Messages.ERROR_WRONG_EMAIL_OR_PASSWORD_FORBIDDEN;
 		}
 		return null;
-	}
-
-	public static boolean isCloudFoundryServer(IServer server) {
-		String serverId = server.getServerType().getId();
-		return serverId.startsWith("org.cloudfoundry.appcloudserver.");
 	}
 
 	// check if error is caused by wrong credentials
