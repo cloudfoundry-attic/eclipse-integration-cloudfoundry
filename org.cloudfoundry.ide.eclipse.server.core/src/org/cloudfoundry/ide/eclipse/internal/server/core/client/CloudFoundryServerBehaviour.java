@@ -1294,6 +1294,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				else if (deltaKind == ServerBehaviourDelegate.CHANGED) {
 					op = getApplicationOperation(module, ApplicationAction.UPDATE_RESTART);
 				}
+				// Republish the root module if any of the child module requires republish
+				else{
+					if (isChildModuleChanged(module, monitor)) {
+						op = getApplicationOperation(module, ApplicationAction.UPDATE_RESTART);	
+					}
+				}
 
 				// NOTE: No need to run this as a separate Job, as publish
 				// operations
@@ -1311,6 +1317,32 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			handlePublishError(e);
 			throw e;
 		}
+	}
+	
+	private boolean isChildModuleChanged(IModule[] module, IProgressMonitor monitor){
+		if (module == null || module.length == 0) {
+			return false;
+		}
+
+		IServer myserver = this.getServer();
+		IModule[] childModules = myserver.getChildModules(module, monitor);
+
+		if (childModules != null && childModules.length > 0) {
+			// Compose the full structure of the child module
+			IModule[] currentChild = new IModule[module.length + 1];
+			for(int i = 0; i < module.length; i++){
+				currentChild[i] = module[i];
+			}
+			for (IModule child : childModules){
+				currentChild[module.length] = child;
+
+				if (myserver.getModulePublishState(currentChild) != IServer.PUBLISH_STATE_NONE 
+						|| isChildModuleChanged(currentChild, monitor)) {
+					return true;
+				}
+			}
+		}		
+		return false;
 	}
 
 	/**
@@ -1872,6 +1904,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		protected void performOperation(IProgressMonitor monitor) throws CoreException {
 
+			// Given that we only look at the root module for generating the appModule
+			// ie: indicated by the following getOrCreateCloudApplicationModule() call
+			// we should ignore child modules of this root module so that 
+			// we don't prompt multiple wizards for the same root module during deployment
+			
+			if (modules.length != 1) {
+				return;
+			}
+						
 			CloudFoundryApplicationModule appModule = getOrCreateCloudApplicationModule(modules);
 
 			try {
