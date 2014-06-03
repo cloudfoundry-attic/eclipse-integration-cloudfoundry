@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -1294,11 +1294,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				else if (deltaKind == ServerBehaviourDelegate.CHANGED) {
 					op = getApplicationOperation(module, ApplicationAction.UPDATE_RESTART);
 				}
-				// Republish the root module if any of the child module requires republish
-				else{
-					if (isChildModuleChanged(module, monitor)) {
-						op = getApplicationOperation(module, ApplicationAction.UPDATE_RESTART);	
-					}
+				// Republish the root module if any of the child module requires
+				// republish
+				else if (isChildModuleChanged(module, monitor)) {
+					op = getApplicationOperation(module, ApplicationAction.UPDATE_RESTART);
 				}
 
 				// NOTE: No need to run this as a separate Job, as publish
@@ -1318,8 +1317,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			throw e;
 		}
 	}
-	
-	private boolean isChildModuleChanged(IModule[] module, IProgressMonitor monitor){
+
+	private boolean isChildModuleChanged(IModule[] module, IProgressMonitor monitor) {
 		if (module == null || module.length == 0) {
 			return false;
 		}
@@ -1330,18 +1329,18 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		if (childModules != null && childModules.length > 0) {
 			// Compose the full structure of the child module
 			IModule[] currentChild = new IModule[module.length + 1];
-			for(int i = 0; i < module.length; i++){
+			for (int i = 0; i < module.length; i++) {
 				currentChild[i] = module[i];
 			}
-			for (IModule child : childModules){
+			for (IModule child : childModules) {
 				currentChild[module.length] = child;
 
-				if (myserver.getModulePublishState(currentChild) != IServer.PUBLISH_STATE_NONE 
+				if (myserver.getModulePublishState(currentChild) != IServer.PUBLISH_STATE_NONE
 						|| isChildModuleChanged(currentChild, monitor)) {
 					return true;
 				}
 			}
-		}		
+		}
 		return false;
 	}
 
@@ -1904,15 +1903,18 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		protected void performOperation(IProgressMonitor monitor) throws CoreException {
 
-			// Given that we only look at the root module for generating the appModule
-			// ie: indicated by the following getOrCreateCloudApplicationModule() call
-			// we should ignore child modules of this root module so that 
-			// we don't prompt multiple wizards for the same root module during deployment
-			
+			// Given that we only look at the root module for generating the
+			// appModule
+			// ie: indicated by the following
+			// getOrCreateCloudApplicationModule() call
+			// we should ignore child modules of this root module so that
+			// we don't prompt multiple wizards for the same root module during
+			// deployment
+
 			if (modules.length != 1) {
 				return;
 			}
-						
+
 			CloudFoundryApplicationModule appModule = getOrCreateCloudApplicationModule(modules);
 
 			try {
@@ -2638,7 +2640,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 								throw new OperationCanceledException();
 							}
 
-							AbstractAppStateTracker curTracker = CloudFoundryPlugin.getAppStateTracker(getServer().getServerType().getId(), cloudModule);
+							AbstractAppStateTracker curTracker = CloudFoundryPlugin.getAppStateTracker(getServer()
+									.getServerType().getId(), cloudModule);
 							if (curTracker != null) {
 								curTracker.setServer(getServer());
 								curTracker.startTracking(cloudModule);
@@ -2649,16 +2652,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							CloudFoundryPlugin.getCallback().applicationStarted(getCloudFoundryServer(), cloudModule);
 
 							if (curTracker != null) {
-								// Wait for application to be ready or getting out of the starting state.
+								// Wait for application to be ready or getting
+								// out of the starting state.
 								boolean isAppStarting = true;
 								while (isAppStarting && !progress.isCanceled()) {
 									if (curTracker.getApplicationState(cloudModule) == IServer.STATE_STARTING) {
 										try {
 											Thread.sleep(200);
-										} catch (InterruptedException e) {
+										}
+										catch (InterruptedException e) {
 											// Do nothing
 										}
-									} else {
+									}
+									else {
 										isAppStarting = false;
 									}
 								}
