@@ -16,14 +16,19 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     Keith Chong, IBM - Add additional properties for enabling commands based on org.eclipse.ui.menus
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.internal.server.core.debug;
 
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.internal.server.core.CloudServerUtil;
+import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryServerBehaviour;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
+import org.eclipse.wst.server.core.IServerType;
 
 /**
  * Defines properties used to test various aspects of debugging an application.
@@ -36,6 +41,39 @@ import org.eclipse.wst.server.core.IServer;
  */
 public enum CloudFoundryProperties {
 
+	isServerSupported {
+		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
+			if (cloudFoundryServer != null) {
+				return CloudServerUtil.isCloudFoundryServer(cloudFoundryServer.getServer());
+			}
+			return false;
+		}	
+	},
+	
+	isServerStarted {
+		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
+			if (cloudFoundryServer != null) {
+				IServer server = cloudFoundryServer.getServer();
+				if (server != null) {
+					return (server.getServerState() == IServer.STATE_STARTED);
+				}
+			}
+			return false;
+		}
+	},
+	
+	isServerStopped {
+		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
+			if (cloudFoundryServer != null) {
+				IServer server = cloudFoundryServer.getServer();
+				if (server != null) {
+					return (server.getServerState() == IServer.STATE_STOPPED);
+				}
+			}
+			return false;
+		}
+    },
+	
 	isDebugEnabled {
 
 		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
@@ -60,6 +98,37 @@ public enum CloudFoundryProperties {
 		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
 
 			return getDeployedAppState(modules, cloudFoundryServer.getServer()) == IServer.STATE_STOPPED;
+		}
+	},
+
+	isModuleStarted {
+		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
+			return getDeployedAppState(modules, cloudFoundryServer.getServer()) == IServer.STATE_STARTED;
+		}
+	},
+
+	isCloudModuleStarted {
+		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
+			if (modules != null && modules.length > 0) {
+				// Selection is limited to one module
+				int moduleState = cloudFoundryServer.getServer().getModuleState(modules);
+				return IServer.STATE_STARTED == moduleState;
+			}
+			return false;
+		}
+	},
+
+	isCloudModuleLocal {
+		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
+			if (modules != null && modules.length > 0) {
+				
+				// Selection is limited to one module
+				CloudFoundryApplicationModule cloudModule = cloudFoundryServer.getExistingCloudModule(modules[0]);
+				if (cloudModule != null) {
+					return !cloudModule.isExternal();
+				}				
+			}
+			return false;
 		}
 	},
 
