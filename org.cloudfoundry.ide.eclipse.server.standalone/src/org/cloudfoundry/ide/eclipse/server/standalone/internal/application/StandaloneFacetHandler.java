@@ -19,8 +19,8 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProjectUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;

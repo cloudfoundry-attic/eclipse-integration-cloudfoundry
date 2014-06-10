@@ -22,14 +22,14 @@ package org.cloudfoundry.ide.eclipse.server.tests;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryClientConnectionTest;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryProxyTest;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerBehaviourTest;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServerTest;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServicesTest;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudUtilTest;
-import org.cloudfoundry.ide.eclipse.internal.server.core.DeploymentURLTest;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ServerCredentialsStoreTest;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryClientConnectionTest;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProxyTest;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServerBehaviourTest;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServerTest;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServicesTest;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtilTest;
+import org.cloudfoundry.ide.eclipse.server.core.internal.DeploymentURLTest;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ServerCredentialsStoreTest;
 import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ManagedTestSuite;
 import org.cloudfoundry.ide.eclipse.server.tests.sts.util.StsTestUtil;
 

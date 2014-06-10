@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
 Bundle-SymbolicName: org.cloudfoundry.ide.eclipse.server.rse;singleton:=true
 Bundle-Version: 1.6.1.qualifier
-Bundle-Activator: org.cloudfoundry.ide.eclipse.server.rse.CloudFoundryRsePlugin
+Bundle-Activator: org.cloudfoundry.ide.eclipse.server.rse.internal.CloudFoundryRsePlugin
 Bundle-Vendor: %Bundle-Vendor
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
@@ -17,4 +17,4 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.wst.server.core
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
-Export-Package: org.cloudfoundry.ide.eclipse.server.rse
+Export-Package: org.cloudfoundry.ide.eclipse.server.rse.internal

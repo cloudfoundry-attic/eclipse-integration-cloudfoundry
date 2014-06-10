@@ -22,10 +22,12 @@
  ********************************************************************************/
 -->
 <plugin>
-   <extension-point id="callback" name="UI Callback" schema="schema/callback.exsd"/>
    <extension-point id="branding" name="Cloud Foundry Service Branding" schema="schema/branding.exsd"/>
    <extension-point id="application" name="Cloud Foundry Supported Application Type" schema="schema/application.exsd"/>
    <extension-point id="appStateTracker" name="Publish Application State Tracker" schema="schema/appStateTracker.exsd"/>
+
+   <!-- Internal extension point that should not be implemented by adopter -->
+   <extension-point id="callback" name="UI Callback" schema="schema/callback.exsd"/>
 	
    <extension
 	       point="org.eclipse.wst.server.core.moduleTypes">
@@ -37,7 +39,7 @@
   <extension
         point="org.eclipse.debug.core.launchConfigurationTypes">
      <launchConfigurationType
-           delegate="org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryDebuggingLaunchConfigDelegate"
+           delegate="org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryDebuggingLaunchConfigDelegate"
            id="org.cloudfoundry.ide.eclipse.launchconfig.debug"
            modes="debug"
            name="Cloud Foundry"
@@ -47,14 +49,14 @@
   <extension
         point="org.eclipse.debug.core.sourcePathComputers">
      <sourcePathComputer
-           class="org.cloudfoundry.ide.eclipse.internal.server.core.debug.CloudFoundryDebugSourceLocator"
+           class="org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryDebugSourceLocator"
            id="org.cloudfoundry.ide.eclipse.debug.sourcepathcomputer">
      </sourcePathComputer>
   </extension>
   <extension
         point="org.cloudfoundry.ide.eclipse.server.core.application">
      <applicationDelegate
-           class="org.cloudfoundry.ide.eclipse.internal.server.core.application.JavaWebApplicationDelegate"
+           class="org.cloudfoundry.ide.eclipse.server.core.internal.application.JavaWebApplicationDelegate"
            priority="Low"
            providerID="org.cloudfoundry.ide.eclipse.server.application.javaweb">
         <moduleID

@@ -20,9 +20,9 @@
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.internal.server.core.application.ModuleResourceApplicationDelegate;
-import org.cloudfoundry.ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleResourceApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.model.IModuleResource;
@@ -48,11 +48,11 @@ public class StandaloneApplicationDelegate extends
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.cloudfoundry.ide.eclipse.internal.server.core.application.
-	 * IApplicationDelegate
+	 * @see org.cloudfoundry.ide.eclipse.server.core.internal.application.
+	 * AbstractApplicationDelegate
 	 * #getApplicationArchive(org.cloudfoundry.ide.eclipse.internal
 	 * .server.core.client.CloudFoundryApplicationModule,
-	 * org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryServer,
+	 * org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer,
 	 * org.eclipse.wst.server.core.model.IModuleResource[])
 	 */
 	public ApplicationArchive getApplicationArchive(

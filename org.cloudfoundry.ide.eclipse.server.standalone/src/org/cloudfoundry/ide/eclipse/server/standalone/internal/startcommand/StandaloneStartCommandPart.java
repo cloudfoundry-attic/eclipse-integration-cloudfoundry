@@ -23,9 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.cloudfoundry.ide.eclipse.internal.server.ui.IPartChangeListener;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.PartChangeEvent;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.IPartChangeListener;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.UIPart;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;

@@ -22,7 +22,7 @@ package org.cloudfoundry.ide.eclipse.server.standalone.internal.startcommand;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;

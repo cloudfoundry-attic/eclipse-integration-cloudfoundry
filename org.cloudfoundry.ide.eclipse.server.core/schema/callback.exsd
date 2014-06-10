@@ -6,7 +6,11 @@
          <meta.schema plugin="org.cloudfoundry.ide.eclipse.server.core" id="callback" name="UI Callback"/>
       </appInfo>
       <documentation>
-         Defines an extension for invoking UI callbacks from the core.
+         INTERNAL EXTENSION POINT
+
+Defines an extension for invoking UI callbacks from the core. This is an internal extension point that should not be extended by adopters. 
+
+As this is an internal extension point, API for the Java delegate contribution through this extension point may change overtime.
       </documentation>
    </annotation>
 
@@ -55,7 +59,7 @@
                   
                </documentation>
                <appInfo>
-                  <meta.attribute kind="java" basedOn="org.cloudfoundry.ide.eclipse.internal.server.core.CloudFoundryCallback:"/>
+                  <meta.attribute kind="java" basedOn="org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryCallback:"/>
                </appInfo>
             </annotation>
          </attribute>
@@ -98,5 +102,28 @@
       </documentation>
    </annotation>
 
+   <annotation>
+      <appInfo>
+         <meta.section type="copyright"/>
+      </appInfo>
+      <documentation>
+         Copyright (c) 2013 Pivotal Software, Inc. 
+All rights reserved. This program and the accompanying materials
+are made available under the terms of the Apache License, 
+Version 2.0 (the &quot;LicenseÓ); you may not use this file except in compliance 
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Contributors:
+Pivotal Software, Inc. - initial API and implementation
+      </documentation>
+   </annotation>
 
 </schema>

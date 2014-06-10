@@ -19,9 +19,9 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 
-import org.cloudfoundry.ide.eclipse.internal.server.core.ApplicationUrlLookupService;
-import org.cloudfoundry.ide.eclipse.internal.server.core.ValueValidationUtil;
-import org.cloudfoundry.ide.eclipse.internal.server.ui.CloudApplicationUrlPart;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudApplicationUrlPart;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 

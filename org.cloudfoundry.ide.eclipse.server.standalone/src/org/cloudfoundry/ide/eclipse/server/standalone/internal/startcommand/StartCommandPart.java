@@ -19,7 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.startcommand;
 
-import org.cloudfoundry.ide.eclipse.internal.server.ui.UIPart;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.UIPart;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 

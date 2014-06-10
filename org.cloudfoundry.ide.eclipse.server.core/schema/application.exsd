@@ -6,16 +6,11 @@
          <meta.schema plugin="org.cloudfoundry.ide.eclipse.server.core" id="application" name="Application"/>
       </appInfo>
       <documentation>
-         INTERNAL EXTENSION POINT
-
-Contribute an application type like Java standalone or NodeJS into the Cloud Foundry plugin, which would allow that application type to be pushed to a Cloud Foundry server instance from within Eclipse, for example, via drag/dropping the applicaiton project onto a Cloud Foundry server in the Servers view. Additional separate contributions to the Eclipse WST framework like a module factory delegate and a WST project facet definition for that particular application type may also be necessary. See:
+         Contribute an application type like Java standalone or NodeJS into the Cloud Foundry plugin, which would allow that application type to be pushed to a Cloud Foundry server instance from within Eclipse, for example, via drag/dropping the application project onto a Cloud Foundry server in the Servers view. Additional separate contributions to the Eclipse WST framework like a module factory delegate and a WST project facet definition for that particular application type may also be necessary. See:
 
 org.eclipse.wst.common.project.facet.core.facets
 org.eclipse.wst.server.core.moduleArtifactAdapters
 org.eclipse.wst.server.core.moduleFactories
-
-
-As this is an internal extension point, API for the Java delegate contribution through this extension point may change overtime.
       </documentation>
    </annotation>
 
@@ -89,7 +84,7 @@ As this is an internal extension point, API for the Java delegate contribution t
                   Application delegate that determines the frameworks and runtimes, if applicable, for a given application type. In addition, the delegate may also contribute a means to create an archive of all resources in a project of the given application type that need to be pushed to a Cloud Foundry server, which is then used by the Cloud Foundry plugin to generate a payload when pushing the application to a Cloud Foundry server.
                </documentation>
                <appInfo>
-                  <meta.attribute kind="java" basedOn=":org.cloudfoundry.ide.eclipse.internal.server.core.application.IApplicationDelegate"/>
+                  <meta.attribute kind="java" basedOn=":org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate"/>
                </appInfo>
             </annotation>
          </attribute>
@@ -169,14 +164,23 @@ A delegate can provide for multiple application types. At least one ID needs to 
          <meta.section type="copyright"/>
       </appInfo>
       <documentation>
-         Copyright (c) 2013 Pivotal Software, Inc.
+         Copyright (c) 2013 Pivotal Software, Inc. 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
-which accompanies this distribution, and is available at
-http://www.eclipse.org/legal/epl-v10.html
+are made available under the terms of the Apache License, 
+Version 2.0 (the &quot;LicenseÓ); you may not use this file except in compliance 
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 
 Contributors:
 Pivotal Software, Inc. - initial API and implementation
+
       </documentation>
    </annotation>
 
