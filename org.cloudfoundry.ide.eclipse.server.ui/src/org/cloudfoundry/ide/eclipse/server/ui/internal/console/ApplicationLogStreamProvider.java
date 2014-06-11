@@ -23,17 +23,25 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
 
 public class ApplicationLogStreamProvider extends ConsoleStreamProvider {
 
+	private static final LogContentType[] SUPPORTED = new LogContentType[] { StandardLogContentType.APPLICATION_LOG,
+			StandardLogContentType.APPLICATION_LOG_STD_OUT, StandardLogContentType.APPLICATION_LOG_STS_ERROR,
+			StandardLogContentType.APPLICATION_LOG_UNKNOWN };
+
 	@Override
 	public ConsoleStream getStream(LogContentType type) {
-		if (StandardLogContentType.APPLICATION_LOG.equals(type)) {
-			return new ApplicationLogConsoleStream();
+
+		for (LogContentType tp : SUPPORTED) {
+			if (tp.equals(type)) {
+				return new ApplicationLogConsoleStream();
+			}
 		}
+
 		return null;
 	}
 
 	@Override
 	public LogContentType[] getSupportedTypes() {
-		return new LogContentType[] { StandardLogContentType.APPLICATION_LOG };
+		return SUPPORTED;
 	}
 
 }

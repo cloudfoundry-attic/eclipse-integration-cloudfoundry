@@ -96,7 +96,8 @@ public class ApplicationLogConsoleStream extends ConsoleStream implements Applic
 		return null;
 	}
 
-	public static CloudLog getCloudlog(ApplicationLog appLog) {
+	public static CloudLog getCloudlog(ApplicationLog appLog, CloudFoundryApplicationModule appModule,
+			CloudFoundryServer server) {
 		if (appLog == null) {
 			return null;
 		}
@@ -105,15 +106,15 @@ public class ApplicationLogConsoleStream extends ConsoleStream implements Applic
 		if (type != null) {
 			switch (type) {
 			case STDERR:
-				contentType = StandardLogContentType.STD_OUT;
+				contentType = StandardLogContentType.APPLICATION_LOG_STS_ERROR;
 				break;
 			case STDOUT:
-				contentType = StandardLogContentType.STD_OUT;
+				contentType = StandardLogContentType.APPLICATION_LOG_STD_OUT;
 				break;
 			}
 		}
 
-		return new CloudLog(format(appLog.getMessage()), contentType);
+		return new CloudLog(format(appLog.getMessage()), contentType, server, appModule);
 
 	}
 
@@ -130,10 +131,10 @@ public class ApplicationLogConsoleStream extends ConsoleStream implements Applic
 		ConsoleStream stream = logStreams.get(type);
 		if (stream == null) {
 			int swtColour = -1;
-			if (StandardLogContentType.STD_ERROR.equals(type)) {
+			if (StandardLogContentType.APPLICATION_LOG_STS_ERROR.equals(type)) {
 				swtColour = SWT.COLOR_RED;
 			}
-			else if (StandardLogContentType.STD_OUT.equals(type)) {
+			else if (StandardLogContentType.APPLICATION_LOG_STD_OUT.equals(type)) {
 				swtColour = SWT.COLOR_DARK_GREEN;
 			}
 			else if (StandardLogContentType.APPLICATION_LOG_UNKNOWN.equals(type)) {
@@ -154,20 +155,28 @@ public class ApplicationLogConsoleStream extends ConsoleStream implements Applic
 		return stream;
 	}
 
+	@Override
 	public void onMessage(ApplicationLog appLog) {
-		CloudLog log = getCloudlog(appLog);
+		CloudLog log = getCloudlog(appLog, null, null);
 		if (log != null) {
-			ConsoleStream stream = getStream(log);
-			if (stream != null && stream.isActive()) {
-				try {
-					stream.write(log);
-				}
-				catch (CoreException e) {
-					CloudFoundryPlugin.logError(e);
-				}
+			try {
+				write(log);
+			}
+			catch (CoreException e) {
+				CloudFoundryPlugin.logError(e);
 			}
 		}
+	}
 
+	public synchronized void write(CloudLog log) throws CoreException {
+		if (log == null) {
+			return;
+		}
+		ConsoleStream stream = getStream(log);
+
+		if (stream != null) {
+			stream.write(log);
+		}
 	}
 
 	public void onComplete() {

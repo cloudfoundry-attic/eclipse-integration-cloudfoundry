@@ -22,6 +22,8 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.ApplicationLog;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
 import org.eclipse.ui.console.MessageConsole;
@@ -67,10 +69,11 @@ class ApplicationLogConsole extends CloudFoundryConsole {
 		}
 	}
 
-	public synchronized void writeApplicationLogs(List<ApplicationLog> logs) {
+	public synchronized void writeApplicationLogs(List<ApplicationLog> logs, CloudFoundryApplicationModule appModule,
+			CloudFoundryServer cloudServer) {
 		if (logs != null) {
 			for (ApplicationLog log : logs) {
-				CloudLog cloudLog = ApplicationLogConsoleStream.getCloudlog(log);
+				CloudLog cloudLog = ApplicationLogConsoleStream.getCloudlog(log, appModule, cloudServer);
 				if (cloudLog != null) {
 					writeToStream(cloudLog);
 				}

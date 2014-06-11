@@ -188,7 +188,7 @@ public class ConsoleManager {
 			}
 			CloudFoundryServerBehaviour behaviour = server.getBehaviour();
 			List<ApplicationLog> logs = behaviour.getRecentApplicationLogs(appModule.getDeployedApplicationName());
-			console.writeApplicationLogs(logs);
+			console.writeApplicationLogs(logs, appModule, server);
 		}
 	}
 

@@ -28,6 +28,10 @@ public class StandardLogContentType {
 	public static final LogContentType STD_ERROR = new LogContentType("stderror");
 
 	public static final LogContentType APPLICATION_LOG = new LogContentType("applicationlog");
+	
+	public static final LogContentType APPLICATION_LOG_STS_ERROR = new LogContentType("applicationlogstderror");
+
+	public static final LogContentType APPLICATION_LOG_STD_OUT = new LogContentType("applicationlogstdout");
 
 	public static final LogContentType APPLICATION_LOG_UNKNOWN = new LogContentType("applicationlogunknown");
 

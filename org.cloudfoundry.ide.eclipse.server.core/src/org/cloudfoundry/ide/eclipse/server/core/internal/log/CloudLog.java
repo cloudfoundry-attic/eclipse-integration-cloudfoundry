@@ -63,4 +63,8 @@ public class CloudLog implements IAdaptable {
 		return null;
 	}
 
+	public String toString() {
+		return logType + " - " + log;
+	}
+
 }

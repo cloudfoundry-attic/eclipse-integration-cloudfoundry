@@ -66,7 +66,6 @@ public abstract class ConsoleStream {
 			if (logMessage != null) {
 				try {
 					activeOutStream.write(logMessage);
-
 				}
 				catch (IOException e) {
 					throw CloudErrorUtil.toCoreException(e);

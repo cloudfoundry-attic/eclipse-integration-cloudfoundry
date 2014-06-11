@@ -62,4 +62,8 @@ public class LogContentType {
 		return true;
 	}
 
+	public String toString() {
+		return id;
+	}
+
 }
