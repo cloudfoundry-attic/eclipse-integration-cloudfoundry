@@ -154,7 +154,6 @@ public class ApplicationLogConsoleStream extends ConsoleStream implements Applic
 		return stream;
 	}
 
-	@Override
 	public void onMessage(ApplicationLog appLog) {
 		CloudLog log = getCloudlog(appLog);
 		if (log != null) {
@@ -171,12 +170,10 @@ public class ApplicationLogConsoleStream extends ConsoleStream implements Applic
 
 	}
 
-	@Override
 	public void onComplete() {
 		// Nothing for now
 	}
 
-	@Override
 	public void onError(Throwable exception) {
 		CloudFoundryPlugin.logError(NLS.bind(Messages.ERROR_APPLICATION_LOG,
 				appModule != null ? appModule.getDeployedApplicationName() : Messages.UNKNOWN_APPLICATION,
