@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -17,7 +17,7 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.core.internal.trace;
+package org.cloudfoundry.ide.eclipse.server.core.internal.log;
 
 import java.io.StringWriter;
 
@@ -25,7 +25,7 @@ import org.cloudfoundry.client.lib.RestLogEntry;
 
 /**
  * General-purpose tracer that parses a {@link RestLogEntry} into various String
- * traces, and assigns a {@link ITraceType} to each section of the log entry.
+ * traces, and assigns a {@link LogContentType} to each section of the log entry.
  *
  */
 public class DefaultCloudTracer extends CloudTracer {
@@ -56,7 +56,7 @@ public class DefaultCloudTracer extends CloudTracer {
 		writer.append(SPACE);
 		writer.append(restLogEntry.getHttpStatus().name());
 
-		fireTraceEvent(writer.toString(), isError ? TraceType.HTTP_ERROR : TraceType.HTTP_OK);
+		fireTraceEvent(getCloudLog(writer.toString(), isError ? TraceType.HTTP_ERROR : TraceType.HTTP_OK));
 
 		writer = new StringWriter();
 		writer.append(SPACE);
@@ -73,7 +73,11 @@ public class DefaultCloudTracer extends CloudTracer {
 		writer.append(restLogEntry.getMessage());
 		writer.append('\n');
 
-		fireTraceEvent(writer.toString(), TraceType.GENERAL);
+		fireTraceEvent(getCloudLog(writer.toString(), TraceType.HTTP_GENERAL));
+	}
+
+	protected CloudLog getCloudLog(String log, LogContentType type) {
+		return new CloudLog(log, type);
 	}
 
 }

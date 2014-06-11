@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -22,7 +22,7 @@ package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
-import org.cloudfoundry.ide.eclipse.server.core.internal.trace.HttpTracer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.log.HttpTracer;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;

@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,25 +19,31 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
 
+import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
+import org.cloudfoundry.ide.eclipse.server.core.internal.log.TraceType;
 import org.eclipse.swt.SWT;
 
-/**
- * 
- * Local std out content for the Eclipse console. Intention is to write local
- * content to the console using the
- * {@link #write(String, org.eclipse.core.runtime.IProgressMonitor)}
- * <p/>
- * To fetch std out content from a remote server (e.g. a std log file), use
- * {@link FileConsoleStream} instead.
- */
-public class LocalStdOutConsoleStream extends LocalConsoleStream {
+public class TraceStreamProvider extends ConsoleStreamProvider {
 
-	public LocalStdOutConsoleStream() {
-		super(SWT.COLOR_DARK_MAGENTA);
+	@Override
+	public ConsoleStream getStream(LogContentType type) {
+		int swtColour = -1;
+		if (TraceType.HTTP_OK.equals(type)) {
+			swtColour = SWT.COLOR_BLUE;
+		}
+		else if (TraceType.HTTP_ERROR.equals(type)) {
+			swtColour = SWT.COLOR_RED;
+		}
+		else if (TraceType.HTTP_GENERAL.equals(type)) {
+			swtColour = SWT.COLOR_BLACK;
+		}
+
+		return swtColour > -1 ? new SingleConsoleStream(new UILogConfig(swtColour)) : null;
 	}
 
-	public IContentType getContentType() {
-		return StdContentType.STD_OUT;
+	@Override
+	public LogContentType[] getSupportedTypes() {
+		return new LogContentType[] { TraceType.HTTP_OK, TraceType.HTTP_ERROR, TraceType.HTTP_GENERAL };
 	}
 
 }

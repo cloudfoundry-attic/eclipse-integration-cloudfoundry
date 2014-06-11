@@ -27,6 +27,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.cloudfoundry.client.lib.ApplicationLogListener;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
@@ -41,6 +43,7 @@ import org.cloudfoundry.client.lib.NotFinishedStagingException;
 import org.cloudfoundry.client.lib.StartingInfo;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
+import org.cloudfoundry.client.lib.domain.ApplicationLog;
 import org.cloudfoundry.client.lib.domain.ApplicationStats;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
@@ -51,8 +54,8 @@ import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.ide.eclipse.server.core.AbstractAppStateTracker;
-import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
+import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
@@ -75,6 +78,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpac
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
@@ -130,8 +134,9 @@ import org.springframework.web.client.RestClientException;
  * corresponding workspace project) that need republishing may be republished as
  * well.
  * 
- * IMPORTANT NOTE: This class can be referred by the branding extension from adopter so this class 
- * should not be moved or renamed to avoid breakage to adopters. 
+ * IMPORTANT NOTE: This class can be referred by the branding extension from
+ * adopter so this class should not be moved or renamed to avoid breakage to
+ * adopters.
  * 
  * @author Christian Dupuis
  * @author Leo Dos Santos
@@ -758,6 +763,53 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public ICloudFoundryApplicationModule updateRestartDebugModule(IModule[] modules, boolean isIncrementalPublishing,
 			IProgressMonitor monitor) throws CoreException {
 		return doDebugModule(true, modules, isIncrementalPublishing, monitor);
+	}
+
+	public void addApplicationLogListener(final String appName, final ApplicationLogListener listener) {
+		if (appName == null || listener == null) {
+			return;
+		}
+
+		try {
+			new BehaviourRequest<Void>("Adding application log listener") //$NON-NLS-1$
+			{
+				@Override
+				protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+					client.streamLogs(appName, listener);
+					return null;
+				}
+
+			}.run(new NullProgressMonitor());
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(NLS.bind(Messages.ERROR_APPLICATION_LOG_LISTENER, appName, e.getMessage()), e);
+		}
+	}
+
+	public List<ApplicationLog> getRecentApplicationLogs(final String appName) {
+		List<ApplicationLog> logs = null;
+		if (appName != null) {
+			try {
+				logs = new BehaviourRequest<List<ApplicationLog>>("Getting existing application logs for: " + appName) //$NON-NLS-1$
+				{
+
+					@Override
+					protected List<ApplicationLog> doRun(CloudFoundryOperations client, SubMonitor progress)
+							throws CoreException {
+						return client.getRecentLogs(appName);
+					}
+
+				}.run(new NullProgressMonitor());
+			}
+			catch (CoreException e) {
+				CloudFoundryPlugin.logError(
+						NLS.bind(Messages.ERROR_EXISTING_APPLICATION_LOGS, appName, e.getMessage()), e);
+			}
+		}
+		if (logs == null) {
+			logs = Collections.emptyList();
+		}
+		return logs;
 	}
 
 	@Override
@@ -2478,7 +2530,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	private ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule cloudModule,
-			IProgressMonitor monitor, AbstractApplicationDelegate delegate, IModuleResource[] resources) throws CoreException {
+			IProgressMonitor monitor, AbstractApplicationDelegate delegate, IModuleResource[] resources)
+			throws CoreException {
 		SubMonitor subProgress = SubMonitor.convert(monitor);
 		subProgress.setTaskName("Creating application archive for: " + cloudModule.getDeployedApplicationName());
 
@@ -2507,22 +2560,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			IProgressMonitor monitor) throws CoreException {
 
 		message += '\n';
-		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, true, false,
-				monitor);
+		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, true, false);
 	}
 
 	protected void printlnToConsole(CloudFoundryApplicationModule appModule, String message, IProgressMonitor monitor)
 			throws CoreException {
 		message += '\n';
-		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, false, false,
-				monitor);
+		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, false, false);
 	}
 
 	protected void printErrorlnToConsole(CloudFoundryApplicationModule appModule, String message,
 			IProgressMonitor monitor) throws CoreException {
 		message = NLS.bind(Messages.CONSOLE_ERROR_MESSAGE + '\n', message);
-		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, false, true,
-				monitor);
+		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, false, true);
 	}
 
 	protected ApplicationArchive getIncrementalPublishArchive(final ApplicationDeploymentInfo deploymentInfo,
@@ -2589,6 +2639,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// started).
 
 					printlnToConsole(cloudModule, Messages.CONSOLE_PRE_STAGING_MESSAGE, monitor);
+
+					CloudFoundryPlugin.getCallback().startApplicationConsole(getCloudFoundryServer(), cloudModule, 0);
 
 					new BehaviourRequest<Void>(NLS.bind("Starting application {0}", deploymentName)) {
 						@Override

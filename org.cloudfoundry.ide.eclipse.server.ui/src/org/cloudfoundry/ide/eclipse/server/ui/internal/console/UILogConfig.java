@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,25 +19,16 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
+public class UILogConfig {
 
-/**
- * Console content for local standard output and error. It is meant write
- * content to the console via the {@link #write(String, IProgressMonitor)} API,
- * instead of fetching content remotely to be displayed to the console. A use
- * case for this is an CF Eclipse component that wishes to display content to
- * the console.
- * 
- */
-public abstract class LocalConsoleStream extends CloudFoundryConsoleStream {
+	private final int swtColour;
 
-	public LocalConsoleStream(int swtColour) {
-		super(null, swtColour, null, -1);
+	UILogConfig(int swtColour) {
+		this.swtColour = swtColour;
 	}
 
-	protected String getContent(IProgressMonitor monitor) throws CoreException {
-		return null;
+	public int getDisplayColour() {
+		return swtColour;
 	}
 
 }

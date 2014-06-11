@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -17,21 +17,12 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
+package org.cloudfoundry.ide.eclipse.server.core.internal.log;
 
+public class TraceType {
+	public static final LogContentType HTTP_OK = new LogContentType("httpok");
 
-public enum StdContentType implements IContentType {
+	public static final LogContentType HTTP_ERROR = new LogContentType("httperror");
 
-	STD_OUT("local_std_out"), STD_ERROR("local_std_error");
-
-	private final String id;
-
-	private StdContentType(String id) {
-		this.id = id;
-	}
-
-	public String getId() {
-		return id;
-	}
-
+	public static final LogContentType HTTP_GENERAL = new LogContentType("general");
 }

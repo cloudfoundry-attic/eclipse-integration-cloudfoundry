@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,8 +19,6 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
 
-import java.util.List;
-
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
@@ -33,8 +31,10 @@ import org.eclipse.core.runtime.IProgressMonitor;
  * new content indefinitely, until the Cloud Foundry manager decided to
  * terminate any further streaming (e.g., application is deleted or stopped, or
  * enough errors have been encountered)
+ * @deprecated Kept as reference to how to stream a file content from a Cloud
+ * Foundry server. Replaced with loggregator since 1.6.2
  */
-public class FileConsoleStream extends CloudFoundryConsoleStream {
+public class FileConsoleStream {
 
 	protected int tailingOffset = 0;
 
@@ -44,7 +44,11 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 
 	private int attemptsRemaining;
 
-	private static final IContentType FILE_CONTENT_TYPE = new FileStreamContentType();
+	private final CloudFoundryServer server;
+
+	private final String appName;
+
+	private final int instanceIndex;
 
 	/**
 	 * 
@@ -57,9 +61,11 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 	 * @param instanceIndex must be valid and greater than -1.
 	 */
 	public FileConsoleStream(String path, int swtColour, CloudFoundryServer server, String appName, int instanceIndex) {
-		super(server, swtColour, appName, instanceIndex);
 		this.path = path;
 		attemptsRemaining = getMaximumErrorCount();
+		this.server = server;
+		this.appName = appName;
+		this.instanceIndex = instanceIndex;
 	}
 
 	/**
@@ -68,15 +74,7 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 	 * False otherwise
 	 */
 	public synchronized boolean isActive() {
-		return attemptsRemaining > 0 && super.isActive();
-	}
-
-	/**
-	 * 
-	 * @return basic chaining API.
-	 */
-	public synchronized List<ICloudFoundryConsoleStream> getNextContent() {
-		return null;
+		return attemptsRemaining > 0;
 	}
 
 	protected String getFilePath() {
@@ -253,7 +251,4 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 		return attemptsRemaining == 0;
 	}
 
-	public IContentType getContentType() {
-		return FILE_CONTENT_TYPE;
-	}
 }

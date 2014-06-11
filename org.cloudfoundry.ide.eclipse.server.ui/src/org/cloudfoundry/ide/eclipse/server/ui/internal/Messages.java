@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -39,6 +39,12 @@ public class Messages {
 	public static final String ERROR_NO_PASSWORD_SPACES = "No password found in existing server. Unable to update list of orgs and spaces for the server";
 
 	public static final String ERROR_NO_URL_SPACES = "No password found in existing server. Unable to update list of orgs and spaces for the server";
+
+	public static final String ERROR_APPLICATION_LOG = "Error while processing application log for {0} - {1}";
+
+	public static final String ERROR_FAILED_INITIALISE_APPLICATION_LOG_STREAM = "Failed to initialise application log stream due to missing cloud application module or cloud server. No application logs will be streamed.";
+
+	public static final String UNKNOWN_APPLICATION = "Unknown application";
 
 	/*
 	 * UI Labels

@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -84,6 +84,13 @@ public class Messages {
 	public static final String ERROR_NO_CLIENT = "No Cloud Foundry client available to process the following request - {0} ";
 
 	public static final String ERROR_FAILED_APP_START_TRACKER = "Internal Error: Failed to load application start tracker due to - {0}";
+
+	public static final String ERROR_NO_CONSOLE_STREAM_FOUND = "Framework Error: No console stream provider found for content type {0}";
+
+	public static final String ERROR_EXISTING_APPLICATION_LOGS = "Failed to fetch recent application logs for {0} - {1}";
+
+	public static final String ERROR_APPLICATION_LOG_LISTENER = "Failed to add application log listener for {0} - {1}";
+
 	/*
 	 * Warnings
 	 */
@@ -108,7 +115,7 @@ public class Messages {
 
 	public static final String CONSOLE_APP_STOPPED = "Application stopped";
 
-	public static final String CONSOLE_PRE_STAGING_MESSAGE = "Staging application";
+	public static final String CONSOLE_PRE_STAGING_MESSAGE = "Starting and staging application";
 
 	public static final String CONSOLE_APP_PUSH_MESSAGE = "Pushing application to Cloud Foundry server";
 

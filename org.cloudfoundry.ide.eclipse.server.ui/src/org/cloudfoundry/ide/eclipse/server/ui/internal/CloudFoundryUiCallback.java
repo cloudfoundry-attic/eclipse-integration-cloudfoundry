@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -28,12 +28,10 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
-import org.cloudfoundry.ide.eclipse.server.core.internal.trace.ITraceType;
+import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.console.ConsoleManager;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.console.IConsoleContents;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.console.StagingConsoleContents;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.console.StdConsoleContents;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.console.StandardLogContentType;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.tunnel.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryCredentialsWizard;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.DeleteServicesWizard;
@@ -58,11 +56,12 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
 	public void applicationStarted(final CloudFoundryServer server, final CloudFoundryApplicationModule cloudModule) {
-		startApplicationConsole(server, new StagingConsoleContents(), cloudModule, 0);
+		// Do nothing
 	}
 
-	protected void startApplicationConsole(CloudFoundryServer cloudServer, IConsoleContents contents,
-			CloudFoundryApplicationModule cloudModule, int showIndex) {
+	@Override
+	public void startApplicationConsole(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
+			int showIndex) {
 		if (cloudModule == null || cloudModule.getApplication() == null) {
 			CloudFoundryPlugin
 					.logError("No application content to display to the console while starting application in the Cloud Foundry server.");
@@ -77,25 +76,29 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			// output
 			boolean shouldClearConsole = false;
 
-			ConsoleManager.getInstance().startConsole(cloudServer, contents, cloudModule, i, i == showIndex,
-					shouldClearConsole);
+			ConsoleManager.getInstance().startConsole(cloudServer, StandardLogContentType.APPLICATION_LOG, cloudModule,
+					i, i == showIndex, shouldClearConsole);
 		}
 	}
 
+	@Override
 	public void showCloudFoundryLogs(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
 			int showIndex) {
-		startApplicationConsole(cloudServer, new StdConsoleContents(), cloudModule, showIndex);
+		ConsoleManager.getInstance().showCloudFoundryLogs(cloudServer, cloudModule, showIndex, true);
 	}
 
+	@Override
 	public void printToConsole(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule, String message,
-			boolean clearConsole, boolean isError, IProgressMonitor monitor) {
-		ConsoleManager.getInstance().synchWriteToStd(message, server, cloudModule, 0, clearConsole, isError, monitor);
+			boolean clearConsole, boolean isError) {
+		ConsoleManager.getInstance().writeToStandardConsole(message, server, cloudModule, 0, clearConsole, isError);
 	}
 
-	public void trace(String message, ITraceType type, CloudFoundryServer server, boolean clear) {
-		ConsoleManager.getInstance().writeTrace(message, type, server, clear);
+	@Override
+	public void trace(CloudLog log, boolean clear) {
+		ConsoleManager.getInstance().writeTrace(log, clear);
 	}
-	
+
+	@Override
 	public void showTraceView(boolean showTrace) {
 		if (showTrace) {
 			ConsoleManager.getInstance().setTraceVisible();

@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -17,13 +17,18 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.core.internal.trace;
+package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
 
-/**
- * 
- * Abstraction used to indicate a trace type. May be used to distinguish
- * different types of trace messages (e.g. ERROR vs OK).
- */
-public interface ITraceType {
+import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
+
+public class StandardLogContentType {
+
+	public static final LogContentType STD_OUT = new LogContentType("stdout");
+
+	public static final LogContentType STD_ERROR = new LogContentType("stderror");
+
+	public static final LogContentType APPLICATION_LOG = new LogContentType("applicationlog");
+
+	public static final LogContentType APPLICATION_LOG_UNKNOWN = new LogContentType("applicationlogunknown");
 
 }

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,29 +19,27 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
+import org.eclipse.swt.SWT;
 
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+public class StdStreamProvider extends ConsoleStreamProvider {
 
-public class StagingConsoleContents implements IConsoleContents {
+	@Override
+	public ConsoleStream getStream(LogContentType type) {
+		int swtColour = -1;
+		if (StandardLogContentType.STD_ERROR.equals(type)) {
+			swtColour = SWT.COLOR_RED;
+		}
+		else if (StandardLogContentType.STD_OUT.equals(type)) {
+			swtColour = SWT.COLOR_DARK_MAGENTA;
+		}
 
-	/**
-	 * Return a list of File contents that should be shown to the user, like
-	 * console logs. The list determines the order in which they appear to the
-	 * user.
-	 * @param cloudServer
-	 * @param app
-	 * @return
-	 */
-	public List<ICloudFoundryConsoleStream> getContents(final CloudFoundryServer cloudServer, String appName,
-			final int instanceIndex) {
+		return swtColour > -1 ? new SingleConsoleStream(new UILogConfig(swtColour)) : null;
+	}
 
-		List<ICloudFoundryConsoleStream> contents = new ArrayList<ICloudFoundryConsoleStream>();
-
-		contents.add(new StagingFileConsoleStream(cloudServer, appName, instanceIndex));
-
-		return contents;
+	@Override
+	public LogContentType[] getSupportedTypes() {
+		return new LogContentType[] { StandardLogContentType.STD_ERROR, StandardLogContentType.STD_OUT };
 	}
 
 }

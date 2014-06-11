@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -17,7 +17,7 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.core.internal.trace;
+package org.cloudfoundry.ide.eclipse.server.core.internal.log;
 
 import org.cloudfoundry.client.lib.RestLogEntry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
@@ -45,19 +45,19 @@ public abstract class CloudTracer implements ICloudTracer {
 	abstract void doTrace(RestLogEntry restLogEntry);
 
 	/**
-	 * Utility method for tracing a message based on a {@link ITraceType}. When
-	 * invoked, it will notify listeners of a trace event.
+	 * Utility method for tracing a message based on a {@link LogContentType}.
+	 * When invoked, it will notify listeners of a trace event.
 	 * @param message if null, nothing is traced.
 	 * @param type of trace. This allows listeners to perform a specific type of
 	 * operation on the trace message.
 	 */
-	protected void fireTraceEvent(String message, ITraceType type) {
-		if (message == null) {
+	protected void fireTraceEvent(CloudLog log) {
+		if (log == null) {
 			return;
 		}
 
 		try {
-			CloudFoundryPlugin.getCallback().trace(message, type, null, false);
+			CloudFoundryPlugin.getCallback().trace(log, false);
 		}
 		catch (Throwable t) {
 			// Failure in tracing. Catch as to not prevent any further framework

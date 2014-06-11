@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -24,7 +24,7 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
-import org.cloudfoundry.ide.eclipse.server.core.internal.trace.ITraceType;
+import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -41,16 +41,21 @@ import org.eclipse.core.runtime.OperationCanceledException;
 public abstract class CloudFoundryCallback {
 
 	public void printToConsole(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule, String message,
-			boolean clearConsole, boolean isError, IProgressMonitor monitor) {
+			boolean clearConsole, boolean isError) {
 		// optional
 	}
 
-	public void trace(String message, ITraceType type, CloudFoundryServer server, boolean clear) {
+	public void trace(CloudLog log, boolean clear) {
 		// optional
 	}
 
 	public void showTraceView(boolean showTrace) {
 		// optional
+	}
+
+	public void startApplicationConsole(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
+			int showIndex) {
+
 	}
 
 	public abstract void applicationStarted(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule);
