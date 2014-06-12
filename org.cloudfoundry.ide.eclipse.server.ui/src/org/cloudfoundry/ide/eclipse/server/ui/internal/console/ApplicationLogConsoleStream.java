@@ -155,7 +155,7 @@ public class ApplicationLogConsoleStream extends ConsoleStream implements Applic
 		return stream;
 	}
 
-	@Override
+	
 	public void onMessage(ApplicationLog appLog) {
 		CloudLog log = getCloudlog(appLog, null, null);
 		if (log != null) {
