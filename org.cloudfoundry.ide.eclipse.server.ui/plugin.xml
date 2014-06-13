@@ -23,6 +23,7 @@
 -->
 <plugin>
    <extension-point id="applicationWizard" name="Application Wizard" schema="schema/applicationWizard.exsd"/>
+   <extension-point id="serviceWizardIconProvider" name="Service Wizard Icon Provider" schema="schema/serviceWizardIconProvider.exsd"/>
 
 	<extension point="org.eclipse.wst.server.ui.serverImages">
 		<image
