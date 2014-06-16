@@ -34,6 +34,9 @@ import org.eclipse.core.runtime.OperationCanceledException;
 /**
  * Callback interface to support clients to hook into CloudFoundry Server
  * processes.
+ * 
+ * <p/>
+ * INTERNAL API: Adopters should not extend or use as API may change.
  * @author Christian Dupuis
  * @author Steffen Pingel
  * @author Terry Denney
@@ -54,7 +57,7 @@ public abstract class CloudFoundryCallback {
 	}
 
 	public void startApplicationConsole(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
-			int showIndex) {
+			int showIndex, IProgressMonitor monitor) {
 
 	}
 
@@ -69,7 +72,7 @@ public abstract class CloudFoundryCallback {
 	 * @param showIndex if -1 shows the first app instance
 	 */
 	public void showCloudFoundryLogs(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
-			int showIndex) {
+			int showIndex, IProgressMonitor monitor) {
 
 	}
 

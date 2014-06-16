@@ -24,15 +24,20 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
 
-public class ConsoleStreamManager {
+/**
+ * Loads console stream contributors for different console content types (e.g.
+ * HTTP Tracing, application log, standard out)
+ *
+ */
+public class ConsoleStreamRegistry {
 
-	private static ConsoleStreamManager current;
+	private static ConsoleStreamRegistry current;
 
 	private List<ConsoleStreamProvider> providers;
 
-	public static ConsoleStreamManager getCurrent() {
+	public static ConsoleStreamRegistry getInstance() {
 		if (current == null) {
-			current = new ConsoleStreamManager();
+			current = new ConsoleStreamRegistry();
 		}
 		return current;
 	}

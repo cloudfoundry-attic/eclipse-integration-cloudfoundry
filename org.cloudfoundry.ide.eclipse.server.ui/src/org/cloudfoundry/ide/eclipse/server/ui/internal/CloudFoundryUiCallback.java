@@ -30,7 +30,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.console.ConsoleManager;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.console.ConsoleManagerRegistry;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.console.StandardLogContentType;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.tunnel.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryCredentialsWizard;
@@ -56,12 +56,12 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
 	public void applicationStarted(final CloudFoundryServer server, final CloudFoundryApplicationModule cloudModule) {
-		// Do nothing
+
 	}
 
 	@Override
 	public void startApplicationConsole(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
-			int showIndex) {
+			int showIndex, IProgressMonitor monitor) {
 		if (cloudModule == null || cloudModule.getApplication() == null) {
 			CloudFoundryPlugin
 					.logError("No application content to display to the console while starting application in the Cloud Foundry server.");
@@ -76,32 +76,35 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			// output
 			boolean shouldClearConsole = false;
 
-			ConsoleManager.getInstance().startConsole(cloudServer, StandardLogContentType.APPLICATION_LOG, cloudModule,
-					i, i == showIndex, shouldClearConsole);
+			ConsoleManagerRegistry.getConsoleManager(cloudServer)
+					.startConsole(cloudServer, StandardLogContentType.APPLICATION_LOG, cloudModule, i, i == showIndex,
+							shouldClearConsole, monitor);
 		}
 	}
 
 	@Override
 	public void showCloudFoundryLogs(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
-			int showIndex) {
-		ConsoleManager.getInstance().showCloudFoundryLogs(cloudServer, cloudModule, showIndex, true);
+			int showIndex, IProgressMonitor monitor) {
+		ConsoleManagerRegistry.getConsoleManager(cloudServer).showCloudFoundryLogs(cloudServer, cloudModule, showIndex,
+				true, monitor);
 	}
 
 	@Override
-	public void printToConsole(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule, String message,
-			boolean clearConsole, boolean isError) {
-		ConsoleManager.getInstance().writeToStandardConsole(message, server, cloudModule, 0, clearConsole, isError);
+	public void printToConsole(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
+			String message, boolean clearConsole, boolean isError) {
+		ConsoleManagerRegistry.getConsoleManager(cloudServer).writeToStandardConsole(message, cloudServer, cloudModule,
+				0, clearConsole, isError);
 	}
 
 	@Override
 	public void trace(CloudLog log, boolean clear) {
-		ConsoleManager.getInstance().writeTrace(log, clear);
+		ConsoleManagerRegistry.getInstance().trace(log, clear);
 	}
 
 	@Override
 	public void showTraceView(boolean showTrace) {
 		if (showTrace) {
-			ConsoleManager.getInstance().setTraceVisible();
+			ConsoleManagerRegistry.getInstance().setTraceConsoleVisible();
 		}
 	}
 
@@ -139,7 +142,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			return;
 		}
 		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
-			ConsoleManager.getInstance().stopConsole(cloudServer.getServer(), cloudModule, i);
+			ConsoleManagerRegistry.getConsoleManager(cloudServer).stopConsole(cloudServer.getServer(), cloudModule, i);
 		}
 	}
 
@@ -157,8 +160,8 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public void disconnecting(CloudFoundryServer server) {
-		ConsoleManager.getInstance().stopConsoles();
+	public void disconnecting(CloudFoundryServer cloudServer) {
+		ConsoleManagerRegistry.getConsoleManager(cloudServer).stopConsoles();
 	}
 
 	@Override

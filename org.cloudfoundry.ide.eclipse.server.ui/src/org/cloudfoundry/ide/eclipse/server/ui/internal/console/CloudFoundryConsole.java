@@ -33,6 +33,16 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.console.MessageConsole;
 
+/**
+ * Cloud Foundry console manages various separate streams based on console
+ * content type (e.g., STDOUT, STDERROR).
+ * <p/>
+ * The console will load {@link ConsoleStreamProvider} for different console
+ * content types, allowing adopters to user their own streams for common
+ * {@link LogContentType} like {@link StandardLogContentType#STD_ERROR} or
+ * {@link StandardLogContentType#STD_OUT}
+ *
+ */
 public class CloudFoundryConsole {
 	static final String ATTRIBUTE_SERVER = "org.cloudfoundry.ide.eclipse.server.Server";
 
@@ -78,7 +88,7 @@ public class CloudFoundryConsole {
 		ConsoleStream stream = activeStreams.get(type);
 
 		if (stream == null) {
-			stream = ConsoleStreamManager.getCurrent().getStream(type);
+			stream = ConsoleStreamRegistry.getInstance().getStream(type);
 			if (stream != null) {
 				try {
 					stream.initialiseStream(getConsole(), appModule, cloudServer);
@@ -94,7 +104,7 @@ public class CloudFoundryConsole {
 	}
 
 	/**
-	 * Stops any further streaming of file content. Stream jobs are terminated.
+	 * Stops any further streaming of file content.
 	 */
 	public synchronized void stop() {
 		for (Entry<LogContentType, ConsoleStream> entry : activeStreams.entrySet()) {

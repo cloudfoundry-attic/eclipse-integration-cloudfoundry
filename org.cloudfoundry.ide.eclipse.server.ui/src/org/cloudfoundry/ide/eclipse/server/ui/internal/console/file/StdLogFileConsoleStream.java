@@ -17,18 +17,34 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
+package org.cloudfoundry.ide.eclipse.server.ui.internal.console.file;
 
-import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.eclipse.core.runtime.CoreException;
 
-/**
- * Provides console streams for specific {@link LogContentType}.
- *
- */
-public abstract class ConsoleStreamProvider {
+class StdLogFileConsoleStream extends FileConsoleStream {
 
-	abstract public ConsoleStream getStream(LogContentType logType);
+	// public static final String MAXIMUM_ERROR =
+	// "Unable to fetch contents for: {0}. The application may no longer be responsive.";
 
-	abstract public LogContentType[] getSupportedTypes();
+	public StdLogFileConsoleStream(String path, int swtColour, CloudFoundryServer server, String appName,
+			int instanceIndex) {
+		super(path, swtColour, server, appName, instanceIndex);
+	}
 
+	@Override
+	protected int getMaximumErrorCount() {
+		return 10;
+	}
+
+	protected String getMessageOnRetry(CoreException ce, int currentAttemptsRemaining) {
+		return null;
+	}
+
+	@Override
+	protected String reachedMaximumErrors(CoreException ce) {
+		return null;
+
+//		return NLS.bind(MAXIMUM_ERROR, getFilePath());
+	}
 }

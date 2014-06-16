@@ -17,13 +17,27 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.core.internal.log;
+package org.cloudfoundry.ide.eclipse.server.ui.internal.console.file;
+
+import org.eclipse.swt.SWT;
 
 /**
  * 
- * Abstraction used to indicate a trace type. May be used to distinguish
- * different types of trace messages (e.g. ERROR vs OK).
+ * Local std out content for the Eclipse console. Intention is to write local
+ * content to the console using the
+ * {@link #write(String, org.eclipse.core.runtime.IProgressMonitor)}
+ * <p/>
+ * To fetch std out content from a remote server (e.g. a std log file), use
+ * {@link FileConsoleStream} instead.
  */
-public interface ITraceType {
+public class LocalStdOutConsoleStream extends LocalConsoleStream {
+
+	public LocalStdOutConsoleStream() {
+		super(SWT.COLOR_DARK_MAGENTA);
+	}
+
+	public IContentType getContentType() {
+		return StdContentType.STD_OUT;
+	}
 
 }

@@ -56,9 +56,10 @@ public class ShowConsoleEditorAction extends Action {
 				if (CloudFoundryPlugin.getCallback() != null) {
 					CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, server);
 
-					CloudFoundryPlugin.getCallback().printToConsole(server, appModule, Messages.SHOWING_CONSOLE, true, false);
+					CloudFoundryPlugin.getCallback().printToConsole(server, appModule, Messages.SHOWING_CONSOLE, true,
+							false);
 
-					CloudFoundryPlugin.getCallback().showCloudFoundryLogs(server, appModule, instanceIndex);
+					CloudFoundryPlugin.getCallback().showCloudFoundryLogs(server, appModule, instanceIndex, monitor);
 					return Status.OK_STATUS;
 				}
 				else {

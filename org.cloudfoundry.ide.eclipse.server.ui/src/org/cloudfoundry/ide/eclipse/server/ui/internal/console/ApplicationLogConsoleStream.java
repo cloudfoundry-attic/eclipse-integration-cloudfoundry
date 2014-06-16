@@ -47,9 +47,7 @@ import org.eclipse.ui.console.MessageConsole;
  *
  */
 public class ApplicationLogConsoleStream extends ConsoleStream implements ApplicationLogListener {
-	public static final String CLOUD_FOUNDRY_TRACE_CONSOLE_NAME = "Cloud Foundry Trace";
 
-	static final String TRACE_CONSOLE_ID = "org.cloudfoundry.ide.eclipse.server.trace";
 
 	private Map<LogContentType, ConsoleStream> logStreams = new HashMap<LogContentType, ConsoleStream>();
 

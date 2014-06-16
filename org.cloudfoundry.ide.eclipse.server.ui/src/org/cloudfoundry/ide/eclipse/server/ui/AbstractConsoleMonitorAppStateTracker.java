@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -25,7 +25,7 @@ import org.cloudfoundry.ide.eclipse.server.core.AbstractAppStateTracker;
 import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Logger;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.console.ConsoleManager;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.console.ConsoleManagerRegistry;
 import org.eclipse.ui.console.IPatternMatchListener;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.PatternMatchEvent;
@@ -119,7 +119,7 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
 	 * @return the message console. Null if no corresponding console is found.
 	 */
 	protected MessageConsole findCloudFoundryConsole(IServer server, CloudFoundryApplicationModule appModule) {
-		return ConsoleManager.getInstance().findCloudFoundryConsole(server, appModule);
+		return ConsoleManagerRegistry.getInstance().getFileConsoleManager().findCloudFoundryConsole(server, appModule);
 	}
 	
 	@Override
@@ -143,7 +143,7 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
 			return;
 		}
 
-		MessageConsole console = ConsoleManager.getInstance().findCloudFoundryConsole(server, appModule);
+		MessageConsole console = ConsoleManagerRegistry.getInstance().getFileConsoleManager().findCloudFoundryConsole(server, appModule);
 		if (console != null) {
 			if (Logger.INFO) {
 				 Logger.println(Logger.INFO_LEVEL, this, "isApplicationStarted", "Start app state tracking: " + ((IModule)appModule).getName());
@@ -161,7 +161,7 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
 		if (Logger.INFO) {
 			 Logger.println(Logger.INFO_LEVEL, this, "stopTracking", "Stop app state tracking: " + ((IModule)appModule).getName());
 		}
-		MessageConsole console = ConsoleManager.getInstance().findCloudFoundryConsole(server, appModule);
+		MessageConsole console = ConsoleManagerRegistry.getInstance().getFileConsoleManager().findCloudFoundryConsole(server, appModule);
 		if (console != null) {
 			console.removePatternMatchListener(consoleMonitor);
 		}

@@ -96,7 +96,7 @@ public class HttpTracer {
 		catch (BackingStoreException e) {
 			CloudFoundryPlugin.logError(e);
 		}
-		
+
 		if (isEnabled) {
 			CloudFoundryPlugin.getCallback().showTraceView(isEnabled);
 		}
@@ -119,7 +119,7 @@ public class HttpTracer {
 	 */
 	public synchronized boolean loadTracePreference() {
 		isEnabled = CloudFoundryPlugin.getDefault().getPreferences().getBoolean(PREFERENCE_TRACE, false);
-		// When loading from preferenc store, if tracing is enabled, also show
+		// When loading from preference store, if tracing is enabled, also show
 		// the tracing view (e.g. a console)
 		if (isEnabled) {
 			CloudFoundryPlugin.getCallback().showTraceView(isEnabled);

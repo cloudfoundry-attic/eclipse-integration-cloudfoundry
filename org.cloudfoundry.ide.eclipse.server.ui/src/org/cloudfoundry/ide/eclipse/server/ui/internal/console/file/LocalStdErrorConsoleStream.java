@@ -17,18 +17,27 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
+package org.cloudfoundry.ide.eclipse.server.ui.internal.console.file;
 
-import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
+import org.eclipse.swt.SWT;
 
 /**
- * Provides console streams for specific {@link LogContentType}.
- *
+ * 
+ * Local std error content for the Eclipse console. Intention is to write
+ * local content to the console using the
+ * {@link #write(String, org.eclipse.core.runtime.IProgressMonitor)}
+ * <p/>
+ * To fetch std error content from a remote server (e.g. a std  log file), use
+ * {@link FileConsoleStream} instead.
  */
-public abstract class ConsoleStreamProvider {
+public class LocalStdErrorConsoleStream extends LocalConsoleStream {
 
-	abstract public ConsoleStream getStream(LogContentType logType);
+	public LocalStdErrorConsoleStream() {
+		super(SWT.COLOR_RED);
+	}
 
-	abstract public LogContentType[] getSupportedTypes();
+	public IContentType getContentType() {
+		return StdContentType.STD_ERROR;
+	}
 
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -17,18 +17,27 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
+package org.cloudfoundry.ide.eclipse.server.ui.internal.console.file;
 
-import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 
 /**
- * Provides console streams for specific {@link LogContentType}.
- *
+ * Console content for local standard output and error. It is meant write
+ * content to the console via the {@link #write(String, IProgressMonitor)} API,
+ * instead of fetching content remotely to be displayed to the console. A use
+ * case for this is an CF Eclipse component that wishes to display content to
+ * the console.
+ * 
  */
-public abstract class ConsoleStreamProvider {
+public abstract class LocalConsoleStream extends CloudFoundryConsoleStream {
 
-	abstract public ConsoleStream getStream(LogContentType logType);
+	public LocalConsoleStream(int swtColour) {
+		super(null, swtColour, null, -1);
+	}
 
-	abstract public LogContentType[] getSupportedTypes();
+	protected String getContent(IProgressMonitor monitor) throws CoreException {
+		return null;
+	}
 
 }

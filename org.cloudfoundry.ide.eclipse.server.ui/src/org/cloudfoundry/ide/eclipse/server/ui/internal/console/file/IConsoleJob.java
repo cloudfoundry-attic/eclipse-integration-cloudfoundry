@@ -17,18 +17,23 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
+package org.cloudfoundry.ide.eclipse.server.ui.internal.console.file;
 
-import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
+import org.eclipse.core.runtime.CoreException;
 
-/**
- * Provides console streams for specific {@link LogContentType}.
- *
- */
-public abstract class ConsoleStreamProvider {
+interface IConsoleJob {
 
-	abstract public ConsoleStream getStream(LogContentType logType);
+	/**
+	 * 
+	 * @return non-null {@link IContentType}
+	 */
+	public IContentType getContentType();
 
-	abstract public LogContentType[] getSupportedTypes();
+	/**
+	 * Writes a message to the console.
+	 * @param message
+	 * @throws CoreException
+	 */
+	public void write(String message) throws CoreException;
 
 }

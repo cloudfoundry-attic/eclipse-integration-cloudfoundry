@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -17,18 +17,19 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
+package org.cloudfoundry.ide.eclipse.server.ui.internal.console.file;
 
-import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
 
 /**
- * Provides console streams for specific {@link LogContentType}.
- *
+ * Console content type indicating that content is coming from a remote file and
+ * should be streamed to the console.
  */
-public abstract class ConsoleStreamProvider {
+public class FileStreamContentType implements IContentType {
 
-	abstract public ConsoleStream getStream(LogContentType logType);
+	private final String id = "file_stream";
 
-	abstract public LogContentType[] getSupportedTypes();
+	public String getId() {
+		return id;
+	}
 
 }
