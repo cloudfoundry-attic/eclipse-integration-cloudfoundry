@@ -700,14 +700,12 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 
 	private void selectItem(CFServiceWizUI item) {
 
-		boolean serviceChanged = false;
-		
 		if (selectedServicesList.contains(item)) {
 			selectedServicesList.remove(item);
 			
-			serviceChanged = true;
+		} else  {
 			
-		} else if(selectedServicesList.size() == 0) {
+			selectedServicesList.clear();
 			
 			selectedServicesList.add(item);
 	
@@ -719,22 +717,17 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 				}
 			}
 
-			serviceChanged = true;
-
 		}
 
-		if(serviceChanged) {
-			servicePageValidation.updatePageState();
+		servicePageValidation.updatePageState();
 
-			Point p = scrollComp.getOrigin();
+		Point p = scrollComp.getOrigin();
 
-			updateServicesTable();
+		updateServicesTable();
 
-			scrollComp.setFocus();
+		scrollComp.setFocus();
 
-			scrollComp.setOrigin(p);			
-		}
-
+		scrollComp.setOrigin(p);			
 
 	}
 
