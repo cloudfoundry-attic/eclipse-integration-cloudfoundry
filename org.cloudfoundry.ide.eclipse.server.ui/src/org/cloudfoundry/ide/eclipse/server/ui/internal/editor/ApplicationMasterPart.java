@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -37,6 +37,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -183,14 +184,31 @@ public class ApplicationMasterPart extends SectionPart {
 		public boolean performDrop(final Object data) {
 			final String jobName = "Deploying application";
 			UIJob job = new UIJob(jobName) {
-
+								
+				/**
+				 * Get the module name according to the given target element of the structured selection.
+				 * @param targetEle the given target element
+				 * @return the corresponding module name if the given element is instance of 
+				 *     <code>IProject</code> or <code>IJavaProject</code>.
+				 *  
+				 */
+				private String getModuleName(Object targetEle) {
+					String moduleName = null;
+					if (targetEle instanceof IProject) {
+						moduleName = ((IProject)targetEle).getName();
+					} else if (targetEle instanceof IJavaProject) {
+						moduleName = ((IJavaProject)targetEle).getProject().getName();
+					}
+					return moduleName;
+				}
+				
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 
 					if (data instanceof IStructuredSelection) {
 						Object modObj = ((IStructuredSelection) data).getFirstElement();
-						if (modObj instanceof IProject) {
-							final IProject project = (IProject) modObj;
+						if (modObj instanceof IProject || modObj instanceof IJavaProject) {
+							final String moduleName = getModuleName(modObj);
 							final CloudFoundryServer cloudServer = (CloudFoundryServer) editorPage.getServer()
 									.getOriginal().loadAdapter(CloudFoundryServer.class, monitor);
 
@@ -211,7 +229,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 									@Override
 									protected IStatus run(IProgressMonitor monitor) {
-										cloudServer.getBehaviour().publishAdd(project.getName(), monitor);
+										cloudServer.getBehaviour().publishAdd(moduleName, monitor);
 										return Status.OK_STATUS;
 									}
 
