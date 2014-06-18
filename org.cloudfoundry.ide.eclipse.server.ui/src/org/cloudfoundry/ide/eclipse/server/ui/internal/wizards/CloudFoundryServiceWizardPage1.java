@@ -284,7 +284,6 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		scrollComp.getVerticalBar().setIncrement(lineHeight);
 
 		scrollComp.addControlListener(new ControlAdapter() {
-			@Override
 			public void controlResized(ControlEvent event) {
 				Control c = scrollComp.getContent();
 				if (c == null) {
@@ -563,7 +562,6 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
  		}
 
 		comp.addMouseListener(new MouseListener() {
-			@Override
 			public void mouseDown(MouseEvent e) { 
 				
 				for (final CFServiceWizUI item : allServicesList) {
@@ -576,12 +574,10 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 				
 			}
 
-			@Override
 			public void mouseDoubleClick(MouseEvent arg0) {
 				// Ignore
 			}
 
-			@Override
 			public void mouseUp(MouseEvent arg0) {
 				// Ignore
 			}
@@ -639,7 +635,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 			selectedItemFinal.setUserDefinedName(utilRemoveSpaces(name));
 		}
 		serviceNameText.addModifyListener(new ModifyListener() { 
-			@Override
+			
 			public void modifyText(ModifyEvent e) {
 				
 				String text = serviceNameText.getText();
@@ -672,14 +668,14 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		
 		
 		typeCombo.addSelectionListener(new SelectionListener() {
-			@Override
+			
 			public void widgetSelected(SelectionEvent e) {
 				if(selectedItemFinal != null) {
 					selectedItemFinal.setPlan(plans.get(typeCombo.getSelectionIndex()));
 				}
 			}
 
-			@Override
+			
 			public void widgetDefaultSelected(SelectionEvent e) {
 				// Ignore.
 			}
