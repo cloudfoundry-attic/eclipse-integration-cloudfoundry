@@ -15,7 +15,7 @@
    <feature url="features/org.cloudfoundry.ide.eclipse.server_0.0.0.jar" id="org.cloudfoundry.ide.eclipse.server" version="0.0.0">
       <category name="Core / Cloud Foundry Integration"/>
    </feature>
-   <feature url="features/org.cloudfoundry.ide.eclipse.server.sdk_1.6.1.qualifier.jar" id="org.cloudfoundry.ide.eclipse.server.sdk" version="0.0.0">
+   <feature url="features/org.cloudfoundry.ide.eclipse.server.sdk_1.7.0.qualifier.jar" id="org.cloudfoundry.ide.eclipse.server.sdk" version="0.0.0">
       <category name="Resources / Cloud Foundry Integration"/>
    </feature>
    <category-def name="Core / Cloud Foundry Integration" label="Core / Cloud Foundry Integration"/>
