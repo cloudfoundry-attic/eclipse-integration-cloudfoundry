@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -20,7 +20,10 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
+
+import javax.net.ssl.SSLPeerUnverifiedException;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.eclipse.core.runtime.CoreException;
@@ -64,6 +67,51 @@ public class CloudErrorUtil {
 		}
 
 		return error;
+	}
+
+	public static CoreException checkRestException(Throwable t) {
+		String error = getInvalidCredentialsError(t);
+		if (error == null) {
+
+			if (t instanceof ResourceAccessException && t.getCause() instanceof UnknownHostException) {
+				error = Messages.ERROR_UNABLE_TO_ESTABLISH_CONNECTION_UNKNOWN_HOST;
+			}
+			else if (t instanceof RestClientException) {
+				error = NLS.bind(Messages.ERROR_FAILED_REST_CLIENT, t.getMessage());
+			}
+
+		}
+		return error != null ? toCoreException(error, t) : toCoreException(t);
+	}
+
+	/**
+	 * If the error is a server communication error, it wraps it in a
+	 * {@link CoreException} with user-friendly message. If the server
+	 * communciation error is due to {@link SSLPeerUnverifiedException}, the
+	 * latter is set as the cause for the wrapped CoreException. Otherwise,
+	 * returns the error as the cause in a CoreException. Always returns a
+	 * {@link CoreException}.
+	 * @param e
+	 * @return CoreException wrapper if communication error with server, or
+	 * otherwise return CoreException with original error as cause. Never null.
+	 * 
+	 */
+	public static CoreException checkServerCommunicationError(RuntimeException e) {
+		if (e != null && e.getCause() instanceof IOException) {
+			// Set the cause for SSL
+			if ((e.getCause() instanceof SSLPeerUnverifiedException)) {
+				return toCoreException(e.getCause());
+			}
+			else {
+				// Log other IO errors.
+				String errorMessage = NLS.bind(Messages.ERROR_UNABLE_TO_COMMUNICATE_SERVER, e.getMessage());
+				CloudFoundryPlugin.logError(errorMessage, e);
+				return new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, errorMessage));
+			}
+		}
+		else {
+			return checkRestException(e);
+		}
 	}
 
 	/**

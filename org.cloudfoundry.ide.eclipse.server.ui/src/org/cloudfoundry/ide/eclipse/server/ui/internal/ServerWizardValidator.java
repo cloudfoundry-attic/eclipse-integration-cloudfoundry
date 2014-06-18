@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -103,7 +103,7 @@ public abstract class ServerWizardValidator implements ServerValidator {
 		if (validateAgainstServer) {
 			status = checkSelfSigned(status, runnableContext);
 			if (status != null && status.getStatus().isOK()) {
-				serverValidation(validateAgainstServer, validateSpace, runnableContext);
+				status = serverValidation(validateAgainstServer, validateSpace, runnableContext);
 			}
 		}
 
@@ -214,10 +214,14 @@ public abstract class ServerWizardValidator implements ServerValidator {
 
 			try {
 
-				// Credential validation errors result in CoreExceptions
-				// handled below.
-				// Likewise, OperationCanceledExceptions are handled below.
-				if (validateAgainstServer) {
+				// Space validation also validates credentials, so if request is made
+				// to validate space, there is no need to do a separate credential validation.
+				if (validateSpace) {
+					cloudServerSpaceDelegate.resolveDescriptor(url, userName, password, acceptSelfSigned, runnableContext,
+							validateAgainstServer);
+				}
+				else if (validateAgainstServer) {
+					// If validation is requested but not space validation.
 					// Indicate that the URL may be a display URL (in which case
 					// the validation will convert
 					// it to an actual URL)
@@ -226,10 +230,6 @@ public abstract class ServerWizardValidator implements ServerValidator {
 							runnableContext);
 				}
 
-				if (validateSpace) {
-					cloudServerSpaceDelegate.validate(url, userName, password, acceptSelfSigned, runnableContext,
-							validateAgainstServer);
-				}
 			}
 			catch (CoreException e) {
 				// Even if an error occurred, classify the event as a validaiton

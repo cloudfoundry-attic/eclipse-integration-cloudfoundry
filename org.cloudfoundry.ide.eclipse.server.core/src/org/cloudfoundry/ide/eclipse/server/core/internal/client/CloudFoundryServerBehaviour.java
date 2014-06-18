@@ -1522,8 +1522,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public static CloudOrgsAndSpaces getCloudSpacesExternalClient(CloudCredentials credentials, final String url,
 			boolean selfSigned, IProgressMonitor monitor) throws CoreException {
 
-		final CloudFoundryOperations operations = CloudFoundryServerBehaviour.createClient(url, credentials.getEmail(),
-				credentials.getPassword(), selfSigned);
+		final CloudFoundryOperations operations = CloudFoundryServerBehaviour.createExternalClientLogin(url,
+				credentials.getEmail(), credentials.getPassword(), selfSigned, monitor);
 
 		return new ClientRequest<CloudOrgsAndSpaces>("Getting orgs and spaces") {
 			@Override
@@ -1602,6 +1602,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public static void validate(final String location, String userName, String password, boolean selfSigned,
 			IProgressMonitor monitor) throws CoreException {
+		createExternalClientLogin(location, userName, password, selfSigned, monitor);
+	}
+
+	public static CloudFoundryOperations createExternalClientLogin(final String location, String userName,
+			String password, boolean selfSigned, IProgressMonitor monitor) throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor);
 		progress.beginTask("Connecting", IProgressMonitor.UNKNOWN);
 		try {
@@ -1623,21 +1628,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				}
 
 			}.run(monitor);
+			return client;
 		}
-		catch (RuntimeException e) {
-			// try to guard against IOException in parsing response
-			if (e.getCause() instanceof IOException) {
-				CloudFoundryPlugin
-						.getDefault()
-						.getLog()
-						.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-								"Parse error from server response", e.getCause()));
-				throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-						"Unable to communicate with server"));
-			}
-			else {
-				throw e;
-			}
+		catch (RuntimeException t) {
+			throw CloudErrorUtil.checkServerCommunicationError(t);
 		}
 		finally {
 			progress.done();
@@ -1657,18 +1651,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 		catch (RuntimeException e) {
 			// try to guard against IOException in parsing response
-			if (e.getCause() instanceof IOException) {
-				CloudFoundryPlugin
-						.getDefault()
-						.getLog()
-						.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-								"Parse error from server response", e.getCause()));
-				throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-						"Unable to communicate with server"));
-			}
-			else {
-				throw e;
-			}
+			throw CloudErrorUtil.checkServerCommunicationError(e);
+
 		}
 		finally {
 			progress.done();

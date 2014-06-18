@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.cloudfoundry.client.lib.domain.CloudSpace;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
@@ -190,7 +189,7 @@ public abstract class CloudSpacesDelegate {
 	}
 
 	/**
-	 * Validates the cloud org/space descriptor as well as the cloud space
+	 * Resolves and validates the cloud org/space descriptor as well as the cloud space
 	 * selection in the current local server instance. Note that cloud space
 	 * descriptors are cached per each session of this Cloud Space change
 	 * handler, in order to prevent frequent requests for orgs and spaces for
@@ -206,30 +205,18 @@ public abstract class CloudSpacesDelegate {
 	 * credentials, or null if failed to resolve
 	 * @param context a runnable UI context, like a wizard.
 	 * @param updateDescriptor if true, will send a request to the server with
-	 * the given set of credentials to obtain a new list of orgs/spaces and
-	 * then perform check on the current server if a default space is set. If
-	 * false, will only perform a local space selection check on the current
-	 * server
+	 * the given set of credentials to obtain a new list of orgs/spaces and then
+	 * perform check on the current server if a default space is set. If false,
+	 * will only perform a local space selection check on the current server
 	 * @throws CoreException if credentials and URL do not match the current
 	 * credentials and URL in the server, are invalid, or failed to retrieve
 	 * list of spaces
 	 */
-	public CloudSpacesDescriptor validate(String urlText, String userName, String password, boolean selfSigned,
+	public CloudSpacesDescriptor resolveDescriptor(String urlText, String userName, String password, boolean selfSigned,
 			IRunnableContext context, boolean updateDescriptor) throws CoreException {
 		CloudSpacesDescriptor descriptor = null;
 		if (updateDescriptor) {
-			try {
-				descriptor = internalUpdateDescriptor(urlText, userName, password, selfSigned, context);
-			}
-			catch (CoreException e) {
-				// Handle orgs and spaces errors separately from other
-				// errors (e.g. credential validation errors) to convert
-				// them to user-friendly messages.
-				String message = e.getMessage() != null ? NLS.bind(
-						Messages.ERROR_FAILED_RESOLVE_ORGS_SPACES_DUE_TO_ERROR, e.getMessage())
-						: Messages.ERROR_CHECK_CONNECTION_NO_SPACES;
-				throw CloudErrorUtil.toCoreException(message, e);
-			}
+			descriptor = internalUpdateDescriptor(urlText, userName, password, selfSigned, context);
 		}
 
 		IStatus status = validateCurrent(getCurrentCloudSpace());
@@ -243,7 +230,7 @@ public abstract class CloudSpacesDelegate {
 			boolean selfSigned, IRunnableContext context) throws CoreException {
 		String actualURL = CloudUiUtil.getUrlFromDisplayText(urlText);
 
-		validateCredentials(actualURL, userName, password);
+		validateCredentialsLocally(actualURL, userName, password);
 
 		String cachedDescriptorID = CloudSpacesDescriptor.getDescriptorID(userName, password, actualURL);
 		spacesDescriptor = cachedDescriptors.get(cachedDescriptorID);
@@ -279,7 +266,7 @@ public abstract class CloudSpacesDelegate {
 		return CloudFoundryPlugin.getStatus(validationMessage, severity);
 	}
 
-	protected void validateCredentials(String url, String userName, String password) throws CoreException {
+	protected void validateCredentialsLocally(String url, String userName, String password) throws CoreException {
 		String actualURL = cloudServer.getUrl();
 		String actualUserName = cloudServer.getUsername();
 		String actualPassword = cloudServer.getPassword();

@@ -43,6 +43,8 @@ public class Messages {
 
 	public static final String ERROR_INVALID_SPACE = "Invalid cloud space";
 
+	public static final String ERROR_UNABLE_TO_COMMUNICATE_SERVER = "Unable to communicate with server - {0}";
+
 	public static final String ERROR_ALL_SPACES_ASSOCIATED_SERVER_INSTANCES = "A server instance for each space already exists. Please delete an existing server instance before creating a new one.";
 
 	public static final String ERROR_CHECK_CONNECTION_NO_SPACES = "No cloud spaces found. Please check your credentials or connection.";
