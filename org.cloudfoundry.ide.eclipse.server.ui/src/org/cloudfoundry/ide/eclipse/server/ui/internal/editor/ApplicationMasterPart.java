@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -37,6 +37,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.internal.core.JavaProject;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -189,8 +190,18 @@ public class ApplicationMasterPart extends SectionPart {
 
 					if (data instanceof IStructuredSelection) {
 						Object modObj = ((IStructuredSelection) data).getFirstElement();
+						IProject prj = null;
 						if (modObj instanceof IProject) {
-							final IProject project = (IProject) modObj;
+							prj = (IProject) modObj;
+						}
+						else if (modObj instanceof JavaProject) {
+							prj = ((JavaProject) modObj).getProject();
+						}
+
+						if (prj != null) {
+
+							final IProject project = prj;
+
 							final CloudFoundryServer cloudServer = (CloudFoundryServer) editorPage.getServer()
 									.getOriginal().loadAdapter(CloudFoundryServer.class, monitor);
 
