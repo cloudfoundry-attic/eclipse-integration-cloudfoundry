@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Cloud Foundry Integration (Tests)
 Bundle-SymbolicName: org.cloudfoundry.ide.eclipse.server.tests;singleton:=true
-Bundle-Version: 1.6.1.qualifier
+Bundle-Version: 1.7.0.qualifier
 Bundle-Vendor: Pivotal Software, Inc.
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.core.resources,

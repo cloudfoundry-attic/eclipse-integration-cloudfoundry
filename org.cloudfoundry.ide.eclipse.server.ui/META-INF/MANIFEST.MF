@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
 Bundle-SymbolicName: org.cloudfoundry.ide.eclipse.server.ui;singleton:=true
-Bundle-Version: 1.6.1.qualifier
+Bundle-Version: 1.7.0.qualifier
 Bundle-Activator: org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryServerUiPlugin
 Bundle-Vendor: %Bundle-Vendor
 Require-Bundle: org.eclipse.wst.common.project.facet.ui,
