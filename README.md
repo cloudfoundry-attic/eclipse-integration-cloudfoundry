@@ -30,15 +30,13 @@
 
 ### Attention:
 
+  Java 7 is now a minimum requirement to install and run Cloud Foundry Integration for Eclipse 1.6.1 and higher.
+  Please be sure your Eclipse or STS is using a Java 7 or higher JRE.
+  
   Cloud Foundry Integration for Eclipse 1.5.0 and higher, as well as the nightly 
   update site and master development branch, now only support v2 Pivotal CF organizations and spaces. 
   
   V1 support for api.cloudfoundry.com as well as v1 micro and local clouds, is no longer available.
-
-  To continue using an older v1 micro or local Cloud Foundry server, please install Cloud Foundry Integration 
-  for Eclipse 1.4.0 using this update site from within STS/Eclipse's "Help -> Install New Software" menu:
-
-  http://dist.springsource.com/release/TOOLS/cloudfoundry/1.4.0/
 
   The latest Cloud Foundry Integration for Eclipse can be update from within STS/Eclipse starting from 
   version 1.0.0. Updates from prior versions are not supported, and any version of Cloud Foundry Integration for
@@ -118,4 +116,4 @@
   * Github is for social coding: if you want to write code, we encourage contributions through pull requests from [forks of this repository](http://help.github.com/forking/). 
   * Watch for upcoming articles on Cloud Foundry by [subscribing](http://blog.cloudfoundry.com/) to the Cloud Foundry blog.
 
-Before we accept a non-trivial patch or pull request we will need you to sign the [contributor's agreement](https://support.springsource.com/spring_eclipsecla_committer_signup). Signing the contributor's agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do. Active contributors might be asked to join the core team, and given the ability to merge pull requests.
+Before we accept any patches or pull requests we will need you to sign our CLA Agreement: [individuals](http://www.cloudfoundry.org/individualcontribution.pdf) or [corporations](http://www.cloudfoundry.org/corpcontribution.pdf). Signing the contributor's agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions only after being reviewed by the core team, and you will get an author credit if we do. Active contributors might be asked to join the core team, and given the ability to merge pull requests.
