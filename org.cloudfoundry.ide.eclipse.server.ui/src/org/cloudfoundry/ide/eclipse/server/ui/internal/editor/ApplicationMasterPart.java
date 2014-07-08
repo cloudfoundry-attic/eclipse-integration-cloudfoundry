@@ -37,7 +37,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jdt.internal.core.JavaProject;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -194,8 +194,8 @@ public class ApplicationMasterPart extends SectionPart {
 						if (modObj instanceof IProject) {
 							prj = (IProject) modObj;
 						}
-						else if (modObj instanceof JavaProject) {
-							prj = ((JavaProject) modObj).getProject();
+						else if (modObj instanceof IJavaProject) {
+							prj = ((IJavaProject) modObj).getProject();
 						}
 
 						if (prj != null) {
