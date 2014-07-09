@@ -2,10 +2,13 @@
       
   The Cloud Foundry Integration for Eclipse provides first-class support for the Cloud Foundry
   PaaS: http://www.cloudfoundry.com/. It allows you to directly deploy applications from your
-  workspace to a running Pivotal CF instance, view and manage deployed applications and services,
-  start and stop applications and allows direct debugging when using a Micro Cloud Foundry.
+  workspace to a running Pivotal CF server instance, view and manage deployed applications and services,
+  start and stop applications.
 
 ## Installation (Release)
+
+  Java 7 is now a minimum execution environment requirement to install and run Cloud Foundry Integration for Eclipse.
+  Please make sure your Eclipse or STS is using a Java 7 or higher JRE.
 
 ### when using Eclipse
 
@@ -29,9 +32,6 @@
   (put this URL into the "Install New Software" dialog of your Eclipse)
 
 ### Attention:
-
-  Java 7 is now a minimum requirement to install and run Cloud Foundry Integration for Eclipse 1.6.1 and higher.
-  Please be sure your Eclipse or STS is using a Java 7 or higher JRE.
   
   Cloud Foundry Integration for Eclipse 1.5.0 and higher, as well as the nightly 
   update site and master development branch, now only support v2 Pivotal CF organizations and spaces. 
@@ -50,8 +50,8 @@
 ## Installation (latest from the CI build)
 
   You can always install the latest bits and pieces of the project from the update site that is
-  automatically produced by the continuous integration build. This reflects always the latest
-  development, so you might observe some interesting behavior here and there.
+  automatically produced by the continuous integration build. This always reflects the latest
+  development, so you might observe some interesting behavior here and there, and it is not guaranteed to be stable.
 
   http://dist.springsource.com/snapshot/TOOLS/cloudfoundry/nightly
 
@@ -75,13 +75,13 @@
 ## Questions and bug reports:
 
   If you have a question that Google can't answer, the best way is to go to the Cloud Foundry
-  community forum:
+  community forums:
   
-  https://groups.google.com/a/cloudfoundry.org/forum/#!forum/cf-eclipse
+   [General Cloud Foundry including Cloud Foundry Eclipse](https://groups.google.com/a/cloudfoundry.org/forum/#!forum/vcap-dev)
 
-  or 
+   or 
 
-  http://support.cloudfoundry.com/home
+   [Cloud Foundry Eclipse only](https://groups.google.com/a/cloudfoundry.org/forum/#!forum/cf-eclipse)
 
   There you can also ask questions and search for other people with related or similar problems
   (and solutions). New versions of the Cloud Foundry Integration for Eclipse are announced
@@ -97,7 +97,7 @@
   
 ## Working with the code
 
-  If you wanna work on the project itself, the best way is to install the Cloud Foundry integration
+  If you want to work on the project itself, the best way is to install the Cloud Foundry integration
   for Eclipse into your Eclipse target platform and start from there, using the standard Eclipse way
   of plugin development using PDE.
   
