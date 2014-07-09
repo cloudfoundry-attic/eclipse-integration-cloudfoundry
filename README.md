@@ -91,11 +91,9 @@
   
   https://github.com/SpringSource/eclipse-integration-cloudfoundry/issues 
   
-  Watch for upcoming articles on Cloud Foundry by [subscribing](http://blog.cloudfoundry.com/) to the Cloud Foundry   
-  blog.
+  Watch for upcoming articles on Cloud Foundry by [subscribing](http://blog.cloudfoundry.com/) to the Cloud Foundry blog.
   
-  Additional support can be found at the [Cloud Foundry support site](http:// 
-  support.cloudfoundry.com/home).
+  Additional support can be found at the [Cloud Foundry support site](http://support.cloudfoundry.com/home).
   
 ## Working with the code
 
@@ -122,13 +120,12 @@
   2. After submitting the CLA, please [fork this repository](http://help.github.com/forking/).
 
   3. Set your name and email
+  
 	$ git config --global user.name "Firstname Lastname"
+	
 	$ git config --global user.email "your_email@youremail.com"
 
-  4. Make your changes on a topic branch, commit, and push to github and open a pull request for review by the core 
-   team.
+  4. Make your changes on a topic branch, commit, and push to github and open a pull request for review by the core team.
 
-  5. Signing the contributor's agreement does not grant anyone commit rights to the main repository, but it does mean 
-   that we can accept your contributions only after being reviewed by the core team, and you will get an author 
-   credit if we do. Active contributors might be asked to join the core team, and given the ability to merge pull 
-   requests.
+  5. Signing the contributor's agreement does not grant anyone commit rights to the main repository, but it does
+mean that we can accept your contributions only after being reviewed by the core team, and you will get an author credit if we do. Active contributors might be asked to join the core team, and given the ability to merge pull requests.
