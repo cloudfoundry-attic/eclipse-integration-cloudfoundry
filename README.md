@@ -89,9 +89,14 @@
   
   Bugs and issues can be raised here in GitHub:
   
-  https://github.com/SpringSource/eclipse-integration-cloudfoundry/issues
-
-
+  https://github.com/SpringSource/eclipse-integration-cloudfoundry/issues 
+  
+  Watch for upcoming articles on Cloud Foundry by [subscribing](http://blog.cloudfoundry.com/) to the Cloud Foundry   
+  blog.
+  
+  Additional support can be found at the [Cloud Foundry support site](http:// 
+  support.cloudfoundry.com/home).
+  
 ## Working with the code
 
   If you wanna work on the project itself, the best way is to install the Cloud Foundry integration
@@ -110,10 +115,20 @@
 
 ## Contributing
 
-  Here are some ways for you to get involved in the community:
+  Before we accept any patches or pull requests we will need you to sign our CLA Agreement.
 
-  * Get involved with the community on the community forums.  Please help out on the [forum](http://support.cloudfoundry.com/home) by responding to questions and joining the debate.
-  * Github is for social coding: if you want to write code, we encourage contributions through pull requests from [forks of this repository](http://help.github.com/forking/). 
-  * Watch for upcoming articles on Cloud Foundry by [subscribing](http://blog.cloudfoundry.com/) to the Cloud Foundry blog.
+  1. Please select, sign and submit the appropriate CLA: [individuals](http://www.cloudfoundry.org/individualcontribution.pdf) or [corporations](http://www.cloudfoundry.org/corpcontribution.pdf). 
 
-Before we accept any patches or pull requests we will need you to sign our CLA Agreement: [individuals](http://www.cloudfoundry.org/individualcontribution.pdf) or [corporations](http://www.cloudfoundry.org/corpcontribution.pdf). Signing the contributor's agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions only after being reviewed by the core team, and you will get an author credit if we do. Active contributors might be asked to join the core team, and given the ability to merge pull requests.
+  2. After submitting the CLA, please [fork this repository](http://help.github.com/forking/).
+
+  3. Set your name and email
+	$ git config --global user.name "Firstname Lastname"
+	$ git config --global user.email "your_email@youremail.com"
+
+  4. Make your changes on a topic branch, commit, and push to github and open a pull request for review by the core 
+   team.
+
+  5. Signing the contributor's agreement does not grant anyone commit rights to the main repository, but it does mean 
+   that we can accept your contributions only after being reviewed by the core team, and you will get an author 
+   credit if we do. Active contributors might be asked to join the core team, and given the ability to merge pull 
+   requests.
