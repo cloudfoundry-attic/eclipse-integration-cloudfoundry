@@ -119,17 +119,17 @@ public class Messages {
 
 	public static final String CONSOLE_PRE_STAGING_MESSAGE = "Starting and staging application";
 
-	public static final String CONSOLE_APP_PUSH_MESSAGE = "Pushing application to Cloud Foundry server";
+	public static final String CONSOLE_APP_PUSH_MESSAGE = "Pushing application to {0}";
 
-	public static final String CONSOLE_APP_CREATION = "Creating application in Cloud Foundry server";
+	public static final String CONSOLE_APP_CREATION = "Creating application in {0}";
 
-	public static final String CONSOLE_APP_FOUND = "Existing application found in Cloud Foundry server";
+	public static final String CONSOLE_APP_FOUND = "Existing application found in {0}";
 
 	public static final String CONSOLE_APP_MAPPING_STARTED = "Updating application mapping";
 
 	public static final String CONSOLE_APP_MAPPING_COMPLETED = "Application mapping updated";
 
-	public static final String CONSOLE_APP_PUSHED_MESSAGE = "Application successfully pushed to Cloud Foundry server";
+	public static final String CONSOLE_APP_PUSHED_MESSAGE = "Application successfully pushed to {0}";
 
 	public static final String CONSOLE_PREPARING_APP = "Checking application - {0}";
 

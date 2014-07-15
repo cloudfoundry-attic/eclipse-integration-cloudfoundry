@@ -60,6 +60,7 @@ import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CachingApplicationArchive;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryLoginHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
@@ -2179,7 +2180,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 					}.run(monitor);
 
-					printlnToConsole(appModule, Messages.CONSOLE_APP_PUSHED_MESSAGE);
+					printlnToConsole(appModule, NLS.bind(Messages.CONSOLE_APP_PUSHED_MESSAGE,
+							CloudFoundryBrandingExtensionPoint.getServiceName(getServer().getServerType().getId())));
 
 				}
 
@@ -2248,7 +2250,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			String appName = appModule.getDeploymentInfo().getDeploymentName();
 
 			try {
-				printlnToConsole(appModule, Messages.CONSOLE_APP_PUSH_MESSAGE);
+				printlnToConsole(appModule, NLS.bind(Messages.CONSOLE_APP_PUSH_MESSAGE,
+						CloudFoundryBrandingExtensionPoint.getServiceName(getServer().getServerType().getId())));
 				// Now push the application content.
 				if (warFile != null) {
 					client.uploadApplication(appName, warFile);
@@ -2365,7 +2368,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			int moduleState = getServer().getModulePublishState(new IModule[] { appModule.getLocalModule() });
 			if (appModule.isDeployed() && moduleState == IServer.PUBLISH_STATE_NONE) {
 
-				printlnToConsole(appModule, Messages.CONSOLE_APP_FOUND);
+				printlnToConsole(appModule, NLS.bind(Messages.CONSOLE_APP_FOUND,
+						CloudFoundryBrandingExtensionPoint.getServiceName(getServer().getServerType().getId())));
 
 				CloudApplication cloudApp = null;
 
@@ -2420,7 +2424,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			// Create the application if it doesn't already exist
 			if (!found) {
-				printlnToConsole(appModule, Messages.CONSOLE_APP_CREATION);
+				
+				printlnToConsole(appModule, NLS.bind(Messages.CONSOLE_APP_CREATION,
+					CloudFoundryBrandingExtensionPoint.getServiceName(getServer().getServerType().getId())));;
 
 				Staging staging = appModule.getDeploymentInfo().getStaging();
 				List<String> uris = appModule.getDeploymentInfo().getUris() != null ? appModule.getDeploymentInfo()
