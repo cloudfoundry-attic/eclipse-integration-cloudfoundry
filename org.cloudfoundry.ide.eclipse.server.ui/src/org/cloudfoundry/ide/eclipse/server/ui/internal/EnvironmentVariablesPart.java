@@ -194,7 +194,7 @@ public class EnvironmentVariablesPart extends UIPart {
 			}
 
 			public String getToolTipText() {
-				return "A for the deployed application.";
+				return "Add Environment variables for the deployed application.";
 			}
 		};
 		
