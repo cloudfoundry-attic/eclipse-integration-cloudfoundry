@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,22 +19,29 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryServiceWizard;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.jface.layout.LayoutConstants;
+import org.eclipse.jface.util.Geometry;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -43,27 +50,36 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.window.Window;
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.ToolBar;
 
 public class EnvironmentVariablesPart extends UIPart {
 
 	private List<EnvironmentVariable> variables;
 
 	private TableViewer envVariablesViewer;
+	
+	private Action editEnvVarAction;
 
+	private Action removeEnvVarAction;
+	
 	public void setInput(List<EnvironmentVariable> variables) {
 		this.variables = variables != null ? variables : new ArrayList<EnvironmentVariable>();
 		if (envVariablesViewer != null) {
@@ -80,16 +96,36 @@ public class EnvironmentVariablesPart extends UIPart {
 		Composite tableArea = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(tableArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(tableArea);
+	    
+		Composite toolBarArea = new Composite(tableArea, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(toolBarArea);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(toolBarArea);
 
-		Label viewerLabel = new Label(tableArea, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(false, false).applyTo(viewerLabel);
+		Label viewerLabel = new Label(toolBarArea, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(false, false).align(SWT.BEGINNING, SWT.CENTER).applyTo(viewerLabel);
 		viewerLabel.setText("Right click to edit environment variables:");
+		
+		ToolBarManager toolBarManager = new ToolBarManager(SWT.FLAT);
+		ToolBar bar = toolBarManager.createControl(toolBarArea);
+		GridDataFactory.fillDefaults().align(SWT.END, SWT.BEGINNING).grab(true, false).applyTo(bar);
+		
+		AddToolbarActions(toolBarManager);
+		toolBarManager.update(true);
+		// AddButtons(bar);
 
 		Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI);
 		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).grab(true, true).applyTo(table);
-
 		envVariablesViewer = new TableViewer(table);
-
+		Listener actionEnabler =  new Listener() {
+			 @Override
+			 public void handleEvent(Event event) {
+			     removeEnvVarAction.setEnabled(isDeleteEnabled());
+			     editEnvVarAction.setEnabled(isEditEnabled());
+			  }
+			 }; 
+			
+		table.addListener(SWT.Selection, actionEnabler);
+		table.addListener(SWT.FocusOut, actionEnabler);
 		envVariablesViewer.setContentProvider(new IStructuredContentProvider() {
 
 			public Object[] getElements(Object inputElement) {
@@ -150,13 +186,55 @@ public class EnvironmentVariablesPart extends UIPart {
 		return tableArea;
 	}
 
+	private void AddToolbarActions(ToolBarManager toolBarManager) {
+		Action addEnvVarAction = new Action("Add Environment Variable", CloudFoundryImages.NEW_SERVICE) {
+
+			public void run() {
+				handleActionSelected(ViewerAction.Add);
+			}
+
+			public String getToolTipText() {
+				return "A for the deployed application.";
+			}
+		};
+		
+		toolBarManager.add(addEnvVarAction);
+		
+		 editEnvVarAction = new Action("Edit Environment Variable", CloudFoundryImages.EDIT) {
+
+			public void run() {
+				handleActionSelected(ViewerAction.Edit);
+			}
+
+			public String getToolTipText() {
+				return "Edit the selected Environment variable.";
+			}
+		};
+
+		editEnvVarAction.setEnabled(false);
+		toolBarManager.add(editEnvVarAction);
+
+		removeEnvVarAction = new Action("Remove Environment Variable", CloudFoundryImages.REMOVE) {
+
+			public void run() {
+				handleActionSelected(ViewerAction.Delete);
+			}
+
+			public String getToolTipText() {
+				return "Removes the selected Environment variable(s).";
+			}
+		};
+		
+		removeEnvVarAction.setEnabled(false);
+		toolBarManager.add(removeEnvVarAction);
+	}
+
 	protected enum ViewerAction {
 		Add, Delete, Edit
 	}
 
 	protected List<IAction> getViewerActions() {
 		List<IAction> actions = new ArrayList<IAction>();
-		final List<EnvironmentVariable> vars = getViewerSelection();
 
 		actions.add(new Action(ViewerAction.Add.name()) {
 
@@ -178,7 +256,7 @@ public class EnvironmentVariablesPart extends UIPart {
 
 			@Override
 			public boolean isEnabled() {
-				return vars != null && vars.size() > 0;
+				return isDeleteEnabled();
 			}
 		});
 
@@ -190,13 +268,25 @@ public class EnvironmentVariablesPart extends UIPart {
 
 			@Override
 			public boolean isEnabled() {
-				return vars != null && vars.size() == 1;
+				return isEditEnabled();
 			}
 		});
 
 		return actions;
 	}
 
+	private boolean isEditEnabled() {
+		final List<EnvironmentVariable> vars = getViewerSelection();
+		boolean isEnabled =  vars != null && vars.size() ==1;
+		return isEnabled;
+	}
+	
+	private boolean isDeleteEnabled() {
+		final List<EnvironmentVariable> vars = getViewerSelection();
+		boolean isEnabled =  vars != null && vars.size() > 0;
+		return isEnabled;	
+	}
+	
 	protected void handleActionSelected(ViewerAction action) {
 		if (action != null) {
 			switch (action) {
