@@ -97,27 +97,23 @@ public class EnvironmentVariablesPart extends UIPart {
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(tableArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(tableArea);
 	    
-		Composite toolBarArea = new Composite(tableArea, SWT.NONE);
+		Composite toolBarArea = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(toolBarArea);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(toolBarArea);
-
-		Label viewerLabel = new Label(toolBarArea, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(false, false).align(SWT.BEGINNING, SWT.CENTER).applyTo(viewerLabel);
-		viewerLabel.setText("Right click to edit environment variables:");
 		
-		ToolBarManager toolBarManager = new ToolBarManager(SWT.FLAT);
-		ToolBar bar = toolBarManager.createControl(toolBarArea);
-		GridDataFactory.fillDefaults().align(SWT.END, SWT.BEGINNING).grab(true, false).applyTo(bar);
+		ToolBarManager toolBarManager = new ToolBarManager(SWT.VERTICAL);
+		ToolBar bar = toolBarManager.createControl(tableArea);
+		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).grab(true, true).applyTo(bar);
 		
 		AddToolbarActions(toolBarManager);
 		toolBarManager.update(true);
-		// AddButtons(bar);
-
+		
 		Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI);
 		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).grab(true, true).applyTo(table);
 		envVariablesViewer = new TableViewer(table);
 		Listener actionEnabler =  new Listener() {
-			 @Override
+			 
+			@Override
 			 public void handleEvent(Event event) {
 			     removeEnvVarAction.setEnabled(isDeleteEnabled());
 			     editEnvVarAction.setEnabled(isEditEnabled());
@@ -164,24 +160,6 @@ public class EnvironmentVariablesPart extends UIPart {
 		}
 
 		envVariablesViewer.setColumnProperties(columnProperties);
-
-		// Add actions to edit the variables
-		MenuManager menuManager = new MenuManager();
-		menuManager.setRemoveAllWhenShown(true);
-		menuManager.addMenuListener(new IMenuListener() {
-
-			public void menuAboutToShow(IMenuManager manager) {
-				List<IAction> actions = getViewerActions();
-				if (actions != null) {
-					for (IAction action : actions) {
-						manager.add(action);
-					}
-				}
-			}
-		});
-
-		Menu menu = menuManager.createContextMenu(envVariablesViewer.getControl());
-		envVariablesViewer.getControl().setMenu(menu);
 
 		return tableArea;
 	}
