@@ -97,17 +97,6 @@ public class EnvironmentVariablesPart extends UIPart {
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(tableArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(tableArea);
 	    
-		Composite toolBarArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(toolBarArea);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(toolBarArea);
-		
-		ToolBarManager toolBarManager = new ToolBarManager(SWT.VERTICAL);
-		ToolBar bar = toolBarManager.createControl(tableArea);
-		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).grab(true, true).applyTo(bar);
-		
-		AddToolbarActions(toolBarManager);
-		toolBarManager.update(true);
-		
 		Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI);
 		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).grab(true, true).applyTo(table);
 		envVariablesViewer = new TableViewer(table);
@@ -164,93 +153,8 @@ public class EnvironmentVariablesPart extends UIPart {
 		return tableArea;
 	}
 
-	private void AddToolbarActions(ToolBarManager toolBarManager) {
-		Action addEnvVarAction = new Action("Add Environment Variable", CloudFoundryImages.NEW_SERVICE) {
-
-			public void run() {
-				handleActionSelected(ViewerAction.Add);
-			}
-
-			public String getToolTipText() {
-				return "Add Environment variables for the deployed application.";
-			}
-		};
-		
-		toolBarManager.add(addEnvVarAction);
-		
-		 editEnvVarAction = new Action("Edit Environment Variable", CloudFoundryImages.EDIT) {
-
-			public void run() {
-				handleActionSelected(ViewerAction.Edit);
-			}
-
-			public String getToolTipText() {
-				return "Edit the selected Environment variable.";
-			}
-		};
-
-		editEnvVarAction.setEnabled(false);
-		toolBarManager.add(editEnvVarAction);
-
-		removeEnvVarAction = new Action("Remove Environment Variable", CloudFoundryImages.REMOVE) {
-
-			public void run() {
-				handleActionSelected(ViewerAction.Delete);
-			}
-
-			public String getToolTipText() {
-				return "Removes the selected Environment variable(s).";
-			}
-		};
-		
-		removeEnvVarAction.setEnabled(false);
-		toolBarManager.add(removeEnvVarAction);
-	}
-
 	protected enum ViewerAction {
 		Add, Delete, Edit
-	}
-
-	protected List<IAction> getViewerActions() {
-		List<IAction> actions = new ArrayList<IAction>();
-
-		actions.add(new Action(ViewerAction.Add.name()) {
-
-			public void run() {
-				handleActionSelected(ViewerAction.Add);
-			}
-
-			@Override
-			public boolean isEnabled() {
-				return true;
-			}
-		});
-
-		actions.add(new Action(ViewerAction.Delete.name()) {
-
-			public void run() {
-				handleActionSelected(ViewerAction.Delete);
-			}
-
-			@Override
-			public boolean isEnabled() {
-				return isDeleteEnabled();
-			}
-		});
-
-		actions.add(new Action(ViewerAction.Edit.name()) {
-
-			public void run() {
-				handleActionSelected(ViewerAction.Edit);
-			}
-
-			@Override
-			public boolean isEnabled() {
-				return isEditEnabled();
-			}
-		});
-
-		return actions;
 	}
 
 	private boolean isEditEnabled() {
@@ -265,24 +169,6 @@ public class EnvironmentVariablesPart extends UIPart {
 		return isEnabled;	
 	}
 	
-	protected void handleActionSelected(ViewerAction action) {
-		if (action != null) {
-			switch (action) {
-			case Add:
-				handleAdd();
-				break;
-			case Edit:
-				handleEdit();
-				break;
-			case Delete:
-				handleDelete();
-				break;
-			}
-			//Notify listeners that changes were made
-			notifyStatusChange(Status.OK_STATUS);
-		}
-	}
-
 	protected void handleAdd() {
 		Shell shell = CloudUiUtil.getShell();
 		if (shell != null) {
