@@ -41,6 +41,7 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.layout.LayoutConstants;
+import org.eclipse.jface.layout.RowLayoutFactory;
 import org.eclipse.jface.util.Geometry;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -54,6 +55,8 @@ import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
@@ -94,14 +97,13 @@ public class EnvironmentVariablesPart extends UIPart {
 	public Control createPart(Composite parent) {
 
 		Composite tableArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(tableArea);
+		GridLayoutFactory.fillDefaults().spacing(new Point(SWT.DEFAULT,80)).numColumns(2).applyTo(tableArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(tableArea);
 	    
 		Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI);
-		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).grab(true, true).applyTo(table);
+		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).span(1,1).grab(false, true).applyTo(table);
 		envVariablesViewer = new TableViewer(table);
-		Listener actionEnabler =  new Listener() {
-			 
+		/*Listener actionEnabler =  new Listener() {
 			@Override
 			 public void handleEvent(Event event) {
 			     removeEnvVarAction.setEnabled(isDeleteEnabled());
@@ -110,7 +112,7 @@ public class EnvironmentVariablesPart extends UIPart {
 			 }; 
 			
 		table.addListener(SWT.Selection, actionEnabler);
-		table.addListener(SWT.FocusOut, actionEnabler);
+		table.addListener(SWT.FocusOut, actionEnabler);*/
 		envVariablesViewer.setContentProvider(new IStructuredContentProvider() {
 
 			public Object[] getElements(Object inputElement) {
@@ -150,11 +152,45 @@ public class EnvironmentVariablesPart extends UIPart {
 
 		envVariablesViewer.setColumnProperties(columnProperties);
 
+		AddEditButtons(tableArea);
 		return tableArea;
 	}
+	
+	private void AddEditButtons(Composite tableArea){
 
-	protected enum ViewerAction {
-		Add, Delete, Edit
+		Composite toolBarArea = new Composite(tableArea, SWT.NONE);
+		GridLayoutFactory.fillDefaults().applyTo(toolBarArea);
+		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).grab(false, true).applyTo(toolBarArea);
+		
+		ToolBarManager toolBarManager = new ToolBarManager(SWT.FLAT);
+		ToolBar bar = toolBarManager.createControl(toolBarArea);
+		bar.setOrientation(SWT.VERTICAL);
+		GridDataFactory.fillDefaults().align(SWT.END, SWT.BEGINNING).grab(true, false).applyTo(bar);
+		
+		Button addEnvVarButton = new Button(tableArea,SWT.NONE);
+		addEnvVarButton.setText("Add");
+		addEnvVarButton.addSelectionListener(new SelectionAdapter() {
+		      public void widgetSelected(SelectionEvent e) {
+		        handleAdd();
+		        }
+		      });
+		
+		Button editEnvVarButton = new Button(tableArea,SWT.NONE);
+		editEnvVarButton.setText("Edit");
+		editEnvVarButton.addSelectionListener(new SelectionAdapter() {
+		      public void widgetSelected(SelectionEvent e) {
+		        handleEdit();
+		        }
+		      });
+		
+		Button removeEnvVarButton = new Button(tableArea,SWT.NONE);
+		removeEnvVarButton.setText("Remove");
+		removeEnvVarButton.addSelectionListener(new SelectionAdapter() {
+		      public void widgetSelected(SelectionEvent e) {
+		        handleDelete();
+		        }
+		      });
+		toolBarManager.update(true);
 	}
 
 	private boolean isEditEnabled() {
