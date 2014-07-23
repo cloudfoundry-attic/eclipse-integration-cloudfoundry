@@ -19,30 +19,17 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryServiceWizard;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.action.IMenuListener;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
-import org.eclipse.jface.layout.LayoutConstants;
-import org.eclipse.jface.layout.RowLayoutFactory;
-import org.eclipse.jface.util.Geometry;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -51,7 +38,6 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.window.Window;
-import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -59,14 +45,12 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -102,16 +86,16 @@ public class EnvironmentVariablesPart extends UIPart {
 		Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI);
 		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).span(1,1).grab(true, true).applyTo(table);
 		envVariablesViewer = new TableViewer(table);
-		/*Listener actionEnabler =  new Listener() {
+		Listener actionEnabler =  new Listener() {
 			@Override
 			 public void handleEvent(Event event) {
-			     removeEnvVarAction.setEnabled(isDeleteEnabled());
-			     editEnvVarAction.setEnabled(isEditEnabled());
+			     removeEnvVarButton.setEnabled(isDeleteEnabled());
+			     editEnvVarButton.setEnabled(isEditEnabled());
 			  }
 			 }; 
 			
 		table.addListener(SWT.Selection, actionEnabler);
-		table.addListener(SWT.FocusOut, actionEnabler);*/
+		table.addListener(SWT.FocusOut, actionEnabler);
 		envVariablesViewer.setContentProvider(new IStructuredContentProvider() {
 
 			public Object[] getElements(Object inputElement) {
@@ -157,7 +141,7 @@ public class EnvironmentVariablesPart extends UIPart {
 	
 	private void AddEditButtons(Composite parent){
 
-		Composite toolBarArea = new Composite(parent, SWT.VERTICAL);
+		Composite toolBarArea = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(toolBarArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(toolBarArea);
 		
@@ -178,6 +162,7 @@ public class EnvironmentVariablesPart extends UIPart {
 		
 		editEnvVarButton = new Button(bar, SWT.NONE);
 		editEnvVarButton.setText("Edit");
+		editEnvVarButton.setEnabled(false);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(editEnvVarButton);
 		editEnvVarButton.addSelectionListener(new SelectionAdapter() {
 		      public void widgetSelected(SelectionEvent e) {
@@ -187,6 +172,7 @@ public class EnvironmentVariablesPart extends UIPart {
 		
 		removeEnvVarButton = new Button(bar, SWT.NONE);
 		removeEnvVarButton.setText("Remove");
+		removeEnvVarButton.setEnabled(false);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(removeEnvVarButton);
 		removeEnvVarButton.addSelectionListener(new SelectionAdapter() {
 		      public void widgetSelected(SelectionEvent e) {
