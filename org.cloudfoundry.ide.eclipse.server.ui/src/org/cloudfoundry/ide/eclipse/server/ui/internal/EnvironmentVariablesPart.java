@@ -79,9 +79,9 @@ public class EnvironmentVariablesPart extends UIPart {
 
 	private TableViewer envVariablesViewer;
 	
-	private Action editEnvVarAction;
-
-	private Action removeEnvVarAction;
+	private Button editEnvVarButton;
+	
+	private Button removeEnvVarButton;
 	
 	public void setInput(List<EnvironmentVariable> variables) {
 		this.variables = variables != null ? variables : new ArrayList<EnvironmentVariable>();
@@ -95,13 +95,12 @@ public class EnvironmentVariablesPart extends UIPart {
 	}
 
 	public Control createPart(Composite parent) {
-
 		Composite tableArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().spacing(new Point(SWT.DEFAULT,80)).numColumns(2).applyTo(tableArea);
+		GridLayoutFactory.fillDefaults().spacing(new Point(SWT.DEFAULT,80)).numColumns(1).applyTo(tableArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(tableArea);
-	    
+
 		Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI);
-		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).span(1,1).grab(false, true).applyTo(table);
+		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).span(1,1).grab(true, true).applyTo(table);
 		envVariablesViewer = new TableViewer(table);
 		/*Listener actionEnabler =  new Listener() {
 			@Override
@@ -152,39 +151,43 @@ public class EnvironmentVariablesPart extends UIPart {
 
 		envVariablesViewer.setColumnProperties(columnProperties);
 
-		AddEditButtons(tableArea);
+		AddEditButtons(parent);
 		return tableArea;
 	}
 	
-	private void AddEditButtons(Composite tableArea){
+	private void AddEditButtons(Composite parent){
 
-		Composite toolBarArea = new Composite(tableArea, SWT.NONE);
-		GridLayoutFactory.fillDefaults().applyTo(toolBarArea);
-		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).grab(false, true).applyTo(toolBarArea);
+		Composite toolBarArea = new Composite(parent, SWT.VERTICAL);
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(toolBarArea);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(toolBarArea);
 		
-		ToolBarManager toolBarManager = new ToolBarManager(SWT.FLAT);
+		ToolBarManager toolBarManager = new ToolBarManager(SWT.NONE);
 		ToolBar bar = toolBarManager.createControl(toolBarArea);
 		bar.setOrientation(SWT.VERTICAL);
-		GridDataFactory.fillDefaults().align(SWT.END, SWT.BEGINNING).grab(true, false).applyTo(bar);
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(bar);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(bar);
 		
-		Button addEnvVarButton = new Button(tableArea,SWT.NONE);
-		addEnvVarButton.setText("Add");
-		addEnvVarButton.addSelectionListener(new SelectionAdapter() {
+		Button newEnvVarButton = new Button(bar, SWT.NONE);
+		newEnvVarButton.setText("New");
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(newEnvVarButton);
+		newEnvVarButton.addSelectionListener(new SelectionAdapter() {
 		      public void widgetSelected(SelectionEvent e) {
 		        handleAdd();
 		        }
 		      });
 		
-		Button editEnvVarButton = new Button(tableArea,SWT.NONE);
+		editEnvVarButton = new Button(bar, SWT.NONE);
 		editEnvVarButton.setText("Edit");
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(editEnvVarButton);
 		editEnvVarButton.addSelectionListener(new SelectionAdapter() {
 		      public void widgetSelected(SelectionEvent e) {
 		        handleEdit();
 		        }
 		      });
 		
-		Button removeEnvVarButton = new Button(tableArea,SWT.NONE);
+		removeEnvVarButton = new Button(bar, SWT.NONE);
 		removeEnvVarButton.setText("Remove");
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(removeEnvVarButton);
 		removeEnvVarButton.addSelectionListener(new SelectionAdapter() {
 		      public void widgetSelected(SelectionEvent e) {
 		        handleDelete();
