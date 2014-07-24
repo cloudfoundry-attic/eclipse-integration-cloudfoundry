@@ -2180,8 +2180,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 					}.run(monitor);
 
-					printlnToConsole(appModule, NLS.bind(Messages.CONSOLE_APP_PUSHED_MESSAGE,
-							CloudFoundryBrandingExtensionPoint.getServiceName(getServer().getServerType().getId())));
+					printlnToConsole(appModule, Messages.CONSOLE_APP_PUSHED_MESSAGE);
 
 				}
 
@@ -2250,8 +2249,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			String appName = appModule.getDeploymentInfo().getDeploymentName();
 
 			try {
-				printlnToConsole(appModule, NLS.bind(Messages.CONSOLE_APP_PUSH_MESSAGE,
-						CloudFoundryBrandingExtensionPoint.getServiceName(getServer().getServerType().getId())));
+				printlnToConsole(appModule, Messages.CONSOLE_APP_PUSH_MESSAGE);
 				// Now push the application content.
 				if (warFile != null) {
 					client.uploadApplication(appName, warFile);
@@ -2368,8 +2366,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			int moduleState = getServer().getModulePublishState(new IModule[] { appModule.getLocalModule() });
 			if (appModule.isDeployed() && moduleState == IServer.PUBLISH_STATE_NONE) {
 
-				printlnToConsole(appModule, NLS.bind(Messages.CONSOLE_APP_FOUND,
-						CloudFoundryBrandingExtensionPoint.getServiceName(getServer().getServerType().getId())));
+				printlnToConsole(appModule, Messages.CONSOLE_APP_FOUND);
 
 				CloudApplication cloudApp = null;
 
@@ -2425,8 +2422,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			// Create the application if it doesn't already exist
 			if (!found) {
 				
-				printlnToConsole(appModule, NLS.bind(Messages.CONSOLE_APP_CREATION,
-					CloudFoundryBrandingExtensionPoint.getServiceName(getServer().getServerType().getId())));;
+				printlnToConsole(appModule, Messages.CONSOLE_APP_CREATION);
 
 				Staging staging = appModule.getDeploymentInfo().getStaging();
 				List<String> uris = appModule.getDeploymentInfo().getUris() != null ? appModule.getDeploymentInfo()
