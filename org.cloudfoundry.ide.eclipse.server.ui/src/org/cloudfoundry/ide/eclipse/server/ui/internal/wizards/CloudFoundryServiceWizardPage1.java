@@ -565,7 +565,8 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 			public void mouseDown(MouseEvent e) { 
 				
 				for (final CFServiceWizUI item : allServicesList) {
-					if(item.getAppxLocation().contains(e.x, e.y)) {
+					// Skip filtered items that has null appxLocation.
+					if(item.getAppxLocation() != null && item.getAppxLocation().contains(e.x, e.y)) {
 						selectItem(item);
 						break;
 					}
@@ -1026,10 +1027,7 @@ class CFServiceWizardLayout extends Layout {
 			
 			Label localNameLabel = (Label)children[i + 1];
 			
-			Rectangle br = new Rectangle(x, y, w, 5);
 			CFServiceWizUI product = (CFServiceWizUI) localNameLabel.getData();
-
-			
 			
 			// image
 			if (apply) {
