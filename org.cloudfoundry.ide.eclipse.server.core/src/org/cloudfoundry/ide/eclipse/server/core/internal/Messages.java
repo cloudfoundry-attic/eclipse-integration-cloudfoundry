@@ -25,7 +25,7 @@ public class Messages {
 	 * Errors
 	 */
 
-	public static final String ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION = "Error performing Cloud Foundry operation: {0}";
+	public static final String ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION = "Error performing operation: {0}";
 
 	public static final String ERROR_WRONG_EMAIL_OR_PASSWORD_UNAUTHORISED = "Wrong email or password - 401 (Unauthorised)";
 
@@ -37,7 +37,7 @@ public class Messages {
 
 	public static final String ERROR_FAILED_RESOLVE_ORGS_SPACES_DUE_TO_ERROR = "Failed to resolve organizations and spaces - {0}";
 
-	public static final String ERROR_SERVER_INSTANCE_CLOUD_SPACE_EXISTS = "A Cloud Foundry server instance ({0}) for space: {1} - already exists. Please select another cloud space if available.";
+	public static final String ERROR_SERVER_INSTANCE_CLOUD_SPACE_EXISTS = "A server instance ({0}) for space: {1} - already exists. Please select another cloud space if available.";
 
 	public static final String ERROR_INVALID_ORG = "Invalid organization";
 
@@ -65,15 +65,15 @@ public class Messages {
 
 	public static final String ERROR_FAILED_MODULE_REFRESH = "Failed to refresh list of applications. Application list may not be accurate. Check connection and try a manual refresh - Reason: {0}";
 
-	public static final String ERROR_FIRE_REFRESH = "Internal Error: Failed to resolve Cloud Foundry server from WST IServer. Manual server disconnect and reconnect may be required - Reason: {0}";
+	public static final String ERROR_FIRE_REFRESH = "Internal Error: Failed to resolve server from WST IServer. Manual server disconnect and reconnect may be required - Reason: {0}";
 
-	public static final String ERROR_INITIALISE_REFRESH_NO_SERVER = "Failed to initialise Cloud Foundry refresh job. Unable to resolve a Cloud Foundry server - {0}";
+	public static final String ERROR_INITIALISE_REFRESH_NO_SERVER = "Failed to initialise refresh job. Unable to resolve a server - {0}";
 
 	public static final String ERROR_APP_DEPLOYMENT_VALIDATION_ERROR = "Invalid application deployment information for: {0} - Unable to deploy or start application - {1}";
 
 	public static final String ERROR_NO_WST_MODULE = "Internal Error: No WST IModule specified - Unable to deploy or start application";
 
-	public static final String ERROR_NO_MAPPED_CLOUD_MODULE = "Internal Error: No mapped Cloud Foundry application module found for: {0} - Unable to deploy or start application";
+	public static final String ERROR_NO_MAPPED_CLOUD_MODULE = "Internal Error: No mapped application module found for: {0} - Unable to deploy or start application";
 
 	public static final String ERROR_FAILED_TO_PUSH_APP = "Failed to push application - {0}";
 
@@ -83,7 +83,7 @@ public class Messages {
 
 	public static final String ERROR_NO_CLOUD_SERVER_DESCRIPTOR = "No cloud server descriptor found that matches : {0}. Unable to create a server instance to another space.";
 
-	public static final String ERROR_NO_CLIENT = "No Cloud Foundry client available to process the following request - {0} ";
+	public static final String ERROR_NO_CLIENT = "No client available to process the following request - {0} ";
 
 	public static final String ERROR_FAILED_APP_START_TRACKER = "Internal Error: Failed to load application start tracker due to - {0}";
 
@@ -119,17 +119,17 @@ public class Messages {
 
 	public static final String CONSOLE_PRE_STAGING_MESSAGE = "Starting and staging application";
 
-	public static final String CONSOLE_APP_PUSH_MESSAGE = "Pushing application to Cloud Foundry server";
+	public static final String CONSOLE_APP_PUSH_MESSAGE = "Pushing application";
 
-	public static final String CONSOLE_APP_CREATION = "Creating application in Cloud Foundry server";
+	public static final String CONSOLE_APP_CREATION = "Creating application";
 
-	public static final String CONSOLE_APP_FOUND = "Existing application found in Cloud Foundry server";
+	public static final String CONSOLE_APP_FOUND = "Existing application found";
 
 	public static final String CONSOLE_APP_MAPPING_STARTED = "Updating application mapping";
 
 	public static final String CONSOLE_APP_MAPPING_COMPLETED = "Application mapping updated";
 
-	public static final String CONSOLE_APP_PUSHED_MESSAGE = "Application successfully pushed to Cloud Foundry server";
+	public static final String CONSOLE_APP_PUSHED_MESSAGE = "Application successfully pushed";
 
 	public static final String CONSOLE_PREPARING_APP = "Checking application - {0}";
 
