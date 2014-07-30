@@ -151,7 +151,7 @@ public class EnvironmentVariablesPart extends UIPart {
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(bar);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(bar);
 		Button newEnvVarButton = new Button(bar, SWT.NONE);
-		newEnvVarButton.setText("New");
+		newEnvVarButton.setText("New...");
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(newEnvVarButton);
 		newEnvVarButton.addSelectionListener(new SelectionAdapter() {
 		      public void widgetSelected(SelectionEvent e) {
@@ -160,7 +160,7 @@ public class EnvironmentVariablesPart extends UIPart {
 		      });
 		
 		editEnvVarButton = new Button(bar, SWT.NONE);
-		editEnvVarButton.setText("Edit");
+		editEnvVarButton.setText("Edit...");
 		editEnvVarButton.setEnabled(false);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(editEnvVarButton);
 		editEnvVarButton.addSelectionListener(new SelectionAdapter() {
