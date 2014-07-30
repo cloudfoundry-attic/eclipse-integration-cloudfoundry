@@ -142,15 +142,14 @@ public class EnvironmentVariablesPart extends UIPart {
 	private void AddEditButtons(Composite parent){
 
 		Composite toolBarArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(toolBarArea);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(toolBarArea);
 		
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(toolBarArea);
+		GridDataFactory.fillDefaults().grab(true, true).hint(50, 20).applyTo(toolBarArea);
 		ToolBarManager toolBarManager = new ToolBarManager(SWT.NONE);
 		ToolBar bar = toolBarManager.createControl(toolBarArea);
 		bar.setOrientation(SWT.VERTICAL);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(bar);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(bar);
-		
 		Button newEnvVarButton = new Button(bar, SWT.NONE);
 		newEnvVarButton.setText("New");
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(newEnvVarButton);
