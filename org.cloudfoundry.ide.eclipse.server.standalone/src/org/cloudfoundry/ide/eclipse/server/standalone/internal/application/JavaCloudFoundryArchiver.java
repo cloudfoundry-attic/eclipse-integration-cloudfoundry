@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -44,6 +44,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IClasspathEntry;
@@ -408,21 +409,27 @@ public class JavaCloudFoundryArchiver {
 
 	public static String getTempJarPath(IModule module) throws CoreException {
 		try {
-			File tempFile = File.createTempFile("tempFileForJar", null);
-			tempFile.delete();
-			tempFile.mkdirs();
+			File tempFolder = File.createTempFile("tempFolderForJavaAppJar",
+					null);
+			tempFolder.delete();
+			tempFolder.mkdirs();
 
-			if (!tempFile.exists()) {
+			if (!tempFolder.exists()) {
 				throw CloudErrorUtil
 						.toCoreException("Failed to created temporary directory when packaging application for deployment. Check permissions at: "
-								+ tempFile.getPath());
+								+ tempFolder.getPath());
 			}
 
-			String path = new Path(tempFile.getPath()).append(
-					module.getName() + ".jar").toString();
-			tempFile.deleteOnExit();
+			File targetFile = new File(tempFolder, module.getName() + ".jar");
+			targetFile.deleteOnExit();
 
+			String path = new Path(targetFile.getAbsolutePath()).toString();
+
+			CloudFoundryPlugin.log(CloudFoundryPlugin.getStatus(
+					"Created temporary jar for " + module.getName() + " - "
+							+ path, IStatus.INFO));
 			return path;
+
 		} catch (IOException io) {
 			CloudErrorUtil.toCoreException(io);
 		}
