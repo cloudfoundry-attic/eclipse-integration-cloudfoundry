@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -194,37 +195,53 @@ public class EnvironmentVariablesPart extends UIPart {
 	}
 	
 	protected void handleAdd() {
+		boolean variableChanged = false;
 		Shell shell = CloudUiUtil.getShell();
 		if (shell != null) {
 			VariableDialogue dialogue = new VariableDialogue(shell, null);
 			if (dialogue.open() == Window.OK) {
-				updateVariables(dialogue.getEnvironmentVariable(), null);
+				variableChanged = updateVariables(dialogue.getEnvironmentVariable(), null);
 			}
+		}
+		
+		if (variableChanged) {
+			notifyStatusChange(Status.OK_STATUS);
 		}
 	}
 
 	protected void handleEdit() {
+		boolean variableChanged = false;
 		Shell shell = CloudUiUtil.getShell();
 		List<EnvironmentVariable> selection = getViewerSelection();
 		if (shell != null && selection != null && !selection.isEmpty()) {
 			EnvironmentVariable toEdit = selection.get(0);
 			VariableDialogue dialogue = new VariableDialogue(shell, toEdit);
 			if (dialogue.open() == Window.OK) {
-				updateVariables(dialogue.getEnvironmentVariable(), toEdit);
+				variableChanged = updateVariables(dialogue.getEnvironmentVariable(), toEdit);
 			}
+		}
+		
+		if (variableChanged) {
+			notifyStatusChange(Status.OK_STATUS);
 		}
 	}
 
 	protected void handleDelete() {
+		boolean variableChanged = false;
 		List<EnvironmentVariable> selection = getViewerSelection();
 		if (selection != null && !selection.isEmpty()) {
 			for (EnvironmentVariable toDelete : selection) {
-				updateVariables(null, toDelete);
+				variableChanged = variableChanged || updateVariables(null, toDelete);
 			}
+		}
+		
+		if (variableChanged) {
+			notifyStatusChange(Status.OK_STATUS);
 		}
 	}
 
-	protected void updateVariables(EnvironmentVariable add, EnvironmentVariable delete) {
+	protected boolean updateVariables(EnvironmentVariable add, EnvironmentVariable delete) {
+		boolean variableChanged = false;
 		if (variables == null) {
 			variables = new ArrayList<EnvironmentVariable>();
 		}
@@ -233,7 +250,10 @@ public class EnvironmentVariablesPart extends UIPart {
 			List<EnvironmentVariable> updatedList = new ArrayList<EnvironmentVariable>();
 
 			for (EnvironmentVariable var : variables) {
-				if (!var.equals(delete)) {
+				if (var.equals(delete)) {
+					variableChanged = true;
+				}
+				else {
 					updatedList.add(var);
 				}
 			}
@@ -243,9 +263,11 @@ public class EnvironmentVariablesPart extends UIPart {
 
 		if (add != null) {
 			variables.add(add);
+			variableChanged = true;
 		}
 
 		setInput(variables);
+		return variableChanged;
 	}
 
 	protected List<EnvironmentVariable> getViewerSelection() {
