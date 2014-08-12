@@ -90,9 +90,8 @@ public class EnvironmentVariablesPart extends UIPart {
 		Listener actionEnabler =  new Listener() {
 			@Override
 			 public void handleEvent(Event event) {
-			     removeEnvVarButton.setEnabled(isDeleteEnabled());
-			     editEnvVarButton.setEnabled(isEditEnabled());
-			  }
+				setEnabledDisabled();
+			    }
 			 }; 
 			
 		table.addListener(SWT.Selection, actionEnabler);
@@ -140,6 +139,11 @@ public class EnvironmentVariablesPart extends UIPart {
 		return tableArea;
 	}
 	
+	protected void setEnabledDisabled() {
+		 removeEnvVarButton.setEnabled(isDeleteEnabled());
+	     editEnvVarButton.setEnabled(isEditEnabled());	  
+	}
+
 	private void AddEditButtons(Composite parent){
 
 		Composite toolBarArea = new Composite(parent, SWT.NONE);
@@ -223,6 +227,7 @@ public class EnvironmentVariablesPart extends UIPart {
 		
 		if (variableChanged) {
 			notifyStatusChange(Status.OK_STATUS);
+			setEnabledDisabled();
 		}
 	}
 
@@ -237,6 +242,7 @@ public class EnvironmentVariablesPart extends UIPart {
 		
 		if (variableChanged) {
 			notifyStatusChange(Status.OK_STATUS);
+			setEnabledDisabled();
 		}
 	}
 
