@@ -44,7 +44,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IClasspathEntry;
@@ -425,9 +424,6 @@ public class JavaCloudFoundryArchiver {
 
 			String path = new Path(targetFile.getAbsolutePath()).toString();
 
-			CloudFoundryPlugin.log(CloudFoundryPlugin.getStatus(
-					"Created temporary jar for " + module.getName() + " - "
-							+ path, IStatus.INFO));
 			return path;
 
 		} catch (IOException io) {

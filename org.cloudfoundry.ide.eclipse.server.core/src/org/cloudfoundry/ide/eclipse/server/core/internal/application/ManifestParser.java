@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -343,7 +343,7 @@ public class ManifestParser {
 			readMemory(application, workingCopy);
 			subMonitor.worked(1);
 
-			readApplicationURL(application, workingCopy, appName);
+			readApplicationURL(application, workingCopy, appName, monitor);
 			subMonitor.worked(1);
 
 			String buildpackurl = getStringValue(application, BUILDPACK_PROP);
@@ -431,44 +431,27 @@ public class ManifestParser {
 		}
 	}
 
-	protected void readApplicationURL(Map<?, ?> application, DeploymentInfoWorkingCopy workingCopy, String appName)
-			throws CoreException {
+	protected void readApplicationURL(Map<?, ?> application, DeploymentInfoWorkingCopy workingCopy, String appName,
+			IProgressMonitor monitor) throws CoreException {
 		String subdomain = getStringValue(application, SUB_DOMAIN_PROP);
 		String domain = getStringValue(application, DOMAIN_PROP);
 
-		// IF one or the other is set, set a default value for the missing part
-		if (subdomain != null || domain != null) {
+		if (domain != null || subdomain != null) {
+			CloudApplicationURL cloudURL = new CloudApplicationURL(subdomain, domain);
 
-			String url = null;
-			if (subdomain == null) {
-				subdomain = appName;
+			try {
+				cloudURL = ApplicationUrlLookupService.update(cloudServer, monitor).validateCloudApplicationUrl(
+						cloudURL);
 			}
-			else {
-				// Get a default domain since no domain has been specified
-				ApplicationUrlLookupService lookup = ApplicationUrlLookupService.getCurrentLookup(cloudServer);
-				CloudApplicationURL cloudURL = lookup.getDefaultApplicationURL(subdomain);
-				if (cloudURL != null) {
-					url = cloudURL.getUrl();
-				}
+			catch (CoreException e) {
+				// Log this as at this stage, but don't let it prevent
+				// further
+				// parsing
+				CloudFoundryPlugin.logError(e);
 			}
 
-			if (url == null) {
-				if (domain != null) {
-					url = subdomain + '.' + domain;
-				}
-				else {
-					CloudFoundryPlugin
-							.logWarning("No domain found while parsing manifest for "
-									+ appName
-									+ " - No URL will be set for this application. Manual URL entry may be required when pushing the application to Cloud Foundry.");
-				}
-			}
-
-			if (url != null) {
-				List<String> urls = Arrays.asList(url);
-				workingCopy.setUris(urls);
-			}
-
+			List<String> urls = Arrays.asList(cloudURL.getUrl());
+			workingCopy.setUris(urls);
 		}
 	}
 

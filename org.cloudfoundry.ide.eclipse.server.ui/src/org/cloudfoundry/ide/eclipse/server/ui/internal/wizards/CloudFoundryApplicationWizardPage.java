@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -28,10 +28,11 @@ import java.util.regex.Pattern;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleCache;
-import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleCache.ServerData;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.UIPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.WizardPartChangeEvent;
 import org.eclipse.core.runtime.IStatus;
@@ -81,6 +82,8 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 	protected final CloudFoundryDeploymentWizardPage deploymentPage;
 
+
+
 	public CloudFoundryApplicationWizardPage(CloudFoundryServer server,
 			CloudFoundryDeploymentWizardPage deploymentPage, CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor) {
@@ -93,7 +96,6 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 	}
 
 	protected void init() {
-		
 		appName = descriptor.getDeploymentInfo().getDeploymentName();
 		buildpack = descriptor.getDeploymentInfo().getStaging() != null ? descriptor.getDeploymentInfo().getStaging()
 				.getBuildpackUrl() : null;
@@ -183,7 +185,6 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 	protected void validateBuildPack() {
 
-		boolean updateButtons = true;
 		IStatus status = Status.OK_STATUS;
 		// Clear the previous buildpack anyway, as either a new one valid one
 		// will be set
@@ -210,7 +211,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 			}
 		}
 
-		update(updateButtons, status);
+		handleChange(new PartChangeEvent(buildpack, status, ApplicationDeploymentEvent.BUILD_PACK_URL));
 
 	}
 
@@ -263,30 +264,23 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 			nameText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 			nameText.setEditable(true);
 
-			boolean nameSet = false;
-			if (appName != null) {
-				nameText.setText(appName);
-				nameSet = true;
-			}
-
 			nameText.addModifyListener(new ModifyListener() {
 				public void modifyText(ModifyEvent e) {
 					appName = nameText.getText();
 					// If first time initialising, dont update the wizard
 					// buttons as the may not be available to update yet
 					boolean updateButtons = true;
-					notifyChange(new WizardPartChangeEvent(appName, getUpdateNameStatus(), AppNamePart.this,
-							CloudFoundryDeploymentWizardPage.APP_NAME_CHANGE_EVENT, updateButtons));
+					notifyChange(new WizardPartChangeEvent(appName, getUpdateNameStatus(),
+							ApplicationDeploymentEvent.APP_NAME_CHANGE_EVENT, updateButtons));
 				}
 			});
 
-			if (nameSet) {
-				notifyChange(new WizardPartChangeEvent(appName, getUpdateNameStatus(), AppNamePart.this,
-						CloudFoundryDeploymentWizardPage.APP_NAME_INIT, false));
+			// Set the app name after adding the listener to fire event
+			if (appName != null) {
+				nameText.setText(appName);
 			}
 
 			return parent;
 		}
 	}
-
 }

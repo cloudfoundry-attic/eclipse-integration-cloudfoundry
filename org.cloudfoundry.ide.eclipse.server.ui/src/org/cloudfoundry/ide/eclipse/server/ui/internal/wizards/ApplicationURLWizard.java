@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -93,6 +93,20 @@ public class ApplicationURLWizard extends Wizard {
 			this.urlPart = urlPart;
 		}
 
+		protected void performWhenPageVisible() {
+
+			// Refresh the application URL (since the URL host tends to the the
+			// application name, if the application name has changed
+			// make sure it gets updated in the UI. Also fetch the list of
+			// domains
+			// ONCE per session.
+			// Run all URL refresh and fetch in the same UI Job to ensure that
+			// domain updates occur first before the UI is refreshed.
+			if (!refreshedDomains) {
+				refreshApplicationUrlDomains();
+			}
+		}
+
 		public void createControl(Composite parent) {
 			Composite composite = new Composite(parent, SWT.NONE);
 			composite.setLayout(new GridLayout());
@@ -106,19 +120,17 @@ public class ApplicationURLWizard extends Wizard {
 		}
 
 		@Override
-		protected void postDomainsRefreshedOperation() {
+		protected void domainsRefreshed() {
 			urlPart.refreshDomains();
-			urlPart.updateFullUrl(initialUrl);
+			urlPart.setUrl(initialUrl);
 		}
 
 		public void handleChange(PartChangeEvent event) {
-			if (event.getSource() == urlPart) {
+			if (event.getSource() == ApplicationDeploymentEvent.APPLICATION_URL_CHANGED) {
 				editedUrl = event.getData() instanceof String ? (String) event.getData() : null;
 			}
 
 			super.handleChange(event);
 		}
-
 	}
-
 }

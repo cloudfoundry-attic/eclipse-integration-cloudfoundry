@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -129,7 +129,8 @@ public abstract class AbstractApplicationDelegate {
 	 * archive but it failed to create one.
 	 */
 	public abstract ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule module,
-			CloudFoundryServer cloudServer, IModuleResource[] moduleResources, IProgressMonitor monitor) throws CoreException;
+			CloudFoundryServer cloudServer, IModuleResource[] moduleResources, IProgressMonitor monitor)
+			throws CoreException;
 
 	/**
 	 * {@link IStatus#OK} If the deployment information is valid. Otherwise

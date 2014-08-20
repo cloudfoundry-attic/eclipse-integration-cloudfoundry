@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -20,11 +20,13 @@
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleResourceApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.wst.server.core.model.IModuleResource;
 
 /**
@@ -43,6 +45,13 @@ public class StandaloneApplicationDelegate extends
 	public boolean requiresURL() {
 		// URLs are optional for Java standalone applications
 		return false;
+	}
+
+	@Override
+	public boolean requiresURL(CloudFoundryApplicationModule appModule) {
+		IJavaProject project = CloudFoundryProjectUtil
+				.getJavaProject(appModule);
+		return JavaCloudFoundryArchiver.isBootProject(project);
 	}
 
 	/*

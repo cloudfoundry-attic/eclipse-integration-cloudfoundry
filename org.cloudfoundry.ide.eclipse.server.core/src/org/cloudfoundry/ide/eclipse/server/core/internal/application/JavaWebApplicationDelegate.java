@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -222,13 +222,10 @@ public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 
 		// Set a default URL for the application.
 		if ((info.getUris() == null || info.getUris().isEmpty()) && info.getDeploymentName() != null) {
-			ApplicationUrlLookupService urlLookup = ApplicationUrlLookupService.getCurrentLookup(cloudServer);
-			urlLookup.refreshDomains(monitor);
-			CloudApplicationURL url = urlLookup.getDefaultApplicationURL(info.getDeploymentName());
-			if (url != null) {
-				info.setUris(Arrays.asList(url.getUrl()));
-			}
 
+			CloudApplicationURL url = ApplicationUrlLookupService.update(cloudServer, monitor)
+					.getDefaultApplicationURL(info.getDeploymentName());
+			info.setUris(Arrays.asList(url.getUrl()));
 		}
 		return info;
 	}

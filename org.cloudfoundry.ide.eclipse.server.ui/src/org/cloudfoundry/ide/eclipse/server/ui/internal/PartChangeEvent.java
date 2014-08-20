@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,6 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
+import org.cloudfoundry.ide.eclipse.server.core.internal.ValidationEvents;
 import org.eclipse.core.runtime.IStatus;
 
 /**
@@ -39,8 +40,11 @@ public class PartChangeEvent {
 		this.source = source;
 		this.status = status;
 		this.data = data;
-
 		this.type = type;
+	}
+
+	public PartChangeEvent(Object data, IStatus status, IEventSource<?> source) {
+		this(data, status, source, ValidationEvents.EVENT_NONE);
 	}
 
 	public IEventSource<?> getSource() {
@@ -61,7 +65,7 @@ public class PartChangeEvent {
 
 	@Override
 	public String toString() {
-		return getStatus() != null ? getStatus().toString() : super.toString();
+		return "PartChangeEvent [status=" + status + ", source=" + source + ", type=" + type + "]";
 	}
 
 }

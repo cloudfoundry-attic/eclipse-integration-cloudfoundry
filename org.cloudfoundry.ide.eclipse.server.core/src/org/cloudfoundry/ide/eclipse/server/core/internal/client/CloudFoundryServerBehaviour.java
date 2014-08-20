@@ -60,7 +60,6 @@ import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CachingApplicationArchive;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryLoginHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;

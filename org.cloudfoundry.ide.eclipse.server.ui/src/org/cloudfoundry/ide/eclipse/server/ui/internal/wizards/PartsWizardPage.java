@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -145,7 +145,9 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 			setMessage(status.getMessage(), DialogPage.WARNING);
 		}
 
-		if (updateButtons) {
+		// Container or page may not be available when update request is received
+		if (updateButtons && getWizard() != null && getWizard().getContainer() != null
+				&& getWizard().getContainer().getCurrentPage() != null) {
 			getWizard().getContainer().updateButtons();
 		}
 	}
@@ -163,6 +165,10 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 			}
 			else {
 				performWhenPageVisible();
+			}
+			IStatus status = getNextNonOKStatus();
+			if (status != null) {
+				update(true, status);
 			}
 		}
 	}

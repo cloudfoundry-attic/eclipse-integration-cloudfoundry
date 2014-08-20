@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -20,21 +20,12 @@
 package org.cloudfoundry.ide.eclipse.server.core.internal;
 
 public class ValueValidationUtil {
-	
+
 	private ValueValidationUtil() {
 		// utility class
 	}
-	
-	public static boolean isEmpty(String value) {
-		if (value == null) {
-			return true;
-		}
-		for (int i = 0; i < value.length(); i++) {
-			if (!Character.isWhitespace(value.charAt(i))) {
-				return false;
-			}
-		}
-		return true;
-	}
 
+	public static boolean isEmpty(String value) {
+		return value == null || value.trim().length() == 0;
+	}
 }

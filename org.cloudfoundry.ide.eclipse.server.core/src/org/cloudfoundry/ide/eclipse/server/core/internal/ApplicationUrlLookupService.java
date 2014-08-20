@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -34,8 +34,9 @@ import org.eclipse.osgi.util.NLS;
  * domain portion (the last segments of the URL: e.g, "cfapps.io" in
  * "myapp.cfapps.io") actually exists in the server.
  * 
- * IMPORTANT NOTE: This class can be referred by the branding extension from adopter so this class 
- * should not be moved or renamed to avoid breakage to adopters. 
+ * IMPORTANT NOTE: This class can be referred by the branding extension from
+ * adopter so this class should not be moved or renamed to avoid breakage to
+ * adopters.
  */
 public class ApplicationUrlLookupService {
 
@@ -65,9 +66,10 @@ public class ApplicationUrlLookupService {
 
 	/**
 	 * Either returns a valid, available Cloud Application URL with the given
-	 * host, or null
+	 * subdomain, or throws {@link CoreException} if unable to generate valid
+	 * URL.
 	 * @param subDomain
-	 * @return Valid, available Cloud Application URL.
+	 * @return Non-null, valid Cloud Application URL using an existing domain.
 	 */
 	public CloudApplicationURL getDefaultApplicationURL(String subDomain) throws CoreException {
 
@@ -79,26 +81,8 @@ public class ApplicationUrlLookupService {
 					cloudServer.getServerId(), subDomain));
 		}
 
-		CloudApplicationURL appURL = null;
-		CoreException lastError = null;
-		for (CloudDomain domain : domains) {
-			String suggestedURL = subDomain + "." + domain.getName();
-			try {
-				appURL = getCloudApplicationURL(suggestedURL);
-				break;
-			}
-			catch (CoreException ce) {
-				lastError = ce;
-			}
-		}
-		if (appURL == null) {
-			if (lastError == null) {
-				lastError = CloudErrorUtil.toCoreException(NLS.bind(
-						"Unable to generate a default application URL for {0} in server {1}", subDomain,
-						cloudServer.getServerId()));
-			}
-			throw lastError;
-		}
+		CloudApplicationURL appURL = validateCloudApplicationUrl(new CloudApplicationURL(subDomain, domains.get(0)
+				.getName()));
 
 		return appURL;
 	}
@@ -155,26 +139,59 @@ public class ApplicationUrlLookupService {
 		}
 
 		String authority = newUri.getScheme() != null ? newUri.getAuthority() : newUri.getPath();
-		String domainName = null;
-		String host = null;
-		for (CloudDomain domain : domainsPerActiveSpace) {
-			if (authority != null && authority.endsWith(domain.getName())) {
-				domainName = domain.getName();
-				if (domainName.length() < authority.length()) {
-					host = authority.substring(0, authority.indexOf(domainName) - 1);
+		String parsedDomainName = null;
+		String parsedSubdomainName = null;
+		if (authority != null) {
+			for (CloudDomain domain : domainsPerActiveSpace) {
+				// Be sure to check for last segment rather than last String
+				// value
+				// otherwise: Example: "validdomain" is a valid domain:
+				// sub.domainvaliddomain will be parsed
+				// successfully as a valid application URL, even though
+				// "domainvaliddomain" is not a valid domain. Instead, this
+				// should be the correct
+				// URL: sub.domain.validdomain. A URL with just "validdomain"
+				// should also
+				// parse the domain part correctly (but no subdomain)
+				String domainName = domain.getName();
+				String domainSegment = '.' + domainName;
+				if (authority.equals(domainName)) {
+					parsedDomainName = domainName;
+					break;
 				}
-				break;
+				else if (authority.endsWith(domainSegment)) {
+					parsedDomainName = domainName;
+					// Any portion of the authority before the separating '.' is
+					// the
+					// subdomain. To avoid including the separating '.' between
+					// subdomain and domain itself as being part of the
+					// subdomain, only parse the subdomain if there
+					// is an actual '.' before the domain value in the authority
+					if (domainSegment.length() < authority.length()) {
+						parsedSubdomainName = authority.substring(0, authority.lastIndexOf(domainSegment));
+					}
+					break;
+				}
 			}
 		}
-		if (domainName == null || domainName.trim().length() == 0) {
-			throw new CoreException(CloudFoundryPlugin.getErrorStatus("Domain not found for URL " + url));
-		}
-		if (host == null || host.trim().length() == 0l) {
-			throw new CoreException(CloudFoundryPlugin.getErrorStatus("Invalid URL " + url
-					+ " -- subdomain not specified for domain " + domainName));
 
+		if (parsedDomainName == null || parsedDomainName.trim().length() == 0) {
+			throw new CoreException(CloudFoundryPlugin.getErrorStatus(NLS.bind(
+					Messages.ERROR_NO_DOMAIN_RESOLVED_FOR_URL, url)));
 		}
-		return new CloudApplicationURL(host, domainName);
+		if (parsedSubdomainName == null || parsedSubdomainName.trim().length() == 0l) {
+			throw new CoreException(CloudFoundryPlugin.getErrorStatus(NLS.bind(Messages.ERROR_INVALID_SUBDOMAIN, url,
+					parsedDomainName)));
+		}
+		return new CloudApplicationURL(parsedSubdomainName, parsedDomainName);
+	}
+
+	/**
+	 * @return Non-null validated CloudApplication URL based on given URL, or
+	 * throws {@link CoreException} if error occurred.
+	 */
+	public CloudApplicationURL validateCloudApplicationUrl(CloudApplicationURL url) throws CoreException {
+		return getCloudApplicationURL(url.getUrl());
 	}
 
 	/**
@@ -188,6 +205,22 @@ public class ApplicationUrlLookupService {
 			service = new ApplicationUrlLookupService(cloudServer);
 		}
 		return service;
+	}
+
+	/**
+	 * Refreshes the current URL lookup service with up-to-date domain
+	 * information. This may be a long-running process, therefore passing a
+	 * progress monitor is recommended.
+	 * @param cloudServer
+	 * @param monitor
+	 * @return non-null URL lookup service.
+	 * @throws CoreException if error occurred while refreshing lookup service.
+	 */
+	public static ApplicationUrlLookupService update(CloudFoundryServer cloudServer, IProgressMonitor monitor)
+			throws CoreException {
+		ApplicationUrlLookupService lookUp = getCurrentLookup(cloudServer);
+		lookUp.refreshDomains(monitor);
+		return lookUp;
 	}
 
 }

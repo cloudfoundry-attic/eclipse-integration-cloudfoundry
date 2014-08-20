@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
@@ -171,6 +172,8 @@ public class ApplicationDeploymentUIHandler {
 							finWorkingCopy, providerDelegate);
 
 					try {
+						// Update the lookup
+						ApplicationUrlLookupService.update(server, monitor);
 						WizardDialog dialog = new WizardDialog(PlatformUI.getWorkbench().getModalDialogShellProvider()
 								.getShell(), wizard);
 						int dialogueStatus = dialog.open();

@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -25,6 +25,7 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
@@ -73,22 +74,11 @@ public class CloudFoundryApplicationWizard extends Wizard {
 
 		this.workingCopy = workingCopy;
 		applicationDescriptor = new ApplicationWizardDescriptor(this.workingCopy);
-		
+
 		// By default applications are started after being pushed to the server
 		applicationDescriptor.setApplicationStartMode(ApplicationAction.START);
 		setNeedsProgressMonitor(true);
 		setWindowTitle("Application");
-	}
-
-	@Override
-	public boolean canFinish() {
-		boolean canFinish = super.canFinish();
-		if (canFinish && wizardDelegate instanceof ApplicationWizardDelegate) {
-			canFinish = ((ApplicationWizardDelegate) wizardDelegate).getApplicationDelegate()
-					.validateDeploymentInfo(applicationDescriptor.getDeploymentInfo()).isOK();
-		}
-
-		return canFinish;
 	}
 
 	@Override
@@ -141,6 +131,14 @@ public class CloudFoundryApplicationWizard extends Wizard {
 			return new DeploymentConfiguration(applicationDescriptor.getApplicationStartMode());
 		}
 		return null;
+	}
+
+	public boolean requiresUrl() {
+		// By default, applications require a URL, unless specified by the delegate
+		return !(wizardDelegate instanceof ApplicationWizardDelegate)
+				|| ApplicationRegistry.requiresURL(
+						((ApplicationWizardDelegate) wizardDelegate).getApplicationDelegate(), module);
+
 	}
 
 	@Override

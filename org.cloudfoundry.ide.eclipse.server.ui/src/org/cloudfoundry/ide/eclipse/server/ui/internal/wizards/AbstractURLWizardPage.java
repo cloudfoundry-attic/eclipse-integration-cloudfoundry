@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -25,7 +25,6 @@ import org.cloudfoundry.ide.eclipse.server.ui.internal.ICoreRunnable;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.widgets.Display;
@@ -55,32 +54,16 @@ public abstract class AbstractURLWizardPage extends PartsWizardPage {
 		return urlLookup;
 	}
 
-	@Override
-	protected void performWhenPageVisible() {
-
-		// Refresh the application URL (since the URL host tends to the the
-		// application name, if the application name has changed
-		// make sure it gets updated in the UI. Also fetch the list of domains
-		// ONCE per session.
-		// Run all URL refresh and fetch in the same UI Job to ensure that
-		// domain updates occur first before the UI is refreshed.
-
-		if (!refreshedDomains) {
-			refreshApplicationUrlDomains();
-		}
-	}
-
 	protected void refreshApplicationUrlDomains() {
 
 		final ApplicationUrlLookupService urlLookup = getApplicationUrlLookup();
 		if (urlLookup == null) {
-			update(false,
+			update(true,
 					CloudFoundryPlugin
 							.getStatus(
 									"No Cloud application URL handler found. Possible error with the application delegate. Application may not deploy correctly.",
-									IStatus.WARNING));
+									IStatus.ERROR));
 			return;
-
 		}
 
 		final String operationLabel = "Fetching list of domains";
@@ -92,31 +75,28 @@ public abstract class AbstractURLWizardPage extends PartsWizardPage {
 					refreshedDomains = true;
 					// Must launch this again in the UI thread AFTER
 					// the refresh occurs.
-					Display.getDefault().asyncExec(new Runnable() {
+					Display.getDefault().syncExec(new Runnable() {
 
 						public void run() {
 							// Clear any info in the dialogue
 							setMessage(null);
-							update(false, Status.OK_STATUS);
-							postDomainsRefreshedOperation();
+
+							domainsRefreshed();
 						}
 
 					});
-
 				}
 				finally {
 					subProgress.done();
 				}
-
 			}
 		};
 		runAsynchWithWizardProgress(runnable, operationLabel);
-
 	}
 
 	/**
 	 * UI callback after the domains have been successfully refreshed.
 	 */
-	abstract protected void postDomainsRefreshedOperation();
+	abstract protected void domainsRefreshed();
 
 }

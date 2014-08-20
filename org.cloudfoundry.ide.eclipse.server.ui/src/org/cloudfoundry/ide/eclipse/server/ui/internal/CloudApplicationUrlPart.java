@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,13 +19,13 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudDomain;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudApplicationURL;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.ApplicationDeploymentEvent;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -45,15 +45,34 @@ import org.eclipse.swt.widgets.Text;
 /**
  * 
  * Allows users to edit or add an application URL based on a list of existing
- * URL Cloud domains
+ * URL Cloud domains.
+ * <p/>
+ * Application URL is defined by subdomain and domain segments. The UP part may
+ * keep track of a raw, unparsed URL , whether invalid or not, as the user has
+ * option to edit the full URL manually without necessarily specifying either a
+ * subdomain or domain.
+ * <p/>
+ * Any changes to the raw URL will be parsed into subdomain and domain segments
+ * if possible, based on a list of available domains for the account. If
+ * successfully parsed, any subdomain and domain controls will be updated as
+ * well. If not successfully parsed, at the very minimum any full URL controls
+ * will be kept up to date with the invalid URL.
+ * <p/>
+ * Any registered listeners are notified when there are changes to the URL, or
+ * any errors have occurred during validation or parsing of the URL.
  */
 public class CloudApplicationUrlPart extends UIPart {
 
-	protected final ApplicationUrlLookupService urlLookup;
+	protected final ApplicationUrlLookupService lookupService;
 
-	private String appURL;
+	/**
+	 * The current URL being edited, in raw form. Note that since URL value in
+	 * the UI needs to always be up to date but the URL itself may be invalid
+	 * and even not par
+	 */
+	private String currentUrl;
 
-	private String selectedDomain;
+	private Control validationSource;
 
 	private Text subDomainText;
 
@@ -61,76 +80,8 @@ public class CloudApplicationUrlPart extends UIPart {
 
 	private Combo domainCombo;
 
-	/**
-	 * Set to the Control that originates the event, and Set to null after ALL
-	 * other related controls are updated. The purpose of this is to prevent
-	 * multiple notifications and URL validations, if setting value in one
-	 * control also causes values in another control to be set.
-	 */
-	private Control modifyEventSource;
-
-	private List<String> domains = new ArrayList<String>();
-
-	public CloudApplicationUrlPart(ApplicationUrlLookupService urlLookup) {
-		this.urlLookup = urlLookup;
-	}
-
-	public void refreshDomains() {
-		domains.clear();
-		List<CloudDomain> cloudDomains = urlLookup.getDomains();
-		if (cloudDomains != null) {
-			for (CloudDomain cloudDomain : cloudDomains) {
-				domains.add(cloudDomain.getName());
-			}
-		}
-
-		setDomainInUI();
-
-	}
-
-	protected void setDomainInUI() {
-		if (domains != null && !domains.isEmpty() && domainCombo != null && !domainCombo.isDisposed()) {
-			domainCombo.setItems(domains.toArray(new String[0]));
-			int selectionIndex = 0;
-			// If there is already a selected domain, find it and select it in
-			// the UI
-			if (selectedDomain != null) {
-				for (int i = 0; i < domains.size(); i++) {
-					if (domains.get(i).equals(selectedDomain)) {
-						selectionIndex = i;
-						break;
-					}
-				}
-			}
-			else {
-				// Otherwise, by default, select the first domain
-				selectedDomain = domains.get(selectionIndex);
-			}
-			domainCombo.select(selectionIndex);
-		}
-	}
-
-	/**
-	 * Note: Triggers validation of the URL, and also notifies any listeners if
-	 * it is validate.
-	 * @param fullUrl
-	 */
-	public void updateFullUrl(String fullUrl) {
-		if (fullUrl != null && fullURLText != null && !fullURLText.isDisposed()) {
-			fullURLText.setText(fullUrl);
-		}
-	}
-
-	/**
-	 * Note: Triggers validation of the URL, and also notifies any listeners if
-	 * it is validate.
-	 * 
-	 * @param subDomain
-	 */
-	public void updateUrlSubdomain(String subDomain) {
-		if (subDomainText != null && !subDomainText.isDisposed()) {
-			subDomainText.setText(subDomain);
-		}
+	public CloudApplicationUrlPart(ApplicationUrlLookupService lookupService) {
+		this.lookupService = lookupService;
 	}
 
 	/**
@@ -158,10 +109,7 @@ public class CloudApplicationUrlPart extends UIPart {
 		subDomainText.addModifyListener(new ModifyListener() {
 
 			public void modifyText(ModifyEvent arg0) {
-				if (modifyEventSource == null) {
-					modifyEventSource = subDomainText;
-					setUrlFromSubdomainOrDomain();
-				}
+				resolveUrlFromSubdomain(subDomainText);
 			}
 		});
 
@@ -175,18 +123,9 @@ public class CloudApplicationUrlPart extends UIPart {
 		domainCombo.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent event) {
-				if (modifyEventSource == null) {
-					modifyEventSource = domainCombo;
-					int selectionIndex = domainCombo.getSelectionIndex();
-					if (selectionIndex != -1 && selectionIndex < domains.size()) {
-						selectedDomain = domains.get(selectionIndex);
-						setUrlFromSubdomainOrDomain();
-					}
-				}
+				resolveUrlFromSubdomain(domainCombo);
 			}
 		});
-
-		setDomainInUI();
 
 		label = new Label(subDomainComp, SWT.NONE);
 
@@ -199,84 +138,207 @@ public class CloudApplicationUrlPart extends UIPart {
 		fullURLText.addModifyListener(new ModifyListener() {
 
 			public void modifyText(ModifyEvent arg0) {
-				if (modifyEventSource == null) {
-					modifyEventSource = fullURLText;
-					appURL = fullURLText.getText();
-					validateFullURL();
-				}
+				currentUrl = fullURLText.getText();
+				validate(null, fullURLText);
 			}
 		});
 
 		return subDomainComp;
 
 	}
-
+	
 	public String getCurrentDomain() {
-		return selectedDomain;
-	}
-
-	protected void setUrlFromSubdomainOrDomain() {
-
-		String subdomain = subDomainText != null && !subDomainText.isDisposed() ? subDomainText.getText() : "";
-		StringWriter urlWriter = new StringWriter();
-
-		if (subdomain != null) {
-			urlWriter.append(subdomain);
-
-			if (selectedDomain != null) {
-				urlWriter.append('.');
+		if (isActive(domainCombo)) {
+			int selectionIndex = domainCombo.getSelectionIndex();
+			String[] domains = domainCombo.getItems();
+			if (selectionIndex >= 0 && selectionIndex < domains.length) {
+				return domains[selectionIndex];
 			}
 		}
-		if (selectedDomain != null) {
-			urlWriter.append(selectedDomain);
+		return null;
+	}
+
+	public void refreshDomains() {
+		if (isActive(domainCombo)) {
+			String existingSelection = getCurrentDomain();
+			List<String> domains = getDomains();
+			domainCombo.setItems(domains.toArray(new String[0]));
+			updateDomainSelection(existingSelection);
+		}
+	}
+
+	public void setUrl(String url) {
+		// Update the current URL, whether valid or not
+		currentUrl = url;
+
+		setTextValue(fullURLText, currentUrl);
+	}
+
+	public void setSubdomain(String subdomain) {
+		setTextValue(subDomainText, subdomain);
+	}
+
+	/**
+	 * Sets value in the given text control if the control is active , and there
+	 * is a change in the text control value. A null value will be set as an
+	 * empty String in the control (this serves as a way to "clear" the
+	 * control).
+	 * @param textControl where text needs to be set
+	 * @param value. If null, empty string will be set to clear the control
+	 */
+	protected void setTextValue(Text textControl, String value) {
+		if (value == null) {
+			value = "";
+		}
+		// Only set value if change occurred to avoid unnecessary validation
+		if (isActive(textControl) && !textControl.getText().equals(value)) {
+			// Setting value will notify Control listener which then
+			// triggers validation
+			textControl.setText(value);
+		}
+	}
+
+	protected void resolveUrlFromSubdomain(Control source) {
+		String subdomain = subDomainText.getText();
+		String domain = getCurrentDomain();
+
+		CloudApplicationURL suggestedUrl = new CloudApplicationURL(subdomain, domain);
+
+		validate(suggestedUrl, source);
+	}
+
+	protected boolean isActive(Control control) {
+		return control != null && !control.isDisposed();
+	}
+
+	/**
+	 * Validate a given application URL. If no application URL is specified, a
+	 * raw URL will be validated instead, if available.
+	 * 
+	 * <p/>
+	 * If the URL is valid, meaning it has valid subdomain and domain segments:
+	 * 
+	 * <p/>
+	 * 1. UI controls will be updated ONLY if there have been changes to the
+	 * control values
+	 * <p/>
+	 * 2. If there are changes to values, or error occurred during validation,
+	 * an event will be fired to notify any registered listeners
+	 * <p/>
+	 * @param appUrl
+	 * @param status
+	 */
+	protected void validate(CloudApplicationURL appUrl, Control source) {
+		// Validation has already been requested by a control, therefore don't
+		// start another
+		// one to avoid recursive validations
+		if (this.validationSource != null) {
+			return;
 		}
 
-		appURL = urlWriter.toString();
+		this.validationSource = source;
 
-		if (fullURLText != null && !fullURLText.isDisposed()) {
-			fullURLText.setText(appURL);
-		}
-
-		modifyEventSource = null;
-
+		// If no Application URL is given with subdomain and domain values set,
+		// attempt to parse the existing
+		// current URL as it may have changed manually
 		IStatus status = Status.OK_STATUS;
+		if (appUrl == null) {
 
-		try {
-			getCloudApplicationUrl(appURL);
+			if (currentUrl != null) {
+				try {
+					appUrl = lookupService.getCloudApplicationURL(currentUrl);
+				}
+				catch (CoreException ce) {
+					status = ce.getStatus();
+				}
+			}
 		}
-		catch (CoreException ce) {
-			status = ce.getStatus();
+		else {
+			try {
+				appUrl = lookupService.validateCloudApplicationUrl(appUrl);
+			}
+			catch (CoreException ce) {
+				status = ce.getStatus();
+			}
 		}
-		notifyURLChanged(appURL, status);
 
+		// Update the current URL regardless of whether the Application URL is
+		// valid or not, to make sure UI controls are up-to-date
+		if (appUrl != null) {
+			currentUrl = appUrl.getUrl();
+		}
+
+		if (this.validationSource != fullURLText) {
+			setTextValue(fullURLText, currentUrl);
+		}
+
+		if (this.validationSource != domainCombo) {
+			String domain = appUrl != null ? appUrl.getDomain() : null;
+			updateDomainSelection(domain);
+		}
+
+		if (this.validationSource != subDomainText) {
+			String subDomain = appUrl != null ? appUrl.getSubdomain() : null;
+			setTextValue(subDomainText, subDomain);
+		}
+
+		validationSource = null;
+
+		notifyChange(new PartChangeEvent(currentUrl, status, ApplicationDeploymentEvent.APPLICATION_URL_CHANGED));
 	}
 
-	protected void validateFullURL() {
-		IStatus status = Status.OK_STATUS;
-		// Try to parse the url based on the known list of domains.
-		// If not found, allow it anyway.
-		try {
-			CloudApplicationURL cloudAppURL = getCloudApplicationUrl(appURL);
-
-			String subDomain = cloudAppURL.getSubdomain();
-			selectedDomain = cloudAppURL.getDomain();
-			subDomainText.setText(subDomain);
-			setDomainInUI();
+	/**
+	 * 
+	 * @return non-null list of Domains.
+	 */
+	protected List<String> getDomains() {
+		List<String> domains = new ArrayList<String>();
+		List<CloudDomain> cloudDomains = lookupService.getDomains();
+		if (cloudDomains != null) {
+			for (CloudDomain cldm : cloudDomains) {
+				domains.add(cldm.getName());
+			}
 		}
-		catch (CoreException e) {
-			// Otherwise, perform simple validation
-			status = urlLookup.simpleValidation(appURL);
-		}
-
-		modifyEventSource = null;
-		notifyURLChanged(appURL, status);
+		return domains;
 	}
 
-	protected CloudApplicationURL getCloudApplicationUrl(String appURL) throws CoreException {
-		return urlLookup.getCloudApplicationURL(appURL);
+	protected void updateDomainSelection(String domain) {
+
+		if (isActive(domainCombo)) {
+
+			// If no domain is to be set, or it no longer exists in list of
+			// domains (possibly because list of domains has been changed),
+			// select
+			// a default one
+			if (getSelectionIndex(domain) < 0 && getCurrentDomain() == null) {
+				List<String> domains = getDomains();
+
+				if (!domains.isEmpty()) {
+					domain = domains.get(0);
+				}
+			}
+
+			if (domain != null) {
+				int selectionIndex = getSelectionIndex(domain);
+
+				if (selectionIndex > -1) {
+					domainCombo.select(selectionIndex);
+				}
+			}
+		}
 	}
 
-	protected void notifyURLChanged(String appURL, IStatus status) {
-		notifyStatusChange(appURL, status);
+	protected int getSelectionIndex(String domain) {
+		int selectionIndex = -1;
+		String[] domains = domainCombo.getItems();
+		if (domains != null) {
+			for (int i = 0; i < domains.length; i++) {
+				if (domains[i].equals(domain)) {
+					selectionIndex = i;
+					break;
+				}
+			}
+		}
+		return selectionIndex;
 	}
 }

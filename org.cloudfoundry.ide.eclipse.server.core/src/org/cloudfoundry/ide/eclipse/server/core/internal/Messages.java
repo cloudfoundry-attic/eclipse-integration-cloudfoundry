@@ -35,6 +35,16 @@ public class Messages {
 
 	public static final String ERROR_FAILED_REST_CLIENT = "Client error - {0}";
 
+	public static final String ERROR_NO_DOMAINS = "No application domains resolved for {0}. Unable to generate a default application URL for {1}";
+	
+	public static final String ERROR_NO_DOMAINS_AVAILABLE = "No domains available. Please check connection and try again.";
+	
+	public static final String ERROR_NO_DOMAIN_RESOLVED_FOR_URL = "Unable to resolve domain for URL - {0}. Please select another domain";
+	
+	public static final String ERROR_INVALID_SUBDOMAIN = "Invalid URL - {0} - subdomain not specified for domain - {1}";
+
+	public static final String ERROR_MANIFEST_PARSING_NO_DOMAINS = "Unable to resolve domains while parsing the application URL from manifest file. Application URL may require a manual update.";
+
 	public static final String ERROR_FAILED_RESOLVE_ORGS_SPACES_DUE_TO_ERROR = "Failed to resolve organizations and spaces - {0}";
 
 	public static final String ERROR_SERVER_INSTANCE_CLOUD_SPACE_EXISTS = "A server instance ({0}) for space: {1} - already exists. Please select another cloud space if available.";
@@ -92,6 +102,8 @@ public class Messages {
 	public static final String ERROR_EXISTING_APPLICATION_LOGS = "Failed to fetch recent application logs for {0} - {1}";
 
 	public static final String ERROR_APPLICATION_LOG_LISTENER = "Failed to add application log listener for {0} - {1}";
+	
+	public static final String ERROR_NO_MAPPED_APPLICATION_URLS = "No mapped application URLs set in application deployment information.";
 
 	/*
 	 * Warnings

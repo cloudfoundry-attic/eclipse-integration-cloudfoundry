@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
@@ -117,7 +118,7 @@ public class ApplicationRegistry {
 		if (providerID == null) {
 			return null;
 		}
-		
+
 		if (delegates == null) {
 			delegates = load();
 		}
@@ -230,6 +231,21 @@ public class ApplicationRegistry {
 		}
 
 		return providerMap;
+	}
+
+	/**
+	 * Determines if the application requires a URL. By default, applications
+	 * are required to have at least one mapped URL, unless otherwise specified
+	 * by the application's delegate.
+	 * @param delegate
+	 * @param appModule
+	 * @return true if application URL is required for the given application.
+	 * False otherwise.
+	 */
+	public static boolean requiresURL(AbstractApplicationDelegate delegate, CloudFoundryApplicationModule appModule) {
+		return delegate == null
+				|| (delegate instanceof ModuleResourceApplicationDelegate ? ((ModuleResourceApplicationDelegate) delegate)
+						.requiresURL(appModule) : delegate.requiresURL());
 	}
 
 }

@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
@@ -34,14 +33,14 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudApplicationUrlPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.IEventSource;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.UIPart;
-import org.eclipse.core.runtime.CoreException;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.WizardPartChangeEvent;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -84,23 +83,20 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 
 	private MemoryPart memoryPart;
 
-	private ApplicationWizardDelegate wizardDelegate;
-
-	static final int APP_NAME_CHANGE_EVENT = 10;
-
-	static final int APP_NAME_INIT = 100;
-
 	private static final String DEFAULT_MEMORY = CloudUtil.DEFAULT_MEMORY + "";
 
 	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor, ApplicationUrlLookupService urlLookup,
 			ApplicationWizardDelegate wizardDelegate) {
-		super("deployment", null, null, urlLookup);
+		super("deployment", null, null);
 		this.server = server;
 		this.module = module;
 		this.descriptor = descriptor;
 		this.serverTypeId = module.getServerTypeId();
-		this.wizardDelegate = wizardDelegate;
+		// Create the part before area is created as it be invoked by the page's
+		// event handler before the page is visible.
+		urlPart = createUrlPart(urlLookup);
+		urlPart.addPartChangeListener(this);
 	}
 
 	/**
@@ -110,10 +106,6 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	protected void performWhenPageVisible() {
 
 		refreshMemoryOptions();
-		// Only refresh Domains once.
-		if (!refreshedDomains) {
-			refreshApplicationUrlDomains();
-		}
 	}
 
 	protected void refreshMemoryOptions() {
@@ -133,16 +125,17 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 		catch (NumberFormatException e) {
 			// ignore. error is handled below
 		}
+		IStatus status = Status.OK_STATUS;
 		if (memory > 0) {
 			descriptor.getDeploymentInfo().setMemory(memory);
-			update(true, Status.OK_STATUS);
 		}
 		else {
 			// Set an invalid memory so next time page opens, it restores a
 			// valid value
 			descriptor.getDeploymentInfo().setMemory(-1);
-			update(true, CloudFoundryPlugin.getErrorStatus(Messages.ERROR_INVALID_MEMORY));
+			status = CloudFoundryPlugin.getErrorStatus(Messages.ERROR_INVALID_MEMORY);
 		}
+		handleChange(new PartChangeEvent(memoryVal, status, ApplicationDeploymentEvent.MEMORY));
 	}
 
 	public void createControl(Composite parent) {
@@ -162,10 +155,6 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 		createAreas(composite);
 
 		setControl(composite);
-
-		// Do not validate values yet. When controls are populated, they will
-		// fire validation events accordingly
-		update(false, Status.OK_STATUS);
 	}
 
 	protected void createAreas(Composite parent) {
@@ -182,9 +171,9 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	}
 
 	protected void createURLArea(Composite parent) {
-		urlPart = createUrlPart(getApplicationUrlLookup());
 		urlPart.createPart(parent);
-		urlPart.addPartChangeListener(this);
+		urlPart.refreshDomains();
+		updateApplicationURL();
 	}
 
 	protected CloudApplicationUrlPart createUrlPart(ApplicationUrlLookupService urlLookup) {
@@ -329,25 +318,30 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	 * (org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent)
 	 */
 	public void handleChange(PartChangeEvent event) {
-		String value = event.getData() instanceof String ? (String) event.getData() : null;
+		Object eventData = event.getData();
+		IEventSource<?> source = event.getSource();
 
-		// If the event originated from the URL UI, just update the URL in the
+		// If the event originated from the URL UI, just update the URL in
+		// the
 		// descriptor. No other UI needs to be updated.
-		if (event.getSource() == urlPart) {
-			setUrlInDescriptor(value);
-		}
-		// If the app name changed, then update both the descriptor and the UI
-		else if (event.getType() == APP_NAME_CHANGE_EVENT || event.getType() == APP_NAME_INIT) {
-			updateApplicationNameInDescriptor(value);
+		if (event.getSource() == ApplicationDeploymentEvent.APPLICATION_URL_CHANGED) {
+			String urlVal = eventData instanceof String ? (String) eventData : null;
+			setUrlInDescriptor(urlVal);
 
-			// If the list of domains has been refreshed, update the URL in the
-			// UI right away. Otherwise
-			// wait for the refresh to finish and invoke the call back that then
-			// updates the UI (see the postDomainRefreshOperation callback).
-
-			if (event.getType() == APP_NAME_CHANGE_EVENT) {
-				updateDescriptorURLwithAppName(value);
+			IStatus status = event.getStatus();
+			// Don't show the error if the application does not require a URL
+			// and the URL is empty
+			if (ValueValidationUtil.isEmpty(urlVal) && !requiresUrl()) {
+				status = Status.OK_STATUS;
 			}
+			event = new WizardPartChangeEvent(eventData, status, event.getSource(), true);
+
+		}
+		else if (source == ApplicationDeploymentEvent.APP_NAME_CHANGE_EVENT) {
+			String value = (String) event.getData();
+			updateApplicationNameInDescriptor(value);
+			// Set the application URL based on the app name.
+			updateApplicationURLFromAppName();
 		}
 
 		super.handleChange(event);
@@ -361,55 +355,36 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 		}
 
 		descriptor.getDeploymentInfo().setDeploymentName(appName);
-
 	}
 
-	protected void updateDescriptorURLwithAppName(String appName) {
-		// When the app name changes, the URL also changes, but only for
-		// application types that require a URL. By default, it
-		// is assumed that the app needs a URL, unless otherwise specified by
-		// the app's delegate
-		if (wizardDelegate == null || wizardDelegate.getApplicationDelegate() == null
-				|| wizardDelegate.getApplicationDelegate().requiresURL()) {
+	protected void updateApplicationURL() {
 
-			String url = null;
-			if (appName != null) {
-				// First see if there is a selected Domain.
+		List<String> urls = descriptor.getDeploymentInfo().getUris();
+		String url = urls != null && !urls.isEmpty() ? urls.get(0) : null;
 
-				String selectedDomain = urlPart != null ? urlPart.getCurrentDomain() : null;
-
-				if (selectedDomain == null) {
-					// use a default URL
-					CloudApplicationURL appURL = null;
-					try {
-						appURL = getApplicationUrlLookup().getDefaultApplicationURL(appName);
-					}
-					catch (CoreException e) {
-						// Do not disable the wizard. Users can still enter a
-						// domain manually.
-						update(false,
-								CloudFoundryPlugin.getStatus(
-										NLS.bind(
-												"Unable to resolve a domain due to {0} - Enter a domain manually to continue deploying the application",
-												e.getMessage()), IStatus.WARNING));
-					}
-
-					if (appURL != null) {
-						url = appURL.getUrl();
-					}
-				}
-
-				// If url was not yet resolved, manually construct it
-				if (url == null && selectedDomain != null) {
-					url = appName + '.' + selectedDomain;
-				}
-			}
-
-			setUrlInDescriptor(url);
-			if (urlPart != null) {
-				urlPart.updateFullUrl(url);
-			}
+		// Existing URLs have higher priority than URLs generated from the
+		// application name
+		if (url != null) {
+			urlPart.setUrl(url);
 		}
+		else {
+			updateApplicationURLFromAppName();
+		}
+	}
+
+	protected void updateApplicationURLFromAppName() {
+		if (requiresUrl()) {
+			// When the app name changes, the URL also changes, but only for
+			// application types that require a URL.
+			String appName = descriptor.getDeploymentInfo().getDeploymentName();
+
+			urlPart.setSubdomain(appName);
+		}
+	}
+
+	protected boolean requiresUrl() {
+		return !(getWizard() instanceof CloudFoundryApplicationWizard)
+				|| ((CloudFoundryApplicationWizard) getWizard()).requiresUrl();
 	}
 
 	class MemoryPart extends UIPart {
@@ -443,33 +418,13 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 					memory.setText(currentMemory + "");
 				}
 			}
-
 		}
 	}
 
 	@Override
-	protected void postDomainsRefreshedOperation() {
+	protected void domainsRefreshed() {
 		urlPart.refreshDomains();
-		if (urlPart == null) {
-			return;
-		}
-
-		// If the app already has a URL, use that in the part. Otherwise, set a
-		// url based on the app's deployment name
-		List<String> urls = descriptor.getDeploymentInfo().getUris();
-		String url = urls != null && !urls.isEmpty() ? urls.get(0) : null;
-
-		if (url != null) {
-			urlPart.updateFullUrl(url);
-		}
-		else {
-			String appName = descriptor.getDeploymentInfo().getDeploymentName();
-
-			if (appName != null) {
-				urlPart.updateUrlSubdomain(appName);
-			}
-		}
-
+		updateApplicationURL();
 	}
 
 }

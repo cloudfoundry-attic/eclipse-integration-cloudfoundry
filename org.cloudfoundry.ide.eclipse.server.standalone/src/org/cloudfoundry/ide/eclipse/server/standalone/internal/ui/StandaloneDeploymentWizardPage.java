@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -26,7 +26,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupSer
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudApplicationUrlPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.ApplicationWizardDelegate;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.ApplicationWizardDescriptor;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryDeploymentWizardPage;
@@ -43,12 +42,6 @@ public class StandaloneDeploymentWizardPage extends
 	}
 
 	@Override
-	protected CloudApplicationUrlPart createUrlPart(
-			ApplicationUrlLookupService urlLookup) {
-		return new StandaloneAppUrlPart(urlLookup);
-	}
-
-	@Override
 	protected void setUrlInDescriptor(String url) {
 
 		if (ValueValidationUtil.isEmpty(url)) {
@@ -60,17 +53,6 @@ public class StandaloneDeploymentWizardPage extends
 			return;
 		}
 		super.setUrlInDescriptor(url);
-	}
-
-	@Override
-	protected void postDomainsRefreshedOperation() {
-		if (urlPart == null) {
-			return;
-		}
-		urlPart.refreshDomains();
-
-		// Do not update the app URL after domains have been refreshed as
-		// standalone does not require URL
 	}
 
 }

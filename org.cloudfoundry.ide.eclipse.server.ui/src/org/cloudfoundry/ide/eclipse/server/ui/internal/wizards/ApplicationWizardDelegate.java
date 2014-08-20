@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -24,9 +24,7 @@ import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 /**
  * 
  * This contains a reference to the core-level application delegate, which
- * contains API to push an application to a CF server. Since a wizard delegate
- * does NOT require a map to a core level application delegate, the link between
- * the two is not pushed up to the parent.
+ * contains API to push an application to a CF server. 
  */
 public abstract class ApplicationWizardDelegate implements IApplicationWizardDelegate {
 
