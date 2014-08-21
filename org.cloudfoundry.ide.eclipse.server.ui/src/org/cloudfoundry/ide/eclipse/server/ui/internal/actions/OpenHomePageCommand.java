@@ -42,7 +42,7 @@ import org.eclipse.wst.server.core.model.IURLProvider;
 public class OpenHomePageCommand extends BaseCommandHandler {
 
 	private String TITLE = "Open Home Page";
-	private String DESCRIPTION = "Select the module to launch home page from";
+	private String DESCRIPTION = "Select the module to launch the home page from";
 	
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		initializeSelection(event);
