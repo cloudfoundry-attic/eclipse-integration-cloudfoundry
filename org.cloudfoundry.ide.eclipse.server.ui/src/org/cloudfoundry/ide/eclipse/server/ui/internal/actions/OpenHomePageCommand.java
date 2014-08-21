@@ -41,7 +41,8 @@ import org.eclipse.wst.server.core.model.IURLProvider;
 
 public class OpenHomePageCommand extends BaseCommandHandler {
 
-	private String SELECTION_TEXT = "Select the module to launch home page from";
+	private String TITLE = "Open Home Page";
+	private String DESCRIPTION = "Select the module to launch home page from";
 	
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		initializeSelection(event);
@@ -82,7 +83,8 @@ public class OpenHomePageCommand extends BaseCommandHandler {
 								}
 								
 								ElementListSelectionDialog dialog = new ElementListSelectionDialog(PlatformUI.getWorkbench().getDisplay().getActiveShell(), new LabelProvider());
-								dialog.setTitle(SELECTION_TEXT);
+								dialog.setTitle(TITLE);
+								dialog.setMessage(DESCRIPTION);
 								dialog.setElements(selectionOptions.toArray());
 
 
