@@ -48,6 +48,7 @@ import org.cloudfoundry.client.lib.domain.ApplicationStats;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.client.lib.domain.CloudDomain;
+import org.cloudfoundry.client.lib.domain.CloudRoute;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
@@ -1502,6 +1503,35 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}.run(monitor);
 	}
 
+	public List<CloudRoute> getRoutes(final String domainName, IProgressMonitor monitor) throws CoreException {
+
+		List<CloudRoute> routes = new BehaviourRequest<List<CloudRoute>>(NLS.bind(Messages.ROUTES, domainName)) {
+			@Override
+			protected List<CloudRoute> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				return client.getRoutes(domainName);
+			}
+		}.run(monitor);
+
+		return routes;
+	}
+
+	public void deleteRoute(final List<CloudRoute> routes, IProgressMonitor monitor) throws CoreException {
+
+		if (routes == null || routes.isEmpty()) {
+			return;
+		}
+		new BehaviourRequest<Void>("Deleting routes") {
+			@Override
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				for (CloudRoute route : routes) {
+					client.deleteRoute(route.getHost(), route.getDomain().getName());
+				}
+				return null;
+
+			}
+		}.run(monitor);
+	}
+
 	/**
 	 * Attempts to retrieve cloud spaces using the given set of credentials and
 	 * server URL. This bypasses the session client in a Cloud Foundry server
@@ -2420,7 +2450,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			// Create the application if it doesn't already exist
 			if (!found) {
-				
+
 				printlnToConsole(appModule, Messages.CONSOLE_APP_CREATION);
 
 				Staging staging = appModule.getDeploymentInfo().getStaging();

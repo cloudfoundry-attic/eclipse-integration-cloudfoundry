@@ -163,6 +163,8 @@ public class Messages {
 
 	public static final String VALIDATING_CREDENTIALS = "Validating credentials";
 
+	public static final String ROUTES = "Getting routes for domain - {0}";
+	
 	/*
 	 * Labels
 	 */

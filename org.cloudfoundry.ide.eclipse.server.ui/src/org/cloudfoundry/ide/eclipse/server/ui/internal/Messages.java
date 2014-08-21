@@ -44,6 +44,8 @@ public class Messages {
 
 	public static final String ERROR_FAILED_INITIALISE_APPLICATION_LOG_STREAM = "Failed to initialise application log stream due to missing cloud application module or cloud server. No application logs will be streamed.";
 
+	public static final String ERROR_ROUTE_IN_USE = "Error: Cloud route - {0} - is in use. Please only delete routes that are not in use.";
+
 	public static final String UNKNOWN_APPLICATION = "Unknown application";
 
 	/*
@@ -62,6 +64,20 @@ public class Messages {
 
 	public static final String SELECT_SERVER_URL = "Select a {0} URL";
 
+	public static final String ROUTE_NAME = "Name";
+
+	public static final String ROUTES_SHOW_IN_USE = "Show In Use";
+
+	public static final String ROUTES_SHOW_REMOVED = "Show Removed";
+
+	public static final String REMOVE = "Remove";
+
+	public static final String SELECT_ALL = "Select All";
+
+	public static final String DESELECT_ALL = "Deselect All";
+
+	public static final String DOMAIN_COMBO = "Domain:";
+
 	/*
 	 * Dialogue messages
 	 */
@@ -70,5 +86,9 @@ public class Messages {
 	public static final String SHOWING_CONSOLE = "Fetching console contents. Please wait...\n";
 
 	public static final String CLONE_SERVER_WIZARD_OK_MESSAGE = "Please select a cloud space and enter a server name to create a new server instance to that space.";
+
+	public static final String ROUTE_PAGE_DESCRIPTION = "Select Cloud routes to remove";
+
+	public static final String REFRESHING_DOMAIN_ROUTES = "Refreshing list of domains and routes";
 
 }

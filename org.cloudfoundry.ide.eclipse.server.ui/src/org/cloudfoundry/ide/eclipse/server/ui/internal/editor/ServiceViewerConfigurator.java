@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,13 +19,12 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.editor;
 
+import org.cloudfoundry.ide.eclipse.server.ui.internal.ColumnSortListener;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.ServiceViewColumn.ServiceViewColumnDescriptor;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
@@ -127,36 +126,6 @@ public class ServiceViewerConfigurator {
 			lastColumn.setWidth(newWidth);
 		}
 
-	}
-
-	protected class ColumnSortListener extends SelectionAdapter {
-
-		private final TableViewer viewer;
-
-		public ColumnSortListener(TableViewer viewer) {
-			this.viewer = viewer;
-		}
-
-		public void widgetSelected(SelectionEvent e) {
-			if (e.widget instanceof TableColumn) {
-				TableColumn selected = (TableColumn) e.widget;
-				Table table = viewer.getTable();
-				TableColumn current = table.getSortColumn();
-
-				int newDirection = SWT.UP;
-				// If selecting a different column, keep the ascending
-				// direction as default. Only switch
-				// directions if the same column has been selected.
-				if (current == selected) {
-					newDirection = table.getSortDirection() == SWT.UP ? SWT.DOWN : SWT.UP;
-				}
-				else {
-					table.setSortColumn(selected);
-				}
-				table.setSortDirection(newDirection);
-				viewer.refresh();
-			}
-		}
 	}
 
 }
