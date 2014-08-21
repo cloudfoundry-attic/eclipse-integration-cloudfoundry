@@ -1293,6 +1293,25 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return Status.OK_STATUS;
 	}
 
+        /**
+	 * Judges whether there is a <code>CloudFoundryApplicationModule</code> with the given name 
+	 * in current server or not.
+	 * 
+	 * @param moduleName the module name to be checked
+	 * @return true if there is a <code>CloudFoundryApplicationModule</code> with the 
+	 *     given name in current server, false otherwise
+	 */
+	public boolean existCloudApplicationModule(String moduleName) {
+		List<IModule[]> allModules = getAllModules();
+		for (IModule[] modules : allModules) {
+			if (modules[0] instanceof CloudFoundryApplicationModule 
+			    && modules[0].getName().equals(moduleName)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	protected void handlePublishError(CoreException e) {
 		// Do not automatically delete apps on errors, even
 		// if critical errors
