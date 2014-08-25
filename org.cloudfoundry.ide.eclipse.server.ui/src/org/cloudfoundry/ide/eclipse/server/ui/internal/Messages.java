@@ -44,7 +44,7 @@ public class Messages {
 
 	public static final String ERROR_FAILED_INITIALISE_APPLICATION_LOG_STREAM = "Failed to initialise application log stream due to missing cloud application module or cloud server. No application logs will be streamed.";
 
-	public static final String ERROR_ROUTE_IN_USE = "Error: Cloud route - {0} - is in use. Please only delete routes that are not in use.";
+	public static final String ERROR_ROUTE_IN_USE = "Cloud route - {0} - is in use. Please only delete routes that are not in use.";
 
 	public static final String UNKNOWN_APPLICATION = "Unknown application";
 

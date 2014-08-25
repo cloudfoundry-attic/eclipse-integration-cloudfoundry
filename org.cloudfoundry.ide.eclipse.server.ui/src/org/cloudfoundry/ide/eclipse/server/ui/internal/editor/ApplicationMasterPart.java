@@ -68,9 +68,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.ui.forms.IFormColors;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.SectionPart;
 import org.eclipse.ui.forms.widgets.FormToolkit;
@@ -398,25 +396,22 @@ public class ApplicationMasterPart extends SectionPart {
 				| Section.TWISTIE);
 		routeSection.setLayout(new GridLayout());
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(routeSection);
-		routeSection.setText("Domains and Routes");
+		routeSection.setText("Routes");
 		routeSection.setExpanded(true);
 
 		routeSection.clientVerticalSpacing = 0;
 
 		Composite client = toolkit.createComposite(routeSection);
-		client.setLayout(new GridLayout(2, false));
+		client.setLayout(new GridLayout(1, false));
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(client);
 		routeSection.setClient(client);
 
-		Label label = toolkit.createLabel(client, "Routes:");
-		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(label);
-		label.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
-		Button button = toolkit.createButton(client, "Edit...", SWT.PUSH);
-		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).hint(50, SWT.DEFAULT).applyTo(button);
+		Button button = toolkit.createButton(client, "Remove...", SWT.PUSH);
+		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(button);
 
 		button.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				UIJob uiJob = new UIJob("Edit Cloud routes") {
+				UIJob uiJob = new UIJob("Remove Cloud routes") {
 
 					public IStatus runInUIThread(IProgressMonitor monitor) {
 						CloudRoutesWizard wizard = new CloudRoutesWizard(cloudServer);
