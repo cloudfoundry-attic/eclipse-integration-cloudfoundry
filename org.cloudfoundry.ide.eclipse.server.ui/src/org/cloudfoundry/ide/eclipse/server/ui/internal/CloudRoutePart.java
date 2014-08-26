@@ -369,7 +369,13 @@ public class CloudRoutePart extends UIPart {
 			tableColumn.setWidth(clm.getWidth());
 			tableColumn.setData(clm);
 			columnProperties.add(clm.getName());
-			tableColumn.addSelectionListener(new ColumnSortListener(tableViewer));
+			tableColumn.addSelectionListener(new ColumnSortListener(tableViewer) {
+
+				protected void refresh() {
+					refreshAll();
+				}
+
+			});
 
 			if (sortColumn == null) {
 				sortColumn = tableColumn;

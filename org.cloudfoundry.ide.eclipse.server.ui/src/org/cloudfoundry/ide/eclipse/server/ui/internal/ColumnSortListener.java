@@ -51,7 +51,11 @@ public class ColumnSortListener extends SelectionAdapter {
 				table.setSortColumn(selected);
 			}
 			table.setSortDirection(newDirection);
-			viewer.refresh();
+			refresh();
 		}
+	}
+
+	protected void refresh() {
+		viewer.refresh();
 	}
 }
