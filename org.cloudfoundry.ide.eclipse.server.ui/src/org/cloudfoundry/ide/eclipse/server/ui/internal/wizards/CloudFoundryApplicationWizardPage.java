@@ -211,7 +211,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 			}
 		}
 
-		handleChange(new PartChangeEvent(buildpack, status, ApplicationDeploymentEvent.BUILD_PACK_URL));
+		handleChange(new PartChangeEvent(buildpack, status, CloudUIEvent.BUILD_PACK_URL));
 
 	}
 
@@ -271,7 +271,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 					// buttons as the may not be available to update yet
 					boolean updateButtons = true;
 					notifyChange(new WizardPartChangeEvent(appName, getUpdateNameStatus(),
-							ApplicationDeploymentEvent.APP_NAME_CHANGE_EVENT, updateButtons));
+							CloudUIEvent.APP_NAME_CHANGE_EVENT, updateButtons));
 				}
 			});
 

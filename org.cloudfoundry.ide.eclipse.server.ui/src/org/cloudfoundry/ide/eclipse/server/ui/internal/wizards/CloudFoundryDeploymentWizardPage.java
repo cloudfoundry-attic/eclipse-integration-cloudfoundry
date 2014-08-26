@@ -135,7 +135,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 			descriptor.getDeploymentInfo().setMemory(-1);
 			status = CloudFoundryPlugin.getErrorStatus(Messages.ERROR_INVALID_MEMORY);
 		}
-		handleChange(new PartChangeEvent(memoryVal, status, ApplicationDeploymentEvent.MEMORY));
+		handleChange(new PartChangeEvent(memoryVal, status, CloudUIEvent.MEMORY));
 	}
 
 	public void createControl(Composite parent) {
@@ -324,7 +324,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 		// If the event originated from the URL UI, just update the URL in
 		// the
 		// descriptor. No other UI needs to be updated.
-		if (event.getSource() == ApplicationDeploymentEvent.APPLICATION_URL_CHANGED) {
+		if (event.getSource() == CloudUIEvent.APPLICATION_URL_CHANGED) {
 			String urlVal = eventData instanceof String ? (String) eventData : null;
 			setUrlInDescriptor(urlVal);
 
@@ -337,7 +337,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 			event = new WizardPartChangeEvent(eventData, status, event.getSource(), true);
 
 		}
-		else if (source == ApplicationDeploymentEvent.APP_NAME_CHANGE_EVENT) {
+		else if (source == CloudUIEvent.APP_NAME_CHANGE_EVENT) {
 			String value = (String) event.getData();
 			updateApplicationNameInDescriptor(value);
 			// Set the application URL based on the app name.

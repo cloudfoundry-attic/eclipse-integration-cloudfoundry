@@ -103,6 +103,10 @@ public class CloudRoutesWizard extends Wizard {
 		}
 
 		protected void performWhenPageVisible() {
+			updateRoutes();
+		}
+
+		protected void updateRoutes() {
 
 			runAsynchWithWizardProgress(new ICoreRunnable() {
 
@@ -154,7 +158,7 @@ public class CloudRoutesWizard extends Wizard {
 		@Override
 		public void handleChange(PartChangeEvent event) {
 
-			if (event.getSource() == routePart) {
+			if (event.getSource() == CloudRoutePart.ROUTES_REMOVED) {
 				Object data = event.getData();
 				if (data instanceof List<?>) {
 					List<?> routes = (List<?>) data;

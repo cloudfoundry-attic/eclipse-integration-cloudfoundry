@@ -71,6 +71,8 @@ public class Messages {
 	public static final String ROUTES_SHOW_REMOVED = "Show Removed";
 
 	public static final String REMOVE = "Remove";
+	
+	public static final String UNDO = "Undo";
 
 	public static final String SELECT_ALL = "Select All";
 
@@ -87,7 +89,7 @@ public class Messages {
 
 	public static final String CLONE_SERVER_WIZARD_OK_MESSAGE = "Please select a cloud space and enter a server name to create a new server instance to that space.";
 
-	public static final String ROUTE_PAGE_DESCRIPTION = "Select Cloud routes to remove";
+	public static final String ROUTE_PAGE_DESCRIPTION = "Press 'Remove' to remove selected Cloud routes. Changes do not take effect until 'Finish' is pressed.";
 
 	public static final String REFRESHING_DOMAIN_ROUTES = "Refreshing list of domains and routes";
 

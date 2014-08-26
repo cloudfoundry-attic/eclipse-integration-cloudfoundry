@@ -20,13 +20,13 @@
 package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudRoute;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudUIEvent;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -36,35 +36,44 @@ import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.swt.widgets.Widget;
 
 /**
  * Allows Cloud routes to be viewed and edited.
  */
 public class CloudRoutePart extends UIPart {
 
+	public static IEventSource<?> ROUTES_REMOVED = new CloudUIEvent("Routes Removed");
+
 	private CheckboxTableViewer viewer;
 
-	private Button activeButton;
+	private Button showInUseButton;
 
-	private Button showDeletedButton;
+	private Button showRemovedRoutesButton;
 
 	private Button removeButton;
 
 	private static final String IN_USE = "x";
 
-	private List<CloudRoute> toDelete = new ArrayList<CloudRoute>();
+	private List<CloudRoute> routesToRemove = new ArrayList<CloudRoute>();
 
-	private List<CloudRoute> routes = new ArrayList<CloudRoute>();
+	private List<CloudRoute> allRoutes = new ArrayList<CloudRoute>();
+
+	private final Color DISABLED = Display.getDefault().getSystemColor(SWT.COLOR_GRAY);
 
 	protected enum RouteColumn {
 
@@ -97,7 +106,7 @@ public class CloudRoutePart extends UIPart {
 	}
 
 	public List<CloudRoute> getRoutesToDelete() {
-		return toDelete;
+		return routesToRemove;
 	}
 
 	public void setInput(List<CloudRoute> routes) {
@@ -107,10 +116,11 @@ public class CloudRoutePart extends UIPart {
 			return;
 		}
 
-		this.routes = new ArrayList<CloudRoute>(routes);
+		this.allRoutes = new ArrayList<CloudRoute>(routes);
 
 		viewer.setInput(routes);
 
+		refreshAll();
 	}
 
 	public Control createPart(Composite parent) {
@@ -128,31 +138,43 @@ public class CloudRoutePart extends UIPart {
 	}
 
 	protected void createFilterButtons(Composite parent) {
-		activeButton = new Button(parent, SWT.CHECK);
-		activeButton.setText(Messages.ROUTES_SHOW_IN_USE);
-		GridDataFactory.fillDefaults().grab(false, false).applyTo(activeButton);
+		showInUseButton = new Button(parent, SWT.CHECK);
+		showInUseButton.setText(Messages.ROUTES_SHOW_IN_USE);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(showInUseButton);
 
-		activeButton.addSelectionListener(new SelectionAdapter() {
+		showInUseButton.addSelectionListener(new SelectionAdapter() {
 
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				refreshInput();
+				refreshAll();
 			}
 
 		});
 
-		showDeletedButton = new Button(parent, SWT.CHECK);
-		showDeletedButton.setText(Messages.ROUTES_SHOW_REMOVED);
-		GridDataFactory.fillDefaults().grab(false, false).applyTo(showDeletedButton);
+		showRemovedRoutesButton = new Button(parent, SWT.CHECK);
+		showRemovedRoutesButton.setText(Messages.ROUTES_SHOW_REMOVED);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(showRemovedRoutesButton);
 
-		showDeletedButton.addSelectionListener(new SelectionAdapter() {
+		showRemovedRoutesButton.addSelectionListener(new SelectionAdapter() {
 
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				refreshInput();
+				refreshAll();
+				String removeButtonLabel = showRemovedRoutesButton.getSelection() ? Messages.UNDO : Messages.REMOVE;
+				removeButton.setText(removeButtonLabel);
 			}
 
 		});
+	}
+
+	protected List<CloudRoute> getAllUnused() {
+		List<CloudRoute> unused = new ArrayList<CloudRoute>();
+		for (CloudRoute route : allRoutes) {
+			if (!route.inUse()) {
+				unused.add(route);
+			}
+		}
+		return unused;
 	}
 
 	protected void createSelectionButtonArea(Composite parent) {
@@ -168,7 +190,7 @@ public class CloudRoutePart extends UIPart {
 
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				viewer.setCheckedElements(routes.toArray(new CloudRoute[0]));
+				viewer.setCheckedElements(getAllUnused().toArray(new CloudRoute[0]));
 			}
 
 		});
@@ -196,14 +218,33 @@ public class CloudRoutePart extends UIPart {
 
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				// The remove button has dual purpose:
+				// 1. if viewing list of available routes, any selection will
+				// remove them
+				// 2. if viewing list of removed routes, any selection will undo
+				// the removed routes
+				Object[] selectedRoutes = viewer.getCheckedElements();
+				if (selectedRoutes == null) {
+					selectedRoutes = new CloudRoute[0];
+				}
+				List<CloudRoute> toRemove = new ArrayList<CloudRoute>(routesToRemove);
 
-				Object[] routes = viewer.getCheckedElements();
-				if (routes != null) {
-					remove(Arrays.asList(routes));
+				if (!showRemovedRoutesButton.getSelection()) {
+					for (Object obj : selectedRoutes) {
+						if (!toRemove.contains(obj)) {
+							toRemove.add((CloudRoute) obj);
+						}
+					}
 				}
 				else {
-					remove(Collections.EMPTY_LIST);
+					// Undo those that are checked by removing them from the
+					// list of routes to delete
+					for (Object obj : selectedRoutes) {
+						toRemove.remove(obj);
+					}
 				}
+
+				remove(toRemove);
 			}
 
 		});
@@ -222,7 +263,7 @@ public class CloudRoutePart extends UIPart {
 
 		createSelectionButtonArea(buttonsAndViewer);
 
-		final Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI | SWT.CHECK);
+		final Table table = new Table(tableArea, SWT.BORDER | SWT.CHECK);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(table);
 
 		viewer = new CheckboxTableViewer(table);
@@ -272,6 +313,41 @@ public class CloudRoutePart extends UIPart {
 
 		});
 
+		viewer.addFilter(new ViewerFilter() {
+
+			@Override
+			public boolean select(Viewer viewer, Object items, Object item) {
+				if (item instanceof CloudRoute) {
+					CloudRoute route = (CloudRoute) item;
+					return route.inUse() ? showInUseButton.getSelection()
+							: (showRemovedRoutesButton.getSelection() && routesToRemove.contains(route))
+									|| (!showRemovedRoutesButton.getSelection() && !routesToRemove.contains(route));
+				}
+				return false;
+			}
+		});
+
+		viewer.getTable().addSelectionListener(new SelectionAdapter() {
+
+			@Override
+			public void widgetSelected(SelectionEvent event) {
+
+				Widget item = event.item;
+				// Disable selecting routes that are in use
+				if (event.detail == SWT.CHECK && item instanceof TableItem) {
+					TableItem tableItem = (TableItem) item;
+
+					Object element = tableItem.getData();
+
+					if (element instanceof CloudRoute && ((CloudRoute) element).inUse()) {
+						event.doit = false;
+						event.detail = SWT.NONE;
+						tableItem.setChecked(false);
+					}
+				}
+			}
+		});
+
 		addColumns(viewer);
 
 		new TableResizeHelper(viewer).enableResizing();
@@ -318,7 +394,6 @@ public class CloudRoutePart extends UIPart {
 
 		@Override
 		public Image getImage(Object element) {
-
 			return null;
 		}
 
@@ -363,29 +438,47 @@ public class CloudRoutePart extends UIPart {
 
 	/**
 	 * 
-	 * @param toRemove elements to remove. Passing a null or empty list will
-	 * clear the list of items to remove.
+	 * @param updatedToRemove elements to remove. Passing a null or empty list
+	 * will clear the list of items to remove.
 	 */
-	protected void remove(List<?> toRemove) {
-		toDelete.clear();
+	protected void remove(List<?> updatedToRemove) {
 
-		if (toRemove != null) {
-			for (Object obj : toRemove) {
+		// If no change, then do nothing to avoid firing change events
+		if (routesToRemove.equals(updatedToRemove)) {
+			return;
+		}
+
+		routesToRemove.clear();
+
+		if (updatedToRemove != null) {
+			for (Object obj : updatedToRemove) {
 				if (obj instanceof CloudRoute) {
 					CloudRoute route = (CloudRoute) obj;
-					toDelete.add(route);
+					if (!routesToRemove.contains(route)) {
+						routesToRemove.add(route);
+					}
 				}
 			}
 		}
 
-		notifyChange(new PartChangeEvent(toDelete, Status.OK_STATUS, this));
+		notifyChange(new PartChangeEvent(routesToRemove, Status.OK_STATUS, ROUTES_REMOVED));
 
-		refreshInput();
+		refreshAll();
+
 	}
 
-	protected void refreshInput() {
-		setInput(routes);
+	protected void refreshAll() {
 		viewer.refresh(true);
+
+		if (showInUseButton.getSelection()) {
+			TableItem[] items = viewer.getTable().getItems();
+			for (TableItem item : items) {
+				CloudRoute route = (CloudRoute) item.getData();
+				if (route.inUse()) {
+					item.setForeground(DISABLED);
+				}
+			}
+		}
 	}
 
 	protected class RoutesContentProvider implements IStructuredContentProvider {
@@ -400,22 +493,7 @@ public class CloudRoutePart extends UIPart {
 
 		public Object[] getElements(Object inputElement) {
 			if (inputElement instanceof Collection) {
-				List<CloudRoute> filtered = new ArrayList<CloudRoute>();
-				for (Object obj : (Collection<?>) inputElement) {
-					CloudRoute route = (CloudRoute) obj;
-
-					boolean showActive = activeButton.getSelection();
-					if (route.inUse() && !showActive) {
-						continue;
-					}
-					else {
-						if (!showDeletedButton.getSelection() || toDelete.contains(route)) {
-							filtered.add(route);
-						}
-					}
-
-				}
-				return filtered.toArray(new Object[0]);
+				return ((Collection<?>) inputElement).toArray(new Object[0]);
 			}
 			return null;
 		}

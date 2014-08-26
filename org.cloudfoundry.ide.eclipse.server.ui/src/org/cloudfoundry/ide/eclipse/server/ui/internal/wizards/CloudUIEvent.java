@@ -21,25 +21,25 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
 import org.cloudfoundry.ide.eclipse.server.ui.internal.IEventSource;
 
-public class ApplicationDeploymentEvent implements IEventSource<ApplicationDeploymentEvent> {
-	public static final ApplicationDeploymentEvent APP_NAME_CHANGE_EVENT = new ApplicationDeploymentEvent(
+public class CloudUIEvent implements IEventSource<CloudUIEvent> {
+	public static final CloudUIEvent APP_NAME_CHANGE_EVENT = new CloudUIEvent(
 			"Application Name Changed");
 
-	public static final ApplicationDeploymentEvent APPLICATION_URL_CHANGED = new ApplicationDeploymentEvent(
+	public static final CloudUIEvent APPLICATION_URL_CHANGED = new CloudUIEvent(
 			"Application URL Changed");
 
-	public static final ApplicationDeploymentEvent BUILD_PACK_URL = new ApplicationDeploymentEvent("Build Pack");
+	public static final CloudUIEvent BUILD_PACK_URL = new CloudUIEvent("Build Pack");
 
-	public static final ApplicationDeploymentEvent MEMORY = new ApplicationDeploymentEvent("Memory");
+	public static final CloudUIEvent MEMORY = new CloudUIEvent("Memory");
 
 	private final String name;
 
-	public ApplicationDeploymentEvent(String name) {
+	public CloudUIEvent(String name) {
 		this.name = name;
 	}
 
 	@Override
-	public ApplicationDeploymentEvent getSource() {
+	public CloudUIEvent getSource() {
 		return this;
 	}
 

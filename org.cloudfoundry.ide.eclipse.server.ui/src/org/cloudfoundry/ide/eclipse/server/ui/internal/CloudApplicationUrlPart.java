@@ -25,7 +25,7 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudDomain;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudApplicationURL;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.ApplicationDeploymentEvent;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudUIEvent;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -284,7 +284,7 @@ public class CloudApplicationUrlPart extends UIPart {
 
 		validationSource = null;
 
-		notifyChange(new PartChangeEvent(currentUrl, status, ApplicationDeploymentEvent.APPLICATION_URL_CHANGED));
+		notifyChange(new PartChangeEvent(currentUrl, status, CloudUIEvent.APPLICATION_URL_CHANGED));
 	}
 
 	/**

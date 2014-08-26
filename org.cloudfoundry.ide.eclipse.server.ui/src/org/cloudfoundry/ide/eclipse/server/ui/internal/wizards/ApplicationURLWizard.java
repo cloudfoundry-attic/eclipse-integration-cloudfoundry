@@ -126,7 +126,7 @@ public class ApplicationURLWizard extends Wizard {
 		}
 
 		public void handleChange(PartChangeEvent event) {
-			if (event.getSource() == ApplicationDeploymentEvent.APPLICATION_URL_CHANGED) {
+			if (event.getSource() == CloudUIEvent.APPLICATION_URL_CHANGED) {
 				editedUrl = event.getData() instanceof String ? (String) event.getData() : null;
 			}
 
