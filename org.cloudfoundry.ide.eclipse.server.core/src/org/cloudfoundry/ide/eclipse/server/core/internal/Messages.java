@@ -36,11 +36,11 @@ public class Messages {
 	public static final String ERROR_FAILED_REST_CLIENT = "Client error - {0}";
 
 	public static final String ERROR_NO_DOMAINS = "No application domains resolved for {0}. Unable to generate a default application URL for {1}";
-	
+
 	public static final String ERROR_NO_DOMAINS_AVAILABLE = "No domains available. Please check connection and try again.";
-	
+
 	public static final String ERROR_NO_DOMAIN_RESOLVED_FOR_URL = "Unable to resolve domain for URL - {0}. Please select another domain";
-	
+
 	public static final String ERROR_INVALID_SUBDOMAIN = "Invalid URL - {0} - subdomain not specified for domain - {1}";
 
 	public static final String ERROR_MANIFEST_PARSING_NO_DOMAINS = "Unable to resolve domains while parsing the application URL from manifest file. Application URL may require a manual update.";
@@ -102,8 +102,10 @@ public class Messages {
 	public static final String ERROR_EXISTING_APPLICATION_LOGS = "Failed to fetch recent application logs for {0} - {1}";
 
 	public static final String ERROR_APPLICATION_LOG_LISTENER = "Failed to add application log listener for {0} - {1}";
-	
+
 	public static final String ERROR_NO_MAPPED_APPLICATION_URLS = "No mapped application URLs set in application deployment information.";
+
+	public static final String INVALID_CHARACTERS_ERROR = "The entered name contains invalid characters";
 
 	/*
 	 * Warnings
@@ -164,11 +166,13 @@ public class Messages {
 	public static final String VALIDATING_CREDENTIALS = "Validating credentials";
 
 	public static final String ROUTES = "Getting routes for domain - {0}";
-	
+
 	/*
 	 * Labels
 	 */
 
 	public static final String VALID_ACCOUNT = "Account information is valid.";
+
+	public static final String EMPTY_URL_ERROR = "Enter a deployment URL";
 
 }

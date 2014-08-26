@@ -48,7 +48,7 @@ public class StandaloneApplicationDelegate extends
 	}
 
 	@Override
-	public boolean requiresURL(CloudFoundryApplicationModule appModule) {
+	public boolean shouldSetDefaultUrl(CloudFoundryApplicationModule appModule) {
 		IJavaProject project = CloudFoundryProjectUtil
 				.getJavaProject(appModule);
 		return JavaCloudFoundryArchiver.isBootProject(project);

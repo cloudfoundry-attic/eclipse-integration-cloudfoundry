@@ -242,10 +242,10 @@ public class ApplicationRegistry {
 	 * @return true if application URL is required for the given application.
 	 * False otherwise.
 	 */
-	public static boolean requiresURL(AbstractApplicationDelegate delegate, CloudFoundryApplicationModule appModule) {
+	public static boolean shouldSetDefaultUrl(AbstractApplicationDelegate delegate, CloudFoundryApplicationModule appModule) {
 		return delegate == null
 				|| (delegate instanceof ModuleResourceApplicationDelegate ? ((ModuleResourceApplicationDelegate) delegate)
-						.requiresURL(appModule) : delegate.requiresURL());
+						.shouldSetDefaultUrl(appModule) : delegate.requiresURL());
 	}
 
 }

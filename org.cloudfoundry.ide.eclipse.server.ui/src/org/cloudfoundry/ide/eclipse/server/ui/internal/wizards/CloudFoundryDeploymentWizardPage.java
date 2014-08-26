@@ -29,6 +29,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudApplicationUrlPart;
@@ -85,6 +86,8 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 
 	private static final String DEFAULT_MEMORY = CloudUtil.DEFAULT_MEMORY + "";
 
+	private ApplicationWizardDelegate wizardDelegate;
+
 	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor, ApplicationUrlLookupService urlLookup,
 			ApplicationWizardDelegate wizardDelegate) {
@@ -97,6 +100,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 		// event handler before the page is visible.
 		urlPart = createUrlPart(urlLookup);
 		urlPart.addPartChangeListener(this);
+		this.wizardDelegate = wizardDelegate;
 	}
 
 	/**
@@ -373,7 +377,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	}
 
 	protected void updateApplicationURLFromAppName() {
-		if (requiresUrl()) {
+		if (shouldSetDefaultUrl()) {
 			// When the app name changes, the URL also changes, but only for
 			// application types that require a URL.
 			String appName = descriptor.getDeploymentInfo().getDeploymentName();
@@ -383,8 +387,16 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	}
 
 	protected boolean requiresUrl() {
-		return !(getWizard() instanceof CloudFoundryApplicationWizard)
-				|| ((CloudFoundryApplicationWizard) getWizard()).requiresUrl();
+		// By default, applications require a URL, unless specified by the
+		// delegate
+		return wizardDelegate == null || wizardDelegate.getApplicationDelegate() == null
+				|| wizardDelegate.getApplicationDelegate().requiresURL();
+
+	}
+
+	protected boolean shouldSetDefaultUrl() {
+		return wizardDelegate == null
+				|| ApplicationRegistry.shouldSetDefaultUrl(wizardDelegate.getApplicationDelegate(), module);
 	}
 
 	class MemoryPart extends UIPart {

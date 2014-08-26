@@ -44,12 +44,14 @@ public abstract class ModuleResourceApplicationDelegate extends AbstractApplicat
 		return true;
 	}
 
+
+	
 	/**
-	 * NOTE: For INTERNAL use only. Framework adopters should not override or invoke.
+	 * NOTE: For INTERNAL use only. API may change. Framework adopters should not override or invoke.
 	 * @param appModule
-	 * @return true if requires URL. False otherwise
+	 * @return true if default URL should be set. False otherwise
 	 */
-	public boolean requiresURL(CloudFoundryApplicationModule appModule) {
+	public boolean shouldSetDefaultUrl(CloudFoundryApplicationModule appModule) {
 		return requiresURL();
 	}
 

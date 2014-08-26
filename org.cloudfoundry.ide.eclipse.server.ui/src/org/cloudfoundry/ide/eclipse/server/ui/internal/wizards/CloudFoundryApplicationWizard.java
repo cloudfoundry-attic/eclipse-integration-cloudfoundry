@@ -25,7 +25,6 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
@@ -131,14 +130,6 @@ public class CloudFoundryApplicationWizard extends Wizard {
 			return new DeploymentConfiguration(applicationDescriptor.getApplicationStartMode());
 		}
 		return null;
-	}
-
-	public boolean requiresUrl() {
-		// By default, applications require a URL, unless specified by the delegate
-		return !(wizardDelegate instanceof ApplicationWizardDelegate)
-				|| ApplicationRegistry.requiresURL(
-						((ApplicationWizardDelegate) wizardDelegate).getApplicationDelegate(), module);
-
 	}
 
 	@Override

@@ -85,8 +85,6 @@ public class MappedURLsWizard extends Wizard {
 	public List<String> getURLs() {
 		return page.getURLs();
 	}
-	
-	
 
 	public boolean requiresURL() {
 		IModule localModule = applicationModule.getLocalModule();
@@ -96,11 +94,8 @@ public class MappedURLsWizard extends Wizard {
 		}
 
 		AbstractApplicationDelegate delegate = ApplicationRegistry.getApplicationDelegate(localModule);
-		if (delegate == null) {
-			return true;
-		}
 
-		return ApplicationRegistry.requiresURL(delegate, applicationModule);
+		return delegate == null || delegate.requiresURL();
 	}
 
 	@Override

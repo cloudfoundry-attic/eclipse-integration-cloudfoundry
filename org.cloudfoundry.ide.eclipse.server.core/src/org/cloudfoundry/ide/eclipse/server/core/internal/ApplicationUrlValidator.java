@@ -41,9 +41,6 @@ import org.eclipse.core.runtime.Status;
  */
 public class ApplicationUrlValidator {
 
-	public static final String EMPTY_URL_ERROR = "Enter a deployment URL.";
-
-	public static final String INVALID_CHARACTERS_ERROR = "The entered name contains invalid characters.";
 
 
 	public ApplicationUrlValidator() {
@@ -54,10 +51,10 @@ public class ApplicationUrlValidator {
 		String errorMessage = null;
 
 		if (ValueValidationUtil.isEmpty(url)) {
-			errorMessage = EMPTY_URL_ERROR;
+			errorMessage = Messages.EMPTY_URL_ERROR;
 		}
 		else if (new URLNameValidation(url).hasInvalidCharacters()) {
-			errorMessage = INVALID_CHARACTERS_ERROR;
+			errorMessage = Messages.INVALID_CHARACTERS_ERROR;
 		}
 
 		IStatus status = errorMessage != null ? CloudFoundryPlugin.getErrorStatus(errorMessage) : Status.OK_STATUS;
