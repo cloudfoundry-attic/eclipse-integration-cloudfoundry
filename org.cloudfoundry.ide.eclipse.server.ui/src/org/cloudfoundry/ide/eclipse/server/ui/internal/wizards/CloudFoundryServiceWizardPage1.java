@@ -120,31 +120,34 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 	CloudFoundryServer cloudServer;
 
 	protected Group serviceInfoComposite;
-	
+
 	public LocalCloudService getService() {
-		
+
 		List<CFServiceWizUI> selectedServices = getSelectedList();
-		if(selectedServices != null && selectedServices.size() == 1) {
+		if (selectedServices != null && selectedServices.size() == 1) {
 			return selectedServices.get(0).convertToLocalCloudService();
 		}
-		
+
 		return null;
 	}
-	
 
 	public static final String INSTALL_SERVICE_TEXT = "Select a service to include in this installation";
+
 	public static final String DEFAULT_FILTER_TEXT = "type filter text";
+
 	public static final String REMOVE_SERVICE_TEXT = "Remove";
+
 	public static final String ADD_SERVICE_TEXT = "Select";
+
 	public static final String DESCRIPTION_FINAL = "Click finish to add the service.";
+
 	public static final String FILTER_TEXT = "Filter:";
 
-	/** Optional field -- used to provide icons in service wizard if available*/
+	/** Optional field -- used to provide icons in service wizard if available */
 	CFServiceWizardDynamicIconLoader loader;
-	
-	
-    private FontMetrics fontMetrics;	
-	
+
+	private FontMetrics fontMetrics;
+
 	public CloudFoundryServiceWizardPage1(CloudFoundryServer cloudServer) {
 		super(PAGE_NAME);
 		this.cloudServer = cloudServer;
@@ -159,13 +162,14 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		// Is there an icon provide for the service, if so, use it
 		IRuntime runtime = cloudServer.getServer().getRuntime();
 		String runtimeTypeId = runtime.getRuntimeType().getId();
-		
-		ICloudFoundryServiceWizardIconProvider provider = CloudFoundryServiceWizardIconProviderRegistry.getInstance().getIconProvider(runtimeTypeId);		
-		if(provider != null) {
+
+		ICloudFoundryServiceWizardIconProvider provider = CloudFoundryServiceWizardIconProviderRegistry.getInstance()
+				.getIconProvider(runtimeTypeId);
+		if (provider != null) {
 			loader = new CFServiceWizardDynamicIconLoader(provider, this.cloudServer);
 			loader.start();
 		}
-		
+
 		servicePageValidation = new CFWizServicePage1Validation(this);
 		setPageComplete(false);
 
@@ -194,8 +198,10 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 								return o1.getDescription().compareTo(o2.getDescription());
 							}
 						});
-
-						sortServicePlans(serviceOfferings);
+						// Pivotal Tracker [77602464] - Leaving plans in order
+						// received by server keeps them in pricing order from
+						// low to high
+						// sortServicePlans(serviceOfferings);
 
 					}
 					catch (CoreException e) {
@@ -232,14 +238,14 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 
 		return false;
 	}
-	
+
 	Composite topComp;
 
 	public void createControl(Composite parent) {
 		Composite comp = new Composite(parent, SWT.NONE);
 
 		topComp = comp;
-		
+
 		GridLayout layout = new GridLayout();
 		layout.horizontalSpacing = convertHorizontalDLUsToPixels(comp, 4);
 		layout.verticalSpacing = convertVerticalDLUsToPixels(comp, 4);
@@ -271,8 +277,6 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		filterText.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false, 2, 1));
 		filterText.setText(DEFAULT_FILTER_TEXT);
 
-		
-		
 		scrollComp = new ScrolledComposite(comp, SWT.BORDER | SWT.V_SCROLL);
 		data = new GridData(GridData.FILL, GridData.FILL, true, true, 3, 1);
 		data.heightHint = 300;
@@ -290,9 +294,9 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 					return;
 				}
 				Rectangle r = scrollComp.getClientArea();
-				
+
 				r.height = c.computeSize(r.width, SWT.DEFAULT).y;
-				
+
 				c.setBounds(r);
 			}
 		});
@@ -364,10 +368,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 				}
 			}
 		});
-		
-		
-		
-		
+
 		serviceInfoComposite = new Group(comp, SWT.NONE);
 		serviceInfoComposite.setText("Specify a service name and service plan");
 		data = new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1);
@@ -377,10 +378,10 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		layout.numColumns = 2;
 		layout.marginHeight = 5;
 		layout.marginWidth = 5;
-		serviceInfoComposite.setLayout(layout);		
+		serviceInfoComposite.setLayout(layout);
 
-		serviceInfoComposite.setVisible(false);		
-		
+		serviceInfoComposite.setVisible(false);
+
 		servicePageValidation.updatePageState();
 		Dialog.applyDialogFont(comp);
 		setControl(comp);
@@ -413,7 +414,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 	}
 
 	protected void updateServicesTable() {
-		
+
 		Control content = scrollComp.getContent();
 		if (content != null) {
 			content.dispose();
@@ -438,35 +439,35 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 
 		final Composite comp = new Composite(scrollComp, SWT.NONE);
 		comp.setBackground(scrollComp.getBackground());
-		
+
 		comp.setLayout(new CFServiceWizardLayout(this));
 
 		comp.addPaintListener(new PaintListener() {
 
 			public void paintControl(PaintEvent event) {
 				List<CFServiceWizUI> selected = selectedServicesList;
-				
-				if(selected != null && selected.size() == 1) {
-					
+
+				if (selected != null && selected.size() == 1) {
+
 					Rectangle r = selected.get(0).getAppxLocation();
-					if(r != null) {
+					if (r != null) {
 						Rectangle r2 = new Rectangle(r.x, r.y, r.width, r.height);
-						
+
 						r2.x -= 3;
 						r2.width += 6;
-						
+
 						r2.y -= 3;
 						r2.height += 6;
-						
+
 						event.gc.setBackground(selFillColor);
 						event.gc.fillRoundRectangle(r2.x, r2.y, r2.width, r2.height, 7, 7);
-	
+
 						event.gc.setForeground(selEdgeColor);
 						event.gc.drawRoundRectangle(r2.x, r2.y, r2.width, r2.height, 7, 7);
 					}
 
 				}
-				
+
 			}
 		});
 
@@ -486,18 +487,19 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 				final Label imgLabel = new Label(comp, SWT.NONE);
 				imgLabel.setBackground(c);
 				imgLabel.setData(item);
-				if(loader != null) {
-//					// Uncomment out these lines for dynamic icon acquisition
-//					imgLabel.addPaintListener(new PaintListener() {
-//						
-//						public void paintControl(PaintEvent e) {
-//							
-//							if(imgLabel.getImage() == null) {
-//								loader.addIconToRetrieveList(item.getOffering(), imgLabel);
-//							}
-//						}
-//					});
-					
+				if (loader != null) {
+					// // Uncomment out these lines for dynamic icon acquisition
+					// imgLabel.addPaintListener(new PaintListener() {
+					//
+					// public void paintControl(PaintEvent e) {
+					//
+					// if(imgLabel.getImage() == null) {
+					// loader.addIconToRetrieveList(item.getOffering(),
+					// imgLabel);
+					// }
+					// }
+					// });
+
 					loader.addIconToRetrieveList(item.getOffering(), imgLabel);
 				}
 
@@ -550,29 +552,30 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 				// }
 
 				CFWizSelectItemListener itemListener = new CFWizSelectItemListener(item);
-				
+
 				imgLabel.addMouseListener(itemListener);
 				nameLabel.addMouseListener(itemListener);
 				descLabel.addMouseListener(itemListener);
 
-			} else {
+			}
+			else {
 				// Filtered out items have no location
 				item.setAppxLocation(null);
 			}
- 		}
+		}
 
 		comp.addMouseListener(new MouseListener() {
-			public void mouseDown(MouseEvent e) { 
-				
+			public void mouseDown(MouseEvent e) {
+
 				for (final CFServiceWizUI item : allServicesList) {
 					// Skip filtered items that has null appxLocation.
-					if(item.getAppxLocation() != null && item.getAppxLocation().contains(e.x, e.y)) {
+					if (item.getAppxLocation() != null && item.getAppxLocation().contains(e.x, e.y)) {
 						selectItem(item);
 						break;
 					}
-					
+
 				}
-				
+
 			}
 
 			public void mouseDoubleClick(MouseEvent arg0) {
@@ -582,45 +585,43 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 			public void mouseUp(MouseEvent arg0) {
 				// Ignore
 			}
-			
+
 		});
-		
+
 		scrollComp.setContent(comp);
 
 		Rectangle r = scrollComp.getClientArea();
 		r.height = comp.computeSize(r.width, SWT.DEFAULT).y;
 		comp.setBounds(r);
 
-				
-		for(Control c: serviceInfoComposite.getChildren()) {
+		for (Control c : serviceInfoComposite.getChildren()) {
 			c.dispose();
 		}
-	
+
 		createServiceInfoComposite();
-		
-	
+
 		serviceInfoComposite.layout();
 		topComp.layout();
-		
+
 		servicePageValidation.updatePageState();
 
 	}
-	
+
 	private void createServiceInfoComposite() {
-		
+
 		String name = "";
-		
+
 		final CFServiceWizUI selectedItemFinal;
-		if(selectedServicesList.size() == 1) {
-			 selectedItemFinal = selectedServicesList.get(0);
-			 name = selectedItemFinal.getName();
-		} else {
+		if (selectedServicesList.size() == 1) {
+			selectedItemFinal = selectedServicesList.get(0);
+			name = selectedItemFinal.getName();
+		}
+		else {
 			selectedItemFinal = null;
 		}
-		
-		
+
 		serviceInfoComposite.setEnabled(selectedItemFinal != null);
-		
+
 		final Label serviceNameLabel = new Label(serviceInfoComposite, SWT.NONE);
 		serviceNameLabel.setText("Name:");
 		GridData data = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
@@ -631,66 +632,65 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		serviceNameText.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 1, 1));
 		serviceNameText.setText(utilRemoveSpaces(name));
 		serviceNameText.setEnabled(selectedItemFinal != null);
-		
-		if(selectedItemFinal != null) {
+
+		if (selectedItemFinal != null) {
 			selectedItemFinal.setUserDefinedName(utilRemoveSpaces(name));
 		}
-		serviceNameText.addModifyListener(new ModifyListener() { 
-			
+		serviceNameText.addModifyListener(new ModifyListener() {
+
 			public void modifyText(ModifyEvent e) {
-				
+
 				String text = serviceNameText.getText();
-				if(selectedItemFinal != null) {
+				if (selectedItemFinal != null) {
 					selectedItemFinal.setUserDefinedName(text);
 				}
 				servicePageValidation.updatePageState();
 			}
-			
+
 		});
-		
+
 		final Label servicePlanLabel = new Label(serviceInfoComposite, SWT.NONE);
 		servicePlanLabel.setText("Plan:");
 		servicePlanLabel.setEnabled(selectedItemFinal != null);
 		data = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
 		servicePlanLabel.setLayoutData(data);
 		@SuppressWarnings("unchecked")
-		final List<CloudServicePlan> plans = selectedItemFinal != null ? selectedItemFinal.getOffering().getCloudServicePlans() : Collections.EMPTY_LIST;
-		
+		final List<CloudServicePlan> plans = selectedItemFinal != null ? selectedItemFinal.getOffering()
+				.getCloudServicePlans() : Collections.EMPTY_LIST;
+
 		String[] items = new String[plans.size()];
-		for(int x = 0; x < items.length; x++) {
+		for (int x = 0; x < items.length; x++) {
 			items[x] = plans.get(x).getName();
 		}
-		
+
 		final Combo typeCombo = new Combo(serviceInfoComposite, SWT.READ_ONLY | SWT.BORDER);
 		typeCombo.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 1, 1));
 		typeCombo.setItems(items);
 		typeCombo.select(0);
 		typeCombo.setEnabled(selectedItemFinal != null);
-		
-		
+
 		typeCombo.addSelectionListener(new SelectionListener() {
-			
+
 			public void widgetSelected(SelectionEvent e) {
-				if(selectedItemFinal != null) {
+				if (selectedItemFinal != null) {
 					selectedItemFinal.setPlan(plans.get(typeCombo.getSelectionIndex()));
 				}
 			}
 
-			
 			public void widgetDefaultSelected(SelectionEvent e) {
 				// Ignore.
 			}
 		});
-		
+
 		serviceInfoComposite.setVisible(true);
 
 	}
-	
-	
+
 	private static String utilRemoveSpaces(String str) {
-		if(str == null) {
+		if (str == null) {
 			return null;
-		} else {
+		}
+		else {
 			return str.replace(" ", "");
 		}
 	}
@@ -699,13 +699,14 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 
 		if (selectedServicesList.contains(item)) {
 			selectedServicesList.remove(item);
-			
-		} else  {
-			
+
+		}
+		else {
+
 			selectedServicesList.clear();
-			
+
 			selectedServicesList.add(item);
-	
+
 			// If the plan has not been set, use the first
 			if (item.getPlan() == null) {
 				List<CloudServicePlan> plans = item.getOffering().getCloudServicePlans();
@@ -724,7 +725,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 
 		scrollComp.setFocus();
 
-		scrollComp.setOrigin(p);			
+		scrollComp.setOrigin(p);
 
 	}
 
@@ -772,29 +773,28 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 	public List<CFServiceWizUI> getSelectedList() {
 		return selectedServicesList;
 	}
-	
-    protected void initializeDialogUnits(Control testControl) {
-        // Compute and store a font metric
-        GC gc = new GC(testControl);
-        gc.setFont(JFaceResources.getDialogFont());
-        fontMetrics = gc.getFontMetrics();
-        gc.dispose();
-    }
 
-    
-    public int convertHorizontalDLUsToPixels(Composite comp, int x) {
-        if (fontMetrics == null) {
-            initializeDialogUnits(comp);
-        }
-        return Dialog.convertHorizontalDLUsToPixels(fontMetrics, x);
-    }
+	protected void initializeDialogUnits(Control testControl) {
+		// Compute and store a font metric
+		GC gc = new GC(testControl);
+		gc.setFont(JFaceResources.getDialogFont());
+		fontMetrics = gc.getFontMetrics();
+		gc.dispose();
+	}
 
-    public int convertVerticalDLUsToPixels(Composite comp, int y) {
-        if (fontMetrics == null) {
-            initializeDialogUnits(comp);
-        }
-        return Dialog.convertVerticalDLUsToPixels(fontMetrics, y);
-    }
+	public int convertHorizontalDLUsToPixels(Composite comp, int x) {
+		if (fontMetrics == null) {
+			initializeDialogUnits(comp);
+		}
+		return Dialog.convertHorizontalDLUsToPixels(fontMetrics, x);
+	}
+
+	public int convertVerticalDLUsToPixels(Composite comp, int y) {
+		if (fontMetrics == null) {
+			initializeDialogUnits(comp);
+		}
+		return Dialog.convertVerticalDLUsToPixels(fontMetrics, y);
+	}
 
 	private static String trimTextAtBound(String str, int bound) {
 		if (str.length() > bound) {
@@ -849,15 +849,15 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		return result.toString();
 
 	}
-	
+
 	protected boolean isIconProviderAvailable() {
 		return loader != null;
 	}
-	
+
 	@Override
 	public void dispose() {
 		super.dispose();
-		if(loader != null) {
+		if (loader != null) {
 			this.loader.dispose();
 		}
 	}
@@ -958,30 +958,28 @@ class CFServiceWizardLayout extends Layout {
 
 	protected int colWidth = -1;
 
-
 	CloudFoundryServiceWizardPage1 parent;
-	
+
 	public CFServiceWizardLayout(CloudFoundryServiceWizardPage1 parent) {
 		this.parent = parent;
 	}
-	
+
 	@Override
 	protected Point computeSize(Composite composite, int wHint, int hHint, boolean flushCache) {
 		int[] result = layoutImpl(composite, 0, flushCache, false);
-		
+
 		return new Point(result[0], result[1]);
 	}
 
 	@Override
 	protected void layout(Composite composite, boolean flushCache) {
 		int[] result = layoutImpl(composite, 0, flushCache, true);
-		
+
 		// Adjust the height to match the elments inside
 		Rectangle r = composite.getBounds();
 		r.height = result[1];
 		composite.setBounds(r);
 	}
-
 
 	protected int[] layoutImpl(Composite composite, int wHint, boolean flushCache, boolean apply) {
 		Rectangle r = composite.getClientArea();
@@ -992,55 +990,55 @@ class CFServiceWizardLayout extends Layout {
 		int w = 0;
 		if (areaW == 0) {
 			w = composite.getParent().getBounds().width - composite.getParent().getBorderWidth() * 2;
-		} else {
+		}
+		else {
 			w = areaW - BORDER * 2;
 		}
 		w = Math.max(400, w);
 
 		int bottomMostY = -1;
 		int rightMostX = -1;
-		
+
 		boolean iconsAvailable = parent.isIconProviderAvailable();
 
 		int IMG;
-		if(iconsAvailable) {
+		if (iconsAvailable) {
 			IMG = IMG_DEFAULT;
-		} else {
+		}
+		else {
 			IMG = 0;
 		}
-		
+
 		// children are: image, name, description, size
 		Control[] children = composite.getChildren();
 
 		final int initialX = x;
 
 		while (i < children.length) {
-			
+
 			x = initialX;
-			
+
 			if (i > 0) {
 				y += V_SPACE;
 			}
 
-			
-			Label localIconLabel = (Label)children[i]; 
-			
-			Label localNameLabel = (Label)children[i + 1];
-			
+			Label localIconLabel = (Label) children[i];
+
+			Label localNameLabel = (Label) children[i + 1];
+
 			CFServiceWizUI product = (CFServiceWizUI) localNameLabel.getData();
-			
+
 			// image
 			if (apply) {
 				localIconLabel.setBounds(x, y, IMG, IMG);
 			}
-			
+
 			if (iconsAvailable) {
 				x += 3;
 			}
-			
 
 			// label
-			 
+
 			Point p = localNameLabel.computeSize(w - IMG - GAP, SWT.DEFAULT, flushCache);
 			if (apply) {
 				localNameLabel.setBounds(x + IMG + GAP, y, p.x, p.y);
@@ -1049,19 +1047,19 @@ class CFServiceWizardLayout extends Layout {
 			y += p.y + GAP;
 
 			// hyperlink
-			Hyperlink localLink = (Hyperlink)children[i+3];
+			Hyperlink localLink = (Hyperlink) children[i + 3];
 			p = localLink.computeSize(SWT.DEFAULT, SWT.DEFAULT, flushCache);
 			if (apply) {
 				localLink.setBounds(x + w - p.x - 2, y, p.x, p.y);
 			}
 
 			// description
-			Label localDescr = (Label)children[i+2];
+			Label localDescr = (Label) children[i + 2];
 			p = localDescr.computeSize(w - IMG - GAP * 2, SWT.DEFAULT, flushCache);
 			if (apply) {
 				localDescr.setBounds(x + IMG + GAP, y, p.x, p.y);
 			}
-			
+
 			y = y + p.y;
 
 			Rectangle imgLabelRect = localIconLabel.getBounds();
@@ -1074,27 +1072,27 @@ class CFServiceWizardLayout extends Layout {
 
 			bottomMostY = botRightY;
 			rightMostX = botRightX;
-			
+
 			Rectangle rowPos = new Rectangle(topLeftX, topLeftY, botRightX - topLeftX, botRightY - topLeftY);
-			if(apply) {
+			if (apply) {
 				product.setAppxLocation(rowPos);
 			}
 
 			y += BORDER;
 			i += 4;
-			
+
 		}
-		
+
 		bottomMostY += BORDER;
-		
-		return new int[] {rightMostX, bottomMostY};
+
+		return new int[] { rightMostX, bottomMostY };
 	}
 }
 
 class CFWizServicePage1Validation {
 
 	private static Pattern VALID_CHARS = Pattern.compile("[A-Za-z\\$_0-9\\-]+");
-	
+
 	CloudFoundryServiceWizardPage1 wizardPage;
 
 	public CFWizServicePage1Validation(CloudFoundryServiceWizardPage1 wizardPage) {
@@ -1115,37 +1113,34 @@ class CFWizServicePage1Validation {
 			}
 
 		}
-		
-		
-		if(!descriptionUpdated) {
+
+		if (!descriptionUpdated) {
 			List<CFServiceWizUI> list = wizardPage.getSelectedList();
 			if (list != null && list.size() == 1) {
 				CFServiceWizUI service = list.get(0);
-				
-				String userDefinedName = service.getUserDefinedName();
-				
-				if(service != null && userDefinedName != null ) {
 
-					if(userDefinedName.trim().length() == 0) {
+				String userDefinedName = service.getUserDefinedName();
+
+				if (service != null && userDefinedName != null) {
+
+					if (userDefinedName.trim().length() == 0) {
 						wizardPage.setDescription("Specify a service name");
 						wizardPage.setErrorMessage(null);
-						descriptionUpdated = true;						
+						descriptionUpdated = true;
 					}
 
-					
 					Matcher matcher = VALID_CHARS.matcher(userDefinedName);
 					if (!descriptionUpdated && !matcher.matches()) {
 						wizardPage.setErrorMessage("The service name contains invalid characters.");
 						wizardPage.setDescription(null);
 						descriptionUpdated = true;
 					}
-					
+
 				}
-	
+
 			}
-			
+
 		}
-		
 
 		if (!descriptionUpdated) {
 			wizardPage.setErrorMessage(null);
@@ -1160,194 +1155,199 @@ class CFWizServicePage1Validation {
 
 }
 
-
 class CFServiceWizardDynamicIconLoader extends Thread {
-	
+
 	private final Object lock = new Object();
-	
+
 	// List synchronized on lock
 	private List<ServiceWizardMapEntry> iconsToRetrieve = new ArrayList<ServiceWizardMapEntry>();
-	
+
 	private CloudFoundryServer server;
-	
+
 	private ICloudFoundryServiceWizardIconProvider iconProvider;
-	
+
 	private boolean isRunning = true;
-	
+
 	// Synchronize on imageMap when accessing it
-	private Map<String /*service id + provider*/, Image> imageMap = new HashMap<String /*offering id*/, Image>();
-	
-	public CFServiceWizardDynamicIconLoader(ICloudFoundryServiceWizardIconProvider iconProvider, CloudFoundryServer server) {
+	private Map<String /* service id + provider */, Image> imageMap = new HashMap<String /*
+																						 * offering
+																						 * id
+																						 */, Image>();
+
+	public CFServiceWizardDynamicIconLoader(ICloudFoundryServiceWizardIconProvider iconProvider,
+			CloudFoundryServer server) {
 		super(CFServiceWizardDynamicIconLoader.class.getName());
 		setDaemon(true);
 		this.iconProvider = iconProvider;
 		this.server = server;
 	}
 
-	
-	/** Add icon to the front of the list, for icons the user is currently viewing */
+	/**
+	 * Add icon to the front of the list, for icons the user is currently
+	 * viewing
+	 */
 	public void addIconToFrontOfRetrieveList(CloudServiceOffering offering, Label imageLabel) {
-		synchronized(lock) {
+		synchronized (lock) {
 
-			// Add to front (this may create a duplicate; dupes are checked in IconRetrieveRunnable)
+			// Add to front (this may create a duplicate; dupes are checked in
+			// IconRetrieveRunnable)
 			ServiceWizardMapEntry me = new ServiceWizardMapEntry(offering, imageLabel);
 			iconsToRetrieve.add(0, me);
 			lock.notifyAll();
 		}
 	}
 
-
 	/** Add icon to end of list */
 	public void addIconToRetrieveList(CloudServiceOffering offering, Label imageLabel) {
 		ServiceWizardMapEntry me = new ServiceWizardMapEntry(offering, imageLabel);
-		synchronized(lock) {
+		synchronized (lock) {
 			iconsToRetrieve.add(me);
 			lock.notifyAll();
 		}
 	}
-	
-	
+
 	public void run() {
 		// Have up to 5 URL requests running at a time
 		ExecutorService es = Executors.newFixedThreadPool(5);
-		
-		while(isRunning) {
-			
+
+		while (isRunning) {
+
 			try {
-				
+
 				List<ServiceWizardMapEntry> localIconsToRetrieve = null;
-				
-				synchronized(lock) {
+
+				synchronized (lock) {
 					lock.wait(1000);
 
-					if(isRunning && iconsToRetrieve.size() > 0) {
-						
+					if (isRunning && iconsToRetrieve.size() > 0) {
+
 						localIconsToRetrieve = new ArrayList<ServiceWizardMapEntry>();
 						localIconsToRetrieve.addAll(iconsToRetrieve);
-						iconsToRetrieve.clear();						
+						iconsToRetrieve.clear();
 					}
-					
+
 				}
-				
-				if(isRunning && localIconsToRetrieve != null) {
+
+				if (isRunning && localIconsToRetrieve != null) {
 					// Process icon requests outside the lock
-					
-					for(ServiceWizardMapEntry e : localIconsToRetrieve) {
-						IconRetrieveRunnable r = new IconRetrieveRunnable(e);								
+
+					for (ServiceWizardMapEntry e : localIconsToRetrieve) {
+						IconRetrieveRunnable r = new IconRetrieveRunnable(e);
 						es.execute(r);
 					}
 
 					localIconsToRetrieve.clear();
 				}
-				
+
 			}
 			catch (InterruptedException e) {
 				isRunning = false;
 			}
-			
+
 		}
-		
+
 		es.shutdownNow();
-		
+
 		try {
 			// Wait at most 10 seconds for the remaining tasks to finish
 			es.awaitTermination(10, TimeUnit.SECONDS);
-		} catch (InterruptedException e1) {
+		}
+		catch (InterruptedException e1) {
 			// ignore.
 		}
 
 		synchronized (imageMap) {
 			// Dispose of old images
 			Set<Entry<String, Image>> s = imageMap.entrySet();
-			for(Entry<String, Image> e : s) {
-				if(e.getValue().isDisposed()) {
+			for (Entry<String, Image> e : s) {
+				if (e.getValue().isDisposed()) {
 					e.getValue().dispose();
 				}
-			}			
+			}
 		}
 
-		
 	}
-	
+
 	public void dispose() {
-		synchronized(lock) {
+		synchronized (lock) {
 			isRunning = false;
 		}
 	}
-	
-	
+
 	private class IconRetrieveRunnable implements Runnable {
-				
+
 		ServiceWizardMapEntry entry;
 
 		public IconRetrieveRunnable(ServiceWizardMapEntry entry) {
 			this.entry = entry;
 		}
-		
+
 		public void run() {
-			
+
 			CloudServiceOffering cso = entry.getOffering();
-			final String mapId = ""+cso.getName()+"-"+cso.getProvider(); 
-			
+			final String mapId = "" + cso.getName() + "-" + cso.getProvider();
+
 			Image result = null;
-			
+
 			// Check the cache for the image
-			synchronized(imageMap) {
+			synchronized (imageMap) {
 				Image i = imageMap.get(mapId);
-				if(i != null) {
+				if (i != null) {
 					result = i;
 				}
 			}
-			
+
 			// Grab the image from the provider, if needed
-			if(result == null) {
+			if (result == null) {
 				ImageDescriptor imageDesc = iconProvider.getServiceIcon(entry.getOffering(), server);
-				
-				if(imageDesc != null) {
+
+				if (imageDesc != null) {
 					Image img = imageDesc.createImage();
 					final Image resizeImg = resizeImage(img, 32, 32);
 					result = resizeImg;
-					synchronized(imageMap) {
+					synchronized (imageMap) {
 						imageMap.put(mapId, resizeImg);
 					}
 				}
 			}
-			
+
 			final Image labelImage = result;
-			
-			if(labelImage == null) return;
-						
+
+			if (labelImage == null)
+				return;
+
 			// Replace the image label
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
 					Label l = entry.getImageLabel();
-					
-					if(!l.isDisposed()) {
-						l.setImage(labelImage);						
+
+					if (!l.isDisposed()) {
+						l.setImage(labelImage);
 					}
 				}
 			});
-				
+
 		}
-		
+
 		private Image resizeImage(Image oldImage, int newWidth, int newHeight) {
 			Image newImage = new Image(Display.getDefault(), newWidth, newHeight);
 			GC gc = new GC(newImage);
 			gc.setAntialias(SWT.ON);
 			gc.setInterpolation(SWT.HIGH);
-			gc.drawImage(oldImage, 0, 0, oldImage.getBounds().width, oldImage.getBounds().height, 0, 0, newWidth, newHeight);
+			gc.drawImage(oldImage, 0, 0, oldImage.getBounds().width, oldImage.getBounds().height, 0, 0, newWidth,
+					newHeight);
 			gc.dispose();
-			oldImage.dispose(); 
+			oldImage.dispose();
 			return newImage;
 		}
 
 	}
-	
-	
+
 	private static class ServiceWizardMapEntry {
 		private CloudServiceOffering offering;
+
 		private Label imageLabel;
-		
+
 		public ServiceWizardMapEntry(CloudServiceOffering offering, Label imageLabel) {
 			super();
 			this.offering = offering;
@@ -1361,7 +1361,7 @@ class CFServiceWizardDynamicIconLoader extends Thread {
 		public Label getImageLabel() {
 			return imageLabel;
 		}
-			
+
 	}
-	
+
 }
