@@ -877,4 +877,30 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		}
 		return null;
 	}
+	
+	/**
+	 * Returns all modules that can be launched via the Open Home Page dialog 
+	 * In the form an array of IModule[], which represents the structure of modules
+	 * @param root The root module Open Home Page is based on
+	 * @return modules that can be launched via Open Home Page dialog 
+	 */
+	public IModule[][] getLaunchableModules(IModule root){
+		// For CF servers, default to an array of IModule containing only the root module.
+		// This preserves the original behavior of homePageUrl in OpenHomePageCommand
+		// by setting the contextRoot to null, and launches the default application entry URL.
+		
+		return new IModule[][]{new IModule[] {root}};
+	}
+	
+	/**
+	 * Get the context root of a given module
+	 * @param module The module to get context root from
+	 * @return The context root of given module
+	 */
+	public String getLaunchableModuleContextRoot(IModule[] module){
+		// For CF servers, default to null.
+		// This preserves the original behavior of homePageUrl in OpenHomePageCommand
+		// by setting the contextRoot to null, and launches the default application entry URL.
+		return null;
+	}
 }
