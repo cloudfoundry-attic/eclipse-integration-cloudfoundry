@@ -56,6 +56,24 @@
   http://dist.springsource.com/snapshot/TOOLS/cloudfoundry/nightly
 
   (put this URL into the "Install New Software" dialog of your Eclipse)
+  
+  
+## Offline Installation
+
+  Release versions of Cloud Foundry Integration for Eclipse can be installed offline using one of the release update 
+  site zip files listed below. Once the zip file is available in an offline environment, Cloud Foundry Integration for
+  Eclipse can be installed following these steps in Eclipse or STS:
+  
+  Help -> Install New Software -> Add -> Archive
+  
+  Browse to the location of the zip file, and installation should complete in offline mode.
+  
+  Zips for the update sites are:
+  
+  [Cloud Foundry Eclipse 1.7.1](http://dist.springsource.com/release/TOOLS/cloudfoundry/1.7.1/cloudfoundry-1.7.1.201408270217-RELEASE-updatesite.zip)
+  
+  [Cloud Foundry Eclipse 1.7.0](http://dist.springsource.com/release/TOOLS/cloudfoundry/1.7.0/cloudfoundry-1.7.0.201406182004-RELEASE-updatesite.zip)
+  
 
 ## Getting started
 
