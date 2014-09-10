@@ -26,7 +26,6 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -45,7 +44,6 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -56,18 +54,17 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.widgets.ToolBar;
 
 public class EnvironmentVariablesPart extends UIPart {
 
 	private List<EnvironmentVariable> variables;
 
 	private TableViewer envVariablesViewer;
-	
+
 	private Button editEnvVarButton;
-	
+
 	private Button removeEnvVarButton;
-	
+
 	public void setInput(List<EnvironmentVariable> variables) {
 		this.variables = variables != null ? variables : new ArrayList<EnvironmentVariable>();
 		if (envVariablesViewer != null) {
@@ -80,20 +77,25 @@ public class EnvironmentVariablesPart extends UIPart {
 	}
 
 	public Control createPart(Composite parent) {
-		Composite tableArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().spacing(new Point(SWT.DEFAULT,80)).numColumns(1).applyTo(tableArea);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(tableArea);
+		Composite commonArea = new Composite(parent, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(commonArea);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(commonArea);
 
-		Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI);
-		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).span(1,1).grab(true, true).applyTo(table);
+		Composite tableParent = new Composite(commonArea, SWT.NONE);
+
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(tableParent);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(tableParent);
+
+		Table table = new Table(tableParent, SWT.BORDER | SWT.MULTI);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(table);
 		envVariablesViewer = new TableViewer(table);
-		Listener actionEnabler =  new Listener() {
+		Listener actionEnabler = new Listener() {
 			@Override
-			 public void handleEvent(Event event) {
+			public void handleEvent(Event event) {
 				setEnabledDisabled();
-			    }
-			 }; 
-			
+			}
+		};
+
 		table.addListener(SWT.Selection, actionEnabler);
 		table.addListener(SWT.FocusOut, actionEnabler);
 		envVariablesViewer.setContentProvider(new IStructuredContentProvider() {
@@ -135,69 +137,64 @@ public class EnvironmentVariablesPart extends UIPart {
 
 		envVariablesViewer.setColumnProperties(columnProperties);
 
-		AddEditButtons(parent);
-		return tableArea;
+		addEditButtons(commonArea);
+		return commonArea;
 	}
-	
+
 	protected void setEnabledDisabled() {
-		 removeEnvVarButton.setEnabled(isDeleteEnabled());
-	     editEnvVarButton.setEnabled(isEditEnabled());	  
+		removeEnvVarButton.setEnabled(isDeleteEnabled());
+		editEnvVarButton.setEnabled(isEditEnabled());
 	}
 
-	private void AddEditButtons(Composite parent){
+	private void addEditButtons(Composite parent) {
 
-		Composite toolBarArea = new Composite(parent, SWT.NONE);
-		
-		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(toolBarArea);
-		GridDataFactory.fillDefaults().grab(true, true).hint(50, 20).applyTo(toolBarArea);
-		ToolBarManager toolBarManager = new ToolBarManager(SWT.NONE);
-		ToolBar bar = toolBarManager.createControl(toolBarArea);
-		bar.setOrientation(SWT.VERTICAL);
-		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(bar);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(bar);
-		Button newEnvVarButton = new Button(bar, SWT.NONE);
+		Composite buttonArea = new Composite(parent, SWT.NONE);
+
+		GridLayoutFactory.fillDefaults().numColumns(1).spacing(SWT.DEFAULT, 4).applyTo(buttonArea);
+		GridDataFactory.fillDefaults().grab(false, true).applyTo(buttonArea);
+
+		Button newEnvVarButton = new Button(buttonArea, SWT.NONE);
 		newEnvVarButton.setText("New...");
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(newEnvVarButton);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(newEnvVarButton);
 		newEnvVarButton.addSelectionListener(new SelectionAdapter() {
-		      public void widgetSelected(SelectionEvent e) {
-		        handleAdd();
-		        }
-		      });
-		
-		editEnvVarButton = new Button(bar, SWT.NONE);
+			public void widgetSelected(SelectionEvent e) {
+				handleAdd();
+			}
+		});
+
+		editEnvVarButton = new Button(buttonArea, SWT.NONE);
 		editEnvVarButton.setText("Edit...");
 		editEnvVarButton.setEnabled(false);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(editEnvVarButton);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(editEnvVarButton);
 		editEnvVarButton.addSelectionListener(new SelectionAdapter() {
-		      public void widgetSelected(SelectionEvent e) {
-		        handleEdit();
-		        }
-		      });
-		
-		removeEnvVarButton = new Button(bar, SWT.NONE);
+			public void widgetSelected(SelectionEvent e) {
+				handleEdit();
+			}
+		});
+
+		removeEnvVarButton = new Button(buttonArea, SWT.NONE);
 		removeEnvVarButton.setText("Remove");
 		removeEnvVarButton.setEnabled(false);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(removeEnvVarButton);
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(removeEnvVarButton);
 		removeEnvVarButton.addSelectionListener(new SelectionAdapter() {
-		      public void widgetSelected(SelectionEvent e) {
-		        handleDelete();
-		        }
-		      });
-		toolBarManager.update(true);
+			public void widgetSelected(SelectionEvent e) {
+				handleDelete();
+			}
+		});
 	}
 
 	private boolean isEditEnabled() {
 		final List<EnvironmentVariable> vars = getViewerSelection();
-		boolean isEnabled =  vars != null && vars.size() ==1;
+		boolean isEnabled = vars != null && vars.size() == 1;
 		return isEnabled;
 	}
-	
+
 	private boolean isDeleteEnabled() {
 		final List<EnvironmentVariable> vars = getViewerSelection();
-		boolean isEnabled =  vars != null && vars.size() > 0;
-		return isEnabled;	
+		boolean isEnabled = vars != null && vars.size() > 0;
+		return isEnabled;
 	}
-	
+
 	protected void handleAdd() {
 		boolean variableChanged = false;
 		Shell shell = CloudUiUtil.getShell();
@@ -207,7 +204,7 @@ public class EnvironmentVariablesPart extends UIPart {
 				variableChanged = updateVariables(dialogue.getEnvironmentVariable(), null);
 			}
 		}
-		
+
 		if (variableChanged) {
 			notifyStatusChange(Status.OK_STATUS);
 		}
@@ -224,7 +221,7 @@ public class EnvironmentVariablesPart extends UIPart {
 				variableChanged = updateVariables(dialogue.getEnvironmentVariable(), toEdit);
 			}
 		}
-		
+
 		if (variableChanged) {
 			notifyStatusChange(Status.OK_STATUS);
 			setEnabledDisabled();
@@ -239,7 +236,7 @@ public class EnvironmentVariablesPart extends UIPart {
 				variableChanged = variableChanged || updateVariables(null, toDelete);
 			}
 		}
-		
+
 		if (variableChanged) {
 			notifyStatusChange(Status.OK_STATUS);
 			setEnabledDisabled();
