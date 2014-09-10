@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,6 +19,8 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
+import java.awt.GridLayout;
+
 import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
@@ -30,6 +32,7 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 
 public class CloudFoundryApplicationEnvVarWizardPage extends PartsWizardPage {
@@ -58,7 +61,7 @@ public class CloudFoundryApplicationEnvVarWizardPage extends PartsWizardPage {
 		}
 
 		Composite mainArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(mainArea);
+		GridLayoutFactory.fillDefaults().numColumns(2).spacing(new Point(SWT.DEFAULT,20)).applyTo(mainArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainArea);
 		envVarPart = new EnvironmentVariablesPart();
 

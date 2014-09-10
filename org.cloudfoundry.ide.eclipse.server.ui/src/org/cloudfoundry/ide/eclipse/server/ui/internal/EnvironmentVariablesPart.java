@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -26,11 +26,7 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.action.IMenuListener;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -46,24 +42,32 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.ToolBar;
 
 public class EnvironmentVariablesPart extends UIPart {
 
 	private List<EnvironmentVariable> variables;
 
 	private TableViewer envVariablesViewer;
-
+	
+	private Button editEnvVarButton;
+	
+	private Button removeEnvVarButton;
+	
 	public void setInput(List<EnvironmentVariable> variables) {
 		this.variables = variables != null ? variables : new ArrayList<EnvironmentVariable>();
 		if (envVariablesViewer != null) {
@@ -76,20 +80,22 @@ public class EnvironmentVariablesPart extends UIPart {
 	}
 
 	public Control createPart(Composite parent) {
-
 		Composite tableArea = new Composite(parent, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(tableArea);
+		GridLayoutFactory.fillDefaults().spacing(new Point(SWT.DEFAULT,80)).numColumns(1).applyTo(tableArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(tableArea);
 
-		Label viewerLabel = new Label(tableArea, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(false, false).applyTo(viewerLabel);
-		viewerLabel.setText("Right click to edit environment variables:");
-
 		Table table = new Table(tableArea, SWT.BORDER | SWT.MULTI);
-		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).grab(true, true).applyTo(table);
-
+		GridDataFactory.fillDefaults().hint(new Point(SWT.DEFAULT, 80)).span(1,1).grab(true, true).applyTo(table);
 		envVariablesViewer = new TableViewer(table);
-
+		Listener actionEnabler =  new Listener() {
+			@Override
+			 public void handleEvent(Event event) {
+				setEnabledDisabled();
+			    }
+			 }; 
+			
+		table.addListener(SWT.Selection, actionEnabler);
+		table.addListener(SWT.FocusOut, actionEnabler);
 		envVariablesViewer.setContentProvider(new IStructuredContentProvider() {
 
 			public Object[] getElements(Object inputElement) {
@@ -129,124 +135,119 @@ public class EnvironmentVariablesPart extends UIPart {
 
 		envVariablesViewer.setColumnProperties(columnProperties);
 
-		// Add actions to edit the variables
-		MenuManager menuManager = new MenuManager();
-		menuManager.setRemoveAllWhenShown(true);
-		menuManager.addMenuListener(new IMenuListener() {
-
-			public void menuAboutToShow(IMenuManager manager) {
-				List<IAction> actions = getViewerActions();
-				if (actions != null) {
-					for (IAction action : actions) {
-						manager.add(action);
-					}
-				}
-			}
-		});
-
-		Menu menu = menuManager.createContextMenu(envVariablesViewer.getControl());
-		envVariablesViewer.getControl().setMenu(menu);
-
+		AddEditButtons(parent);
 		return tableArea;
 	}
-
-	protected enum ViewerAction {
-		Add, Delete, Edit
+	
+	protected void setEnabledDisabled() {
+		 removeEnvVarButton.setEnabled(isDeleteEnabled());
+	     editEnvVarButton.setEnabled(isEditEnabled());	  
 	}
 
-	protected List<IAction> getViewerActions() {
-		List<IAction> actions = new ArrayList<IAction>();
+	private void AddEditButtons(Composite parent){
+
+		Composite toolBarArea = new Composite(parent, SWT.NONE);
+		
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(toolBarArea);
+		GridDataFactory.fillDefaults().grab(true, true).hint(50, 20).applyTo(toolBarArea);
+		ToolBarManager toolBarManager = new ToolBarManager(SWT.NONE);
+		ToolBar bar = toolBarManager.createControl(toolBarArea);
+		bar.setOrientation(SWT.VERTICAL);
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(bar);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(bar);
+		Button newEnvVarButton = new Button(bar, SWT.NONE);
+		newEnvVarButton.setText("New...");
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(newEnvVarButton);
+		newEnvVarButton.addSelectionListener(new SelectionAdapter() {
+		      public void widgetSelected(SelectionEvent e) {
+		        handleAdd();
+		        }
+		      });
+		
+		editEnvVarButton = new Button(bar, SWT.NONE);
+		editEnvVarButton.setText("Edit...");
+		editEnvVarButton.setEnabled(false);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(editEnvVarButton);
+		editEnvVarButton.addSelectionListener(new SelectionAdapter() {
+		      public void widgetSelected(SelectionEvent e) {
+		        handleEdit();
+		        }
+		      });
+		
+		removeEnvVarButton = new Button(bar, SWT.NONE);
+		removeEnvVarButton.setText("Remove");
+		removeEnvVarButton.setEnabled(false);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(removeEnvVarButton);
+		removeEnvVarButton.addSelectionListener(new SelectionAdapter() {
+		      public void widgetSelected(SelectionEvent e) {
+		        handleDelete();
+		        }
+		      });
+		toolBarManager.update(true);
+	}
+
+	private boolean isEditEnabled() {
 		final List<EnvironmentVariable> vars = getViewerSelection();
-
-		actions.add(new Action(ViewerAction.Add.name()) {
-
-			public void run() {
-				handleActionSelected(ViewerAction.Add);
-			}
-
-			@Override
-			public boolean isEnabled() {
-				return true;
-			}
-		});
-
-		actions.add(new Action(ViewerAction.Delete.name()) {
-
-			public void run() {
-				handleActionSelected(ViewerAction.Delete);
-			}
-
-			@Override
-			public boolean isEnabled() {
-				return vars != null && vars.size() > 0;
-			}
-		});
-
-		actions.add(new Action(ViewerAction.Edit.name()) {
-
-			public void run() {
-				handleActionSelected(ViewerAction.Edit);
-			}
-
-			@Override
-			public boolean isEnabled() {
-				return vars != null && vars.size() == 1;
-			}
-		});
-
-		return actions;
+		boolean isEnabled =  vars != null && vars.size() ==1;
+		return isEnabled;
 	}
-
-	protected void handleActionSelected(ViewerAction action) {
-		if (action != null) {
-			switch (action) {
-			case Add:
-				handleAdd();
-				break;
-			case Edit:
-				handleEdit();
-				break;
-			case Delete:
-				handleDelete();
-				break;
-			}
-			//Notify listeners that changes were made
-			notifyStatusChange(Status.OK_STATUS);
-		}
+	
+	private boolean isDeleteEnabled() {
+		final List<EnvironmentVariable> vars = getViewerSelection();
+		boolean isEnabled =  vars != null && vars.size() > 0;
+		return isEnabled;	
 	}
-
+	
 	protected void handleAdd() {
+		boolean variableChanged = false;
 		Shell shell = CloudUiUtil.getShell();
 		if (shell != null) {
 			VariableDialogue dialogue = new VariableDialogue(shell, null);
 			if (dialogue.open() == Window.OK) {
-				updateVariables(dialogue.getEnvironmentVariable(), null);
+				variableChanged = updateVariables(dialogue.getEnvironmentVariable(), null);
 			}
+		}
+		
+		if (variableChanged) {
+			notifyStatusChange(Status.OK_STATUS);
 		}
 	}
 
 	protected void handleEdit() {
+		boolean variableChanged = false;
 		Shell shell = CloudUiUtil.getShell();
 		List<EnvironmentVariable> selection = getViewerSelection();
 		if (shell != null && selection != null && !selection.isEmpty()) {
 			EnvironmentVariable toEdit = selection.get(0);
 			VariableDialogue dialogue = new VariableDialogue(shell, toEdit);
 			if (dialogue.open() == Window.OK) {
-				updateVariables(dialogue.getEnvironmentVariable(), toEdit);
+				variableChanged = updateVariables(dialogue.getEnvironmentVariable(), toEdit);
 			}
+		}
+		
+		if (variableChanged) {
+			notifyStatusChange(Status.OK_STATUS);
+			setEnabledDisabled();
 		}
 	}
 
 	protected void handleDelete() {
+		boolean variableChanged = false;
 		List<EnvironmentVariable> selection = getViewerSelection();
 		if (selection != null && !selection.isEmpty()) {
 			for (EnvironmentVariable toDelete : selection) {
-				updateVariables(null, toDelete);
+				variableChanged = variableChanged || updateVariables(null, toDelete);
 			}
+		}
+		
+		if (variableChanged) {
+			notifyStatusChange(Status.OK_STATUS);
+			setEnabledDisabled();
 		}
 	}
 
-	protected void updateVariables(EnvironmentVariable add, EnvironmentVariable delete) {
+	protected boolean updateVariables(EnvironmentVariable add, EnvironmentVariable delete) {
+		boolean variableChanged = false;
 		if (variables == null) {
 			variables = new ArrayList<EnvironmentVariable>();
 		}
@@ -255,7 +256,10 @@ public class EnvironmentVariablesPart extends UIPart {
 			List<EnvironmentVariable> updatedList = new ArrayList<EnvironmentVariable>();
 
 			for (EnvironmentVariable var : variables) {
-				if (!var.equals(delete)) {
+				if (var.equals(delete)) {
+					variableChanged = true;
+				}
+				else {
 					updatedList.add(var);
 				}
 			}
@@ -265,9 +269,11 @@ public class EnvironmentVariablesPart extends UIPart {
 
 		if (add != null) {
 			variables.add(add);
+			variableChanged = true;
 		}
 
 		setInput(variables);
+		return variableChanged;
 	}
 
 	protected List<EnvironmentVariable> getViewerSelection() {
