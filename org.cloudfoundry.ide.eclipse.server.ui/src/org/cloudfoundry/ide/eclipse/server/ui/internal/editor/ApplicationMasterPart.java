@@ -44,6 +44,7 @@ import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.ToolBarManager;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.util.LocalSelectionTransfer;
 import org.eclipse.jface.viewers.DecorationOverlayIcon;
@@ -55,6 +56,7 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSourceAdapter;
@@ -68,6 +70,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.SectionPart;
@@ -206,12 +209,37 @@ public class ApplicationMasterPart extends SectionPart {
 
 						if (prj != null) {
 
-							final IProject project = prj;
-
 							final CloudFoundryServer cloudServer = (CloudFoundryServer) editorPage.getServer()
 									.getOriginal().loadAdapter(CloudFoundryServer.class, monitor);
 
 							if (cloudServer != null) {
+
+								final String moduleName = prj.getName();
+
+								// First of all, should make sure there is no
+								// CloundApplicationModule
+								// with the same name of the selected project,
+								// otherwise it will cause
+								// the CloundApplicationModule with the same
+								// name and its related remote
+								// application in CF to be deleted.
+								if (cloudServer.getBehaviour().existCloudApplicationModule(moduleName)) {
+									Display.getDefault().asyncExec(new Runnable() {
+
+										public void run() {
+											MessageDialog.openError(
+													editorPage.getSite().getShell(),
+													"Failed to deploy application",
+													NLS.bind(
+															"Can't deploy the project {0} because a cloud application with the same name already exits. {1}",
+															moduleName,
+															" Please either rename the project or delete the cloud application, and then try again."));
+										}
+
+									});
+									return Status.CANCEL_STATUS;
+								}
+
 								// Make sure parent performs the drop first to
 								// create the IModule. Unsupported modules will
 								// not proceed result in IModule creation
@@ -228,7 +256,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 									@Override
 									protected IStatus run(IProgressMonitor monitor) {
-										cloudServer.getBehaviour().publishAdd(project.getName(), monitor);
+										cloudServer.getBehaviour().publishAdd(moduleName, monitor);
 										return Status.OK_STATUS;
 									}
 
