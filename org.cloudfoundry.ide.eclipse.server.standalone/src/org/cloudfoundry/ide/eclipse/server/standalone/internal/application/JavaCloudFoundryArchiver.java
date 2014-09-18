@@ -56,6 +56,7 @@ import org.eclipse.jdt.ui.jarpackager.IJarExportRunnable;
 import org.eclipse.jdt.ui.jarpackager.JarPackageData;
 import org.eclipse.wst.server.core.IModule;
 import org.springframework.boot.loader.tools.Libraries;
+import org.springframework.boot.loader.tools.Library;
 import org.springframework.boot.loader.tools.LibraryCallback;
 import org.springframework.boot.loader.tools.LibraryScope;
 import org.springframework.boot.loader.tools.Repackager;
@@ -314,7 +315,8 @@ public class JavaCloudFoundryArchiver {
 							File rootFile = new File(root.getPath()
 									.toOSString());
 							if (rootFile.exists()) {
-								callBack.library(rootFile, LibraryScope.COMPILE);
+								callBack.library(new Library(rootFile,
+										LibraryScope.COMPILE));
 							}
 						}
 					}
