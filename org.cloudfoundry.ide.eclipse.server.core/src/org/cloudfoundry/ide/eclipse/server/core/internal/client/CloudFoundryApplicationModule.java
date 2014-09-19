@@ -36,6 +36,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.internal.ExternalModule;
@@ -402,6 +403,21 @@ public class CloudFoundryApplicationModule extends ExternalModule implements ICl
 	 */
 	public synchronized boolean isDeployed() {
 		return getApplication() != null;
+	}
+
+	/**
+	 * Sets the local module to current <code>CloudFoundryApplicationModule</code>
+	 * instance.
+	 * 
+	 * @param localModule the target local module
+	 * @throws CoreException when the given local module is null
+	 */
+	public synchronized void setLocalModule(IModule localModule) throws CoreException {
+		if (localModule == null) {
+			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, 
+			    "The given localModule is null"));
+		}
+		this.localModule = localModule;
 	}
 
 	/**
