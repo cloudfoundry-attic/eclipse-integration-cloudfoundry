@@ -21,23 +21,23 @@ package org.cloudfoundry.ide.eclipse.server.core.internal;
 
 public class CloudFoundryConstants {
 
-	public static final String GRAILS_NATURE = "com.springsource.sts.grails.core.nature";
+	public static final String GRAILS_NATURE = "com.springsource.sts.grails.core.nature"; //$NON-NLS-1$
 
-	public static final String LIFT = "lift/1.0";
+	public static final String LIFT = "lift/1.0"; //$NON-NLS-1$
 
-	public static final String JAVA_WEB = "java_web";
+	public static final String JAVA_WEB = "java_web"; //$NON-NLS-1$
 
-	public static final String SPRING = "spring";
+	public static final String SPRING = "spring"; //$NON-NLS-1$
 
-	public static final String GRAILS = "grails";
+	public static final String GRAILS = "grails"; //$NON-NLS-1$
 
-	public static final String ID_GRAILS_APP = "grails.app";
+	public static final String ID_GRAILS_APP = "grails.app"; //$NON-NLS-1$
 
-	public static final String ID_WEB_MODULE = "jst.web";
+	public static final String ID_WEB_MODULE = "jst.web"; //$NON-NLS-1$
 	
 	// Does this have to be vendor specific?  Removing Pivotal CF
-	public static final String PUBLIC_CF_SERVER_SIGNUP_LABEL = "Sign Up";
+	public static final String PUBLIC_CF_SERVER_SIGNUP_LABEL = Messages.CloudFoundryConstants_LABEL_SIGNUP;
 
-	public static final String PROPERTY_MODULE_NO_FACET = "org.cloudfoundry.ide.eclipse.server.core.property.PROPERTY_MODULE_NO_FACET";
+	public static final String PROPERTY_MODULE_NO_FACET = "org.cloudfoundry.ide.eclipse.server.core.property.PROPERTY_MODULE_NO_FACET"; //$NON-NLS-1$
 
 }

@@ -43,8 +43,8 @@ public class AppStatsLabelProvider extends LabelProvider implements ITableLabelP
 
 			Usage usage = stats.getUsage();
 			double cpu = 0.0;
-			String memory = "0M";
-			String disk = "0M";
+			String memory = "0M"; //$NON-NLS-1$
+			String disk = "0M"; //$NON-NLS-1$
 			if (usage != null) {
 				cpu = usage.getCpu();
 				memory = getFormattedMemory(usage.getMem() / 1024);
@@ -56,13 +56,13 @@ public class AppStatsLabelProvider extends LabelProvider implements ITableLabelP
 			case 1:
 				return stats.getHost();
 			case 2:
-				return stats.getPort() + "";
+				return stats.getPort() + ""; //$NON-NLS-1$
 			case 3:
-				return String.valueOf(cpu) + "% (" + String.valueOf(stats.getCores()) + ")";
+				return String.valueOf(cpu) + "% (" + String.valueOf(stats.getCores()) + ")"; //$NON-NLS-1$ //$NON-NLS-2$
 			case 4:
-				return memory + " (" + getFormattedMemory(stats.getMemQuota() / 1024) + ")";
+				return memory + " (" + getFormattedMemory(stats.getMemQuota() / 1024) + ")"; //$NON-NLS-1$ //$NON-NLS-2$
 			case 5:
-				return disk + " (" + getFormattedMemory(stats.getDiskQuota() / 1024) + ")";
+				return disk + " (" + getFormattedMemory(stats.getDiskQuota() / 1024) + ")"; //$NON-NLS-1$ //$NON-NLS-2$
 			case 6:
 				return getFormattedDuration(Math.round(stats.getUptime()));
 			}
@@ -84,15 +84,15 @@ public class AppStatsLabelProvider extends LabelProvider implements ITableLabelP
 		// long totalDays = totalHours / 24;
 
 		// String dayString = "" + totalDays;
-		String hourString = "" + totalHours;
-		String minuteString = "" + remainderMinutes;
-		String secondString = "" + remainderSeconds;
+		String hourString = "" + totalHours; //$NON-NLS-1$
+		String minuteString = "" + remainderMinutes; //$NON-NLS-1$
+		String secondString = "" + remainderSeconds; //$NON-NLS-1$
 
-		return hourString + "h:" + minuteString + "m:" + secondString + "s"; //$NON-NLS-1$
+		return hourString + "h:" + minuteString + "m:" + secondString + "s"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
 	private String getFormattedMemory(double mem) {
-		return String.valueOf(Math.round(mem * 10 / 1024) / 10) + "M";
+		return String.valueOf(Math.round(mem * 10 / 1024) / 10) + "M"; //$NON-NLS-1$
 	}
 
 }

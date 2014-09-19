@@ -29,6 +29,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ITunnelServiceCo
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServerService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServiceCommandManager;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.tunnel.AddCommandDisplayPart;
 import org.eclipse.jface.wizard.Wizard;
 
@@ -63,7 +64,7 @@ public class ServiceCommandWizard extends Wizard {
 		this.contextCommand = serviceCommandToEdit;
 		this.commands = commands;
 
-		setWindowTitle("Configure a service tunnel command");
+		setWindowTitle(Messages.ServiceCommandWizard_TITLE_CONFIG_CMD);
 		setNeedsProgressMonitor(true);
 	}
 

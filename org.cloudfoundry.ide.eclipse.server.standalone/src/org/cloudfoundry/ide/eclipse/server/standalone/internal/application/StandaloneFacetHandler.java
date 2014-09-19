@@ -41,8 +41,8 @@ public class StandaloneFacetHandler {
 
 	private final IProject project;
 
-	public static final String ID_JAVA_STANDALONE_APP_VERSION = "1.0";
-	public static final String ID_MODULE_STANDALONE = "cloudfoundry.standalone.app";
+	public static final String ID_JAVA_STANDALONE_APP_VERSION = "1.0"; //$NON-NLS-1$
+	public static final String ID_MODULE_STANDALONE = "cloudfoundry.standalone.app"; //$NON-NLS-1$
 
 	public StandaloneFacetHandler(IProject project) {
 		this.project = project;
@@ -113,7 +113,7 @@ public class StandaloneFacetHandler {
 			if (!new StandaloneFacetHandler(project).canAddFacet()) {
 				throw new CoreException(
 						CloudFoundryPlugin
-								.getErrorStatus("Cloud Foundry Standalone Facet can only be installed on a Java project."));
+								.getErrorStatus("Cloud Foundry Standalone Facet can only be installed on a Java project.")); //$NON-NLS-1$
 			}
 		}
 	}

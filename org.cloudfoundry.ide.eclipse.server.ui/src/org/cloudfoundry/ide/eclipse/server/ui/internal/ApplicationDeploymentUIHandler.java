@@ -123,10 +123,10 @@ public class ApplicationDeploymentUIHandler {
 					.getLocalModule());
 
 			if (providerDelegate == null) {
-				throw CloudErrorUtil.toCoreException("Failed to open application deployment wizard for: "
-						+ appModule.getDeployedApplicationName() + " when attempting to push application to "
+				throw CloudErrorUtil.toCoreException("Failed to open application deployment wizard for: " //$NON-NLS-1$
+						+ appModule.getDeployedApplicationName() + " when attempting to push application to " //$NON-NLS-1$
 						+ server.getServer().getName()
-						+ ". No application provider found that corresponds to the application type: "
+						+ ". No application provider found that corresponds to the application type: " //$NON-NLS-1$
 						+ appModule.getLocalModule().getModuleType().getId());
 			}
 
@@ -217,7 +217,7 @@ public class ApplicationDeploymentUIHandler {
 
 			if (cancelled[0]) {
 				if (!status[0].isOK()) {
-					CloudFoundryPlugin.logError("Failed to deploy application due to: " + status[0].getMessage(),
+					CloudFoundryPlugin.logError("Failed to deploy application due to: " + status[0].getMessage(), //$NON-NLS-1$
 							status[0].getException());
 				}
 				throw new OperationCanceledException();

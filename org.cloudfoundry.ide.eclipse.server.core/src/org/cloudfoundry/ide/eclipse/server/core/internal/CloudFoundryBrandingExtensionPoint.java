@@ -38,31 +38,31 @@ import org.eclipse.core.runtime.Platform;
  */
 public class CloudFoundryBrandingExtensionPoint {
 
-	public static String ELEM_DEFAULT_URL = "defaultUrl";
+	public static String ELEM_DEFAULT_URL = "defaultUrl"; //$NON-NLS-1$
 
-	public static String ELEM_CLOUD_URL = "cloudUrl";
+	public static String ELEM_CLOUD_URL = "cloudUrl"; //$NON-NLS-1$
 
-	public static String ELEM_WILDCARD = "wildcard";
+	public static String ELEM_WILDCARD = "wildcard"; //$NON-NLS-1$
 
-	public static String ATTR_REMOTE_SYSTEM_TYPE_ID = "remoteSystemTypeId";
+	public static String ATTR_REMOTE_SYSTEM_TYPE_ID = "remoteSystemTypeId"; //$NON-NLS-1$
 
-	public static String ATTR_SERVER_DISPLAY_NAME = "serverDisplayName";
+	public static String ATTR_SERVER_DISPLAY_NAME = "serverDisplayName"; //$NON-NLS-1$
 
-	public static String ATTR_SERVER_TYPE_ID = "serverTypeId";
+	public static String ATTR_SERVER_TYPE_ID = "serverTypeId"; //$NON-NLS-1$
 
-	public static String ATTR_NAME = "name";
+	public static String ATTR_NAME = "name"; //$NON-NLS-1$
 
-	public static String ATTR_URL = "url";
+	public static String ATTR_URL = "url"; //$NON-NLS-1$
 
-	public static String ATTR_PROVIDE_SERVICES = "provideServices";
+	public static String ATTR_PROVIDE_SERVICES = "provideServices"; //$NON-NLS-1$
 
-	public static String ATTR_WIZ_BAN = "wizardBanner";
+	public static String ATTR_WIZ_BAN = "wizardBanner"; //$NON-NLS-1$
 
-	public static String ELEM_SERVICE = "service";
+	public static String ELEM_SERVICE = "service"; //$NON-NLS-1$
 
-	public static String ATTR_SIGNUP_URL = "signupURL";
+	public static String ATTR_SIGNUP_URL = "signupURL"; //$NON-NLS-1$
 
-	public static String POINT_ID = "org.cloudfoundry.ide.eclipse.server.core.branding";
+	public static String POINT_ID = "org.cloudfoundry.ide.eclipse.server.core.branding"; //$NON-NLS-1$
 
 	private static Map<String, IConfigurationElement> brandingDefinitions = new HashMap<String, IConfigurationElement>();
 
@@ -133,7 +133,7 @@ public class CloudFoundryBrandingExtensionPoint {
 					IConfigurationElement[] wildcards = defaultUrl.getChildren(ELEM_WILDCARD);
 					for (IConfigurationElement wildcard : wildcards) {
 						String wildcardName = wildcard.getAttribute(ATTR_NAME);
-						url = url.replaceAll(wildcardName, "{" + wildcardName + "}");
+						url = url.replaceAll(wildcardName, "{" + wildcardName + "}"); //$NON-NLS-1$ //$NON-NLS-2$
 					}
 					result.add(new CloudServerURL(urlName, url, false, signupURL));
 				}
@@ -243,7 +243,7 @@ public class CloudFoundryBrandingExtensionPoint {
 	}
 
 	public static boolean supportsRegistration(String serverTypeId, String url) {
-		return url != null && (url.endsWith("cloudfoundry.me") || url.endsWith("vcap.me"));
+		return url != null && (url.endsWith("cloudfoundry.me") || url.endsWith("vcap.me")); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	public static String getSignupURL(String serverTypeId, String url) {

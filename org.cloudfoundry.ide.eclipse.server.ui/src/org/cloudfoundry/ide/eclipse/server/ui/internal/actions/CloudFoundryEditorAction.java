@@ -28,6 +28,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServ
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.ModifyOperation;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryServerUiPlugin;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.ApplicationMasterDetailsBlock;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryCredentialsWizard;
@@ -131,7 +132,7 @@ public abstract class CloudFoundryEditorAction extends Action {
 				try {
 					ICloudFoundryOperation operation = getOperation(monitor);
 					if (operation == null) {
-						return CloudFoundryPlugin.getStatus("No editor operation to execute.", IStatus.WARNING);
+						return CloudFoundryPlugin.getStatus(Messages.CloudFoundryEditorAction_TEXT_NO_OP_EXECUTE, IStatus.WARNING);
 					}
 					operation.run(monitor);
 				}
@@ -140,7 +141,7 @@ public abstract class CloudFoundryEditorAction extends Action {
 							.getCause() : null;
 					if (cfe instanceof NotFinishedStagingException) {
 						status = new Status(IStatus.WARNING, CloudFoundryServerUiPlugin.PLUGIN_ID,
-								"Please restart your application for any changes to take effect");
+								Messages.CloudFoundryEditorAction_WARNING_RESTART_APP);
 
 					}
 					else if (shouldLogException(e)) {

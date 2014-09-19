@@ -58,7 +58,7 @@ public enum DebugModeType {
 
 	public String getJobName() {
 		if (jobName == null) {
-			jobName = "Debugging in " + applicationAction.getDisplayName().toLowerCase() + " mode";
+			jobName = "Debugging in " + applicationAction.getDisplayName().toLowerCase() + " mode"; //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return jobName;
 	}

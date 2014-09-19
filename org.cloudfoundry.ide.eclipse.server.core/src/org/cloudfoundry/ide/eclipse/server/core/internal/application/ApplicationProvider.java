@@ -39,11 +39,11 @@ import org.eclipse.core.runtime.IConfigurationElement;
  */
 public class ApplicationProvider extends FrameworkProvider<AbstractApplicationDelegate> {
 
-	private static final String MODULE_ID_ELEMENT = "moduleID";
+	private static final String MODULE_ID_ELEMENT = "moduleID"; //$NON-NLS-1$
 
-	private static final String PRIORITY_ATTR = "priority";
+	private static final String PRIORITY_ATTR = "priority"; //$NON-NLS-1$
 
-	private static final String ID_ATTRIBUTE = "id";
+	private static final String ID_ATTRIBUTE = "id"; //$NON-NLS-1$
 
 	private Priority priority;
 

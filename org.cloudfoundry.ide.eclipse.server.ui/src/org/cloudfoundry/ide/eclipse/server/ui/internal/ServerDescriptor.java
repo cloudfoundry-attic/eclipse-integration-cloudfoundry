@@ -48,7 +48,7 @@ public class ServerDescriptor {
 
 		@Override
 		public void configureServer(IServerWorkingCopy wc) throws CoreException {
-			Object object = WorkbenchPlugin.createExtension(element, "callback");
+			Object object = WorkbenchPlugin.createExtension(element, "callback"); //$NON-NLS-1$
 			if (object instanceof ServerHandlerCallback) {
 				((ServerHandlerCallback) object).configureServer(wc);
 			}
@@ -97,21 +97,21 @@ public class ServerDescriptor {
 	}
 
 	public ServerDescriptor(IConfigurationElement element) {
-		id = element.getAttribute("id");
-		setArchivePath(element.getAttribute("archivePath"));
-		setRuntimeTypeId(element.getAttribute("runtimeTypeId"));
-		setServerTypeId(element.getAttribute("serverTypeId"));
-		setRuntimeName(element.getAttribute("runtimeName"));
-		setServerName(element.getAttribute("serverName"));
-		setName(element.getAttribute("name"));
-		setDescription(element.getAttribute("description"));
-		setVersionRange(element.getAttribute("versionRange"));
-		setInstallPath(element.getAttribute("installPath"));
-		setBundleId(element.getAttribute("bundleId"));
-		if (element.getAttribute("callback") != null) {
+		id = element.getAttribute("id"); //$NON-NLS-1$
+		setArchivePath(element.getAttribute("archivePath")); //$NON-NLS-1$
+		setRuntimeTypeId(element.getAttribute("runtimeTypeId")); //$NON-NLS-1$
+		setServerTypeId(element.getAttribute("serverTypeId")); //$NON-NLS-1$
+		setRuntimeName(element.getAttribute("runtimeName")); //$NON-NLS-1$
+		setServerName(element.getAttribute("serverName")); //$NON-NLS-1$
+		setName(element.getAttribute("name")); //$NON-NLS-1$
+		setDescription(element.getAttribute("description")); //$NON-NLS-1$
+		setVersionRange(element.getAttribute("versionRange")); //$NON-NLS-1$
+		setInstallPath(element.getAttribute("installPath")); //$NON-NLS-1$
+		setBundleId(element.getAttribute("bundleId")); //$NON-NLS-1$
+		if (element.getAttribute("callback") != null) { //$NON-NLS-1$
 			setCallback(new ServerHandlerCallbackDelegate(element));
 		}
-		String autoConfigurable = element.getAttribute("autoConfigurable");
+		String autoConfigurable = element.getAttribute("autoConfigurable"); //$NON-NLS-1$
 		if (autoConfigurable != null) {
 			setAutoConfigurable(Boolean.parseBoolean(autoConfigurable));
 		}
@@ -294,7 +294,7 @@ public class ServerDescriptor {
 	}
 
 	public static ServerDescriptor getServerDescriptor(CloudFoundryServer server, String serverName) {
-		ServerDescriptor descriptor = new ServerDescriptor("space server");
+		ServerDescriptor descriptor = new ServerDescriptor("space server"); //$NON-NLS-1$
 		// Loads the CF Server Runtime Adapter
 		CloudFoundryServerRuntime cfServerRuntime = server.getRuntime();
 		if (cfServerRuntime != null) {

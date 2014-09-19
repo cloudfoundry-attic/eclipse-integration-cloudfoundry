@@ -200,8 +200,8 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
 		if (cloudServer == null) {
 			CloudFoundryPlugin
-					.logError("Cloud Foundry Server Framework Error: Failed to create a Cloud Foundry server working copy for: "
-							+ server.getId() + ". Please check if the plugin has been installed correctly.");
+					.logError("Cloud Foundry Server Framework Error: Failed to create a Cloud Foundry server working copy for: " //$NON-NLS-1$
+							+ server.getId() + ". Please check if the plugin has been installed correctly."); //$NON-NLS-1$
 		}
 	}
 
@@ -212,7 +212,7 @@ public class CloudFoundryServerWizardFragment extends WizardFragment {
 		private final IServer server;
 
 		public ConnectJob(CloudFoundryServer originalServer, IServer server) {
-			super("Connect account");
+			super(Messages.CloudFoundryServerWizardFragment_TEXT_CONNECT_ACCOUNT);
 			this.originalServer = originalServer;
 			this.server = server;
 		}

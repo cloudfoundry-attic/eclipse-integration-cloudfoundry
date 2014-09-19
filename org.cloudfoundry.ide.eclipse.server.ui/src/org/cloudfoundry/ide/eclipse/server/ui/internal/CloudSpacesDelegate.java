@@ -29,7 +29,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExt
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerUtil;
-import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudFoundrySpace;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpaces;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudSpacesDescriptor;
@@ -160,7 +159,7 @@ public abstract class CloudSpacesDelegate {
 		}
 
 		if (selectedCloudSpace == null) {
-			errorMessage = org.cloudfoundry.ide.eclipse.server.core.internal.Messages.ERROR_INVALID_SPACE;
+			errorMessage = Messages.ERROR_INVALID_SPACE;
 		}
 		else if (cloudServerURL != null) {
 			List<CloudFoundryServer> cloudServers = CloudServerUtil.getCloudServers();
@@ -284,7 +283,7 @@ public abstract class CloudSpacesDelegate {
 		if (!isValid) {
 			throw new CoreException(
 					CloudFoundryPlugin.getErrorStatus(NLS
-							.bind("Failed to obtain a list of cloud spaces for {0} and username {1}. Credentials or URL do not match the current credentials and URL in the server.",
+							.bind(Messages.CloudSpacesDelegate_ERROR_FAIL_LOADING_CLOUDSPACES,
 									new String[] { actualURL, userName })));
 		}
 	}

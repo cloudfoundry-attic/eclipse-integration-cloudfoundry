@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -49,7 +50,7 @@ public class RegisterAccountWizard extends Wizard {
 
 	public RegisterAccountWizard(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
-		setWindowTitle("Register Account");
+		setWindowTitle(Messages.RegisterAccountWizard_TITLE_REGISTER_ACC);
 		setNeedsProgressMonitor(true);
 	}
 
@@ -94,7 +95,7 @@ public class RegisterAccountWizard extends Wizard {
 		}
 		catch (InvocationTargetException e) {
 			if (e.getCause() instanceof CoreException) {
-				String message = NLS.bind("Registering account failed for {0}: {1}", cloudServer.getServer().getName(),
+				String message = NLS.bind(Messages.RegisterAccountWizard_ERROR_REGISTER_ACC, cloudServer.getServer().getName(),
 						e.getCause().getMessage());
 				page.setErrorMessage(message);
 				Status status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, message, e);
@@ -103,7 +104,7 @@ public class RegisterAccountWizard extends Wizard {
 			}
 			else {
 				Status status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-						"Unexpected error registering account: {0}", e.getMessage()), e);
+						Messages.RegisterAccountWizard_ERROR_UNEXPECTED, e.getMessage()), e);
 				StatusManager.getManager().handle(status, StatusManager.SHOW | StatusManager.BLOCK | StatusManager.LOG);
 			}
 		}

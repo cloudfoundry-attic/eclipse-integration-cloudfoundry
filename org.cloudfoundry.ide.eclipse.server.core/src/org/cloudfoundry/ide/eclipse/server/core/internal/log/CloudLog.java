@@ -64,7 +64,7 @@ public class CloudLog implements IAdaptable {
 	}
 
 	public String toString() {
-		return logType + " - " + log;
+		return logType + " - " + log; //$NON-NLS-1$
 	}
 
 }

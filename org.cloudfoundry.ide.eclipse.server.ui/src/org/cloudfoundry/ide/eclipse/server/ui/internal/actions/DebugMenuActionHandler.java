@@ -28,6 +28,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.server.core.internal.debug.DebugCommandBuilder;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.DebugMenuActionHandler.DebugAction.DebugActionDescriptor;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -49,13 +50,13 @@ public class DebugMenuActionHandler extends MenuActionHandler<IServerModule> {
 		super(IServerModule.class);
 	}
 
-	public static final String DEBUG_ACTION_ID = "org.cloudfoundry.ide.eclipse.server.ui.action.debug";
+	public static final String DEBUG_ACTION_ID = "org.cloudfoundry.ide.eclipse.server.ui.action.debug"; //$NON-NLS-1$
 
-	public static final String CONNECT_TO_DEBUGGER_ACTION_ID = "org.cloudfoundry.ide.eclipse.server.ui.action.connectToDebugger";
+	public static final String CONNECT_TO_DEBUGGER_ACTION_ID = "org.cloudfoundry.ide.eclipse.server.ui.action.connectToDebugger"; //$NON-NLS-1$
 
-	public static final String DEBUG_TOOLTIP_TEXT = "Debug the selected application";
+	public static final String DEBUG_TOOLTIP_TEXT = Messages.DebugMenuActionHandler_TEXT_DEBUG_TOOLTIP;
 
-	public static final String CONNECT_TO_DEBUBGGER_TOOTIP_TEXT = "Connect the debugger to the deployed application";
+	public static final String CONNECT_TO_DEBUBGGER_TOOTIP_TEXT = Messages.DebugMenuActionHandler_TEXT_CONN_DEBUGGER_TOOLTIP;
 
 	protected ApplicationAction getApplicationAction(IServerModule serverModule, CloudFoundryServer cloudFoundryServer) {
 

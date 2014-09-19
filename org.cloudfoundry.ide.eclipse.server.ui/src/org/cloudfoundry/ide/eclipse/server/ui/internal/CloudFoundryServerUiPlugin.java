@@ -29,7 +29,7 @@ import org.osgi.framework.BundleContext;
  */
 public class CloudFoundryServerUiPlugin extends AbstractUIPlugin {
 
-	public static final String PLUGIN_ID = "org.cloudfoundry.ide.eclipse.server.ui";
+	public static final String PLUGIN_ID = "org.cloudfoundry.ide.eclipse.server.ui"; //$NON-NLS-1$
 
 	private static CloudFoundryServerUiPlugin plugin;
 

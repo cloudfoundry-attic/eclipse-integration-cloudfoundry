@@ -23,10 +23,12 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ITunnelServiceCo
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.TunnelServiceCommandStore;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryServerUiPlugin;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.IPartChangeListener;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.preference.PreferencePage;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IWorkbench;
@@ -91,7 +93,7 @@ public class ServiceTunnelCommandPreferencePage extends PreferencePage implement
 				TunnelServiceCommandStore.getCurrentStore().storeServerServiceCommands(updatedCommands);
 			}
 			catch (CoreException e) {
-				setErrorMessage("Failed to save command preferences: " + e.getMessage());
+				setErrorMessage(NLS.bind(Messages.ServiceTunnelCommandPreferencePage_ERROR_FAIL_TO_SAVE, e.getMessage()));
 			}
 		}
 	}

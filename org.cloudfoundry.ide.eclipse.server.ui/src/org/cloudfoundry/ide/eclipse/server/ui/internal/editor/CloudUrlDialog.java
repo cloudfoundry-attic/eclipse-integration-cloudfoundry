@@ -26,11 +26,13 @@ import java.util.List;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.events.ModifyEvent;
@@ -69,18 +71,18 @@ public class CloudUrlDialog extends Dialog {
 	
 	@Override
 	protected Control createDialogArea(Composite parent) {
-		getShell().setText("Cloud URL");
+		getShell().setText(Messages.CloudUrlDialog_TEXT_CLOUD_URL);
 		
 		Composite composite = new Composite(parent, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(true, true).hint(400, SWT.DEFAULT).applyTo(composite);
 		GridLayoutFactory.fillDefaults().margins(10, 10).numColumns(2).applyTo(composite);
 		
 		messageLabel = new Label(composite, SWT.NONE);
-		messageLabel.setText("Enter cloud URL name");
+		messageLabel.setText(Messages.CloudUrlDialog_TEXT_ENTER_URL_LABEL);
 		GridDataFactory.fillDefaults().span(2, 1).applyTo(messageLabel);
 		
 		Label nameLabel = new Label(composite, SWT.NONE);
-		nameLabel.setText("Name: ");
+		nameLabel.setText(Messages.COMMONTXT_NAME_WITH_COLON);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(nameLabel);
 		
 		final Text nameText = new Text(composite, SWT.BORDER);
@@ -98,7 +100,7 @@ public class CloudUrlDialog extends Dialog {
 		});
 		
 		Label urlLabel = new Label(composite, SWT.NONE);
-		urlLabel.setText("URL: ");
+		urlLabel.setText(Messages.COMMONTXT_URL);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(urlLabel);
 		
 		final Text urlText = new Text(composite, SWT.BORDER);
@@ -122,18 +124,18 @@ public class CloudUrlDialog extends Dialog {
 		boolean canFinish = false;
 		
 		if (name == null || name.length() == 0 ) {
-			messageLabel.setText("Enter a cloud URL name.");
+			messageLabel.setText(Messages.CloudUrlDialog_TEXT_ENTER_URL_NAME);
 		} else if (url == null || url.length() == 0) {
-			messageLabel.setText("Enter a cloud URL.");
+			messageLabel.setText(Messages.CloudUrlDialog_TEXT_ENTER_URL);
 		} else {
 			canFinish = true;
 			
 //			List<CloudURL> cloudUrls = CloudUiUtil.getAllUrls(serverTypeId);
 			for(CloudServerURL cloudUrl: allCloudUrls) {
-				if (! cloudUrl.getUrl().contains("{")) {
+				if (! cloudUrl.getUrl().contains("{")) { //$NON-NLS-1$
 					if (cloudUrl.getName().equals(name)) {
 						canFinish = false;
-						messageLabel.setText("A URL with name " + name + " already exists. Enter a different url name.");
+						messageLabel.setText(NLS.bind(Messages.CloudUrlDialog_TEXT_URL_EXISTS, name));
 					}
 				}
 			}
@@ -144,18 +146,18 @@ public class CloudUrlDialog extends Dialog {
 					String host = urlObject.getHost();
 					if (host == null || host.length() == 0) {
 						canFinish = false;
-						messageLabel.setText("Enter a valid URL.");
+						messageLabel.setText(Messages.CloudUrlDialog_TEXT_ENTER_VALID_URL);
 					}
 				} catch (MalformedURLException e) {
-					messageLabel.setText("Enter a valid URL.");
+					messageLabel.setText(Messages.CloudUrlDialog_TEXT_ENTER_VALID_URL);
 					canFinish = false;
 				} catch (CloudFoundryException e) {
-					messageLabel.setText("Enter a valid cloud controller URL.");
+					messageLabel.setText(Messages.CloudUrlDialog_TEXT_ENTER_VALID_CONTROLLER);
 					canFinish = false;
 				}
 				
 				if (canFinish) {
-					messageLabel.setText("Create a new cloud URL.");
+					messageLabel.setText(Messages.CloudUrlDialog_TEXT_CREATE_NEW_URL);
 				}
 			}
 		}		
@@ -188,7 +190,7 @@ public class CloudUrlDialog extends Dialog {
 					shouldProceed[0] = true;
 				}
 				catch (Exception e) {
-					shouldProceed[0] = MessageDialog.openQuestion(getParentShell(), "Invalid Cloud URL", "Connection to " + url + " failed. Would you like to keep the URL anyways?");
+					shouldProceed[0] = MessageDialog.openQuestion(getParentShell(), Messages.CloudUrlDialog_TEXT_INVALID_URL, NLS.bind(Messages.CloudUrlDialog_TEXT_CONN_FAILED, url));
 				}
 			}
 		});

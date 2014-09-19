@@ -53,7 +53,7 @@ public abstract class ProcessLauncher {
 			List<String> processArguments = getProcessArguments();
 
 			if (processArguments == null || processArguments.isEmpty()) {
-				throw new CoreException(getErrorStatus("No process arguments were found"));
+				throw new CoreException(getErrorStatus("No process arguments were found")); //$NON-NLS-1$
 			}
 			else {
 
@@ -73,7 +73,7 @@ public abstract class ProcessLauncher {
 				p = processBuilder.start();
 
 				if (p == null) {
-					throw new CoreException(getErrorStatus("No process was created."));
+					throw new CoreException(getErrorStatus("No process was created.")); //$NON-NLS-1$
 				}
 				else {
 
@@ -89,7 +89,7 @@ public abstract class ProcessLauncher {
 						throw new CoreException(getErrorStatus(errorBuffer.toString()));
 					}
 					else if (p.exitValue() != 0) {
-						throw new CoreException(getErrorStatus("process exit value: " + p.exitValue()));
+						throw new CoreException(getErrorStatus("process exit value: " + p.exitValue())); //$NON-NLS-1$
 					}
 				}
 			}
@@ -141,7 +141,7 @@ public abstract class ProcessLauncher {
 	}
 
 	protected IStatus getErrorStatus(String body, Exception e) {
-		String errorMessage = "Failure when launching " + getLaunchName() + " due to: " + body;
+		String errorMessage = "Failure when launching " + getLaunchName() + " due to: " + body; //$NON-NLS-1$ //$NON-NLS-2$
 		return e != null ? CloudFoundryPlugin.getErrorStatus(errorMessage, e) : CloudFoundryPlugin
 				.getErrorStatus(errorMessage);
 	}
@@ -179,7 +179,7 @@ public abstract class ProcessLauncher {
 				}
 			}
 			catch (IOException e) {
-				CloudFoundryPlugin.logError("Error while reading input from process for: " + processName, e);
+				CloudFoundryPlugin.logError("Error while reading input from process for: " + processName, e); //$NON-NLS-1$
 			}
 			finally {
 				if (processInput != null) {

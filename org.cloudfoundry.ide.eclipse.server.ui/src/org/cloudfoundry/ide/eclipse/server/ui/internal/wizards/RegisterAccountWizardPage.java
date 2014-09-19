@@ -21,6 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.osgi.util.NLS;
@@ -48,10 +49,10 @@ public class RegisterAccountWizardPage extends WizardPage {
 	private Text verifyPasswordText;
 
 	protected RegisterAccountWizardPage(CloudFoundryServer cloudServer) {
-		super("registerAccount");
+		super(Messages.RegisterAccountWizardPage_TEXT_REGISTER_ACC);
 		this.cloudServer = cloudServer;
-		setTitle("Register Account");
-		setDescription(NLS.bind("Sign-up for an account at {0}.", cloudServer.getUrl()));
+		setTitle(Messages.RegisterAccountWizardPage_TITLE_REGISTER_ACC);
+		setDescription(NLS.bind(Messages.RegisterAccountWizardPage_TEXT_SIGNUP, cloudServer.getUrl()));
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(cloudServer.getServer().getServerType().getId());
 		if (banner != null) {
 			setImageDescriptor(banner);
@@ -65,7 +66,7 @@ public class RegisterAccountWizardPage extends WizardPage {
 
 		Label emailLabel = new Label(composite, SWT.NONE);
 		emailLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		emailLabel.setText("Email:");
+		emailLabel.setText(Messages.COMMONTXT_EMAIL_WITH_COLON);
 
 		emailText = new Text(composite, SWT.BORDER);
 		emailText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -82,7 +83,7 @@ public class RegisterAccountWizardPage extends WizardPage {
 
 		Label passwordLabel = new Label(composite, SWT.NONE);
 		passwordLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		passwordLabel.setText("Password:");
+		passwordLabel.setText(Messages.COMMONTXT_PW);
 
 		passwordText = new Text(composite, SWT.PASSWORD | SWT.BORDER);
 		passwordText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -98,7 +99,7 @@ public class RegisterAccountWizardPage extends WizardPage {
 
 		Label verifyPasswordLabel = new Label(composite, SWT.NONE);
 		verifyPasswordLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		verifyPasswordLabel.setText("Verify Password:");
+		verifyPasswordLabel.setText(Messages.RegisterAccountWizardPage_LABEL_VERIFY);
 
 		verifyPasswordText = new Text(composite, SWT.PASSWORD | SWT.BORDER);
 		verifyPasswordText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -128,16 +129,16 @@ public class RegisterAccountWizardPage extends WizardPage {
 		String errorMessage = null;
 		String message = null;
 		if (emailText.getText().length() == 0) {
-			message = "Enter an email address.";
+			message = Messages.RegisterAccountWizardPage_TEXT_ENTER_EMAIL;
 		}
 		else if (passwordText.getText().length() == 0) {
-			message = "Enter a password.";
+			message = Messages.RegisterAccountWizardPage_TEXT_ENTER_PW;
 		}
 		else if (verifyPasswordText.getText().length() == 0) {
-			message = "Enter password for verification.";
+			message = Messages.RegisterAccountWizardPage_TEXT_ENTER_PW_VERIFICATION;
 		}
 		else if (!passwordText.getText().equals(verifyPasswordText.getText())) {
-			errorMessage = "Passwords do not match.";
+			errorMessage = Messages.RegisterAccountWizardPage_ERROR_PW_NO_MATCH;
 		}
 		setMessage(message);
 		setErrorMessage(errorMessage);

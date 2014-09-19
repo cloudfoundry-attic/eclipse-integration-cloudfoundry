@@ -22,12 +22,14 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.ServicesHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.osgi.util.NLS;
 
 /**
  * @author Terry Denney
@@ -45,7 +47,7 @@ public class DeleteServicesAction extends CloudFoundryEditorAction {
 		super(editorPage, RefreshArea.ALL);
 		this.serverBehaviour = serverBehaviour;
 
-		setText("Delete");
+		setText(Messages.DeleteServicesAction_TEXT_DELETE);
 		setImageDescriptor(CloudFoundryImages.REMOVE);
 
 		servicesHandler = new ServicesHandler(selection);
@@ -53,7 +55,7 @@ public class DeleteServicesAction extends CloudFoundryEditorAction {
 
 	@Override
 	public String getJobName() {
-		return "Deleting services";
+		return "Deleting services"; //$NON-NLS-1$
 	}
 
 	@Override
@@ -64,8 +66,8 @@ public class DeleteServicesAction extends CloudFoundryEditorAction {
 	@Override
 	public void run() {
 
-		boolean confirm = MessageDialog.openConfirm(getEditorPage().getSite().getShell(), "Delete Services",
-				"Are you sure you want to delete " + servicesHandler.toString() + " from the services list?");
+		boolean confirm = MessageDialog.openConfirm(getEditorPage().getSite().getShell(), Messages.DeleteServicesAction_TEXT_DELETE_SERVICE,
+				NLS.bind(Messages.DeleteServicesAction_TEXT_DELETE_CONFIRMATION, servicesHandler.toString()));
 		if (confirm) {
 			super.run();
 		}

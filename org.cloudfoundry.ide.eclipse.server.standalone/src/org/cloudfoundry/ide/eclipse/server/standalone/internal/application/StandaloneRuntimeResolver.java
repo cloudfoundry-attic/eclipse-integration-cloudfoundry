@@ -60,7 +60,7 @@ import org.eclipse.jdt.launching.JavaRuntime;
 public class StandaloneRuntimeResolver {
 
 	public static final IPath[] TEST_SOURCE_NAME_PATTERNS = { new Path(
-			"src/test") };
+			"src/test") }; //$NON-NLS-1$
 
 	private final boolean skipTestSources;
 

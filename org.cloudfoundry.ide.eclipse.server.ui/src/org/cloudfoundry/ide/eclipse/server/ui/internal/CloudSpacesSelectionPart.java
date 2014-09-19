@@ -51,7 +51,7 @@ import org.eclipse.wst.server.ui.wizard.IWizardHandle;
 
 public class CloudSpacesSelectionPart extends UIPart {
 
-	private static final String DEFAULT_DESCRIPTION = "Select an organization and space.";
+	private static final String DEFAULT_DESCRIPTION = Messages.CloudSpacesSelectionPart_TEXT_DEFAULT_DESCRIPTION;
 
 	protected TreeViewer orgsSpacesViewer;
 
@@ -63,7 +63,7 @@ public class CloudSpacesSelectionPart extends UIPart {
 
 		String serverTypeId = cloudServer.getServer().getServerType().getId();
 
-		wizardPage.setTitle("Organizations and Spaces");
+		wizardPage.setTitle(Messages.CloudSpacesSelectionPart_TEXT_ORG_AND_SPACE);
 		wizardPage.setDescription(DEFAULT_DESCRIPTION);
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
 		if (banner != null) {
@@ -77,7 +77,7 @@ public class CloudSpacesSelectionPart extends UIPart {
 
 		String serverTypeId = cloudServer.getServer().getServerType().getId();
 
-		wizardHandle.setTitle("Organizations and Spaces");
+		wizardHandle.setTitle(Messages.CloudSpacesSelectionPart_TEXT_ORG_AND_SPACE);
 		wizardHandle.setDescription(DEFAULT_DESCRIPTION);
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
 		if (banner != null) {
@@ -96,7 +96,7 @@ public class CloudSpacesSelectionPart extends UIPart {
 
 		Label orgLabel = new Label(orgTableComposite, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(orgLabel);
-		orgLabel.setText("Organizations and Spaces:");
+		orgLabel.setText(Messages.CloudSpacesSelectionPart_TEXT_ORG_AND_SPACE_WITH_COLUMN);
 
 		Tree orgTable = new Tree(orgTableComposite, SWT.BORDER | SWT.SINGLE);
 

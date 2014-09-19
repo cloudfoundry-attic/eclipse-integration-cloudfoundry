@@ -21,6 +21,8 @@ package org.cloudfoundry.ide.eclipse.server.core.internal.tunnel;
 
 import java.io.StringWriter;
 
+import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
+
 /**
  * 
  * Using getters and setters with no-argument constructors for JSON
@@ -45,28 +47,28 @@ public class CommandOptions {
 
 	public static String getDefaultTunnelOptionsDescription() {
 		StringWriter writer = new StringWriter();
-		writer.append("Use the following variables for tunnel values that will be filled in automatically:");
+		writer.append(Messages.CommandOptions_DESCRIPTION_VARIABLES_FOR_TUNNEL);
 		writer.append('\n');
 		writer.append('\n');
-		writer.append("${");
+		writer.append("${"); //$NON-NLS-1$
 		writer.append(TunnelOptions.user.name());
-		writer.append("}");
+		writer.append("}"); //$NON-NLS-1$
 		writer.append('\n');
-		writer.append("${");
+		writer.append("${"); //$NON-NLS-1$
 		writer.append(TunnelOptions.password.name());
-		writer.append("}");
+		writer.append("}"); //$NON-NLS-1$
 		writer.append('\n');
-		writer.append("${");
+		writer.append("${"); //$NON-NLS-1$
 		writer.append(TunnelOptions.url.name());
-		writer.append("}");
+		writer.append("}"); //$NON-NLS-1$
 		writer.append('\n');
-		writer.append("${");
+		writer.append("${"); //$NON-NLS-1$
 		writer.append(TunnelOptions.databasename.name());
-		writer.append("}");
+		writer.append("}"); //$NON-NLS-1$
 		writer.append('\n');
-		writer.append("${");
+		writer.append("${"); //$NON-NLS-1$
 		writer.append(TunnelOptions.port.name());
-		writer.append("}");
+		writer.append("}"); //$NON-NLS-1$
 		return writer.toString();
 	}
 

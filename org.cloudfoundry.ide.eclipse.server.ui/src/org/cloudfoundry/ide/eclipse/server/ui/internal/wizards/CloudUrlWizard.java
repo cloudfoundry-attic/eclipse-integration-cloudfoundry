@@ -25,6 +25,7 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -59,7 +60,7 @@ public class CloudUrlWizard extends Wizard {
 		this.allCloudUrls = allCloudUrls;
 		this.url = url;
 		this.name = name;
-		setWindowTitle("Add and validate a Cloud URL");
+		setWindowTitle(Messages.CloudUrlWizard_TITLE_ADD_VALIDATE);
 
 		// Does not require a modal progress monitor.
 		// Long running application are run using specialised non-blocking
@@ -105,7 +106,7 @@ public class CloudUrlWizard extends Wizard {
 	protected boolean launchURLValidation(final Exception[] exception, final IProgressMonitor monitor) {
 
 		url = page.getUrl();
-		final String jobName = "Validating URL";
+		final String jobName = Messages.CloudUrlWizard_JOB_VALIDATE_URL;
 
 		final Boolean shouldProceed[] = new Boolean[] { new Boolean(false) };
 		try {
@@ -198,8 +199,8 @@ public class CloudUrlWizard extends Wizard {
 		}
 		if (!shouldProceed[0]) {
 			String errorMessage = getErrorMessage(exception[0], url);
-			shouldProceed[0] = MessageDialog.openQuestion(getShell(), "Keep URL", errorMessage
-					+ ". Would you like to keep the URL anyways?");
+			shouldProceed[0] = MessageDialog.openQuestion(getShell(), Messages.CloudUrlWizard_ERROR_KEEP_TITLE, errorMessage
+					+ Messages.CloudUrlWizard_ERROR_KEEP_BODY);
 		}
 		return shouldProceed[0];
 
@@ -207,14 +208,14 @@ public class CloudUrlWizard extends Wizard {
 
 	protected String getErrorMessage(Exception exception, String url) {
 		StringBuilder builder = new StringBuilder();
-		builder.append("Unable to validate Cloud URL: ");
+		builder.append(Messages.CloudUrlWizard_ERROR_VALIDATE);
 		builder.append(url);
 
 		if (exception != null) {
 			String errorMessage = exception.getMessage() != null ? exception.getMessage() : exception
 					.toString();
 			if (errorMessage != null) {
-				builder.append(" due to ");
+				builder.append(Messages.CloudUrlWizard_ERROR_VALIDATE_DUE_TO);
 				builder.append(errorMessage);
 			}
 

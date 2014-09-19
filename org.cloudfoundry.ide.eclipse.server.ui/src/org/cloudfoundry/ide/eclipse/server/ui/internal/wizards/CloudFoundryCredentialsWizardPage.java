@@ -22,6 +22,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryCredentialsPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudServerSpacesDelegate;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.ValidationEventHandler;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
@@ -46,7 +47,7 @@ public class CloudFoundryCredentialsWizardPage extends WizardPage {
 	private ValidationEventHandler validationNotifier;
 
 	protected CloudFoundryCredentialsWizardPage(CloudFoundryServer server) {
-		super(server.getServer().getName() + " Credentials");
+		super(server.getServer().getName() + Messages.CloudFoundryCredentialsWizardPage_TEXT_CRENDENTIAL);
 		cloudServerSpaceDelegate = new CloudServerSpacesDelegate(server);
 		WizardStatusHandler wizardUpdateHandler = new WizardPageStatusHandler(this);
 

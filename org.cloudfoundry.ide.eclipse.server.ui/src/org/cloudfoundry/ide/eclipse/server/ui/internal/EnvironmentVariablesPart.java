@@ -154,7 +154,7 @@ public class EnvironmentVariablesPart extends UIPart {
 		GridDataFactory.fillDefaults().grab(false, true).applyTo(buttonArea);
 
 		Button newEnvVarButton = new Button(buttonArea, SWT.NONE);
-		newEnvVarButton.setText("New...");
+		newEnvVarButton.setText(Messages.EnvironmentVariablesPart_TEXT_NEW_ENV_VAR);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(newEnvVarButton);
 		newEnvVarButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
@@ -163,7 +163,7 @@ public class EnvironmentVariablesPart extends UIPart {
 		});
 
 		editEnvVarButton = new Button(buttonArea, SWT.NONE);
-		editEnvVarButton.setText("Edit...");
+		editEnvVarButton.setText(Messages.COMMONTXT_EDIT);
 		editEnvVarButton.setEnabled(false);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(editEnvVarButton);
 		editEnvVarButton.addSelectionListener(new SelectionAdapter() {
@@ -173,7 +173,7 @@ public class EnvironmentVariablesPart extends UIPart {
 		});
 
 		removeEnvVarButton = new Button(buttonArea, SWT.NONE);
-		removeEnvVarButton.setText("Remove");
+		removeEnvVarButton.setText(Messages.COMMONTXT_REMOVE);
 		removeEnvVarButton.setEnabled(false);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(removeEnvVarButton);
 		removeEnvVarButton.addSelectionListener(new SelectionAdapter() {
@@ -400,7 +400,7 @@ public class EnvironmentVariablesPart extends UIPart {
 		}
 
 		protected Control createDialogArea(Composite parent) {
-			getShell().setText("Enter variable name and value");
+			getShell().setText(Messages.EnvironmentVariablesPart_TEXT_DIALOG_TITLE);
 
 			Composite control = (Composite) super.createDialogArea(parent);
 
@@ -409,7 +409,7 @@ public class EnvironmentVariablesPart extends UIPart {
 			GridLayoutFactory.fillDefaults().numColumns(1).applyTo(composite);
 
 			Label nameLabel = new Label(composite, SWT.NONE);
-			nameLabel.setText("Name:");
+			nameLabel.setText(Messages.COMMONTXT_NAME_WITH_COLON);
 			GridDataFactory.fillDefaults().grab(false, false).align(SWT.FILL, SWT.FILL).hint(300, SWT.DEFAULT)
 					.applyTo(nameLabel);
 
@@ -429,7 +429,7 @@ public class EnvironmentVariablesPart extends UIPart {
 			});
 
 			Label valueLabel = new Label(composite, SWT.NONE);
-			valueLabel.setText("Value:");
+			valueLabel.setText(Messages.EnvironmentVariablesPart_TEXT_VALUE_LABEL);
 			GridDataFactory.fillDefaults().grab(false, false).align(SWT.FILL, SWT.FILL).hint(300, SWT.DEFAULT)
 					.applyTo(valueLabel);
 

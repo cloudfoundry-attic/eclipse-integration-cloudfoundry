@@ -26,9 +26,11 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.osgi.util.NLS;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
@@ -37,7 +39,7 @@ import org.osgi.service.prefs.BackingStoreException;
  */
 public class TunnelServiceCommandStore {
 
-	public static final String SERVICE_COMMANDS_PREF = CloudFoundryPlugin.PLUGIN_ID + ".service.tunnel.commands";
+	public static final String SERVICE_COMMANDS_PREF = CloudFoundryPlugin.PLUGIN_ID + ".service.tunnel.commands"; //$NON-NLS-1$
 
 	private final static ObjectMapper mapper = new ObjectMapper();
 
@@ -73,7 +75,7 @@ public class TunnelServiceCommandStore {
 			}
 			catch (IOException e) {
 
-				CloudFoundryPlugin.logError("Error while reading Java Map from JSON response: ", e);
+				CloudFoundryPlugin.logError("Error while reading Java Map from JSON response: ", e); //$NON-NLS-1$
 			}
 		}
 
@@ -119,12 +121,12 @@ public class TunnelServiceCommandStore {
 				}
 				catch (IOException e) {
 					throw new CoreException(CloudFoundryPlugin.getErrorStatus(
-							"Error while serialising Java Map from JSON response: ", e));
+							Messages.TunnelServiceCommandStore_ERROR_SERIALIZE_JAVAMAP, e));
 				}
 			}
 			else {
-				throw new CoreException(CloudFoundryPlugin.getErrorStatus("Value of type "
-						+ cachedCommands.getClass().getName() + " can not be serialized to JSON."));
+				throw new CoreException(CloudFoundryPlugin.getErrorStatus(NLS.bind(Messages.TunnelServiceCommandStore_ERROR_VALUE_CANNOT_SERILIZE,  
+						cachedCommands.getClass().getName())));
 			}
 		}
 

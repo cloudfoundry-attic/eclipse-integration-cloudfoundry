@@ -44,13 +44,13 @@ import org.eclipse.ui.console.MessageConsole;
  *
  */
 public class CloudFoundryConsole {
-	static final String ATTRIBUTE_SERVER = "org.cloudfoundry.ide.eclipse.server.Server";
+	static final String ATTRIBUTE_SERVER = "org.cloudfoundry.ide.eclipse.server.Server"; //$NON-NLS-1$ 
 
-	static final String ATTRIBUTE_APP = "org.cloudfoundry.ide.eclipse.server.CloudApp";
+	static final String ATTRIBUTE_APP = "org.cloudfoundry.ide.eclipse.server.CloudApp"; //$NON-NLS-1$ 
 
-	static final String ATTRIBUTE_INSTANCE = "org.cloudfoundry.ide.eclipse.server.CloudInstance";
+	static final String ATTRIBUTE_INSTANCE = "org.cloudfoundry.ide.eclipse.server.CloudInstance"; //$NON-NLS-1$ 
 
-	static final String CONSOLE_TYPE = "org.cloudfoundry.ide.eclipse.server.appcloud";
+	static final String CONSOLE_TYPE = "org.cloudfoundry.ide.eclipse.server.appcloud"; //$NON-NLS-1$ 
 
 	private Map<LogContentType, ConsoleStream> activeStreams = new HashMap<LogContentType, ConsoleStream>();
 

@@ -28,6 +28,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CaldecottTunnelWizard;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -49,7 +50,7 @@ public class CaldecottUIHelper {
 
 	public void openCaldecottTunnelWizard() {
 
-		UIJob uiJob = new UIJob("Show Tunnels") {
+		UIJob uiJob = new UIJob(Messages.CaldecottUIHelper_JOB_SHOWTUNNEL) {
 
 			public IStatus runInUIThread(IProgressMonitor monitor) {
 				Shell shell = getShell();
@@ -86,7 +87,7 @@ public class CaldecottUIHelper {
 
 		if (srcNames != null && !srcNames.isEmpty()) {
 			final List<String> serviceNames = srcNames;
-			UIJob job = new UIJob("Display Tunnel Information") {
+			UIJob job = new UIJob(Messages.CaldecottUIHelper_JOB_DISPLAY_INFO) {
 
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {

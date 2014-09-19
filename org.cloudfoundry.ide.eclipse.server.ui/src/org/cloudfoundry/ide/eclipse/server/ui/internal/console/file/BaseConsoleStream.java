@@ -50,7 +50,7 @@ public abstract class BaseConsoleStream {
 				outputStream.close();
 			}
 			catch (IOException e) {
-				CloudFoundryPlugin.logError("Failed to close console output stream due to: " + e.getMessage(), e);
+				CloudFoundryPlugin.logError("Failed to close console output stream due to: " + e.getMessage(), e); //$NON-NLS-1$
 			}
 		}
 	}

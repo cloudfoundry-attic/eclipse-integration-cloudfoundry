@@ -23,6 +23,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupSer
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudApplicationUrlPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -47,7 +48,7 @@ public class ApplicationURLWizard extends Wizard {
 
 	private ApplicationURLWizardPage urlPage;
 
-	private static final String title = "Add or Edit Application URL";
+	private static final String title = Messages.ApplicationURLWizard_TITLE_MOD_APP_URL;
 
 	public ApplicationURLWizard(CloudFoundryServer cloudServer, String initialUrl) {
 		this.cloudServer = cloudServer;
@@ -88,8 +89,8 @@ public class ApplicationURLWizard extends Wizard {
 
 		protected ApplicationURLWizardPage(ImageDescriptor titleImage, ApplicationUrlLookupService urlLookup,
 				CloudApplicationUrlPart urlPart) {
-			super("Application URL Page", title, titleImage, urlLookup);
-			setDescription("Add or edit application URL.");
+			super(Messages.ApplicationURLWizard_TEXT_PAGE, title, titleImage, urlLookup);
+			setDescription(Messages.ApplicationURLWizard_TEXT_MOD_APP_URL);
 			this.urlPart = urlPart;
 		}
 

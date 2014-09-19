@@ -21,6 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.IPartChangeListener;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.tunnel.AddCommandDisplayPart;
 import org.eclipse.core.runtime.IStatus;
@@ -34,7 +35,7 @@ public class ServiceCommandWizardPage extends CloudFoundryAwareWizardPage {
 	private IStatus partStatus;
 
 	protected ServiceCommandWizardPage() {
-		super("Command Page", "Command Definition", "Define a command to launch on a service tunnel", null);
+		super(Messages.ServiceCommandWizardPage_TEXT_CMD_PAGE, Messages.ServiceCommandWizardPage_TEXT_CMD_PAGE_BODY, Messages.ServiceCommandWizardPage_TEXT_CMD_PAGE_DESCRIP, null);
 	}
 
 	public void createControl(Composite parent) {

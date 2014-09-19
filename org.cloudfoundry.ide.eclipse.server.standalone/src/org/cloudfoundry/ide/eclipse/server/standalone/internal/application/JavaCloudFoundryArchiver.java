@@ -37,6 +37,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.standalone.internal.Messages;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -54,6 +55,7 @@ import org.eclipse.jdt.internal.ui.jarpackagerfat.FatJarRsrcUrlBuilder;
 import org.eclipse.jdt.ui.jarpackager.IJarBuilder;
 import org.eclipse.jdt.ui.jarpackager.IJarExportRunnable;
 import org.eclipse.jdt.ui.jarpackager.JarPackageData;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 import org.springframework.boot.loader.tools.Libraries;
 import org.springframework.boot.loader.tools.Library;
@@ -77,11 +79,11 @@ public class JavaCloudFoundryArchiver {
 
 	private final CloudFoundryServer cloudServer;
 
-	private static final String META_FOLDER_NAME = "META-INF";
+	private static final String META_FOLDER_NAME = "META-INF"; //$NON-NLS-1$
 
-	private static final String MANIFEST_FILE = "MANIFEST.MF";
+	private static final String MANIFEST_FILE = "MANIFEST.MF"; //$NON-NLS-1$
 
-	private static final String NO_MANIFEST_ERROR = "No META-INF/MANIFEST.MF file found in source folders";
+	private static final String NO_MANIFEST_ERROR = Messages.JavaCloudFoundryArchiver_ERROR_NO_MANIFEST_IN_SRC;
 
 	public JavaCloudFoundryArchiver(CloudFoundryApplicationModule appModule,
 			CloudFoundryServer cloudServer) {
@@ -133,7 +135,7 @@ public class JavaCloudFoundryArchiver {
 					.getJavaProject(appModule);
 
 			if (javaProject == null) {
-				handleApplicationDeploymentFailure("No Java project resolved");
+				handleApplicationDeploymentFailure(Messages.JavaCloudFoundryArchiver_ERROR_NO_JAVA_PROJ_RESOLVED);
 			}
 
 			JavaPackageFragmentRootHandler rootResolver = getPackageFragmentRootHandler(
@@ -175,8 +177,8 @@ public class JavaCloudFoundryArchiver {
 								.getLocation().toFile());
 						Manifest manifest = new Manifest(inputStream);
 						Attributes att = manifest.getMainAttributes();
-						if (att.getValue("Main-Class") == null) {
-							handleApplicationDeploymentFailure("No Main Class found in manifest file");
+						if (att.getValue("Main-Class") == null) { //$NON-NLS-1$
+							handleApplicationDeploymentFailure(Messages.JavaCloudFoundryArchiver_ERROR_NO_MAIN_CLASS);
 						}
 					} catch (FileNotFoundException e) {
 						// Dont terminate deployment, just log error
@@ -214,12 +216,12 @@ public class JavaCloudFoundryArchiver {
 			try {
 				packagedFile = packageApplication(jarPackageData, monitor);
 			} catch (CoreException e) {
-				handleApplicationDeploymentFailure("Java application packaging failed - "
-						+ e.getMessage());
+				handleApplicationDeploymentFailure(NLS.bind(Messages.JavaCloudFoundryArchiver_ERROR_JAVA_APP_PACKAGE,
+						e.getMessage()));
 			}
 
 			if (packagedFile == null || !packagedFile.exists()) {
-				handleApplicationDeploymentFailure("Java application packaging failed. No packaged file was created");
+				handleApplicationDeploymentFailure(Messages.JavaCloudFoundryArchiver_ERROR_NO_PACKAGED_FILE_CREATED);
 			}
 
 			if (isBoot) {
@@ -231,8 +233,7 @@ public class JavaCloudFoundryArchiver {
 		try {
 			return new ZipApplicationArchive(new ZipFile(packagedFile));
 		} catch (IOException ioe) {
-			handleApplicationDeploymentFailure("Error creating Cloud Foundry archive due to - "
-					+ ioe.getMessage());
+			handleApplicationDeploymentFailure(NLS.bind(Messages.JavaCloudFoundryArchiver_ERROR_CREATE_CF_ARCHIVE, ioe.getMessage()));
 		}
 		return null;
 	}
@@ -323,19 +324,19 @@ public class JavaCloudFoundryArchiver {
 				}
 			});
 		} catch (IOException e) {
-			handleApplicationDeploymentFailure("Failed to repackage Spring boot application due to "
-					+ e.getMessage());
+			handleApplicationDeploymentFailure(NLS.bind(Messages.JavaCloudFoundryArchiver_ERROR_REPACKAGE_SPRING,
+					e.getMessage()));
 		}
 	}
 
 	protected JarPackageData getJarPackageData(IPackageFragmentRoot[] roots,
 			IType mainType, IProgressMonitor monitor) throws CoreException {
 		if (roots == null || roots.length == 0) {
-			handleApplicationDeploymentFailure("No package fragment roots found");
+			handleApplicationDeploymentFailure(Messages.JavaCloudFoundryArchiver_ERROR_NO_PACKAGE_FRAG);
 		}
 
 		if (mainType == null) {
-			handleApplicationDeploymentFailure("No main type found");
+			handleApplicationDeploymentFailure(Messages.JavaCloudFoundryArchiver_ERROR_NO_MAIN);
 		}
 
 		String filePath = getTempJarPath(appModule.getLocalModule());
@@ -397,11 +398,11 @@ public class JavaCloudFoundryArchiver {
 	protected void handleApplicationDeploymentFailure(String errorMessage)
 			throws CoreException {
 		if (errorMessage == null) {
-			errorMessage = "Failed to create packaged file";
+			errorMessage = Messages.JavaCloudFoundryArchiver_ERROR_CREATE_PACKAGED_FILE;
 		}
-		throw CloudErrorUtil.toCoreException(errorMessage + " - "
+		throw CloudErrorUtil.toCoreException(errorMessage + " - " //$NON-NLS-1$
 				+ appModule.getDeployedApplicationName()
-				+ ". Unable to package application for deployment.");
+				+ ". Unable to package application for deployment."); //$NON-NLS-1$
 	}
 
 	protected void handleApplicationDeploymentFailure() throws CoreException {
@@ -410,18 +411,18 @@ public class JavaCloudFoundryArchiver {
 
 	public static String getTempJarPath(IModule module) throws CoreException {
 		try {
-			File tempFolder = File.createTempFile("tempFolderForJavaAppJar",
+			File tempFolder = File.createTempFile("tempFolderForJavaAppJar", //$NON-NLS-1$
 					null);
 			tempFolder.delete();
 			tempFolder.mkdirs();
 
 			if (!tempFolder.exists()) {
 				throw CloudErrorUtil
-						.toCoreException("Failed to created temporary directory when packaging application for deployment. Check permissions at: "
-								+ tempFolder.getPath());
+						.toCoreException(NLS.bind(Messages.JavaCloudFoundryArchiver_ERROR_CREATE_TEMP_DIR 
+								, tempFolder.getPath()));
 			}
 
-			File targetFile = new File(tempFolder, module.getName() + ".jar");
+			File targetFile = new File(tempFolder, module.getName() + ".jar"); //$NON-NLS-1$
 			targetFile.deleteOnExit();
 
 			String path = new Path(targetFile.getAbsolutePath()).toString();
@@ -462,7 +463,7 @@ public class JavaCloudFoundryArchiver {
 		if (e.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
 			IPath path = e.getPath();
 			String name = path.lastSegment();
-			return name.endsWith(".jar") && name.startsWith("spring-boot");
+			return name.endsWith(".jar") && name.startsWith("spring-boot"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return false;
 	}

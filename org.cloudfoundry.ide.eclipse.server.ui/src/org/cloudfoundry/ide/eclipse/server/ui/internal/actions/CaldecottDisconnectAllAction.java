@@ -23,12 +23,14 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
+import org.eclipse.osgi.util.NLS;
 
 public class CaldecottDisconnectAllAction extends Action {
 
@@ -40,15 +42,15 @@ public class CaldecottDisconnectAllAction extends Action {
 	}
 
 	protected void setActionValues() {
-		setText("Disconnect All Tunnels");
+		setText(Messages.CaldecottDisconnectAllAction_TEXT_DISCON_TUNNEL);
 		setImageDescriptor(CloudFoundryImages.DISCONNECT);
-		setToolTipText("Disconnect All Tunnels");
+		setToolTipText(Messages.CaldecottDisconnectAllAction_TEXT_DISCON_TUNNEL);
 		setEnabled(true);
 	}
 
 	public void run() {
 
-		Job job = new Job("Stopping all tunnels for: " + cloudServer.getDeploymentName()) {
+		Job job = new Job(NLS.bind(Messages.CaldecottDisconnectAllAction_JOB_STOP, cloudServer.getDeploymentName())) {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {

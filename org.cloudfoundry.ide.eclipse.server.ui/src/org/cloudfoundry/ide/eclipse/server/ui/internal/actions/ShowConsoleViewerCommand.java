@@ -35,7 +35,7 @@ public class ShowConsoleViewerCommand extends BaseCommandHandler {
 		CloudFoundryApplicationModule appModule = cloudServer != null && selectedModule != null ? cloudServer
 				.getExistingCloudModule(selectedModule) : null;
 		if (selectedServer == null) {
-			error = "No Cloud Foundry server instance available to run the selected action.";
+			error = "No Cloud Foundry server instance available to run the selected action."; //$NON-NLS-1$
 		}
 
 		if (error == null) {

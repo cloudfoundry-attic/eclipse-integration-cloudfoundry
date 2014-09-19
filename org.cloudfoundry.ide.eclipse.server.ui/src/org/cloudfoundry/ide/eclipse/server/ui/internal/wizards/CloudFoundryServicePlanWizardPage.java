@@ -33,6 +33,7 @@ import org.cloudfoundry.client.lib.domain.CloudServicePlan;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.LocalCloudService;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.databinding.DataBindingContext;
 import org.eclipse.core.databinding.UpdateValueStrategy;
 import org.eclipse.core.databinding.observable.Observables;
@@ -101,13 +102,13 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 
 	private Combo typeCombo;
 
-	private Pattern VALID_CHARS = Pattern.compile("[A-Za-z\\$_0-9\\-]+");
+	private Pattern VALID_CHARS = Pattern.compile("[A-Za-z\\$_0-9\\-]+"); //$NON-NLS-1$
 
 	protected CloudFoundryServicePlanWizardPage(CloudFoundryServer cloudServer) {
-		super("service");
+		super(Messages.CloudFoundryServicePlanWizardPage_TEXT_SERVICE_PAGE);
 		this.cloudServer = cloudServer;
-		setTitle("Service Configuration");
-		setDescription("Finish to add the service.");
+		setTitle(Messages.CloudFoundryServicePlanWizardPage_TITLE_SERVICE_CONFIG);
+		setDescription(Messages.CloudFoundryServicePlanWizardPage_TEXT_FINISH_ADD);
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(cloudServer.getServer().getServerType().getId());
 		if (banner != null) {
 			setImageDescriptor(banner);
@@ -120,7 +121,7 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 		GridLayoutFactory.fillDefaults().numColumns(2).spacing(10, LayoutConstants.getSpacing().y).applyTo(composite);
 
 		Label label = new Label(composite, SWT.NONE);
-		label.setText("Name:");
+		label.setText(Messages.COMMONTXT_NAME_WITH_COLON);
 
 		nameText = new Text(composite, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(nameText);
@@ -136,11 +137,11 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 		WizardPageSupport.create(this, bindingContext);
 
 		bindingContext.bindValue(SWTObservables.observeText(nameText, SWT.Modify),
-				Observables.observeMapEntry(map, "name"),
+				Observables.observeMapEntry(map, "name"), //$NON-NLS-1$
 				new UpdateValueStrategy().setAfterConvertValidator(new StringValidator()), null);
 
 		label = new Label(composite, SWT.NONE);
-		label.setText("Type:");
+		label.setText(Messages.CloudFoundryServicePlanWizardPage_LABEL_TYPE);
 
 		typeCombo = new Combo(composite, SWT.READ_ONLY | SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(typeCombo);
@@ -155,8 +156,8 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 			}
 		});
 
-		bindingContext.bindValue(SWTObservables.observeSelection(typeCombo), Observables.observeMapEntry(map, "type"),
-				new UpdateValueStrategy().setAfterConvertValidator(new ComboValidator("Select a type")), null);
+		bindingContext.bindValue(SWTObservables.observeSelection(typeCombo), Observables.observeMapEntry(map, "type"), //$NON-NLS-1$
+				new UpdateValueStrategy().setAfterConvertValidator(new ComboValidator(Messages.CloudFoundryServicePlanWizardPage_TEXT_SELECT_TYPE)), null);
 
 		pageBook = new PageBook(composite, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(true, true).span(2, 1).applyTo(pageBook);
@@ -209,7 +210,7 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 		if (updateConfiguration()) {
 			typeCombo.removeAll();
 			for (CloudServiceOffering offering : serviceOfferings) {
-				String label = offering.getLabel() != null ? offering.getLabel() + " - "
+				String label = offering.getLabel() != null ? offering.getLabel() + " - " //$NON-NLS-1$
 						+ offering.getDescription() : offering.getDescription();
 				typeCombo.add(label);
 			}
@@ -326,7 +327,7 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 		}
 		catch (InvocationTargetException e) {
 			IStatus status = cloudServer.error(
-					NLS.bind("Configuration retrieval failed: {0}", e.getCause().getMessage()), e);
+					NLS.bind(Messages.CloudFoundryServicePlanWizardPage_ERROR_CONFIG_RETRIVE, e.getCause().getMessage()), e);
 			StatusManager.getManager().handle(status, StatusManager.LOG);
 			setMessage(status.getMessage(), IMessageProvider.ERROR);
 		}
@@ -358,11 +359,11 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 		public IStatus validate(Object value) {
 			if (value instanceof String) {
 				if (((String) value).length() == 0) {
-					return ValidationStatus.cancel("Enter a name");
+					return ValidationStatus.cancel(Messages.CloudFoundryServicePlanWizardPage_TEXT_ENTER_NAME);
 				}
 				Matcher matcher = VALID_CHARS.matcher((String) value);
 				if (!matcher.matches()) {
-					return ValidationStatus.error("The entered name contains invalid characters.");
+					return ValidationStatus.error(Messages.CloudFoundryServicePlanWizardPage_ERROR_INVALID_CHAR);
 				}
 			}
 			return Status.OK_STATUS;
@@ -396,11 +397,11 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 	}
 
 	protected String getValidationErrorMessage() {
-		return "Select a plan";
+		return Messages.CloudFoundryServicePlanWizardPage_ERROR_SELECT_PLAN;
 	}
 
 	protected String getPlanLabel() {
-		return "Plan";
+		return Messages.CloudFoundryServicePlanWizardPage_LABEL_PLAN;
 	}
 
 	protected void setCloudService(CloudService service, CloudServiceOffering offering) {
@@ -412,7 +413,7 @@ public class CloudFoundryServicePlanWizardPage extends WizardPage {
 	}
 
 	protected LocalCloudService createService() {
-		LocalCloudService service = new LocalCloudService("");
+		LocalCloudService service = new LocalCloudService(""); //$NON-NLS-1$
 		return service;
 	}
 

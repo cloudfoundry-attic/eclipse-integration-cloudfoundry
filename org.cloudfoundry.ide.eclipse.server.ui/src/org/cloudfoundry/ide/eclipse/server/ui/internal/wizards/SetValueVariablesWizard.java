@@ -21,6 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
 import java.util.Map;
 
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.wizard.Wizard;
 
 /**
@@ -37,7 +38,7 @@ public class SetValueVariablesWizard extends Wizard {
 	public SetValueVariablesWizard(Map<String, String> variableToValue, Map<String, String> environmentVariables) {
 		this.optionVariables = variableToValue;
 		this.envVariables = environmentVariables;
-		setWindowTitle("Set Variable Values");
+		setWindowTitle(Messages.SetValueVariablesWizard_TITILE_SET_VAR);
 	}
 
 	public void addPages() {

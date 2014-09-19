@@ -20,17 +20,18 @@
 package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
 import org.cloudfoundry.ide.eclipse.server.ui.internal.IEventSource;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 
 public class CloudUIEvent implements IEventSource<CloudUIEvent> {
 	public static final CloudUIEvent APP_NAME_CHANGE_EVENT = new CloudUIEvent(
-			"Application Name Changed");
+			Messages.CloudUIEvent_TEXT_APP_NAME_CHANGE);
 
 	public static final CloudUIEvent APPLICATION_URL_CHANGED = new CloudUIEvent(
-			"Application URL Changed");
+			Messages.CloudUIEvent_TEXT_APP_URL_CHANGE);
 
-	public static final CloudUIEvent BUILD_PACK_URL = new CloudUIEvent("Build Pack");
+	public static final CloudUIEvent BUILD_PACK_URL = new CloudUIEvent(Messages.CloudUIEvent_TEXT_BUILDPACK);
 
-	public static final CloudUIEvent MEMORY = new CloudUIEvent("Memory");
+	public static final CloudUIEvent MEMORY = new CloudUIEvent(Messages.COMMONTXT_MEM);
 
 	private final String name;
 

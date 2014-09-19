@@ -57,7 +57,7 @@ import org.eclipse.swt.widgets.Widget;
  */
 public class CloudRoutePart extends UIPart {
 
-	public static IEventSource<?> ROUTES_REMOVED = new CloudUIEvent("Routes Removed");
+	public static IEventSource<?> ROUTES_REMOVED = new CloudUIEvent(Messages.CloudRoutePart_TEXT_ROUTES_REMOVED);
 
 	private CheckboxTableViewer viewer;
 
@@ -67,7 +67,7 @@ public class CloudRoutePart extends UIPart {
 
 	private Button removeButton;
 
-	private static final String IN_USE = "x";
+	private static final String IN_USE = "x"; //$NON-NLS-1$
 
 	private List<CloudRoute> routesToRemove = new ArrayList<CloudRoute>();
 
@@ -77,7 +77,7 @@ public class CloudRoutePart extends UIPart {
 
 	protected enum RouteColumn {
 
-		NAME("Name", 250), DOMAIN("Domain", 100), IN_USE("In Use", 30);
+		NAME(Messages.COMMONTXT_NAME, 250), DOMAIN(Messages.CloudRoutePart_TEXT_ROUTE_DOMAIN, 100), IN_USE(Messages.CloudRoutePart_TEXT_ROUTE_INUSE, 30);
 
 		private String name;
 
@@ -112,7 +112,7 @@ public class CloudRoutePart extends UIPart {
 	public void setInput(List<CloudRoute> routes) {
 
 		if (routes == null || routes.isEmpty()) {
-			notifyStatusChange(CloudFoundryPlugin.getErrorStatus("No routes available."));
+			notifyStatusChange(CloudFoundryPlugin.getErrorStatus(Messages.CloudRoutePart_ERROR_NO_ROUTE_AVAIL));
 			return;
 		}
 
@@ -160,7 +160,7 @@ public class CloudRoutePart extends UIPart {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				refreshAll();
-				String removeButtonLabel = showRemovedRoutesButton.getSelection() ? Messages.UNDO : Messages.REMOVE;
+				String removeButtonLabel = showRemovedRoutesButton.getSelection() ? Messages.CloudRoutePart_UNDO : Messages.COMMONTXT_REMOVE;
 				removeButton.setText(removeButtonLabel);
 			}
 
@@ -210,7 +210,7 @@ public class CloudRoutePart extends UIPart {
 		});
 
 		removeButton = new Button(buttons, SWT.PUSH);
-		removeButton.setText(Messages.REMOVE);
+		removeButton.setText(Messages.COMMONTXT_REMOVE);
 
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(removeButton);
 

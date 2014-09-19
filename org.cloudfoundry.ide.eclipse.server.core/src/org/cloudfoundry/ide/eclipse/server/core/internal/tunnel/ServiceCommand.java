@@ -181,7 +181,7 @@ public class ServiceCommand {
 					if (value != null && dollarSignIndex >= 0 && (endingIndex <= resolvedOptions.length())) {
 
 						// delete the variable
-						resolvedOptions.replace(dollarSignIndex, endingIndex, "");
+						resolvedOptions.replace(dollarSignIndex, endingIndex, ""); //$NON-NLS-1$
 
 						// insert the value
 						resolvedOptions.insert(dollarSignIndex, value);

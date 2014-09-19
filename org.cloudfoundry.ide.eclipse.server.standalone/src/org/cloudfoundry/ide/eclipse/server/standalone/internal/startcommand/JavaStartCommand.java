@@ -28,7 +28,7 @@ import org.eclipse.core.runtime.Path;
 
 public class JavaStartCommand extends StartCommand {
 
-	public static final String DEFAULT_LIB = "lib";
+	public static final String DEFAULT_LIB = "lib"; //$NON-NLS-1$
 
 	public static final IPath DEFAULT_LIB_PATH = Path.EMPTY.append(DEFAULT_LIB);
 
@@ -39,9 +39,9 @@ public class JavaStartCommand extends StartCommand {
 	@Override
 	public String getStartCommand() {
 		StringWriter writer = new StringWriter();
-		writer.append("java");
+		writer.append("java"); //$NON-NLS-1$
 		if (getArgs() != null) {
-			writer.append(" ");
+			writer.append(" "); //$NON-NLS-1$
 			writer.append(getArgs());
 		}
 		return writer.toString();
@@ -50,19 +50,19 @@ public class JavaStartCommand extends StartCommand {
 	protected String getClassPathOptionArg() {
 		StringWriter options = new StringWriter();
 		options.append(DEFAULT_LIB);
-		options.append("/");
-		options.append("*");
-		options.append(":");
-		options.append(".");
+		options.append("/"); //$NON-NLS-1$
+		options.append("*"); //$NON-NLS-1$
+		options.append(":"); //$NON-NLS-1$
+		options.append("."); //$NON-NLS-1$
 		return options.toString();
 	}
 
 	public String getArgs() {
 		StringWriter options = new StringWriter();
-		options.append("$JAVA_OPTS");
-		options.append(" ");
-		options.append("-cp");
-		options.append(" ");
+		options.append("$JAVA_OPTS"); //$NON-NLS-1$
+		options.append(" "); //$NON-NLS-1$
+		options.append("-cp"); //$NON-NLS-1$
+		options.append(" "); //$NON-NLS-1$
 		options.append(getClassPathOptionArg());
 		return options.toString();
 	}

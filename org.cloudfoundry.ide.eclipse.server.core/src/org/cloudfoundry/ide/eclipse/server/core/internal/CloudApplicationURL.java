@@ -93,7 +93,7 @@ public class CloudApplicationURL {
 
 	@Override
 	public String toString() {
-		return "CloudApplicationURL [subdomain=" + subdomain + ", domain=" + domain + ", url=" + url + "]";
+		return "CloudApplicationURL [subdomain=" + subdomain + ", domain=" + domain + ", url=" + url + "]"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 	}
 
 	@Override

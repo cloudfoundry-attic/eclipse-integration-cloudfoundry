@@ -46,7 +46,7 @@ class StdConsoleStreamJob extends Job implements IConsoleJob {
 			}
 			catch (CoreException e) {
 				CloudFoundryPlugin.logError(
-						"Failed to write message to Cloud Foundry console due to - " + e.getMessage(), e);
+						"Failed to write message to Cloud Foundry console due to - " + e.getMessage(), e); //$NON-NLS-1$
 			}
 		}
 

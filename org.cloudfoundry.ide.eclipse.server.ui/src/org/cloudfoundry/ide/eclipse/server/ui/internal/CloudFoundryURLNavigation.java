@@ -22,14 +22,15 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.eclipse.osgi.util.NLS;
 
 public class CloudFoundryURLNavigation extends UIWebNavigationHelper {
 
 	public static final CloudFoundryURLNavigation INSIGHT_URL = new CloudFoundryURLNavigation(
-			"http://insight.cloudfoundry.com/");
+			"http://insight.cloudfoundry.com/"); //$NON-NLS-1$
 
 	public CloudFoundryURLNavigation(String location) {
-		super(location, "Opening " + location);
+		super(location, NLS.bind(Messages.CloudFoundryURLNavigation_TEXT_OPEN_LABEL, location));
 	}
 
 	public static boolean canEnableCloudFoundryNavigation(CloudFoundryServer server) {

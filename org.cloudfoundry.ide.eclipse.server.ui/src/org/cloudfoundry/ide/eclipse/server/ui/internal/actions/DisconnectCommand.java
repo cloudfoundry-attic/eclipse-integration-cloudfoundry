@@ -21,6 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryServerUiPlugin;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.CoreException;
@@ -36,7 +37,7 @@ public class DisconnectCommand extends BaseCommandHandler {
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		initializeSelection(event);
 		final CloudFoundryServer cloudServer = (CloudFoundryServer) selectedServer.loadAdapter(CloudFoundryServer.class, null);
-		Job disconnectJob = new Job("Disconnecting server") {
+		Job disconnectJob = new Job(Messages.DisconnectCommand_JOB_DISCONN_SERVER) {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
@@ -48,7 +49,7 @@ public class DisconnectCommand extends BaseCommandHandler {
 				catch (CoreException e) {
 //					Trace.trace(Trace.STRING_SEVERE, "Error calling disconnect() ", e);
 					return new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, NLS.bind(
-							"Failed to disconnect from server: {0}", e.getMessage()));
+							"Failed to disconnect from server: {0}", e.getMessage())); //$NON-NLS-1$
 				}
 				return Status.OK_STATUS;
 			}

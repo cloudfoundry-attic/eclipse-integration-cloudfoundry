@@ -25,6 +25,7 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -70,7 +71,7 @@ public class MappedURLsWizardPage extends WizardPage {
 
 	public MappedURLsWizardPage(CloudFoundryServer cloudServer, List<String> existingURIs,
 			ICloudFoundryApplicationModule appModule) {
-		super("Mapped URIs");
+		super(Messages.MappedURLsWizardPage_TEXT_MAPPED_URI);
 
 		urls = new ArrayList<String>();
 		if (existingURIs != null) {
@@ -79,8 +80,8 @@ public class MappedURLsWizardPage extends WizardPage {
 
 		this.cloudServer = cloudServer;
 
-		setTitle("Mapped URIs Configuration");
-		setDescription("Finish to modify the mapped URIs.");
+		setTitle(Messages.MappedURLsWizardPage_TITLE_MAPPED_URI_CONFIG);
+		setDescription(Messages.MappedURLsWizardPage_TEST_FINISH);
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(cloudServer.getServer().getServerType().getId());
 		if (banner != null) {
 			setImageDescriptor(banner);
@@ -92,7 +93,7 @@ public class MappedURLsWizardPage extends WizardPage {
 		GridLayoutFactory.fillDefaults().numColumns(2).spacing(10, LayoutConstants.getSpacing().y).applyTo(composite);
 
 		Label label = new Label(composite, SWT.NONE);
-		label.setText("Application URIs:");
+		label.setText(Messages.MappedURLsWizardPage_LABEL_APP_URI);
 		GridDataFactory.fillDefaults().span(2, 1).applyTo(label);
 
 		Table table = new Table(composite, SWT.FULL_SELECTION | SWT.MULTI | SWT.BORDER);
@@ -116,7 +117,7 @@ public class MappedURLsWizardPage extends WizardPage {
 		GridDataFactory.fillDefaults().align(SWT.RIGHT, SWT.FILL).applyTo(buttonComposite);
 
 		addButton = new Button(buttonComposite, SWT.PUSH);
-		addButton.setText("Add...");
+		addButton.setText(Messages.COMMONTXT_ADD);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(addButton);
 		addButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -132,7 +133,7 @@ public class MappedURLsWizardPage extends WizardPage {
 		});
 
 		editButton = new Button(buttonComposite, SWT.PUSH);
-		editButton.setText("Edit...");
+		editButton.setText(Messages.COMMONTXT_EDIT);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(editButton);
 		editButton.setEnabled(false);
 		editButton.addSelectionListener(new SelectionAdapter() {
@@ -153,7 +154,7 @@ public class MappedURLsWizardPage extends WizardPage {
 		});
 
 		removeButton = new Button(buttonComposite, SWT.PUSH);
-		removeButton.setText("Remove");
+		removeButton.setText(Messages.COMMONTXT_REMOVE);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(addButton);
 		removeButton.setEnabled(false);
 		removeButton.addSelectionListener(new SelectionAdapter() {
@@ -172,7 +173,7 @@ public class MappedURLsWizardPage extends WizardPage {
 
 		if (!isPublished) {
 			shouldRepublishButton = new Button(composite, SWT.CHECK);
-			shouldRepublishButton.setText("Republish");
+			shouldRepublishButton.setText(Messages.MappedURLsWizardPage_BUTTON_REPUBLISH);
 			GridDataFactory.fillDefaults().span(2, 1).applyTo(shouldRepublishButton);
 			GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(shouldRepublishButton);
 			shouldRepublishButton.setEnabled(false);

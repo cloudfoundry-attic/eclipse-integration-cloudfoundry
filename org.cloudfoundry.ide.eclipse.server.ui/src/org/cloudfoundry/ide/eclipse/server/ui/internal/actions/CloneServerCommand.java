@@ -46,7 +46,7 @@ public class CloneServerCommand extends BaseCommandHandler {
 		CloudFoundryServer cloudServer = selectedServer != null ? (CloudFoundryServer) selectedServer.loadAdapter(
 				CloudFoundryServer.class, null) : null;
 		if (selectedServer == null) {
-			error = "No Cloud Foundry server instance available to run the selected action.";
+			error = "No Cloud Foundry server instance available to run the selected action."; //$NON-NLS-1$
 		}
 
 		if (error == null) {
@@ -60,7 +60,7 @@ public class CloneServerCommand extends BaseCommandHandler {
 	}
 	
 	private String getJobName() {
-		return "Cloning server to selected space";
+		return "Cloning server to selected space"; //$NON-NLS-1$
 	}
 	
 	public void doRun(final CloudFoundryServer cloudServer) {
@@ -82,7 +82,7 @@ public class CloneServerCommand extends BaseCommandHandler {
 			job.schedule();
 		}
 		else {
-			CloudFoundryPlugin.logError("Unable to find an active shell to open the orgs and spaces wizard.");
+			CloudFoundryPlugin.logError("Unable to find an active shell to open the orgs and spaces wizard."); //$NON-NLS-1$
 		}
 
 	}

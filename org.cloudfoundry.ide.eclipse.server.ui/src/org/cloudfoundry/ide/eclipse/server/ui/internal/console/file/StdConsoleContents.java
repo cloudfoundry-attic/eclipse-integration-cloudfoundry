@@ -28,9 +28,9 @@ import org.eclipse.swt.SWT;
 
 public class StdConsoleContents implements IConsoleContents {
 
-	public static final String STD_OUT_LOG = "logs/stdout.log";
+	public static final String STD_OUT_LOG = "logs/stdout.log"; //$NON-NLS-1$
 
-	public static final String STD_ERROR_LOG = "logs/stderr.log";
+	public static final String STD_ERROR_LOG = "logs/stderr.log"; //$NON-NLS-1$
 
 	public List<ICloudFoundryConsoleStream> getContents(CloudFoundryServer cloudServer, CloudFoundryApplicationModule app,
 			int instanceIndex) {

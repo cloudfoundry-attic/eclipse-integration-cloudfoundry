@@ -35,9 +35,9 @@ public class ApplicationWizardRegistry {
 
 	private static Map<String, ApplicationWizardProvider> wizardProviders;
 
-	private static final String APPLICATION_DELEGATE_EXT_ELEMENT = "applicationWizardDelegate";
+	private static final String APPLICATION_DELEGATE_EXT_ELEMENT = "applicationWizardDelegate"; //$NON-NLS-1$
 
-	public static String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.ui.applicationWizard";
+	public static String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.ui.applicationWizard"; //$NON-NLS-1$
 
 	public static ApplicationWizardDelegate getWizardProvider(IModule module) {
 		// See if there is a corresponding application delegate
@@ -79,7 +79,7 @@ public class ApplicationWizardRegistry {
 		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(EXTENSION_POINT);
 
 		if (extensionPoint == null) {
-			CloudFoundryPlugin.logError("Failed to load Cloud Foundry application wizard providers from: "
+			CloudFoundryPlugin.logError("Failed to load Cloud Foundry application wizard providers from: " //$NON-NLS-1$
 					+ EXTENSION_POINT);
 		}
 		else {
@@ -92,8 +92,8 @@ public class ApplicationWizardRegistry {
 						String providerID = wizardProvider.getProviderID();
 						if (providerID == null) {
 							CloudFoundryPlugin
-									.logError("Failed to load application wizard provider from extension point: "
-											+ EXTENSION_POINT + ". Missing provider ID.");
+									.logError("Failed to load application wizard provider from extension point: " //$NON-NLS-1$
+											+ EXTENSION_POINT + ". Missing provider ID."); //$NON-NLS-1$
 						}
 						else {
 							wizardProviders.put(providerID, wizardProvider);

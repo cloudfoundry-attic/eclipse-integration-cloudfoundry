@@ -25,6 +25,7 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -43,7 +44,7 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
 		super(application, serverBehaviour, editorPage);
 
-		setText("Unbind from Application");
+		setText(Messages.RemoveServicesFromApplicationAction_TEXT_UNBIND_FROM_APP);
 		setImageDescriptor(CloudFoundryImages.REMOVE);
 
 		services = getServiceNames(selection);
@@ -51,7 +52,7 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 
 	@Override
 	public String getJobName() {
-		return "Unbinding services";
+		return "Unbinding services"; //$NON-NLS-1$
 	}
 
 	@Override

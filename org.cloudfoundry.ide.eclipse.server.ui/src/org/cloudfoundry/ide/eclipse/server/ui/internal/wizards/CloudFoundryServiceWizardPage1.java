@@ -41,6 +41,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.LocalCloudService;
 import org.cloudfoundry.ide.eclipse.server.ui.ICloudFoundryServiceWizardIconProvider;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -131,17 +132,17 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		return null;
 	}
 
-	public static final String INSTALL_SERVICE_TEXT = "Select a service to include in this installation";
+	public static final String INSTALL_SERVICE_TEXT = Messages.CloudFoundryServiceWizardPage1_TEXT_SELECT_SERVICE;
 
-	public static final String DEFAULT_FILTER_TEXT = "type filter text";
+	public static final String DEFAULT_FILTER_TEXT = Messages.CloudFoundryServiceWizardPage1_TEXT_TYPE_FILTER;
 
-	public static final String REMOVE_SERVICE_TEXT = "Remove";
+	public static final String REMOVE_SERVICE_TEXT = Messages.COMMONTXT_REMOVE;
 
-	public static final String ADD_SERVICE_TEXT = "Select";
+	public static final String ADD_SERVICE_TEXT = Messages.CloudFoundryServiceWizardPage1_TEXT_SELECT;
 
-	public static final String DESCRIPTION_FINAL = "Click finish to add the service.";
+	public static final String DESCRIPTION_FINAL = Messages.CloudFoundryServiceWizardPage1_TEXT_FINISH;
 
-	public static final String FILTER_TEXT = "Filter:";
+	public static final String FILTER_TEXT = Messages.CloudFoundryServiceWizardPage1_TEXT_FILTER;
 
 	/** Optional field -- used to provide icons in service wizard if available */
 	CFServiceWizardDynamicIconLoader loader;
@@ -151,7 +152,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 	public CloudFoundryServiceWizardPage1(CloudFoundryServer cloudServer) {
 		super(PAGE_NAME);
 		this.cloudServer = cloudServer;
-		setTitle("Service Configuration");
+		setTitle(Messages.CloudFoundryServiceWizardPage1_TTILE_SERVICE_CONFIG);
 		setDescription(DESCRIPTION_FINAL);
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(cloudServer.getServer().getServerType().getId());
 		if (banner != null) {
@@ -228,7 +229,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		}
 		catch (InvocationTargetException e) {
 			IStatus status = cloudServer.error(
-					NLS.bind("Configuration retrieval failed: {0}", e.getCause().getMessage()), e);
+					NLS.bind(Messages.CloudFoundryServiceWizardPage1_ERROR_CONFIG_RETRIVE, e.getCause().getMessage()), e);
 			StatusManager.getManager().handle(status, StatusManager.LOG);
 			setMessage(status.getMessage(), IMessageProvider.ERROR);
 		}
@@ -363,14 +364,14 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 			public void focusGained(FocusEvent e) {
 				if (DEFAULT_FILTER_TEXT.equals(filterText.getText())) {
 					updating = true;
-					filterText.setText("");
+					filterText.setText(""); //$NON-NLS-1$
 					updating = false;
 				}
 			}
 		});
 
 		serviceInfoComposite = new Group(comp, SWT.NONE);
-		serviceInfoComposite.setText("Specify a service name and service plan");
+		serviceInfoComposite.setText(Messages.CloudFoundryServiceWizardPage1_TEXT_SET_NAME_PLAN);
 		data = new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1);
 		data.verticalIndent = 5;
 		serviceInfoComposite.setLayoutData(data);
@@ -431,7 +432,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 			Label descriptionLabel = new Label(labelComp, SWT.NONE);
 			descriptionLabel.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false));
 			descriptionLabel.setBackground(scrollComp.getBackground());
-			descriptionLabel.setText("No available services.");
+			descriptionLabel.setText(Messages.CloudFoundryServiceWizardPage1_LABEL_NO_AVAIL_SERVICE);
 			scrollComp.setContent(labelComp);
 			labelComp.setSize(labelComp.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 			return;
@@ -514,7 +515,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 				descLabel.setBackground(c);
 				String desc = item.getDescription();
 				if (desc == null) {
-					desc = "";
+					desc = ""; //$NON-NLS-1$
 				}
 				descLabel.setText(trimTextAtBound(desc, 200));
 
@@ -536,7 +537,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 
 				final Hyperlink hyperLinkLabel = new Hyperlink(comp, SWT.WRAP);
 				hyperLinkLabel.setBackground(c);
-				hyperLinkLabel.setText("");
+				hyperLinkLabel.setText(""); //$NON-NLS-1$
 				hyperLinkLabel.setVisible(false);
 				// if(hyperLink != null) {
 				// hyperLinkLabel.setText("(link)");
@@ -609,7 +610,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 
 	private void createServiceInfoComposite() {
 
-		String name = "";
+		String name = ""; //$NON-NLS-1$
 
 		final CFServiceWizUI selectedItemFinal;
 		if (selectedServicesList.size() == 1) {
@@ -623,7 +624,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		serviceInfoComposite.setEnabled(selectedItemFinal != null);
 
 		final Label serviceNameLabel = new Label(serviceInfoComposite, SWT.NONE);
-		serviceNameLabel.setText("Name:");
+		serviceNameLabel.setText(Messages.COMMONTXT_NAME_WITH_COLON);
 		GridData data = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
 		serviceNameLabel.setLayoutData(data);
 		serviceNameLabel.setEnabled(selectedItemFinal != null);
@@ -650,7 +651,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		});
 
 		final Label servicePlanLabel = new Label(serviceInfoComposite, SWT.NONE);
-		servicePlanLabel.setText("Plan:");
+		servicePlanLabel.setText(Messages.CloudFoundryServiceWizardPage1_LABEL_PLAN);
 		servicePlanLabel.setEnabled(selectedItemFinal != null);
 		data = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
 		servicePlanLabel.setLayoutData(data);
@@ -691,7 +692,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 			return null;
 		}
 		else {
-			return str.replace(" ", "");
+			return str.replace(" ", ""); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
@@ -801,12 +802,12 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 			/** Use the existing word wrap function to wrap at the spot we want. */
 			String result = wrapAndTrimTextAtBound(str, bound);
 
-			int index = result.indexOf("\n");
+			int index = result.indexOf("\n"); //$NON-NLS-1$
 			if (index == -1) {
 				return str;
 			}
 			else {
-				return str.substring(0, index) + "...";
+				return str.substring(0, index) + "..."; //$NON-NLS-1$
 			}
 		}
 		else {
@@ -837,7 +838,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 				String nextLine = remainingString.substring(0, lastSpace);
 				remainingString = remainingString.substring(lastSpace).trim();
 				result.append(nextLine);
-				result.append("\n");
+				result.append("\n"); //$NON-NLS-1$
 				x = 0;
 				lastSpace = 0;
 			}
@@ -871,7 +872,7 @@ class CFServiceWizUI {
 
 	private Rectangle appxLocation;
 
-	private String userDefinedName = "";
+	private String userDefinedName = ""; //$NON-NLS-1$
 
 	private CloudServicePlan plan = null;
 
@@ -929,14 +930,14 @@ class CFServiceWizUI {
 			return false;
 		}
 		CloudServiceOffering offering = ((CFServiceWizUI) o).getOffering();
-		String name1 = "" + getOffering().getName();
-		String name2 = "" + offering.getName();
+		String name1 = "" + getOffering().getName(); //$NON-NLS-1$
+		String name2 = "" + offering.getName(); //$NON-NLS-1$
 
 		return name1.equals(name2);
 	}
 
 	public LocalCloudService convertToLocalCloudService() {
-		final LocalCloudService localService = new LocalCloudService("");
+		final LocalCloudService localService = new LocalCloudService(""); //$NON-NLS-1$
 		localService.setName(getUserDefinedName());
 		localService.setVersion(getOffering().getVersion());
 		localService.setLabel(getOffering().getLabel());
@@ -1091,7 +1092,7 @@ class CFServiceWizardLayout extends Layout {
 
 class CFWizServicePage1Validation {
 
-	private static Pattern VALID_CHARS = Pattern.compile("[A-Za-z\\$_0-9\\-]+");
+	private static Pattern VALID_CHARS = Pattern.compile("[A-Za-z\\$_0-9\\-]+"); //$NON-NLS-1$
 
 	CloudFoundryServiceWizardPage1 wizardPage;
 
@@ -1107,7 +1108,7 @@ class CFWizServicePage1Validation {
 
 			List<CFServiceWizUI> list = wizardPage.getSelectedList();
 			if (list == null || list.size() == 0) {
-				wizardPage.setDescription("Select a service from the service list.");
+				wizardPage.setDescription(Messages.CloudFoundryServiceWizardPage1_TEXT_SELECT_SERVICE_LIST);
 				wizardPage.setErrorMessage(null);
 				descriptionUpdated = true;
 			}
@@ -1124,14 +1125,14 @@ class CFWizServicePage1Validation {
 				if (service != null && userDefinedName != null) {
 
 					if (userDefinedName.trim().length() == 0) {
-						wizardPage.setDescription("Specify a service name");
+						wizardPage.setDescription(Messages.CloudFoundryServiceWizardPage1_TEXT_SET_SERVICE_NAME);
 						wizardPage.setErrorMessage(null);
 						descriptionUpdated = true;
 					}
 
 					Matcher matcher = VALID_CHARS.matcher(userDefinedName);
 					if (!descriptionUpdated && !matcher.matches()) {
-						wizardPage.setErrorMessage("The service name contains invalid characters.");
+						wizardPage.setErrorMessage(Messages.CloudFoundryServiceWizardPage1_ERROR_INVALID_CHAR);
 						wizardPage.setDescription(null);
 						descriptionUpdated = true;
 					}
@@ -1285,7 +1286,7 @@ class CFServiceWizardDynamicIconLoader extends Thread {
 		public void run() {
 
 			CloudServiceOffering cso = entry.getOffering();
-			final String mapId = "" + cso.getName() + "-" + cso.getProvider();
+			final String mapId = "" + cso.getName() + "-" + cso.getProvider(); //$NON-NLS-1$ //$NON-NLS-2$
 
 			Image result = null;
 

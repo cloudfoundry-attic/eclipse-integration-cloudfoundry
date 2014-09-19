@@ -58,33 +58,33 @@ import org.yaml.snakeyaml.Yaml;
 
 public class ManifestParser {
 
-	public static final String APPLICATIONS_PROP = "applications";
+	public static final String APPLICATIONS_PROP = "applications"; //$NON-NLS-1$
 
-	public static final String NAME_PROP = "name";
+	public static final String NAME_PROP = "name"; //$NON-NLS-1$
 
-	public static final String MEMORY_PROP = "memory";
+	public static final String MEMORY_PROP = "memory"; //$NON-NLS-1$
 
-	public static final String INSTANCES_PROP = "instances";
+	public static final String INSTANCES_PROP = "instances"; //$NON-NLS-1$
 
-	public static final String SUB_DOMAIN_PROP = "host";
+	public static final String SUB_DOMAIN_PROP = "host"; //$NON-NLS-1$
 
-	public static final String DOMAIN_PROP = "domain";
+	public static final String DOMAIN_PROP = "domain"; //$NON-NLS-1$
 
-	public static final String SERVICES_PROP = "services";
+	public static final String SERVICES_PROP = "services"; //$NON-NLS-1$
 
-	public static final String LABEL_PROP = "label";
+	public static final String LABEL_PROP = "label"; //$NON-NLS-1$
 
-	public static final String PROVIDER_PROP = "provider";
+	public static final String PROVIDER_PROP = "provider"; //$NON-NLS-1$
 
-	public static final String VERSION_PROP = "version";
+	public static final String VERSION_PROP = "version"; //$NON-NLS-1$
 
-	public static final String PLAN_PROP = "plan";
+	public static final String PLAN_PROP = "plan"; //$NON-NLS-1$
 
-	public static final String PATH_PROP = "path";
+	public static final String PATH_PROP = "path"; //$NON-NLS-1$
 
-	public static final String BUILDPACK_PROP = "buildpack";
+	public static final String BUILDPACK_PROP = "buildpack"; //$NON-NLS-1$
 
-	public static final String ENV_PROP = "env";
+	public static final String ENV_PROP = "env"; //$NON-NLS-1$
 
 	private final String relativePath;
 
@@ -92,9 +92,10 @@ public class ManifestParser {
 
 	private final CloudFoundryServer cloudServer;
 
-	public static final String DEFAULT = "manifest.yml";
+	public static final String DEFAULT = "manifest.yml"; //$NON-NLS-1$
 
-	static final String ERROR_MESSAGE = "Unable to write changes to the application's manifest file";
+	//This is not used
+	static final String ERROR_MESSAGE = "Unable to write changes to the application's manifest file"; //$NON-NLS-1$
 
 	public ManifestParser(CloudFoundryApplicationModule appModule, CloudFoundryServer cloudServer) {
 		this(DEFAULT, appModule, cloudServer);
@@ -257,9 +258,9 @@ public class ManifestParser {
 		Object applicationsObj = results.get(APPLICATIONS_PROP);
 		if (!(applicationsObj instanceof List<?>)) {
 			throw CloudErrorUtil
-					.toCoreException("Expected a top-level list of applications in: "
+					.toCoreException("Expected a top-level list of applications in: " //$NON-NLS-1$
 							+ relativePath
-							+ ". Unable to continue parsing manifest values. No manifest values will be loaded into the application deployment info.");
+							+ ". Unable to continue parsing manifest values. No manifest values will be loaded into the application deployment info."); //$NON-NLS-1$
 		}
 
 		List<?> applicationsList = (List<?>) applicationsObj;
@@ -276,9 +277,9 @@ public class ManifestParser {
 			Object mapObj = applicationsList.get(0);
 			application = (mapObj instanceof Map<?, ?>) ? (Map<?, ?>) mapObj : null;
 			if (application == null) {
-				errorMessage = "Expected a map of application properties in: "
+				errorMessage = "Expected a map of application properties in: " //$NON-NLS-1$
 						+ relativePath
-						+ ". Unable to continue parsing manifest values. No manifest values will be loaded into the application deployment info.";
+						+ ". Unable to continue parsing manifest values. No manifest values will be loaded into the application deployment info."; //$NON-NLS-1$
 
 			}
 		}
@@ -315,7 +316,7 @@ public class ManifestParser {
 	 */
 	public DeploymentInfoWorkingCopy load(IProgressMonitor monitor) throws CoreException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor);
-		subMonitor.beginTask("Parsing and loading application manifest file", 6);
+		subMonitor.beginTask("Parsing and loading application manifest file", 6); //$NON-NLS-1$
 		DeploymentInfoWorkingCopy workingCopy;
 		try {
 			workingCopy = appModule.resolveDeploymentInfoWorkingCopy(subMonitor);
@@ -481,8 +482,8 @@ public class ManifestParser {
 					memoryStringVal = memoryStringVal.substring(0, gIndex);
 				}
 				else if (gIndex == 0) {
-					CloudFoundryPlugin.logError("Failed to read memory value in manifest file: " + relativePath
-							+ " for: " + appModule.getDeployedApplicationName() + ". Invalid memory: "
+					CloudFoundryPlugin.logError("Failed to read memory value in manifest file: " + relativePath //$NON-NLS-1$
+							+ " for: " + appModule.getDeployedApplicationName() + ". Invalid memory: " //$NON-NLS-1$ //$NON-NLS-2$
 							+ memoryStringVal);
 				}
 
@@ -491,8 +492,8 @@ public class ManifestParser {
 				}
 				catch (NumberFormatException e) {
 					// Log an error but do not stop the parsing
-					CloudFoundryPlugin.logError("Failed to parse memory from manifest file: " + relativePath + " for: "
-							+ appModule.getDeployedApplicationName() + " due to: " + e.getMessage());
+					CloudFoundryPlugin.logError("Failed to parse memory from manifest file: " + relativePath + " for: " //$NON-NLS-1$ //$NON-NLS-2$
+							+ appModule.getDeployedApplicationName() + " due to: " + e.getMessage()); //$NON-NLS-1$
 				}
 			}
 		}
@@ -544,8 +545,8 @@ public class ManifestParser {
 					return (Map<Object, Object>) results;
 				}
 				else {
-					throw CloudErrorUtil.toCoreException("Expected a map of values for manifest file: " + relativePath
-							+ ". Unable to load manifest content.  Actual results: " + results);
+					throw CloudErrorUtil.toCoreException("Expected a map of values for manifest file: " + relativePath //$NON-NLS-1$
+							+ ". Unable to load manifest content.  Actual results: " + results); //$NON-NLS-1$
 				}
 
 			}
@@ -631,8 +632,8 @@ public class ManifestParser {
 			applicationsList = (List<Map<Object, Object>>) applicationsObj;
 		}
 		else {
-			throw CloudErrorUtil.toCoreException("Expected a top-level list of applications in: " + relativePath
-					+ ". Unable to continue writing manifest values.");
+			throw CloudErrorUtil.toCoreException("Expected a top-level list of applications in: " + relativePath //$NON-NLS-1$
+					+ ". Unable to continue writing manifest values."); //$NON-NLS-1$
 		}
 
 		Map<Object, Object> applicationWithSameName = null;
@@ -775,16 +776,16 @@ public class ManifestParser {
 		String manifestValue = yaml.dump(deploymentInfoYaml);
 
 		if (manifestValue == null) {
-			throw CloudErrorUtil.toCoreException("Manifest map for " + appModule.getDeployedApplicationName()
-					+ " contained values but yaml parser failed to serialise the map. : " + deploymentInfoYaml);
+			throw CloudErrorUtil.toCoreException("Manifest map for " + appModule.getDeployedApplicationName() //$NON-NLS-1$
+					+ " contained values but yaml parser failed to serialise the map. : " + deploymentInfoYaml); //$NON-NLS-1$
 		}
 
 		OutputStream outStream = null;
 		try {
 			outStream = getOutStream();
 			if (outStream == null) {
-				throw CloudErrorUtil.toCoreException("No output stream could be opened to: " + relativePath
-						+ ". Unable to write changes to the application's manifest file for: "
+				throw CloudErrorUtil.toCoreException("No output stream could be opened to: " + relativePath //$NON-NLS-1$
+						+ ". Unable to write changes to the application's manifest file for: " //$NON-NLS-1$
 						+ appModule.getDeployedApplicationName());
 			}
 
@@ -814,7 +815,7 @@ public class ManifestParser {
 		if (memory < 1) {
 			return null;
 		}
-		return memory + "M";
+		return memory + "M"; //$NON-NLS-1$
 	}
 
 	protected void refreshProject(IProgressMonitor monitor) throws CoreException {

@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
@@ -52,10 +53,10 @@ public class DeleteServicesWizardPage extends WizardPage {
 	private Object[] checkedElements;
 
 	public DeleteServicesWizardPage(CloudFoundryServer cloudServer, List<String> services) {
-		super("service");
+		super(Messages.DeleteServicesWizardPage_TEXT_SERVICE);
 		this.services = services;
-		setTitle("Delete Services");
-		setDescription("Select which services associated with the application you would like to be deleted.");
+		setTitle(Messages.DeleteServicesWizardPage_TITLE_DELETE_SERVICE);
+		setDescription(Messages.DeleteServicesWizardPage_TEXT_SELECT_SERVICE);
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(cloudServer.getServer().getServerType().getId());
 		if (banner != null) {
 			setImageDescriptor(banner);

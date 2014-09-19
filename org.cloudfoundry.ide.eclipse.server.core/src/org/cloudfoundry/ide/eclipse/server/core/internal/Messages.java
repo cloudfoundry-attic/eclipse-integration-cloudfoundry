@@ -19,160 +19,187 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal;
 
-public class Messages {
+import org.eclipse.osgi.util.NLS;
 
-	/*
-	 * Errors
-	 */
+public class Messages extends NLS {
 
-	public static final String ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION = "Error performing operation: {0}";
+	public static String AbstractApplicationDelegate_ERROR_MISSING_APPNAME;
 
-	public static final String ERROR_WRONG_EMAIL_OR_PASSWORD_UNAUTHORISED = "Wrong email or password - 401 (Unauthorised)";
+	public static String AbstractApplicationDelegate_ERROR_MISSING_DEPLOY_INFO;
 
-	public static final String ERROR_WRONG_EMAIL_OR_PASSWORD_FORBIDDEN = "Wrong email or password - 403 (Forbidden)";
+	public static String AbstractApplicationDelegate_ERROR_MISSING_MEM;
 
-	public static final String ERROR_UNABLE_TO_ESTABLISH_CONNECTION_UNKNOWN_HOST = "Unable to establish connection - Unknown host";
+	public static String ApplicationUrlLookupService_ERROR_GET_CLOUD_URL;
 
-	public static final String ERROR_FAILED_REST_CLIENT = "Client error - {0}";
+	public static String ApplicationUrlLookupService_ERROR_GETDEFAULT_APP_URL;
 
-	public static final String ERROR_NO_DOMAINS = "No application domains resolved for {0}. Unable to generate a default application URL for {1}";
+	public static String ERROR_PERFORMING_CLOUD_FOUNDRY_OPERATION;
 
-	public static final String ERROR_NO_DOMAINS_AVAILABLE = "No domains available. Please check connection and try again.";
+	public static String ERROR_WRONG_EMAIL_OR_PASSWORD_UNAUTHORISED;
 
-	public static final String ERROR_NO_DOMAIN_RESOLVED_FOR_URL = "Unable to resolve domain for URL - {0}. Please select another domain";
+	public static String ERROR_WRONG_EMAIL_OR_PASSWORD_FORBIDDEN;
 
-	public static final String ERROR_INVALID_SUBDOMAIN = "Invalid URL - {0} - subdomain not specified for domain - {1}";
+	public static String ERROR_UNABLE_TO_ESTABLISH_CONNECTION_UNKNOWN_HOST;
 
-	public static final String ERROR_MANIFEST_PARSING_NO_DOMAINS = "Unable to resolve domains while parsing the application URL from manifest file. Application URL may require a manual update.";
+	public static String ERROR_FAILED_REST_CLIENT;
 
-	public static final String ERROR_FAILED_RESOLVE_ORGS_SPACES_DUE_TO_ERROR = "Failed to resolve organizations and spaces - {0}";
+	public static String ERROR_NO_DOMAINS;
 
-	public static final String ERROR_SERVER_INSTANCE_CLOUD_SPACE_EXISTS = "A server instance ({0}) for space: {1} - already exists. Please select another cloud space if available.";
+	public static String ERROR_NO_DOMAINS_AVAILABLE;
 
-	public static final String ERROR_INVALID_ORG = "Invalid organization";
+	public static String ERROR_NO_DOMAIN_RESOLVED_FOR_URL;
 
-	public static final String ERROR_INVALID_SPACE = "Invalid cloud space";
+	public static String ERROR_INVALID_SUBDOMAIN;
 
-	public static final String ERROR_UNABLE_TO_COMMUNICATE_SERVER = "Unable to communicate with server - {0}";
+	public static String ERROR_MANIFEST_PARSING_NO_DOMAINS;
 
-	public static final String ERROR_ALL_SPACES_ASSOCIATED_SERVER_INSTANCES = "A server instance for each space already exists. Please delete an existing server instance before creating a new one.";
+	public static String ERROR_FAILED_RESOLVE_ORGS_SPACES_DUE_TO_ERROR;
 
-	public static final String ERROR_CHECK_CONNECTION_NO_SPACES = "No cloud spaces found. Please check your credentials or connection.";
+	public static String ERROR_UNABLE_TO_COMMUNICATE_SERVER;
 
-	public static final String ERROR_UNKNOWN = "Unknown Cloud Foundry error";
+	public static String ERROR_CREATE_ZIP;
 
-	public static final String ERROR_INVALID_MEMORY = "Invalid memory. Please enter a valid integer value over 0.";
+	public static String ERROR_UNKNOWN;
 
-	public static final String ERROR_FAILED_MEMORY_UPDATE = "Unable to update application memory";
+	public static String ERROR_FAILED_MEMORY_UPDATE;
 
-	public static final String ERROR_FAILED_READ_SELF_SIGNED_PREFS = "Failed to read self-signed certificate preferences for servers. Unable to store self-signed certificate preferences for {0}";
+	public static String ERROR_FAILED_READ_SELF_SIGNED_PREFS;
 
-	public static final String ERROR_FAILED_STORE_SELF_SIGNED_PREFS = "Failed to store self-signed certificate preference for {0}";
+	public static String ERROR_FAILED_STORE_SELF_SIGNED_PREFS;
 
-	public static final String ERROR_UNABLE_CONNECT_SERVER_CREDENTIALS = "Unable to connect to the server to validate credentials";
+	public static String ERROR_UNABLE_CONNECT_SERVER_CREDENTIALS;
 
-	public static final String ERROR_FAILED_CLIENT_CREATION_NO_SPACE = "Unable to resolve locally stored organisation and space for the server instance {0}. The server instance may have to be cloned or created again.";
+	public static String ERROR_FAILED_CLIENT_CREATION_NO_SPACE;
 
-	public static final String ERROR_FAILED_MODULE_REFRESH = "Failed to refresh list of applications. Application list may not be accurate. Check connection and try a manual refresh - Reason: {0}";
+	public static String ERROR_FAILED_MODULE_REFRESH;
 
-	public static final String ERROR_FIRE_REFRESH = "Internal Error: Failed to resolve server from WST IServer. Manual server disconnect and reconnect may be required - Reason: {0}";
+	public static String ERROR_FIRE_REFRESH;
 
-	public static final String ERROR_INITIALISE_REFRESH_NO_SERVER = "Failed to initialise refresh job. Unable to resolve a server - {0}";
+	public static String ERROR_INITIALISE_REFRESH_NO_SERVER;
 
-	public static final String ERROR_APP_DEPLOYMENT_VALIDATION_ERROR = "Invalid application deployment information for: {0} - Unable to deploy or start application - {1}";
+	public static String ERROR_APP_DEPLOYMENT_VALIDATION_ERROR;
 
-	public static final String ERROR_NO_WST_MODULE = "Internal Error: No WST IModule specified - Unable to deploy or start application";
+	public static String ERROR_NO_WST_MODULE;
 
-	public static final String ERROR_NO_MAPPED_CLOUD_MODULE = "Internal Error: No mapped application module found for: {0} - Unable to deploy or start application";
+	public static String ERROR_NO_MAPPED_CLOUD_MODULE;
 
-	public static final String ERROR_FAILED_TO_PUSH_APP = "Failed to push application - {0}";
+	public static String ERROR_FAILED_TO_PUSH_APP;
 
-	public static final String ERROR_NO_CLOUD_APPLICATION_FOUND = "No cloud module specified when attempting to update application instance stats.";
+	public static String ERROR_NO_CLOUD_APPLICATION_FOUND;
 
-	public static final String ERROR_NO_MODULES_TO_PUBLISH = "Publish request failed. No modules to publish.";
+	public static String ERROR_NO_MODULES_TO_PUBLISH;
 
-	public static final String ERROR_NO_CLOUD_SERVER_DESCRIPTOR = "No cloud server descriptor found that matches : {0}. Unable to create a server instance to another space.";
+	public static String ERROR_NO_CLOUD_SERVER_DESCRIPTOR;
 
-	public static final String ERROR_NO_CLIENT = "No client available to process the following request - {0} ";
+	public static String ERROR_NO_CLIENT;
 
-	public static final String ERROR_FAILED_APP_START_TRACKER = "Internal Error: Failed to load application start tracker due to - {0}";
+	public static String ERROR_NO_CONSOLE_STREAM_FOUND;
 
-	public static final String ERROR_NO_CONSOLE_STREAM_FOUND = "Framework Error: No console stream provider found for content type {0}";
+	public static String ERROR_EXISTING_APPLICATION_LOGS;
 
-	public static final String ERROR_EXISTING_APPLICATION_LOGS = "Failed to fetch recent application logs for {0} - {1}";
+	public static String ERROR_APPLICATION_LOG_LISTENER;
 
-	public static final String ERROR_APPLICATION_LOG_LISTENER = "Failed to add application log listener for {0} - {1}";
+	public static String ERROR_NO_MAPPED_APPLICATION_URLS;
 
-	public static final String ERROR_NO_MAPPED_APPLICATION_URLS = "No mapped application URLs set in application deployment information.";
+	public static String INVALID_CHARACTERS_ERROR;
 
-	public static final String INVALID_CHARACTERS_ERROR = "The entered name contains invalid characters";
+	public static String WARNING_SELF_SIGNED_PROMPT_USER;
 
-	/*
-	 * Warnings
-	 */
-	public static final String WARNING_SELF_SIGNED_PROMPT_USER = "Failed to connect to {0}, probably because the site is using a self-signed certificate. Do you want to trust this site anyway?";
+	public static String TITLE_SELF_SIGNED_PROMPT_USER;
 
-	/*
-	 * Titles
-	 */
+	public static String TunnelServiceCommandStore_ERROR_SERIALIZE_JAVAMAP;
 
-	public static final String TITLE_SELF_SIGNED_PROMPT_USER = "Failed to connect";
+	public static String TunnelServiceCommandStore_ERROR_VALUE_CANNOT_SERILIZE;
 
-	/*
-	 * Console messages
-	 */
-	public static final String CONSOLE_ERROR_MESSAGE = "Error: {0}";
+	public static String CloudFoundryApplicationModule_STATE_DEPLOYABLE;
 
-	public static final String CONSOLE_RESTARTING_APP = "Restarting application";
+	public static String CloudFoundryApplicationModule_STATE_DEPLOYED;
 
-	public static final String CONSOLE_DEPLOYING_APP = "Starting application operation";
+	public static String CloudFoundryApplicationModule_STATE_LAUNCHED;
 
-	public static final String CONSOLE_GENERATING_ARCHIVE = "Generating application archive";
+	public static String CloudFoundryApplicationModule_STATE_LAUNCHING;
 
-	public static final String CONSOLE_APP_STOPPED = "Application stopped";
+	public static String CloudFoundryApplicationModule_STATE_STARTING_SERVICES;
 
-	public static final String CONSOLE_PRE_STAGING_MESSAGE = "Starting and staging application";
+	public static String CloudFoundryApplicationModule_STATE_STOPPED;
 
-	public static final String CONSOLE_APP_PUSH_MESSAGE = "Pushing application";
+	public static String CloudFoundryApplicationModule_STATE_STOPPING;
 
-	public static final String CONSOLE_APP_CREATION = "Creating application";
+	public static String CloudFoundryApplicationModule_STATE_UPLOADING;
 
-	public static final String CONSOLE_APP_FOUND = "Existing application found";
+	public static String CloudFoundryApplicationModule_STATE_WAITING_TO_LAUNCH;
 
-	public static final String CONSOLE_APP_MAPPING_STARTED = "Updating application mapping";
+	public static String CloudFoundryConstants_LABEL_SIGNUP;
 
-	public static final String CONSOLE_APP_MAPPING_COMPLETED = "Application mapping updated";
+	public static String CloudFoundryLoginHandler_LABEL_PERFORM_CF_OPERATION;
 
-	public static final String CONSOLE_APP_PUSHED_MESSAGE = "Application successfully pushed";
+	public static String CloudFoundryServer_ERROR_APPTYPE_NOT_SUPPORTED;
 
-	public static final String CONSOLE_PREPARING_APP = "Checking application - {0}";
+	public static String CloudFoundryServer_ERROR_FAIL_ON_CFAPP_CREATION;
 
-	public static final String CONSOLE_STILL_WAITING_FOR_APPLICAITON_TO_START = "Still waiting for applicaiton to start...";
+	public static String CloudFoundryServer_ERROR_SERVER_ORIGIN_NOT_FOUND;
+	
+	public static String CloudFoundryServer_JOB_UPDATE;
+	
+	public static String CloudSpacesDelegate_ERROR_FAIL_LOADING_CLOUDSPACES;
 
-	public static final String CONSOLE_WAITING_FOR_APPLICATION_TO_START = "Waiting for application to start...";
+	public static String CommandOptions_DESCRIPTION_VARIABLES_FOR_TUNNEL;
 
-	public static final String CONSOLE_STOPPING_APPLICATION = "Stopping application - {0}";
+	public static String CONSOLE_ERROR_MESSAGE;
 
-	/*
-	 * Jobs
-	 */
+	public static String CONSOLE_RESTARTING_APP;
 
-	public static final String REFRESHING_MODULES = "Initialising and refreshing modules for - {0}";
+	public static String CONSOLE_DEPLOYING_APP;
 
-	public static final String PUBLISHING_MODULE = "Publishing module - {0}";
+	public static String CONSOLE_GENERATING_ARCHIVE;
 
-	public static final String DELETING_MODULE = "Deleting module - {0}";
+	public static String CONSOLE_APP_STOPPED;
 
-	public static final String VALIDATING_CREDENTIALS = "Validating credentials";
+	public static String CONSOLE_PRE_STAGING_MESSAGE;
 
-	public static final String ROUTES = "Getting routes for domain - {0}";
+	public static String CONSOLE_APP_PUSH_MESSAGE;
 
-	/*
-	 * Labels
-	 */
+	public static String CONSOLE_APP_CREATION;
 
-	public static final String VALID_ACCOUNT = "Account information is valid.";
+	public static String CONSOLE_APP_FOUND;
 
-	public static final String EMPTY_URL_ERROR = "Enter a deployment URL";
+	public static String CONSOLE_APP_MAPPING_STARTED;
 
+	public static String CONSOLE_APP_MAPPING_COMPLETED;
+
+	public static String CONSOLE_APP_PUSHED_MESSAGE;
+
+	public static String CONSOLE_PREPARING_APP;
+
+	public static String CONSOLE_STILL_WAITING_FOR_APPLICAITON_TO_START;
+
+	public static String CONSOLE_WAITING_FOR_APPLICATION_TO_START;
+
+	public static String CONSOLE_STOPPING_APPLICATION;
+
+	public static String REFRESHING_MODULES;
+
+	public static String PUBLISHING_MODULE;
+
+	public static String DELETING_MODULE;
+
+	public static String VALIDATING_CREDENTIALS;
+
+	public static String ROUTES;
+
+	public static String EMPTY_URL_ERROR;
+
+	public static String JavaWebApplicationDelegate_ERROR_NO_MAPPED_APP_URL;
+
+	public static String ModuleResourceApplicationArchive_ERROR_NO_DEPLOYABLE_RES_FOUND;
+
+	
+	private static final String BUNDLE_NAME = CloudFoundryPlugin.PLUGIN_ID + ".internal.Messages"; //$NON-NLS-1$
+	
+	static {
+		NLS.initializeMessages(BUNDLE_NAME, Messages.class);
+	}
+	
+	private Messages() {
+	}	
 }

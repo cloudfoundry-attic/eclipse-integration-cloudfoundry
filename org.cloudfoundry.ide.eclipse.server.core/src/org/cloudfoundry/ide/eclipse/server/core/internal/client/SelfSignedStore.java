@@ -38,13 +38,13 @@ import org.osgi.service.prefs.BackingStoreException;
  */
 public class SelfSignedStore {
 
-	public static final String SELF_SIGNED_PREF = CloudFoundryPlugin.PLUGIN_ID + ".selfsigned.certificate";
+	public static final String SELF_SIGNED_PREF = CloudFoundryPlugin.PLUGIN_ID + ".selfsigned.certificate"; //$NON-NLS-1$
 
 	private final String serverURL;
 
 	private final static ObjectMapper mapper = new ObjectMapper();
 
-	public static final String VALUE_SEPARATOR = " ";
+	public static final String VALUE_SEPARATOR = " "; //$NON-NLS-1$
 
 	public SelfSignedStore(String serverURL) {
 		Assert.isNotNull(serverURL);

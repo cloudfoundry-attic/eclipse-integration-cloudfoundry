@@ -114,7 +114,7 @@ public class RefreshHandler {
 	class BehaviourRefreshJob extends Job {
 
 		public BehaviourRefreshJob() {
-			super("Refresh Server Job");
+			super("Refresh Server Job"); //$NON-NLS-1$
 			setSystem(true);
 		}
 

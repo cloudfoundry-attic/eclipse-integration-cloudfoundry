@@ -36,7 +36,7 @@ import org.eclipse.wst.server.core.IModule;
  */
 public class DeployInDebugCommand extends DebugCommand {
 
-	protected final String COMMAND_NAME = "Launching application in debug mode.";
+	protected final String COMMAND_NAME = "Launching application in debug mode."; //$NON-NLS-1$
 
 	/**
 	 * Valid actions are: {@literal ApplicationAction#DEBUG}

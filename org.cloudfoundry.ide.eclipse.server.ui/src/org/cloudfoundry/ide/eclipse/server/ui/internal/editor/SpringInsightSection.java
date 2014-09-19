@@ -21,6 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.editor;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryURLNavigation;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
@@ -46,7 +47,7 @@ public class SpringInsightSection extends ServerEditorSection {
 
 		Section section = toolkit.createSection(parent, ExpandableComposite.TWISTIE | ExpandableComposite.TITLE_BAR);
 		section.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		section.setText("Spring Insight");
+		section.setText(Messages.SpringInsightSection_TEXT_SPRING_INSIGHT);
 		section.setExpanded(false);
 
 		Composite composite = toolkit.createComposite(section);

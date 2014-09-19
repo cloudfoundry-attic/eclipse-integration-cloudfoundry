@@ -23,6 +23,7 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -56,7 +57,7 @@ public class UpdatePasswordDialog extends Dialog {
 	
 	@Override
 	protected Control createDialogArea(Composite parent) {
-		getShell().setText("Change Password");
+		getShell().setText(Messages.UpdatePasswordDialog_TEXT_CHANGE_PW_TITLE);
 		
 		Composite control = (Composite) super.createDialogArea(parent);
 		
@@ -65,11 +66,11 @@ public class UpdatePasswordDialog extends Dialog {
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(composite);
 		
 		description = new Label(composite, SWT.NONE);
-		description.setText("Enter new password for '" + username + "'");
+		description.setText(NLS.bind(Messages.UpdatePasswordDialog_TEXT_ENTER_NEW_PW, username));
 		GridDataFactory.fillDefaults().span(2, 1).applyTo(description);
 		
 		Label newPasswordLabel = new Label(composite, SWT.NONE);
-		newPasswordLabel.setText("New password: ");
+		newPasswordLabel.setText(Messages.UpdatePasswordDialog_TEXT_NEW_PW_LABEL);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(newPasswordLabel);
 		
 		final Text newPasswordText = new Text(composite, SWT.PASSWORD | SWT.BORDER);
@@ -83,7 +84,7 @@ public class UpdatePasswordDialog extends Dialog {
 		});
 		
 		Label verifyPasswordLabel = new Label(composite, SWT.NONE);
-		verifyPasswordLabel.setText("Verify password: ");
+		verifyPasswordLabel.setText(Messages.UpdatePasswordDialog_TEXT_VERIFY_PW_LABEL);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(verifyPasswordLabel);
 		
 		final Text verifyPasswordText = new Text(composite, SWT.PASSWORD | SWT.BORDER);
@@ -103,16 +104,16 @@ public class UpdatePasswordDialog extends Dialog {
 		getButton(OK).setEnabled(password != null && password.length() > 0 && verifyPassword != null && verifyPassword.length() > 0);
 		
 		if (password == null || password.length() == 0) {
-			description.setText("Enter new password for '" + username + "'");
+			description.setText(NLS.bind(Messages.UpdatePasswordDialog_TEXT_ENTER_NEW_PW, username));
 			getButton(OK).setEnabled(false);
 		} else if (verifyPassword == null || verifyPassword.length() == 0) {
-			description.setText("Verify password for '" + username + "'");
+			description.setText(NLS.bind(Messages.UpdatePasswordDialog_TEXT_VERIFY_PW_FOR, username));
 			getButton(OK).setEnabled(false);
 		} else if (! password.equals(verifyPassword)) {
-			description.setText("Enter the same password in New password and Verify password");
+			description.setText(Messages.UpdatePasswordDialog_TEXT_MISMATCH_PW);
 			getButton(OK).setEnabled(false);
 		} else {
-			description.setText("Select OK to complete password change");
+			description.setText(Messages.UpdatePasswordDialog_TEXT_PROMPT_OK);
 			getButton(OK).setEnabled(true);
 		}
 	}
@@ -127,7 +128,7 @@ public class UpdatePasswordDialog extends Dialog {
 	@Override
 	protected void okPressed() {
 		if (! verifyPassword.equals(password)) {
-			MessageDialog.openError(getParentShell(), "Password Error", "Passwords did not match, please re-enter.");
+			MessageDialog.openError(getParentShell(), Messages.UpdatePasswordDialog_ERROR_VERIFY_PW_TITLE, Messages.UpdatePasswordDialog_ERROR_VERIFY_PW_BODY);
 			return;
 		}
 		

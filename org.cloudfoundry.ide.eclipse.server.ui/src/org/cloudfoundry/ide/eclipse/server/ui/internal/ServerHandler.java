@@ -103,7 +103,7 @@ public class ServerHandler {
 
 	public ServerHandler(String serverType) {
 		this.serverType = serverType;
-		this.verifyPath = "conf";
+		this.verifyPath = "conf"; //$NON-NLS-1$
 	}
 
 	public IServer getExistingServer() {
@@ -143,12 +143,12 @@ public class ServerHandler {
 	public IServer createServer(IProgressMonitor monitor, IOverwriteQuery query, ServerHandlerCallback callback)
 			throws CoreException {
 		try {
-			monitor.beginTask("Creating server configuration", 4);
+			monitor.beginTask("Creating server configuration", 4); //$NON-NLS-1$
 
 			IServerType st = ServerCore.findServerType(serverType);
 			if (st == null) {
-				throw new CoreException(CloudFoundryPlugin.getErrorStatus("Could not find server type \"" + serverType
-						+ "\""));
+				throw new CoreException(CloudFoundryPlugin.getErrorStatus("Could not find server type \"" + serverType //$NON-NLS-1$
+						+ "\"")); //$NON-NLS-1$
 			}
 			IRuntime runtime;
 			if (serverPath != null) {
@@ -175,7 +175,7 @@ public class ServerHandler {
 
 	public void deleteServerAndRuntime(IProgressMonitor monitor) throws CoreException {
 		try {
-			monitor.beginTask("Deleting server configuration", 4);
+			monitor.beginTask("Deleting server configuration", 4); //$NON-NLS-1$
 
 			IServer server = ServerCore.findServer(serverName);
 			if (server != null) {
@@ -200,7 +200,7 @@ public class ServerHandler {
 		ServerPort[] ports = server.getServerPorts(monitor);
 		if (ports != null) {
 			for (ServerPort serverPort : ports) {
-				if ("http".equals(serverPort.getProtocol())) {
+				if ("http".equals(serverPort.getProtocol())) { //$NON-NLS-1$
 					return serverPort.getPort();
 				}
 			}
@@ -227,7 +227,7 @@ public class ServerHandler {
 	 */
 	public IServer launch(IProject project, IProgressMonitor monitor) throws CoreException {
 		try {
-			monitor.beginTask("Launching " + project.getName(), IProgressMonitor.UNKNOWN);
+			monitor.beginTask("Launching " + project.getName(), IProgressMonitor.UNKNOWN); //$NON-NLS-1$
 
 			IServer server = createServer(new SubProgressMonitor(monitor, 1), NEVER_OVERWRITE);
 
@@ -235,7 +235,7 @@ public class ServerHandler {
 			IModule[] modules = ServerUtil.getModules(project);
 			if (modules == null || modules.length == 0) {
 				throw new CoreException(
-						CloudFoundryPlugin.getErrorStatus("Sample project does not contain web modules: " + project));
+						CloudFoundryPlugin.getErrorStatus("Sample project does not contain web modules: " + project)); //$NON-NLS-1$
 			}
 
 			if (!Arrays.asList(wc.getModules()).contains(modules[0])) {
@@ -285,7 +285,7 @@ public class ServerHandler {
 			throws CoreException {
 		IRuntime runtime = ServerCore.findRuntime(runtimeName);
 		if (runtime != null) {
-			if (!query(query, NLS.bind("A runtime with the name ''{0}'' already exists. Replace the existing runtime?",
+			if (!query(query, NLS.bind(Messages.ServerHandler_QUERY_RUNTIME_EXISTS,
 					runtimeName))) {
 				monitor.worked(1);
 				return runtime;
@@ -311,7 +311,7 @@ public class ServerHandler {
 		IServer server = ServerCore.findServer(serverName);
 		if (server != null) {
 			if (!query(query,
-					NLS.bind("A server with the name ''{0}'' already exists. Replace the existing server?", serverName))) {
+					NLS.bind(Messages.ServerHandler_QUERY_SERVER_EXISTS, serverName))) {
 				monitor.worked(1);
 				return server;
 			}
@@ -342,7 +342,7 @@ public class ServerHandler {
 				}
 			}
 		}
-		throw new CoreException(CloudFoundryPlugin.getErrorStatus("No matching runtime found"));
+		throw new CoreException(CloudFoundryPlugin.getErrorStatus("No matching runtime found")); //$NON-NLS-1$
 	}
 
 	private IServer findServer(IServerType st, IRuntime runtime, IProgressMonitor monitor) throws CoreException {
@@ -354,7 +354,7 @@ public class ServerHandler {
 				}
 			}
 		}
-		throw new CoreException(CloudFoundryPlugin.getErrorStatus("No matching server found"));
+		throw new CoreException(CloudFoundryPlugin.getErrorStatus("No matching server found")); //$NON-NLS-1$
 	}
 
 	private boolean query(IOverwriteQuery query, String message) {
@@ -369,7 +369,7 @@ public class ServerHandler {
 	}
 
 	private void restartServer(IServer server, IProgressMonitor monitor) throws CoreException {
-		monitor.subTask("Restarting server");
+		monitor.subTask("Restarting server"); //$NON-NLS-1$
 
 		final CountDownLatch eventLatch = new CountDownLatch(1);
 		IServerListener serverListener = new IServerListener() {
@@ -394,7 +394,7 @@ public class ServerHandler {
 			}
 
 			// wait 10 seconds
-			monitor.subTask("Waiting for server to start");
+			monitor.subTask("Waiting for server to start"); //$NON-NLS-1$
 			for (int i = 0; i < 50; i++) {
 				try {
 					if (eventLatch.await(200, TimeUnit.MILLISECONDS)) {

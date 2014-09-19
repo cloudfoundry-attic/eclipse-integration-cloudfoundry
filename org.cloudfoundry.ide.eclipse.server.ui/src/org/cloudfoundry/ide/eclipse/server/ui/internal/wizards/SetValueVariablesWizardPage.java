@@ -22,6 +22,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 import java.util.Map;
 
 import org.cloudfoundry.ide.eclipse.server.ui.internal.IPartChangeListener;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.tunnel.SetValueVariablesPart;
 import org.eclipse.core.runtime.IStatus;
@@ -36,7 +37,7 @@ public class SetValueVariablesWizardPage extends CloudFoundryAwareWizardPage {
 	private IStatus status;
 
 	protected SetValueVariablesWizardPage() {
-		super("Set Value Variables Page", "Set Values", "The following variables require values:", null);
+		super(Messages.SetValueVariablesWizardPage_TEXT_SET_VAR_PAGE, Messages.SetValueVariablesWizardPage_TITLE_SET_VAR, Messages.SetValueVariablesWizardPage_TEXT_SET_VAR_DESCRIP, null);
 	}
 
 	public void createControl(Composite parent) {

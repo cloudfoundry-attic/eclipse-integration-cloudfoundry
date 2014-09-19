@@ -28,6 +28,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
@@ -77,7 +78,7 @@ public class CloudFoundryApplicationWizard extends Wizard {
 		// By default applications are started after being pushed to the server
 		applicationDescriptor.setApplicationStartMode(ApplicationAction.START);
 		setNeedsProgressMonitor(true);
-		setWindowTitle("Application");
+		setWindowTitle(Messages.CloudFoundryApplicationWizard_TITLE_APP);
 	}
 
 	@Override
@@ -102,12 +103,12 @@ public class CloudFoundryApplicationWizard extends Wizard {
 		else {
 
 			String moduleID = module != null && module.getModuleType() != null ? module.getModuleType().getId()
-					: "Unknown module type.";
+					: "Unknown module type."; //$NON-NLS-1$
 
 			CloudFoundryPlugin
-					.logError("No application deployment wizard pages found for application type: "
+					.logError("No application deployment wizard pages found for application type: " //$NON-NLS-1$
 							+ moduleID
-							+ ". Unable to complete application deployment. Check that the application type is registered in the Cloud Foundry application framework.");
+							+ ". Unable to complete application deployment. Check that the application type is registered in the Cloud Foundry application framework."); //$NON-NLS-1$
 		}
 
 	}

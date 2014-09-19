@@ -65,7 +65,7 @@ public class PartChangeEvent {
 
 	@Override
 	public String toString() {
-		return "PartChangeEvent [status=" + status + ", source=" + source + ", type=" + type + "]";
+		return "PartChangeEvent [status=" + status + ", source=" + source + ", type=" + type + "]"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 	}
 
 }

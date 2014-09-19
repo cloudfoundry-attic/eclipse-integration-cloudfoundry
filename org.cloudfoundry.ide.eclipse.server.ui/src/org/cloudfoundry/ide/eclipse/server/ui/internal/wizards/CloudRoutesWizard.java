@@ -88,7 +88,7 @@ public class CloudRoutesWizard extends Wizard {
 		private final CloudFoundryServer server;
 
 		public CloudRoutesPage(CloudFoundryServer server) {
-			super("Cloud Route Page", "Cloud Routes", CloudFoundryImages.getWizardBanner(server.getServer()
+			super(Messages.CloudRoutesWizard_TEXT_CLOUD_ROUTE_PAGE, Messages.CloudRoutesWizard_TEXT_CLOUD_ROUTES, CloudFoundryImages.getWizardBanner(server.getServer()
 					.getServerType().getId()));
 			setDescription(Messages.ROUTE_PAGE_DESCRIPTION);
 			this.server = server;

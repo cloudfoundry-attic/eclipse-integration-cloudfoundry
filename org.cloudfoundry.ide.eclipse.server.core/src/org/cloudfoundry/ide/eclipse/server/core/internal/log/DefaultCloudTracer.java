@@ -30,15 +30,15 @@ import org.cloudfoundry.client.lib.RestLogEntry;
  */
 public class DefaultCloudTracer extends CloudTracer {
 
-	static final String HTTP_TRACE_STATUS = "HTTP STATUS";
+	static final String HTTP_TRACE_STATUS = "HTTP STATUS"; //$NON-NLS-1$
 
-	static final String HTTP_TRACE_REQUEST = "REQUEST";
+	static final String HTTP_TRACE_REQUEST = "REQUEST"; //$NON-NLS-1$
 
-	static final String ERROR_STATUS = "ERROR";
+	static final String ERROR_STATUS = "ERROR"; //$NON-NLS-1$
 
-	static final String TRACE_SEPARATOR = " :: ";
+	static final String TRACE_SEPARATOR = " :: "; //$NON-NLS-1$
 
-	static final String SPACE = " ";
+	static final String SPACE = " "; //$NON-NLS-1$
 
 	protected void doTrace(RestLogEntry restLogEntry) {
 

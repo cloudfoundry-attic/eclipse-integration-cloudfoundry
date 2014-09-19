@@ -100,7 +100,7 @@ public class CloudApplicationUrlPart extends UIPart {
 
 		Label label = new Label(subDomainComp, SWT.NONE);
 
-		label.setText("Subdomain:");
+		label.setText(Messages.CloudApplicationUrlPart_TEXT_SUBDOMAIN_LABEL);
 		GridDataFactory.fillDefaults().grab(false, false).align(SWT.FILL, SWT.CENTER).applyTo(label);
 
 		subDomainText = new Text(subDomainComp, SWT.BORDER);
@@ -114,7 +114,7 @@ public class CloudApplicationUrlPart extends UIPart {
 		});
 
 		label = new Label(subDomainComp, SWT.NONE);
-		label.setText("Domain:");
+		label.setText(Messages.COMMONTXT_DOMAIN);
 		GridDataFactory.fillDefaults().grab(false, false).align(SWT.FILL, SWT.CENTER).applyTo(label);
 
 		domainCombo = new Combo(subDomainComp, SWT.BORDER | SWT.READ_ONLY);
@@ -129,7 +129,7 @@ public class CloudApplicationUrlPart extends UIPart {
 
 		label = new Label(subDomainComp, SWT.NONE);
 
-		label.setText("Deployed URL:");
+		label.setText(Messages.CloudApplicationUrlPart_TEXT_DEPLOYURL_LABEL);
 		GridDataFactory.fillDefaults().grab(false, false).align(SWT.FILL, SWT.CENTER).applyTo(label);
 
 		fullURLText = new Text(subDomainComp, SWT.BORDER);
@@ -188,7 +188,7 @@ public class CloudApplicationUrlPart extends UIPart {
 	 */
 	protected void setTextValue(Text textControl, String value) {
 		if (value == null) {
-			value = "";
+			value = ""; //$NON-NLS-1$
 		}
 		// Only set value if change occurred to avoid unnecessary validation
 		if (isActive(textControl) && !textControl.getText().equals(value)) {

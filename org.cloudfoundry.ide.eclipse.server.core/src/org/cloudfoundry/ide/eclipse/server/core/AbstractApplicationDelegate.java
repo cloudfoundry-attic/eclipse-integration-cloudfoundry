@@ -31,6 +31,7 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
@@ -192,13 +193,13 @@ public abstract class AbstractApplicationDelegate {
 		String errorMessage = null;
 
 		if (deploymentInfo == null) {
-			errorMessage = "Missing application deployment information.";
+			errorMessage = Messages.AbstractApplicationDelegate_ERROR_MISSING_DEPLOY_INFO;
 		}
 		else if (ValueValidationUtil.isEmpty(deploymentInfo.getDeploymentName())) {
-			errorMessage = "Missing application name in application deployment information.";
+			errorMessage = Messages.AbstractApplicationDelegate_ERROR_MISSING_APPNAME;
 		}
 		else if (deploymentInfo.getMemory() <= 0) {
-			errorMessage = "No memory set in application deployment information.";
+			errorMessage = Messages.AbstractApplicationDelegate_ERROR_MISSING_MEM;
 		}
 
 		if (errorMessage != null) {

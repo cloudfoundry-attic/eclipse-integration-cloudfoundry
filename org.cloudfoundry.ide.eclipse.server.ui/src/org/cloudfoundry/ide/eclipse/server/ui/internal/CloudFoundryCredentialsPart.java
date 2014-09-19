@@ -88,7 +88,7 @@ public class CloudFoundryCredentialsPart extends UIPart implements IPartChangeLi
 		this(cfServer);
 
 		if (wizardPage != null) {
-			wizardPage.setTitle(NLS.bind("{0} Account", service));
+			wizardPage.setTitle(NLS.bind(Messages.CloudFoundryCredentialsPart_TEXT_CREDENTIAL_WIZ_TITLE, service));
 			wizardPage.setDescription(Messages.SERVER_WIZARD_VALIDATOR_CLICK_TO_VALIDATE);
 			ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
 			if (banner != null) {
@@ -103,7 +103,7 @@ public class CloudFoundryCredentialsPart extends UIPart implements IPartChangeLi
 		this(cfServer);
 		IWizardHandle wizardHandle = context.getWizardHandle();
 		if (wizardHandle != null) {
-			wizardHandle.setTitle(NLS.bind("{0} Account", service));
+			wizardHandle.setTitle(NLS.bind(Messages.CloudFoundryCredentialsPart_TEXT_CREDENTIAL_WIZ_TITLE, service));
 			wizardHandle.setDescription(Messages.SERVER_WIZARD_VALIDATOR_CLICK_TO_VALIDATE);
 			ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
 			if (banner != null) {
@@ -165,7 +165,7 @@ public class CloudFoundryCredentialsPart extends UIPart implements IPartChangeLi
 
 		Label emailLabel = new Label(topComposite, SWT.NONE);
 		emailLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		emailLabel.setText("Email:");
+		emailLabel.setText(Messages.COMMONTXT_EMAIL_WITH_COLON);
 
 		emailText = new Text(topComposite, SWT.BORDER);
 		emailText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -184,7 +184,7 @@ public class CloudFoundryCredentialsPart extends UIPart implements IPartChangeLi
 
 		Label passwordLabel = new Label(topComposite, SWT.NONE);
 		passwordLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		passwordLabel.setText("Password:");
+		passwordLabel.setText(Messages.COMMONTXT_PW);
 
 		passwordText = new Text(topComposite, SWT.PASSWORD | SWT.BORDER);
 		passwordText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -225,7 +225,7 @@ public class CloudFoundryCredentialsPart extends UIPart implements IPartChangeLi
 		validateComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
 		validateButton = new Button(validateComposite, SWT.PUSH);
-		validateButton.setText("Validate Account");
+		validateButton.setText(Messages.CloudFoundryCredentialsPart_TEXT_VALIDATE_BUTTON);
 		validateButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent event) {
@@ -236,7 +236,7 @@ public class CloudFoundryCredentialsPart extends UIPart implements IPartChangeLi
 		});
 
 		registerAccountButton = new Button(validateComposite, SWT.PUSH);
-		registerAccountButton.setText("Register Account...");
+		registerAccountButton.setText(Messages.CloudFoundryCredentialsPart_TEXT_REGISTER_BUTTON);
 		registerAccountButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent event) {
@@ -267,7 +267,7 @@ public class CloudFoundryCredentialsPart extends UIPart implements IPartChangeLi
 		});
 
 		TabItem item = new TabItem(folder, SWT.NONE);
-		item.setText("Account Information");
+		item.setText(Messages.COMMONTXT_ACCOUNT_INFO);
 		item.setControl(composite);
 	}
 

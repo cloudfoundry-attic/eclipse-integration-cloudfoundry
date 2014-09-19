@@ -71,13 +71,13 @@ public class CloudFoundryPlugin extends Plugin {
 
 	private static class ExtensionPointReader {
 
-		private static final String ELEMENT_CALLBACK = "callback";
+		private static final String ELEMENT_CALLBACK = "callback"; //$NON-NLS-1$
 
-		private static final String ELEMENT_CLASS = "class";
+		private static final String ELEMENT_CLASS = "class"; //$NON-NLS-1$
 
-		private static final String EXTENSION_ID_CALLBACK = PLUGIN_ID + ".callback";
+		private static final String EXTENSION_ID_CALLBACK = PLUGIN_ID + ".callback"; //$NON-NLS-1$
 
-		private static final String EXTENSION_ID_APP_STATE_TRACKER = "appStateTracker";
+		private static final String EXTENSION_ID_APP_STATE_TRACKER = "appStateTracker"; //$NON-NLS-1$
 
 		public static CloudFoundryCallback readExtension() {
 			IExtensionRegistry registry = Platform.getExtensionRegistry();
@@ -99,8 +99,8 @@ public class CloudFoundryPlugin extends Plugin {
 				Object object = configurationElement.createExecutableExtension(ELEMENT_CLASS);
 				if (!(object instanceof CloudFoundryCallback)) {
 					getDefault().getLog().log(
-							new Status(IStatus.ERROR, PLUGIN_ID, "Could not load "
-									+ object.getClass().getCanonicalName() + " must implement "
+							new Status(IStatus.ERROR, PLUGIN_ID, "Could not load " //$NON-NLS-1$
+									+ object.getClass().getCanonicalName() + " must implement " //$NON-NLS-1$
 									+ CloudFoundryCallback.class.getCanonicalName()));
 					return null;
 				}
@@ -108,7 +108,7 @@ public class CloudFoundryPlugin extends Plugin {
 				return (CloudFoundryCallback) object;
 			}
 			catch (CoreException e) {
-				getDefault().getLog().log(new Status(IStatus.ERROR, PLUGIN_ID, "Could not load callback extension", e));
+				getDefault().getLog().log(new Status(IStatus.ERROR, PLUGIN_ID, "Could not load callback extension", e)); //$NON-NLS-1$
 			}
 			return null;
 		}
@@ -132,8 +132,8 @@ public class CloudFoundryPlugin extends Plugin {
 			for (IConfigurationElement curConfigElement : cf) {
 				// load the extension in a safe environment. If there are NPEs
 				// or miss configurations they will be caught by try/catch
-				String[] curServerTypeIds = tokenize(curConfigElement.getAttribute("serverTypeIds"), ",");
-				String[] curModuleTypeIds = tokenize(curConfigElement.getAttribute("moduleTypeIds"), ",");
+				String[] curServerTypeIds = tokenize(curConfigElement.getAttribute("serverTypeIds"), ","); //$NON-NLS-1$ //$NON-NLS-2$
+				String[] curModuleTypeIds = tokenize(curConfigElement.getAttribute("moduleTypeIds"), ","); //$NON-NLS-1$ //$NON-NLS-2$
 				appStateTrackerEntries.add(new AppStateTrackerEntry(curServerTypeIds, curModuleTypeIds,
 						curConfigElement));
 			}
@@ -249,7 +249,7 @@ public class CloudFoundryPlugin extends Plugin {
 		private AbstractAppStateTracker createAppStateTracker() {
 			AbstractAppStateTracker tracker = null;
 			try {
-				tracker = (AbstractAppStateTracker) configElement.createExecutableExtension("class");
+				tracker = (AbstractAppStateTracker) configElement.createExecutableExtension("class"); //$NON-NLS-1$
 				// if (Trace.CONFIG) {
 				// Trace.trace(Trace.STRING_CONFIG,
 				// "  Loaded .appStateTracker: " +
@@ -263,7 +263,7 @@ public class CloudFoundryPlugin extends Plugin {
 				// "  Could not load .appStateTracker: " +
 				// curConfigElement.getAttribute("id"), t);
 				// }
-				CloudFoundryPlugin.logError(NLS.bind(Messages.ERROR_FAILED_APP_START_TRACKER, t.getMessage()), t);
+				CloudFoundryPlugin.logError(("Internal Error: Failed to load application start tracker due to - " + t.getMessage()), t); //$NON-NLS-1$
 			}
 			return tracker;
 		}
@@ -272,9 +272,9 @@ public class CloudFoundryPlugin extends Plugin {
 	// public static final String CLOUD_CONTROLLER_DEFAULT_URL_ATTRIBUTE =
 	// "cloudfoundry.cloudcontroller.url.default";
 
-	public static final String PLUGIN_ID = "org.cloudfoundry.ide.eclipse.server.core";
+	public static final String PLUGIN_ID = "org.cloudfoundry.ide.eclipse.server.core"; //$NON-NLS-1$
 
-	public static final String ENABLE_INCREMENTAL_PUBLISH_PREFERENCE = PLUGIN_ID + ".publish.incremental.properties";
+	public static final String ENABLE_INCREMENTAL_PUBLISH_PREFERENCE = PLUGIN_ID + ".publish.incremental.properties"; //$NON-NLS-1$
 
 	public static final boolean DEFAULT_INCREMENTAL_PUBLISH_PREFERENCE_VAL = true;
 
@@ -457,7 +457,7 @@ public class CloudFoundryPlugin extends Plugin {
 
 		int size = supportedTypeIds.length;
 		for (int i = 0; i < size; i++) {
-			if (supportedTypeIds[i].endsWith("*")) {
+			if (supportedTypeIds[i].endsWith("*")) { //$NON-NLS-1$
 				if (typeId.length() >= supportedTypeIds[i].length()
 						&& typeId.startsWith(supportedTypeIds[i].substring(0, supportedTypeIds[i].length() - 1)))
 					return true;

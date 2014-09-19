@@ -23,18 +23,18 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
 
 public class StandardLogContentType {
 
-	public static final LogContentType STD_OUT = new LogContentType("stdout");
+	public static final LogContentType STD_OUT = new LogContentType("stdout"); //$NON-NLS-1$
 
-	public static final LogContentType STD_ERROR = new LogContentType("stderror");
+	public static final LogContentType STD_ERROR = new LogContentType("stderror"); //$NON-NLS-1$
 
-	public static final LogContentType APPLICATION_LOG = new LogContentType("applicationlog");
+	public static final LogContentType APPLICATION_LOG = new LogContentType("applicationlog"); //$NON-NLS-1$
 
-	public static final LogContentType APPLICATION_LOG_STS_ERROR = new LogContentType("applicationlogstderror");
+	public static final LogContentType APPLICATION_LOG_STS_ERROR = new LogContentType("applicationlogstderror"); //$NON-NLS-1$
 
-	public static final LogContentType APPLICATION_LOG_STD_OUT = new LogContentType("applicationlogstdout");
+	public static final LogContentType APPLICATION_LOG_STD_OUT = new LogContentType("applicationlogstdout"); //$NON-NLS-1$
 
-	public static final LogContentType APPLICATION_LOG_UNKNOWN = new LogContentType("applicationlogunknown");
+	public static final LogContentType APPLICATION_LOG_UNKNOWN = new LogContentType("applicationlogunknown"); //$NON-NLS-1$
 
-	public static final LogContentType SHOW_EXISTING_LOGS = new LogContentType("existingLogs");
+	public static final LogContentType SHOW_EXISTING_LOGS = new LogContentType("existingLogs"); //$NON-NLS-1$
 
 }

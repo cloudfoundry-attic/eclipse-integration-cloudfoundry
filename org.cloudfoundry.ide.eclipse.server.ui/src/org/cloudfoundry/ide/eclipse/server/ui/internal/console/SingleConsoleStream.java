@@ -60,7 +60,7 @@ public class SingleConsoleStream extends ConsoleStream {
 				outputStream.close();
 			}
 			catch (IOException e) {
-				CloudFoundryPlugin.logError("Failed to close console output stream due to: " + e.getMessage(), e);
+				CloudFoundryPlugin.logError("Failed to close console output stream due to: " + e.getMessage(), e); //$NON-NLS-1$
 			}
 		}
 	}

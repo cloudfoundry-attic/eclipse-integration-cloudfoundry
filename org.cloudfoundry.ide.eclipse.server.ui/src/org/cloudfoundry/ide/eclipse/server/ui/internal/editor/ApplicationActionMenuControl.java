@@ -25,11 +25,13 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -180,7 +182,7 @@ public class ApplicationActionMenuControl {
 			viewMenuButton.setImage(CloudFoundryImages.getImage(CloudFoundryImages.MENU_VIEW_ENABLED));
 			viewMenuButton.setDisabledImage(CloudFoundryImages.getImage(CloudFoundryImages.MENU_VIEW_DISABLED));
 
-			viewMenuButton.setToolTipText("Select mode");
+			viewMenuButton.setToolTipText(Messages.ApplicationActionMenuControl_TEXT_SELECT_MODE);
 			viewMenuButton.addSelectionListener(new SelectionAdapter() {
 
 				public void widgetSelected(SelectionEvent e) {
@@ -265,7 +267,7 @@ public class ApplicationActionMenuControl {
 	public void setDefaultTooltipMessage() {
 
 		if (applicationActionButton != null) {
-			applicationActionButton.setToolTipText("Select " + selectedType.getDisplayName() + " mode");
+			applicationActionButton.setToolTipText(NLS.bind(Messages.ApplicationActionMenuControl_TEXT_SELECT_MODE_FOR, selectedType.getDisplayName()));
 		}
 
 	}

@@ -117,9 +117,9 @@ public class LaunchTunnelCommandManager {
 					// added as part of the script
 					if (serviceCommand.getEnvironmentVariables() != null) {
 						for (EnvironmentVariable var : serviceCommand.getEnvironmentVariables()) {
-							optionsWr.append("export ");
+							optionsWr.append("export "); //$NON-NLS-1$
 							optionsWr.append(var.getVariable());
-							optionsWr.append("=");
+							optionsWr.append("="); //$NON-NLS-1$
 							optionsWr.append(var.getValue());
 							optionsWr.append('\n');
 						}
@@ -183,7 +183,7 @@ public class LaunchTunnelCommandManager {
 					String processArg = serviceCommand.getExternalApplication().getExecutableNameAndPath();
 
 					if (appOptions != null) {
-						processArg += " " + appOptions;
+						processArg += " " + appOptions; //$NON-NLS-1$
 					}
 
 					processArguments.add(processArg);
@@ -246,7 +246,7 @@ public class LaunchTunnelCommandManager {
 		else {
 			throw new CoreException(
 					CloudFoundryPlugin
-							.getErrorStatus("Unable to launch process because no process arguments were resolved when launching process for "
+							.getErrorStatus("Unable to launch process because no process arguments were resolved when launching process for " //$NON-NLS-1$
 									+ getLaunchName()));
 		}
 	}
@@ -288,7 +288,7 @@ public class LaunchTunnelCommandManager {
 
 		try {
 
-			File scriptFile = CloudUtil.createTemporaryFile("tempScriptFileCFTunnelCommands", "tunnelCommand.sh");
+			File scriptFile = CloudUtil.createTemporaryFile("tempScriptFileCFTunnelCommands", "tunnelCommand.sh"); //$NON-NLS-1$ //$NON-NLS-2$
 			if (scriptFile != null && scriptFile.exists()) {
 
 				outStream = new FileOutputStream(scriptFile);
@@ -301,7 +301,7 @@ public class LaunchTunnelCommandManager {
 				return scriptFile;
 			}
 			else {
-				throw new CoreException(CloudFoundryPlugin.getErrorStatus("Failed to create script file for: "
+				throw new CoreException(CloudFoundryPlugin.getErrorStatus("Failed to create script file for: " //$NON-NLS-1$
 						+ serviceCommand.getDisplayName()));
 			}
 		}
@@ -340,8 +340,8 @@ public class LaunchTunnelCommandManager {
 
 			List<String> permissionCommand = new ArrayList<String>();
 
-			permissionCommand.add("chmod");
-			permissionCommand.add("+x");
+			permissionCommand.add("chmod"); //$NON-NLS-1$
+			permissionCommand.add("+x"); //$NON-NLS-1$
 			permissionCommand.add(file.getAbsolutePath());
 			return permissionCommand;
 		}

@@ -92,13 +92,13 @@ public class CaldecottTunnelDescriptor {
 			switch (vendor) {
 			case mysql:
 				builtURL = new StringBuilder();
-				builtURL.append("jdbc:mysql");
-				builtURL.append("://");
+				builtURL.append("jdbc:mysql"); //$NON-NLS-1$
+				builtURL.append("://"); //$NON-NLS-1$
 				builtURL.append(TunnelBehaviour.LOCAL_HOST);
-				builtURL.append(":");
+				builtURL.append(":"); //$NON-NLS-1$
 				builtURL.append(tunnelPort());
 				if (getDatabaseName() != null) {
-					builtURL.append("/");
+					builtURL.append("/"); //$NON-NLS-1$
 					builtURL.append(getDatabaseName());
 				}
 
@@ -119,13 +119,13 @@ public class CaldecottTunnelDescriptor {
 			// break;
 			case postgresql:
 				builtURL = new StringBuilder();
-				builtURL.append("jdbc:postgresql");
-				builtURL.append("://");
+				builtURL.append("jdbc:postgresql"); //$NON-NLS-1$
+				builtURL.append("://"); //$NON-NLS-1$
 				builtURL.append(TunnelBehaviour.LOCAL_HOST);
-				builtURL.append(":");
+				builtURL.append(":"); //$NON-NLS-1$
 				builtURL.append(tunnelPort());
 				if (getDatabaseName() != null) {
-					builtURL.append("/");
+					builtURL.append("/"); //$NON-NLS-1$
 					builtURL.append(getDatabaseName());
 				}
 				break;

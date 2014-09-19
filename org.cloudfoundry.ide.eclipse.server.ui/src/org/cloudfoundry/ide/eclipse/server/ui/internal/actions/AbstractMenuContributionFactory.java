@@ -44,7 +44,7 @@ public abstract class AbstractMenuContributionFactory extends AbstractContributi
 		IMenuService menuService = (IMenuService) serviceLocator.getService(IMenuService.class);
 		if (menuService == null) {
 			CloudFoundryPlugin
-					.logError("Unable to retrieve Eclipse menu service. Cannot add Cloud Foundry context menus.");
+					.logError("Unable to retrieve Eclipse menu service. Cannot add Cloud Foundry context menus."); //$NON-NLS-1$
 			return;
 		}
 

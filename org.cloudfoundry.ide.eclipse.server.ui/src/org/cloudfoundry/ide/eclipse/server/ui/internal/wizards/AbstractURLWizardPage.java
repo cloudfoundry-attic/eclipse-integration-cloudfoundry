@@ -22,6 +22,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.ICoreRunnable;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -61,12 +62,12 @@ public abstract class AbstractURLWizardPage extends PartsWizardPage {
 			update(true,
 					CloudFoundryPlugin
 							.getStatus(
-									"No Cloud application URL handler found. Possible error with the application delegate. Application may not deploy correctly.",
+									Messages.AbstractURLWizardPage_ERROR_NO_URL_HANDLER,
 									IStatus.ERROR));
 			return;
 		}
 
-		final String operationLabel = "Fetching list of domains";
+		final String operationLabel = Messages.AbstractURLWizardPage_LABEL_FETCHING_DOMAIN;
 		ICoreRunnable runnable = new ICoreRunnable() {
 			public void run(IProgressMonitor coreRunnerMonitor) throws CoreException {
 				SubMonitor subProgress = SubMonitor.convert(coreRunnerMonitor, operationLabel, 100);

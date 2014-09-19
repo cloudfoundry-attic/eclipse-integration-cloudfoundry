@@ -34,9 +34,9 @@ import org.eclipse.osgi.util.NLS;
  */
 public class ServerCredentialsStore {
 
-	private static final String KEY_PASSWORD = "password";
+	private static final String KEY_PASSWORD = "password"; //$NON-NLS-1$
 
-	private static final String KEY_USERNAME = "username";
+	private static final String KEY_USERNAME = "username"; //$NON-NLS-1$
 
 	private boolean initialized;
 
@@ -108,8 +108,7 @@ public class ServerCredentialsStore {
 			CloudFoundryPlugin
 					.getDefault()
 					.getLog()
-					.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-							"Unexpected error while accessing secure preferences for server {0}", serverId)));
+					.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, "Unexpected error while accessing secure preferences for server: " + serverId)); //$NON-NLS-1$
 		}
 	}
 

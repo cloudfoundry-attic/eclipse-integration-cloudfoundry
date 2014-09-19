@@ -38,17 +38,17 @@ import org.eclipse.jdt.launching.JavaRuntime;
 
 public class CloudFoundryDebuggingLaunchConfigDelegate extends AbstractJavaLaunchConfigurationDelegate {
 
-	public static final String SOURCE_LOCATOR = "org.cloudfoundry.ide.eclipse.debug.sourcepathcomputer";
+	public static final String SOURCE_LOCATOR = "org.cloudfoundry.ide.eclipse.debug.sourcepathcomputer"; //$NON-NLS-1$
 
-	public static final String LAUNCH_CONFIGURATION_ID = "org.cloudfoundry.ide.eclipse.launchconfig.debug";
+	public static final String LAUNCH_CONFIGURATION_ID = "org.cloudfoundry.ide.eclipse.launchconfig.debug"; //$NON-NLS-1$
 
-	public static final String TIME_OUT = "timeout";
+	public static final String TIME_OUT = "timeout"; //$NON-NLS-1$
 
-	public static final String HOST_NAME = "hostname";
+	public static final String HOST_NAME = "hostname"; //$NON-NLS-1$
 
-	public static final String PORT = "port";
+	public static final String PORT = "port"; //$NON-NLS-1$
 
-	public static final String DEBUGGER_CONNECTION_ID = "debuggerconnectionid";
+	public static final String DEBUGGER_CONNECTION_ID = "debuggerconnectionid"; //$NON-NLS-1$
 
 	public void launch(ILaunchConfiguration configuration, String mode, ILaunch launch, IProgressMonitor monitor)
 			throws CoreException {
@@ -59,14 +59,14 @@ public class CloudFoundryDebuggingLaunchConfigDelegate extends AbstractJavaLaunc
 		final Map<String, String> argMap = new HashMap<String, String>();
 		String timeout = configuration.getAttribute(TIME_OUT, (String) null);
 		if (timeout != null) {
-			argMap.put("timeout", timeout);
+			argMap.put("timeout", timeout); //$NON-NLS-1$
 		}
 
 		String host = configuration.getAttribute(HOST_NAME, (String) null);
 		String port = configuration.getAttribute(PORT, (String) null);
 		if (host != null && port != null) {
-			argMap.put("hostname", host);
-			argMap.put("port", port);
+			argMap.put("hostname", host); //$NON-NLS-1$
+			argMap.put("port", port); //$NON-NLS-1$
 
 			setSourceLocator(launch);
 			connector.connect(argMap, monitor, launch);
@@ -74,7 +74,7 @@ public class CloudFoundryDebuggingLaunchConfigDelegate extends AbstractJavaLaunc
 		}
 		else {
 			CloudFoundryPlugin
-					.logError("Failed to launch debug configuration. IP and host for application instance cannot be resolved.");
+					.logError("Failed to launch debug configuration. IP and host for application instance cannot be resolved."); //$NON-NLS-1$
 		}
 
 	}

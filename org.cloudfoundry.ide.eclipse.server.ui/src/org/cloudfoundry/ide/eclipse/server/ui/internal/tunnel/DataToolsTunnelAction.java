@@ -29,6 +29,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOpe
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.CloudFoundryEditorAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
@@ -48,6 +49,7 @@ import org.eclipse.datatools.connectivity.drivers.jdbc.IJDBCConnectionProfileCon
 import org.eclipse.datatools.connectivity.drivers.models.TemplateDescriptor;
 import org.eclipse.datatools.connectivity.internal.ui.dialogs.DriverDialog;
 import org.eclipse.jface.window.Window;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
@@ -73,17 +75,17 @@ import org.eclipse.ui.progress.UIJob;
  */
 public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 
-	private static final String CLOUD_FOUNDRY_JDBC_PROFILE_DESCRIPTION = "Cloud Foundry JDBC Profile";
+	private static final String CLOUD_FOUNDRY_JDBC_PROFILE_DESCRIPTION = Messages.DataToolsTunnelAction_TEXT_PROF_DESCRIP;
 
-	private final static String DATA_TOOLS_DRIVER_DEFINITION_ID = "org.eclipse.datatools.connectivity.driverDefinitionID";
+	private final static String DATA_TOOLS_DRIVER_DEFINITION_ID = "org.eclipse.datatools.connectivity.driverDefinitionID"; //$NON-NLS-1$
 
-	private final static String ACTION_NAME = "Connect to Data Tools...";
+	private final static String ACTION_NAME = Messages.DataToolsTunnelAction_TEXT_CONN_DT;
 
 	private DataSourceDescriptor descriptor;
 
 	private final CloudFoundryServer cloudServer;
 
-	private final String JOBNAME = "Creating Data Tools Connection";
+	private final String JOBNAME = Messages.DataToolsTunnelAction_TEXT_CREATE_JOB;
 
 	private CaldecottTunnelDescriptor tunnelDescriptor;
 
@@ -110,7 +112,7 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 			serviceVendor = CloudUtil.getServiceVendor(cloudService);
 		}
 
-		if ("mysql".equals(serviceVendor)) {
+		if ("mysql".equals(serviceVendor)) { //$NON-NLS-1$
 			return MySQLDataSourceTunnelAction.getTunnelAction(editorPage, descriptor, cloudService, cloudServer);
 		}
 		return null;
@@ -182,8 +184,7 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 						status = profile.connect();
 					}
 					else {
-						status = CloudFoundryPlugin.getErrorStatus("Unable to create Data Tools profile for: "
-								+ tunnelDescriptor.getServiceName());
+						status = CloudFoundryPlugin.getErrorStatus(NLS.bind(Messages.DataToolsTunnelAction_ERROR_CREATE_PROFILE, tunnelDescriptor.getServiceName()));
 					}
 
 					return status;
@@ -195,8 +196,7 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 
 		}
 		else {
-			return CloudFoundryPlugin.getErrorStatus("Failed to create tunnel for: "
-					+ tunnelDescriptor.getServiceName());
+			return CloudFoundryPlugin.getErrorStatus(NLS.bind(Messages.DataToolsTunnelAction_ERROR_CREATE_TUNNEL_FOR, tunnelDescriptor.getServiceName()));
 		}
 	}
 
@@ -252,7 +252,7 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 				if (driverTemplate != null) {
 					IPropertySet properties = new PropertySetImpl(descriptor.getDriverName(), driverTemplate.getName());
 					Properties props = new Properties();
-					props.setProperty(IDriverMgmtConstants.PROP_DEFN_JARLIST, "replace with actual jar location");
+					props.setProperty(IDriverMgmtConstants.PROP_DEFN_JARLIST, Messages.DataToolsTunnelAction_PROP_REPLACE);
 
 					props.setProperty(IDriverMgmtConstants.PROP_DEFN_TYPE, driverTemplate.getId());
 
@@ -301,8 +301,8 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 				}
 			}
 			else {
-				CloudFoundryPlugin.logError("Failed to create driver instance for: "
-						+ CloudUtil.getServiceVendor(descriptor.getCloudService()) + " - "
+				CloudFoundryPlugin.logError("Failed to create driver instance for: " //$NON-NLS-1$
+						+ CloudUtil.getServiceVendor(descriptor.getCloudService()) + " - " //$NON-NLS-1$
 						+ tunnelDescriptor.getServiceName());
 			}
 
@@ -443,15 +443,15 @@ public abstract class DataToolsTunnelAction extends CloudFoundryEditorAction {
 		static DataToolsTunnelAction getTunnelAction(CloudFoundryApplicationsEditorPage editorPage,
 				CaldecottTunnelDescriptor tunnelDescriptor, CloudService cloudService, CloudFoundryServer cloudServer) {
 
-			String profileName = "Cloud Foundry" + " - " + cloudServer.getServer().getName() + " - "
-					+ CloudUtil.getServiceVendor(cloudService) + " - " + cloudService.getName();
+			String profileName = "Cloud Foundry" + " - " + cloudServer.getServer().getName() + " - " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					+ CloudUtil.getServiceVendor(cloudService) + " - " + cloudService.getName(); //$NON-NLS-1$
 
-			String driverProviderID = "org.eclipse.datatools.enablement.mysql.connectionProfile";
+			String driverProviderID = "org.eclipse.datatools.enablement.mysql.connectionProfile"; //$NON-NLS-1$
 
-			String driverName = "Cloud Foundry Tunnel " + " " + CloudUtil.getServiceVendor(cloudService) + " "
+			String driverName = "Cloud Foundry Tunnel " + " " + CloudUtil.getServiceVendor(cloudService) + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					+ cloudService.getVersion();
 
-			String driverTemplateIdentifier = "mysql";
+			String driverTemplateIdentifier = "mysql"; //$NON-NLS-1$
 
 			DataSourceDescriptor dataSourceDescriptor = new DataSourceDescriptor(tunnelDescriptor, cloudService,
 					profileName, driverProviderID, driverName, driverTemplateIdentifier);

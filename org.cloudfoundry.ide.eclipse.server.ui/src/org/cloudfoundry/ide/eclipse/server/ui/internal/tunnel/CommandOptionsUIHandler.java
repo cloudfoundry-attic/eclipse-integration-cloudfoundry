@@ -161,7 +161,7 @@ public class CommandOptionsUIHandler {
 				value = descriptor.getDatabaseName();
 				break;
 			case port:
-				value = descriptor.tunnelPort() + "";
+				value = descriptor.tunnelPort() + ""; //$NON-NLS-1$
 				break;
 			}
 

@@ -29,6 +29,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.DeleteServicesAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.RefreshApplicationEditorAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryServiceWizard;
@@ -191,7 +192,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 		@Override
 		public boolean performDrop(final Object data) {
-			final String jobName = "Deploying application";
+			final String jobName = "Deploying application"; //$NON-NLS-1$
 			UIJob job = new UIJob(jobName) {
 
 				@Override
@@ -229,11 +230,10 @@ public class ApplicationMasterPart extends SectionPart {
 										public void run() {
 											MessageDialog.openError(
 													editorPage.getSite().getShell(),
-													"Failed to deploy application",
+													Messages.ApplicationMasterPart_ERROR_DEPLOY_FAIL_TITLE,
 													NLS.bind(
-															"Can't deploy the project {0} because a cloud application with the same name already exits. {1}",
-															moduleName,
-															" Please either rename the project or delete the cloud application, and then try again."));
+															Messages.ApplicationMasterPart_ERROR_DEPLOY_FAIL_BODY,
+															moduleName));
 										}
 
 									});
@@ -280,8 +280,8 @@ public class ApplicationMasterPart extends SectionPart {
 		Section section = getSection();
 		section.setLayout(new GridLayout());
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(section);
-		section.setText("Applications");
-		section.setDescription("Select a currently deployed application to see details.");
+		section.setText(Messages.COMMONTXT_APPLICATIONS);
+		section.setDescription(Messages.ApplicationMasterPart_TEXT_APP_DESCRIP);
 
 		Composite client = toolkit.createComposite(section);
 		client.setLayout(new GridLayout());
@@ -350,7 +350,7 @@ public class ApplicationMasterPart extends SectionPart {
 									&& !cfAppName.equals(moduleName)
 									&& CloudFoundryProperties.isModuleProjectAccessible.testProperty(
 											new IModule[] { module }, cloudServer)) {
-								moduleName = cfAppName + " (" + moduleName + ")";
+								moduleName = cfAppName + " (" + moduleName + ")"; //$NON-NLS-1$ //$NON-NLS-2$
 							}
 							else {
 								moduleName = cfAppName;
@@ -399,7 +399,7 @@ public class ApplicationMasterPart extends SectionPart {
 		applicationsViewer.getControl().setMenu(menu);
 		editorPage.getSite().registerContextMenu(menuManager, applicationsViewer);
 
-		Action addRemoveApplicationAction = new Action("Add/Remove Applications",
+		Action addRemoveApplicationAction = new Action(Messages.ApplicationMasterPart_TEXT_ADD_REMOVE,
 				ImageResource.getImageDescriptor(ImageResource.IMG_ETOOL_MODIFY_MODULES)) {
 			@Override
 			public void run() {
@@ -424,7 +424,7 @@ public class ApplicationMasterPart extends SectionPart {
 				| Section.TWISTIE);
 		routeSection.setLayout(new GridLayout());
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(routeSection);
-		routeSection.setText("Routes");
+		routeSection.setText(Messages.ApplicationMasterPart_TEXT_ROUTES);
 		routeSection.setExpanded(true);
 
 		routeSection.clientVerticalSpacing = 0;
@@ -434,12 +434,12 @@ public class ApplicationMasterPart extends SectionPart {
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(client);
 		routeSection.setClient(client);
 
-		Button button = toolkit.createButton(client, "Remove...", SWT.PUSH);
+		Button button = toolkit.createButton(client, Messages.ApplicationMasterPart_TEXT_REMOVE_BUTTON, SWT.PUSH);
 		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(button);
 
 		button.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				UIJob uiJob = new UIJob("Remove Cloud routes") {
+				UIJob uiJob = new UIJob(Messages.ApplicationMasterPart_JOB_REMOVE_ROUTE) {
 
 					public IStatus runInUIThread(IProgressMonitor monitor) {
 						CloudRoutesWizard wizard = new CloudRoutesWizard(cloudServer);
@@ -463,9 +463,9 @@ public class ApplicationMasterPart extends SectionPart {
 				| Section.TWISTIE);
 		servicesSection.setLayout(new GridLayout());
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(servicesSection);
-		servicesSection.setText("Services");
+		servicesSection.setText(Messages.COMMONTXT_SERVICES);
 		servicesSection.setExpanded(true);
-		servicesSection.setDescription("Drag a service to the right hand side to bind it to an application.");
+		servicesSection.setDescription(Messages.ApplicationMasterPart_TEXT_SERVICES_DESCRIP);
 		// NOTE:Comment out as keeping section collapsed by default causes zero
 		// height tables if no services are provided
 		// servicesSection.addExpansionListener(new ExpansionAdapter() {
@@ -533,7 +533,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(servicesViewer.getControl());
 
-		Action addServiceAction = new Action("Add Service", CloudFoundryImages.NEW_SERVICE) {
+		Action addServiceAction = new Action(Messages.COMMONTXT_ADD_SERVICE, CloudFoundryImages.NEW_SERVICE) {
 			@Override
 			public void run() {
 				IWizard wizard = new CloudFoundryServiceWizard(cloudServer);

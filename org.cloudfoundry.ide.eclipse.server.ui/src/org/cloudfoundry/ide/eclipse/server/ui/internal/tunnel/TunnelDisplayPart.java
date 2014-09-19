@@ -29,6 +29,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.TableResizeHelper;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -238,7 +239,7 @@ public class TunnelDisplayPart {
 						result = descriptor.getPassword();
 						break;
 					case Port:
-						result = descriptor.tunnelPort() + "";
+						result = descriptor.tunnelPort() + ""; //$NON-NLS-1$
 						break;
 					case Vendor:
 						result = descriptor.getServiceVendor();
@@ -336,12 +337,12 @@ public class TunnelDisplayPart {
 	protected class CopyURL extends CopyTunnelInformation {
 
 		public CopyURL() {
-			super("Copy URL", CloudFoundryImages.EDIT);
+			super(Messages.TunnelDisplayPart_TEXT_COPY_URL, CloudFoundryImages.EDIT);
 		}
 
 		@Override
 		public String getToolTipText() {
-			return "Copy connection URL";
+			return Messages.TunnelDisplayPart_TEXT_COPY_CONN_URL;
 		}
 
 		@Override
@@ -354,12 +355,12 @@ public class TunnelDisplayPart {
 	protected class CopyUserName extends CopyTunnelInformation {
 
 		public CopyUserName() {
-			super("Copy username", CloudFoundryImages.EDIT);
+			super(Messages.TunnelDisplayPart_TEXT_COPY_USERNAME, CloudFoundryImages.EDIT);
 		}
 
 		@Override
 		public String getToolTipText() {
-			return "Copy username";
+			return Messages.TunnelDisplayPart_TEXT_COPY_USERNAME;
 		}
 
 		@Override
@@ -372,12 +373,12 @@ public class TunnelDisplayPart {
 	protected class CopyPassword extends CopyTunnelInformation {
 
 		public CopyPassword() {
-			super("Copy password", CloudFoundryImages.EDIT);
+			super(Messages.TunnelDisplayPart_TEXT_COPY_PW, CloudFoundryImages.EDIT);
 		}
 
 		@Override
 		public String getToolTipText() {
-			return "Copy password";
+			return Messages.TunnelDisplayPart_TEXT_COPY_PW;
 		}
 
 		@Override
@@ -388,34 +389,34 @@ public class TunnelDisplayPart {
 	}
 
 	protected class CopyAll extends CopyTunnelInformation {
-		private static final String SPACE = "     ";
+		private static final String SPACE = "     "; //$NON-NLS-1$
 
 		public CopyAll() {
-			super("Copy all", CloudFoundryImages.EDIT);
+			super(Messages.TunnelDisplayPart_TEXT_COPY_ALL, CloudFoundryImages.EDIT);
 		}
 
 		@Override
 		public String getToolTipText() {
-			return "Copy all";
+			return Messages.TunnelDisplayPart_TEXT_COPY_ALL;
 		}
 
 		@Override
 		String getTunnelInformation(CaldecottTunnelDescriptor descriptor) {
 			StringWriter writer = new StringWriter();
-			writer.append("UserName: ");
+			writer.append(Messages.TunnelDisplayPart_TEXT_USERNAME);
 			writer.append(descriptor.getUserName());
 			writer.append(SPACE);
-			writer.append("Password: ");
+			writer.append(Messages.COMMONTXT_PW);
 			writer.append(descriptor.getPassword());
 			writer.append(SPACE);
-			writer.append("DatabaseName: ");
+			writer.append(Messages.TunnelDisplayPart_TEXT_DB_NAME);
 			writer.append(descriptor.getDatabaseName());
 			writer.append(SPACE);
-			writer.append("Port: ");
-			writer.append(descriptor.tunnelPort() + "");
+			writer.append(Messages.TunnelDisplayPart_TEXT_PORT);
+			writer.append(descriptor.tunnelPort() + ""); //$NON-NLS-1$
 			if (descriptor.getURL() != null) {
 				writer.append(SPACE);
-				writer.append("URL: ");
+				writer.append(Messages.COMMONTXT_URL);
 				writer.append(descriptor.getURL());
 			}
 

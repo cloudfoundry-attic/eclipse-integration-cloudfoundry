@@ -26,6 +26,7 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.LocalCloudService;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -71,7 +72,7 @@ public class CloudFoundryServiceWizard extends Wizard {
 	 */
 	public CloudFoundryServiceWizard(CloudFoundryServer cloudServer, boolean deferServiceAddition) {
 		this.cloudServer = cloudServer;
-		setWindowTitle("Add Service");
+		setWindowTitle(Messages.COMMONTXT_ADD_SERVICE);
 		setNeedsProgressMonitor(true);
 		this.deferServiceAddition = deferServiceAddition;
 	}
@@ -119,7 +120,7 @@ public class CloudFoundryServiceWizard extends Wizard {
 			catch (InvocationTargetException e) {
 				if (e.getCause() != null) {
 					Status status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-							"Adding of service failed for {0}: {1}", cloudServer.getServer().getName(), e.getCause()
+							Messages.CloudFoundryServiceWizard_ERROR_ADD_SERVICE, cloudServer.getServer().getName(), e.getCause()
 									.getMessage() != null ? e.getCause().getMessage() : e.getCause().toString()), e);
 					StatusManager.getManager().handle(status,
 							StatusManager.SHOW | StatusManager.BLOCK | StatusManager.LOG);

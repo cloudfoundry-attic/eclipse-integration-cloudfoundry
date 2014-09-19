@@ -29,6 +29,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudUrlWizard;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -129,12 +130,12 @@ public class ManageCloudDialog extends Dialog {
 
 	@Override
 	protected Control createDialogArea(Composite parent) {
-		getShell().setText("Manage Cloud URLs");
+		getShell().setText(Messages.ManageCloudDialog_TEXT_MANAGE_CLOUD_URL);
 		Composite composite = new Composite(parent, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(composite);
 		GridLayoutFactory.fillDefaults().margins(10, 10).numColumns(2).equalWidth(false).applyTo(composite);
 
-		final TableViewer viewer = createTableViewer(composite, new String[] { "Server Type", "URL" }, new int[] { 35,
+		final TableViewer viewer = createTableViewer(composite, new String[] { Messages.ManageCloudDialog_TEXT_SERVER_TYPE, Messages.ManageCloudDialog_TEXT_URL }, new int[] { 35,
 				55 });
 
 		viewer.setContentProvider(new IStructuredContentProvider() {
@@ -197,7 +198,7 @@ public class ManageCloudDialog extends Dialog {
 
 		final Button addButton = new Button(buttonComposite, SWT.PUSH);
 		GridDataFactory.fillDefaults().applyTo(addButton);
-		addButton.setText("Add...");
+		addButton.setText(Messages.COMMONTXT_ADD);
 		addButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -212,7 +213,7 @@ public class ManageCloudDialog extends Dialog {
 
 		final Button editButton = new Button(buttonComposite, SWT.PUSH);
 		GridDataFactory.fillDefaults().applyTo(editButton);
-		editButton.setText("Edit...");
+		editButton.setText(Messages.COMMONTXT_EDIT);
 		editButton.setEnabled(false);
 		editButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -255,7 +256,7 @@ public class ManageCloudDialog extends Dialog {
 
 		final Button removeButton = new Button(buttonComposite, SWT.PUSH);
 		GridDataFactory.fillDefaults().applyTo(removeButton);
-		removeButton.setText("Remove");
+		removeButton.setText(Messages.COMMONTXT_REMOVE);
 		removeButton.setEnabled(false);
 		removeButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -291,7 +292,7 @@ public class ManageCloudDialog extends Dialog {
 							CloudServerURL cloudUrl = (CloudServerURL) selectedItem;
 							if (!cloudUrl.getUserDefined()) {
 								String url = cloudUrl.getUrl();
-								if (!url.contains("{")) {
+								if (!url.contains("{")) { //$NON-NLS-1$
 									editEnabled = false;
 								}
 
@@ -347,9 +348,7 @@ public class ManageCloudDialog extends Dialog {
 		}
 
 		if (newUrl == null) {
-			if (MessageDialog.openQuestion(getShell(), "URL used in existing server", "The URL you are "
-					+ "removing is used in an existing server. Removing the URL will also remove the server."
-					+ " Are you sure you want to continue?")) {
+			if (MessageDialog.openQuestion(getShell(), Messages.ManageCloudDialog_TEXT_URL_USED_TITLE, Messages.ManageCloudDialog_TEXT_URL_USED_BODY_1)) {
 				for (CloudFoundryServer matchedServer : matchedServers) {
 					serversToDelete.add(matchedServer);
 				}
@@ -384,10 +383,9 @@ public class ManageCloudDialog extends Dialog {
 		private Action action;
 
 		public EditUrlConfirmationDialog(Shell parentShell) {
-			super(parentShell, "URL used in existing server", null,
-					"The URL you are modifying is used in an existing server. "
-							+ "Choose the desired action to complete editing:", MessageDialog.QUESTION, new String[] {
-							"OK", "Cancel" }, 0);
+			super(parentShell, Messages.ManageCloudDialog_TEXT_URL_USED_TITLE, null,
+					Messages.ManageCloudDialog_TEXT_URL_MOD_USED, MessageDialog.QUESTION, new String[] {
+							Messages.COMMONTXT_OK, Messages.ManageCloudDialog_TEXT_CANCEL }, 0);
 		}
 
 		@Override
@@ -397,7 +395,7 @@ public class ManageCloudDialog extends Dialog {
 			new Label(composite, SWT.NONE);
 
 			final Button removeServerButton = new Button(composite, SWT.RADIO);
-			removeServerButton.setText("Remove server(s) with old URL");
+			removeServerButton.setText(Messages.ManageCloudDialog_TEXT_REMOVE_SERVER);
 			removeServerButton.setSelection(true);
 			action = Action.REMOVE_SERVER;
 			removeServerButton.addSelectionListener(new SelectionAdapter() {
@@ -412,7 +410,7 @@ public class ManageCloudDialog extends Dialog {
 			new Label(composite, SWT.NONE);
 
 			final Button addUrlButton = new Button(composite, SWT.RADIO);
-			addUrlButton.setText("Keep old URL and add modified URL as new URL");
+			addUrlButton.setText(Messages.ManageCloudDialog_TEXT_KEEP_OLD_URL);
 			removeServerButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -443,7 +441,7 @@ public class ManageCloudDialog extends Dialog {
 			}
 			catch (CoreException e) {
 				CloudFoundryPlugin.getDefault().getLog()
-						.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, "Unable to delete server", e));
+						.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, "Unable to delete server", e)); //$NON-NLS-1$
 			}
 		}
 

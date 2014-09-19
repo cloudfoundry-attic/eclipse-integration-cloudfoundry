@@ -32,9 +32,9 @@ import org.eclipse.core.runtime.Platform;
 
 public class CloudFoundryServiceWizardIconProviderRegistry {
 
-	private static final String ELEMENT = "serviceIconProvider";
+	private static final String ELEMENT = "serviceIconProvider"; //$NON-NLS-1$
 
-	public static final String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.ui.serviceWizardIconProvider";
+	public static final String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.ui.serviceWizardIconProvider"; //$NON-NLS-1$
 
 	// Static variables
 	private static CloudFoundryServiceWizardIconProviderRegistry instance = new CloudFoundryServiceWizardIconProviderRegistry();
@@ -69,7 +69,7 @@ public class CloudFoundryServiceWizardIconProviderRegistry {
 		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(EXTENSION_POINT);
 
 		if (extensionPoint == null) {
-			CloudFoundryPlugin.logError("Failed to load Cloud Foundry service icon extension providers from: "
+			CloudFoundryPlugin.logError("Failed to load Cloud Foundry service icon extension providers from: " //$NON-NLS-1$
 					+ EXTENSION_POINT);
 		}
 		else {
@@ -80,14 +80,14 @@ public class CloudFoundryServiceWizardIconProviderRegistry {
 					if (ELEMENT.equals(config.getName())) {
 						try {
 							ICloudFoundryServiceWizardIconProvider provider = (ICloudFoundryServiceWizardIconProvider) config
-									.createExecutableExtension("providerClass");
+									.createExecutableExtension("providerClass"); //$NON-NLS-1$
 
-							String runtimeTypeId =config.getAttribute("runtimeTypeId");
+							String runtimeTypeId =config.getAttribute("runtimeTypeId"); //$NON-NLS-1$
 							
 							if(runtimeTypeId != null) {
 								providers.put(runtimeTypeId, provider);
 							} else {
-								CloudFoundryPlugin.logError("Invalid server icon entry from:"+EXTENSION_POINT);
+								CloudFoundryPlugin.logError("Invalid server icon entry from:"+EXTENSION_POINT); //$NON-NLS-1$
 							}
 
 						}

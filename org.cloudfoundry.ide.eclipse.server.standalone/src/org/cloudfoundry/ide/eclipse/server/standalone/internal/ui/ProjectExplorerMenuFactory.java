@@ -22,6 +22,7 @@ package org.cloudfoundry.ide.eclipse.server.standalone.internal.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.server.standalone.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandaloneFacetHandler;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.AbstractMenuContributionFactory;
 import org.eclipse.core.expressions.IEvaluationContext;
@@ -43,7 +44,7 @@ import org.eclipse.ui.menus.IMenuService;
 public class ProjectExplorerMenuFactory extends AbstractMenuContributionFactory {
 
 	public ProjectExplorerMenuFactory() {
-		super("popup:org.eclipse.ui.projectConfigure?endof=additions", null);
+		super("popup:org.eclipse.ui.projectConfigure?endof=additions", null); //$NON-NLS-1$
 	}
 
 	@Override
@@ -97,13 +98,13 @@ public class ProjectExplorerMenuFactory extends AbstractMenuContributionFactory 
 		}
 
 		protected void setActionValues() {
-			setText("Enable as Cloud Foundry App");
-			setToolTipText("Enable as Cloud Foundry Standalone App");
+			setText(Messages.ProjectExplorerMenuFactory_LABEL_CONVERT_TEXT);
+			setToolTipText(Messages.ProjectExplorerMenuFactory_LABEL_CONVERT_TOOLTIP);
 			setEnabled(true);
 		}
 
 		public void run() {
-			Job job = new Job("Enabling as Cloud Foundry App") {
+			Job job = new Job(Messages.ProjectExplorerMenuFactory_JOB_ENABLE) {
 
 				protected IStatus run(IProgressMonitor monitor) {
 
@@ -127,13 +128,13 @@ public class ProjectExplorerMenuFactory extends AbstractMenuContributionFactory 
 		}
 
 		protected void setActionValues() {
-			setText("Disable as Cloud Foundry App");
-			setToolTipText("Disable as Cloud Foundry App");
+			setText(Messages.ProjectExplorerMenuFactory_LABEL_REMOVE_TEXT);
+			setToolTipText(Messages.ProjectExplorerMenuFactory_LABEL_REMOVE_TOOLTIP);
 			setEnabled(true);
 		}
 
 		public void run() {
-			Job job = new Job("Disabling as Cloud Foundry App") {
+			Job job = new Job(Messages.ProjectExplorerMenuFactory_JOB_DISABLE) {
 
 				protected IStatus run(IProgressMonitor monitor) {
 

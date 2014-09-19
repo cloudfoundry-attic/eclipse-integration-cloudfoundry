@@ -19,11 +19,12 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.editor;
 
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.forms.widgets.Section;
 import org.eclipse.wst.server.ui.editor.ServerEditorSection;
-import org.eclipse.wst.server.ui.internal.Messages;
 
 @SuppressWarnings("restriction")
 
@@ -44,9 +45,9 @@ public class DisablePublishSection extends ServerEditorSection {
 		for(Control child: children) {
 			if (child instanceof Section) {
 				Section section = (Section) child;
-				if (Messages.serverEditorOverviewPublishSection.equals(section.getText())) {
+				if (Messages.DisablePublishSection_TEXT_PUBLISHING.equals(section.getText())) {
 					section.setEnabled(false);
-					section.setText(Messages.serverEditorOverviewPublishSection + " (manually only)");
+					section.setText(NLS.bind(Messages.DisablePublishSection_TEXT_PUBLISHING, Messages.DisablePublishSection_MANUAL));
 //					Control[] sectionChildren = section.getChildren();
 //					for(Control sectionChild: sectionChildren) {
 //						if (sectionChild instanceof Composite) {

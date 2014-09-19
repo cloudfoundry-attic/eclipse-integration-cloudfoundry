@@ -51,11 +51,11 @@ public class ApplicationRegistry {
 
 	private static Map<Priority, List<ApplicationProvider>> delegates;
 
-	private static final String APPLICATION_DELEGATE_EXT_ELEMENT = "applicationDelegate";
+	private static final String APPLICATION_DELEGATE_EXT_ELEMENT = "applicationDelegate"; //$NON-NLS-1$
 
-	public static final String DEFAULT_JAVA_WEB_PROVIDER_ID = "org.cloudfoundry.ide.eclipse.server.application.javaweb";
+	public static final String DEFAULT_JAVA_WEB_PROVIDER_ID = "org.cloudfoundry.ide.eclipse.server.application.javaweb"; //$NON-NLS-1$
 
-	public static String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.core.application";
+	public static String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.core.application"; //$NON-NLS-1$
 
 	public static AbstractApplicationDelegate getApplicationDelegate(IModule module) {
 		ApplicationProvider provider = getApplicationProvider(module);
@@ -70,8 +70,8 @@ public class ApplicationRegistry {
 		ApplicationProvider provider = getApplicationProvider(DEFAULT_JAVA_WEB_PROVIDER_ID);
 
 		if (provider == null) {
-			CloudFoundryPlugin.logError("Unable to load default Java Web application provider with this ID: "
-					+ DEFAULT_JAVA_WEB_PROVIDER_ID + ". Please check that the plug-in is correctly installed.");
+			CloudFoundryPlugin.logError("Unable to load default Java Web application provider with this ID: " //$NON-NLS-1$
+					+ DEFAULT_JAVA_WEB_PROVIDER_ID + ". Please check that the plug-in is correctly installed."); //$NON-NLS-1$
 		}
 		return provider;
 	}
@@ -202,7 +202,7 @@ public class ApplicationRegistry {
 		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(EXTENSION_POINT);
 
 		if (extensionPoint == null) {
-			CloudFoundryPlugin.logError("Failed to load application type providers from: " + EXTENSION_POINT);
+			CloudFoundryPlugin.logError("Failed to load application type providers from: " + EXTENSION_POINT); //$NON-NLS-1$
 		}
 		else {
 			for (IExtension extension : extensionPoint.getExtensions()) {
@@ -214,8 +214,8 @@ public class ApplicationRegistry {
 						String providerID = provider.getProviderID();
 						if (priority == null || providerID == null) {
 							CloudFoundryPlugin
-									.logError("Failed to load Cloud Foundry application provider from extension point: "
-											+ EXTENSION_POINT + ". Missing provider ID and priority values");
+									.logError("Failed to load Cloud Foundry application provider from extension point: " //$NON-NLS-1$
+											+ EXTENSION_POINT + ". Missing provider ID and priority values"); //$NON-NLS-1$
 						}
 						else {
 							List<ApplicationProvider> providers = providerMap.get(priority);

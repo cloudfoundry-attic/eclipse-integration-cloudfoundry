@@ -34,6 +34,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.LocalCloudServic
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.ICoreRunnable;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.ServiceViewColumn;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.ServiceViewerConfigurator;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.ServiceViewerSorter;
@@ -52,6 +53,7 @@ import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
@@ -71,7 +73,7 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 
 	private CheckboxTableViewer servicesViewer;
 
-	private static final String DESCRIPTION = "Bind or add new services";
+	private static final String DESCRIPTION = Messages.CloudFoundryApplicationServicesWizardPage_TEXT_BIND_DESCRIP;
 
 	/**
 	 * Services, either existing or new, that a user has checked for binding.
@@ -95,7 +97,7 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 
 	public CloudFoundryApplicationServicesWizardPage(CloudFoundryServer cloudServer,
 			CloudFoundryApplicationModule module, ApplicationWizardDescriptor descriptor) {
-		super("Services", "Services selection", null);
+		super(Messages.COMMONTXT_SERVICES, Messages.CloudFoundryApplicationServicesWizardPage_TEXT_SERVICE_SELECTION, null);
 		this.cloudServer = cloudServer;
 		this.serverTypeId = module.getServerTypeId();
 		this.descriptor = descriptor;
@@ -123,7 +125,7 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 
 		Label label = new Label(toolBarArea, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).align(SWT.BEGINNING, SWT.CENTER).applyTo(label);
-		label.setText("Select services to bind to the application:");
+		label.setText(Messages.CloudFoundryApplicationServicesWizardPage_LABEL_SELECT_SERVICE);
 
 		Table table = new Table(tableArea, SWT.BORDER | SWT.SINGLE | SWT.CHECK);
 
@@ -187,7 +189,7 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 			}
 		});
 
-		Action addServiceAction = new Action("Add Service", CloudFoundryImages.NEW_SERVICE) {
+		Action addServiceAction = new Action(Messages.COMMONTXT_ADD_SERVICE, CloudFoundryImages.NEW_SERVICE) {
 
 			public void run() {
 				// Do not create the service right away.
@@ -206,7 +208,7 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 			}
 
 			public String getToolTipText() {
-				return "Add a service to the server and automatically select it for the deployed application.";
+				return Messages.CloudFoundryApplicationServicesWizardPage_TEXT_TOOLTIP;
 			}
 		};
 		toolBarManager.add(addServiceAction);
@@ -307,15 +309,15 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 							update(false,
 									CloudFoundryPlugin
 											.getErrorStatus(
-													"Failed to verify existing services in the server. Only new services can be created at this time. Please check connection or credentials and try again. - "
-															+ e.getMessage(), e));
+													NLS.bind(Messages.CloudFoundryApplicationServicesWizardPage_ERROR_VERIFY_SERVICE,
+															e.getMessage()), e));
 
 						}
 					});
 				}
 			}
 		};
-		runAsynchWithWizardProgress(runnable, "Verifying existing services");
+		runAsynchWithWizardProgress(runnable, Messages.CloudFoundryApplicationServicesWizardPage_TEXT_VERIFY_SERVICE_PROGRESS);
 
 	}
 
@@ -370,12 +372,12 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 
 	public void setErrorText(String newMessage) {
 		// Clear the message
-		setMessage("");
+		setMessage(""); //$NON-NLS-1$
 		super.setErrorMessage(newMessage);
 	}
 
 	public void setMessageText(String newMessage) {
-		setErrorMessage("");
+		setErrorMessage(""); //$NON-NLS-1$
 		super.setMessage(newMessage);
 	}
 

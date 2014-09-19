@@ -42,7 +42,7 @@ import org.osgi.framework.Bundle;
  */
 public class CloudFoundryRuntimeClasspathProvider extends RuntimeClasspathProviderDelegate {
 
-	String[] CP_BUNDLES = { "javax.servlet", "javax.servlet.jsp" };
+	String[] CP_BUNDLES = { "javax.servlet", "javax.servlet.jsp" }; //$NON-NLS-1$ //$NON-NLS-2$
 
 	public IClasspathEntry[] resolveClasspathContainer(IProject project, IRuntime runtime) {
 		List<IClasspathEntry> cp = new ArrayList<IClasspathEntry>(2);

@@ -32,6 +32,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServerServiceWit
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.EnvironmentVariablesPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.IPartChangeListener;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.UIPart;
 import org.eclipse.core.runtime.IStatus;
@@ -174,7 +175,7 @@ public class AddCommandDisplayPart extends UIPart {
 
 	protected void createEnvVariablesArea(Composite parent) {
 
-		parent = createGroupComposite(parent, "Environment Variables");
+		parent = createGroupComposite(parent, Messages.COMMONTXT_ENV_VAR);
 
 		envVarPart = new EnvironmentVariablesPart();
 		envVarPart.addPartChangeListener(new IPartChangeListener() {
@@ -189,7 +190,7 @@ public class AddCommandDisplayPart extends UIPart {
 
 	protected void createTerminalLocationArea(Composite parent) {
 
-		parent = createGroupComposite(parent, "External Command Line Terminal");
+		parent = createGroupComposite(parent, Messages.AddCommandDisplayPart_TITLE_EXTERNAL_CMDLINE);
 
 		terminalLocation = new Text(parent, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(terminalLocation);
@@ -203,7 +204,7 @@ public class AddCommandDisplayPart extends UIPart {
 		final Button terminalButton = new Button(parent, SWT.CHECK);
 
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(terminalButton);
-		terminalButton.setText("Apply terminal changes to all commands");
+		terminalButton.setText(Messages.AddCommandDisplayPart_BUTTON_APPLY_CHANGE);
 
 		terminalButton.setSelection(applyTerminalToAllCommands);
 
@@ -222,7 +223,7 @@ public class AddCommandDisplayPart extends UIPart {
 		/* Display name area */
 		Label commandDisplayName = new Label(parent, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(commandDisplayName);
-		commandDisplayName.setText("Display Name:");
+		commandDisplayName.setText(Messages.AddCommandDisplayPart_LABEL_DISPLAY_NAME);
 
 		displayName = new Text(parent, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(displayName);
@@ -235,7 +236,7 @@ public class AddCommandDisplayPart extends UIPart {
 
 		Label fileSelectionLabel = new Label(parent, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(fileSelectionLabel);
-		fileSelectionLabel.setText("Enter or browse location of command executable:");
+		fileSelectionLabel.setText(Messages.AddCommandDisplayPart_LABEL_LOCATION_ENTER);
 
 		locationField = new Text(parent, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(locationField);
@@ -254,7 +255,7 @@ public class AddCommandDisplayPart extends UIPart {
 		findApplicationButton = new Button(buttonArea, SWT.PUSH);
 
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(findApplicationButton);
-		findApplicationButton.setText("Browse...");
+		findApplicationButton.setText(Messages.AddCommandDisplayPart_BUTTON_BROWSE);
 
 		findApplicationButton.addSelectionListener(new SelectionAdapter() {
 
@@ -267,12 +268,12 @@ public class AddCommandDisplayPart extends UIPart {
 
 	protected void createOptionsArea(Composite parent) {
 
-		parent = createGroupComposite(parent, "Application Options");
+		parent = createGroupComposite(parent, Messages.AddCommandDisplayPart_TITLE_APP_OPTION);
 		Label optionsLabel = new Label(parent, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(optionsLabel);
 
 		optionsLabel
-				.setText("Use ${variablename} for option values that should be prompted when the command is executed.");
+				.setText(Messages.AddCommandDisplayPart_LABEL_SET_VAR);
 
 		options = new Text(parent, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
 		options.addTraverseListener(new TraverseListener() {
@@ -316,7 +317,7 @@ public class AddCommandDisplayPart extends UIPart {
 			Label templates = new Label(parent, SWT.NONE);
 			GridDataFactory.fillDefaults().grab(false, false).applyTo(templates);
 			templates
-					.setText("Select a pre-defined command. Note that the executable location may need to be changed.");
+					.setText(Messages.AddCommandDisplayPart_LABEL_SET_PREDEF_CMD);
 
 			Composite predefinedArea = new Composite(parent, SWT.NONE);
 			GridLayoutFactory.fillDefaults().numColumns(1).applyTo(predefinedArea);
@@ -343,7 +344,7 @@ public class AddCommandDisplayPart extends UIPart {
 			});
 
 			// Add a clear value to allow users to clear the predefined command
-			predefinedCommands.add("Select:");
+			predefinedCommands.add(Messages.AddCommandDisplayPart_TEXT_SELECT);
 
 			for (ServiceCommand option : predefined) {
 				predefinedCommands.add(option.getDisplayName());
@@ -359,15 +360,15 @@ public class AddCommandDisplayPart extends UIPart {
 		// If no predefined command is set, clear values
 		if (predefinedCommand != null) {
 			displayNameVal = predefinedCommand.getDisplayName();
-			displayName.setText(displayNameVal != null ? displayNameVal : "");
+			displayName.setText(displayNameVal != null ? displayNameVal : ""); //$NON-NLS-1$
 
 			optionsVal = predefinedCommand.getOptions() != null ? predefinedCommand.getOptions().getOptions() : null;
-			options.setText(optionsVal != null ? optionsVal : "");
+			options.setText(optionsVal != null ? optionsVal : ""); //$NON-NLS-1$
 
 			executableLocationValue = predefinedCommand.getExternalApplication() != null ? predefinedCommand
 					.getExternalApplication().getExecutableNameAndPath() : null;
 
-			locationField.setText(executableLocationValue != null ? executableLocationValue : "");
+			locationField.setText(executableLocationValue != null ? executableLocationValue : ""); //$NON-NLS-1$
 
 			envVariables = predefinedCommand.getEnvironmentVariables();
 
@@ -377,9 +378,9 @@ public class AddCommandDisplayPart extends UIPart {
 		else {
 
 			// Clear the values
-			displayName.setText("");
-			options.setText("");
-			locationField.setText("");
+			displayName.setText(""); //$NON-NLS-1$
+			options.setText(""); //$NON-NLS-1$
+			locationField.setText(""); //$NON-NLS-1$
 			envVarPart.setInput(null);
 		}
 
@@ -518,10 +519,10 @@ public class AddCommandDisplayPart extends UIPart {
 	protected String getValidationMessage() {
 		String message = null;
 		if (ValueValidationUtil.isEmpty(executableLocationValue)) {
-			message = "No command executable location specified.";
+			message = Messages.AddCommandDisplayPart_TEXT_NO_EXECUTABLE;
 		}
 		else if (ValueValidationUtil.isEmpty(displayNameVal)) {
-			message = "No command display name specified.";
+			message = Messages.AddCommandDisplayPart_TEXT_NO_DISPLAY_NAME;
 		}
 		else {
 
@@ -531,7 +532,7 @@ public class AddCommandDisplayPart extends UIPart {
 				for (ServiceCommand command : existingCommands) {
 					String otherCommandName = command.getDisplayName();
 					if ((command != serviceCommand) && otherCommandName.equals(displayNameVal)) {
-						message = "Another command with the same display name already exists. Please select another display name.";
+						message = Messages.AddCommandDisplayPart_TEXT_NAME_EXIST;
 						break;
 					}
 				}

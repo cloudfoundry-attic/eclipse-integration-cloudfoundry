@@ -21,6 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -42,23 +43,23 @@ public class RefreshApplicationEditorAction extends RefreshInstancesEditorAction
 		super(editorPage, area);
 
 		setImageDescriptor(CloudFoundryImages.REFRESH);
-		setText("Refresh");
+		setText(Messages.RefreshApplicationEditorAction_TEXT_REFRESH);
 	}
 
 	@Override
 	public String getJobName() {
-		return "Refresh application";
+		return "Refresh application"; //$NON-NLS-1$
 	}
 
 	@Override
 	protected void display404Error(IStatus status) {
 		IModule currentModule = getEditorPage().getMasterDetailsBlock().getCurrentModule();
 		if (currentModule != null) {
-			getEditorPage().setMessage("Local module is not yet deployed. Cannot refresh with server.",
+			getEditorPage().setMessage(Messages.RefreshApplicationEditorAction_WARNING_CANNOT_REFRESH,
 					IMessageProvider.WARNING);
 		}
 		else {
-			getEditorPage().setMessage("Status is not up to date with server. Refresh needed.",
+			getEditorPage().setMessage(Messages.RefreshApplicationEditorAction_MSG_REFRESH_NEEDED,
 					IMessageProvider.WARNING);
 		}
 	}

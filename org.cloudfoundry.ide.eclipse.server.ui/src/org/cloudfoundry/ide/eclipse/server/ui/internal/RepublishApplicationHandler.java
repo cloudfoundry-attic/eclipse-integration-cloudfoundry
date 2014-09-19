@@ -33,6 +33,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
@@ -148,8 +149,8 @@ public class RepublishApplicationHandler {
 		}
 
 		if (!republished) {
-			throw new CoreException(CloudFoundryPlugin.getErrorStatus("Failed to republish module: "
-					+ appModule.getDeployedApplicationName() + ". Please try manual republishing."));
+			throw new CoreException(CloudFoundryPlugin.getErrorStatus(NLS.bind(Messages.RepublishApplicationHandler_ERROR_REPUBLISH_FAIL, 
+					appModule.getDeployedApplicationName())));
 		}
 
 	}

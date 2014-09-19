@@ -88,7 +88,7 @@ public class JavaStartCommandPart extends StartCommandPart {
 		Composite mainTypeArea = startCommandPartFactory
 				.create2ColumnComposite(javaStartArea);
 
-		startCommandPartFactory.createdLabel(mainTypeArea, "Main Type:");
+		startCommandPartFactory.createdLabel(mainTypeArea, "Main Type:"); //$NON-NLS-1$
 
 		Composite typeArea = startCommandPartFactory
 				.create2ColumnComposite(mainTypeArea);
@@ -104,7 +104,7 @@ public class JavaStartCommandPart extends StartCommandPart {
 		});
 
 		browseButton = new Button(typeArea, SWT.PUSH);
-		browseButton.setText("Browse...");
+		browseButton.setText("Browse..."); //$NON-NLS-1$
 		GridDataFactory.fillDefaults().grab(false, false)
 				.align(SWT.BEGINNING, SWT.CENTER).applyTo(browseButton);
 
@@ -113,7 +113,7 @@ public class JavaStartCommandPart extends StartCommandPart {
 			typeAdapter.apply();
 		}
 
-		startCommandPartFactory.createdLabel(mainTypeArea, "Options:");
+		startCommandPartFactory.createdLabel(mainTypeArea, "Options:"); //$NON-NLS-1$
 
 		javaOptions = startCommandPartFactory.createdEditableText(mainTypeArea);
 
@@ -141,14 +141,14 @@ public class JavaStartCommandPart extends StartCommandPart {
 
 		String options = javaOptions.getText();
 
-		StringBuilder startCommand = new StringBuilder("java");
+		StringBuilder startCommand = new StringBuilder("java"); //$NON-NLS-1$
 
 		if (options != null) {
-			startCommand.append(" ");
+			startCommand.append(" "); //$NON-NLS-1$
 			startCommand.append(options);
 		}
 		if (mainType != null) {
-			startCommand.append(" ");
+			startCommand.append(" "); //$NON-NLS-1$
 			startCommand.append(mainType);
 		}
 
@@ -157,7 +157,7 @@ public class JavaStartCommandPart extends StartCommandPart {
 		notifyStatusChange(
 				startCommand.toString(),
 				isInvalid ? CloudFoundryPlugin
-						.getErrorStatus("Invalid start command.")
+						.getErrorStatus("Invalid start command.") //$NON-NLS-1$
 						: Status.OK_STATUS);
 
 	}

@@ -32,6 +32,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelD
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.TunnelServiceCommandStore;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.CloudFoundryEditorAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.ModifyServicesForApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.AddServiceStartCaldecottAction;
@@ -46,7 +47,7 @@ public class TunnelActionProvider {
 
 	private final CloudFoundryServer cloudServer;
 
-	public static final String DISABLED_V2_TOOLTIP_MESSAGE = "Disabled for this version of Cloud Foundry Integration for Eclipse";
+	public static final String DISABLED_V2_TOOLTIP_MESSAGE = Messages.TunnelActionProvider_TEXT_DISABLE;
 
 	public TunnelActionProvider(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
@@ -74,7 +75,7 @@ public class TunnelActionProvider {
 
 				if (servicesWithTunnels.isEmpty()) {
 					actions.add(new AddServiceStartCaldecottAction(servicesToAdd, cloudServer.getBehaviour(),
-							editorPage, "Open Tunnel"));
+							editorPage, Messages.TunnelActionProvider_TEXT_OPEN_TUNNEL));
 				}
 
 			}
@@ -82,7 +83,7 @@ public class TunnelActionProvider {
 			if (!servicesWithTunnels.isEmpty()) {
 
 				actions.add(new DisconnectCaldecottTunnelAction(editorPage, handler, servicesWithTunnels));
-				IAction showCaldecottTunnelInfo = new Action("Show Tunnel Information...", CloudFoundryImages.CONNECT) {
+				IAction showCaldecottTunnelInfo = new Action(Messages.TunnelActionProvider_TEXT_SHOW_TUNNEL_INFO, CloudFoundryImages.CONNECT) {
 					public void run() {
 						uiHelper.displayCaldecottTunnels(servicesWithTunnels);
 					}
@@ -130,7 +131,7 @@ public class TunnelActionProvider {
 				}
 			}
 			catch (CoreException e) {
-				CloudFoundryPlugin.logError("Failed to load external tool launch commands for services.", e);
+				CloudFoundryPlugin.logError("Failed to load external tool launch commands for services.", e); //$NON-NLS-1$
 			}
 		}
 
@@ -141,7 +142,7 @@ public class TunnelActionProvider {
 
 	static class DisconnectCaldecottTunnelAction extends CloudFoundryEditorAction {
 
-		static final String ACTION_NAME = "Disconnect Tunnel";
+		static final String ACTION_NAME = Messages.TunnelActionProvider_TEXT_DISCONN_TUNNEL;
 
 		private final List<String> servicesWithTunnels;
 
@@ -173,7 +174,7 @@ public class TunnelActionProvider {
 							handler.stopAndDeleteCaldecottTunnel(serviceName, monitor);
 						}
 						catch (CoreException e) {
-							CloudFoundryPlugin.logError("Failed to close tunnel for service: " + serviceName, e);
+							CloudFoundryPlugin.logError("Failed to close tunnel for service: " + serviceName, e); //$NON-NLS-1$
 						}
 					}
 				}

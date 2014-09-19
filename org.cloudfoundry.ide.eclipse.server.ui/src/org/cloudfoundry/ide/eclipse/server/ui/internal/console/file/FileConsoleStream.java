@@ -25,6 +25,7 @@ import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
@@ -230,7 +231,7 @@ public class FileConsoleStream extends CloudFoundryConsoleStream {
 	 * errors are reached @
 	 */
 	protected String reachedMaximumErrors(CoreException ce) {
-		return "Taking too long to fetch file contents";
+		return Messages.FileConsoleStream_ERROR_REACH_MAX;
 	}
 
 	/**

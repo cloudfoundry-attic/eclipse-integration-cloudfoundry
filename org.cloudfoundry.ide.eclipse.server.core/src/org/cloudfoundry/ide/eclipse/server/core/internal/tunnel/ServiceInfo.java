@@ -26,17 +26,17 @@ package org.cloudfoundry.ide.eclipse.server.core.internal.tunnel;
  */
 public enum ServiceInfo {
 
-	blob("blob"),
+	blob("blob"), //$NON-NLS-1$
 
-	mongodb("mongodb"),
+	mongodb("mongodb"), //$NON-NLS-1$
 
-	mysql("mysql"),
+	mysql("mysql"), //$NON-NLS-1$
 
-	postgresql("postgresql"),
+	postgresql("postgresql"), //$NON-NLS-1$
 
-	rabbitmq("rabbitmq"),
+	rabbitmq("rabbitmq"), //$NON-NLS-1$
 
-	redis("redis");
+	redis("redis"); //$NON-NLS-1$
 
 	private final String vendor;
 
