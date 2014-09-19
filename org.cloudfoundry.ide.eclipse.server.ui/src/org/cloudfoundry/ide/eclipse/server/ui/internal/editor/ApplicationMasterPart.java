@@ -32,8 +32,10 @@ import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.DeleteServicesAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.RefreshApplicationEditorAction;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.ReplaceCloudApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryServiceWizard;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudRoutesWizard;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.DragAndDropProjectProcessChoiceWizard;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -55,6 +57,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.osgi.util.NLS;
@@ -190,6 +193,34 @@ public class ApplicationMasterPart extends SectionPart {
 			return editorPage.getServer();
 		}
 
+		/**
+		 * Schedule a job to execute the operation of application replacement.
+		 * 
+		 * @param selectedProj the dragged-and-dropped project whose contents will
+		 *     be used to replace the contents of an existing cloud application
+		 * @param targetModule the corresponding <code>CloudFoundryApplicationModule</code>
+		 *     of the selected existing application.
+		 */
+		protected void scheduleApplicationReplacement(final IProject selectedProj,
+			final CloudFoundryApplicationModule targetModule) {
+			Job job = new Job("Replace cloud application") {
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					new ReplaceCloudApplicationAction(targetModule, editorPage) {
+						@Override
+						protected boolean selectReplaceProject() {
+							selectProj = selectedProj;
+							return true;
+						}
+					}.run();
+					return Status.OK_STATUS;
+				}
+
+			};
+			job.setPriority(Job.SHORT);
+			job.schedule();
+		}
+		
 		@Override
 		public boolean performDrop(final Object data) {
 			final String jobName = "Deploying application"; //$NON-NLS-1$
@@ -216,8 +247,67 @@ public class ApplicationMasterPart extends SectionPart {
 							if (cloudServer != null) {
 
 								final String moduleName = prj.getName();
+								
+								// Now it should decide publish a new application or 
+								// replace an existing application firstly.
+								final IProject selectedProject = prj;
+								
+								final boolean[] result = new boolean[2];
+								// result[0] shows whether the user cancel the operation,
+								result[0] = false;
+								// while result[1] shows the user choose OK (result[0] == true) 
+								// and the logical whether needs to continue or not.
+								result[1] = false;
+								
+								if (!cloudServer.getBehaviour().existBoundModule(selectedProject)) {
+									Display.getDefault().syncExec(new Runnable() {
 
-								// First of all, should make sure there is no
+										public void run() {
+											DragAndDropProjectProcessChoiceWizard choiceWizard = 
+												new DragAndDropProjectProcessChoiceWizard(cloudServer);
+											WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(), choiceWizard);
+											if (Window.OK == dialog.open()) {
+												result[0] = true;
+												if (choiceWizard.choosePublish()) {
+													result[1] = true;
+												} else {
+													final boolean[] confirm = new boolean[1];
+													CloudFoundryApplicationModule targetModule = choiceWizard.getReplacedApplication();
+													final String replaceAppName = targetModule.getName();
+													
+													// The replacement can't be pulled back, so
+													// give user a confirmation.
+													Display.getDefault().syncExec(new Runnable() {
+														public void run() {
+															confirm[0] = MessageDialog.openConfirm(
+																	editorPage.getSite().getShell(),
+																	Messages.REPLACEMENT_CONFIRMATION_TITLE,
+																	NLS.bind(
+																			"Are you sure to use the contents of project {0} to replace the cloud application {1} ?",
+																			moduleName,
+																			replaceAppName));
+														}
+													});
+													if (!confirm[0]) {
+														result[0] = false;
+													} else {
+														scheduleApplicationReplacement(selectedProject, targetModule);
+													}
+												}
+											}
+										}
+
+									});
+									if (!result[0]) {
+										return Status.CANCEL_STATUS;
+									} else if (!result[1]) {
+										// It indicates the user chooses to replace an existing application,
+										// and the corresponding operation is executing in background job
+										return Status.OK_STATUS;
+									}
+								}
+								
+								// Secondly, make sure there is no
 								// CloundApplicationModule
 								// with the same name of the selected project,
 								// otherwise it will cause
@@ -225,19 +315,27 @@ public class ApplicationMasterPart extends SectionPart {
 								// name and its related remote
 								// application in CF to be deleted.
 								if (cloudServer.getBehaviour().existCloudApplicationModule(moduleName)) {
-									Display.getDefault().asyncExec(new Runnable() {
+									result[0] = false;
+									Display.getDefault().syncExec(new Runnable() {
 
 										public void run() {
-											MessageDialog.openError(
+											result[0] = MessageDialog.openConfirm(
 													editorPage.getSite().getShell(),
-													Messages.ApplicationMasterPart_ERROR_DEPLOY_FAIL_TITLE,
+													Messages.REPLACEMENT_CONFIRMATION_TITLE,
 													NLS.bind(
-															Messages.ApplicationMasterPart_ERROR_DEPLOY_FAIL_BODY,
-															moduleName));
+															"A cloud application with the name {0} already exists, {1}",
+															moduleName,
+															" do you want to replace its contents with the selected project which has the same name ?"));
 										}
 
 									});
-									return Status.CANCEL_STATUS;
+									if (!result[0]) {
+										return Status.CANCEL_STATUS;
+									}
+									
+									scheduleApplicationReplacement(selectedProject, 
+										cloudServer.getBehaviour().getCloudApplicationModule(moduleName));
+									return Status.OK_STATUS;
 								}
 
 								// Make sure parent performs the drop first to
@@ -397,7 +495,6 @@ public class ApplicationMasterPart extends SectionPart {
 
 		Menu menu = menuManager.createContextMenu(applicationsViewer.getControl());
 		applicationsViewer.getControl().setMenu(menu);
-		editorPage.getSite().registerContextMenu(menuManager, applicationsViewer);
 
 		Action addRemoveApplicationAction = new Action(Messages.ApplicationMasterPart_TEXT_ADD_REMOVE,
 				ImageResource.getImageDescriptor(ImageResource.IMG_ETOOL_MODIFY_MODULES)) {
@@ -613,6 +710,10 @@ public class ApplicationMasterPart extends SectionPart {
 		IModule module = (IModule) selection.getFirstElement();
 		if (module != null) {
 			manager.add(new RemoveModuleAction(getSection().getShell(), editorPage.getServer().getOriginal(), module));
+			if (module instanceof CloudFoundryApplicationModule) {
+				CloudFoundryApplicationModule cloudModule = (CloudFoundryApplicationModule)module;
+				manager.add(new ReplaceCloudApplicationAction(cloudModule, editorPage));
+			}
 		}
 	}
 
