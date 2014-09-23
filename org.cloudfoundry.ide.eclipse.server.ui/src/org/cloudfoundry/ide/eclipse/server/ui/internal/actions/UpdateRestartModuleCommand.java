@@ -35,11 +35,11 @@ public class UpdateRestartModuleCommand extends BaseCommandHandler {
 
 
 	private String getJobName() {
-		return "Update and restarting module";
+		return "Update and restarting module"; //$NON-NLS-1$
 	}
 
 	private String getFailureMessage() {
-		return "Unable to update and restart module";
+		return "Unable to update and restart module"; //$NON-NLS-1$
 	}
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		initializeSelection(event);
@@ -49,7 +49,7 @@ public class UpdateRestartModuleCommand extends BaseCommandHandler {
 		CloudFoundryApplicationModule appModule = cloudServer != null && selectedModule != null ? cloudServer
 				.getExistingCloudModule(selectedModule) : null;
 		if (selectedServer == null) {
-			error = "No Cloud Foundry server instance available to run the selected action.";
+			error = "No Cloud Foundry server instance available to run the selected action."; //$NON-NLS-1$
 		}
 
 		if (error == null) {

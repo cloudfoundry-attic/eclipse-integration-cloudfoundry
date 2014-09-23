@@ -39,7 +39,7 @@ public class DebugApplicationEditorAction extends CloudFoundryEditorAction {
 		StringBuilder jobName = new StringBuilder();
 
 		jobName.append(command.getCommandName());
-		jobName.append(" application " + command.getApplicationID());
+		jobName.append(" application " + command.getApplicationID()); //$NON-NLS-1$
 		return jobName.toString();
 	}
 

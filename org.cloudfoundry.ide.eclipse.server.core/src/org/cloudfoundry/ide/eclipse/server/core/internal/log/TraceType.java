@@ -20,9 +20,9 @@
 package org.cloudfoundry.ide.eclipse.server.core.internal.log;
 
 public class TraceType {
-	public static final LogContentType HTTP_OK = new LogContentType("httpok");
+	public static final LogContentType HTTP_OK = new LogContentType("httpok"); //$NON-NLS-1$
 
-	public static final LogContentType HTTP_ERROR = new LogContentType("httperror");
+	public static final LogContentType HTTP_ERROR = new LogContentType("httperror"); //$NON-NLS-1$
 
-	public static final LogContentType HTTP_GENERAL = new LogContentType("general");
+	public static final LogContentType HTTP_GENERAL = new LogContentType("general"); //$NON-NLS-1$
 }

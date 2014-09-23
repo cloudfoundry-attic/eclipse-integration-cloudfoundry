@@ -21,6 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.tunnel.CaldecottUIHelper;
 import org.eclipse.jface.action.Action;
 
@@ -34,9 +35,9 @@ public class CaldecottTunnelAction extends Action {
 	}
 
 	protected void setActionValues() {
-		setText("Show Tunnels...");
+		setText(Messages.CaldecottTunnelAction_TEXT_SHOW_TUNNEL);
 		setImageDescriptor(CloudFoundryImages.CONNECT);
-		setToolTipText("Show active tunnels");
+		setToolTipText(Messages.CaldecottTunnelAction_TEXT_SHOW_ACTIVE_TUNNEL);
 		setEnabled(true);
 	}
 

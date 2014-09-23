@@ -35,7 +35,7 @@ import org.eclipse.swt.SWT;
  */
 public class StagingFileConsoleStream extends FileConsoleStream {
 
-	public static final String STAGING_LOG = "logs/staging_task.log";
+	public static final String STAGING_LOG = "logs/staging_task.log"; //$NON-NLS-1$
 
 	private boolean scheduleNextContent = false;
 
@@ -117,10 +117,10 @@ public class StagingFileConsoleStream extends FileConsoleStream {
 			else if (currentAttemptsRemaining > 0) {
 				// Append progress dot
 				if (currentAttemptsRemaining % 20 == 0) {
-					return "\n.";
+					return "\n."; //$NON-NLS-1$
 				}
 				else {
-					return ".";
+					return "."; //$NON-NLS-1$
 				}
 			}
 			else if (currentAttemptsRemaining == 0) {

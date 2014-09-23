@@ -21,6 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryServerUiPlugin;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.CoreException;
@@ -38,7 +39,7 @@ public class ConnectCommand extends BaseCommandHandler {
 		initializeSelection(event);
 		
 		final CloudFoundryServer cloudServer = (CloudFoundryServer) selectedServer.loadAdapter(CloudFoundryServer.class, null);
-		Job connectJob = new Job("Connecting to server") {
+		Job connectJob = new Job(Messages.ConnectCommand_JOB_CONN_SERVER) {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
@@ -49,8 +50,8 @@ public class ConnectCommand extends BaseCommandHandler {
 				}
 				catch (CoreException e) {
 //					Trace.trace(Trace.STRING_SEVERE, "Error calling connect() ", e);
-					return new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, NLS.bind(
-							"Failed to connect to server: {0}", e.getMessage()));
+					return new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
+							NLS.bind(Messages.ConnectCommand_ERROR_CONNECT, e.getMessage()));
 				}
 				return Status.OK_STATUS;
 			}

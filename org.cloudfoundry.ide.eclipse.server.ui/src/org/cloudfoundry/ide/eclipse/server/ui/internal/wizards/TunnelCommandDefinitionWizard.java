@@ -21,6 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ITunnelServiceCommands;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServiceInfo;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.wizard.Wizard;
 
 public class TunnelCommandDefinitionWizard extends Wizard {
@@ -37,7 +38,7 @@ public class TunnelCommandDefinitionWizard extends Wizard {
 		super();
 		this.originalCommands = originalCommands;
 		this.serviceContext = serviceContext;
-		setWindowTitle("Service Tunnel Commands");
+		setWindowTitle(Messages.TunnelCommandDefinitionWizard_TITLE_SERVICE_TUNNEL_CMD);
 		setNeedsProgressMonitor(true);
 	}
 

@@ -100,7 +100,7 @@ public class StandaloneStartCommandPart extends UIPart implements
 
 		Label label = new Label(parent, SWT.NONE);
 		label.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, false, false));
-		label.setText("Start Command:");
+		label.setText("Start Command:"); //$NON-NLS-1$
 
 		Composite startCommandArea = new Composite(parent, SWT.NONE);
 

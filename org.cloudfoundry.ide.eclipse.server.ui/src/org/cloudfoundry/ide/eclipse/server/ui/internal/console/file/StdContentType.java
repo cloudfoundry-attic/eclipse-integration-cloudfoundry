@@ -22,7 +22,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.console.file;
 
 public enum StdContentType implements IContentType {
 
-	STD_OUT("local_std_out"), STD_ERROR("local_std_error");
+	STD_OUT("local_std_out"), STD_ERROR("local_std_error"); //$NON-NLS-1$ //$NON-NLS-2$
 
 	private final String id;
 

@@ -20,16 +20,16 @@
 package org.cloudfoundry.ide.eclipse.server.core.internal;
 
 public enum ApplicationAction {
-	RESTART, START("Run"), STOP, UPDATE_RESTART, DEBUG("Debug"),
+	RESTART, START("Run"), STOP, UPDATE_RESTART, DEBUG("Debug"), //$NON-NLS-1$ //$NON-NLS-2$
 
 	// This action should only be selected if an app is already deployed in
 	// debug mode
 	// but still needs to be connected to the local debugger.
-	CONNECT_TO_DEBUGGER("Connect to Debugger");
+	CONNECT_TO_DEBUGGER("Connect to Debugger"); //$NON-NLS-1$
 
-	private String displayName = "";
+	private String displayName = ""; //$NON-NLS-1$
 
-	private String shortDisplay = "";
+	private String shortDisplay = ""; //$NON-NLS-1$
 
 	private ApplicationAction(String displayName, String shortDisplay) {
 		this.displayName = displayName;

@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -48,7 +49,7 @@ public class DeleteServicesWizard extends Wizard {
 	public DeleteServicesWizard(CloudFoundryServer cloudServer, List<String> services) {
 		this.cloudServer = cloudServer;
 		this.services = services;
-		setWindowTitle("Delete Services");
+		setWindowTitle(Messages.DeleteServicesWizard_TITLE_DELETE_SERVICE);
 		setNeedsProgressMonitor(true);
 	}
 
@@ -85,7 +86,7 @@ public class DeleteServicesWizard extends Wizard {
 		catch (InvocationTargetException e) {
 			if (e.getCause() instanceof CoreException) {
 				Status status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-						"Deleting of services failed for {0}: {1}", cloudServer.getServer().getName(), e.getCause()
+						Messages.DeleteServicesWizard_ERROR_DELETE_SERVICE, cloudServer.getServer().getName(), e.getCause()
 								.getMessage()), e);
 				StatusManager.getManager().handle(status, StatusManager.SHOW | StatusManager.BLOCK | StatusManager.LOG);
 			}

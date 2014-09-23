@@ -139,13 +139,13 @@ public class ApplicationSubSystemConfiguration extends FileServiceSubSystemConfi
 				RemoteFileFilterString accountsFilterString = new RemoteFileFilterString(this);
 				accountsFilterString.setPath(getSeparator());
 				String[] filterStrings = new String[] { accountsFilterString.toString() };
-				ISystemFilter filter = mgr.createSystemFilter(pool, "Accounts", filterStrings);
+				ISystemFilter filter = mgr.createSystemFilter(pool, "Accounts", filterStrings); //$NON-NLS-1$
 				filter.setNonDeletable(true);
 				filter.setNonRenamable(true);
 			}
 		}
 		catch (Exception e) {
-			CloudFoundryRsePlugin.logError("An error occurred creating default filter pool", e);
+			CloudFoundryRsePlugin.logError("An error occurred creating default filter pool", e); //$NON-NLS-1$
 		}
 		return pool;
 	}

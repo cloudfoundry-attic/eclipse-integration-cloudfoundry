@@ -54,7 +54,7 @@ public class CloudFoundryDebugSourceLocator implements ISourcePathComputer {
 			entries.add(jreEntry);
 		}
 
-		String projectName = configuration.getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, "");
+		String projectName = configuration.getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, ""); //$NON-NLS-1$
 		
 		if (projectName == null) {
 			return null;
@@ -62,7 +62,7 @@ public class CloudFoundryDebugSourceLocator implements ISourcePathComputer {
 
 		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
 			IJavaProject javaProject = JavaCore.create(project);
-			if (javaProject != null && javaProject.isOpen() && ("".equals(projectName) || projectName.equals(javaProject.getElementName()))) {
+			if (javaProject != null && javaProject.isOpen() && ("".equals(projectName) || projectName.equals(javaProject.getElementName()))) { //$NON-NLS-1$
 				entries.add(JavaRuntime.newDefaultProjectClasspathEntry(javaProject));
 			}
 		}
@@ -73,7 +73,7 @@ public class CloudFoundryDebugSourceLocator implements ISourcePathComputer {
 	}
 
 	public String getId() {
-		return "org.cloudfoundry.ide.eclipse.debug.sourcepathcomputer";
+		return "org.cloudfoundry.ide.eclipse.debug.sourcepathcomputer"; //$NON-NLS-1$
 	}
 
 }

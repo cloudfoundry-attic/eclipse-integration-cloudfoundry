@@ -29,6 +29,7 @@ import java.util.Set;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.tunnel.TunnelDisplayPart;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -46,10 +47,10 @@ public class CaldecottTunnelWizardPage extends WizardPage {
 	private TunnelDisplayPart part;
 
 	public CaldecottTunnelWizardPage(CloudFoundryServer cloudServer) {
-		super("Active Tunnels");
+		super(Messages.CaldecottTunnelWizardPage_TEXT_ACTIVE_TUNN_PAGE);
 		this.cloudServer = cloudServer;
-		setTitle("Active Tunnels");
-		setDescription("Manage active tunnels");
+		setTitle(Messages.CaldecottTunnelWizardPage_TEXT_ACTIVE_TUNN_PAGE);
+		setDescription(Messages.CaldecottTunnelWizardPage_TEXT_MANAGE_TUNN_DESCRIP);
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(cloudServer.getServer().getServerType().getId());
 		if (banner != null) {
 			setImageDescriptor(banner);
@@ -65,7 +66,7 @@ public class CaldecottTunnelWizardPage extends WizardPage {
 				actions = actions != null ? new ArrayList<IAction>(actions) : new ArrayList<IAction>();
 
 				if (!descriptors.isEmpty()) {
-					Action caldecottAction = new DeleteTunnelAction("Disconnect", CloudFoundryImages.DISCONNECT);
+					Action caldecottAction = new DeleteTunnelAction(Messages.CaldecottTunnelWizardPage_TEXT_DISCONN_ACTION, CloudFoundryImages.DISCONNECT);
 					actions.add(caldecottAction);
 
 				}
@@ -120,7 +121,7 @@ public class CaldecottTunnelWizardPage extends WizardPage {
 		}
 
 		public String getToolTipText() {
-			return "Remove the selected connection(s)";
+			return Messages.CaldecottTunnelWizardPage_TEXT_REMOVE_TOOLTIP;
 		}
 	};
 

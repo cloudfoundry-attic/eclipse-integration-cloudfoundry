@@ -54,7 +54,7 @@ public abstract class AbstractWaitForStateOperation extends WaitWithProgressJob 
 
 		if (updatedCloudApp == null) {
 			throw CloudErrorUtil
-					.toCoreException("No cloud application found while attempting to check application state.");
+					.toCoreException("No cloud application found while attempting to check application state."); //$NON-NLS-1$
 		}
 
 		return isInState(updatedCloudApp.getState());

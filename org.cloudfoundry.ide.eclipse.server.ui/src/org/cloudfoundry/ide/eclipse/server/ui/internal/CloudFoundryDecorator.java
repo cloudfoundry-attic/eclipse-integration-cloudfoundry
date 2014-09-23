@@ -100,10 +100,10 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 					// module.getName()));
 					// }
 					if (application != null) {
-						decoration.addSuffix(NLS.bind(" - Deployed as {0}", application.getName()));
+						decoration.addSuffix(NLS.bind(Messages.CloudFoundryDecorator_SUFFIX_DEPLOYED_AS, application.getName()));
 					}
 					else {
-						decoration.addSuffix(" - Not Deployed");
+						decoration.addSuffix(Messages.CloudFoundryDecorator_SUFFIX_NOT_DEPLOYED);
 					}
 
 					if (module.getErrorMessage() != null) {
@@ -123,7 +123,7 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 						CloudFoundrySpace clSpace = cfServer.getCloudFoundrySpace();
 						if (clSpace != null) {
 							decoration
-									.addSuffix(NLS.bind(" - {0} - {1}", clSpace.getOrgName(), clSpace.getSpaceName()));
+									.addSuffix(NLS.bind(" - {0} - {1}", clSpace.getOrgName(), clSpace.getSpaceName())); //$NON-NLS-1$
 
 						}
 					}
@@ -134,7 +134,7 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 					// cfServer.getUsername()));
 					for (CloudServerURL cloudUrl : cloudUrls) {
 						if (cloudUrl.getUrl().equals(url)) {
-							decoration.addSuffix(NLS.bind(" - {0}", cloudUrl.getUrl()));
+							decoration.addSuffix(NLS.bind(" - {0}", cloudUrl.getUrl())); //$NON-NLS-1$
 							break;
 						}
 					}

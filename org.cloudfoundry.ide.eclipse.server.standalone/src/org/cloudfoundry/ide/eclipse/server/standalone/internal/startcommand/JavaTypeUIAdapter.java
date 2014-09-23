@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.standalone.internal.Messages;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -82,7 +83,7 @@ public class JavaTypeUIAdapter {
 
 	public JavaTypeUIAdapter(JavaStartCommandPart javaStartCommandPart,
 			IJavaProject javaProject) {
-		this(javaStartCommandPart, javaProject, "Browse Type with main method");
+		this(javaStartCommandPart, javaProject, "Browse Type with main method"); //$NON-NLS-1$
 	}
 
 	public void apply() {
@@ -126,7 +127,7 @@ public class JavaTypeUIAdapter {
 						}
 					});
 		}
-		UIJob job = new UIJob("Initialising Java Content Assist") {
+		UIJob job = new UIJob(Messages.JavaTypeUIAdapter_JOB_JAVA_ASSIST) {
 
 			public IStatus runInUIThread(IProgressMonitor monitor) {
 

@@ -76,7 +76,7 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
 	     */
 	    public void matchFound(PatternMatchEvent event) {
 	    	if (Logger.INFO) {
-	    		Logger.println(Logger.INFO_LEVEL, this, "matchFound", "Application start detected: " + appName);
+	    		Logger.println(Logger.INFO_LEVEL, this, "matchFound", "Application start detected: " + appName); //$NON-NLS-1$ //$NON-NLS-2$
 	    	}
 	    	appState = IServer.STATE_STARTED;
 	    }
@@ -125,7 +125,7 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
 	@Override
 	public int getApplicationState(ICloudFoundryApplicationModule appModule) {
 		if (Logger.DETAILS) {
-			 Logger.println(Logger.DETAILS_LEVEL, this, "getApplicationState", "Waiting for app to start: " + ((IModule)appModule).getName() + ", state=" + consoleMonitor.getApplicationState());
+			 Logger.println(Logger.DETAILS_LEVEL, this, "getApplicationState", "Waiting for app to start: " + ((IModule)appModule).getName() + ", state=" + consoleMonitor.getApplicationState()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 		return consoleMonitor.getApplicationState();
 	}
@@ -146,7 +146,7 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
 		MessageConsole console = ConsoleManagerRegistry.getInstance().getFileConsoleManager().findCloudFoundryConsole(server, appModule);
 		if (console != null) {
 			if (Logger.INFO) {
-				 Logger.println(Logger.INFO_LEVEL, this, "isApplicationStarted", "Start app state tracking: " + ((IModule)appModule).getName());
+				 Logger.println(Logger.INFO_LEVEL, this, "isApplicationStarted", "Start app state tracking: " + ((IModule)appModule).getName()); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 			consoleMonitor = createPatternMatchListener(appModule);
 			console.addPatternMatchListener(consoleMonitor);
@@ -159,7 +159,7 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
 			return;
 		}
 		if (Logger.INFO) {
-			 Logger.println(Logger.INFO_LEVEL, this, "stopTracking", "Stop app state tracking: " + ((IModule)appModule).getName());
+			 Logger.println(Logger.INFO_LEVEL, this, "stopTracking", "Stop app state tracking: " + ((IModule)appModule).getName()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		MessageConsole console = ConsoleManagerRegistry.getInstance().getFileConsoleManager().findCloudFoundryConsole(server, appModule);
 		if (console != null) {

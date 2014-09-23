@@ -47,13 +47,13 @@ public class CommandTerminal {
 		String os = PlatformUtil.getOS();
 		String terminalCommand = null;
 		if (Platform.OS_MACOSX.equals(os)) {
-			terminalCommand = "/usr/bin/open -a Terminal";
+			terminalCommand = "/usr/bin/open -a Terminal"; //$NON-NLS-1$
 		}
 		else if (Platform.OS_LINUX.equals(os)) {
-			terminalCommand = "xterm -e";
+			terminalCommand = "xterm -e"; //$NON-NLS-1$
 		}
 		else if (Platform.OS_WIN32.equals(os)) {
-			terminalCommand = "cmd.exe /c start cmd.exe /k";
+			terminalCommand = "cmd.exe /c start cmd.exe /k"; //$NON-NLS-1$
 		}
 
 		if (terminalCommand != null) {

@@ -30,7 +30,7 @@ import org.eclipse.rse.core.subsystems.BasicConnectorService;
 public class CloudFoundryConnectorService extends BasicConnectorService {
 
 	public CloudFoundryConnectorService(IHost host) {
-		super("Cloud Service Connector", "Manages connections to a cloud service", host, 80);
+		super("Cloud Service Connector", "Manages connections to a cloud service", host, 80); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	public boolean isConnected() {

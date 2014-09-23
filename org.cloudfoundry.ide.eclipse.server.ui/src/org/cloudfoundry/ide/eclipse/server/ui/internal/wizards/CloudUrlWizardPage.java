@@ -25,11 +25,13 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.WizardPage;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -59,12 +61,12 @@ public class CloudUrlWizardPage extends WizardPage {
 
 	private final List<CloudServerURL> allCloudUrls;
 
-	protected static final String TITLE = "Add a Cloud URL";
+	protected static final String TITLE = Messages.CloudUrlWizardPage_TITLE_CLOUD_URL;
 
-	protected static final String DESCRIPTION = "Finish to validate the URL.";
+	protected static final String DESCRIPTION = Messages.CloudUrlWizardPage_TEXT_DESCRIPT;
 
 	protected CloudUrlWizardPage(List<CloudServerURL> allCloudUrls, ImageDescriptor descriptor, String url, String name) {
-		super("Cloud URL");
+		super(Messages.CloudUrlWizardPage_TEXT_CLOUD_URL);
 		this.allCloudUrls = allCloudUrls;
 		this.name = name;
 		this.url = url;
@@ -83,11 +85,11 @@ public class CloudUrlWizardPage extends WizardPage {
 		GridLayoutFactory.fillDefaults().margins(10, 10).numColumns(2).applyTo(composite);
 
 		messageLabel = new Label(composite, SWT.NONE);
-		messageLabel.setText("Enter cloud URL name");
+		messageLabel.setText(Messages.CloudUrlWizardPage_LABEL_CLOUD_URL_NAME);
 		GridDataFactory.fillDefaults().span(2, 1).applyTo(messageLabel);
 
 		Label nameLabel = new Label(composite, SWT.NONE);
-		nameLabel.setText("Name: ");
+		nameLabel.setText(Messages.COMMONTXT_NAME_WITH_COLON);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(nameLabel);
 
 		final Text nameText = new Text(composite, SWT.BORDER);
@@ -105,7 +107,7 @@ public class CloudUrlWizardPage extends WizardPage {
 		});
 
 		Label urlLabel = new Label(composite, SWT.NONE);
-		urlLabel.setText("URL: ");
+		urlLabel.setText(Messages.COMMONTXT_URL);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(urlLabel);
 
 		final Text urlText = new Text(composite, SWT.BORDER);
@@ -138,11 +140,11 @@ public class CloudUrlWizardPage extends WizardPage {
 	private void update() {
 
 		if (name == null || name.length() == 0) {
-			messageLabel.setText("Enter a cloud URL name.");
+			messageLabel.setText(Messages.CloudUrlWizardPage_LABEL_A_CLOUD_URL);
 			canFinish = false;
 		}
 		else if (url == null || url.length() == 0) {
-			messageLabel.setText("Enter a cloud URL.");
+			messageLabel.setText(Messages.CloudUrlWizardPage_LABEL_ENTER_CLOUD_URL);
 			canFinish = false;
 		}
 		else {
@@ -150,11 +152,11 @@ public class CloudUrlWizardPage extends WizardPage {
 
 			// List<CloudURL> cloudUrls = CloudUiUtil.getAllUrls(serverTypeId);
 			for (CloudServerURL cloudUrl : allCloudUrls) {
-				if (!cloudUrl.getUrl().contains("{")) {
+				if (!cloudUrl.getUrl().contains("{")) { //$NON-NLS-1$
 					if (cloudUrl.getName().equals(name)) {
 						canFinish = false;
 						messageLabel
-								.setText("A URL with name " + name + " already exists. Enter a different url name.");
+								.setText(NLS.bind(Messages.CloudUrlWizardPage_LABEL_SET_DIFF_URL, name ));
 					}
 				}
 			}
@@ -165,20 +167,20 @@ public class CloudUrlWizardPage extends WizardPage {
 					String host = urlObject.getHost();
 					if (host == null || host.length() == 0) {
 						canFinish = false;
-						messageLabel.setText("Enter a valid URL.");
+						messageLabel.setText(Messages.CloudUrlWizardPage_LABEL_INVALID_URL);
 					}
 				}
 				catch (MalformedURLException e) {
-					messageLabel.setText("Enter a valid URL.");
+					messageLabel.setText(Messages.CloudUrlWizardPage_LABEL_INVALID_URL);
 					canFinish = false;
 				}
 				catch (CloudFoundryException e) {
-					messageLabel.setText("Enter a valid cloud controller URL.");
+					messageLabel.setText(Messages.CloudUrlWizardPage_LABEL_INVALID_CONTROLLER);
 					canFinish = false;
 				}
 
 				if (canFinish) {
-					messageLabel.setText("Create a new cloud URL.");
+					messageLabel.setText(Messages.CloudUrlWizardPage_LABEL_CREATE_NEW_URL);
 				}
 			}
 		}
@@ -190,7 +192,7 @@ public class CloudUrlWizardPage extends WizardPage {
 			String messageText = messageLabel.getText();
 
 			setErrorMessage(messageText != null && messageText.length() > 0 ? messageLabel.getText()
-					: "Invalid URL or name.");
+					: Messages.CloudUrlWizardPage_ERROR_INVALID_URL);
 		}
 
 		getWizard().getContainer().updateButtons();

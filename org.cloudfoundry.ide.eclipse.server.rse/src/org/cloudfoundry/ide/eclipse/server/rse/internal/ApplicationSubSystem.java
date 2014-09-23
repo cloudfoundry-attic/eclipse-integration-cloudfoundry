@@ -54,7 +54,7 @@ public class ApplicationSubSystem extends FileServiceSubSystem implements CloudS
 
 	@Override
 	public String getDescription() {
-		return "This configuration allows you to work with files deployed to the cloud";
+		return Messages.ApplicationSubSystem_DESCRIPTION;
 	}
 
 	public void serverAdded(IServer server) {

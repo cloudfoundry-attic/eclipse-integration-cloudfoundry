@@ -48,7 +48,6 @@ import org.eclipse.jst.server.core.IWebModule;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IModuleType;
-import org.eclipse.wst.server.core.internal.Messages;
 import org.eclipse.wst.server.core.internal.ProgressUtil;
 import org.eclipse.wst.server.core.internal.Server;
 import org.eclipse.wst.server.core.internal.ServerPlugin;
@@ -77,7 +76,7 @@ public class CloudUtil {
 
 		IModuleType moduleType = modules[0].getModuleType();
 
-		if (modules.length == 1 && moduleType != null && "jst.web".equals(moduleType.getId())) {
+		if (modules.length == 1 && moduleType != null && "jst.web".equals(moduleType.getId())) { //$NON-NLS-1$
 			return (IWebModule) modules[0].loadAdapter(IWebModule.class, null);
 		}
 		return null;
@@ -106,7 +105,7 @@ public class CloudUtil {
 			File tempDirectory = getTempFolder(module);
 			// tempFile needs to be in the same location as the war file
 			// otherwise PublishHelper will fail
-			String fileName = module.getName() + ".war";
+			String fileName = module.getName() + ".war"; //$NON-NLS-1$
 
 			File warFile = new File(tempDirectory, fileName);
 			warFile.createNewFile();
@@ -118,13 +117,13 @@ public class CloudUtil {
 
 			IStatus[] status = publishZip(allResources, warFile, filterInResources, monitor);
 			merge(result, status);
-			throwException(result, NLS.bind("Publishing of ''{0}'' failed", module.getName()));
+			throwException(result, "Publishing of : " + module.getName() + " failed"); //$NON-NLS-1$ //$NON-NLS-2$
 
 			return warFile;
 		}
 		catch (IOException e) {
-			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-					"Failed to create war file: {0}", e.getMessage()), e));
+			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, 
+					"Failed to create war file: "+ e.getMessage(), e)); //$NON-NLS-1$
 		}
 	}
 
@@ -134,7 +133,7 @@ public class CloudUtil {
 			File tempFile = getTempFolder(modules[0]);
 			// tempFile needs to be in the same location as the war file
 			// otherwise PublishHelper will fail
-			File targetFile = new File(tempFile, modules[0].getName() + ".war");
+			File targetFile = new File(tempFile, modules[0].getName() + ".war"); //$NON-NLS-1$
 			targetFile.deleteOnExit();
 			PublishHelper helper = new PublishHelper(tempFile);
 
@@ -162,7 +161,7 @@ public class CloudUtil {
 							// binaries are copied to the destination
 							// directory
 							if (childUri == null) {
-								childUri = "WEB-INF/lib/" + child.getName();
+								childUri = "WEB-INF/lib/" + child.getName(); //$NON-NLS-1$
 							}
 							IPath jarPath = new Path(childUri);
 							File jarFile = new File(tempFile, jarPath.lastSegment());
@@ -176,7 +175,7 @@ public class CloudUtil {
 						else {
 							// other modules are assembled into a jar
 							if (childUri == null) {
-								childUri = "WEB-INF/lib/" + child.getName() + ".jar";
+								childUri = "WEB-INF/lib/" + child.getName() + ".jar"; //$NON-NLS-1$ //$NON-NLS-2$
 							}
 							IPath jarPath = new Path(childUri);
 							File jarFile = new File(tempFile, jarPath.lastSegment());
@@ -199,13 +198,13 @@ public class CloudUtil {
 			IStatus[] status = helper.publishZip(newResources.toArray(new IModuleResource[0]),
 					new Path(targetFile.getAbsolutePath()), monitor);
 			merge(result, status);
-			throwException(result, NLS.bind("Publishing of ''{0}'' failed", modules[0].getName()));
+			throwException(result, "Publishing of " + modules[0].getName() + " failed"); //$NON-NLS-1$ //$NON-NLS-2$
 
 			return targetFile;
 		}
 		catch (IOException e) {
-			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-					"Failed to create war file: {0}", e.getMessage()), e));
+			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+					"Failed to create war file: " + e.getMessage(), e)); //$NON-NLS-1$
 		}
 
 	}
@@ -229,7 +228,7 @@ public class CloudUtil {
 	}
 
 	private static File getTempFolder(IModule module) throws IOException {
-		File tempFile = File.createTempFile("tempFileForWar", null);
+		File tempFile = File.createTempFile("tempFileForWar", null); //$NON-NLS-1$
 		tempFile.delete();
 		tempFile.mkdirs();
 		return tempFile;
@@ -261,7 +260,7 @@ public class CloudUtil {
 		catch (Exception e) {
 
 			return new Status[] { new Status(IStatus.ERROR, ServerPlugin.PLUGIN_ID, 0, NLS.bind(
-					Messages.errorCreatingZipFile, tempFile.getName(), e.getLocalizedMessage()), e) };
+					Messages.ERROR_CREATE_ZIP, tempFile.getName(), e.getLocalizedMessage()), e) };
 		}
 		finally {
 			if (tempFile != null && tempFile.exists())
@@ -277,7 +276,7 @@ public class CloudUtil {
 	public static String getZipRelativeName(IModuleResource resource) {
 		IPath path = resource.getModuleRelativePath().append(resource.getName());
 		String entryPath = path.toPortableString();
-		if (resource instanceof IModuleFolder && !entryPath.endsWith("/")) {
+		if (resource instanceof IModuleFolder && !entryPath.endsWith("/")) { //$NON-NLS-1$
 			entryPath += '/';
 		}
 

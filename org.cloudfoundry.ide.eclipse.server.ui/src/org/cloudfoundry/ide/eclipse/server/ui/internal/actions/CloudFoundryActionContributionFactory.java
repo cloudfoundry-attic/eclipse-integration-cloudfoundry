@@ -45,7 +45,7 @@ public class CloudFoundryActionContributionFactory extends AbstractMenuContribut
 	};
 
 	public CloudFoundryActionContributionFactory() {
-		super("popup:org.eclipse.wst.server.ui.ServersView?before=additions", null);
+		super("popup:org.eclipse.wst.server.ui.ServersView?before=additions", null); //$NON-NLS-1$
 	}
 
 	@Override

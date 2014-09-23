@@ -36,9 +36,9 @@ import org.eclipse.wst.server.core.model.RuntimeDelegate;
  */
 public class CloudFoundryServerRuntime extends RuntimeDelegate implements IJavaRuntime, IJavaRuntimeWorkingCopy {
 
-	protected static final String PROP_VM_INSTALL_ID = "vm-install-id";
+	protected static final String PROP_VM_INSTALL_ID = "vm-install-id"; //$NON-NLS-1$
 
-	protected static final String PROP_VM_INSTALL_TYPE_ID = "vm-install-type-id";
+	protected static final String PROP_VM_INSTALL_TYPE_ID = "vm-install-type-id"; //$NON-NLS-1$
 
 	public IVMInstall getVMInstall() {
 		if (getVMInstallTypeId() == null)

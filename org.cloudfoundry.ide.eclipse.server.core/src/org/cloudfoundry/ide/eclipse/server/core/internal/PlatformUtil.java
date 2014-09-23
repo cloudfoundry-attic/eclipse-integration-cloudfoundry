@@ -37,8 +37,8 @@ public class PlatformUtil {
 			os = Platform.getOS();
 
 			if (os != Platform.OS_MACOSX && os != Platform.OS_LINUX) {
-				String osName = System.getProperty("os.name").toLowerCase();
-				if (osName != null && osName.startsWith("windows")) {
+				String osName = System.getProperty("os.name").toLowerCase(); //$NON-NLS-1$
+				if (osName != null && osName.startsWith("windows")) { //$NON-NLS-1$
 					os = Platform.OS_WIN32;
 				}
 			}

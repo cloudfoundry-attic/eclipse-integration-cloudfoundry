@@ -114,8 +114,8 @@ public class CloudFoundryFileService extends AbstractFileService implements IClo
 				}
 			}
 			catch (Exception e) {
-				CloudFoundryRsePlugin.logError("An error occurred while opening file: " + remoteFile
-						+ " for application: " + appName, e);
+				CloudFoundryRsePlugin.logError("An error occurred while opening file: " + remoteFile //$NON-NLS-1$
+						+ " for application: " + appName, e); //$NON-NLS-1$
 			}
 		}
 
@@ -123,11 +123,11 @@ public class CloudFoundryFileService extends AbstractFileService implements IClo
 
 	@Override
 	public String getDescription() {
-		return "The Cloud File Service provides services for the Applications and Files subsystem";
+		return Messages.CloudFoundryFileService_DESCRIPTION_FILE_SERVICES;
 	}
 
 	public IHostFile getFile(String remoteParent, String name, IProgressMonitor monitor) throws SystemMessageException {
-		remoteParent = remoteParent.concat("/");
+		remoteParent = remoteParent.concat("/"); //$NON-NLS-1$
 		AccountResource account = parseAccount(remoteParent.concat(name));
 		if (account != null) {
 			return account;
@@ -154,7 +154,7 @@ public class CloudFoundryFileService extends AbstractFileService implements IClo
 
 	@Override
 	public String getName() {
-		return "Cloud File Service";
+		return Messages.CloudFoundryFileService_DESCRIPTION_FILE_SERVICE_NAME;
 	}
 
 	public IHostFile[] getRoots(IProgressMonitor monitor) throws SystemMessageException {
@@ -226,7 +226,7 @@ public class CloudFoundryFileService extends AbstractFileService implements IClo
 	}
 
 	private AccountResource parseAccount(String path) {
-		int index = path.lastIndexOf("@");
+		int index = path.lastIndexOf("@"); //$NON-NLS-1$
 		if (index >= 0 && (index + 1) <= path.length()) {
 			String accountName = path.substring(0, index);
 			String accountUrl = path.substring(index + 1);
@@ -241,7 +241,7 @@ public class CloudFoundryFileService extends AbstractFileService implements IClo
 	}
 
 	private ApplicationResource parseApp(String path) {
-		int index = path.indexOf("/");
+		int index = path.indexOf("/"); //$NON-NLS-1$
 		if (index >= 0 && (index + 1) <= path.length()) {
 			String appUrl = path.substring(0, index);
 			String instance = path.substring(index + 1);
@@ -269,11 +269,11 @@ public class CloudFoundryFileService extends AbstractFileService implements IClo
 	}
 
 	private Object[] parseNestedFiles(String path) {
-		int index = path.indexOf("/");
+		int index = path.indexOf("/"); //$NON-NLS-1$
 		if (index >= 0 && (index + 1) <= path.length()) {
 			String appUrl = path.substring(0, index);
 			String leftover = path.substring(index + 1);
-			index = leftover.indexOf("/");
+			index = leftover.indexOf("/"); //$NON-NLS-1$
 			if (index >= 0) {
 				String instance = leftover.substring(0, index);
 				String filePath = leftover.substring(index);
@@ -299,7 +299,7 @@ public class CloudFoundryFileService extends AbstractFileService implements IClo
 		}
 		ApplicationResource app = parseApp(parentPath);
 		if (app != null) {
-			List<FileResource> files = app.fetchChildren("/", monitor);
+			List<FileResource> files = app.fetchChildren("/", monitor); //$NON-NLS-1$
 			return files.toArray(new FileResource[files.size()]);
 		}
 		Object[] array = parseNestedFiles(parentPath);

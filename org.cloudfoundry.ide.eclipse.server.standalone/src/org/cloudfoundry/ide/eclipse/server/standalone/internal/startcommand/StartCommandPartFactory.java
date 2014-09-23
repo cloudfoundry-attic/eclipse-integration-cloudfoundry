@@ -103,7 +103,7 @@ public class StartCommandPartFactory {
 				notifyStatusChange(
 						startCommand.toString(),
 						isInvalid ? CloudFoundryPlugin
-								.getErrorStatus("Invalid start command.")
+								.getErrorStatus("Invalid start command.") //$NON-NLS-1$
 								: Status.OK_STATUS);
 			}
 

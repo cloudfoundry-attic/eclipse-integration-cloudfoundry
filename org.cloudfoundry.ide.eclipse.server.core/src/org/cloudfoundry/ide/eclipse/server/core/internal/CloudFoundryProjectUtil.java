@@ -28,7 +28,7 @@ import org.eclipse.jdt.core.JavaCore;
 
 public class CloudFoundryProjectUtil {
 
-	public static final String SPRING_NATURE_ID = "org.springframework.ide.eclipse.core.springnature";
+	public static final String SPRING_NATURE_ID = "org.springframework.ide.eclipse.core.springnature"; //$NON-NLS-1$
 
 	private CloudFoundryProjectUtil() {
 		// Utility Class
@@ -74,7 +74,7 @@ public class CloudFoundryProjectUtil {
 				}
 			}
 			catch (CoreException e) {
-				CloudFoundryPlugin.logError("Error getting Java project for project '" + project.getName() + "'", e);
+				CloudFoundryPlugin.logError("Error getting Java project for project '" + project.getName() + "'", e); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 		return null;

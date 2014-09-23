@@ -60,7 +60,7 @@ public class ServicesHandler {
 		StringBuilder serviceNames = new StringBuilder();
 		for (String service : getServiceNames()) {
 			if (serviceNames.length() > 0) {
-				serviceNames.append(", ");
+				serviceNames.append(", "); //$NON-NLS-1$
 			}
 			serviceNames.append(service);
 		}

@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -64,7 +65,7 @@ public class CaldecottTunnelInfoDialog extends TitleAreaDialog {
 	protected Control createDialogArea(Composite parent) {
 		ImageDescriptor descriptor = CloudFoundryImages
 				.getWizardBanner(cloudServer.getServer().getServerType().getId());
-		setTitle("Tunnel Information");
+		setTitle(Messages.CaldecottTunnelInfoDialog_TITLE_TUNNEL_INFO);
 		
 		if (descriptor != null) {
 			setTitleImage(CloudFoundryImages.getImage(descriptor));

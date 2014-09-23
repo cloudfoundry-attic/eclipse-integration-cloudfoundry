@@ -64,14 +64,14 @@ public abstract class AbstractCloudFoundryServerAction implements IObjectActionD
 		CloudFoundryApplicationModule appModule = cloudServer != null && selectedModule != null ? cloudServer
 				.getExistingCloudModule(selectedModule) : null;
 		if (selectedServer == null) {
-			error = "No Cloud Foundry server instance available to run the selected action.";
+			error = "No Cloud Foundry server instance available to run the selected action."; //$NON-NLS-1$
 		}
 
 		if (error == null) {
 			doRun(cloudServer, appModule, action);
 		}
 		else {
-			error += " - " + action.getText();
+			error += " - " + action.getText(); //$NON-NLS-1$
 			CloudFoundryPlugin.logError(error);
 		}
 	}

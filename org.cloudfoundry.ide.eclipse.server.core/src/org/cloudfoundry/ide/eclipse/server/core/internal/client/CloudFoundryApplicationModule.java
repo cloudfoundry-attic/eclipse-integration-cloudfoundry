@@ -30,6 +30,7 @@ import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
@@ -110,27 +111,27 @@ import org.eclipse.wst.server.core.internal.ExternalModule;
 @SuppressWarnings("restriction")
 public class CloudFoundryApplicationModule extends ExternalModule implements ICloudFoundryApplicationModule {
 
-	public static String APPLICATION_STATE_DEPLOYABLE = "Deployable";
+	public static String APPLICATION_STATE_DEPLOYABLE = Messages.CloudFoundryApplicationModule_STATE_DEPLOYABLE;
 
-	public static String APPLICATION_STATE_DEPLOYED = "Deployed";
+	public static String APPLICATION_STATE_DEPLOYED = Messages.CloudFoundryApplicationModule_STATE_DEPLOYED;
 
-	public static String APPLICATION_STATE_UPLOADING = "Uploading";
+	public static String APPLICATION_STATE_UPLOADING = Messages.CloudFoundryApplicationModule_STATE_UPLOADING;
 
-	public static String DEPLOYMENT_STATE_LAUNCHED = "LAUNCHED";
+	public static String DEPLOYMENT_STATE_LAUNCHED = Messages.CloudFoundryApplicationModule_STATE_LAUNCHED;
 
-	public static String DEPLOYMENT_STATE_LAUNCHING = "LAUNCHING";
+	public static String DEPLOYMENT_STATE_LAUNCHING = Messages.CloudFoundryApplicationModule_STATE_LAUNCHING;
 
-	public static String DEPLOYMENT_STATE_STARTING_SERVICES = "STARTING_SERVICES";
+	public static String DEPLOYMENT_STATE_STARTING_SERVICES = Messages.CloudFoundryApplicationModule_STATE_STARTING_SERVICES;
 
-	public static String DEPLOYMENT_STATE_STOPPED = "STOPPED";
+	public static String DEPLOYMENT_STATE_STOPPED = Messages.CloudFoundryApplicationModule_STATE_STOPPED;
 
-	public static String DEPLOYMENT_STATE_STOPPING = "STOPPING";
+	public static String DEPLOYMENT_STATE_STOPPING = Messages.CloudFoundryApplicationModule_STATE_STOPPING;
 
-	public static String DEPLOYMENT_STATE_WAITING_TO_LAUNCH = "WAITING_TO_LAUNCH";
+	public static String DEPLOYMENT_STATE_WAITING_TO_LAUNCH = Messages.CloudFoundryApplicationModule_STATE_WAITING_TO_LAUNCH;
 
-	private static final String MODULE_ID = "org.cloudfoundry.ide.eclipse.server.core.CloudFoundryApplicationModule";
+	private static final String MODULE_ID = "org.cloudfoundry.ide.eclipse.server.core.CloudFoundryApplicationModule"; //$NON-NLS-1$
 
-	private static final String MODULE_VERSION = "1.0";
+	private static final String MODULE_VERSION = "1.0"; //$NON-NLS-1$
 
 	private CloudApplication application;
 
@@ -185,7 +186,7 @@ public class CloudFoundryApplicationModule extends ExternalModule implements ICl
 		this.localModule = (module != null) ? module : this;
 		this.server = server;
 		setDeployedApplicationName(deployedApplicationName);
-		CloudFoundryPlugin.trace("Created ApplicationModule " + deployedApplicationName + " for module " + module);
+		CloudFoundryPlugin.trace("Created ApplicationModule " + deployedApplicationName + " for module " + module); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	/**

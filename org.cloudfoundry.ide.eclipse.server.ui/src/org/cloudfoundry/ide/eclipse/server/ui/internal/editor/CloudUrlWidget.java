@@ -24,6 +24,7 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -56,7 +57,7 @@ public class CloudUrlWidget {
 	public void createControls(final Composite parent) {
 		Label urlLabel = new Label(parent, SWT.NONE);
 		urlLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		urlLabel.setText("URL:");
+		urlLabel.setText(Messages.COMMONTXT_URL);
 
 		Composite urlComposite = new Composite(parent, SWT.NONE);
 		urlComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
@@ -77,7 +78,7 @@ public class CloudUrlWidget {
 
 				if (index >= 0 && index != comboIndex) {
 					CloudServerURL cloudUrl = CloudUiUtil.getAllUrls(serverTypeId).get(index);
-					if (cloudUrl.getUrl().contains("{")) {
+					if (cloudUrl.getUrl().contains("{")) { //$NON-NLS-1$
 						CloudServerURL newUrl = CloudUiUtil.getWildcardUrl(cloudUrl,
 								CloudUiUtil.getAllUrls(serverTypeId), parent.getShell());
 						if (newUrl != null) {
@@ -88,7 +89,7 @@ public class CloudUrlWidget {
 
 							updateUrlCombo(null);
 							for (int i = 0; i < urlCombo.getItemCount(); i++) {
-								if (urlCombo.getItem(i).startsWith(newUrlName + " - ")) {
+								if (urlCombo.getItem(i).startsWith(newUrlName + " - ")) { //$NON-NLS-1$
 									urlCombo.select(i);
 									comboIndex = i;
 									break;
@@ -105,7 +106,7 @@ public class CloudUrlWidget {
 		});
 
 		final Button manageUrlButton = new Button(urlComposite, SWT.PUSH);
-		manageUrlButton.setText("Manage Cloud...");
+		manageUrlButton.setText(Messages.CloudUrlWidget_TEXT_MANAGE_CLOUD);
 		manageUrlButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 		manageUrlButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -129,7 +130,7 @@ public class CloudUrlWidget {
 	}
 
 	protected String getComboURLDisplay(CloudServerURL url) {
-		return url.getName() + " - " + url.getUrl();
+		return url.getName() + " - " + url.getUrl(); //$NON-NLS-1$
 	}
 
 	protected void updateUrlCombo(CloudServerURL lastAddedEditedUrl) {

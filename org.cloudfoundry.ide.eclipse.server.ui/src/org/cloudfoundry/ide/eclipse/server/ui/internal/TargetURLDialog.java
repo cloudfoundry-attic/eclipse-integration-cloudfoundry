@@ -27,6 +27,7 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.events.ModifyEvent;
@@ -77,7 +78,7 @@ public class TargetURLDialog extends Dialog {
 	
 	@Override
 	protected Control createDialogArea(Composite parent) {
-		getShell().setText("Create " + cloudUrl.getName() + " Target");
+		getShell().setText(NLS.bind(Messages.TargetURLDialog_TEXT_CREATE_DIALOG_SHELL, cloudUrl.getName()));
 		
 		Composite control = (Composite) super.createDialogArea(parent);
 		
@@ -86,7 +87,7 @@ public class TargetURLDialog extends Dialog {
 		GridLayoutFactory.fillDefaults().applyTo(composite);
 		
 		Label wildcardLabel = new Label(composite, SWT.NONE);
-		wildcardLabel.setText("Enter the value to replace {" + wildcard + "}:");
+		wildcardLabel.setText(NLS.bind(Messages.TargetURLDialog_TEXT_WILDCARD_LABEL, wildcard));
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).hint(300, SWT.DEFAULT).applyTo(wildcardLabel);
 		
 		wildcardText = new Text(composite, SWT.BORDER);
@@ -97,21 +98,21 @@ public class TargetURLDialog extends Dialog {
 		wildcardText.addModifyListener(new ModifyListener() {
 			
 			public void modifyText(ModifyEvent e) {
-				if (nameText.getText().equals(cloudUrl.getName() + " (" + value + ")")) {
-					nameText.setText(cloudUrl.getName() + " (" + wildcardText.getText() + ")");
+				if (nameText.getText().equals(cloudUrl.getName() + " (" + value + ")")) { //$NON-NLS-1$ //$NON-NLS-2$
+					nameText.setText(cloudUrl.getName() + " (" + wildcardText.getText() + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 				value = wildcardText.getText();
 			}
 		});
 		
 		Label nameLabel = new Label(composite, SWT.NONE);
-		nameLabel.setText("Enter the name for this Cloud URL:");
+		nameLabel.setText(Messages.TargetURLDialog_TEXT_NAMELABEL);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).indent(0, 5).applyTo(nameLabel);
 		
 		nameText = new Text(composite, SWT.BORDER);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).applyTo(nameText);
 		nameText.setEnabled(true);
-		name = cloudUrl.getName() + " (" + value + ")";
+		name = cloudUrl.getName() + " (" + value + ")"; //$NON-NLS-1$ //$NON-NLS-2$
 		nameText.setText(name);
 		nameText.addModifyListener(new ModifyListener() {
 			
@@ -128,7 +129,7 @@ public class TargetURLDialog extends Dialog {
 //		List<CloudURL> allUrls = CloudUiUtil.getAllUrls(serverTypeId);
 		for(CloudServerURL url: allCloudUrls) {
 			if (url.getName().equals(name)) {
-				MessageDialog.openError(getParentShell(), "Duplicate Cloud URL Name", "There is already a cloud URL with the name " + name + ". Please enter a new name.");
+				MessageDialog.openError(getParentShell(), Messages.TargetURLDialog_ERROR_DUPLICATE_TITLE, NLS.bind(Messages.TargetURLDialog_ERROR_DUPLICATE_BODY, name));
 				return;
 			}
 		}
@@ -144,7 +145,7 @@ public class TargetURLDialog extends Dialog {
 					shouldProceed[0] = true;
 				}
 				catch (Exception e) {
-					shouldProceed[0] = MessageDialog.openQuestion(getParentShell(), "Invalid Cloud URL", "Connection to " + url + " failed. Would you like to keep the URL anyway?");
+					shouldProceed[0] = MessageDialog.openQuestion(getParentShell(), Messages.TargetURLDialog_ERROR_INVALID_URL_TITLE, NLS.bind(Messages.TargetURLDialog_ERROR_INVALID_URL_BODY, url));
 				}
 			}
 		});
@@ -155,7 +156,7 @@ public class TargetURLDialog extends Dialog {
 	}
 	
 	private static String replaceWildcard(String url, String wildcard, String value) {
-		return url.replaceAll("\\{" + wildcard + "\\}", value);
+		return url.replaceAll("\\{" + wildcard + "\\}", value); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 	
 }

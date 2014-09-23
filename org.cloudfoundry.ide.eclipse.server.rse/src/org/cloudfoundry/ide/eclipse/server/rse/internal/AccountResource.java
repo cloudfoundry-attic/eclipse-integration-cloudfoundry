@@ -78,13 +78,13 @@ public class AccountResource extends CloudFoundryHostFile {
 			}
 		}
 		catch (CoreException e) {
-			CloudFoundryRsePlugin.logError("An error occurred while retrieving applications.", e);
+			CloudFoundryRsePlugin.logError("An error occurred while retrieving applications.", e); //$NON-NLS-1$
 		}
 		return applications;
 	}
 
 	public String getAbsolutePath() {
-		return server.getServer().getName() + "@" + server.getUrl();
+		return server.getServer().getName() + "@" + server.getUrl(); //$NON-NLS-1$
 	}
 
 	/**
@@ -99,7 +99,7 @@ public class AccountResource extends CloudFoundryHostFile {
 
 	@Override
 	public String getClassification() {
-		return "account";
+		return "account"; //$NON-NLS-1$
 	}
 
 	public long getModifiedDate() {

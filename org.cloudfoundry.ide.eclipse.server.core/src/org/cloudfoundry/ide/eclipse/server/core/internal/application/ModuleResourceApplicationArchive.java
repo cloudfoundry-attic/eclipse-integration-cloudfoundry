@@ -22,7 +22,9 @@ package org.cloudfoundry.ide.eclipse.server.core.internal.application;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.IModuleFile;
 import org.eclipse.wst.server.core.model.IModuleFolder;
@@ -67,8 +69,8 @@ public class ModuleResourceApplicationArchive extends AbstractModuleResourceArch
 		super(module, resources);
 		if (resources == null || resources.isEmpty()) {
 			throw new CoreException(
-					CloudFoundryPlugin.getErrorStatus("Unable to deploy module. No deployable resources found for: "
-							+ module.getName() + " " + module.getId()));
+					CloudFoundryPlugin.getErrorStatus(NLS.bind(Messages.ModuleResourceApplicationArchive_ERROR_NO_DEPLOYABLE_RES_FOUND,
+							module.getName(), module.getId())));
 		}
 	}
 
@@ -103,7 +105,7 @@ public class ModuleResourceApplicationArchive extends AbstractModuleResourceArch
 
 		@Override
 		protected String computeName(IModuleResource resource) {
-			String name = resource.getModuleRelativePath().append(resource.getName()).toString() + "/";
+			String name = resource.getModuleRelativePath().append(resource.getName()).toString() + "/"; //$NON-NLS-1$
 			return name;
 		}
 

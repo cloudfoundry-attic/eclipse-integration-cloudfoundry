@@ -170,14 +170,14 @@ public class ModuleCache {
 
 		private String convertMapToString(Map<String, String> map) {
 			if (map == null) {
-				return "";
+				return ""; //$NON-NLS-1$
 			}
 			StringBuilder result = new StringBuilder();
 			for (Map.Entry<String, String> entry : map.entrySet()) {
 				result.append(entry.getKey());
-				result.append(",");
+				result.append(","); //$NON-NLS-1$
 				result.append(entry.getValue());
-				result.append(",");
+				result.append(","); //$NON-NLS-1$
 			}
 			return result.toString();
 		}
@@ -187,7 +187,7 @@ public class ModuleCache {
 				return new HashMap<String, String>();
 			}
 			Map<String, String> result = new HashMap<String, String>();
-			String[] tokens = str.split(",");
+			String[] tokens = str.split(","); //$NON-NLS-1$
 			for (int i = 0; i < tokens.length - 1; i += 2) {
 				result.put(tokens[i], tokens[i + 1]);
 			}
@@ -203,7 +203,7 @@ public class ModuleCache {
 		 */
 		private Map<String, String> getLocalModuleToCloudModuleMapping() {
 			IEclipsePreferences node = new InstanceScope().getNode(CloudFoundryPlugin.PLUGIN_ID);
-			String string = node.get(KEY_MODULE_MAPPING_LIST + ":" + getServerId(), "");
+			String string = node.get(KEY_MODULE_MAPPING_LIST + ":" + getServerId(), ""); //$NON-NLS-1$ //$NON-NLS-2$
 			return convertStringToMap(string);
 		}
 
@@ -245,8 +245,8 @@ public class ModuleCache {
 		private void setLocalModuleToCloudModuleMapping(Map<String, String> list) {
 			String string = convertMapToString(list);
 			IEclipsePreferences node = new InstanceScope().getNode(CloudFoundryPlugin.PLUGIN_ID);
-			CloudFoundryPlugin.trace("Updated mapping: " + string);
-			node.put(KEY_MODULE_MAPPING_LIST + ":" + getServerId(), string);
+			CloudFoundryPlugin.trace("Updated mapping: " + string); //$NON-NLS-1$
+			node.put(KEY_MODULE_MAPPING_LIST + ":" + getServerId(), string); //$NON-NLS-1$
 			try {
 				node.flush();
 			}
@@ -255,7 +255,7 @@ public class ModuleCache {
 						.getDefault()
 						.getLog()
 						.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-								"Failed to update application mappings", e));
+								"Failed to update application mappings", e)); //$NON-NLS-1$
 			}
 		}
 
@@ -314,9 +314,9 @@ public class ModuleCache {
 
 		void updateServerId(String oldServerId, String newServerId) {
 			IEclipsePreferences node = new InstanceScope().getNode(CloudFoundryPlugin.PLUGIN_ID);
-			String string = node.get(KEY_MODULE_MAPPING_LIST + ":" + oldServerId, "");
-			node.remove(KEY_MODULE_MAPPING_LIST + ":" + oldServerId);
-			node.put(KEY_MODULE_MAPPING_LIST + ":" + newServerId, string);
+			String string = node.get(KEY_MODULE_MAPPING_LIST + ":" + oldServerId, ""); //$NON-NLS-1$ //$NON-NLS-2$
+			node.remove(KEY_MODULE_MAPPING_LIST + ":" + oldServerId); //$NON-NLS-1$
+			node.put(KEY_MODULE_MAPPING_LIST + ":" + newServerId, string); //$NON-NLS-1$
 		}
 
 		public synchronized void setApplicationMemoryChoices(int[] applicationMemoryChoices) {
@@ -331,7 +331,7 @@ public class ModuleCache {
 	/**
 	 * List of appName, module id pairs.
 	 */
-	static final String KEY_MODULE_MAPPING_LIST = "org.cloudfoundry.ide.eclipse.moduleMapping";
+	static final String KEY_MODULE_MAPPING_LIST = "org.cloudfoundry.ide.eclipse.moduleMapping"; //$NON-NLS-1$
 
 	private Map<IServer, ServerData> dataByServer;
 
@@ -375,7 +375,7 @@ public class ModuleCache {
 		String serverId = server.getAttribute(CloudFoundryServer.PROP_SERVER_ID, (String) null);
 		if (serverId != null) {
 			IEclipsePreferences node = new InstanceScope().getNode(CloudFoundryPlugin.PLUGIN_ID);
-			node.remove(KEY_MODULE_MAPPING_LIST + ":" + serverId);
+			node.remove(KEY_MODULE_MAPPING_LIST + ":" + serverId); //$NON-NLS-1$
 			try {
 				node.flush();
 			}
@@ -384,7 +384,7 @@ public class ModuleCache {
 						.getDefault()
 						.getLog()
 						.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-								"Failed to remove application mappings", e));
+								"Failed to remove application mappings", e)); //$NON-NLS-1$
 			}
 		}
 	}

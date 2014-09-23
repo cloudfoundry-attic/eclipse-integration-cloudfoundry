@@ -80,7 +80,7 @@ public class ApplicationResource extends CloudFoundryHostFile {
 	}
 
 	public String getAbsolutePath() {
-		return getAbsolutePath(app, id + "");
+		return getAbsolutePath(app, id + ""); //$NON-NLS-1$
 	}
 
 	public static String getAbsolutePath(CloudApplication app, String id) {
@@ -92,7 +92,7 @@ public class ApplicationResource extends CloudFoundryHostFile {
 			// for standalone, append the app name
 			builder.append(app.getName());
 		}
-		builder.append("/");
+		builder.append("/"); //$NON-NLS-1$
 		builder.append(id);
 		return builder.toString();
 	}
@@ -110,7 +110,7 @@ public class ApplicationResource extends CloudFoundryHostFile {
 
 	@Override
 	public String getClassification() {
-		return "application";
+		return "application"; //$NON-NLS-1$
 	}
 
 	public CloudApplication getCloudApplication() {
@@ -126,7 +126,7 @@ public class ApplicationResource extends CloudFoundryHostFile {
 	}
 
 	public String getName() {
-		return app.getName() + "#" + id;
+		return app.getName() + "#" + id; //$NON-NLS-1$
 	}
 
 	public String getParentPath() {

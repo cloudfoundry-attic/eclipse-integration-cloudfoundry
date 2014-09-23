@@ -117,7 +117,7 @@ public class ApplicationLogConsoleStream extends ConsoleStream implements Applic
 	}
 
 	protected static String format(String message) {
-		if (message.contains("\n") || message.contains("\r")) //$NON-NLS-1$ 
+		if (message.contains("\n") || message.contains("\r")) //$NON-NLS-1$ //$NON-NLS-2$  
 		{
 			return message;
 		}

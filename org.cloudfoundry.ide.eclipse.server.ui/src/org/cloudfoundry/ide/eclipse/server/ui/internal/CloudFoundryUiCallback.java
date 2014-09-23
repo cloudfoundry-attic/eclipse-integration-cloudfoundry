@@ -64,7 +64,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			int showIndex, IProgressMonitor monitor) {
 		if (cloudModule == null || cloudModule.getApplication() == null) {
 			CloudFoundryPlugin
-					.logError("No application content to display to the console while starting application in the Cloud Foundry server.");
+					.logError("No application content to display to the console while starting application in the Cloud Foundry server."); //$NON-NLS-1$
 			return;
 		}
 		if (showIndex < 0) {
@@ -210,12 +210,12 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 		if (status != null && status.getSeverity() == IStatus.ERROR) {
 
-			UIJob job = new UIJob("Cloud Foundry Error") {
+			UIJob job = new UIJob(Messages.CloudFoundryUiCallback_JOB_CF_ERROR) {
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					Shell shell = CloudUiUtil.getShell();
 					if (shell != null) {
-						new MessageDialog(shell, "Cloud Foundry Error", null, status.getMessage(), MessageDialog.ERROR,
-								new String[] { "OK" }, 0).open();
+						new MessageDialog(shell, Messages.CloudFoundryUiCallback_ERROR_CALLBACK_TITLE, null, status.getMessage(), MessageDialog.ERROR,
+								new String[] { Messages.COMMONTXT_OK }, 0).open();
 					}
 					return Status.OK_STATUS;
 				}

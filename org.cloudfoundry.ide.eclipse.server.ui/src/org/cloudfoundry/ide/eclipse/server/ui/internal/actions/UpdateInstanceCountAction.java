@@ -50,7 +50,7 @@ public class UpdateInstanceCountAction extends CloudFoundryEditorAction {
 
 	@Override
 	public String getJobName() {
-		return "Updating instance count";
+		return "Updating instance count"; //$NON-NLS-1$
 	}
 
 	@Override

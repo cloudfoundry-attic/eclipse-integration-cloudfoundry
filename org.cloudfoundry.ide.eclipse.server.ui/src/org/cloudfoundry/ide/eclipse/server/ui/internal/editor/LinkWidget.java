@@ -60,7 +60,7 @@ public class LinkWidget {
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(linkComposite);
 
 		if (toolkit != null) {
-			labelControl = toolkit.createLabel(linkComposite, label + ":");
+			labelControl = toolkit.createLabel(linkComposite, label + ":"); //$NON-NLS-1$
 			GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(labelControl);
 			labelControl.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 

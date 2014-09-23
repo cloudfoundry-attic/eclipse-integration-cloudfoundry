@@ -21,11 +21,13 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.UpdatePasswordDialog;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
 
@@ -40,9 +42,9 @@ public class UpdatePasswordCommand extends BaseCommandHandler {
 		if (dialog.open() == IDialogConstants.OK_ID) {
 			String errorMsg = CloudUiUtil.updatePassword(dialog.getPassword(), cfServer, wc);
 			if (errorMsg != null) {
-				MessageDialog.openError(Display.getDefault().getActiveShell(), "Password Update", "Password update failed: " + errorMsg);
+				MessageDialog.openError(Display.getDefault().getActiveShell(), Messages.UpdatePasswordCommand_TEXT_PW_UPDATE, NLS.bind(Messages.UpdatePasswordCommand_ERROR_PW_UPDATE_BODY, errorMsg));
 			} else {
-				MessageDialog.openInformation(Display.getDefault().getActiveShell(), "Password Update", "Password update successful.");
+				MessageDialog.openInformation(Display.getDefault().getActiveShell(), Messages.UpdatePasswordCommand_TEXT_PW_UPDATE, Messages.UpdatePasswordCommand_TEXT_PW_UPDATE_SUCC);
 			}
 		}
 		return null;

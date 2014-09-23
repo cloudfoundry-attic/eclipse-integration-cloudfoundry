@@ -34,27 +34,27 @@ public class PredefinedServiceCommands {
 			case mysql:
 				value = new String[][] {
 						{
-								"mysql",
-								"mysql",
-								"--protocol=TCP --host=localhost --port=${" + TunnelOptions.port.name() + "} --user=${"
-										+ TunnelOptions.user.name() + "} --password=${" + TunnelOptions.password.name()
-										+ "} ${" + TunnelOptions.databasename.name() + "}" },
+								"mysql", //$NON-NLS-1$
+								"mysql", //$NON-NLS-1$
+								"--protocol=TCP --host=localhost --port=${" + TunnelOptions.port.name() + "} --user=${" //$NON-NLS-1$ //$NON-NLS-2$
+										+ TunnelOptions.user.name() + "} --password=${" + TunnelOptions.password.name() //$NON-NLS-1$
+										+ "} ${" + TunnelOptions.databasename.name() + "}" }, //$NON-NLS-1$ //$NON-NLS-2$
 						{
-								"mysqldump",
-								"mysqldump",
-								"--protocol=TCP --host=localhost --port=${" + TunnelOptions.port.name() + "} --user=${"
-										+ TunnelOptions.user.name() + "} --password=${" + TunnelOptions.password.name()
-										+ "} ${" + TunnelOptions.databasename.name() + "} > ${Output file}"
+								"mysqldump", //$NON-NLS-1$
+								"mysqldump", //$NON-NLS-1$
+								"--protocol=TCP --host=localhost --port=${" + TunnelOptions.port.name() + "} --user=${" //$NON-NLS-1$ //$NON-NLS-2$
+										+ TunnelOptions.user.name() + "} --password=${" + TunnelOptions.password.name() //$NON-NLS-1$
+										+ "} ${" + TunnelOptions.databasename.name() + "} > ${Output file}" //$NON-NLS-1$ //$NON-NLS-2$
 
 						} };
 
 				break;
 			case redis:
 				value = new String[][] { {
-						"redis-cli",
-						"redis-cli",
-						"-h localhost -p ${" + TunnelOptions.port.name() + "} -a ${" + TunnelOptions.password.name()
-								+ "}" }
+						"redis-cli", //$NON-NLS-1$
+						"redis-cli", //$NON-NLS-1$
+						"-h localhost -p ${" + TunnelOptions.port.name() + "} -a ${" + TunnelOptions.password.name() //$NON-NLS-1$ //$NON-NLS-2$
+								+ "}" } //$NON-NLS-1$
 
 				};
 				break;
@@ -62,33 +62,33 @@ public class PredefinedServiceCommands {
 			case mongodb:
 				value = new String[][] {
 						{
-								"mongo",
-								"mongo",
-								"--host localhost --port ${" + TunnelOptions.port.name() + "} -u ${"
-										+ TunnelOptions.user.name() + "} -p ${" + TunnelOptions.password.name()
-										+ "} ${" + TunnelOptions.databasename.name() + "}" },
+								"mongo", //$NON-NLS-1$
+								"mongo", //$NON-NLS-1$
+								"--host localhost --port ${" + TunnelOptions.port.name() + "} -u ${" //$NON-NLS-1$ //$NON-NLS-2$
+										+ TunnelOptions.user.name() + "} -p ${" + TunnelOptions.password.name() //$NON-NLS-1$
+										+ "} ${" + TunnelOptions.databasename.name() + "}" }, //$NON-NLS-1$ //$NON-NLS-2$
 						{
-								"mongodump",
-								"mongodump",
-								"--host localhost --port ${" + TunnelOptions.port.name() + "} -u ${"
-										+ TunnelOptions.user.name() + "} -p ${" + TunnelOptions.password.name()
-										+ "} ${" + TunnelOptions.databasename.name() + "}" },
+								"mongodump", //$NON-NLS-1$
+								"mongodump", //$NON-NLS-1$
+								"--host localhost --port ${" + TunnelOptions.port.name() + "} -u ${" //$NON-NLS-1$ //$NON-NLS-2$
+										+ TunnelOptions.user.name() + "} -p ${" + TunnelOptions.password.name() //$NON-NLS-1$
+										+ "} ${" + TunnelOptions.databasename.name() + "}" }, //$NON-NLS-1$ //$NON-NLS-2$
 						{
-								"mongorestore",
-								"mongorestore",
-								"--host localhost --port ${" + TunnelOptions.port.name() + "} -u ${"
-										+ TunnelOptions.user.name() + "} -p ${" + TunnelOptions.password.name()
-										+ "} ${" + TunnelOptions.databasename.name()
-										+ "} ${Directory or filename}" },
+								"mongorestore", //$NON-NLS-1$
+								"mongorestore", //$NON-NLS-1$
+								"--host localhost --port ${" + TunnelOptions.port.name() + "} -u ${" //$NON-NLS-1$ //$NON-NLS-2$
+										+ TunnelOptions.user.name() + "} -p ${" + TunnelOptions.password.name() //$NON-NLS-1$
+										+ "} ${" + TunnelOptions.databasename.name() //$NON-NLS-1$
+										+ "} ${Directory or filename}" }, //$NON-NLS-1$
 
 				};
 				break;
 			case postgresql:
 				value = new String[][] { {
-						"psql",
-						"psql",
-						"-h localhost -p ${" + TunnelOptions.port.name() + "} -d ${"
-								+ TunnelOptions.databasename.name() + "} -U ${" + TunnelOptions.user.name() + "} -w" }
+						"psql", //$NON-NLS-1$
+						"psql", //$NON-NLS-1$
+						"-h localhost -p ${" + TunnelOptions.port.name() + "} -d ${" //$NON-NLS-1$ //$NON-NLS-2$
+								+ TunnelOptions.databasename.name() + "} -U ${" + TunnelOptions.user.name() + "} -w" } //$NON-NLS-1$ //$NON-NLS-2$
 
 				};
 				break;
@@ -109,10 +109,10 @@ public class PredefinedServiceCommands {
 	}
 
 	protected List<EnvironmentVariable> getEnvironmentVariables(String applicationName) {
-		if ("psql".equals(applicationName)) {
+		if ("psql".equals(applicationName)) { //$NON-NLS-1$
 			EnvironmentVariable envVariable = new EnvironmentVariable();
-			envVariable.setVariable("PGPASSWORD");
-			envVariable.setValue("${" + TunnelOptions.password.name() + "}");
+			envVariable.setVariable("PGPASSWORD"); //$NON-NLS-1$
+			envVariable.setValue("${" + TunnelOptions.password.name() + "}"); //$NON-NLS-1$ //$NON-NLS-2$
 			List<EnvironmentVariable> variables = new ArrayList<EnvironmentVariable>();
 			variables.add(envVariable);
 

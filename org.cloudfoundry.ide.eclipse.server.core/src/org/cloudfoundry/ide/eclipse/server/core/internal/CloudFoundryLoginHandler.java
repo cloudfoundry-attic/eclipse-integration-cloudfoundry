@@ -29,7 +29,7 @@ public class CloudFoundryLoginHandler {
 
 	private final CloudFoundryOperations operations;
 
-	private static final String DEFAULT_PROGRESS_LABEL = "Performing Cloud Foundry operation";
+	private static final String DEFAULT_PROGRESS_LABEL = Messages.CloudFoundryLoginHandler_LABEL_PERFORM_CF_OPERATION;
 
 	private static final int DEFAULT_PROGRESS_TICKS = 100;
 

@@ -35,7 +35,7 @@ public class HttpTracer {
 
 	private static HttpTracer currentTracer;
 
-	public static final String PREFERENCE_TRACE = CloudFoundryPlugin.PLUGIN_ID + ".http.tracing";
+	public static final String PREFERENCE_TRACE = CloudFoundryPlugin.PLUGIN_ID + ".http.tracing"; //$NON-NLS-1$
 
 	private RestLogCallback activeListener = null;
 

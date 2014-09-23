@@ -31,6 +31,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServiceCommandManager;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServiceInfo;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.UIPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.ServiceCommandWizard;
 import org.eclipse.core.runtime.Status;
@@ -104,7 +105,7 @@ public class ServiceTunnelCommandPart extends UIPart {
 		Label serverLabel = new Label(parent, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).span(2, 0).applyTo(serverLabel);
 		serverLabel
-				.setText("Manage commands to launch when creating a tunnel to a specific service in a Cloud Foundry server.");
+				.setText(Messages.ServiceTunnelCommandPart_LABEL_MANAGE_CMD);
 
 		createViewerArea(generalArea);
 
@@ -136,7 +137,7 @@ public class ServiceTunnelCommandPart extends UIPart {
 
 		Label serverLabel = new Label(serverComposite, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(serverLabel);
-		serverLabel.setText("Select a service:");
+		serverLabel.setText(Messages.ServiceTunnelCommandPart_LABEL_SELECT_SERVICE);
 
 		Table table = new Table(serverComposite, SWT.BORDER | SWT.SINGLE);
 
@@ -163,7 +164,7 @@ public class ServiceTunnelCommandPart extends UIPart {
 
 		Label serviceLabel = new Label(serviceTableComposite, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(serviceLabel);
-		serviceLabel.setText("Add, delete or edit a command:");
+		serviceLabel.setText(Messages.ServiceTunnelCommandPart_LABEL_MODIFY_CMD);
 
 		createTableArea(serviceTableComposite);
 
@@ -197,14 +198,14 @@ public class ServiceTunnelCommandPart extends UIPart {
 
 		Label filler = new Label(buttonArea, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(filler);
-		filler.setText("");
+		filler.setText(""); //$NON-NLS-1$
 
 		addCommandButton = new Button(buttonArea, SWT.PUSH);
 
 		addCommandButton.setData(ControlData.Add);
 
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(addCommandButton);
-		addCommandButton.setText("Add");
+		addCommandButton.setText(Messages.ServiceTunnelCommandPart_BUTTON_ADD);
 
 		addCommandButton.addSelectionListener(new SelectionAdapter() {
 
@@ -219,7 +220,7 @@ public class ServiceTunnelCommandPart extends UIPart {
 		deleteCommandButton.setData(ControlData.Delete);
 
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(deleteCommandButton);
-		deleteCommandButton.setText("Delete");
+		deleteCommandButton.setText(Messages.ServiceTunnelCommandPart_BUTTON_DELETE);
 
 		deleteCommandButton.addSelectionListener(new SelectionAdapter() {
 
@@ -234,7 +235,7 @@ public class ServiceTunnelCommandPart extends UIPart {
 		editCommandButton.setData(ControlData.Edit);
 
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(editCommandButton);
-		editCommandButton.setText("Edit");
+		editCommandButton.setText(Messages.ServiceTunnelCommandPart_BUTTON_EDIT);
 
 		editCommandButton.addSelectionListener(new SelectionAdapter() {
 
@@ -345,7 +346,7 @@ public class ServiceTunnelCommandPart extends UIPart {
 								editedCommand);
 
 						if (!added) {
-							notifyStatusChange(CloudFoundryPlugin.getErrorStatus("Failed to add command: "
+							notifyStatusChange(CloudFoundryPlugin.getErrorStatus(Messages.ServiceTunnelCommandPart_ERROR_FAIL_TO_ADD
 									+ editedCommand.getDisplayName()));
 							return;
 						}

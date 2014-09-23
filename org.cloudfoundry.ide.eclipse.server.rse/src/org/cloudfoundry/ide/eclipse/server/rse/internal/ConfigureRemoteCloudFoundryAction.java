@@ -68,7 +68,7 @@ public class ConfigureRemoteCloudFoundryAction extends Action {
 
 			if (host == null) {
 				try {
-					host = sysReg.createHost(systemType, systemType.getLabel(), server.getUrl(), "");
+					host = sysReg.createHost(systemType, systemType.getLabel(), server.getUrl(), ""); //$NON-NLS-1$
 					ISubSystem[] subSystems = sysReg.getSubSystems(host);
 					CloudFoundryConnectorServiceManager serviceManager = CloudFoundryConnectorServiceManager.getInstance();
 					CloudFoundryConnectorService service = (CloudFoundryConnectorService) serviceManager
@@ -78,7 +78,7 @@ public class ConfigureRemoteCloudFoundryAction extends Action {
 					}
 				}
 				catch (Exception e) {
-					CloudFoundryRsePlugin.logError("An error occurred while connecting to service.", e);
+					CloudFoundryRsePlugin.logError("An error occurred while connecting to service.", e); //$NON-NLS-1$
 				}
 			}
 

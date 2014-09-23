@@ -47,7 +47,7 @@ public class URLNameValidation {
 		this.value = value;
 	}
 
-	private final Pattern VALID_CHARS = Pattern.compile("[A-Za-z\\$_0-9\\-.]+");
+	private final Pattern VALID_CHARS = Pattern.compile("[A-Za-z\\$_0-9\\-.]+"); //$NON-NLS-1$
 
 
 

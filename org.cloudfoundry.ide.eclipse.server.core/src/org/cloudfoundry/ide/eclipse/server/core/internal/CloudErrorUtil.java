@@ -148,7 +148,7 @@ public class CloudErrorUtil {
 			HttpClientErrorException httpException = (HttpClientErrorException) cause;
 			HttpStatus statusCode = httpException.getStatusCode();
 			if (statusCode.equals(HttpStatus.FORBIDDEN) && httpException instanceof CloudFoundryException) {
-				return ((CloudFoundryException) httpException).getDescription().equals("Operation not permitted");
+				return ((CloudFoundryException) httpException).getDescription().equals("Operation not permitted"); //$NON-NLS-1$
 			}
 		}
 		return false;
@@ -161,7 +161,7 @@ public class CloudErrorUtil {
 
 			if (message != null) {
 				message = message.toLowerCase();
-				return message.contains("state") && message.contains("stop");
+				return message.contains("state") && message.contains("stop"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 		return false;
@@ -199,8 +199,8 @@ public class CloudErrorUtil {
 
 			if (message != null) {
 				message = message.toLowerCase();
-				return message.contains("file error") && message.contains("request failed")
-						&& message.contains("as the instance is not found");
+				return message.contains("file error") && message.contains("request failed") //$NON-NLS-1$ //$NON-NLS-2$
+						&& message.contains("as the instance is not found"); //$NON-NLS-1$
 			}
 		}
 		return false;
@@ -249,7 +249,7 @@ public class CloudErrorUtil {
 	public static CoreException toCoreException(Throwable e) {
 		if (e instanceof CloudFoundryException) {
 			if (((CloudFoundryException) e).getDescription() != null) {
-				return new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind("{0} ({1})",
+				return new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind("{0} ({1})", //$NON-NLS-1$
 						((CloudFoundryException) e).getDescription(), e.getMessage()), e));
 			}
 		}
@@ -319,7 +319,7 @@ public class CloudErrorUtil {
 		}
 		if (error != null) {
 			if (error.getMessage() != null) {
-				message += " - " + error.getMessage();
+				message += " - " + error.getMessage(); //$NON-NLS-1$
 			}
 			return new CoreException(CloudFoundryPlugin.getErrorStatus(message, error));
 		}
@@ -361,7 +361,7 @@ public class CloudErrorUtil {
 				newStatus = CloudFoundryPlugin.getErrorStatus(message, error);
 			}
 			else {
-				String enhancedMessage = replaceMessage ? message : message + " - " + oldStatus.getMessage();
+				String enhancedMessage = replaceMessage ? message : message + " - " + oldStatus.getMessage(); //$NON-NLS-1$
 				newStatus = new Status(oldStatus.getSeverity(), oldStatus.getPlugin(), oldStatus.getCode(),
 						enhancedMessage, oldStatus.getException());
 			}

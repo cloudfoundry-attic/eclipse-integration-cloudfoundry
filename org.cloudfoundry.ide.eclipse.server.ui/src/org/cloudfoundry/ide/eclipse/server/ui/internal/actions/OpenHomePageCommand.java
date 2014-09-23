@@ -29,6 +29,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -41,8 +42,8 @@ import org.eclipse.wst.server.core.model.IURLProvider;
 
 public class OpenHomePageCommand extends BaseCommandHandler {
 
-	private String TITLE = "Open Home Page";
-	private String DESCRIPTION = "Select the module to launch the home page from";
+	private String TITLE = Messages.OpenHomePageCommand_TEXT_OPEN_HOME_TITLE;
+	private String DESCRIPTION = Messages.OpenHomePageCommand_TEXT_OPEN_HOME_LABEL;
 	
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		initializeSelection(event);
@@ -71,11 +72,11 @@ public class OpenHomePageCommand extends BaseCommandHandler {
 								List<String> selectionOptions = new ArrayList<String>();
 								Map<String, String> index = new HashMap<String, String>();
 								for (int i = 0; i < launchables.length; i++){
-									String option = "";
+									String option = ""; //$NON-NLS-1$
 									for (int j = 0; j < launchables[i].length; j++){
-										option += launchables[i][j].getName() + "/";
+										option += launchables[i][j].getName() + "/"; //$NON-NLS-1$
 									}
-									if (option.endsWith("/")){
+									if (option.endsWith("/")){ //$NON-NLS-1$
 										option = option.substring(0, option.length() - 1);
 									}
 									selectionOptions.add(option);
@@ -90,10 +91,10 @@ public class OpenHomePageCommand extends BaseCommandHandler {
 
 								if (dialog.open() != Window.OK) { 	
 									if (dialog.getReturnCode() == Window.CANCEL){
-										CloudFoundryPlugin.logWarning("User pressed cancel on selection dialog");
+										CloudFoundryPlugin.logWarning("User pressed cancel on selection dialog"); //$NON-NLS-1$
 										return null;
 									}
-									CloudFoundryPlugin.logError(("Failed to open the Open Home Page selection dialog"));
+									CloudFoundryPlugin.logError(("Failed to open the Open Home Page selection dialog")); //$NON-NLS-1$
 									return null;
 								}
 
@@ -113,12 +114,12 @@ public class OpenHomePageCommand extends BaseCommandHandler {
 							CloudUiUtil.openUrl(homePageUrl.toExternalForm());
 						}
 						else {
-							CloudFoundryPlugin.logError("homePageUrl is null, unable to launch the Home Page URL");
+							CloudFoundryPlugin.logError("homePageUrl is null, unable to launch the Home Page URL"); //$NON-NLS-1$
 							return null;
 						}
 					}
 					catch (Exception e) {
-						CloudFoundryPlugin.logError("Cannot launch the home page URL", e);
+						CloudFoundryPlugin.logError("Cannot launch the home page URL", e); //$NON-NLS-1$
 						return null;
 					}					
 				}

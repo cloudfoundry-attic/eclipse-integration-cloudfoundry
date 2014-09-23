@@ -59,16 +59,16 @@ public class CloudFoundryLaunchable extends HttpLaunchable {
                         Servlet servlet = (Servlet) moduleObject;
                         if (servlet.getAlias() != null) {
                             String path = servlet.getAlias();
-                            if (path.startsWith("/"))
+                            if (path.startsWith("/")) //$NON-NLS-1$
                                 path = path.substring(1);
                             url = new URL(url, path);
                         } else {
-                            url = new URL(url, "servlet/" + servlet.getServletClassName());
+                            url = new URL(url, "servlet/" + servlet.getServletClassName()); //$NON-NLS-1$
                         }
                     } else if (moduleObject instanceof WebResource) {
                         WebResource resource = (WebResource) moduleObject;
                         String path = resource.getPath().toString();
-                        if (path != null && path.startsWith("/") && path.length() > 0) {
+                        if (path != null && path.startsWith("/") && path.length() > 0) { //$NON-NLS-1$
                             path = path.substring(1);
                         }
                         if (path != null && path.length() > 0) {
@@ -96,7 +96,7 @@ public class CloudFoundryLaunchable extends HttpLaunchable {
                     try {
                         conn = (HttpURLConnection) moduleUrl.openConnection();
                         conn.setUseCaches(false);
-                        conn.setRequestMethod("GET");
+                        conn.setRequestMethod("GET"); //$NON-NLS-1$
                         conn.setReadTimeout(5000);
                         conn.connect();
                         code = conn.getResponseCode();

@@ -26,7 +26,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.console.file;
  */
 public class FileStreamContentType implements IContentType {
 
-	private final String id = "file_stream";
+	private final String id = "file_stream"; //$NON-NLS-1$
 
 	public String getId() {
 		return id;

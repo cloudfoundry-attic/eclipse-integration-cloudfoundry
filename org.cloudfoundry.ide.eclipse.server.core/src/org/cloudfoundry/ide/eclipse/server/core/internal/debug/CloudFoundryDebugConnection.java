@@ -115,7 +115,7 @@ public class CloudFoundryDebugConnection {
 			}
 		}
 		else {
-			CloudFoundryPlugin.logError("No cloud module found for cloud application. Unable to connect debugger.");
+			CloudFoundryPlugin.logError("No cloud module found for cloud application. Unable to connect debugger."); //$NON-NLS-1$
 		}
 
 		return !resolvedDescriptors.isEmpty() ? resolvedDescriptors.get(0) : null;

@@ -26,6 +26,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.EnvironmentVariablesPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.IPartChangeListener;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -45,7 +46,7 @@ public class CloudFoundryApplicationEnvVarWizardPage extends PartsWizardPage {
 
 	public CloudFoundryApplicationEnvVarWizardPage(CloudFoundryServer cloudServer,
 			ApplicationDeploymentInfo deploymentInfo) {
-		super("Environment Variables Wizard Page", null, null);
+		super(Messages.CloudFoundryApplicationEnvVarWizardPage_TEXT_ENV_VAR_WIZ, null, null);
 		Assert.isNotNull(deploymentInfo);
 
 		this.cloudServer = cloudServer;
@@ -53,8 +54,8 @@ public class CloudFoundryApplicationEnvVarWizardPage extends PartsWizardPage {
 	}
 
 	public void createControl(Composite parent) {
-		setTitle("Environment Variables");
-		setDescription("Edit application environment variables");
+		setTitle(Messages.COMMONTXT_ENV_VAR);
+		setDescription(Messages.CloudFoundryApplicationEnvVarWizardPage_TEXT_EDIT_ENV_VAR);
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(cloudServer.getServer().getServerType().getId());
 		if (banner != null) {
 			setImageDescriptor(banner);

@@ -73,7 +73,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  */
 public class TunnelBehaviour {
 
-	public static final String LOCAL_HOST = "127.0.0.1";
+	public static final String LOCAL_HOST = "127.0.0.1"; //$NON-NLS-1$
 
 	private final CloudFoundryServer cloudServer;
 
@@ -103,7 +103,7 @@ public class TunnelBehaviour {
 		IModule caldecottModule = getCaldecottModule(monitor.newChild(1));
 
 		if (!updateCaldecottServices.contains(serviceName)) {
-			monitor.setTaskName("Binding service " + serviceName + " to tunnel application");
+			monitor.setTaskName("Binding service " + serviceName + " to tunnel application"); //$NON-NLS-1$ //$NON-NLS-2$
 
 			updateCaldecottServices.add(serviceName);
 			CloudFoundryServerBehaviour behaviour = cloudServer.getBehaviour();
@@ -126,16 +126,16 @@ public class TunnelBehaviour {
 
 	protected void startCaldecottApp(IProgressMonitor progress, final CloudFoundryOperations client)
 			throws CoreException {
-		progress.setTaskName("Starting tunnel application");
+		progress.setTaskName("Starting tunnel application"); //$NON-NLS-1$
 		CloudApplication caldecottApp = getCaldecottApp(client);
 
 		if (caldecottApp == null) {
-			throw CloudErrorUtil.toCoreException("No Caldecott application found. Unable to create tunnel.");
+			throw CloudErrorUtil.toCoreException("No Caldecott application found. Unable to create tunnel."); //$NON-NLS-1$
 		}
 		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(caldecottApp.getName());
 		if (appModule == null) {
 			throw CloudErrorUtil
-					.toCoreException("No local Caldecott application module found. Application may not have finished deploying. Unable to create tunnel.");
+					.toCoreException("No local Caldecott application module found. Application may not have finished deploying. Unable to create tunnel."); //$NON-NLS-1$
 		}
 
 		cloudServer.getBehaviour().startModule(new IModule[] { appModule.getLocalModule() }, progress);
@@ -149,7 +149,7 @@ public class TunnelBehaviour {
 		int attempts = 10;
 		long sleep = 3000;
 
-		progress.setTaskName("Getting tunnel URL");
+		progress.setTaskName("Getting tunnel URL"); //$NON-NLS-1$
 		String url = new AbstractWaitWithProgressJob<String>(attempts, sleep) {
 
 			@Override
@@ -182,7 +182,7 @@ public class TunnelBehaviour {
 
 		final List<CaldecottTunnelDescriptor> tunnel = new ArrayList<CaldecottTunnelDescriptor>(1);
 
-		new LocalServerRequest<CaldecottTunnelDescriptor>("Opening Tunnel") {
+		new LocalServerRequest<CaldecottTunnelDescriptor>("Opening Tunnel") { //$NON-NLS-1$
 
 			@Override
 			protected CaldecottTunnelDescriptor doRun(final CloudFoundryOperations client, SubMonitor progress)
@@ -209,14 +209,12 @@ public class TunnelBehaviour {
 
 				if (oldDescriptor != null) {
 					try {
-						progress.setTaskName("Stopping existing tunnel");
+						progress.setTaskName("Stopping existing tunnel"); //$NON-NLS-1$
 						stopAndDeleteCaldecottTunnel(serviceName, getSubMonitor(worked, progress));
 
 					}
 					catch (CoreException e) {
-						CloudFoundryPlugin.logError(NLS.bind(
-								"Failed to stop existing tunnel for service {0}. Unable to create new tunnel.",
-								new Object[] { serviceName }));
+						CloudFoundryPlugin.logError("Failed to stop existing tunnel for service " + new Object[] { serviceName } + ". Unable to create new tunnel."); //$NON-NLS-1$ //$NON-NLS-2$
 						return null;
 					}
 				}
@@ -225,22 +223,20 @@ public class TunnelBehaviour {
 
 				Map<String, String> info = getTunnelInfo(client, serviceName, getSubMonitor(worked, progress));
 				if (info == null) {
-					CloudFoundryPlugin.logError(NLS.bind("Failed to obtain tunnel information for {0}.",
-							new Object[] { serviceName }));
-
+					CloudFoundryPlugin.logError("Failed to obtain tunnel information for " + new Object[] { serviceName }); //$NON-NLS-1$
 					return null;
 				}
 
-				String host = info.get("hostname");
-				int port = Integer.valueOf(info.get("port"));
+				String host = info.get("hostname"); //$NON-NLS-1$
+				int port = Integer.valueOf(info.get("port")); //$NON-NLS-1$
 				String auth = getTunnelAuthorisation(client);
-				String serviceUserName = info.get("username");
-				String servicePassword = info.get("password");
+				String serviceUserName = info.get("username"); //$NON-NLS-1$
+				String servicePassword = info.get("password"); //$NON-NLS-1$
 				String dataBase = getServiceVendor(serviceName, getSubMonitor(worked, progress));
 
-				String name = info.get("vhost");
+				String name = info.get("vhost"); //$NON-NLS-1$
 				if (name == null) {
-					name = info.get("db") != null ? info.get("db") : info.get("name");
+					name = info.get("db") != null ? info.get("db") : info.get("name"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				}
 
 				// Use proxy settings if they exist
@@ -262,15 +258,14 @@ public class TunnelBehaviour {
 
 				if (tunnelServers.isEmpty() || localPort == -1) {
 					CloudFoundryPlugin
-							.logError(NLS
-									.bind("Tunnel information obtained for {0}, but failed to create tunnel server for ports between: {1} and {2}",
-											new Object[] { serviceName, new Integer(BASE_PORT), new Integer(MAX_PORT) }));
+							.logError("Tunnel information obtained for " + serviceName + //$NON-NLS-1$
+									", but failed to create tunnel server for ports between: " + new Integer(BASE_PORT) + " and " + new Integer(MAX_PORT)); //$NON-NLS-1$ //$NON-NLS-2$
 					return null;
 				}
 
 				TunnelServer tunnelServer = tunnelServers.get(0);
 
-				progress.setTaskName("Starting tunnel server");
+				progress.setTaskName("Starting tunnel server"); //$NON-NLS-1$
 				tunnelServer.start();
 
 				CaldecottTunnelDescriptor descriptor = new CaldecottTunnelDescriptor(serviceUserName, servicePassword,
@@ -425,7 +420,7 @@ public class TunnelBehaviour {
 
 	protected Map<String, String> getTunnelInfo(final CloudFoundryOperations client, final String serviceName,
 			IProgressMonitor monitor) throws CoreException {
-		monitor.setTaskName("Getting tunnel information");
+		monitor.setTaskName("Getting tunnel information"); //$NON-NLS-1$
 		int attempts = 10;
 		long sleepTime = 2000;
 
@@ -447,8 +442,8 @@ public class TunnelBehaviour {
 		}.run(monitor);
 
 		if (info == null) {
-			CloudFoundryPlugin.logError("Timeout trying to obtain tunnel information for: " + serviceName
-					+ ". Please wait a few seconds before trying again.");
+			CloudFoundryPlugin.logError("Timeout trying to obtain tunnel information for: " + serviceName //$NON-NLS-1$
+					+ ". Please wait a few seconds before trying again."); //$NON-NLS-1$
 		}
 
 		return info;
@@ -535,7 +530,7 @@ public class TunnelBehaviour {
 	 */
 	protected synchronized CloudApplication getOrDeployCaldecottApp(IProgressMonitor monitor,
 			CloudFoundryOperations client) throws CoreException {
-		monitor.setTaskName("Obtaining tunnel application");
+		monitor.setTaskName("Obtaining tunnel application"); //$NON-NLS-1$
 		CloudApplication caldecottApp = null;
 		try {
 			caldecottApp = getCaldecottApp(client);
@@ -558,7 +553,7 @@ public class TunnelBehaviour {
 	}
 
 	protected void deployCaldecottApp(IProgressMonitor monitor, CloudFoundryOperations client) throws CoreException {
-		monitor.setTaskName("Publishing tunnel application");
+		monitor.setTaskName("Publishing tunnel application"); //$NON-NLS-1$
 		Thread t = Thread.currentThread();
 		ClassLoader oldLoader = t.getContextClassLoader();
 		boolean deployed = false;

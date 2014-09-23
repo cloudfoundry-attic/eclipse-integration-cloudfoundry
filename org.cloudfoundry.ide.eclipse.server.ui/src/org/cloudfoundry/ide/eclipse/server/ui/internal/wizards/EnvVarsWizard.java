@@ -25,6 +25,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -74,7 +75,7 @@ public class EnvVarsWizard extends Wizard {
 		final IStatus[] result = new IStatus[1];
 		try {
 
-			envVarPage.setMessage("Updating environment variables. Please wait while the process completes.");
+			envVarPage.setMessage(Messages.EnvVarsWizard_TEXT_ENV_VAR);
 			getContainer().run(true, true, new IRunnableWithProgress() {
 				public void run(IProgressMonitor monitor) {
 					try {
@@ -96,7 +97,7 @@ public class EnvVarsWizard extends Wizard {
 
 		}
 		if (result[0] != null && !result[0].isOK()) {
-			envVarPage.setErrorMessage("Environment variables may not have changed correctly due to: "
+			envVarPage.setErrorMessage(Messages.EnvVarsWizard_ERROR_ENV_VAR
 					+ result[0].getMessage());
 			return false;
 		}

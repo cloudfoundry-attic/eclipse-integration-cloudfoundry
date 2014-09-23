@@ -212,7 +212,7 @@ public class FileConsoleManager extends CloudConsoleManager {
 	}
 
 	public static String getConsoleId(IServer server, CloudFoundryApplicationModule appModule, int instanceIndex) {
-		return server.getId() + "/" + appModule.getDeployedApplicationName() + "#" + instanceIndex;
+		return server.getId() + "/" + appModule.getDeployedApplicationName() + "#" + instanceIndex; //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	public static String getConsoleDisplayName(CloudFoundryServer server, CloudFoundryApplicationModule appModule,
@@ -235,7 +235,7 @@ public class FileConsoleManager extends CloudConsoleManager {
 
 		writer.append(appModule.getDeployedApplicationName());
 		writer.append('#');
-		writer.append(instanceIndex + "");
+		writer.append(instanceIndex + ""); //$NON-NLS-1$
 		return writer.toString();
 	}
 

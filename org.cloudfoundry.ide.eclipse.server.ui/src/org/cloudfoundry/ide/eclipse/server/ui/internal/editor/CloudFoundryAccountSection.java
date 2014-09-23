@@ -24,10 +24,10 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerListener;
-import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryURLNavigation;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.UpdatePasswordDialog;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.OrgsAndSpacesWizard;
 import org.eclipse.core.commands.ExecutionException;
@@ -144,11 +144,11 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		topComposite.setLayout(new GridLayout(2, false));
 		topComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
-		Label emailLabel = toolkit.createLabel(topComposite, "Email:", SWT.NONE);
+		Label emailLabel = toolkit.createLabel(topComposite, Messages.COMMONTXT_EMAIL_WITH_COLON, SWT.NONE);
 		emailLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 		emailLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
-		emailText = toolkit.createText(topComposite, "");
+		emailText = toolkit.createText(topComposite, ""); //$NON-NLS-1$
 		emailText.setEditable(false);
 		emailText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		emailText.setData(FormToolkit.KEY_DRAW_BORDER, FormToolkit.TEXT_BORDER);
@@ -157,11 +157,11 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		}
 		emailText.addModifyListener(new DataChangeListener(DataType.EMAIL));
 
-		Label passwordLabel = toolkit.createLabel(topComposite, "Password:", SWT.NONE);
+		Label passwordLabel = toolkit.createLabel(topComposite, Messages.COMMONTXT_PW, SWT.NONE);
 		passwordLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 		passwordLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
-		passwordText = toolkit.createText(topComposite, "", SWT.PASSWORD);
+		passwordText = toolkit.createText(topComposite, "", SWT.PASSWORD); //$NON-NLS-1$
 		passwordText.setEditable(false);
 		passwordText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		passwordText.setData(FormToolkit.KEY_DRAW_BORDER, FormToolkit.TEXT_BORDER);
@@ -170,11 +170,11 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		}
 		passwordText.addModifyListener(new DataChangeListener(DataType.PASSWORD));
 
-		Label label = toolkit.createLabel(topComposite, "URL:");
+		Label label = toolkit.createLabel(topComposite, Messages.COMMONTXT_URL);
 		label.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 		label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
-		urlText = toolkit.createText(topComposite, "", SWT.NONE);
+		urlText = toolkit.createText(topComposite, "", SWT.NONE); //$NON-NLS-1$
 		urlText.setEditable(false);
 		urlText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		urlText.setData(FormToolkit.KEY_DRAW_BORDER, Boolean.FALSE);
@@ -183,11 +183,11 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 					.getId()));
 		}
 
-		Label orgLabel = toolkit.createLabel(topComposite, "Organization:", SWT.NONE);
+		Label orgLabel = toolkit.createLabel(topComposite, Messages.CloudFoundryAccountSection_LABEL_ORG, SWT.NONE);
 		orgLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 		orgLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
-		orgText = toolkit.createText(topComposite, "", SWT.NONE);
+		orgText = toolkit.createText(topComposite, "", SWT.NONE); //$NON-NLS-1$
 		orgText.setEditable(false);
 		orgText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		orgText.setData(FormToolkit.KEY_DRAW_BORDER, Boolean.FALSE);
@@ -195,11 +195,11 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 			orgText.setText(cfServer.getCloudFoundrySpace().getOrgName());
 		}
 
-		Label spaceLabel = toolkit.createLabel(topComposite, "Space:", SWT.NONE);
+		Label spaceLabel = toolkit.createLabel(topComposite, Messages.CloudFoundryAccountSection_LABEL_SPACE, SWT.NONE);
 		spaceLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 		spaceLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
-		spaceText = toolkit.createText(topComposite, "", SWT.NONE);
+		spaceText = toolkit.createText(topComposite, "", SWT.NONE); //$NON-NLS-1$
 		spaceText.setEditable(false);
 		spaceText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		spaceText.setData(FormToolkit.KEY_DRAW_BORDER, Boolean.FALSE);
@@ -221,12 +221,12 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		validateComposite.setLayout(new GridLayout(1, false));
 		validateComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
-		validateLabel = toolkit.createLabel(validateComposite, "", SWT.NONE);
+		validateLabel = toolkit.createLabel(validateComposite, "", SWT.NONE); //$NON-NLS-1$
 		validateLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
 		createCloneServerArea(buttonComposite, toolkit);
 
-		final Button changePasswordButton = toolkit.createButton(buttonComposite, "Change Password...", SWT.PUSH);
+		final Button changePasswordButton = toolkit.createButton(buttonComposite, Messages.CloudFoundryAccountSection_BUTTON_CHANGE_PW, SWT.PUSH);
 
 		// Pivotal Tracker: 54644658 - Disable for CF 1.5.0 until fixed.
 		changePasswordButton.setEnabled(false);
@@ -237,8 +237,8 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 			public void widgetSelected(SelectionEvent e) {
 				if (server.isDirty()) {
 					boolean confirm = MessageDialog
-							.openQuestion(getShell(), "Unsaved Changes",
-									"There are unsaved changes on the server that will be saved upon password change. Do you wish to continue?");
+							.openQuestion(getShell(), Messages.CloudFoundryAccountSection_DIALOG_UNSAVE_TITLE,
+									Messages.CloudFoundryAccountSection_DIALOG_UNSAVE_BODY);
 					if (!confirm) {
 						return;
 					}
@@ -255,14 +255,14 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 						validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
 					}
 					else {
-						validateLabel.setText("Password sucessfully changed.");
+						validateLabel.setText(Messages.CloudFoundryAccountSection_LABEL_PW_CHANGED);
 						passwordText.setText(newPassword);
 					}
 				}
 			}
 		});
 
-		final Button validateButton = toolkit.createButton(buttonComposite, "Validate Account", SWT.PUSH);
+		final Button validateButton = toolkit.createButton(buttonComposite, Messages.CloudFoundryAccountSection_BUTTON_VALIDATE_ACCOUNT, SWT.PUSH);
 		validateButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 		validateButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -329,7 +329,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 	}
 
 	protected void createCloneServerArea(Composite parent, FormToolkit toolkit) {
-		final Button changeSpaceButton = toolkit.createButton(parent, "Clone Server...", SWT.PUSH);
+		final Button changeSpaceButton = toolkit.createButton(parent, Messages.CloudFoundryAccountSection_BUTTON_CLONE_SERVER, SWT.PUSH);
 
 		changeSpaceButton.setEnabled(true);
 
@@ -358,7 +358,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 			// CloudFoundryBrandingExtensionPoint.getServiceName(server.getServerType().getId());
 		}
 		// if (serviceName == null) {
-		sectionTitle = "Account Information";
+		sectionTitle = Messages.COMMONTXT_ACCOUNT_INFO;
 
 		// }
 		// else {
@@ -397,7 +397,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 			// break;
 			}
 
-			execute(new AbstractOperation("CloudFoundryServerUpdate") {
+			execute(new AbstractOperation("CloudFoundryServerUpdate") { //$NON-NLS-1$
 
 				@Override
 				public IStatus execute(IProgressMonitor monitor, IAdaptable info) throws ExecutionException {
@@ -440,7 +440,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 
 				private void updateTextField(String input, Text text) {
 					if (!text.getText().equals(input)) {
-						text.setText(input == null ? "" : input);
+						text.setText(input == null ? "" : input); //$NON-NLS-1$
 					}
 				}
 

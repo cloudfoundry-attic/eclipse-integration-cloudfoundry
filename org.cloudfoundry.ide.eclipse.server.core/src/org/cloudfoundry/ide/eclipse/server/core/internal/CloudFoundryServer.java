@@ -97,30 +97,30 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	 * Attribute key for the a unique server ID used to store credentials in the
 	 * secure store.
 	 */
-	static final String PROP_SERVER_ID = "org.cloudfoundry.ide.eclipse.serverId";
+	static final String PROP_SERVER_ID = "org.cloudfoundry.ide.eclipse.serverId"; //$NON-NLS-1$
 
 	/**
 	 * Attribute key for the password.
 	 */
-	static final String PROP_PASSWORD_ID = "org.cloudfoundry.ide.eclipse.password";
+	static final String PROP_PASSWORD_ID = "org.cloudfoundry.ide.eclipse.password"; //$NON-NLS-1$
 
 	/**
 	 * Attribute key for the API url.
 	 */
-	static final String PROP_URL = "org.cloudfoundry.ide.eclipse.url";
+	static final String PROP_URL = "org.cloudfoundry.ide.eclipse.url"; //$NON-NLS-1$
 
 	/**
 	 * Attribute key for the username.
 	 */
-	static final String PROP_USERNAME_ID = "org.cloudfoundry.ide.eclipse.username";
+	static final String PROP_USERNAME_ID = "org.cloudfoundry.ide.eclipse.username"; //$NON-NLS-1$
 
-	static final String PROP_ORG_ID = "org.cloudfoundry.ide.eclipse.org";
+	static final String PROP_ORG_ID = "org.cloudfoundry.ide.eclipse.org"; //$NON-NLS-1$
 
-	static final String PROP_SPACE_ID = "org.cloudfoundry.ide.eclipse.space";
+	static final String PROP_SPACE_ID = "org.cloudfoundry.ide.eclipse.space"; //$NON-NLS-1$
 
-	static final String TUNNEL_SERVICE_COMMANDS_PROPERTY = "org.cloudfoundry.ide.eclipse.tunnel.service.commands";
+	static final String TUNNEL_SERVICE_COMMANDS_PROPERTY = "org.cloudfoundry.ide.eclipse.tunnel.service.commands"; //$NON-NLS-1$
 
-	private static final String PROPERTY_DEPLOYMENT_NAME = "deployment_name";
+	private static final String PROPERTY_DEPLOYMENT_NAME = "deployment_name"; //$NON-NLS-1$
 
 	static void updateState(Server server, CloudFoundryApplicationModule appModule) throws CoreException {
 		IModule localModule = appModule.getLocalModule();
@@ -160,7 +160,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 				IModule module = add[i];
 				if (!ApplicationRegistry.isSupportedModule(module)) {
 					return new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, 0,
-							"This server does not support applications of type: " + module.getModuleType().getId(),
+							NLS.bind(Messages.CloudFoundryServer_ERROR_APPTYPE_NOT_SUPPORTED, module.getModuleType().getId()),
 							null);
 				}
 
@@ -183,11 +183,11 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 				ClassLoader classLoader = module.getClass().getClassLoader();
 				if (classLoader != null) {
 					try {
-						Class iModule2 = classLoader.loadClass("org.eclipse.wst.server.core.IModule2");
+						Class iModule2 = classLoader.loadClass("org.eclipse.wst.server.core.IModule2"); //$NON-NLS-1$
 						if (iModule2 != null) {
-							Method getProperty = iModule2.getMethod("getProperty", String.class);
+							Method getProperty = iModule2.getMethod("getProperty", String.class); //$NON-NLS-1$
 							Object o = getProperty.invoke(module, CloudFoundryConstants.PROPERTY_MODULE_NO_FACET);
-							if (o instanceof String && ((String)o).equals("true")) {
+							if (o instanceof String && ((String)o).equals("true")) { //$NON-NLS-1$
 								ignoreFacetCheck = true;
 							}
 						}
@@ -225,8 +225,8 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	}
 
 	public IStatus error(String message, Exception e) {
-		return new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind("{0} [{1}]", message, getServer()
-				.getName()), e);
+		return new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind("{0} [{1}]", message, //$NON-NLS-1$
+				getServer().getName()), e);
 	}
 
 	/**
@@ -300,7 +300,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	public IStatus refreshCloudModules() {
 		if (getServerOriginal() == null) {
 			return CloudFoundryPlugin
-					.getErrorStatus("Server original for " + getDeploymentName() + " cannot be found.");
+					.getErrorStatus(NLS.bind(Messages.CloudFoundryServer_ERROR_SERVER_ORIGIN_NOT_FOUND, getDeploymentName()));
 		}
 		IModule[] modules = getServerOriginal().getModules();
 		if (modules != null) {
@@ -309,7 +309,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 			for (IModule module : modules) {
 				ICloudFoundryApplicationModule appModule = getCloudModule(module);
 				if (appModule == null) {
-					writer.append("Failed to create Cloud Foundry application module for: ");
+					writer.append(Messages.CloudFoundryServer_ERROR_FAIL_ON_CFAPP_CREATION);
 					writer.append(module.getId());
 					writer.append('\n');
 				}
@@ -377,7 +377,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	}
 
 	public String getDeploymentName() {
-		return getAttribute(PROPERTY_DEPLOYMENT_NAME, "");
+		return getAttribute(PROPERTY_DEPLOYMENT_NAME, ""); //$NON-NLS-1$
 	}
 
 	public String getPassword() {
@@ -512,13 +512,13 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		String name = typeName;
 		int i = 2;
 		while (ServerPlugin.isNameInUse(getServerWorkingCopy().getOriginal(), name)) {
-			name = NLS.bind("{0} ({1})", new String[] { typeName, i + "" });
+			name = NLS.bind("{0} ({1})", new String[] { typeName, String.valueOf(i) }); //$NON-NLS-1$
 			i++;
 		}
 		getServerWorkingCopy().setName(name);
-		getServerWorkingCopy().setHost("Cloud");
+		getServerWorkingCopy().setHost("Cloud"); //$NON-NLS-1$
 
-		setAttribute("auto-publish-setting", 1);
+		setAttribute("auto-publish-setting", 1); //$NON-NLS-1$
 	}
 
 	public void setDeploymentName(String name) {
@@ -662,9 +662,9 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 				CloudFoundryApplicationModule cloudModule = getCloudModule(module);
 
 				if (cloudModule == null) {
-					CloudFoundryPlugin.logError("Unable to find local Cloud Foundry application module for : "
+					CloudFoundryPlugin.logError("Unable to find local Cloud Foundry application module for : " //$NON-NLS-1$
 							+ module.getName()
-							+ ". Try refreshing applications or disconnecting and reconnecting to the server.");
+							+ ". Try refreshing applications or disconnecting and reconnecting to the server."); //$NON-NLS-1$
 					continue;
 				}
 
@@ -738,7 +738,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	}
 
 	private void deleteModules(final Set<IModule> deletedModules) {
-		Job deleteJob = new Job("Update Modules") {
+		Job deleteJob = new Job(Messages.CloudFoundryServer_JOB_UPDATE) {
 			@Override
 			protected IStatus run(IProgressMonitor arg0) {
 				return doDeleteModules(deletedModules);
@@ -805,7 +805,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 					.getDefault()
 					.getLog()
 					.log(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-							"Unexpected error while updating modules", e));
+							"Unexpected error while updating modules", e)); //$NON-NLS-1$
 			return Status.CANCEL_STATUS;
 		}
 		finally {
@@ -869,7 +869,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 				.getUris() : null;
 		if (uris != null && !uris.isEmpty()) {
 			try {
-				return new URL("http://" + uris.get(0));
+				return new URL("http://" + uris.get(0)); //$NON-NLS-1$
 			}
 			catch (MalformedURLException e) {
 				CloudFoundryPlugin.logError(e);

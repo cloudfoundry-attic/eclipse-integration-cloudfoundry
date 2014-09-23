@@ -82,9 +82,9 @@ import org.springframework.web.client.ResourceAccessException;
 @SuppressWarnings("restriction")
 public class CloudUiUtil {
 
-	public static final String SERVERS_VIEW_ID = "org.eclipse.wst.server.ui.ServersView";
+	public static final String SERVERS_VIEW_ID = "org.eclipse.wst.server.ui.ServersView"; //$NON-NLS-1$
 
-	public static String ATTR_USER_DEFINED_URLS = "org.cloudfoundry.ide.eclipse.server.user.defined.urls";
+	public static String ATTR_USER_DEFINED_URLS = "org.cloudfoundry.ide.eclipse.server.user.defined.urls"; //$NON-NLS-1$
 
 	public static IStatus runForked(final ICoreRunnable coreRunner, IWizard wizard) {
 		try {
@@ -107,11 +107,11 @@ public class CloudUiUtil {
 			IStatus status;
 			if (e.getCause() instanceof CoreException) {
 				status = new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, NLS.bind(
-						"The operation failed: {0}", e.getCause().getMessage()), e);
+						Messages.CloudUiUtil_ERROR_FORK_OP_FAILED, e.getCause().getMessage()), e);
 			}
 			else {
 				status = new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, NLS.bind(
-						"Unexpected error: {0}", e.getMessage()), e);
+						Messages.CloudUiUtil_ERROR_FORK_UNEXPECTED, e.getMessage()), e);
 			}
 			CloudFoundryServerUiPlugin.getDefault().getLog().log(status);
 			IWizardPage page = wizard.getContainer().getCurrentPage();
@@ -172,15 +172,15 @@ public class CloudUiUtil {
 		List<CloudServerURL> urls = new ArrayList<CloudServerURL>();
 
 		IPreferenceStore prefStore = CloudFoundryServerUiPlugin.getDefault().getPreferenceStore();
-		String urlString = prefStore.getString(ATTR_USER_DEFINED_URLS + "." + serverTypeId);
+		String urlString = prefStore.getString(ATTR_USER_DEFINED_URLS + "." + serverTypeId); //$NON-NLS-1$
 
 		if (urlString != null && urlString.length() > 0) {
 			// Split on "||"
-			String[] urlEntries = urlString.split("\\|\\|");
+			String[] urlEntries = urlString.split("\\|\\|"); //$NON-NLS-1$
 			if (urlEntries != null) {
 				for (String entry : urlEntries) {
 					if (entry.length() > 0) {
-						String[] values = entry.split(",");
+						String[] values = entry.split(","); //$NON-NLS-1$
 						if (values != null) {
 							String name = null;
 							String url = null;
@@ -209,14 +209,14 @@ public class CloudUiUtil {
 			if (url.getUserDefined()) {
 				builder.append(url.getName());
 
-				builder.append(",");
+				builder.append(","); //$NON-NLS-1$
 				builder.append(url.getUrl());
 
-				builder.append("||");
+				builder.append("||"); //$NON-NLS-1$
 			}
 		}
 
-		prefStore.setValue(ATTR_USER_DEFINED_URLS + "." + serverTypeId, builder.toString());
+		prefStore.setValue(ATTR_USER_DEFINED_URLS + "." + serverTypeId, builder.toString()); //$NON-NLS-1$
 	}
 
 	public static String updatePassword(final String newPassword, final CloudFoundryServer cfServer,
@@ -341,7 +341,7 @@ public class CloudUiUtil {
 	public static String getUrlFromDisplayText(String displayText) {
 		String url = displayText;
 		if (url != null) {
-			int pos = url.lastIndexOf(" - ");
+			int pos = url.lastIndexOf(" - "); //$NON-NLS-1$
 			if (pos >= 0) {
 				return url.substring(pos + 3);
 			}
@@ -354,7 +354,7 @@ public class CloudUiUtil {
 		List<CloudServerURL> cloudUrls = getAllUrls(serverTypeId);
 		for (CloudServerURL cloudUrl : cloudUrls) {
 			if (cloudUrl.getUrl().equals(url)) {
-				return cloudUrl.getName() + " - " + url;
+				return cloudUrl.getName() + " - " + url; //$NON-NLS-1$
 			}
 		}
 		return url;
@@ -369,7 +369,7 @@ public class CloudUiUtil {
 		try {
 			IRunnableWithProgress runner = new IRunnableWithProgress() {
 				public void run(final IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-					monitor.beginTask("", IProgressMonitor.UNKNOWN);
+					monitor.beginTask("", IProgressMonitor.UNKNOWN); //$NON-NLS-1$
 					try {
 						coreRunner.run(monitor);
 					}
@@ -392,7 +392,7 @@ public class CloudUiUtil {
 				CloudFoundryServerUiPlugin
 						.getDefault()
 						.getLog()
-						.log(new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, "Unexpected exception", e));
+						.log(new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, "Unexpected exception", e)); //$NON-NLS-1$
 			}
 		}
 		catch (InterruptedException e) {
@@ -430,23 +430,23 @@ public class CloudUiUtil {
 							| IWorkbenchBrowserSupport.NAVIGATION_BAR;
 				}
 
-				String generatedId = "org.eclipse.mylyn.web.browser-" + Calendar.getInstance().getTimeInMillis();
+				String generatedId = "org.eclipse.mylyn.web.browser-" + Calendar.getInstance().getTimeInMillis(); //$NON-NLS-1$
 				browser = WorkbenchBrowserSupport.getInstance().createBrowser(flags, generatedId, null, null);
 				browser.openURL(url);
 			}
 		}
 		catch (PartInitException e) {
-			MessageDialog.openError(Display.getDefault().getActiveShell(), "Failed to Open Browser",
-					"Browser could not be initiated");
+			MessageDialog.openError(Display.getDefault().getActiveShell(), Messages.CloudUiUtil_ERROR_OPEN_BROWSER_FAIL_TITLE,
+					Messages.CloudUiUtil_ERROR_OPEN_BROWSER_BODY);
 		}
 		catch (MalformedURLException e) {
-			if (location == null || location.trim().equals("")) {
-				MessageDialog.openInformation(Display.getDefault().getActiveShell(), "Failed to Open Browser",
-						"No URL to open." + location);
+			if (location == null || location.trim().equals("")) { //$NON-NLS-1$
+				MessageDialog.openInformation(Display.getDefault().getActiveShell(), Messages.CloudUiUtil_ERROR_OPEN_BROWSER_FAIL_TITLE,
+						NLS.bind(Messages.CloudUiUtil_ERROR_EMPTY_URL_BODY, location));
 			}
 			else {
-				MessageDialog.openInformation(Display.getDefault().getActiveShell(), "Failed to Open Browser",
-						"Could not open URL: " + location);
+				MessageDialog.openInformation(Display.getDefault().getActiveShell(), Messages.CloudUiUtil_ERROR_OPEN_BROWSER_FAIL_TITLE,
+						NLS.bind(Messages.CloudUiUtil_ERROR_MALFORM_URL_BODY, location));
 			}
 		}
 
@@ -464,9 +464,9 @@ public class CloudUiUtil {
 	 */
 	public static CloudServerURL getWildcardUrl(CloudServerURL cloudUrl, List<CloudServerURL> allCloudUrls, Shell shell) {
 		String url = cloudUrl.getUrl();
-		if (url.contains("{")) {
-			int startIndex = url.indexOf("{");
-			int endIndex = url.indexOf("}");
+		if (url.contains("{")) { //$NON-NLS-1$
+			int startIndex = url.indexOf("{"); //$NON-NLS-1$
+			int endIndex = url.indexOf("}"); //$NON-NLS-1$
 			String wildcard = url.substring(startIndex + 1, endIndex);
 
 			TargetURLDialog dialog = new TargetURLDialog(shell, cloudUrl, wildcard, allCloudUrls);

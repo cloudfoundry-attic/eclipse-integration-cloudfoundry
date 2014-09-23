@@ -27,7 +27,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupSer
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
-import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
@@ -35,6 +34,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryPrope
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudApplicationUrlPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.IEventSource;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.UIPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.WizardPartChangeEvent;
@@ -84,14 +84,14 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 
 	private MemoryPart memoryPart;
 
-	private static final String DEFAULT_MEMORY = CloudUtil.DEFAULT_MEMORY + "";
+	private static final String DEFAULT_MEMORY = CloudUtil.DEFAULT_MEMORY + ""; //$NON-NLS-1$
 
 	private ApplicationWizardDelegate wizardDelegate;
 
 	public CloudFoundryDeploymentWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor, ApplicationUrlLookupService urlLookup,
 			ApplicationWizardDelegate wizardDelegate) {
-		super("deployment", null, null);
+		super(Messages.CloudFoundryDeploymentWizardPage_TEXT_DEPLOYMENT, null, null);
 		this.server = server;
 		this.module = module;
 		this.descriptor = descriptor;
@@ -143,8 +143,8 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	}
 
 	public void createControl(Composite parent) {
-		setTitle("Launch deployment");
-		setDescription("Specify the deployment details");
+		setTitle(Messages.CloudFoundryDeploymentWizardPage_TITLE_LAUNCH_DEPLOY);
+		setDescription(Messages.CloudFoundryDeploymentWizardPage_TEXT_DEPLOY_DETAIL);
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
 		if (banner != null) {
 			setImageDescriptor(banner);
@@ -192,7 +192,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 
 	protected void createStartOrDebugOptions(Composite parent) {
 
-		String startLabelText = "Start application on deployment";
+		String startLabelText = Messages.CloudFoundryDeploymentWizardPage_LABEL_START_APP;
 
 		regularStartOnDeploymentButton = new Button(parent, SWT.CHECK);
 		regularStartOnDeploymentButton.setText(startLabelText);
@@ -407,7 +407,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 		public Control createPart(Composite parent) {
 			Label label = new Label(parent, SWT.NONE);
 			label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-			label.setText(org.cloudfoundry.ide.eclipse.server.ui.internal.Messages.LABEL_MEMORY_LIMIT);
+			label.setText(Messages.LABEL_MEMORY_LIMIT);
 
 			memory = new Text(parent, SWT.BORDER);
 			memory.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -427,7 +427,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 					memory.setText(DEFAULT_MEMORY);
 				}
 				else {
-					memory.setText(currentMemory + "");
+					memory.setText(currentMemory + ""); //$NON-NLS-1$
 				}
 			}
 		}

@@ -20,6 +20,7 @@
 package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ITunnelServiceCommands;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.tunnel.ServiceTunnelCommandPart;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.widgets.Composite;
@@ -31,8 +32,8 @@ public class TunnelCommandDefinitionWizardPage extends CloudFoundryAwareWizardPa
 	private ServiceTunnelCommandPart commandPart;
 
 	protected TunnelCommandDefinitionWizardPage(ITunnelServiceCommands originalCommands, ImageDescriptor banner) {
-		super("Service Tunnel Commands Page", "Service Tunnel Commands",
-				"Add, delete, or edit commands to launch external applications for service tunnels", banner);
+		super(Messages.TunnelCommandDefinitionWizardPage_TEXT_SERVICE_TUNN_CMD_PAGE, Messages.TunnelCommandDefinitionWizardPage_TITLE_SERVICE_TUNN_CMD,
+				Messages.TunnelCommandDefinitionWizardPage_TEXT_SERVICE_TUNN_DESCRIP, banner);
 		this.originalCommands = originalCommands;
 	}
 

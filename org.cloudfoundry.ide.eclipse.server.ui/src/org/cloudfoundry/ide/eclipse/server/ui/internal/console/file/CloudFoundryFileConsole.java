@@ -80,13 +80,13 @@ import org.eclipse.ui.console.MessageConsole;
  */
 class CloudFoundryFileConsole extends JobChangeAdapter {
 
-	static final String ATTRIBUTE_SERVER = "org.cloudfoundry.ide.eclipse.server.Server";
+	static final String ATTRIBUTE_SERVER = "org.cloudfoundry.ide.eclipse.server.Server"; //$NON-NLS-1$
 
-	static final String ATTRIBUTE_APP = "org.cloudfoundry.ide.eclipse.server.CloudApp";
+	static final String ATTRIBUTE_APP = "org.cloudfoundry.ide.eclipse.server.CloudApp"; //$NON-NLS-1$
 
-	static final String ATTRIBUTE_INSTANCE = "org.cloudfoundry.ide.eclipse.server.CloudInstance";
+	static final String ATTRIBUTE_INSTANCE = "org.cloudfoundry.ide.eclipse.server.CloudInstance"; //$NON-NLS-1$
 
-	static final String CONSOLE_TYPE = "org.cloudfoundry.ide.eclipse.server.appcloud";
+	static final String CONSOLE_TYPE = "org.cloudfoundry.ide.eclipse.server.appcloud"; //$NON-NLS-1$
 
 	private final CloudFoundryApplicationModule app;
 
@@ -195,7 +195,7 @@ class CloudFoundryFileConsole extends JobChangeAdapter {
 		IOConsoleOutputStream outputStream = console.newOutputStream();
 		IConsoleJob job = null;
 		if (outputStream != null) {
-			job = new ConsoleStreamJob(app.getDeployedApplicationName() + " - " + stream.getContentType().getId(),
+			job = new ConsoleStreamJob(app.getDeployedApplicationName() + " - " + stream.getContentType().getId(), //$NON-NLS-1$
 					stream);
 			stream.initialiseStream(outputStream);
 		}

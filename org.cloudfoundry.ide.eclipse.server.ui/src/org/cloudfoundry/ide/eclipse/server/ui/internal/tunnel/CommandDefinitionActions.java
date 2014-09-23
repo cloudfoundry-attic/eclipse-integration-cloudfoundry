@@ -26,6 +26,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ITunnelServiceCo
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServiceInfo;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.TunnelServiceCommandStore;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.TunnelCommandDefinitionWizard;
 import org.eclipse.core.runtime.CoreException;
@@ -54,7 +55,7 @@ class CommandDefinitionActions extends Action {
 	protected CommandDefinitionActions(CloudFoundryApplicationsEditorPage editorPage, CloudService serviceContext) {
 		this.editorPage = editorPage;
 		this.serviceContext = serviceContext;
-		setText("Command Definitions...");
+		setText(Messages.CommandDefinitionActions_TEXT_CMD_DEFS);
 		setImageDescriptor(CloudFoundryImages.TUNNEL_EXTERNAL_TOOLS);
 		
 		/**
@@ -65,7 +66,7 @@ class CommandDefinitionActions extends Action {
 	}
 
 	protected String getJobName() {
-		return "Command Definitions";
+		return Messages.CommandDefinitionActions_TEXT_CMD_DEF;
 	}
 
 	public void run() {
@@ -84,7 +85,7 @@ class CommandDefinitionActions extends Action {
 	}
 
 	protected UIJob getUIJob() {
-		UIJob job = new UIJob("Command Definitions") {
+		UIJob job = new UIJob(Messages.CommandDefinitionActions_TEXT_CMD_DEF) {
 
 			@Override
 			public IStatus runInUIThread(IProgressMonitor monitor) {

@@ -24,6 +24,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerListener;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryServerUiPlugin;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -78,7 +79,7 @@ public class CloudFoundryServerStatusSection extends ServerEditorSection impleme
 
 		Section section = toolkit.createSection(parent, ExpandableComposite.TWISTIE | ExpandableComposite.TITLE_BAR);
 		section.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		section.setText("Server Status");
+		section.setText(Messages.CloudFoundryServerStatusSection_TEXT_SERV_STAT);
 		section.setExpanded(true);
 
 		composite = toolkit.createComposite(section);
@@ -87,20 +88,20 @@ public class CloudFoundryServerStatusSection extends ServerEditorSection impleme
 		GridLayoutFactory.fillDefaults().numColumns(4).margins(10, 5).applyTo(composite);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(composite);
 
-		nameLabel = toolkit.createLabel(composite, "");
+		nameLabel = toolkit.createLabel(composite, ""); //$NON-NLS-1$
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(nameLabel);
 		nameLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 		
-		statusLabel = toolkit.createLabel(composite, "");
+		statusLabel = toolkit.createLabel(composite, ""); //$NON-NLS-1$
 		GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.CENTER).applyTo(statusLabel);
 		
-		connectButton = toolkit.createButton(composite, "Connect", SWT.PUSH);
+		connectButton = toolkit.createButton(composite, Messages.CloudFoundryServerStatusSection_TEXT_CONN_BUTTON, SWT.PUSH);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(connectButton);
 		
 		connectButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				Job job = new Job("Connect server") {
+				Job job = new Job(Messages.CloudFoundryServerStatusSection_JOB_CONN_SERVER) {
 					
 					@Override
 					protected IStatus run(IProgressMonitor monitor) {
@@ -108,7 +109,7 @@ public class CloudFoundryServerStatusSection extends ServerEditorSection impleme
 							cfServer.getBehaviour().connect(monitor);
 						}
 						catch (CoreException e) {
-							StatusManager.getManager().handle(new Status(Status.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, "Failed to perform server editor action", e), StatusManager.LOG);
+							StatusManager.getManager().handle(new Status(Status.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, "", e), StatusManager.LOG); //$NON-NLS-1$
 							return Status.CANCEL_STATUS;
 						}
 						
@@ -119,13 +120,13 @@ public class CloudFoundryServerStatusSection extends ServerEditorSection impleme
 			}
 		});
 		
-		disconnectButton = toolkit.createButton(composite, "Disconnect", SWT.PUSH);
+		disconnectButton = toolkit.createButton(composite, Messages.CloudFoundryServerStatusSection_TEXT_DISCONN_BUTTON, SWT.PUSH);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(disconnectButton);
 		
 		disconnectButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				Job job = new Job("Connect server") {
+				Job job = new Job(Messages.CloudFoundryServerStatusSection_JOB_CONN_SERVER) {
 					
 					@Override
 					protected IStatus run(IProgressMonitor monitor) {
@@ -133,7 +134,7 @@ public class CloudFoundryServerStatusSection extends ServerEditorSection impleme
 							cfServer.getBehaviour().disconnect(monitor);
 						}
 						catch (CoreException e) {
-							StatusManager.getManager().handle(new Status(Status.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, "Failed to perform server editor action", e), StatusManager.LOG);
+							StatusManager.getManager().handle(new Status(Status.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID, "", e), StatusManager.LOG); //$NON-NLS-1$
 							return Status.CANCEL_STATUS;
 						}
 						
@@ -160,12 +161,12 @@ public class CloudFoundryServerStatusSection extends ServerEditorSection impleme
 			public void run() {
 				
 				if (composite != null && !composite.isDisposed()) {
-					nameLabel.setText(cfServer.getServer().getName() + ": ");
+					nameLabel.setText(cfServer.getServer().getName() + ": "); //$NON-NLS-1$
 					
 					int s = cfServer.getServer().getServerState();
-					String statusString = "Not connected";
+					String statusString = ""; //$NON-NLS-1$
 					if (s == IServer.STATE_STARTED) {
-						statusString = "Connected";
+						statusString = ""; //$NON-NLS-1$
 					}
 					statusLabel.setText(statusString);
 					

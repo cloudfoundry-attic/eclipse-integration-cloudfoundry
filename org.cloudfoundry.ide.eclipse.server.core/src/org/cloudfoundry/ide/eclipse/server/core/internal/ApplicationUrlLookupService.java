@@ -77,7 +77,7 @@ public class ApplicationUrlLookupService {
 		if (domains == null || domains.isEmpty()) {
 
 			throw CloudErrorUtil.toCoreException(NLS.bind(
-					"No application domains resolved for {0}. Unable to generate a default application URL for {1}",
+					Messages.ApplicationUrlLookupService_ERROR_GETDEFAULT_APP_URL,
 					cloudServer.getServerId(), subDomain));
 		}
 
@@ -125,7 +125,7 @@ public class ApplicationUrlLookupService {
 		if (domainsPerActiveSpace == null || domainsPerActiveSpace.isEmpty()) {
 			throw new CoreException(
 					CloudFoundryPlugin
-							.getErrorStatus("No domains found for the current active space. Unable to generate a default application URL."));
+							.getErrorStatus(Messages.ApplicationUrlLookupService_ERROR_GET_CLOUD_URL));
 		}
 
 		// String url = domain.getName();

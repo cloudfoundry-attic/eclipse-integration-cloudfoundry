@@ -43,7 +43,7 @@ public class CloudFoundryPreferencePage extends PreferencePage implements IWorkb
 
 		Label serviceLabel = new Label(mainArea, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(serviceLabel);
-		serviceLabel.setText("Expand the tree to select a specific Cloud Foundry feature");
+		serviceLabel.setText(Messages.CloudFoundryPreferencePage_TEXT_SELECT_CF_FEATURE);
 
 		return mainArea;
 	}

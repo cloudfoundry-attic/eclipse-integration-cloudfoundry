@@ -47,7 +47,7 @@ public class AddServicesToApplicationAction extends ModifyServicesForApplication
 
 	@Override
 	public String getJobName() {
-		return "Adding services";
+		return "Adding services"; //$NON-NLS-1$
 	}
 
 	@Override

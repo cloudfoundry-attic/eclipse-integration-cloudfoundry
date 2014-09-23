@@ -71,12 +71,12 @@ public class FileResource extends CloudFoundryHostFile {
 	@Override
 	public String getClassification() {
 		if (isDirectory) {
-			return "directory";
+			return "directory"; //$NON-NLS-1$
 		}
 		if (isFile) {
-			return "file";
+			return "file"; //$NON-NLS-1$
 		}
-		return "unknown";
+		return "unknown"; //$NON-NLS-1$
 	}
 
 	public long getModifiedDate() {
@@ -95,17 +95,17 @@ public class FileResource extends CloudFoundryHostFile {
 		// An approximation!!
 		long l = 0;
 		try {
-			String num = "0";
-			if (size.endsWith("B")) {
+			String num = "0"; //$NON-NLS-1$
+			if (size.endsWith("B")) { //$NON-NLS-1$
 				num = size.substring(0, size.length() - 1);
 				l = Long.parseLong(num);
 			}
-			else if (size.endsWith("K")) {
+			else if (size.endsWith("K")) { //$NON-NLS-1$
 				num = size.substring(0, size.length() - 1);
 				float f = Float.parseFloat(num) * 1000;
 				l = ((Float) f).longValue();
 			}
-			else if (size.endsWith("M")) {
+			else if (size.endsWith("M")) { //$NON-NLS-1$
 				num = size.substring(0, size.length() - 1);
 				float f = Float.parseFloat(num) * 1000 * 1000;
 				l = ((Float) f).longValue();

@@ -43,7 +43,7 @@ public class UpdateApplicationMemoryAction extends CloudFoundryEditorAction {
 
 	@Override
 	public String getJobName() {
-		return "Updating application memory limit";
+		return "Updating application memory limit"; //$NON-NLS-1$
 	}
 
 	@Override

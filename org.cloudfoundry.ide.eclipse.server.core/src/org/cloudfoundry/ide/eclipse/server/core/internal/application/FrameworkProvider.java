@@ -33,9 +33,9 @@ import org.eclipse.core.runtime.IConfigurationElement;
  */
 public class FrameworkProvider<T> {
 
-	private static final String CLASS_ELEMENT = "class";
+	private static final String CLASS_ELEMENT = "class"; //$NON-NLS-1$
 
-	private static final String PROVIDER_ID_ATTRIBUTE = "providerID";
+	private static final String PROVIDER_ID_ATTRIBUTE = "providerID"; //$NON-NLS-1$
 
 	private T delegate;
 
@@ -63,8 +63,8 @@ public class FrameworkProvider<T> {
 				Object object = configurationElement.createExecutableExtension(CLASS_ELEMENT);
 				if (object == null) {
 					CloudFoundryPlugin
-							.logError("No delegate class found. Must implement a delegate class. See extension point: "
-									+ extensionPointID + " for more details.");
+							.logError("No delegate class found. Must implement a delegate class. See extension point: " //$NON-NLS-1$
+									+ extensionPointID + " for more details."); //$NON-NLS-1$
 				}
 				else {
 					delegate = (T) object;

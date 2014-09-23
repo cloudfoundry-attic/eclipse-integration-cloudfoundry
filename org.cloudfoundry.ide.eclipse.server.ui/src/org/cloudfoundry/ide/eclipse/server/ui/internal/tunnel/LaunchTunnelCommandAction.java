@@ -28,6 +28,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelD
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.LaunchTunnelCommandManager;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServiceCommand;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.CloudFoundryEditorAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
@@ -110,7 +111,7 @@ public class LaunchTunnelCommandAction extends CloudFoundryEditorAction {
 			// options
 			// THis must be wrapped in a UI Job
 
-			UIJob uiJob = new UIJob("Prompting for variable options") {
+			UIJob uiJob = new UIJob(Messages.LaunchTunnelCommandAction_JOB_PROMPT) {
 
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
@@ -124,7 +125,7 @@ public class LaunchTunnelCommandAction extends CloudFoundryEditorAction {
 					// for the user to exist the external
 					// application
 					if (resolvedCommand != null) {
-						Job job = new Job("Launching external tool.") {
+						Job job = new Job(Messages.LaunchTunnelCommandAction_JOB_LAUNCH) {
 
 							@Override
 							protected IStatus run(IProgressMonitor monitor) {

@@ -97,7 +97,7 @@ public class CloudFoundryActionProvider extends CommonActionProvider {
 						IServerEditorInput.EDITOR_ID);
 
 				// set applications page to active
-				Method method = MultiPageEditorPart.class.getDeclaredMethod("setActivePage", int.class);
+				Method method = MultiPageEditorPart.class.getDeclaredMethod("setActivePage", int.class); //$NON-NLS-1$
 				method.setAccessible(true);
 				method.invoke(editor, 1);
 
@@ -110,27 +110,27 @@ public class CloudFoundryActionProvider extends CommonActionProvider {
 			catch (SecurityException e) {
 				StatusManager.getManager().handle(
 						new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
-								"Reflection error while opening Cloud Foundry applications page", e), StatusManager.LOG);
+								Messages.CloudFoundryActionProvider_ERROR_REFLECTION_CF_APP_PAGE, e), StatusManager.LOG);
 			}
 			catch (NoSuchMethodException e) {
 				StatusManager.getManager().handle(
 						new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
-								"Reflection error while opening Cloud Foundry applications page", e), StatusManager.LOG);
+								Messages.CloudFoundryActionProvider_ERROR_REFLECTION_CF_APP_PAGE, e), StatusManager.LOG);
 			}
 			catch (IllegalArgumentException e) {
 				StatusManager.getManager().handle(
 						new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
-								"Reflection error while opening Cloud Foundry applications page", e), StatusManager.LOG);
+								Messages.CloudFoundryActionProvider_ERROR_REFLECTION_CF_APP_PAGE, e), StatusManager.LOG);
 			}
 			catch (IllegalAccessException e) {
 				StatusManager.getManager().handle(
 						new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
-								"Reflection error while opening Cloud Foundry applications page", e), StatusManager.LOG);
+								Messages.CloudFoundryActionProvider_ERROR_REFLECTION_CF_APP_PAGE, e), StatusManager.LOG);
 			}
 			catch (InvocationTargetException e) {
 				StatusManager.getManager().handle(
 						new Status(IStatus.ERROR, CloudFoundryServerUiPlugin.PLUGIN_ID,
-								"Reflection error while opening Cloud Foundry applications page", e), StatusManager.LOG);
+								Messages.CloudFoundryActionProvider_ERROR_REFLECTION_CF_APP_PAGE, e), StatusManager.LOG);
 			}
 		}
 

@@ -27,6 +27,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.RepublishApplicationHandler;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
@@ -36,6 +37,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.Wizard;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.wst.server.core.IModule;
 
@@ -66,7 +68,7 @@ public class MappedURLsWizard extends Wizard {
 		this.applicationModule = applicationModule;
 		this.existingURIs = existingURIs;
 
-		setWindowTitle("Modify Mapped URLs");
+		setWindowTitle(Messages.MappedURLsWizard_TITLE_MOD_MAPPED_URL);
 		setNeedsProgressMonitor(true);
 	}
 
@@ -106,7 +108,7 @@ public class MappedURLsWizard extends Wizard {
 		final IStatus[] result = new IStatus[1];
 		if (shouldRepublish) {
 
-			Job job = new Job("Republishing " + applicationModule.getDeployedApplicationName()) {
+			Job job = new Job(NLS.bind(Messages.MappedURLsWizard_JOB_REPUBLISH, applicationModule.getDeployedApplicationName())) {
 
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
@@ -129,7 +131,7 @@ public class MappedURLsWizard extends Wizard {
 		}
 		else {
 			try {
-				page.setMessage("Updating URLs. Please wait while the process completes.");
+				page.setMessage(Messages.MappedURLsWizard_TEXT_UPDATE_URL);
 				getContainer().run(true, true, new IRunnableWithProgress() {
 					public void run(IProgressMonitor monitor) {
 						try {
@@ -152,7 +154,7 @@ public class MappedURLsWizard extends Wizard {
 
 		}
 		if (result[0] != null && !result[0].isOK()) {
-			page.setErrorMessage("URL may not have changed correctly due to: " + result[0].getMessage());
+			page.setErrorMessage(NLS.bind(Messages.MappedURLsWizard_ERROR_CHANGE_URL, result[0].getMessage()));
 			return false;
 		}
 		else {

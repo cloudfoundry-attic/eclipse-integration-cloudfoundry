@@ -32,6 +32,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleCache.ServerData;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.UIPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.WizardPartChangeEvent;
@@ -60,9 +61,9 @@ import org.eclipse.swt.widgets.Text;
  */
 public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
-	private Pattern VALID_CHARS = Pattern.compile("[A-Za-z\\$_0-9\\-]+");
+	private Pattern VALID_CHARS = Pattern.compile("[A-Za-z\\$_0-9\\-]+"); //$NON-NLS-1$
 
-	protected static final String DEFAULT_DESCRIPTION = "Specify application details.";
+	protected static final String DEFAULT_DESCRIPTION = Messages.CloudFoundryApplicationWizardPage_TEXT_SET_APP_DETAIL;
 
 	private String appName;
 
@@ -87,7 +88,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 	public CloudFoundryApplicationWizardPage(CloudFoundryServer server,
 			CloudFoundryDeploymentWizardPage deploymentPage, CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor) {
-		super("Deployment Wizard", null, null);
+		super(Messages.CloudFoundryApplicationWizardPage_TEXT_DEPLOY_WIZ, null, null);
 		this.server = server;
 		this.deploymentPage = deploymentPage;
 		this.module = module;
@@ -106,7 +107,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 	}
 
 	public void createControl(Composite parent) {
-		setTitle("Application details");
+		setTitle(Messages.CloudFoundryApplicationWizardPage_TITLE_APP_DETAIL);
 		setDescription(DEFAULT_DESCRIPTION);
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(serverTypeId);
 		if (banner != null) {
@@ -143,7 +144,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 		Label nameLabel = new Label(composite, SWT.NONE);
 		nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		nameLabel.setText("Buildpack URL (optional):");
+		nameLabel.setText(Messages.CloudFoundryApplicationWizardPage_LABEL_BUILDPACK);
 
 		buildpackText = new Text(composite, SWT.BORDER);
 
@@ -163,9 +164,9 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 		});
 
 		final Button saveToManifest = new Button(composite, SWT.CHECK);
-		saveToManifest.setText("Save to manifest file");
+		saveToManifest.setText(Messages.CloudFoundryApplicationWizardPage_BUTTON_SAVE_MANIFEST);
 		saveToManifest
-				.setToolTipText("Save the deployment configuration to the application's manifest file. If a manifest file does not exist, a new one will be created. If one already exists, changes will be merged with the existing file.");
+				.setToolTipText(Messages.CloudFoundryApplicationWizardPage_TEXT_SAVE_MANIFEST_TOOLTIP);
 
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(saveToManifest);
 
@@ -199,7 +200,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 				URL urlObject = new URL(buildpack);
 				String host = urlObject.getHost();
 				if (host == null || host.length() == 0) {
-					status = CloudFoundryPlugin.getErrorStatus("Enter a valid URL.");
+					status = CloudFoundryPlugin.getErrorStatus("Enter a valid URL."); //$NON-NLS-1$
 				}
 				else {
 					// Only set valid buildpack URLs
@@ -207,7 +208,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 				}
 			}
 			catch (MalformedURLException e) {
-				status = CloudFoundryPlugin.getErrorStatus("Enter a valid URL.");
+				status = CloudFoundryPlugin.getErrorStatus("Enter a valid URL."); //$NON-NLS-1$
 			}
 		}
 
@@ -218,12 +219,12 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 	protected IStatus getUpdateNameStatus() {
 		IStatus status = Status.OK_STATUS;
 		if (ValueValidationUtil.isEmpty(appName)) {
-			status = CloudFoundryPlugin.getStatus("Enter an application name.", IStatus.ERROR);
+			status = CloudFoundryPlugin.getStatus(Messages.CloudFoundryApplicationWizardPage_ERROR_MISSING_APPNAME, IStatus.ERROR);
 		}
 		else {
 			Matcher matcher = VALID_CHARS.matcher(appName);
 			if (!matcher.matches()) {
-				status = CloudFoundryPlugin.getErrorStatus("The entered name contains invalid characters.");
+				status = CloudFoundryPlugin.getErrorStatus(Messages.CloudFoundryApplicationWizardPage_ERROR_INVALID_CHAR);
 			}
 			else {
 				ModuleCache moduleCache = CloudFoundryPlugin.getModuleCache();
@@ -240,7 +241,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 				if (duplicate) {
 					status = CloudFoundryPlugin
-							.getErrorStatus("The entered name conflicts with an application deployed.");
+							.getErrorStatus(Messages.CloudFoundryApplicationWizardPage_ERROR_NAME_CONFLICT);
 				}
 			}
 		}
@@ -258,7 +259,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 			Label nameLabel = new Label(parent, SWT.NONE);
 			nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-			nameLabel.setText("Name:");
+			nameLabel.setText(Messages.COMMONTXT_NAME_WITH_COLON);
 
 			nameText = new Text(parent, SWT.BORDER);
 			nameText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));

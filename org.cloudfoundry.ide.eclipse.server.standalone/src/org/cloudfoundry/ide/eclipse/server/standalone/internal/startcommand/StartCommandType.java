@@ -20,7 +20,7 @@
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.startcommand;
 
 public enum StartCommandType {
-	Java("Java start command"), Other("Other start command");
+	Java("Java start command"), Other("Other start command"); //$NON-NLS-1$ //$NON-NLS-2$
 
 	private String description;
 

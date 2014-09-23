@@ -28,6 +28,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerListener;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.RefreshApplicationEditorAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.CloudFoundryEditorAction.RefreshArea;
 import org.eclipse.core.runtime.CoreException;
@@ -78,7 +79,7 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 		FormToolkit toolkit = getFormToolkit(parent.getDisplay());
 
 		sform = mform.getForm();
-		sform.getForm().setText("Applications");
+		sform.getForm().setText(Messages.COMMONTXT_APPLICATIONS);
 		toolkit.decorateFormHeading(sform.getForm());
 
 		cloudServer = (CloudFoundryServer) getServer().getOriginal().loadAdapter(CloudFoundryServer.class, null);
@@ -158,12 +159,12 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 			for (int i = 0; i < buffer.length(); i++) {
 				char ch = buffer.charAt(i);
 				if (ch == '\r' || ch == '\n') {
-					buffer.replace(i, i + 1, " ");
+					buffer.replace(i, i + 1, " "); //$NON-NLS-1$
 				}
 			}
 
 			if (buffer.length() > MAX_ERROR_MESSAGE) {
-				String endingSegment = "... (see error log)";
+				String endingSegment = Messages.CloudFoundryApplicationsEditorPage_TEXT_SEE_ERRORLOG;
 
 				messageToDisplay = buffer.substring(0, MAX_ERROR_MESSAGE).trim() + endingSegment;
 				CloudFoundryPlugin.logError(message);
@@ -212,7 +213,7 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 
 		private void refresh(final IServer server) {
 
-			UIJob job = new UIJob("Refreshing editor") {
+			UIJob job = new UIJob(Messages.CloudFoundryApplicationsEditorPage_JOB_REFRESH) {
 
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {

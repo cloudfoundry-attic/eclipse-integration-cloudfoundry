@@ -59,7 +59,7 @@ import org.eclipse.wst.server.core.IModule;
  */
 public class ConnectToDebuggerCommand extends DebugCommand {
 
-	protected static final String DEBUG_JOB = "Connecting to debugger";
+	protected static final String DEBUG_JOB = "Connecting to debugger"; //$NON-NLS-1$
 
 	private final CloudFoundryDebugConnection connection;
 
@@ -84,7 +84,7 @@ public class ConnectToDebuggerCommand extends DebugCommand {
 
 			StringBuilder launchLabel = new StringBuilder();
 			launchLabel.append(getCloudFoundryServer().getServer().getName());
-			launchLabel.append(" - ");
+			launchLabel.append(" - "); //$NON-NLS-1$
 			launchLabel.append(appModule.getDeployedApplicationName());
 
 			ApplicationStats stats = appModule.getApplicationStats();
@@ -92,7 +92,7 @@ public class ConnectToDebuggerCommand extends DebugCommand {
 				List<InstanceStats> instanceStats = stats.getRecords();
 				if (instanceStats != null && instanceIndex < instanceStats.size()) {
 					InstanceStats stat = instanceStats.get(instanceIndex);
-					launchLabel.append(" - ");
+					launchLabel.append(" - "); //$NON-NLS-1$
 					launchLabel.append(stat.getId());
 				}
 			}
@@ -127,8 +127,8 @@ public class ConnectToDebuggerCommand extends DebugCommand {
 				// Convert all to String to make it consistent when reading the
 				// attributes later.
 				wc.setAttribute(CloudFoundryDebuggingLaunchConfigDelegate.HOST_NAME, host);
-				wc.setAttribute(CloudFoundryDebuggingLaunchConfigDelegate.PORT, port + "");
-				wc.setAttribute(CloudFoundryDebuggingLaunchConfigDelegate.TIME_OUT, timeout + "");
+				wc.setAttribute(CloudFoundryDebuggingLaunchConfigDelegate.PORT, port + ""); //$NON-NLS-1$
+				wc.setAttribute(CloudFoundryDebuggingLaunchConfigDelegate.TIME_OUT, timeout + ""); //$NON-NLS-1$
 				wc.setAttribute(CloudFoundryDebuggingLaunchConfigDelegate.DEBUGGER_CONNECTION_ID,
 						getDebuggerConnectionIdentifier());
 				configuration = wc.doSave();
@@ -186,8 +186,8 @@ public class ConnectToDebuggerCommand extends DebugCommand {
 		}
 
 		if (!successful && status == null) {
-			status = CloudFoundryPlugin.getErrorStatus("Failed to connect to Cloud Foundry server - IP: " + debugIP
-					+ " Port: " + debugPort + " Application: " + getApplicationID());
+			status = CloudFoundryPlugin.getErrorStatus("Failed to connect to Cloud Foundry server - IP: " + debugIP //$NON-NLS-1$
+					+ " Port: " + debugPort + " Application: " + getApplicationID()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		return status;

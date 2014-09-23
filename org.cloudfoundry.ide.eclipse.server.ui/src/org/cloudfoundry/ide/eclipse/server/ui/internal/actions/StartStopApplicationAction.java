@@ -53,20 +53,20 @@ public class StartStopApplicationAction extends CloudFoundryEditorAction {
 		StringBuilder jobName = new StringBuilder();
 		switch (action) {
 		case START:
-			jobName.append("Starting");
+			jobName.append("Starting"); //$NON-NLS-1$
 			break;
 		case STOP:
-			jobName.append("Stopping");
+			jobName.append("Stopping"); //$NON-NLS-1$
 			break;
 		case RESTART:
-			jobName.append("Restarting");
+			jobName.append("Restarting"); //$NON-NLS-1$
 			break;
 		case UPDATE_RESTART:
-			jobName.append("Update and Restarting");
+			jobName.append("Update and Restarting"); //$NON-NLS-1$
 			break;
 		}
 
-		jobName.append(" application " + application.getDeployedApplicationName());
+		jobName.append(" application " + application.getDeployedApplicationName()); //$NON-NLS-1$
 		return jobName.toString();
 	}
 

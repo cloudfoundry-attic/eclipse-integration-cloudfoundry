@@ -66,7 +66,7 @@ public class EnvironmentVariable {
 
 			value = value.trim();
 
-			if (value.startsWith("${") && value.endsWith("}")) {
+			if (value.startsWith("${") && value.endsWith("}")) { //$NON-NLS-1$ //$NON-NLS-2$
 				StringBuffer val = new StringBuffer();
 				for (int i = 0; i < value.length(); i++) {
 					char ch = value.charAt(i);

@@ -23,6 +23,7 @@ import java.util.Set;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.wizard.Wizard;
 
 public class CaldecottTunnelWizard extends Wizard {
@@ -35,7 +36,7 @@ public class CaldecottTunnelWizard extends Wizard {
 		super();
 		this.cloudServer = cloudServer;
 
-		setWindowTitle("Active Tunnels");
+		setWindowTitle(Messages.CaldecottTunnelWizard_TITLE_ACTIVE_TUNNEL);
 		setNeedsProgressMonitor(true);
 	}
 

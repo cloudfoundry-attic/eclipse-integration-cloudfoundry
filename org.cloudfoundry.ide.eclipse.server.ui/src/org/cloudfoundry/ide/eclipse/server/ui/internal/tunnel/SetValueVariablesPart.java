@@ -26,11 +26,13 @@ import java.util.Map.Entry;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.UIPart;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -61,13 +63,13 @@ public class SetValueVariablesPart extends UIPart {
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(generalArea);
 
 
-		boolean hasOptionsToSet = createValueInputArea(optionsValueVariables, generalArea, "Command options:");
-		boolean hasEnvironmentVariablesToSet = createValueInputArea(envVarsValueVariables, generalArea, "Environment variables:");
+		boolean hasOptionsToSet = createValueInputArea(optionsValueVariables, generalArea, Messages.SetValueVariablesPart_TEXT_COMMAND_OPT);
+		boolean hasEnvironmentVariablesToSet = createValueInputArea(envVarsValueVariables, generalArea, Messages.SetValueVariablesPart_TEXT_ENV_VAR);
 
 		if (!hasOptionsToSet && !hasEnvironmentVariablesToSet) {
 			Label serverLabel = new Label(parent, SWT.NONE);
 			GridDataFactory.fillDefaults().grab(false, false).span(2, 0).applyTo(serverLabel);
-			serverLabel.setText("No command options or environment variables to set.");
+			serverLabel.setText(Messages.SetValueVariablesPart_LABEL_NO_COMMAND_OR_ENVAR);
 		}
 
 		validate(false);
@@ -108,7 +110,7 @@ public class SetValueVariablesPart extends UIPart {
 			final Map<String, String> valueVariables) {
 		Label serverLabel = new Label(parent, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(serverLabel);
-		serverLabel.setText(variable + ": ");
+		serverLabel.setText(variable + ": "); //$NON-NLS-1$
 
 		final Text text = new Text(parent, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(text);
@@ -144,7 +146,7 @@ public class SetValueVariablesPart extends UIPart {
 		}
 
 		if (missingValueVariable != null) {
-			status = CloudFoundryPlugin.getErrorStatus(showError ? missingValueVariable + " requires a value" : "");
+			status = CloudFoundryPlugin.getErrorStatus(showError ? NLS.bind(missingValueVariable, Messages.SetValueVariablesPart_ERROR_VALIDATE) : ""); //$NON-NLS-1$ 
 		}
 
 		notifyStatusChange(status);

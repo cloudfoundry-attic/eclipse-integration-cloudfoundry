@@ -20,13 +20,14 @@
 package org.cloudfoundry.ide.eclipse.server.ui.internal.editor;
 
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryURLNavigation;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 
 public class GoToSpringLinkWidget extends LinkWidget {
 
-	public static final String NAVIGATION_LABEL = "Go to Spring Insight";
+	public static final String NAVIGATION_LABEL = Messages.GoToSpringLinkWidget_TEXT_SPRING_INSIGHT;
 
 	public GoToSpringLinkWidget(Composite parent, FormToolkit toolKit) {
 		super(parent, NAVIGATION_LABEL, CloudFoundryURLNavigation.INSIGHT_URL.getLocation(), toolKit);

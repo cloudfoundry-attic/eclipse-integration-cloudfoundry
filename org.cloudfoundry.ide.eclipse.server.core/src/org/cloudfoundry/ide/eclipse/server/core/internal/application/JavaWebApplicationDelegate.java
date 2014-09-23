@@ -33,6 +33,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
@@ -66,10 +67,10 @@ public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 	 */
 	protected static Map<String, String> getJavaWebSupportedFrameworks() {
 		Map<String, String> valuesByLabel = new LinkedHashMap<String, String>();
-		valuesByLabel.put(CloudFoundryConstants.SPRING, "Spring");
-		valuesByLabel.put(CloudFoundryConstants.GRAILS, "Grails");
-		valuesByLabel.put(CloudFoundryConstants.LIFT, "Lift");
-		valuesByLabel.put(CloudFoundryConstants.JAVA_WEB, "Java Web");
+		valuesByLabel.put(CloudFoundryConstants.SPRING, "Spring"); //$NON-NLS-1$
+		valuesByLabel.put(CloudFoundryConstants.GRAILS, "Grails"); //$NON-NLS-1$
+		valuesByLabel.put(CloudFoundryConstants.LIFT, "Lift"); //$NON-NLS-1$
+		valuesByLabel.put(CloudFoundryConstants.JAVA_WEB, "Java Web"); //$NON-NLS-1$
 		return valuesByLabel;
 	}
 
@@ -93,8 +94,8 @@ public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 
 				// in case user has Grails projects without the nature
 				// attached
-				if (project.isAccessible() && project.getFolder("grails-app").exists()
-						&& project.getFile("application.properties").exists()) {
+				if (project.isAccessible() && project.getFolder("grails-app").exists() //$NON-NLS-1$
+						&& project.getFile("application.properties").exists()) { //$NON-NLS-1$
 					return CloudFoundryConstants.GRAILS;
 				}
 
@@ -131,7 +132,7 @@ public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 					// Log the error but don't throw it again as there may be
 					// other ways to detect the framework
 					CloudFoundryPlugin.log(new Status(IStatus.WARNING, CloudFoundryPlugin.PLUGIN_ID,
-							"Unexpected error during auto detection of application type", e));
+							"Unexpected error during auto detection of application type", e)); //$NON-NLS-1$
 				}
 
 				if (CloudFoundryProjectUtil.isSpringProject(project)) {
@@ -149,7 +150,7 @@ public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 	private boolean isLiftLibrary(IClasspathEntry entry) {
 		if (entry.getPath() != null) {
 			String name = entry.getPath().lastSegment();
-			return Pattern.matches("lift-webkit.*\\.jar", name);
+			return Pattern.matches("lift-webkit.*\\.jar", name); //$NON-NLS-1$
 		}
 		return false;
 	}
@@ -157,7 +158,7 @@ public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 	private boolean isSpringLibrary(IClasspathEntry entry) {
 		if (entry.getPath() != null) {
 			String name = entry.getPath().lastSegment();
-			return Pattern.matches(".*spring.*\\.jar", name);
+			return Pattern.matches(".*spring.*\\.jar", name); //$NON-NLS-1$
 		}
 		return false;
 	}
@@ -197,7 +198,7 @@ public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 
 		IStatus status = super.validateDeploymentInfo(deploymentInfo);
 		if (status.isOK() && ((deploymentInfo.getUris() == null || deploymentInfo.getUris().isEmpty()))) {
-			String errorMessage = "No mapped application URLs set in application deployment information.";
+			String errorMessage = Messages.JavaWebApplicationDelegate_ERROR_NO_MAPPED_APP_URL;
 			status = CloudFoundryPlugin.getErrorStatus(errorMessage);
 		}
 

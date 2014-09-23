@@ -44,7 +44,7 @@ public class ShowConsoleEditorAction extends Action {
 		this.server = server;
 		this.appModule = appModule;
 		this.instanceIndex = instanceIndex;
-		setText("Show Console");
+		setText(Messages.ShowConsoleEditorAction_TEXT_SHOW_CONSOLE);
 	}
 
 	@Override

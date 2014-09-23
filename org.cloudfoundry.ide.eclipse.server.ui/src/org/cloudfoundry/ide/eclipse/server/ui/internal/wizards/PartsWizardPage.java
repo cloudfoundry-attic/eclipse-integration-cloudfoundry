@@ -28,6 +28,7 @@ import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.IEventSource;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.IPartChangeListener;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.WizardPartChangeEvent;
 import org.eclipse.core.runtime.CoreException;
@@ -136,7 +137,7 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 		}
 		else if (status.getSeverity() == IStatus.ERROR) {
 			setErrorMessage(status.getMessage() != null ? status.getMessage()
-					: "Unknown error. Unable to complete the operation.");
+					: Messages.PartsWizardPage_ERROR_UNKNOWN);
 		}
 		else if (status.getSeverity() == IStatus.INFO) {
 			setMessage(status.getMessage(), DialogPage.INFORMATION);
@@ -190,7 +191,7 @@ public abstract class PartsWizardPage extends WizardPage implements IPartChangeL
 			return;
 		}
 		if (operationLabel == null) {
-			operationLabel = "";
+			operationLabel = ""; //$NON-NLS-1$
 		}
 
 		// Asynch launch as a UI job, as the wizard messages get updated before

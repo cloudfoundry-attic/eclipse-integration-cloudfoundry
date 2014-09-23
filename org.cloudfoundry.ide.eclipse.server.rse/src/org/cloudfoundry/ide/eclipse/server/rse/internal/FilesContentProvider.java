@@ -54,14 +54,14 @@ public class FilesContentProvider {
 			try {
 				if (AppState.STARTED.equals(app.getState())) {
 					String blob = server.getBehaviour().getFile(app.getName(), id, parent.substring(1), monitor);
-					String[] files = blob.split("\n");
+					String[] files = blob.split("\n"); //$NON-NLS-1$
 					long timestamp = Calendar.getInstance().getTimeInMillis();
 					for (int i = 0; i < files.length; i++) {
-						String[] content = files[i].split("\\s+");
+						String[] content = files[i].split("\\s+"); //$NON-NLS-1$
 						String name = content[0];
 						if (name.trim().length() > 0) {
 							FileResource resource = new FileResource();
-							if (name.endsWith("/")) {
+							if (name.endsWith("/")) { //$NON-NLS-1$
 								resource.setIsDirectory(true);
 								resource.setIsFile(false);
 								name = name.substring(0, name.length() - 1);
@@ -80,7 +80,7 @@ public class FilesContentProvider {
 				}
 			}
 			catch (CoreException e) {
-				CloudFoundryRsePlugin.logError("An error occurred while retrieving files for application " + app.getName(), e);
+				CloudFoundryRsePlugin.logError("An error occurred while retrieving files for application " + app.getName(), e); //$NON-NLS-1$
 			}
 		}
 		return list;

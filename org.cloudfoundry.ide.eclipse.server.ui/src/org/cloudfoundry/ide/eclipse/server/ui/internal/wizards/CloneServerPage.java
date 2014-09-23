@@ -98,7 +98,7 @@ class CloneServerPage extends CloudFoundryCloudSpaceWizardpage {
 			if (openParIndex > 0 && closeParIndex > openParIndex) {
 				suggestedName = suggestedName.substring(0, openParIndex).trim();
 			}
-			suggestedName += " (" + i++ + ")";
+			suggestedName += " (" + i++ + ")"; //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return suggestedName;
 	}
@@ -157,7 +157,7 @@ class CloneServerPage extends CloudFoundryCloudSpaceWizardpage {
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(serverNameComp);
 		Label label = new Label(serverNameComp, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(label);
-		label.setText("Server Name:");
+		label.setText(Messages.CloneServerPage_LABEL_SERVER_NAME);
 
 		serverNameText = new Text(serverNameComp, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(serverNameText);
@@ -232,7 +232,7 @@ class CloneServerPage extends CloudFoundryCloudSpaceWizardpage {
 		if (visible) {
 			// Launch it as a job, to give the wizard time to display
 			// the spaces viewer
-			UIJob job = new UIJob("Refreshing list of organization and spaces") {
+			UIJob job = new UIJob(Messages.CloneServerPage_JOB_REFRESH_ORG_SPACE) {
 
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {

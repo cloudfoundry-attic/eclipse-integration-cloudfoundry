@@ -24,6 +24,7 @@ import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudServerSpacesDelegate;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudSpacesDelegate;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudSpacesSelectionPart;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
@@ -38,7 +39,7 @@ public class CloudFoundryCloudSpaceWizardpage extends WizardPage {
 	protected CloudSpacesSelectionPart spacesPart;
 
 	public CloudFoundryCloudSpaceWizardpage(CloudFoundryServer cloudServer, CloudServerSpacesDelegate cloudServerSpaceDelegate) {
-		super(cloudServer.getServer().getName() + " Organization and Spaces");
+		super(cloudServer.getServer().getName() + Messages.CloudFoundryCloudSpaceWizardpage_TEXT_ORG_AND_SPACES);
 		this.cloudServer = cloudServer;
 		this.cloudServerSpaceDelegate = cloudServerSpaceDelegate;
 		ImageDescriptor banner = CloudFoundryImages.getWizardBanner(cloudServer.getServer().getServerType().getId());
