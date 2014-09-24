@@ -73,15 +73,9 @@ public class Messages extends NLS {
 
 	public static String ERROR_FAILED_MODULE_REFRESH;
 
-	public static String ERROR_FIRE_REFRESH;
-
 	public static String ERROR_INITIALISE_REFRESH_NO_SERVER;
 
 	public static String ERROR_APP_DEPLOYMENT_VALIDATION_ERROR;
-
-	public static String ERROR_NO_WST_MODULE;
-
-	public static String ERROR_NO_MAPPED_CLOUD_MODULE;
 
 	public static String ERROR_FAILED_TO_PUSH_APP;
 
@@ -138,10 +132,8 @@ public class Messages extends NLS {
 	public static String CloudFoundryServer_ERROR_FAIL_ON_CFAPP_CREATION;
 
 	public static String CloudFoundryServer_ERROR_SERVER_ORIGIN_NOT_FOUND;
-	
+
 	public static String CloudFoundryServer_JOB_UPDATE;
-	
-	public static String CloudSpacesDelegate_ERROR_FAIL_LOADING_CLOUDSPACES;
 
 	public static String CommandOptions_DESCRIPTION_VARIABLES_FOR_TUNNEL;
 
@@ -171,7 +163,7 @@ public class Messages extends NLS {
 
 	public static String CONSOLE_PREPARING_APP;
 
-	public static String CONSOLE_STILL_WAITING_FOR_APPLICAITON_TO_START;
+	public static String CONSOLE_STILL_WAITING_FOR_APPLICATION_TO_START;
 
 	public static String CONSOLE_WAITING_FOR_APPLICATION_TO_START;
 
@@ -193,13 +185,12 @@ public class Messages extends NLS {
 
 	public static String ModuleResourceApplicationArchive_ERROR_NO_DEPLOYABLE_RES_FOUND;
 
-	
 	private static final String BUNDLE_NAME = CloudFoundryPlugin.PLUGIN_ID + ".internal.Messages"; //$NON-NLS-1$
-	
+
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, Messages.class);
 	}
-	
+
 	private Messages() {
-	}	
+	}
 }

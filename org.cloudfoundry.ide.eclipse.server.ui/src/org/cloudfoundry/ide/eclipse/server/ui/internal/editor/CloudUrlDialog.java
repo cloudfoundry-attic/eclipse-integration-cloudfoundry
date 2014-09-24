@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -46,6 +46,7 @@ import org.eclipse.swt.widgets.Text;
 
 /**
  * @author Terry Denney
+ * @deprecated No longer in use. May be removed.
  */
 public class CloudUrlDialog extends Dialog {
 
@@ -124,7 +125,7 @@ public class CloudUrlDialog extends Dialog {
 		boolean canFinish = false;
 		
 		if (name == null || name.length() == 0 ) {
-			messageLabel.setText(Messages.CloudUrlDialog_TEXT_ENTER_URL_NAME);
+			messageLabel.setText(Messages.CloudUrlDialog_TEXT_ENTER_URL_LABEL);
 		} else if (url == null || url.length() == 0) {
 			messageLabel.setText(Messages.CloudUrlDialog_TEXT_ENTER_URL);
 		} else {
@@ -146,10 +147,10 @@ public class CloudUrlDialog extends Dialog {
 					String host = urlObject.getHost();
 					if (host == null || host.length() == 0) {
 						canFinish = false;
-						messageLabel.setText(Messages.CloudUrlDialog_TEXT_ENTER_VALID_URL);
+						messageLabel.setText(Messages.COMMONTXT_ENTER_VALID_URL);
 					}
 				} catch (MalformedURLException e) {
-					messageLabel.setText(Messages.CloudUrlDialog_TEXT_ENTER_VALID_URL);
+					messageLabel.setText(Messages.COMMONTXT_ENTER_VALID_URL);
 					canFinish = false;
 				} catch (CloudFoundryException e) {
 					messageLabel.setText(Messages.CloudUrlDialog_TEXT_ENTER_VALID_CONTROLLER);
