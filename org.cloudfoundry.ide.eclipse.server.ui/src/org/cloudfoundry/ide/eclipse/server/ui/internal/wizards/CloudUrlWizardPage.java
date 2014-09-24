@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -167,11 +167,11 @@ public class CloudUrlWizardPage extends WizardPage {
 					String host = urlObject.getHost();
 					if (host == null || host.length() == 0) {
 						canFinish = false;
-						messageLabel.setText(Messages.CloudUrlWizardPage_LABEL_INVALID_URL);
+						messageLabel.setText(Messages.COMMONTXT_ENTER_VALID_URL);
 					}
 				}
 				catch (MalformedURLException e) {
-					messageLabel.setText(Messages.CloudUrlWizardPage_LABEL_INVALID_URL);
+					messageLabel.setText(Messages.COMMONTXT_ENTER_VALID_URL);
 					canFinish = false;
 				}
 				catch (CloudFoundryException e) {

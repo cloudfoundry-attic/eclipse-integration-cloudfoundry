@@ -94,9 +94,6 @@ public class ManifestParser {
 
 	public static final String DEFAULT = "manifest.yml"; //$NON-NLS-1$
 
-	//This is not used
-	static final String ERROR_MESSAGE = "Unable to write changes to the application's manifest file"; //$NON-NLS-1$
-
 	public ManifestParser(CloudFoundryApplicationModule appModule, CloudFoundryServer cloudServer) {
 		this(DEFAULT, appModule, cloudServer);
 	}

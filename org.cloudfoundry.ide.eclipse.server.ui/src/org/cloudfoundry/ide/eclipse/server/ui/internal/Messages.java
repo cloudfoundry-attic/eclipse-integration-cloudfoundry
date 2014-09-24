@@ -21,47 +21,50 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
 import org.eclipse.osgi.util.NLS;
 
-public class Messages extends NLS{
+public class Messages extends NLS {
 
 	/*
 	 * Common
 	 */
-	
+
 	public static String COMMONTXT_ADD_SERVICE;
-	
+
 	public static String COMMONTXT_APPLICATIONS;
-	
+
 	public static String COMMONTXT_ENV_VAR;
-	
+
 	public static String COMMONTXT_SERVICES;
-	
+
 	public static String COMMONTXT_EDIT;
 
 	public static String COMMONTXT_MEM;
-	
+
 	public static String COMMONTXT_NAME;
-	
+
 	public static String COMMONTXT_NAME_WITH_COLON;
-	
+
 	public static String COMMONTXT_EMAIL_WITH_COLON;
-	
+
 	public static String COMMONTXT_PW;
-	
+
 	public static String COMMONTXT_URL;
-	
+
 	public static String COMMONTXT_ACCOUNT_INFO;
-	
+
 	public static String COMMONTXT_REMOVE;
-	
+
 	public static String COMMONTXT_OK;
-	
+
 	public static String COMMONTXT_DOMAIN;
-	
+
 	public static String COMMONTXT_ADD;
+	
+	public static String COMMONTXT_ENTER_VALID_URL;
+
 	/*
 	 * Per-class
 	 */
-	
+
 	public static String AbstractURLWizardPage_ERROR_NO_URL_HANDLER;
 
 	public static String AbstractURLWizardPage_LABEL_FETCHING_DOMAIN;
@@ -113,7 +116,7 @@ public class Messages extends NLS{
 	public static String ApplicationDetailsPart_ERROR_INCORRECT_SERVICE;
 
 	public static String ApplicationDetailsPart_ERROR_INVALID_MEMORY;
-	
+
 	public static String ApplicationDetailsPart_ERROR_FAIL_TO_RESOLVE_CLOUD_MODULE;
 
 	public static String ApplicationDetailsPart_ERROR_FAILED_MEMORY_UPDATE;
@@ -123,7 +126,7 @@ public class Messages extends NLS{
 	public static String ApplicationDetailsPart_ERROR_NO_CF_APP_MODULE;
 
 	public static String ApplicationDetailsPart_ERROR_NO_CF_APP_MODULE_FOR;
-	
+
 	public static String ApplicationDetailsPart_ERROR_OPEN_URL_WIZ;
 
 	public static String ApplicationDetailsPart_ERROR_PERFORM;
@@ -141,13 +144,13 @@ public class Messages extends NLS{
 	public static String ApplicationDetailsPart_ERROR_WRITE_TO_MANIFEST;
 
 	public static String ApplicationDetailsPart_ERROR_WRITE_TO_MANIFEST_DUE;
-			
+
 	public static String ApplicationDetailsPart_JOB_EDIT_ENV_VAR;
-	
+
 	public static String ApplicationDetailsPart_JOB_WRITE;
-	
+
 	public static String ApplicationDetailsPart_JOB_DEBUG;
-	
+
 	public static String ApplicationDetailsPart_TEXT_APP_OP;
 
 	public static String ApplicationDetailsPart_TEXT_APP_SERVICES;
@@ -236,10 +239,6 @@ public class Messages extends NLS{
 
 	public static String ApplicationURLWizard_TITLE_MOD_APP_URL;
 
-	public static String ERROR_NO_VALIDATOR_PRESENT;
-
-	public static String ERROR_NO_CALLBACK_UNABLE_TO_REFRESH_CONSOLE;
-
 	public static String ERROR_VALID_SERVER_NAME;
 
 	public static String ERROR_SERVER_NAME_ALREADY_EXISTS;
@@ -253,7 +252,7 @@ public class Messages extends NLS{
 	public static String ERROR_NO_URL_SPACES;
 
 	public static String ERROR_APPLICATION_LOG;
-	
+
 	public static String ERROR_INVALID_MEMORY;
 
 	public static String ERROR_FAILED_INITIALISE_APPLICATION_LOG_STREAM;
@@ -403,7 +402,7 @@ public class Messages extends NLS{
 	public static String DESELECT_ALL;
 
 	public static String ShowConsoleEditorAction_TEXT_SHOW_CONSOLE;
-	
+
 	public static String SERVER_WIZARD_VALIDATOR_CLICK_TO_VALIDATE;
 
 	public static String ServerHandler_QUERY_RUNTIME_EXISTS;
@@ -455,7 +454,7 @@ public class Messages extends NLS{
 	public static String SpringInsightSection_TEXT_SPRING_INSIGHT;
 
 	public static String CaldecottDisconnectAllAction_JOB_STOP;
-	
+
 	public static String CaldecottDisconnectAllAction_TEXT_DISCON_TUNNEL;
 
 	public static String CaldecottTunnelAction_TEXT_SHOW_ACTIVE_TUNNEL;
@@ -527,7 +526,7 @@ public class Messages extends NLS{
 	public static String CloudFoundryApplicationServicesWizardPage_TEXT_VERIFY_SERVICE_PROGRESS;
 
 	public static String CloudFoundryApplicationWizard_TITLE_APP;
-	
+
 	public static String CloudFoundryApplicationWizardPage_BUTTON_SAVE_MANIFEST;
 
 	public static String CloudFoundryApplicationWizardPage_ERROR_INVALID_CHAR;
@@ -637,7 +636,7 @@ public class Messages extends NLS{
 	public static String CloudFoundryServiceWizardPage1_TEXT_TYPE_FILTER;
 
 	public static String CloudFoundryServiceWizardPage1_TTILE_SERVICE_CONFIG;
-	
+
 	public static String CloudRoutePart_UNDO;
 
 	public static String CloudFoundryUiCallback_ERROR_CALLBACK_TITLE;
@@ -657,7 +656,7 @@ public class Messages extends NLS{
 	public static String CloudRoutesWizard_TEXT_CLOUD_ROUTE_PAGE;
 
 	public static String CloudRoutesWizard_TEXT_CLOUD_ROUTES;
-	
+
 	public static String CloudSpacesDelegate_ERROR_FAIL_LOADING_CLOUDSPACES;
 
 	public static String CloudSpacesSelectionPart_TEXT_DEFAULT_DESCRIPTION;
@@ -694,19 +693,15 @@ public class Messages extends NLS{
 
 	public static String CloudUrlDialog_TEXT_ENTER_URL;
 
-	public static String CloudUrlDialog_TEXT_ENTER_URL_NAME;
-
 	public static String CloudUrlDialog_TEXT_ENTER_VALID_CONTROLLER;
-
-	public static String CloudUrlDialog_TEXT_ENTER_VALID_URL;
 
 	public static String CloudUrlDialog_TEXT_INVALID_URL;
 
 	public static String CloudUrlDialog_TEXT_URL_EXISTS;
 
 	public static String CloudUrlWidget_TEXT_MANAGE_CLOUD;
-	
-	public static String CloudUrlWizard_ERROR_VALIDATE; 
+
+	public static String CloudUrlWizard_ERROR_VALIDATE;
 
 	public static String CloudUrlWizard_ERROR_KEEP_BODY;
 
@@ -730,38 +725,38 @@ public class Messages extends NLS{
 
 	public static String CloudUrlWizardPage_LABEL_INVALID_CONTROLLER;
 
-	public static String CloudUrlWizardPage_LABEL_INVALID_URL;
-
 	public static String CloudUrlWizardPage_LABEL_SET_DIFF_URL;
 
 	public static String CloudUrlWizardPage_TEXT_CLOUD_URL;
 
 	public static String CloudUrlWizardPage_TEXT_DESCRIPT;
 
-	public static String CloudUrlWizardPage_TITLE_CLOUD_URL;public static String CommandDefinitionActions_TEXT_CMD_DEF;
+	public static String CloudUrlWizardPage_TITLE_CLOUD_URL;
+
+	public static String CommandDefinitionActions_TEXT_CMD_DEF;
 
 	public static String CommandDefinitionActions_TEXT_CMD_DEFS;
 
 	public static String ConnectCommand_JOB_CONN_SERVER;
-	
+
 	public static String ConnectCommand_ERROR_CONNECT;
 
 	public static String DisablePublishSection_TEXT_PUBLISHING;
-	
+
 	public static String DisablePublishSection_MANUAL;
 
 	public static String DisconnectCommand_JOB_DISCONN_SERVER;
-	
+
 	public static String VALID_ACCOUNT;
-	
+
 	public static String ERROR_INVALID_ORG;
-	
+
 	public static String ERROR_INVALID_SPACE;
-	
+
 	public static String ERROR_SERVER_INSTANCE_CLOUD_SPACE_EXISTS;
-	
+
 	public static String ERROR_ALL_SPACES_ASSOCIATED_SERVER_INSTANCES;
-	
+
 	public static String ERROR_CHECK_CONNECTION_NO_SPACES;
 
 	public static String FileConsoleStream_ERROR_REACH_MAX;
@@ -845,10 +840,9 @@ public class Messages extends NLS{
 	public static String RemoveServicesFromApplicationAction_TEXT_UNBIND_FROM_APP;
 
 	public static String RepublishApplicationHandler_ERROR_REPUBLISH_FAIL;
-	
-	
+
 	private static final String BUNDLE_NAME = CloudFoundryServerUiPlugin.PLUGIN_ID + ".internal.Messages"; //$NON-NLS-1$
-	
+
 	static {
 		// initialize resource bundle
 		NLS.initializeMessages(BUNDLE_NAME, Messages.class);

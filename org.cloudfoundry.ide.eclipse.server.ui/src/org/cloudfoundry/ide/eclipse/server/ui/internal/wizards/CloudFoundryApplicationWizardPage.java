@@ -83,8 +83,6 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 	protected final CloudFoundryDeploymentWizardPage deploymentPage;
 
-
-
 	public CloudFoundryApplicationWizardPage(CloudFoundryServer server,
 			CloudFoundryDeploymentWizardPage deploymentPage, CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor) {
@@ -165,8 +163,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 		final Button saveToManifest = new Button(composite, SWT.CHECK);
 		saveToManifest.setText(Messages.CloudFoundryApplicationWizardPage_BUTTON_SAVE_MANIFEST);
-		saveToManifest
-				.setToolTipText(Messages.CloudFoundryApplicationWizardPage_TEXT_SAVE_MANIFEST_TOOLTIP);
+		saveToManifest.setToolTipText(Messages.CloudFoundryApplicationWizardPage_TEXT_SAVE_MANIFEST_TOOLTIP);
 
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(saveToManifest);
 
@@ -200,7 +197,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 				URL urlObject = new URL(buildpack);
 				String host = urlObject.getHost();
 				if (host == null || host.length() == 0) {
-					status = CloudFoundryPlugin.getErrorStatus("Enter a valid URL."); //$NON-NLS-1$
+					status = CloudFoundryPlugin.getErrorStatus(Messages.COMMONTXT_ENTER_VALID_URL);
 				}
 				else {
 					// Only set valid buildpack URLs
@@ -208,7 +205,7 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 				}
 			}
 			catch (MalformedURLException e) {
-				status = CloudFoundryPlugin.getErrorStatus("Enter a valid URL."); //$NON-NLS-1$
+				status = CloudFoundryPlugin.getErrorStatus(Messages.COMMONTXT_ENTER_VALID_URL);
 			}
 		}
 
@@ -219,12 +216,14 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 	protected IStatus getUpdateNameStatus() {
 		IStatus status = Status.OK_STATUS;
 		if (ValueValidationUtil.isEmpty(appName)) {
-			status = CloudFoundryPlugin.getStatus(Messages.CloudFoundryApplicationWizardPage_ERROR_MISSING_APPNAME, IStatus.ERROR);
+			status = CloudFoundryPlugin.getStatus(Messages.CloudFoundryApplicationWizardPage_ERROR_MISSING_APPNAME,
+					IStatus.ERROR);
 		}
 		else {
 			Matcher matcher = VALID_CHARS.matcher(appName);
 			if (!matcher.matches()) {
-				status = CloudFoundryPlugin.getErrorStatus(Messages.CloudFoundryApplicationWizardPage_ERROR_INVALID_CHAR);
+				status = CloudFoundryPlugin
+						.getErrorStatus(Messages.CloudFoundryApplicationWizardPage_ERROR_INVALID_CHAR);
 			}
 			else {
 				ModuleCache moduleCache = CloudFoundryPlugin.getModuleCache();

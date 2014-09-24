@@ -153,6 +153,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private RefreshHandler refreshHandler;
 
 	private ApplicationUrlLookupService applicationUrlLookup;
+	
+	public static String INTERNAL_ERROR_NO_WST_MODULE = "Internal Error: No WST IModule specified - Unable to deploy or start application"; //$NON-NLS-1$
+
+	public static String INTERNAL_ERROR_NO_MAPPED_CLOUD_MODULE = "Internal Error: No mapped application module found for: {0} - Unable to deploy or start application"; //$NON-NLS-1$
 
 	/*
 	 * FIXNS: Until V2 MCF is released, disable debugging support for V2, as
@@ -674,7 +678,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		CloudFoundryApplicationModule appModule = null;
 		if (modules == null || modules.length == 0) {
-			throw CloudErrorUtil.toCoreException(Messages.ERROR_NO_WST_MODULE);
+			throw CloudErrorUtil.toCoreException(INTERNAL_ERROR_NO_WST_MODULE);
 		}
 		else {
 			IModule module = modules[0];
@@ -685,7 +689,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 			if (appModule == null) {
 				throw CloudErrorUtil
-						.toCoreException(NLS.bind(Messages.ERROR_NO_MAPPED_CLOUD_MODULE, modules[0].getId()));
+						.toCoreException(NLS.bind(INTERNAL_ERROR_NO_MAPPED_CLOUD_MODULE, modules[0].getId()));
 
 			}
 

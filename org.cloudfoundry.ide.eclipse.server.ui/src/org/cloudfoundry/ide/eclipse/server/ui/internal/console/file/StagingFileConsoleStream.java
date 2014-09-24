@@ -124,7 +124,7 @@ public class StagingFileConsoleStream extends FileConsoleStream {
 				}
 			}
 			else if (currentAttemptsRemaining == 0) {
-				return '\n' + Messages.CONSOLE_STILL_WAITING_FOR_APPLICAITON_TO_START;
+				return '\n' + Messages.CONSOLE_STILL_WAITING_FOR_APPLICATION_TO_START;
 			}
 		}
 		return null;

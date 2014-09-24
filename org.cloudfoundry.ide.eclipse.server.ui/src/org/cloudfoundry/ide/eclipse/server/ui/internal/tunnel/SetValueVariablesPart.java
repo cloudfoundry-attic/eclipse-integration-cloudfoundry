@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -62,9 +62,10 @@ public class SetValueVariablesPart extends UIPart {
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(generalArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(generalArea);
 
-
-		boolean hasOptionsToSet = createValueInputArea(optionsValueVariables, generalArea, Messages.SetValueVariablesPart_TEXT_COMMAND_OPT);
-		boolean hasEnvironmentVariablesToSet = createValueInputArea(envVarsValueVariables, generalArea, Messages.SetValueVariablesPart_TEXT_ENV_VAR);
+		boolean hasOptionsToSet = createValueInputArea(optionsValueVariables, generalArea,
+				Messages.SetValueVariablesPart_TEXT_COMMAND_OPT);
+		boolean hasEnvironmentVariablesToSet = createValueInputArea(envVarsValueVariables, generalArea,
+				Messages.SetValueVariablesPart_TEXT_ENV_VAR);
 
 		if (!hasOptionsToSet && !hasEnvironmentVariablesToSet) {
 			Label serverLabel = new Label(parent, SWT.NONE);
@@ -135,7 +136,7 @@ public class SetValueVariablesPart extends UIPart {
 				}
 			}
 		}
-		
+
 		if (missingValueVariable == null && envVarsValueVariables != null) {
 			for (Entry<String, String> entry : envVarsValueVariables.entrySet()) {
 				if (entry.getValue() == null || ValueValidationUtil.isEmpty(entry.getValue())) {
@@ -146,7 +147,8 @@ public class SetValueVariablesPart extends UIPart {
 		}
 
 		if (missingValueVariable != null) {
-			status = CloudFoundryPlugin.getErrorStatus(showError ? NLS.bind(missingValueVariable, Messages.SetValueVariablesPart_ERROR_VALIDATE) : ""); //$NON-NLS-1$ 
+			status = CloudFoundryPlugin.getErrorStatus(showError ? NLS.bind(
+					Messages.SetValueVariablesPart_ERROR_VALIDATE, missingValueVariable) : ""); //$NON-NLS-1$ 
 		}
 
 		notifyStatusChange(status);

@@ -63,7 +63,8 @@ public class ShowConsoleEditorAction extends Action {
 					return Status.OK_STATUS;
 				}
 				else {
-					return CloudFoundryPlugin.getErrorStatus(Messages.ERROR_NO_CALLBACK_UNABLE_TO_REFRESH_CONSOLE);
+					return CloudFoundryPlugin
+							.getErrorStatus("Internal Error: No Cloud Foundry console callback available. Unable to refresh console contents."); //$NON-NLS-1$
 				}
 			}
 

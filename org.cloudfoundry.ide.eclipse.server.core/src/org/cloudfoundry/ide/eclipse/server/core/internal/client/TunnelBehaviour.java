@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -46,7 +46,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SubMonitor;
-import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -214,7 +213,8 @@ public class TunnelBehaviour {
 
 					}
 					catch (CoreException e) {
-						CloudFoundryPlugin.logError("Failed to stop existing tunnel for service " + new Object[] { serviceName } + ". Unable to create new tunnel."); //$NON-NLS-1$ //$NON-NLS-2$
+						CloudFoundryPlugin
+								.logError("Failed to stop existing tunnel for service " + serviceName + ". Unable to create new tunnel."); //$NON-NLS-1$ //$NON-NLS-2$
 						return null;
 					}
 				}
@@ -223,7 +223,7 @@ public class TunnelBehaviour {
 
 				Map<String, String> info = getTunnelInfo(client, serviceName, getSubMonitor(worked, progress));
 				if (info == null) {
-					CloudFoundryPlugin.logError("Failed to obtain tunnel information for " + new Object[] { serviceName }); //$NON-NLS-1$
+					CloudFoundryPlugin.logError("Failed to obtain tunnel information for " + serviceName); //$NON-NLS-1$
 					return null;
 				}
 
@@ -257,9 +257,9 @@ public class TunnelBehaviour {
 				int localPort = getTunnelServer(tunnelFactory, tunnelServers);
 
 				if (tunnelServers.isEmpty() || localPort == -1) {
-					CloudFoundryPlugin
-							.logError("Tunnel information obtained for " + serviceName + //$NON-NLS-1$
-									", but failed to create tunnel server for ports between: " + new Integer(BASE_PORT) + " and " + new Integer(MAX_PORT)); //$NON-NLS-1$ //$NON-NLS-2$
+					CloudFoundryPlugin.logError("Tunnel information obtained for " + serviceName + //$NON-NLS-1$
+							", but failed to create tunnel server for ports between: " + new Integer(BASE_PORT)
+							+ " and " + new Integer(MAX_PORT)); //$NON-NLS-1$ //$NON-NLS-2$
 					return null;
 				}
 
