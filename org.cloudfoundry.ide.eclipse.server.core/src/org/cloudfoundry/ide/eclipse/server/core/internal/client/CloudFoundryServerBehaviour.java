@@ -72,10 +72,12 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.RefreshHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.server.core.internal.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudFoundrySpace;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpaces;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -83,6 +85,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
@@ -1296,7 +1299,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return Status.OK_STATUS;
 	}
 
-        /**
+	/**
 	 * Judges whether there is a <code>CloudFoundryApplicationModule</code> with the given name 
 	 * in current server or not.
 	 * 
@@ -1310,6 +1313,61 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			if (modules[0] instanceof CloudFoundryApplicationModule 
 			    && modules[0].getName().equals(moduleName)) {
 				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Gets the <code>CloudFoundryApplicationModule</code> instance according to 
+	 * the given module name.
+	 * 
+	 * @param moduleName the name of the module required
+	 * @return the corresponding <code>CloudFoundryApplicationModule</code> instance if it exists 
+	 *         in current server, or null if it doesn't exist.
+	 */
+	public CloudFoundryApplicationModule getCloudApplicationModule(String moduleName) {
+		List<IModule[]> allModules = getAllModules();
+		for (IModule[] modules : allModules) {
+			if (modules[0] instanceof CloudFoundryApplicationModule 
+				&& modules[0].getName().equals(moduleName)) {
+				return (CloudFoundryApplicationModule)modules[0];
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * Gets all the modules in current cloud foundry server.
+	 * 
+	 * @return a list containing all the existing modules, which
+	 *     represent the applications have been published to CF
+	 */
+	public List<IModule> getExistModules() {
+		List<IModule> existModules = new ArrayList<IModule>();
+		List<IModule[]> allModules = getAllModules();
+		for (IModule[] modules : allModules) {
+			existModules.add(modules[0]);
+		}
+		return existModules;
+	}
+
+	/**
+	 * Judges whether there exists a module bound with the given project or not.
+	 * 
+	 * @param project the target project to be checked
+	 * @return true if the given project has a bound module, false otherwise
+	 */
+	public boolean existBoundModule(IProject project) {
+		if (null == project) {
+			return false;
+		}
+		List<IModule[]> allModules = getAllModules();
+		for (IModule[] item : allModules) {
+			if (!(item[0] instanceof CloudFoundryApplicationModule)) {
+				if (project.equals(item[0].getProject())) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -2496,6 +2554,59 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		}
 
+	}
+	
+	/**
+	 * Gets the operation to replace a cloud application with the given new module
+	 * created by a selected project.
+	 * 
+	 * @param modules the moudle to replace the target cloud application.
+	 * @return the operation is about to replace the target cloud application
+	 */
+	public ICloudFoundryOperation getReplaceCloudApplicationOperation(IModule[] modules) {
+		return new ReplaceCloudApplicationOperation(modules);
+	}
+	
+	/**
+	 * Operation to replace cloud application with the given moudle created for
+	 * the binding selected project.
+	 * 
+	 */
+	protected class ReplaceCloudApplicationOperation extends StartOperation {
+
+		/**
+		 * Constructs an instance of <code>ReplaceCloudApplicationOperation</code>.
+		 * 
+		 * @param modules the target module used to replace the related clound appliction
+		 */
+		public ReplaceCloudApplicationOperation(IModule[] modules) {
+			super(false, modules);
+		}
+		
+		
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		protected void performOperation(IProgressMonitor monitor) throws CoreException {
+			//Firstly generates the manifest
+			storeApplicationDeploymentInfo(new SubProgressMonitor(monitor, 50));
+			
+			//Then generates war and replaces the target cloud appliation
+			super.performOperation(new SubProgressMonitor(monitor, 50));
+		}
+		
+		/**
+		 * Stores the deployment information of the related cloud application.
+		 * 
+		 * @param monitor progress monitor
+		 * @throws CoreException if error occurs when stroing the deployment information
+		 */
+		protected void storeApplicationDeploymentInfo(IProgressMonitor monitor) throws CoreException {
+			CloudFoundryApplicationModule cloudModule = getCloudFoundryServer().getCloudModule(modules[0]);
+			ApplicationDeploymentInfo deployInfo = cloudModule.resolveDeploymentInfoWorkingCopy(monitor).copy();
+			new ManifestParser(cloudModule, getCloudFoundryServer()).write(monitor, deployInfo);
+		}
 	}
 
 	/**

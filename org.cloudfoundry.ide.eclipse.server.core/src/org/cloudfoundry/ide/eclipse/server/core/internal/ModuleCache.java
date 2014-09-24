@@ -238,6 +238,22 @@ public class ModuleCache {
 			return null;
 		}
 
+		/**
+		 * Gets the cloud module whose local module is the given module.
+		 * 
+		 * @param module the target module to be checked
+		 * @return the corresponding <code>CloudFoundryApplicationModule</code> instance, 
+		 *        or null if not found.
+		 */
+		private CloudFoundryApplicationModule getCloudModuleWithLocalModule(IModule module) {
+			for (CloudFoundryApplicationModule cloudModule : cloudModules) {
+				if (cloudModule.getLocalModule() != null && cloudModule.getLocalModule().equals(module)) {
+					return cloudModule;
+				}
+			}
+			return null;
+		}
+
 		private String getServerId() {
 			return server.getAttribute(CloudFoundryServer.PROP_SERVER_ID, (String) null);
 		}
@@ -282,7 +298,9 @@ public class ModuleCache {
 				}
 				// If not available, it means it needs to be created below.
 			}
-			return null;
+
+			// See if there is a cloud module whose local module is the given module
+			return getCloudModuleWithLocalModule(module);
 		}
 
 		synchronized CloudFoundryApplicationModule getOrCreateCloudModule(IModule module) {

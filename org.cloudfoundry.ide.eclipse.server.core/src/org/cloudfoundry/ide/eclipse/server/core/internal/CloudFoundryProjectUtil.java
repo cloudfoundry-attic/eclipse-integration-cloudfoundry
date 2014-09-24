@@ -103,4 +103,13 @@ public class CloudFoundryProjectUtil {
 		return getJavaProject(getProject(appModule));
 	}
 
+	/**
+	 * Judges whether the given resource is a Java project or not.
+	 * 
+	 * @param resouce the resource to be tested
+	 * @return true if it is a Java project, otherwise false
+	 */
+	public static boolean isJavaProject(IResource resouce) {
+		return hasNature(resouce, JavaCore.NATURE_ID);
+	}
 }

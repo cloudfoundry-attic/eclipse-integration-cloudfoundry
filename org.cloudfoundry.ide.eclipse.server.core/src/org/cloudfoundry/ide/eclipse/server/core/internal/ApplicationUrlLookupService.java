@@ -26,6 +26,7 @@ import org.cloudfoundry.client.lib.domain.CloudDomain;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -121,6 +122,11 @@ public class ApplicationUrlLookupService {
 		if (!isValidStatus.isOK()) {
 			throw new CoreException(isValidStatus);
 		}
+
+		// For avoiding the situation that the application is running well 
+		// but the domainsPerActiveSpace is not initialized, so the below 
+		// CoreException will be thrown.
+		refreshDomains(new NullProgressMonitor());
 
 		if (domainsPerActiveSpace == null || domainsPerActiveSpace.isEmpty()) {
 			throw new CoreException(
