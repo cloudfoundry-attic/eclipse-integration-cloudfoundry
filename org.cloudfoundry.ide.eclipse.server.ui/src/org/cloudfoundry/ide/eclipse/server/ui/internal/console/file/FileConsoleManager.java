@@ -177,8 +177,13 @@ public class FileConsoleManager extends CloudConsoleManager {
 		String appUrl = getConsoleId(server, appModule, instanceIndex);
 		CloudFoundryFileConsole serverLogTail = consoleByUri.get(appUrl);
 		if (serverLogTail != null) {
-			serverLogTail.stop();
+			
 			consoleByUri.remove(appUrl);
+			
+			serverLogTail.stop();
+			MessageConsole messageConsole = serverLogTail.getConsole();
+			consoleManager.removeConsoles(new IConsole[] { messageConsole });
+			messageConsole.destroy();
 		}
 	}
 

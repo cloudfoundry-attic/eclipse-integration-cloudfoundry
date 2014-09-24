@@ -41,6 +41,7 @@ import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.NotFinishedStagingException;
 import org.cloudfoundry.client.lib.StartingInfo;
+import org.cloudfoundry.client.lib.StreamingLogToken;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.domain.ApplicationLog;
@@ -153,7 +154,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private RefreshHandler refreshHandler;
 
 	private ApplicationUrlLookupService applicationUrlLookup;
-	
+
 	public static String INTERNAL_ERROR_NO_WST_MODULE = "Internal Error: No WST IModule specified - Unable to deploy or start application"; //$NON-NLS-1$
 
 	public static String INTERNAL_ERROR_NO_MAPPED_CLOUD_MODULE = "Internal Error: No mapped application module found for: {0} - Unable to deploy or start application"; //$NON-NLS-1$
@@ -239,7 +240,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public void createService(final CloudService[] services, IProgressMonitor monitor) throws CoreException {
 
 		new BehaviourRequest<Void>(services.length == 1 ? "Creating service " + services[0].getName() //$NON-NLS-1$
-				: "Creating services") { //$NON-NLS-1$
+		: "Creating services") { //$NON-NLS-1$
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 
@@ -342,7 +343,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				applicationUrlLookup = new ApplicationUrlLookupService(getCloudFoundryServer());
 			}
 			catch (CoreException e) {
-				CloudFoundryPlugin.logError("Failed to create the Cloud Foundry Application URL lookup service due to {" + //$NON-NLS-1$
+				CloudFoundryPlugin.logError(
+						"Failed to create the Cloud Foundry Application URL lookup service due to {" + //$NON-NLS-1$
 								e.getMessage(), e);
 			}
 		}
@@ -769,25 +771,26 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return doDebugModule(true, modules, isIncrementalPublishing, monitor);
 	}
 
-	public void addApplicationLogListener(final String appName, final ApplicationLogListener listener) {
-		if (appName == null || listener == null) {
-			return;
+	public StreamingLogToken addApplicationLogListener(final String appName, final ApplicationLogListener listener) {
+		if (appName != null && listener != null) {
+			try {
+				return new BehaviourRequest<StreamingLogToken>("Adding application log listener") //$NON-NLS-1$
+				{
+					@Override
+					protected StreamingLogToken doRun(CloudFoundryOperations client, SubMonitor progress)
+							throws CoreException {
+						return client.streamLogs(appName, listener);
+					}
+
+				}.run(new NullProgressMonitor());
+			}
+			catch (CoreException e) {
+				CloudFoundryPlugin.logError(NLS.bind(Messages.ERROR_APPLICATION_LOG_LISTENER, appName, e.getMessage()),
+						e);
+			}
 		}
 
-		try {
-			new BehaviourRequest<Void>("Adding application log listener") //$NON-NLS-1$
-			{
-				@Override
-				protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-					client.streamLogs(appName, listener);
-					return null;
-				}
-
-			}.run(new NullProgressMonitor());
-		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.logError(NLS.bind(Messages.ERROR_APPLICATION_LOG_LISTENER, appName, e.getMessage()), e);
-		}
+		return null;
 	}
 
 	public List<ApplicationLog> getRecentApplicationLogs(final String appName) {
@@ -1183,7 +1186,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		 * RestTemplate restTemplate = new RestTemplate(); String response =
 		 * restTemplate.getForObject(application.getUris().get(0),
 		 * String.class); if
-		 * (response.contains("B29 ROUTER: 404 - FILE NOT FOUND")) { return 
+		 * (response.contains("B29 ROUTER: 404 - FILE NOT FOUND")) { return
 		 * false; }
 		 */
 		return AppState.STARTED.equals(application.getState());
@@ -1296,19 +1299,18 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return Status.OK_STATUS;
 	}
 
-        /**
-	 * Judges whether there is a <code>CloudFoundryApplicationModule</code> with the given name 
-	 * in current server or not.
+	/**
+	 * Judges whether there is a <code>CloudFoundryApplicationModule</code> with
+	 * the given name in current server or not.
 	 * 
 	 * @param moduleName the module name to be checked
-	 * @return true if there is a <code>CloudFoundryApplicationModule</code> with the 
-	 *     given name in current server, false otherwise
+	 * @return true if there is a <code>CloudFoundryApplicationModule</code>
+	 * with the given name in current server, false otherwise
 	 */
 	public boolean existCloudApplicationModule(String moduleName) {
 		List<IModule[]> allModules = getAllModules();
 		for (IModule[] modules : allModules) {
-			if (modules[0] instanceof CloudFoundryApplicationModule 
-			    && modules[0].getName().equals(moduleName)) {
+			if (modules[0] instanceof CloudFoundryApplicationModule && modules[0].getName().equals(moduleName)) {
 				return true;
 			}
 		}
@@ -1792,7 +1794,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							selfSigned);
 		}
 		catch (MalformedURLException e) {
-			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, 
+			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
 					"The server url " + serverURL + " is invalid: " + e.getMessage(), e)); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
@@ -2015,9 +2017,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				// Stop any consoles
 				CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, cloudServer);
 
-				clearAndPrintlnConsole(appModule,
-						NLS.bind(Messages.CONSOLE_PREPARING_APP, appModule.getDeployedApplicationName()));
-
 				configuration = prepareForDeployment(appModule, monitor);
 
 				IStatus validationStatus = appModule.validateDeploymentInfo();
@@ -2026,6 +2025,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 							appModule.getDeployedApplicationName(), validationStatus.getMessage()));
 
 				}
+				// NOTE: Only print to a console AFTER an application has been
+				// prepared for deployment, as the application
+				// name may have changed during the deployment preparation
+				// stage, and consoles are mapped by application name.
+				// This prevents two different consoles with different names
+				// from appearing for the same application
+				clearAndPrintlnConsole(appModule,
+						NLS.bind(Messages.CONSOLE_PREPARING_APP, appModule.getDeployedApplicationName()));
 
 				performDeployment(appModule, monitor);
 
@@ -2374,8 +2381,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 			catch (IOException e) {
 				throw new CoreException(CloudFoundryPlugin.getErrorStatus("Failed to deploy application " + //$NON-NLS-1$ 
-						appModule.getDeploymentInfo().getDeploymentName() + 
-						" due to " + e.getMessage(), e)); //$NON-NLS-1$
+						appModule.getDeploymentInfo().getDeploymentName() + " due to " + e.getMessage(), e)); //$NON-NLS-1$
 			}
 
 		}
@@ -2581,6 +2587,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
+	 * Note that consoles may be mapped to an application's deployment name. If
+	 * during deployment, the application name has changed, then this may result
+	 * in two separate consoles.
+	 * 
 	 * 
 	 * @param appModule consoles are associated with a particular deployed
 	 * application. This must not be null.
@@ -2592,19 +2602,30 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @throws CoreException
 	 */
 	protected void clearAndPrintlnConsole(CloudFoundryApplicationModule appModule, String message) throws CoreException {
-
 		message += '\n';
-		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, true, false);
+		printToConsole(appModule, message, true, false);
 	}
 
 	protected void printlnToConsole(CloudFoundryApplicationModule appModule, String message) throws CoreException {
 		message += '\n';
-		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, false, false);
+		printToConsole(appModule, message, false, false);
 	}
 
 	protected void printErrorlnToConsole(CloudFoundryApplicationModule appModule, String message) throws CoreException {
 		message = NLS.bind(Messages.CONSOLE_ERROR_MESSAGE + '\n', message);
-		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, false, true);
+		printToConsole(appModule, message, false, true);
+	}
+
+	/**
+	 * Note that consoles may be mapped to an application's deployment name. If
+	 * during deployment, the application name has changed, then this may result
+	 * in two separate consoles.
+	 * 
+	 */
+	protected void printToConsole(CloudFoundryApplicationModule appModule, String message, boolean clearConsole,
+			boolean isError) throws CoreException {
+		CloudFoundryPlugin.getCallback().printToConsole(getCloudFoundryServer(), appModule, message, clearConsole,
+				isError);
 	}
 
 	protected ApplicationArchive getIncrementalPublishArchive(final ApplicationDeploymentInfo deploymentInfo,
@@ -2675,7 +2696,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					CloudFoundryPlugin.getCallback().startApplicationConsole(getCloudFoundryServer(), cloudModule, 0,
 							monitor);
 
-					new BehaviourRequest<Void>("Starting application " +deploymentName) { //$NON-NLS-1$
+					new BehaviourRequest<Void>("Starting application " + deploymentName) { //$NON-NLS-1$
 						@Override
 						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
 								throws CoreException {

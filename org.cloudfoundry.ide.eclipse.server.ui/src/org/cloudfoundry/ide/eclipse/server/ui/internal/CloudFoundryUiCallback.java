@@ -138,12 +138,19 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	}
 
 	public void stopApplicationConsole(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
-		if (cloudModule == null || cloudModule.getApplication() == null) {
+		if (cloudModule == null) {
 			return;
 		}
-		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
-			ConsoleManagerRegistry.getConsoleManager(cloudServer).stopConsole(cloudServer.getServer(), cloudModule, i);
-		}
+
+		// If application is not deployed (i.e., there are no application instances), still stop the console as
+		// a console may have been created for the application even if it failed to deploy or start.
+		int totalInstances = cloudModule.isDeployed() ? cloudModule.getApplication().getInstances() : 0;
+		int instance = 0;
+		do {
+			ConsoleManagerRegistry.getConsoleManager(cloudServer).stopConsole(cloudServer.getServer(), cloudModule, instance);
+			++instance;
+		} while (instance < totalInstances);
+
 	}
 
 	public void displayCaldecottTunnelConnections(CloudFoundryServer cloudServer,
@@ -214,8 +221,9 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					Shell shell = CloudUiUtil.getShell();
 					if (shell != null) {
-						new MessageDialog(shell, Messages.CloudFoundryUiCallback_ERROR_CALLBACK_TITLE, null, status.getMessage(), MessageDialog.ERROR,
-								new String[] { Messages.COMMONTXT_OK }, 0).open();
+						new MessageDialog(shell, Messages.CloudFoundryUiCallback_ERROR_CALLBACK_TITLE, null,
+								status.getMessage(), MessageDialog.ERROR, new String[] { Messages.COMMONTXT_OK }, 0)
+								.open();
 					}
 					return Status.OK_STATUS;
 				}

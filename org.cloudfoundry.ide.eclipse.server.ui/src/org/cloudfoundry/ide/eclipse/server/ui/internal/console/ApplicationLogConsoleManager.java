@@ -54,7 +54,6 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 
 		public void consolesAdded(IConsole[] consoles) {
 			// ignore
-
 		}
 
 		public void consolesRemoved(IConsole[] consoles) {
@@ -81,7 +80,9 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 	@Override
 	public void startConsole(CloudFoundryServer server, LogContentType type, CloudFoundryApplicationModule appModule,
 			int instanceIndex, boolean show, boolean clear, IProgressMonitor monitor) {
-		CloudFoundryConsole serverLogTail = getApplicationLogConsole(server, appModule, instanceIndex);
+		// As of 1.7.2, instances are not used for loggregator. Loggregator
+		// shows content for all instances in the same console
+		CloudFoundryConsole serverLogTail = getApplicationLogConsole(server, appModule);
 
 		if (serverLogTail != null) {
 			if (clear) {
@@ -96,15 +97,16 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 	}
 
 	protected synchronized ApplicationLogConsole getApplicationLogConsole(CloudFoundryServer server,
-			CloudFoundryApplicationModule appModule, int instanceIndex) {
-		String appUrl = getConsoleId(server.getServer(), appModule, instanceIndex);
+			CloudFoundryApplicationModule appModule) {
+
+		String appUrl = getConsoleId(server.getServer(), appModule);
 		ApplicationLogConsole serverLogTail = consoleByUri.get(appUrl);
 		if (serverLogTail == null) {
 
-			MessageConsole appConsole = getApplicationConsole(server, appModule, instanceIndex);
+			MessageConsole appConsole = getApplicationConsole(server, appModule);
 
 			serverLogTail = new ApplicationLogConsole(appConsole);
-			consoleByUri.put(getConsoleId(server.getServer(), appModule, instanceIndex), serverLogTail);
+			consoleByUri.put(getConsoleId(server.getServer(), appModule), serverLogTail);
 		}
 		return serverLogTail;
 	}
@@ -119,7 +121,7 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 
 	@Override
 	public MessageConsole findCloudFoundryConsole(IServer server, CloudFoundryApplicationModule appModule) {
-		String curConsoleId = getConsoleId(server, appModule, 0);
+		String curConsoleId = getConsoleId(server, appModule);
 		if (curConsoleId != null) {
 			return consoleByUri.get(curConsoleId).getConsole();
 		}
@@ -129,7 +131,9 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 	@Override
 	public void writeToStandardConsole(String message, CloudFoundryServer server,
 			CloudFoundryApplicationModule appModule, int instanceIndex, boolean clear, boolean isError) {
-		CloudFoundryConsole serverLogTail = getApplicationLogConsole(server, appModule, instanceIndex);
+		// As of 1.7.2, instances are not used for loggregator. Loggregator
+		// shows content for all instances in the same console
+		CloudFoundryConsole serverLogTail = getApplicationLogConsole(server, appModule);
 
 		if (serverLogTail instanceof ApplicationLogConsole) {
 
@@ -154,7 +158,9 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 		if (appModule == null || server == null) {
 			return;
 		}
-		ApplicationLogConsole console = getApplicationLogConsole(server, appModule, instanceIndex);
+		// As of 1.7.2, instances are not used for loggregator. Loggregator
+		// shows content for all instances in the same console
+		ApplicationLogConsole console = getApplicationLogConsole(server, appModule);
 		if (console != null) {
 			if (clear) {
 				console.getConsole().clearConsole();
@@ -167,11 +173,17 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 
 	@Override
 	public void stopConsole(IServer server, CloudFoundryApplicationModule appModule, int instanceIndex) {
-		String appUrl = getConsoleId(server, appModule, instanceIndex);
+		String appUrl = getConsoleId(server, appModule);
 		CloudFoundryConsole serverLogTail = consoleByUri.get(appUrl);
 		if (serverLogTail != null) {
-			serverLogTail.stop();
+
 			consoleByUri.remove(appUrl);
+
+			serverLogTail.stop();
+
+			MessageConsole messageConsole = serverLogTail.getConsole();
+			consoleManager.removeConsoles(new IConsole[] { messageConsole });
+			messageConsole.destroy();
 		}
 	}
 
@@ -184,32 +196,32 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 	}
 
 	public static MessageConsole getApplicationConsole(CloudFoundryServer server,
-			CloudFoundryApplicationModule appModule, int instanceIndex) {
+			CloudFoundryApplicationModule appModule) {
 		MessageConsole appConsole = null;
-		String consoleName = getConsoleId(server.getServer(), appModule, instanceIndex);
+		String consoleName = getConsoleId(server.getServer(), appModule);
 		for (IConsole console : ConsolePlugin.getDefault().getConsoleManager().getConsoles()) {
 			if (console instanceof MessageConsole && console.getName().equals(consoleName)) {
 				appConsole = (MessageConsole) console;
 			}
 		}
 		if (appConsole == null) {
-			appConsole = new MessageConsole(getConsoleDisplayName(server, appModule, instanceIndex),
+			appConsole = new MessageConsole(getConsoleDisplayName(server, appModule),
 					ApplicationLogConsole.CONSOLE_TYPE, null, true);
 			appConsole.setAttribute(ApplicationLogConsole.ATTRIBUTE_SERVER, server);
 			appConsole.setAttribute(ApplicationLogConsole.ATTRIBUTE_APP, appModule);
-			appConsole.setAttribute(ApplicationLogConsole.ATTRIBUTE_INSTANCE, instanceIndex);
+			// appConsole.setAttribute(ApplicationLogConsole.ATTRIBUTE_INSTANCE,
+			// instanceIndex);
 			ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[] { appConsole });
 		}
 
 		return appConsole;
 	}
 
-	public static String getConsoleId(IServer server, CloudFoundryApplicationModule appModule, int instanceIndex) {
-		return server.getId() + "/" + appModule.getDeployedApplicationName() + "#" + instanceIndex; //$NON-NLS-1$ //$NON-NLS-2$
+	public static String getConsoleId(IServer server, CloudFoundryApplicationModule appModule) {
+		return server.getId() + "/" + appModule.getDeployedApplicationName(); //$NON-NLS-1$
 	}
 
-	public static String getConsoleDisplayName(CloudFoundryServer server, CloudFoundryApplicationModule appModule,
-			int instanceIndex) {
+	public static String getConsoleDisplayName(CloudFoundryServer server, CloudFoundryApplicationModule appModule) {
 		StringWriter writer = new StringWriter();
 		writer.append(server.getServer().getName());
 		writer.append('-');
@@ -227,8 +239,6 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 		}
 
 		writer.append(appModule.getDeployedApplicationName());
-		writer.append('#');
-		writer.append(instanceIndex + ""); //$NON-NLS-1$
 		return writer.toString();
 	}
 }
