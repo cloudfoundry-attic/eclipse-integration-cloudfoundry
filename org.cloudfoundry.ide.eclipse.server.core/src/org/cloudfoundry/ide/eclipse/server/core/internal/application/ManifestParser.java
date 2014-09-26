@@ -766,6 +766,7 @@ public class ManifestParser {
 		}
 
 		DumperOptions options = new DumperOptions();
+		options.setExplicitStart(true);
 		options.setCanonical(false);
 		options.setPrettyFlow(true);
 		options.setDefaultFlowStyle(FlowStyle.BLOCK);
