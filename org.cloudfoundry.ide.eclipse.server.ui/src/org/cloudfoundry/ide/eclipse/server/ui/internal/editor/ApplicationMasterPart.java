@@ -16,6 +16,7 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     Steven Hung, IBM - add accessibility for managing service binding
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.editor;
 
@@ -32,6 +33,7 @@ import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.DeleteServicesAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.RefreshApplicationEditorAction;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.ServiceToApplicationsBindingAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryServiceWizard;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudRoutesWizard;
 import org.eclipse.core.resources.IProject;
@@ -593,7 +595,12 @@ public class ApplicationMasterPart extends SectionPart {
 		}
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
-
+				
+		manager.add(new ServiceToApplicationsBindingAction(
+				selection, 
+				cloudServer.getBehaviour(), 
+				editorPage));		
+		
 		// FIXNS: Disable Caldecott feature in 1.5.1 until feature is supported
 		// in the client-lib
 		// List<IAction> caldecottAction = new

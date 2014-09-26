@@ -841,6 +841,22 @@ public class Messages extends NLS {
 
 	public static String RepublishApplicationHandler_ERROR_REPUBLISH_FAIL;
 
+	public static String MANAGE_SERVICES_TO_APPLICATIONS_TITLE;
+	
+	public static String MANAGE_SERVICES_TO_APPLICATIONS_DESCRIPTION;
+	
+	public static String MANAGE_SERVICES_TO_APPLICATIONS_ACTION;
+	
+	public static String MANAGE_SERVICES_TO_APPLICATIONS_FINISH;
+	
+	public static String MANAGE_SERVICES_TO_APPLICATIONS_SELECTION_DESCRIPTION;
+	
+	public static String MANAGE_SERVICES_TO_APPLICATIONS_GET_APPLICATION_NAMES;
+	
+	public static String MANAGE_SERVICES_TO_APPLICATIONS_FINISH_ERROR_TITLE;
+	
+	public static String MANAGE_SERVICES_TO_APPLICATIONS_FINISH_ERROR_DESCRIPTION;
+	
 	private static final String BUNDLE_NAME = CloudFoundryServerUiPlugin.PLUGIN_ID + ".internal.Messages"; //$NON-NLS-1$
 
 	static {
