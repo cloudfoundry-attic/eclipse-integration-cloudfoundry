@@ -8,7 +8,7 @@
 
   <groupId>org.cloudfoundry.ide.eclipse.server</groupId>
   <artifactId>org.cloudfoundry.ide.eclipse.server.parent</artifactId>
-  <version>1.7.1-SNAPSHOT</version>
+  <version>1.7.2-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <scm>
@@ -34,10 +34,10 @@
 
   <!-- Common Configuration -->
   <organization>
-    <name>GoPivotal, Inc.</name>
-    <url>http://www.gopivotal.com</url>
+    <name>Pivotal Software, Inc.</name>
+    <url>http://www.pivotal.io</url>
   </organization>
-  <url>http://docs.cloudfoundry.com/</url>
+  <url>http://docs.run.pivotal.io</url>
   <inceptionYear>2013</inceptionYear>
 
   <prerequisites>
@@ -314,7 +314,7 @@
               <artifact>
                 <groupId>org.cloudfoundry.ide.eclipse.server</groupId>
                 <artifactId>org.cloudfoundry.ide.eclipse.server.target</artifactId>
-                <version>1.7.1-SNAPSHOT</version>
+                <version>1.7.2-SNAPSHOT</version>
                 <classifier>${dist.target.classifier}</classifier>
               </artifact>
             </target>
