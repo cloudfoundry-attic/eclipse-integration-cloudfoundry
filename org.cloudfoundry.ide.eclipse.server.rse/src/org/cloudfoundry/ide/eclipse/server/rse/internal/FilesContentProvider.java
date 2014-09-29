@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -53,34 +53,38 @@ public class FilesContentProvider {
 			String parent = (String) inputElement;
 			try {
 				if (AppState.STARTED.equals(app.getState())) {
-					String blob = server.getBehaviour().getFile(app.getName(), id, parent.substring(1), monitor);
-					String[] files = blob.split("\n"); //$NON-NLS-1$
-					long timestamp = Calendar.getInstance().getTimeInMillis();
-					for (int i = 0; i < files.length; i++) {
-						String[] content = files[i].split("\\s+"); //$NON-NLS-1$
-						String name = content[0];
-						if (name.trim().length() > 0) {
-							FileResource resource = new FileResource();
-							if (name.endsWith("/")) { //$NON-NLS-1$
-								resource.setIsDirectory(true);
-								resource.setIsFile(false);
-								name = name.substring(0, name.length() - 1);
+					String path = parent.substring(1);
+					String blob = server.getBehaviour().getFile(app.getName(), id, path, monitor);
+					if (blob != null) {
+						String[] files = blob.split("\n"); //$NON-NLS-1$
+						long timestamp = Calendar.getInstance().getTimeInMillis();
+						for (int i = 0; i < files.length; i++) {
+							String[] content = files[i].split("\\s+"); //$NON-NLS-1$
+							String name = content[0];
+							if (name.trim().length() > 0) {
+								FileResource resource = new FileResource();
+								if (name.endsWith("/")) { //$NON-NLS-1$
+									resource.setIsDirectory(true);
+									resource.setIsFile(false);
+									name = name.substring(0, name.length() - 1);
+								}
+								resource.setName(name);
+								resource.setModifiedDate(timestamp);
+								String parentPath = ApplicationResource.getAbsolutePath(app, id + parent);
+								resource.setParentPath(parentPath);
+								resource.setAbsolutePath(parentPath.concat(content[0]));
+								if (content.length > 1) {
+									resource.setSize(content[1]);
+								}
+								list.add(resource);
 							}
-							resource.setName(name);
-							resource.setModifiedDate(timestamp);
-							String parentPath = ApplicationResource.getAbsolutePath(app, id + parent);
-							resource.setParentPath(parentPath);
-							resource.setAbsolutePath(parentPath.concat(content[0]));
-							if (content.length > 1) {
-								resource.setSize(content[1]);
-							}
-							list.add(resource);
 						}
 					}
 				}
 			}
 			catch (CoreException e) {
-				CloudFoundryRsePlugin.logError("An error occurred while retrieving files for application " + app.getName(), e); //$NON-NLS-1$
+				CloudFoundryRsePlugin.logError(
+						"An error occurred while retrieving files for application " + app.getName(), e); //$NON-NLS-1$
 			}
 		}
 		return list;
