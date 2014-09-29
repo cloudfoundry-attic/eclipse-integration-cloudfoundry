@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -23,7 +23,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.standalone.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.startcommand.JavaTypeResolver;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -66,12 +68,10 @@ public class JavaPackageFragmentRootHandler {
 
 	public IPackageFragmentRoot[] getPackageFragmentRoots(
 			IProgressMonitor monitor) throws CoreException {
-		if (type == null) {
-			type = new JavaTypeResolver(javaProject)
-					.getMainTypesFromSource(monitor);
-		}
+		IType type = getMainType(monitor);
+
 		ILaunchConfiguration configuration = createConfiguration(type);
-		IPath[] classpathEntries = getClasspath(configuration);
+		IPath[] classpathEntries = getRuntimeClasspaths(configuration);
 
 		List<IPackageFragmentRoot> pckRoots = new ArrayList<IPackageFragmentRoot>();
 
@@ -100,7 +100,13 @@ public class JavaPackageFragmentRootHandler {
 						List<IPackageFragmentRoot> foundRoots = new ArrayList<IPackageFragmentRoot>();
 
 						for (IPackageFragmentRoot packageFragmentRoot : roots) {
-							if (isRootAt(packageFragmentRoot, path)) {
+							// Note that a class path entry may correspond to a
+							// Java project's target directory.
+							// Different fragment roots may use the same target
+							// directory, so relationship between fragment roots
+							// to a class path entry may be many-to-one.
+
+							if (isRootAtEntry(packageFragmentRoot, path)) {
 								foundRoots.add(packageFragmentRoot);
 							}
 						}
@@ -113,7 +119,7 @@ public class JavaPackageFragmentRootHandler {
 					}
 
 				} catch (Exception e) {
-					CloudFoundryPlugin.logError(e);
+					throw CloudErrorUtil.toCoreException(e);
 				}
 			}
 
@@ -123,7 +129,26 @@ public class JavaPackageFragmentRootHandler {
 
 	}
 
-	public IType getMainType() {
+	/**
+	 * Attempts to resolve a main type in the associated Java project. Throws
+	 * {@link CoreException} if it failed to resolve main type or no main type
+	 * found.
+	 * 
+	 * @param monitor
+	 * @return non-null Main type.
+	 * @throws CoreException
+	 *             if failure occurred while resolving main type or no main type
+	 *             found
+	 */
+	public IType getMainType(IProgressMonitor monitor) throws CoreException {
+		if (type == null) {
+			type = new JavaTypeResolver(javaProject)
+					.getMainTypesFromSource(monitor);
+			if (type == null) {
+				throw CloudErrorUtil
+						.toCoreException(Messages.JavaCloudFoundryArchiver_ERROR_NO_MAIN);
+			}
+		}
 		return type;
 	}
 
@@ -226,7 +251,7 @@ public class JavaPackageFragmentRootHandler {
 		return workingCopy.doSave();
 	}
 
-	protected IPath[] getClasspath(ILaunchConfiguration configuration)
+	protected IPath[] getRuntimeClasspaths(ILaunchConfiguration configuration)
 			throws CoreException {
 		IRuntimeClasspathEntry[] entries = JavaRuntime
 				.computeUnresolvedRuntimeClasspath(configuration);
@@ -248,7 +273,35 @@ public class JavaPackageFragmentRootHandler {
 		return userEntries.toArray(new IPath[userEntries.size()]);
 	}
 
-	private static boolean isRootAt(IPackageFragmentRoot root, IPath entry) {
+	/**
+	 * 
+	 * Determines if the given package fragment root corresponds to the class
+	 * path entry path.
+	 * <p/>
+	 * Note that different package fragment roots may point to the same class
+	 * path entry.
+	 * <p/>
+	 * Example:
+	 * <p/>
+	 * A Java project may have the following package fragment roots:
+	 * <p/>
+	 * - src/main/java
+	 * <p/>
+	 * - src/main/resources
+	 * <p/>
+	 * Both may be using the same output folder:
+	 * <p/>
+	 * target/classes.
+	 * <p/>
+	 * In this case, the output folder will have a class path entry - target/classes - and it will be the same
+	 * for both roots, and this method will return true for both roots if passed the entry for target/classes
+	 * 
+	 * @param root
+	 *            to check if it corresponds to the given class path entry path
+	 * @param entry
+	 * @return true if root is at the given entry
+	 */
+	private static boolean isRootAtEntry(IPackageFragmentRoot root, IPath entry) {
 		try {
 			IClasspathEntry cpe = root.getRawClasspathEntry();
 			if (cpe.getEntryKind() == IClasspathEntry.CPE_SOURCE) {

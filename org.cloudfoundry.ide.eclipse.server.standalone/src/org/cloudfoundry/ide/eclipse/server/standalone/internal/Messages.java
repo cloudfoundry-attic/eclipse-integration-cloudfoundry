@@ -37,15 +37,15 @@ public class Messages extends NLS {
 
 	public static String JavaCloudFoundryArchiver_ERROR_NO_MAIN;
 
-	public static String JavaCloudFoundryArchiver_ERROR_NO_MAIN_CLASS;
+	public static String JavaCloudFoundryArchiver_ERROR_NO_MAIN_CLASS_IN_MANIFEST;
 
-	public static String JavaCloudFoundryArchiver_ERROR_NO_MANIFEST_IN_SRC;
+	public static String JavaCloudFoundryArchiver_ERROR_MANIFEST_NOT_ACCESSIBLE;
+	
+	public static String JavaCloudFoundryArchiver_ERROR_FAILED_READ_MANIFEST;
 
-	public static String JavaCloudFoundryArchiver_ERROR_NO_PACKAGE_FRAG;
+	public static String JavaCloudFoundryArchiver_ERROR_NO_PACKAGE_FRAG_ROOTS;
 
 	public static String JavaCloudFoundryArchiver_ERROR_NO_PACKAGED_FILE_CREATED;
-
-	public static String JavaCloudFoundryArchiver_ERROR_PACKAGE_APP_FOR_DEPLOY;
 
 	public static String JavaCloudFoundryArchiver_ERROR_REPACKAGE_SPRING;
 
