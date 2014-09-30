@@ -40,6 +40,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.SelfSignedStore;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudFoundrySpace;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -471,22 +472,72 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		return getServer().getServerState() == IServer.STATE_STARTED;
 	}
 
+	/**
+	 * Judges whether there is a bound active project with the given module 
+	 * to be removed or not.
+	 * 
+	 * @param removedModule the module to be removed potentially
+	 * @return true indicates there is a bound active project, false otherwise   
+	 */
+	protected boolean existBoundProject(IModule removedModule) {
+		IProject project = removedModule.getProject();
+		if (project != null && project.isOpen()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	/**
+	 * Delete the given WST module locally.
+	 * <p>
+	 * It means that the given WST module will be deleted just in the WST 
+	 * server, without involving the related CloudFoundryApplicationModule.
+	 * 
+	 * @param remove the module to be removed locally    
+	 */
+	public void deleteModulesLocally(IModule[] remove, IProgressMonitor monitor) throws CoreException {
+		ServerWorkingCopyFacade wc = new ServerWorkingCopyFacade(getServer().createWorkingCopy());
+		IModule[] delete = new IModule[] { remove[0] };
+		wc.deleteModulesLocally(delete, monitor);
+		wc.save(true, monitor);
+	}
+
 	@Override
 	public void modifyModules(final IModule[] add, IModule[] remove, IProgressMonitor monitor) throws CoreException {
 		if (remove != null && remove.length > 0) {
-			if (getData() != null) {
-				for (IModule module : remove) {
-					getData().tagAsDeployed(module);
+			boolean confirmToDelete = true;
+			if (!(remove[0] instanceof CloudFoundryApplicationModule) && !existBoundProject(remove[0])) {
+				// Indicates this deletion is triggered by deleting 
+				// a project in Package Explorer or Project Explorer,
+				// so there should be a confirmation about whether 
+				// to delete the cloud application accordingly or not.
+				confirmToDelete = CloudFoundryPlugin.getCallback().confirmTheOperation(
+				    Messages.DELETE_CLOUD_APP_CONFIRMATION_TITLE, 
+					NLS.bind(Messages.DELETE_CLOUD_APP_CONFIRMATION_MESSAGE, remove[0].getName()));
+			}
+			
+			if (!confirmToDelete) {
+				// Delete module in WST server locally.
+				deleteModulesLocally(remove, monitor);
+				// Refresh application viewer
+				this.getBehaviour().refreshModules(monitor);
+				this.getBehaviour().getRefreshHandler().fireRefreshEvent(monitor);
+			} else {
+				if (getData() != null) {
+					for (IModule module : remove) {
+						getData().tagAsDeployed(module);
+					}
 				}
-			}
-
-			try {
-				getBehaviour().deleteModules(remove, deleteServicesOnModuleRemove.get(), monitor);
-			}
-			catch (CoreException e) {
-				// ignore deletion of applications that didn't exist
-				if (!CloudErrorUtil.isNotFoundException(e)) {
-					throw e;
+	
+				try {
+					getBehaviour().deleteModules(remove, deleteServicesOnModuleRemove.get(), monitor);
+				}
+				catch (CoreException e) {
+					// ignore deletion of applications that didn't exist
+					if (!CloudErrorUtil.isNotFoundException(e)) {
+						throw e;
+					}
 				}
 			}
 		}
