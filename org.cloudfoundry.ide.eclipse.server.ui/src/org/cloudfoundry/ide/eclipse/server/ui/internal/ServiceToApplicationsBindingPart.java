@@ -84,6 +84,7 @@ public class ServiceToApplicationsBindingPart extends UIPart {
 	
 	protected void createTableArea(Composite parent) {	
 		Text t = new Text(parent, SWT.NONE | SWT.READ_ONLY);
+		t.setBackground(parent.getBackground());
 		t.setText(Messages.MANAGE_SERVICES_TO_APPLICATIONS_SELECTION_DESCRIPTION);		
 		
 		Composite tableArea = new Composite(parent, SWT.NONE);
