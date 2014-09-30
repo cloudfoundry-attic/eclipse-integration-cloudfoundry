@@ -63,6 +63,7 @@ import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseWheelListener;
@@ -70,6 +71,8 @@ import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -144,6 +147,14 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 
 	public static final String FILTER_TEXT = Messages.CloudFoundryServiceWizardPage1_TEXT_FILTER;
 
+	private Composite layoutList;
+	
+	private ServiceListTraverseListener traverseListener;
+	
+	private Text filterText;
+	
+	private Text serviceNameText;
+	
 	/** Optional field -- used to provide icons in service wizard if available */
 	CFServiceWizardDynamicIconLoader loader;
 
@@ -174,6 +185,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		servicePageValidation = new CFWizServicePage1Validation(this);
 		setPageComplete(false);
 
+		traverseListener = new ServiceListTraverseListener();
 	}
 
 	private static void sortServicePlans(List<CloudServiceOffering> configurations) {
@@ -274,7 +286,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		data = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
 		filterLabel.setLayoutData(data);
 
-		final Text filterText = new Text(filterComp, SWT.SEARCH);
+		filterText = new Text(filterComp, SWT.SEARCH);
 		filterText.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false, 2, 1));
 		filterText.setText(DEFAULT_FILTER_TEXT);
 
@@ -302,37 +314,8 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 			}
 		});
 
-		Font font = comp.getFont();
-		if (boldFont == null) {
-			Display display = getShell().getDisplay();
-			FontData[] fontData = font.getFontData();
-			fontData[0].setStyle(SWT.BOLD);
-			fontData[0].setHeight(fontData[0].getHeight());
-			boldFont = new Font(display, fontData);
-
-			Color c1 = display.getSystemColor(SWT.COLOR_LIST_SELECTION);
-			Color c2 = display.getSystemColor(SWT.COLOR_LIST_BACKGROUND);
-			selEdgeColor = new Color(display, (c1.getRed() + c2.getRed() * 3) / 4,
-					(c1.getGreen() + c2.getGreen() * 3) / 4, (c1.getBlue() + c2.getBlue() * 3) / 4);
-			selFillColor = new Color(display, (c1.getRed() + c2.getRed() * 8) / 9,
-					(c1.getGreen() + c2.getGreen() * 8) / 9, (c1.getBlue() + c2.getBlue() * 8) / 9);
-		}
-
-		comp.addDisposeListener(new DisposeListener() {
-
-			public void widgetDisposed(DisposeEvent event) {
-				if (boldFont != null) {
-					boldFont.dispose();
-				}
-				if (selEdgeColor != null) {
-					selEdgeColor.dispose();
-				}
-				if (selFillColor != null) {
-					selFillColor.dispose();
-				}
-			}
-		});
-
+		layoutList = createLayoutList(scrollComp);
+		
 		filterText.addModifyListener(new ModifyListener() {
 
 			public void modifyText(ModifyEvent event) {
@@ -369,6 +352,8 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 				}
 			}
 		});
+		
+		filterText.addTraverseListener(traverseListener);
 
 		serviceInfoComposite = new Group(comp, SWT.NONE);
 		serviceInfoComposite.setText(Messages.CloudFoundryServiceWizardPage1_TEXT_SET_NAME_PLAN);
@@ -398,7 +383,143 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		// nameText.addMouseWheelListener(mwl);
 
 	}
+	
+	private Composite createLayoutList(Composite parent) {
+		
+		Composite result = new Composite(parent, SWT.NONE);
+		
+		result.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+		
+		Display display = result.getDisplay();	
+		Font font = result.getFont();
+		
+		if (boldFont == null) {
+			FontData[] fontData = font.getFontData();
+			fontData[0].setStyle(SWT.BOLD);
+			fontData[0].setHeight(fontData[0].getHeight());
+			boldFont = new Font(display, fontData);
 
+			Color c1 = display.getSystemColor(SWT.COLOR_LIST_SELECTION);
+			Color c2 = display.getSystemColor(SWT.COLOR_LIST_BACKGROUND);
+			selEdgeColor = new Color(display, (c1.getRed() + c2.getRed() * 3) / 4,
+					(c1.getGreen() + c2.getGreen() * 3) / 4, (c1.getBlue() + c2.getBlue() * 3) / 4);
+			selFillColor = new Color(display, (c1.getRed() + c2.getRed() * 8) / 9,
+					(c1.getGreen() + c2.getGreen() * 8) / 9, (c1.getBlue() + c2.getBlue() * 8) / 9);
+			
+			result.addDisposeListener(new DisposeListener() {
+
+				public void widgetDisposed(DisposeEvent event) {
+					if (boldFont != null && !boldFont.isDisposed()) {
+						boldFont.dispose();
+					}
+					if (selEdgeColor != null && !selEdgeColor.isDisposed()) {
+						selEdgeColor.dispose();
+					}
+					if (selFillColor != null && !selFillColor.isDisposed()) {
+						selFillColor.dispose();
+					}
+				}
+			});
+			
+		}
+		
+		result.addPaintListener(new PaintListener() {
+
+			public void paintControl(PaintEvent event) {
+				if(selectedServicesList != null && selectedServicesList.size() > 0 && selectedServicesList.get(0).getNameLabel().isVisible()) {
+					
+					Rectangle r = selectedServicesList.get(0).getAppxLocation();
+					if(r != null) {
+						Rectangle r2 = new Rectangle(r.x, r.y, r.width, r.height);
+						
+						r2.x -= 3;
+						r2.width += 6;
+						
+						r2.y -= 3;
+						r2.height += 6;
+						
+						event.gc.setBackground(selFillColor);
+						event.gc.fillRoundRectangle(r2.x, r2.y, r2.width, r2.height, 7, 7);
+	
+						event.gc.setForeground(selEdgeColor);
+						event.gc.drawRoundRectangle(r2.x, r2.y, r2.width, r2.height, 7, 7);
+					}
+
+				}
+				
+			}
+		});
+
+		
+		Color color = result.getBackground();
+		
+		updateConfiguration();
+		
+		Control[] tabList = new Control[allServicesList.size()];		
+		
+		for(int x = 0; x < allServicesList.size(); x++) {
+			
+			CFServiceWizUI service = allServicesList.get(x);
+			
+			final Label imgLabel = new Label(result, SWT.NONE);
+			imgLabel.setBackground(color);
+			imgLabel.setData(service);
+			
+			final Label nameLabel = new Label(result, SWT.WRAP);
+			nameLabel.setData(service);
+			nameLabel.setFont(boldFont);
+			nameLabel.setBackground(color);
+
+			nameLabel.setText(service.getName());
+			
+			tabList[x] = nameLabel;
+
+			final Label descLabel = new Label(result, SWT.WRAP);
+			descLabel.setData(service);
+			descLabel.setBackground(color);
+			String desc = service.getDescription();
+			descLabel.setText(trimTextAtBound(desc, 200));
+
+			service.setDescriptionLabel(descLabel);
+			service.setImageLabel(imgLabel);
+			service.setNameLabel(nameLabel);
+			
+			imgLabel.addMouseListener(new CFWizSelectItemListener(service));
+			nameLabel.addMouseListener(new CFWizSelectItemListener(service));
+			descLabel.addMouseListener(new CFWizSelectItemListener(service));
+			
+			descLabel.setToolTipText(wrapAndTrimTextAtBound(desc, 100));
+
+		}
+	
+		result.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDown(MouseEvent e) { 
+				
+				for (final CFServiceWizUI service : allServicesList) {
+					if(service.getAppxLocation().contains(e.x, e.y)) {
+						selectItem(service);
+						break;
+					}
+					
+				}
+				
+			}
+			
+		});
+	
+		
+		result.setTabList(tabList);
+		
+		for(Control c : tabList) {
+			c.addTraverseListener(traverseListener);
+		}
+		
+		return result;
+	
+		
+	}	
+	
 	@Override
 	public void setVisible(boolean isVis) {
 		super.setVisible(isVis);
@@ -557,13 +678,34 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 				imgLabel.addMouseListener(itemListener);
 				nameLabel.addMouseListener(itemListener);
 				descLabel.addMouseListener(itemListener);
+				
+				if (item != null){
+					if (item.getImageLabel() != null)
+						item.getImageLabel().setVisible(true);
+					if (item.getNameLabel() != null)
+						item.getNameLabel().setVisible(true);	
+					if (item.getDescriptionLabel() != null)
+						item.getDescriptionLabel().setVisible(true);							
+				}
 
 			}
 			else {
 				// Filtered out items have no location
 				item.setAppxLocation(null);
+				
+				if (item != null){
+					if (item.getImageLabel() != null)
+						item.getImageLabel().setVisible(false);
+					if (item.getNameLabel() != null)
+						item.getNameLabel().setVisible(false);	
+					if (item.getDescriptionLabel() != null)
+						item.getDescriptionLabel().setVisible(false);							
+				}				
 			}
 		}
+		
+		if (layoutList != null)
+			layoutList.layout();
 
 		comp.addMouseListener(new MouseListener() {
 			public void mouseDown(MouseEvent e) {
@@ -629,11 +771,13 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 		serviceNameLabel.setLayoutData(data);
 		serviceNameLabel.setEnabled(selectedItemFinal != null);
 
-		final Text serviceNameText = new Text(serviceInfoComposite, SWT.SEARCH);
+		serviceNameText = new Text(serviceInfoComposite, SWT.SEARCH);
 		serviceNameText.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 1, 1));
 		serviceNameText.setText(utilRemoveSpaces(name));
 		serviceNameText.setEnabled(selectedItemFinal != null);
 
+		serviceNameText.addTraverseListener(traverseListener);
+		
 		if (selectedItemFinal != null) {
 			selectedItemFinal.setUserDefinedName(utilRemoveSpaces(name));
 		}
@@ -698,9 +842,12 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 
 	private void selectItem(CFServiceWizUI item) {
 
+		if (selectedServicesList == null)
+			return;
+		
 		if (selectedServicesList.contains(item)) {
-			selectedServicesList.remove(item);
-
+			// Do nothing to disable deselect.
+			return;
 		}
 		else {
 
@@ -709,7 +856,7 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 			selectedServicesList.add(item);
 
 			// If the plan has not been set, use the first
-			if (item.getPlan() == null) {
+			if (item != null && item.getPlan() == null) {
 				List<CloudServicePlan> plans = item.getOffering().getCloudServicePlans();
 				if (plans != null && plans.size() > 0) {
 					item.setPlan(plans.get(0));
@@ -728,8 +875,53 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 
 		scrollComp.setOrigin(p);
 
+		if (selectedServicesList.size() > 0){
+			selectServiceListItem(selectedServicesList.get(0));
+		}
+		
 	}
 
+	/** Update the selection rectangle in the composite for the service*/
+	private void selectServiceListItem(CFServiceWizUI service) {		
+		if (service == null)
+			return;
+		
+		if(selectedServicesList != null && selectedServicesList.size() > 0) {
+			// Set the previously selected item back to normal 
+			selectedServicesList.get(0).getDescriptionLabel().setBackground(layoutList.getBackground());
+			selectedServicesList.get(0).getImageLabel().setBackground(layoutList.getBackground());
+			selectedServicesList.get(0).getNameLabel().setBackground(layoutList.getBackground());
+		}
+				
+		service.getDescriptionLabel().setBackground(selFillColor);
+		service.getImageLabel().setBackground(selFillColor);
+		service.getNameLabel().setBackground(selFillColor);
+		
+		service.getNameLabel().forceFocus();
+		
+		layoutList.redraw();
+		
+		if(service.getAppxLocation() != null) {
+			
+	        Rectangle bounds = service.getAppxLocation(); //child.getBounds();
+	        Rectangle area = scrollComp.getClientArea();
+	        Point origin = scrollComp.getOrigin();
+	        
+	        // Our view is lower than the item
+	        if (origin.y > bounds.y) {
+	          origin.y = Math.max(0, bounds.y);
+	        }
+
+	        // Our view is above the item
+	        if (origin.y + area.height < bounds.y + bounds.height) {
+	          origin.y = Math.max(0, bounds.y + bounds.height - area.height);
+	        }
+	        
+	        scrollComp.setOrigin(origin);					        
+		}
+
+	}		
+	
 	class CFWizSelectItemListener implements SelectionListener, MouseListener {
 
 		CFServiceWizUI service;
@@ -862,6 +1054,126 @@ public class CloudFoundryServiceWizardPage1 extends WizardPage {
 			this.loader.dispose();
 		}
 	}
+	
+	class ServiceListTraverseListener implements TraverseListener {		
+		@Override
+		public void keyTraversed(TraverseEvent e) {
+			
+			if( ((e.getSource() == filterText ) && (e.detail == SWT.TRAVERSE_TAB_NEXT)) 
+					|| ((e.getSource() == serviceNameText) && (e.detail == SWT.TRAVERSE_TAB_PREVIOUS))){	
+				// Only one service can currently be selected right now
+				
+				int listSize = selectedServicesList.size();
+				
+				
+				if (selectedServicesList != null && allServicesList != null){
+					// An item was previously selected. Select that item again
+					if (listSize > 0){
+						CFServiceWizUI item = selectedServicesList.get(0);
+						if (item != null && item.getNameLabel() != null && item.getNameLabel().isVisible()){
+							selectServiceListItem(item);
+							
+							// If doit is set to true, then the cursor will change focus to 
+							// the next text box. That behaviour is not good as it is difficult
+							// for accessibility to lose focus of the items in the list
+							e.doit = false;									
+							return;
+						}					
+					}
+
+
+					// Item is no longer selected (e.g. filter is used), so choose another item
+					CFServiceWizUI service = null;
+					int len = allServicesList.size();
+					for (int i=0;i<len;i++){
+						CFServiceWizUI currItem = allServicesList.get(i);
+						if (currItem != null && currItem.getNameLabel() != null){							
+							if(allServicesList.get(i).getNameLabel().isVisible()){
+								service = allServicesList.get(i);
+								break;
+							}
+						}
+					}
+					// Service can be null if filter leads to 0 results
+					if (service != null){
+						selectItem(service);
+					}
+					else {
+						// If there are no items, the user is stuck in the keyboard only case if
+						// they tab next. Focus on the next text box instead
+						if (((e.getSource() == filterText ) && (e.detail == SWT.TRAVERSE_TAB_NEXT)) && serviceNameText != null){
+							serviceNameText.forceFocus();
+						}
+						else if (((e.getSource() == serviceNameText) && (e.detail == SWT.TRAVERSE_TAB_PREVIOUS)) && filterText != null){
+							filterText.forceFocus();
+						}
+					}
+				}
+
+				// If doit is set to true, then the cursor will change focus to 
+				// the next text box. That behaviour is not good as it is difficult
+				// for accessibility to lose focus of the items in the list
+				e.doit = false;				
+			}
+			else {
+				if(e.getSource() instanceof Label && e.getSource() != null && 
+						((Label)e.getSource() ).getData() instanceof CFServiceWizUI 
+						&& allServicesList != null) {
+					
+					// If you press tab while in the list, go outside of the list
+					if(e.detail == SWT.TRAVERSE_TAB_NEXT) {	
+						if (serviceNameText != null)
+							serviceNameText.forceFocus();
+					}
+					if (e.detail == SWT.TRAVERSE_TAB_PREVIOUS){
+						if (filterText != null)
+							filterText.forceFocus();
+					}					
+					CFServiceWizUI selectedService = (CFServiceWizUI)((Label)e.getSource() ).getData();
+					
+					CFServiceWizUI service = null;
+					
+					int servicePos = -1;
+					for(int x = 0; x < allServicesList.size(); x++) {
+						if(selectedService == allServicesList.get(x)) {
+							servicePos = x;
+							break;
+						}
+					}
+					
+					// If you press the arrow keys inside the list, go to the next visible item
+					if(servicePos != -1) {
+						
+						if(e.detail == SWT.TRAVERSE_ARROW_NEXT) {
+							int len = allServicesList.size();
+							while(servicePos+1 < len){
+								servicePos++;
+								CFServiceWizUI currItem = allServicesList.get(servicePos);
+								if (currItem != null && currItem.getNameLabel() != null && currItem.getNameLabel().isVisible()){
+									service = allServicesList.get(servicePos);
+									break;
+								}
+							}
+						} else if(e.detail == SWT.TRAVERSE_ARROW_PREVIOUS) {							
+							while(servicePos > 0){
+								servicePos--;
+								CFServiceWizUI currItem = allServicesList.get(servicePos);
+								if (currItem != null && currItem.getNameLabel() != null && currItem.getNameLabel().isVisible()){
+									service = allServicesList.get(servicePos);
+									break;
+								}
+							}							
+						}
+					}
+								
+					if(service != null) {
+						selectItem(service);
+					}					
+				}
+			}
+		}
+	}	
+	
 }
 
 class CFServiceWizUI {
@@ -876,6 +1188,10 @@ class CFServiceWizUI {
 
 	private CloudServicePlan plan = null;
 
+	Label nameLabel;
+	Label descLabel;
+	Label imageLabel;
+	
 	public CFServiceWizUI(CloudServiceOffering offering) {
 		this.offering = offering;
 	}
@@ -946,6 +1262,29 @@ class CFServiceWizUI {
 		return localService;
 	}
 
+	public Label getNameLabel() {
+		return nameLabel;
+	}
+
+	public void setNameLabel(Label nameLabel) {
+		this.nameLabel = nameLabel;
+	}
+
+	public Label getDescriptionLabel() {
+		return descLabel;
+	}
+
+	public void setDescriptionLabel(Label descLabel) {
+		this.descLabel = descLabel;
+	}
+
+	public Label getImageLabel() {
+		return imageLabel;
+	}
+
+	public void setImageLabel(Label imageLabel) {
+		this.imageLabel = imageLabel;
+	}	
 }
 
 class CFServiceWizardLayout extends Layout {
