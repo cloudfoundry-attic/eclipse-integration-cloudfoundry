@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -217,7 +217,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		buttonComposite.setLayout(new GridLayout(4, false));
 		GridDataFactory.fillDefaults().align(SWT.END, SWT.FILL).grab(true, false).applyTo(buttonComposite);
 
-		Composite validateComposite = toolkit.createComposite(composite);
+		final Composite validateComposite = toolkit.createComposite(composite);
 		validateComposite.setLayout(new GridLayout(1, false));
 		validateComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
@@ -226,7 +226,8 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 
 		createCloneServerArea(buttonComposite, toolkit);
 
-		final Button changePasswordButton = toolkit.createButton(buttonComposite, Messages.CloudFoundryAccountSection_BUTTON_CHANGE_PW, SWT.PUSH);
+		final Button changePasswordButton = toolkit.createButton(buttonComposite,
+				Messages.CloudFoundryAccountSection_BUTTON_CHANGE_PW, SWT.PUSH);
 
 		// Pivotal Tracker: 54644658 - Disable for CF 1.5.0 until fixed.
 		changePasswordButton.setEnabled(false);
@@ -236,9 +237,9 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				if (server.isDirty()) {
-					boolean confirm = MessageDialog
-							.openQuestion(getShell(), Messages.CloudFoundryAccountSection_DIALOG_UNSAVE_TITLE,
-									Messages.CloudFoundryAccountSection_DIALOG_UNSAVE_BODY);
+					boolean confirm = MessageDialog.openQuestion(getShell(),
+							Messages.CloudFoundryAccountSection_DIALOG_UNSAVE_TITLE,
+							Messages.CloudFoundryAccountSection_DIALOG_UNSAVE_BODY);
 					if (!confirm) {
 						return;
 					}
@@ -262,7 +263,8 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 			}
 		});
 
-		final Button validateButton = toolkit.createButton(buttonComposite, Messages.CloudFoundryAccountSection_BUTTON_VALIDATE_ACCOUNT, SWT.PUSH);
+		final Button validateButton = toolkit.createButton(buttonComposite,
+				Messages.CloudFoundryAccountSection_BUTTON_VALIDATE_ACCOUNT, SWT.PUSH);
 		validateButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 		validateButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -296,8 +298,8 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 				catch (CoreException e) {
 					validateLabel.setText(e.getMessage());
 				}
-				buttonComposite.layout(new Control[] { validateLabel, validateButton });
-
+				buttonComposite.layout(new Control[] { validateButton });
+				validateComposite.layout(new Control[] { validateLabel });
 			}
 		});
 
@@ -329,7 +331,8 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 	}
 
 	protected void createCloneServerArea(Composite parent, FormToolkit toolkit) {
-		final Button changeSpaceButton = toolkit.createButton(parent, Messages.CloudFoundryAccountSection_BUTTON_CLONE_SERVER, SWT.PUSH);
+		final Button changeSpaceButton = toolkit.createButton(parent,
+				Messages.CloudFoundryAccountSection_BUTTON_CLONE_SERVER, SWT.PUSH);
 
 		changeSpaceButton.setEnabled(true);
 
