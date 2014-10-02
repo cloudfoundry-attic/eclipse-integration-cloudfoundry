@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 
 import org.cloudfoundry.ide.eclipse.server.core.AbstractAppStateTracker;
 import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Logger;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.console.ConsoleManagerRegistry;
@@ -119,7 +120,8 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
 	 * @return the message console. Null if no corresponding console is found.
 	 */
 	protected MessageConsole findCloudFoundryConsole(IServer server, CloudFoundryApplicationModule appModule) {
-		return ConsoleManagerRegistry.getInstance().getFileConsoleManager().findCloudFoundryConsole(server, appModule);
+		CloudFoundryServer cfServer = (CloudFoundryServer)server.getAdapter(CloudFoundryServer.class);
+		return ConsoleManagerRegistry.getConsoleManager(cfServer).findCloudFoundryConsole(server, appModule);
 	}
 	
 	@Override
@@ -143,7 +145,7 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
 			return;
 		}
 
-		MessageConsole console = ConsoleManagerRegistry.getInstance().getFileConsoleManager().findCloudFoundryConsole(server, appModule);
+		MessageConsole console = findCloudFoundryConsole(server, appModule);
 		if (console != null) {
 			if (Logger.INFO) {
 				 Logger.println(Logger.INFO_LEVEL, this, "isApplicationStarted", "Start app state tracking: " + ((IModule)appModule).getName()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -161,7 +163,7 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
 		if (Logger.INFO) {
 			 Logger.println(Logger.INFO_LEVEL, this, "stopTracking", "Stop app state tracking: " + ((IModule)appModule).getName()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		MessageConsole console = ConsoleManagerRegistry.getInstance().getFileConsoleManager().findCloudFoundryConsole(server, appModule);
+		MessageConsole console = findCloudFoundryConsole(server, appModule);
 		if (console != null) {
 			console.removePatternMatchListener(consoleMonitor);
 		}

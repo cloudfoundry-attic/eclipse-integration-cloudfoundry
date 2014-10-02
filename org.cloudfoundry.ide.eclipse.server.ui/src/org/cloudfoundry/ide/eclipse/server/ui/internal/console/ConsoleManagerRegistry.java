@@ -131,8 +131,7 @@ public class ConsoleManagerRegistry {
 	}
 
 	protected boolean usesLogFileStreaming(CloudFoundryServer cloudServer) {
-		String blueMixServer = "bluemix"; //$NON-NLS-1$
-		return cloudServer.getUrl().contains(blueMixServer);
+		return false;
 	}
 
 	/**
