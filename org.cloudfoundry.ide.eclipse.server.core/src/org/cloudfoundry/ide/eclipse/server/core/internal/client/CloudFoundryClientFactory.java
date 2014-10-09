@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -58,7 +58,8 @@ public class CloudFoundryClientFactory {
 		return getCloudFoundryOperations(credentials, url, null, selfSigned);
 	}
 
-	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, CloudSpace session, boolean selfSigned) {
+	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, CloudSpace session,
+			boolean selfSigned) {
 
 		// Proxies are always updated on each client call by the
 		// CloudFoundryServerBehaviour Request as well as the client login
@@ -68,8 +69,8 @@ public class CloudFoundryClientFactory {
 		// creation
 
 		HttpProxyConfiguration proxyConfiguration = getProxy(url);
-		return session != null ? new CloudFoundryClient(credentials, url, session, selfSigned) : new CloudFoundryClient(
-				credentials, url, proxyConfiguration, selfSigned);
+		return session != null ? new CloudFoundryClient(credentials, url, session, selfSigned)
+				: new CloudFoundryClient(credentials, url, proxyConfiguration, selfSigned);
 	}
 
 	public CloudFoundryOperations getCloudFoundryOperations(CloudCredentials credentials, URL url, String orgName,
@@ -151,7 +152,10 @@ public class CloudFoundryClientFactory {
 							if (matchedProxyData.equals(data.getType())) {
 								int proxyPort = data.getPort();
 								String proxyHost = data.getHost();
-								return proxyHost != null ? new HttpProxyConfiguration(proxyHost, proxyPort) : null;
+								String user = data.getUserId();
+								String password = data.getPassword();
+								return proxyHost != null ? new HttpProxyConfiguration(proxyHost, proxyPort,
+										data.isRequiresAuthentication(), user, password) : null;
 							}
 						}
 					}
