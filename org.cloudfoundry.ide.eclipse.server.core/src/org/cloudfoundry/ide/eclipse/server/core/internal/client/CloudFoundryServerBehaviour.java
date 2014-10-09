@@ -1372,7 +1372,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 					// publish
 					op = new PushApplicationOperation(module);
 				}
-				else if (deltaKind == ServerBehaviourDelegate.CHANGED) {
+				else if (deltaKind == ServerBehaviourDelegate.CHANGED && CloudFoundryPlugin.getCallback()
+					.confirmTheOperation(Messages.REPUSH_CLOUD_APP_CONFIRMATION_TITLE, 
+					    NLS.bind(Messages.REPUSH_CLOUD_APP_CONFIRMATION_MESSAGE, module[0].getName()))) {
 					op = getApplicationOperation(module, ApplicationAction.UPDATE_RESTART);
 				}
 				// Republish the root module if any of the child module requires
