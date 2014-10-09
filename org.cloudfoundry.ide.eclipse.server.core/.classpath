@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-client-lib-1.0.5.BUILD-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/aopalliance-1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-codec-1.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-logging-1.1.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-caldecott-lib-0.1.4.BUILD-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-client-lib-1.0.4.jar" sourcepath="/cloudfoundry-client-lib/1.0.4/cloudfoundry-client-lib-1.0.4-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-io-2.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/httpclient-4.2.5.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/httpcore-4.2.4.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/jackson-core-asl-1.9.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/jackson-mapper-asl-1.9.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jackson-core-asl-1.9.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jackson-mapper-asl-1.9.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/juli-6.0.39.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/protobuf-java-2.5.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/snakeyaml-1.13.jar"/>
