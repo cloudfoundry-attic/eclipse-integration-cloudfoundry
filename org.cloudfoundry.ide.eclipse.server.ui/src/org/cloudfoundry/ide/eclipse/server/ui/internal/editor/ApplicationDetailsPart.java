@@ -747,6 +747,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 							generalSection.getParent().layout(true, true);
 							editorPage.reflow();
 							application.setUris(URIs);
+							appModule.setCloudApplication(application);
 						}
 					}
 				}
