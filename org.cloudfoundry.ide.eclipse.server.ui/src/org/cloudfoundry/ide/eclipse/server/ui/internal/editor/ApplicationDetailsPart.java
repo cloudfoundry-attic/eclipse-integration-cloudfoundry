@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -192,7 +192,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	 */
 	private FormToolkit toolkit;
 
-	private List<String> URIs;
+	private List<String> appUrls;
 
 	private final boolean provideServices;
 
@@ -421,7 +421,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	private void updateServerNameDisplay(CloudFoundryApplicationModule application) {
 		if (application.getApplication() == null) {
-			serverNameText.setText(NLS.bind(Messages.ApplicationDetailsPart_TEXT_UPDATE_NOT_DEPLOYED, application.getDeployedApplicationName()));
+			serverNameText.setText(NLS.bind(Messages.ApplicationDetailsPart_TEXT_UPDATE_NOT_DEPLOYED,
+					application.getDeployedApplicationName()));
 			return;
 		}
 		int state = application.getState();
@@ -429,11 +430,13 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		switch (state) {
 		case IServer.STATE_STARTED:
-			String message = debugLabel != null ? NLS.bind(Messages.ApplicationDetailsPart_TEXT_UPDATE_STARTED_IN, debugLabel) : Messages.ApplicationDetailsPart_TEXT_UPDATE_STARTED;
+			String message = debugLabel != null ? NLS.bind(Messages.ApplicationDetailsPart_TEXT_UPDATE_STARTED_IN,
+					debugLabel) : Messages.ApplicationDetailsPart_TEXT_UPDATE_STARTED;
 			serverNameText.setText(NLS.bind("{0} {1}", application.getDeployedApplicationName(), message)); //$NON-NLS-1$
 			break;
 		case IServer.STATE_STOPPED:
-			serverNameText.setText(NLS.bind(Messages.ApplicationDetailsPart_TEXT_UPDATE_STOPPED, application.getDeployedApplicationName()));
+			serverNameText.setText(NLS.bind(Messages.ApplicationDetailsPart_TEXT_UPDATE_STOPPED,
+					application.getDeployedApplicationName()));
 			break;
 		default:
 			serverNameText.setText(application.getDeployedApplicationName());
@@ -456,7 +459,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	 * unknown state.
 	 */
 	protected void refreshPublishState(CloudFoundryApplicationModule appModule) {
-		isPublished = appModule != null && appModule.getState() != IServer.STATE_UNKNOWN;
+		isPublished = appModule != null && appModule.isDeployed();
 	}
 
 	public void refreshUI() {
@@ -483,13 +486,11 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			ManifestParser parser = new ManifestParser(appModule, cloudServer);
 			if (!parser.canWriteToManifest()) {
 				saveManifest.setEnabled(false);
-				saveManifest
-						.setToolTipText(Messages.ApplicationDetailsPart_TEXT_MANIFEST_SAVE_CREATE_TOOLTIP);
+				saveManifest.setToolTipText(Messages.ApplicationDetailsPart_TEXT_MANIFEST_SAVE_CREATE_TOOLTIP);
 			}
 			else {
 				saveManifest.setEnabled(true);
-				saveManifest
-						.setToolTipText(Messages.ApplicationDetailsPart_TEXT_MANIFEST_UPDATE);
+				saveManifest.setToolTipText(Messages.ApplicationDetailsPart_TEXT_MANIFEST_UPDATE);
 			}
 		}
 
@@ -557,11 +558,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			currentURIs = Collections.emptyList();
 		}
 
-		if (!currentURIs.equals(URIs)) {
-			URIs = currentURIs;
-			mappedURIsLink.setText(getURIsAsLinkText(URIs));
-			generalSection.getParent().layout(true, true);
-			editorPage.reflow();
+		if (!currentURIs.equals(this.appUrls)) {
+			updateAppUrls(currentURIs);
 		}
 
 		refreshServices(appModule);
@@ -600,9 +598,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				serviceNames = deploymentInfo.asServiceBindingList();
 			}
 			catch (CoreException e) {
-				logError(NLS
-						.bind(Messages.ApplicationDetailsPart_ERROR_INCORRECT_SERVICE,
-								appModule.getDeployedApplicationName()));
+				logError(NLS.bind(Messages.ApplicationDetailsPart_ERROR_INCORRECT_SERVICE,
+						appModule.getDeployedApplicationName()));
 			}
 
 			if (serviceNames == null) {
@@ -703,6 +700,13 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		}
 	}
 
+	protected void updateAppUrls(List<String> urls) {
+		this.appUrls = urls;
+		mappedURIsLink.setText(getURIsAsLinkText(urls));
+		generalSection.getParent().layout(true, true);
+		editorPage.reflow();
+	}
+
 	private void createGeneralSection(Composite parent) {
 		generalSection = toolkit.createSection(parent, Section.TITLE_BAR);
 		generalSection.setLayout(new GridLayout());
@@ -736,18 +740,10 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				try {
 					CloudFoundryApplicationModule appModule = getExistingApplication();
 
-					MappedURLsWizard wizard = new MappedURLsWizard(cloudServer, appModule, URIs, isPublished);
+					MappedURLsWizard wizard = new MappedURLsWizard(cloudServer, appModule, appUrls);
 					WizardDialog dialog = new WizardDialog(editorPage.getEditorSite().getShell(), wizard);
 					if (dialog.open() == Window.OK) {
-
-						CloudApplication application = appModule.getApplication();
-						if (application != null) {
-							URIs = wizard.getURLs();
-							mappedURIsLink.setText(getURIsAsLinkText(wizard.getURLs()));
-							generalSection.getParent().layout(true, true);
-							editorPage.reflow();
-							application.setUris(URIs);
-						}
+						updateAppUrls(wizard.getURLs());
 					}
 				}
 				catch (CoreException ce) {
@@ -822,9 +818,9 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(memoryArea);
 
 		memoryText = new Text(memoryArea, SWT.BORDER);
-		
+
 		memoryText.addModifyListener(new ModifyListener() {
-			
+
 			public void modifyText(ModifyEvent e) {
 				try {
 					Integer.parseInt(memoryText.getText());
@@ -956,7 +952,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				ApplicationAction.DEBUG } : null;
 
 		restartAppButton = new ApplicationActionMenuControl(buttonComposite, restartActions, ApplicationAction.START,
-				Messages.ApplicationDetailsPart_TEXT_RESTART, CloudFoundryImages.getImage(CloudFoundryImages.RESTART), toolkit) {
+				Messages.ApplicationDetailsPart_TEXT_RESTART, CloudFoundryImages.getImage(CloudFoundryImages.RESTART),
+				toolkit) {
 
 			public void setDefaultTooltipMessage() {
 				// Don't do anything as tooltip is controlled by the editor part
@@ -973,8 +970,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		});
 
 		updateRestartAppButton = new ApplicationActionMenuControl(buttonComposite, restartActions,
-				ApplicationAction.START, Messages.ApplicationDetailsPart_TEXT_UPDATE_RESTART, CloudFoundryImages.getImage(CloudFoundryImages.RESTART),
-				toolkit) {
+				ApplicationAction.START, Messages.ApplicationDetailsPart_TEXT_UPDATE_RESTART,
+				CloudFoundryImages.getImage(CloudFoundryImages.RESTART), toolkit) {
 
 			public void setDefaultTooltipMessage() {
 				// Don't do anything as tooltip is controlled by the editor part
@@ -1007,10 +1004,11 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		try {
 			final CloudFoundryApplicationModule appModule = getExistingApplication();
 			if (appModule != null && saveManifest != null && !saveManifest.isDisposed()) {
-				if (MessageDialog
-						.openConfirm(saveManifest.getShell(), Messages.ApplicationDetailsPart_TEXT_SAVE_MANIFEST,
-								Messages.ApplicationDetailsPart_TEXT_SAVE_MANIFEST_BODY)) {
-					Job job = new Job(NLS.bind(Messages.ApplicationDetailsPart_JOB_WRITE, appModule.getDeployedApplicationName())) {
+				if (MessageDialog.openConfirm(saveManifest.getShell(),
+						Messages.ApplicationDetailsPart_TEXT_SAVE_MANIFEST,
+						Messages.ApplicationDetailsPart_TEXT_SAVE_MANIFEST_BODY)) {
+					Job job = new Job(NLS.bind(Messages.ApplicationDetailsPart_JOB_WRITE,
+							appModule.getDeployedApplicationName())) {
 
 						@Override
 						protected IStatus run(IProgressMonitor monitor) {
@@ -1160,7 +1158,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		DebugModeType type = getDeployedAppDebugMode();
 
 		if (type != null) {
-			return type.getApplicationAction().getDisplayName().toLowerCase() + Messages.ApplicationDetailsPart_TEXT_MODE;
+			return type.getApplicationAction().getDisplayName().toLowerCase()
+					+ Messages.ApplicationDetailsPart_TEXT_MODE;
 		}
 		return null;
 	}
@@ -1184,10 +1183,10 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 			break;
 		case DEBUG:
-			restartButton
-					.setToolTipText(restartButtonAction == ApplicationAction.UPDATE_RESTART ? NLS.bind(Messages.ApplicationDetailsPart_TEXT_UPDATE_RESTART_IN_MODE,
-							currentDeployedAction.getDisplayName().toLowerCase()) : NLS.bind(Messages.ApplicationDetailsPart_TEXT_RESTART_IN_MODE,
-							currentDeployedAction.getDisplayName().toLowerCase()));
+			restartButton.setToolTipText(restartButtonAction == ApplicationAction.UPDATE_RESTART ? NLS.bind(
+					Messages.ApplicationDetailsPart_TEXT_UPDATE_RESTART_IN_MODE, currentDeployedAction.getDisplayName()
+							.toLowerCase()) : NLS.bind(Messages.ApplicationDetailsPart_TEXT_RESTART_IN_MODE,
+					currentDeployedAction.getDisplayName().toLowerCase()));
 			restartButton.setImage(CloudFoundryImages.getImage(CloudFoundryImages.RESTART_DEBUG_MODE));
 			break;
 		}
@@ -1209,9 +1208,14 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		GridLayoutFactory.fillDefaults().applyTo(container);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(container);
 
-		String[] columnNames = new String[] { Messages.ApplicationDetailsPart_TEXT_ID, Messages.ApplicationDetailsPart_TEXT_HOST, Messages.ApplicationDetailsPart_TEXT_PORT, Messages.ApplicationDetailsPart_TEXT_CPU, Messages.COMMONTXT_MEM, Messages.ApplicationDetailsPart_TEXT_DISK, Messages.ApplicationDetailsPart_TEXT_UPTIME };
-		String[] columnTooltips = new String[] { Messages.ApplicationDetailsPart_TEXT_ID, Messages.ApplicationDetailsPart_TEXT_HOST, Messages.ApplicationDetailsPart_TEXT_PORT, Messages.ApplicationDetailsPart_TEXT_CPU_CIRE, Messages.ApplicationDetailsPart_TEXT_MEMORY_LIMIT, Messages.ApplicationDetailsPart_TEXT_DISK_LIMIT,
-				Messages.ApplicationDetailsPart_TEXT_UPTIME
+		String[] columnNames = new String[] { Messages.ApplicationDetailsPart_TEXT_ID,
+				Messages.ApplicationDetailsPart_TEXT_HOST, Messages.ApplicationDetailsPart_TEXT_PORT,
+				Messages.ApplicationDetailsPart_TEXT_CPU, Messages.COMMONTXT_MEM,
+				Messages.ApplicationDetailsPart_TEXT_DISK, Messages.ApplicationDetailsPart_TEXT_UPTIME };
+		String[] columnTooltips = new String[] { Messages.ApplicationDetailsPart_TEXT_ID,
+				Messages.ApplicationDetailsPart_TEXT_HOST, Messages.ApplicationDetailsPart_TEXT_PORT,
+				Messages.ApplicationDetailsPart_TEXT_CPU_CIRE, Messages.ApplicationDetailsPart_TEXT_MEMORY_LIMIT,
+				Messages.ApplicationDetailsPart_TEXT_DISK_LIMIT, Messages.ApplicationDetailsPart_TEXT_UPTIME
 
 		};
 
@@ -1407,7 +1411,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
 		if (appModule == null) {
-			String errorMessage = module != null ? NLS.bind(Messages.ApplicationDetailsPart_ERROR_NO_CF_APP_MODULE_FOR, module.getId()) : Messages.ApplicationDetailsPart_ERROR_NO_CF_APP_MODULE;
+			String errorMessage = module != null ? NLS.bind(Messages.ApplicationDetailsPart_ERROR_NO_CF_APP_MODULE_FOR,
+					module.getId()) : Messages.ApplicationDetailsPart_ERROR_NO_CF_APP_MODULE;
 			throw CloudErrorUtil.toCoreException(errorMessage);
 		}
 
@@ -1425,7 +1430,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		CloudFoundryApplicationModule appModule = cloudServer.getCloudModule(module);
 
 		if (appModule == null) {
-			String errorMessage = module != null ? NLS.bind(Messages.ApplicationDetailsPart_ERROR_NO_CF_APP_MODULE_FOR, module.getId()) : Messages.ApplicationDetailsPart_ERROR_NO_CF_APP_MODULE;
+			String errorMessage = module != null ? NLS.bind(Messages.ApplicationDetailsPart_ERROR_NO_CF_APP_MODULE_FOR,
+					module.getId()) : Messages.ApplicationDetailsPart_ERROR_NO_CF_APP_MODULE;
 			throw CloudErrorUtil.toCoreException(errorMessage);
 		}
 		return appModule;
@@ -1461,7 +1467,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			new StartStopApplicationAction(editorPage, action, appModule, serverBehaviour).run();
 		}
 		catch (CoreException ce) {
-			logApplicationModuleFailureError(NLS.bind(Messages.ApplicationDetailsPart_ERROR_PERFORM, action.getDisplayName()));
+			logApplicationModuleFailureError(NLS.bind(Messages.ApplicationDetailsPart_ERROR_PERFORM,
+					action.getDisplayName()));
 		}
 	}
 

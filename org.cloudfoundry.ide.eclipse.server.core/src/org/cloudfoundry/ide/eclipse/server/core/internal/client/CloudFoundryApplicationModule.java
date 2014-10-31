@@ -99,8 +99,9 @@ import org.eclipse.wst.server.core.internal.ExternalModule;
  * {@link CloudApplication}), the deployment information is kept in synch any
  * time the module mapping to a {@link CloudApplication} is changed.
  * 
- * IMPORTANT NOTE: This class can be referred by the branding extension from adopter so this class 
- * should not be moved or renamed to avoid breakage to adopters. 
+ * IMPORTANT NOTE: This class can be referred by the branding extension from
+ * adopter so this class should not be moved or renamed to avoid breakage to
+ * adopters.
  * 
  * @author Nieraj Singh
  * @author Christian Dupuis
@@ -401,7 +402,7 @@ public class CloudFoundryApplicationModule extends ExternalModule implements ICl
 	 * False otherwise.
 	 */
 	public synchronized boolean isDeployed() {
-		return getApplication() != null;
+		return getApplication() != null && getState() != IServer.STATE_UNKNOWN;
 	}
 
 	/**

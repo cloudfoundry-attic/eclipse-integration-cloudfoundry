@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -60,8 +60,6 @@ public class MappedURLsWizardPage extends WizardPage {
 	private Button removeButton;
 
 	private Button editButton;
-
-	private Button shouldRepublishButton;
 
 	private List<String> urls;
 
@@ -169,17 +167,6 @@ public class MappedURLsWizardPage extends WizardPage {
 			}
 		});
 
-		boolean isPublished = ((MappedURLsWizard) getWizard()).isPublished();
-
-		if (!isPublished) {
-			shouldRepublishButton = new Button(composite, SWT.CHECK);
-			shouldRepublishButton.setText(Messages.MappedURLsWizardPage_BUTTON_REPUBLISH);
-			GridDataFactory.fillDefaults().span(2, 1).applyTo(shouldRepublishButton);
-			GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(shouldRepublishButton);
-			shouldRepublishButton.setEnabled(false);
-			shouldRepublishButton.setSelection(true);
-		}
-
 		Dialog.applyDialogFont(composite);
 		setControl(composite);
 	}
@@ -195,11 +182,6 @@ public class MappedURLsWizardPage extends WizardPage {
 
 	public List<String> getURLs() {
 		return urls;
-	}
-
-	public boolean shouldRepublish() {
-		return shouldRepublishButton != null && !shouldRepublishButton.isDisposed()
-				&& shouldRepublishButton.getSelection();
 	}
 
 	private class URIsContentProvider implements ITreeContentProvider {
