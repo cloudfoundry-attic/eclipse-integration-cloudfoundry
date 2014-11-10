@@ -22,7 +22,6 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
 import java.io.IOException;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
 import org.eclipse.core.runtime.CoreException;
@@ -45,21 +44,21 @@ public abstract class ConsoleStream {
 
 	}
 
-	abstract public void initialiseStream(MessageConsole console, CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer) throws CoreException;
+	abstract public void initialiseStream(MessageConsole console, CloudFoundryApplicationModule appModule)
+			throws CoreException;
 
 	abstract public void close();
 
 	abstract public boolean isActive();
 
-	abstract protected IOConsoleOutputStream getActiveOutputStream();
+	abstract protected IOConsoleOutputStream getActiveOutputStream(CloudLog log);
 
 	public synchronized MessageConsole getMessageConsole() {
 		return this.console;
 	}
 
 	public synchronized void write(CloudLog log) throws CoreException {
-		IOConsoleOutputStream activeOutStream = getActiveOutputStream();
+		IOConsoleOutputStream activeOutStream = getActiveOutputStream(log);
 
 		if (activeOutStream != null && log != null) {
 			String logMessage = log.getLog();

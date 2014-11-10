@@ -27,12 +27,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.cloudfoundry.client.lib.domain.ApplicationLog;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudFoundrySpace;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleListener;
@@ -105,7 +109,7 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 
 			MessageConsole appConsole = getApplicationConsole(server, appModule);
 
-			serverLogTail = new ApplicationLogConsole(appConsole);
+			serverLogTail = new ApplicationLogConsole(appConsole, appModule, server);
 			consoleByUri.put(getConsoleId(server.getServer(), appModule), serverLogTail);
 		}
 		return serverLogTail;
@@ -166,8 +170,25 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 				console.getConsole().clearConsole();
 			}
 			CloudFoundryServerBehaviour behaviour = server.getBehaviour();
-			List<ApplicationLog> logs = behaviour.getRecentApplicationLogs(appModule.getDeployedApplicationName());
-			console.writeApplicationLogs(logs, appModule, server);
+			List<ApplicationLog> logs;
+			try {
+				logs = behaviour.getRecentApplicationLogs(appModule.getDeployedApplicationName(), monitor);
+				if (!logs.isEmpty()) {
+					console.writeApplicationLogs(logs, appModule, server);
+				}
+				else {
+					writeToStandardConsole(Messages.ApplicationLogConsoleManager_NO_RECENT_LOGS + '\n', server, appModule,
+							instanceIndex, false, false);
+				}
+			}
+			catch (CoreException ce) {
+				String message = NLS.bind(Messages.ERROR_EXISTING_APPLICATION_LOGS + '\n',
+						appModule.getDeployedApplicationName(), ce.getMessage());
+				CloudFoundryPlugin.logError(message, ce);
+				writeToStandardConsole(message, server, appModule, instanceIndex, false, true);
+
+			}
+			consoleManager.showConsoleView(console.getConsole());
 		}
 	}
 

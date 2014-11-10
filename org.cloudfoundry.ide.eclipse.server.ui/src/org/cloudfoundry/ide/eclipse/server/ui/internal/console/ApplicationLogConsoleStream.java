@@ -23,19 +23,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.cloudfoundry.client.lib.ApplicationLogListener;
-import org.cloudfoundry.client.lib.StreamingLogToken;
 import org.cloudfoundry.client.lib.domain.ApplicationLog;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.console.MessageConsole;
@@ -55,17 +51,14 @@ import org.eclipse.ui.console.MessageConsole;
  * 
  *
  */
-public class ApplicationLogConsoleStream extends ConsoleStream implements ApplicationLogListener {
+public class ApplicationLogConsoleStream extends ConsoleStream {
 
 	private Map<LogContentType, ConsoleStream> logStreams = new HashMap<LogContentType, ConsoleStream>();
 
-	private CloudFoundryServer cloudServer;
-
 	private CloudFoundryApplicationModule appModule;
 
-	private StreamingLogToken loggregatorToken;
-
 	public ApplicationLogConsoleStream() {
+
 	}
 
 	public synchronized void close() {
@@ -75,38 +68,32 @@ public class ApplicationLogConsoleStream extends ConsoleStream implements Applic
 			}
 			logStreams.clear();
 		}
-		// Also cancel any further loggregator streaming
-		if (loggregatorToken != null) {
-			loggregatorToken.cancel();
-			loggregatorToken = null;
-		}
+
 	}
 
-	public synchronized void initialiseStream(MessageConsole console, CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer) throws CoreException {
+	public synchronized void initialiseStream(MessageConsole console, CloudFoundryApplicationModule appModule)
+			throws CoreException {
 
-		if (appModule == null || cloudServer == null) {
+		if (appModule == null) {
 			throw CloudErrorUtil.toCoreException(Messages.ERROR_FAILED_INITIALISE_APPLICATION_LOG_STREAM);
 		}
 		this.console = console;
 		this.appModule = appModule;
-		this.cloudServer = cloudServer;
-		CloudFoundryServerBehaviour behaviour = cloudServer.getBehaviour();
 
-		// This token represents the loggregator connection.
-		loggregatorToken = behaviour.addApplicationLogListener(appModule.getDeployedApplicationName(), this);
 	}
 
 	@Override
 	public synchronized boolean isActive() {
-		return loggregatorToken != null;
+		return true;
 	}
 
 	@Override
-	protected IOConsoleOutputStream getActiveOutputStream() {
-		// There is no single active outstream for the manager, as the manager
-		// manages
-		// various streams internally for each type of loggregator content.
+	protected IOConsoleOutputStream getActiveOutputStream(CloudLog log) {
+
+		ConsoleStream consoleStream = getStream(log);
+		if (consoleStream != null) {
+			return consoleStream.getActiveOutputStream(log);
+		}
 		return null;
 	}
 
@@ -155,10 +142,10 @@ public class ApplicationLogConsoleStream extends ConsoleStream implements Applic
 				swtColour = SWT.COLOR_BLACK;
 			}
 
-			stream = swtColour > -1 ? new SingleConsoleStream(new UILogConfig(swtColour)) : null;
-			if (stream != null) {
+			if (swtColour > -1) {
 				try {
-					stream.initialiseStream(console, appModule, cloudServer);
+					stream = new SingleConsoleStream(new UILogConfig(swtColour));
+					stream.initialiseStream(console, appModule);
 					logStreams.put(type, stream);
 				}
 				catch (CoreException e) {
@@ -169,51 +156,4 @@ public class ApplicationLogConsoleStream extends ConsoleStream implements Applic
 		return stream;
 	}
 
-	public void onMessage(ApplicationLog appLog) {
-		CloudLog log = getCloudlog(appLog, null, null);
-		if (log != null) {
-			try {
-				write(log);
-			}
-			catch (CoreException e) {
-				CloudFoundryPlugin.logError(e);
-			}
-		}
-	}
-
-	public synchronized void write(CloudLog log) throws CoreException {
-		// Only log if the console manager is active. This is a
-		// workaround
-		// for cases where canceling loggregator connection is not immediate,
-		// and the callback still is invoked asynchronously
-		// even after all the managed console streams are closed.
-		if (log == null || !isActive()) {
-			return;
-		}
-		ConsoleStream stream = getStream(log);
-
-		// Even if the manager is active, any individual stream may be closed,
-		// therefore always check that
-		// the associated stream for the given log type is active before
-		// streaming content to it.
-		if (stream != null && stream.isActive()) {
-			stream.write(log);
-		}
-	}
-
-	public void onComplete() {
-		// Nothing for now
-	}
-
-	public void onError(Throwable exception) {
-		// Only log errors if the stream manager is active. This prevents errors
-		// to be continued to be displayed by the asynchronous loggregator
-		// callback after the stream
-		// manager has closed.
-		if (isActive()) {
-			CloudFoundryPlugin.logError(NLS.bind(Messages.ERROR_APPLICATION_LOG,
-					appModule != null ? appModule.getDeployedApplicationName() : Messages.UNKNOWN_APPLICATION,
-					exception.getMessage()), exception);
-		}
-	}
 }

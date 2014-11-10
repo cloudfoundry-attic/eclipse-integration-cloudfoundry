@@ -793,25 +793,20 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return null;
 	}
 
-	public List<ApplicationLog> getRecentApplicationLogs(final String appName) {
+	public List<ApplicationLog> getRecentApplicationLogs(final String appName, IProgressMonitor monitor)
+			throws CoreException {
 		List<ApplicationLog> logs = null;
 		if (appName != null) {
-			try {
-				logs = new BehaviourRequest<List<ApplicationLog>>("Getting existing application logs for: " + appName) //$NON-NLS-1$
-				{
+			logs = new BehaviourRequest<List<ApplicationLog>>("Getting existing application logs for: " + appName) //$NON-NLS-1$
+			{
 
-					@Override
-					protected List<ApplicationLog> doRun(CloudFoundryOperations client, SubMonitor progress)
-							throws CoreException {
-						return client.getRecentLogs(appName);
-					}
+				@Override
+				protected List<ApplicationLog> doRun(CloudFoundryOperations client, SubMonitor progress)
+						throws CoreException {
+					return client.getRecentLogs(appName);
+				}
 
-				}.run(new NullProgressMonitor());
-			}
-			catch (CoreException e) {
-				CloudFoundryPlugin.logError(
-						NLS.bind(Messages.ERROR_EXISTING_APPLICATION_LOGS, appName, e.getMessage()), e);
-			}
+			}.run(monitor);
 		}
 		if (logs == null) {
 			logs = Collections.emptyList();

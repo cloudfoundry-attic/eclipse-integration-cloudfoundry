@@ -21,11 +21,17 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
 
 import java.util.List;
 
+import org.cloudfoundry.client.lib.ApplicationLogListener;
+import org.cloudfoundry.client.lib.StreamingLogToken;
 import org.cloudfoundry.client.lib.domain.ApplicationLog;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.console.MessageConsole;
 
 /**
@@ -37,8 +43,22 @@ import org.eclipse.ui.console.MessageConsole;
  */
 class ApplicationLogConsole extends CloudFoundryConsole {
 
-	public ApplicationLogConsole(MessageConsole console) {
+	private StreamingLogToken loggregatorToken;
+
+	private final CloudFoundryApplicationModule appModule;
+
+	private final CloudFoundryServer cloudServer;
+
+	public ApplicationLogConsole(MessageConsole console, CloudFoundryApplicationModule appModule,
+			CloudFoundryServer cloudServer) {
 		super(console);
+		this.cloudServer = cloudServer;
+		this.appModule = appModule;
+		CloudFoundryServerBehaviour behaviour = cloudServer.getBehaviour();
+
+		// This token represents the loggregator connection.
+		loggregatorToken = behaviour.addApplicationLogListener(appModule.getDeployedApplicationName(),
+				new ApplicationLogConsoleListener());
 	}
 
 	/**
@@ -73,12 +93,57 @@ class ApplicationLogConsole extends CloudFoundryConsole {
 			CloudFoundryServer cloudServer) {
 		if (logs != null) {
 			for (ApplicationLog log : logs) {
-				CloudLog cloudLog = ApplicationLogConsoleStream.getCloudlog(log, appModule, cloudServer);
-				if (cloudLog != null) {
-					writeToStream(cloudLog);
-				}
+				writeApplicationLog(log);
 			}
 		}
+	}
+
+	protected synchronized void writeApplicationLog(ApplicationLog log) {
+		CloudLog cloudLog = ApplicationLogConsoleStream.getCloudlog(log, appModule, cloudServer);
+		if (cloudLog != null) {
+			writeToStream(cloudLog);
+		}
+	}
+
+	public synchronized boolean isActive() {
+		return loggregatorToken != null;
+	}
+
+	public class ApplicationLogConsoleListener implements ApplicationLogListener {
+
+		public void onMessage(ApplicationLog appLog) {
+			if (isActive()) {
+				writeApplicationLog(appLog);
+			}
+		}
+
+		public void onComplete() {
+			// Nothing for now
+		}
+
+		public void onError(Throwable exception) {
+			// Only log errors if the stream manager is active. This prevents
+			// errors
+			// to be continued to be displayed by the asynchronous loggregator
+			// callback after the stream
+			// manager has closed.
+			if (isActive()) {
+				CloudFoundryPlugin.logError(
+						NLS.bind(Messages.ERROR_APPLICATION_LOG, appModule.getDeployedApplicationName(),
+								exception.getMessage()), exception);
+			}
+		}
+	}
+
+	@Override
+	public synchronized void stop() {
+		// Also cancel any further loggregator streaming
+		if (loggregatorToken != null) {
+			loggregatorToken.cancel();
+			loggregatorToken = null;
+		}
+		super.stop();
+
 	}
 
 }

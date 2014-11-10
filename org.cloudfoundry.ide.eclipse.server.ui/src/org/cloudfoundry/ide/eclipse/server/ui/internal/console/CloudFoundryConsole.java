@@ -70,16 +70,15 @@ public class CloudFoundryConsole {
 	 * @param contents to stream to the console
 	 */
 	public synchronized void startTailing(LogContentType type, CloudFoundryApplicationModule appModule,
-			CloudFoundryServer server) {
-		ConsoleStream stream = getStream(type, appModule, server);
+			CloudFoundryServer cloudServer) {
+		ConsoleStream stream = getStream(type, appModule);
 		if (stream == null) {
 			CloudFoundryPlugin.logError(NLS.bind(Messages.ERROR_NO_CONSOLE_STREAM_FOUND, type));
 		}
 
 	}
 
-	protected synchronized ConsoleStream getStream(LogContentType type, CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer) {
+	protected synchronized ConsoleStream getStream(LogContentType type, CloudFoundryApplicationModule appModule) {
 
 		if (type == null) {
 			return null;
@@ -91,7 +90,7 @@ public class CloudFoundryConsole {
 			stream = ConsoleStreamRegistry.getInstance().getStream(type);
 			if (stream != null) {
 				try {
-					stream.initialiseStream(getConsole(), appModule, cloudServer);
+					stream.initialiseStream(getConsole(), appModule);
 					activeStreams.put(type, stream);
 				}
 				catch (CoreException e) {
@@ -110,16 +109,16 @@ public class CloudFoundryConsole {
 		for (Entry<LogContentType, ConsoleStream> entry : activeStreams.entrySet()) {
 			entry.getValue().close();
 		}
+		activeStreams.clear();
 	}
 
 	public synchronized void writeToStream(CloudLog log) {
 		if (log == null) {
 			return;
 		}
-		CloudFoundryServer server = (CloudFoundryServer) log.getAdapter(CloudFoundryServer.class);
 		CloudFoundryApplicationModule appModule = (CloudFoundryApplicationModule) log
 				.getAdapter(CloudFoundryApplicationModule.class);
-		ConsoleStream stream = getStream(log.getLogType(), appModule, server);
+		ConsoleStream stream = getStream(log.getLogType(), appModule);
 		if (stream != null) {
 			try {
 				stream.write(log);

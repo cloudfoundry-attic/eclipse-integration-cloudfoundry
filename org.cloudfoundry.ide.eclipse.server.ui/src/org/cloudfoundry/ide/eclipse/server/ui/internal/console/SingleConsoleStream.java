@@ -22,8 +22,8 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
 import java.io.IOException;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.console.MessageConsole;
@@ -47,7 +47,7 @@ public class SingleConsoleStream extends ConsoleStream {
 	 * @return Returns the output stream IFF it is active. Returns null
 	 * otherwise.
 	 */
-	protected synchronized IOConsoleOutputStream getActiveOutputStream() {
+	protected synchronized IOConsoleOutputStream getActiveOutputStream(CloudLog log) {
 		if (isActive()) {
 			return outputStream;
 		}
@@ -65,8 +65,7 @@ public class SingleConsoleStream extends ConsoleStream {
 		}
 	}
 
-	public synchronized void initialiseStream(MessageConsole console, CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer) {
+	public synchronized void initialiseStream(MessageConsole console, CloudFoundryApplicationModule appModule) {
 		this.console = console;
 		this.outputStream = console.newOutputStream();
 		if (isActive()) {
