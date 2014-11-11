@@ -957,7 +957,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public void updateApplicationUrls(final String appName, final List<String> uris, IProgressMonitor monitor)
 			throws CoreException {
 
-		new AbstractDeploymentOperation(this) {
+		new UpdateApplicationOperation(appName, this) {
 			@Override
 			protected void performOperation(IProgressMonitor monitor) throws CoreException {
 				new AppInStoppedStateAwareRequest<Void>("Updating application URLs for " + appName) { //$NON-NLS-1$
