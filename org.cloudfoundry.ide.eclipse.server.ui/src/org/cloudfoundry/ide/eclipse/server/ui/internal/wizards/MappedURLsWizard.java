@@ -27,18 +27,15 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.RepublishApplicationHandler;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.wst.server.core.IModule;
 
 /**
@@ -54,8 +51,6 @@ public class MappedURLsWizard extends Wizard {
 
 	private List<String> existingURIs;
 
-	private boolean isPublished = true;
-
 	private CloudFoundryApplicationModule applicationModule;
 
 	private MappedURLsWizardPage page;
@@ -70,12 +65,6 @@ public class MappedURLsWizard extends Wizard {
 
 		setWindowTitle(Messages.MappedURLsWizard_TITLE_MOD_MAPPED_URL);
 		setNeedsProgressMonitor(true);
-	}
-
-	public MappedURLsWizard(CloudFoundryServer cloudServer, CloudFoundryApplicationModule applicationModule,
-			List<String> existingURIs, boolean isPublished) {
-		this(cloudServer, applicationModule, existingURIs);
-		this.isPublished = isPublished;
 	}
 
 	@Override
@@ -103,56 +92,52 @@ public class MappedURLsWizard extends Wizard {
 	@Override
 	public boolean performFinish() {
 		page.setErrorMessage(null);
-		final boolean shouldRepublish = page.shouldRepublish();
 
 		final IStatus[] result = new IStatus[1];
-		if (shouldRepublish) {
 
-			Job job = new Job(NLS.bind(Messages.MappedURLsWizard_JOB_REPUBLISH, applicationModule.getDeployedApplicationName())) {
+		IRunnableWithProgress runnable = null;
 
-				@Override
-				protected IStatus run(IProgressMonitor monitor) {
-					IStatus status = null;
+		page.setMessage(Messages.MappedURLsWizard_TEXT_UPDATE_URL);
+
+		// If the app module is not deployed, set the URIs in the deployment
+		// descriptor.
+		if (!applicationModule.isDeployed()) {
+			runnable = new IRunnableWithProgress() {
+				public void run(IProgressMonitor monitor) {
 					try {
-						new RepublishApplicationHandler(applicationModule, page.getURLs(), cloudServer)
-								.republish(monitor);
+						DeploymentInfoWorkingCopy wc = applicationModule.resolveDeploymentInfoWorkingCopy(monitor);
+						wc.setUris(page.getURLs());
+						wc.save();
 					}
 					catch (CoreException e) {
-						status = CloudFoundryPlugin.getErrorStatus(e);
-						StatusManager.getManager().handle(status, StatusManager.LOG);
+						result[0] = e.getStatus();
 					}
-					return status != null ? status : Status.OK_STATUS;
 				}
-
 			};
-			job.setSystem(false);
-			job.setPriority(Job.INTERACTIVE);
-			job.schedule();
 		}
 		else {
-			try {
-				page.setMessage(Messages.MappedURLsWizard_TEXT_UPDATE_URL);
-				getContainer().run(true, true, new IRunnableWithProgress() {
-					public void run(IProgressMonitor monitor) {
-						try {
-							cloudServer.getBehaviour().updateApplicationUrls(appName, page.getURLs(), monitor);
-						}
-						catch (CoreException e) {
-							result[0] = e.getStatus();
-						}
+			runnable = new IRunnableWithProgress() {
+				public void run(IProgressMonitor monitor) {
+					try {
+						cloudServer.getBehaviour().updateApplicationUrls(appName, page.getURLs(), monitor);
 					}
-				});
-				page.setMessage(null);
-			}
-			catch (InvocationTargetException e) {
-				result[0] = CloudFoundryPlugin.getErrorStatus(e);
-			}
-			catch (InterruptedException e) {
-				result[0] = CloudFoundryPlugin.getErrorStatus(e);
-
-			}
-
+					catch (CoreException e) {
+						result[0] = e.getStatus();
+					}
+				}
+			};
 		}
+
+		try {
+			getContainer().run(true, true, runnable);
+		}
+		catch (InvocationTargetException e) {
+			result[0] = CloudFoundryPlugin.getErrorStatus(e);
+		}
+		catch (InterruptedException e) {
+			result[0] = CloudFoundryPlugin.getErrorStatus(e);
+		}
+
 		if (result[0] != null && !result[0].isOK()) {
 			page.setErrorMessage(NLS.bind(Messages.MappedURLsWizard_ERROR_CHANGE_URL, result[0].getMessage()));
 			return false;
@@ -162,9 +147,4 @@ public class MappedURLsWizard extends Wizard {
 		}
 
 	}
-
-	public boolean isPublished() {
-		return isPublished;
-	}
-
 }

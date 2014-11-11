@@ -783,8 +783,6 @@ public class Messages extends NLS {
 
 	public static String MappedURLsWizard_ERROR_CHANGE_URL;
 
-	public static String MappedURLsWizard_JOB_REPUBLISH;
-
 	public static String MappedURLsWizard_TEXT_UPDATE_URL;
 
 	public static String MappedURLsWizard_TITLE_MOD_MAPPED_URL;

@@ -956,11 +956,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public void updateApplicationUrls(final String appName, final List<String> uris, IProgressMonitor monitor)
 			throws CoreException {
-		new AppInStoppedStateAwareRequest<Void>("Updating application URLs for {0}" + appName) { //$NON-NLS-1$
+
+		new UpdateApplicationOperation(appName, this) {
 			@Override
-			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-				client.updateApplicationUris(appName, uris);
-				return null;
+			protected void performOperation(IProgressMonitor monitor) throws CoreException {
+				new AppInStoppedStateAwareRequest<Void>("Updating application URLs for " + appName) { //$NON-NLS-1$
+					@Override
+					protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+						client.updateApplicationUris(appName, uris);
+						return null;
+					}
+				}.run(monitor);
 			}
 		}.run(monitor);
 	}
