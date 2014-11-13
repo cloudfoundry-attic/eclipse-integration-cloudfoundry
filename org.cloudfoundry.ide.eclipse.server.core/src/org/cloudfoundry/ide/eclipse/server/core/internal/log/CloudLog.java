@@ -1,9 +1,3 @@
-package org.cloudfoundry.ide.eclipse.server.core.internal.log;
-
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
-import org.eclipse.core.runtime.IAdaptable;
-
 /*******************************************************************************
  * Copyright (c) 2014 Pivotal Software, Inc.
  * 
@@ -22,49 +16,37 @@ import org.eclipse.core.runtime.IAdaptable;
  * 
  * Contributors: Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-public class CloudLog implements IAdaptable {
+package org.cloudfoundry.ide.eclipse.server.core.internal.log;
+
+/**
+ * A log message that contains the message and message type. This may be used to
+ * model both local log messages (for example writing to local standard out) or
+ * an actual loggregator application log for a published app. The
+ * {@link LogContentType} indicates whether it is a local log or a log from a
+ * published application that is being streamed to a console.
+ *
+ */
+public class CloudLog {
 
 	private final LogContentType logType;
 
-	private final String log;
+	private final String message;
 
-	private final CloudFoundryServer cloudServer;
-
-	private final CloudFoundryApplicationModule appModule;
-
-	public CloudLog(String log, LogContentType logType) {
-		this(log, logType, null, null);
-	}
-
-	public CloudLog(String log, LogContentType logType, CloudFoundryServer cloudServer,
-			CloudFoundryApplicationModule appModule) {
+	public CloudLog(String message, LogContentType logType) {
+		this.message = message;
 		this.logType = logType;
-		this.log = log;
-		this.cloudServer = cloudServer;
-		this.appModule = appModule;
 	}
 
 	public LogContentType getLogType() {
 		return logType;
 	}
 
-	public String getLog() {
-		return log;
-	}
-
-	public Object getAdapter(Class clazz) {
-		if (clazz.equals(CloudFoundryServer.class)) {
-			return cloudServer;
-		}
-		else if (clazz.equals(CloudFoundryApplicationModule.class)) {
-			return appModule;
-		}
-
-		return null;
+	public String getMessage() {
+		return message;
 	}
 
 	public String toString() {
-		return logType + " - " + log; //$NON-NLS-1$
+		return logType + " - " + message; //$NON-NLS-1$
 	}
 
 }

@@ -23,10 +23,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
 import org.eclipse.core.runtime.CoreException;
@@ -37,9 +36,10 @@ import org.eclipse.ui.console.MessageConsole;
  * Cloud Foundry console manages various separate streams based on console
  * content type (e.g., STDOUT, STDERROR).
  * <p/>
- * The console will load {@link ConsoleStreamProvider} for different console
- * content types, allowing adopters to user their own streams for common
- * {@link LogContentType} like {@link StandardLogContentType#STD_ERROR} or
+ * The console will create and initialise streams from
+ * {@link ConsoleStreamRegistry} for different console content types, allowing
+ * adopters to user their own streams for common {@link LogContentType} like
+ * {@link StandardLogContentType#STD_ERROR} or
  * {@link StandardLogContentType#STD_OUT}
  *
  */
@@ -54,31 +54,42 @@ public class CloudFoundryConsole {
 
 	private Map<LogContentType, ConsoleStream> activeStreams = new HashMap<LogContentType, ConsoleStream>();
 
-	private final MessageConsole console;
+	private final ConsoleConfig config;
 
-	public CloudFoundryConsole(MessageConsole console) {
-		this.console = console;
+	public CloudFoundryConsole(ConsoleConfig config) {
+		this.config = config;
 	}
 
 	public MessageConsole getConsole() {
-		return console;
+		return config.getMessageConsole();
 	}
 
 	/**
-	 * Starts stream jobs and creates new output streams to the console for each
-	 * file listed in the console contents.
+	 * Initialises a stream based on the given log content type and prepares it
+	 * for tailing
 	 * @param contents to stream to the console
 	 */
-	public synchronized void startTailing(LogContentType type, CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer) {
-		ConsoleStream stream = getStream(type, appModule);
-		if (stream == null) {
-			CloudFoundryPlugin.logError(NLS.bind(Messages.ERROR_NO_CONSOLE_STREAM_FOUND, type));
+	public synchronized void startTailing(LogContentType type) {
+		// initialise the stream for tailing
+		try {
+			getStream(type);
 		}
-
+		catch (CoreException ce) {
+			CloudFoundryPlugin.logError(ce);
+		}
 	}
 
-	protected synchronized ConsoleStream getStream(LogContentType type, CloudFoundryApplicationModule appModule) {
+	/**
+	 * Gets the stream for the given content type. This will request the console stream
+	 * registry  for a stream provider for the given content type. If the
+	 * stream was already created, it will return the existing cached stream. To
+	 * clear the cache, the streams must fist be stopped through {@link #stop()}
+	 * See {@link ConsoleStreamRegistry}
+	 * @param type
+	 * @return non-null stream for the given log content type.
+	 * @throws CoreException if stream failed to initialise for the given type
+	 */
+	protected synchronized ConsoleStream getStream(LogContentType type) throws CoreException {
 
 		if (type == null) {
 			return null;
@@ -88,15 +99,12 @@ public class CloudFoundryConsole {
 
 		if (stream == null) {
 			stream = ConsoleStreamRegistry.getInstance().getStream(type);
-			if (stream != null) {
-				try {
-					stream.initialiseStream(getConsole(), appModule);
-					activeStreams.put(type, stream);
-				}
-				catch (CoreException e) {
-					CloudFoundryPlugin.logError(e);
-				}
+
+			if (stream == null) {
+				throw CloudErrorUtil.toCoreException(NLS.bind(Messages.ERROR_NO_CONSOLE_STREAM_FOUND, type));
 			}
+			stream.initialiseStream(config);
+			activeStreams.put(type, stream);
 		}
 
 		return stream;
@@ -112,20 +120,44 @@ public class CloudFoundryConsole {
 		activeStreams.clear();
 	}
 
+	/**
+	 * Synchronously writes to Std Error. This is run in the same thread where
+	 * it is invoked, therefore use with caution as to not send a large volume
+	 * of text.
+	 * @param message
+	 * @param monitor
+	 */
+	public void writeToStdError(String message) {
+		writeToStream(message, StandardLogContentType.STD_ERROR);
+	}
+
+	/**
+	 * Synchronously writes to Std Out. This is run in the same thread where it
+	 * is invoked, therefore use with caution as to not send a large volume of
+	 * text.
+	 * @param message
+	 * @param monitor
+	 */
+	public void writeToStdOut(String message) {
+		writeToStream(message, StandardLogContentType.STD_OUT);
+	}
+
+	protected synchronized void writeToStream(String message, LogContentType type) {
+		if (message != null) {
+			writeToStream(new CloudLog(message, type));
+		}
+	}
+
 	public synchronized void writeToStream(CloudLog log) {
 		if (log == null) {
 			return;
 		}
-		CloudFoundryApplicationModule appModule = (CloudFoundryApplicationModule) log
-				.getAdapter(CloudFoundryApplicationModule.class);
-		ConsoleStream stream = getStream(log.getLogType(), appModule);
-		if (stream != null) {
-			try {
-				stream.write(log);
-			}
-			catch (CoreException e) {
-				CloudFoundryPlugin.logError(e);
-			}
+		try {
+			ConsoleStream stream = getStream(log.getLogType());
+			stream.write(log);
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
 		}
 	}
 

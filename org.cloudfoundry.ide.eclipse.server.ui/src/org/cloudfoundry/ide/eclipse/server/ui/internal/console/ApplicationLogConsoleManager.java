@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.cloudfoundry.client.lib.domain.ApplicationLog;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
@@ -84,6 +85,34 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 	@Override
 	public void startConsole(CloudFoundryServer server, LogContentType type, CloudFoundryApplicationModule appModule,
 			int instanceIndex, boolean show, boolean clear, IProgressMonitor monitor) {
+		try {
+			doStartConsole(server, type, appModule, show, clear);
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+	}
+
+	/**
+	 * Starts the application console, and begins tailing for application logs.
+	 * NOTE that this should only be invoked if the application has started and
+	 * is published.
+	 * @param server
+	 * @param type
+	 * @param appModule
+	 * @param show
+	 * @param clear
+	 * @return
+	 */
+	protected CloudFoundryConsole doStartConsole(CloudFoundryServer server, LogContentType type,
+			CloudFoundryApplicationModule appModule, boolean show, boolean clear) throws CoreException {
+
+		if (!appModule.isDeployed()) {
+			throw CloudErrorUtil
+					.toCoreException(NLS
+							.bind(org.cloudfoundry.ide.eclipse.server.ui.internal.Messages.ApplicationLogConsoleManager_APPLICATION_NOT_PUBLISHED,
+									appModule.getDeployedApplicationName()));
+		}
 		// As of 1.7.2, instances are not used for loggregator. Loggregator
 		// shows content for all instances in the same console
 		CloudFoundryConsole serverLogTail = getApplicationLogConsole(server, appModule);
@@ -92,12 +121,13 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 			if (clear) {
 				serverLogTail.getConsole().clearConsole();
 			}
-			serverLogTail.startTailing(type, appModule, server);
+			serverLogTail.startTailing(type);
 		}
 
 		if (show && serverLogTail != null) {
 			consoleManager.showConsoleView(serverLogTail.getConsole());
 		}
+		return serverLogTail;
 	}
 
 	protected synchronized ApplicationLogConsole getApplicationLogConsole(CloudFoundryServer server,
@@ -109,7 +139,7 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 
 			MessageConsole appConsole = getApplicationConsole(server, appModule);
 
-			serverLogTail = new ApplicationLogConsole(appConsole, appModule, server);
+			serverLogTail = new ApplicationLogConsole(new ConsoleConfig(appConsole, server, appModule));
 			consoleByUri.put(getConsoleId(server.getServer(), appModule), serverLogTail);
 		}
 		return serverLogTail;
@@ -135,60 +165,69 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 	@Override
 	public void writeToStandardConsole(String message, CloudFoundryServer server,
 			CloudFoundryApplicationModule appModule, int instanceIndex, boolean clear, boolean isError) {
-		// As of 1.7.2, instances are not used for loggregator. Loggregator
-		// shows content for all instances in the same console
+		// IMPORTANT: Writing to local standard console does NOT require the
+		// application to be published, as it may
+		// be used to display pre-publish messages for the application when
+		// publishing the application for the first time.
+		// Do not start tailing the application console when writing to local
+		// standard out as tailing is meant for application
+		// log streaming and it requires the application to be published.
+		LogContentType type = isError ? StandardLogContentType.STD_ERROR : StandardLogContentType.STD_OUT;
+
 		CloudFoundryConsole serverLogTail = getApplicationLogConsole(server, appModule);
 
-		if (serverLogTail instanceof ApplicationLogConsole) {
-
-			ApplicationLogConsole logConsole = (ApplicationLogConsole) serverLogTail;
+		if (serverLogTail != null) {
 			if (clear) {
 				serverLogTail.getConsole().clearConsole();
 			}
-
-			if (isError) {
-				logConsole.writeToStdError(message);
-			}
-			else {
-				logConsole.writeToStdOut(message);
-			}
+			doWriteToStdConsole(message, serverLogTail, type);
 			consoleManager.showConsoleView(serverLogTail.getConsole());
+		}
+	}
+
+	protected void doWriteToStdConsole(String message, CloudFoundryConsole console, LogContentType type) {
+		if (StandardLogContentType.STD_ERROR.equals(type)) {
+			console.writeToStdError(message);
+		}
+		else {
+			console.writeToStdOut(message);
 		}
 	}
 
 	@Override
 	public void showCloudFoundryLogs(CloudFoundryServer server, CloudFoundryApplicationModule appModule,
 			int instanceIndex, boolean clear, IProgressMonitor monitor) {
-		if (appModule == null || server == null) {
+		CloudFoundryConsole console = null;
+		try {
+			console = doStartConsole(server, StandardLogContentType.APPLICATION_LOG, appModule, true, false);
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
 			return;
 		}
-		// As of 1.7.2, instances are not used for loggregator. Loggregator
-		// shows content for all instances in the same console
-		ApplicationLogConsole console = getApplicationLogConsole(server, appModule);
-		if (console != null) {
-			if (clear) {
-				console.getConsole().clearConsole();
-			}
+
+		if (console instanceof ApplicationLogConsole) {
+			ApplicationLogConsole logConsole = (ApplicationLogConsole) console;
 			CloudFoundryServerBehaviour behaviour = server.getBehaviour();
 			List<ApplicationLog> logs;
 			try {
 				logs = behaviour.getRecentApplicationLogs(appModule.getDeployedApplicationName(), monitor);
 				if (!logs.isEmpty()) {
-					console.writeApplicationLogs(logs, appModule, server);
+					logConsole.writeApplicationLogs(logs);
 				}
 				else {
-					writeToStandardConsole(Messages.ApplicationLogConsoleManager_NO_RECENT_LOGS + '\n', server, appModule,
-							instanceIndex, false, false);
+
+					doWriteToStdConsole(Messages.ApplicationLogConsoleManager_NO_RECENT_LOGS + '\n', logConsole,
+							StandardLogContentType.STD_OUT);
 				}
 			}
 			catch (CoreException ce) {
 				String message = NLS.bind(Messages.ERROR_EXISTING_APPLICATION_LOGS + '\n',
 						appModule.getDeployedApplicationName(), ce.getMessage());
 				CloudFoundryPlugin.logError(message, ce);
-				writeToStandardConsole(message, server, appModule, instanceIndex, false, true);
+				doWriteToStdConsole(message, logConsole, StandardLogContentType.STD_ERROR);
 
 			}
-			consoleManager.showConsoleView(console.getConsole());
 		}
 	}
 

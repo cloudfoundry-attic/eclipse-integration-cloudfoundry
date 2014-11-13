@@ -39,31 +39,13 @@ public class StandardLogContentType {
 	public static final LogContentType STD_ERROR = new LogContentType("stderror"); //$NON-NLS-1$
 
 	/**
-	 * Application log errors that occur while the application is deployed in
-	 * the Cloud Foundry server.
-	 */
-	public static final LogContentType APPLICATION_LOG_STS_ERROR = new LogContentType("applicationlogstderror"); //$NON-NLS-1$
-
-	/**
-	 * Application log std out messages that occur while the application is
-	 * deployed in the Cloud Foundr server.
-	 */
-	public static final LogContentType APPLICATION_LOG_STD_OUT = new LogContentType("applicationlogstdout"); //$NON-NLS-1$
-
-	/**
-	 * Other application log content obtained while the app is deployed to a
-	 * Cloud Foundry server that is neither std out or std error.
-	 */
-	public static final LogContentType APPLICATION_LOG_UNKNOWN = new LogContentType("applicationlogunknown"); //$NON-NLS-1$
-
-	/**
 	 * Generic application log type that is used for both loggregator and file
 	 * log stream. NOTE: May be deprecated once file log streaming is removed.
 	 */
 	public static final LogContentType APPLICATION_LOG = new LogContentType("applicationlog"); //$NON-NLS-1$
 
 	/**
-	 * @deprecated only used by file log streaming, which is deprecated
+	 * @deprecated only used by file log streaming, which is no longer supported.
 	 */
 	public static final LogContentType SHOW_EXISTING_LOGS = new LogContentType("existingLogs"); //$NON-NLS-1$
 

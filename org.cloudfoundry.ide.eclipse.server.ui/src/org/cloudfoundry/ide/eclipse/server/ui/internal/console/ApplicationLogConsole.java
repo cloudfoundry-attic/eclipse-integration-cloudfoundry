@@ -21,21 +21,16 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
 
 import java.util.List;
 
-import org.cloudfoundry.client.lib.ApplicationLogListener;
-import org.cloudfoundry.client.lib.StreamingLogToken;
 import org.cloudfoundry.client.lib.domain.ApplicationLog;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
-import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
-import org.eclipse.osgi.util.NLS;
-import org.eclipse.ui.console.MessageConsole;
+import org.eclipse.core.runtime.CoreException;
 
 /**
- * 
+ * Application Log console that manages loggregator streams for a deployed
+ * application. This console should only be created and used for applications
+ * that are already published, as it initialises loggregator support which
+ * requires the application to exist in the Cloud server.
  * 
  * @author Steffen Pingel
  * @author Christian Dupuis
@@ -43,54 +38,11 @@ import org.eclipse.ui.console.MessageConsole;
  */
 class ApplicationLogConsole extends CloudFoundryConsole {
 
-	private StreamingLogToken loggregatorToken;
-
-	private final CloudFoundryApplicationModule appModule;
-
-	private final CloudFoundryServer cloudServer;
-
-	public ApplicationLogConsole(MessageConsole console, CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer) {
-		super(console);
-		this.cloudServer = cloudServer;
-		this.appModule = appModule;
-		CloudFoundryServerBehaviour behaviour = cloudServer.getBehaviour();
-
-		// This token represents the loggregator connection.
-		loggregatorToken = behaviour.addApplicationLogListener(appModule.getDeployedApplicationName(),
-				new ApplicationLogConsoleListener());
+	public ApplicationLogConsole(ConsoleConfig config) {
+		super(config);
 	}
 
-	/**
-	 * Synchronously writes to Std Error. This is run in the same thread where
-	 * it is invoked, therefore use with caution as to not send a large volume
-	 * of text.
-	 * @param message
-	 * @param monitor
-	 */
-	public void writeToStdError(String message) {
-		writeToStream(message, StandardLogContentType.STD_ERROR);
-	}
-
-	/**
-	 * Synchronously writes to Std Out. This is run in the same thread where it
-	 * is invoked, therefore use with caution as to not send a large volume of
-	 * text.
-	 * @param message
-	 * @param monitor
-	 */
-	public void writeToStdOut(String message) {
-		writeToStream(message, StandardLogContentType.STD_OUT);
-	}
-
-	protected synchronized void writeToStream(String message, LogContentType type) {
-		if (message != null) {
-			writeToStream(new CloudLog(message, type));
-		}
-	}
-
-	public synchronized void writeApplicationLogs(List<ApplicationLog> logs, CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer) {
+	public synchronized void writeApplicationLogs(List<ApplicationLog> logs) {
 		if (logs != null) {
 			for (ApplicationLog log : logs) {
 				writeApplicationLog(log);
@@ -98,52 +50,30 @@ class ApplicationLogConsole extends CloudFoundryConsole {
 		}
 	}
 
+	/**
+	 * Writes a loggregator application log to a corresponding console stream.
+	 * This is different from {@link #writeToStream(CloudLog)} in the sense that
+	 * the latter writes a local log and does not handle special cases for
+	 * loggregator.
+	 * @param log
+	 */
 	protected synchronized void writeApplicationLog(ApplicationLog log) {
-		CloudLog cloudLog = ApplicationLogConsoleStream.getCloudlog(log, appModule, cloudServer);
-		if (cloudLog != null) {
-			writeToStream(cloudLog);
+		if (log == null) {
+			return;
 		}
-	}
-
-	public synchronized boolean isActive() {
-		return loggregatorToken != null;
-	}
-
-	public class ApplicationLogConsoleListener implements ApplicationLogListener {
-
-		public void onMessage(ApplicationLog appLog) {
-			if (isActive()) {
-				writeApplicationLog(appLog);
+		try {
+			// Write to the application console stream directly, as the
+			// Application log stream does
+			// additional processing on the raw application log that may not be performed
+			// by the base CloudFoundryConsole
+			ConsoleStream stream = getStream(StandardLogContentType.APPLICATION_LOG);
+			if (stream instanceof ApplicationLogConsoleStream) {
+				((ApplicationLogConsoleStream) stream).write(log);
 			}
 		}
-
-		public void onComplete() {
-			// Nothing for now
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
 		}
-
-		public void onError(Throwable exception) {
-			// Only log errors if the stream manager is active. This prevents
-			// errors
-			// to be continued to be displayed by the asynchronous loggregator
-			// callback after the stream
-			// manager has closed.
-			if (isActive()) {
-				CloudFoundryPlugin.logError(
-						NLS.bind(Messages.ERROR_APPLICATION_LOG, appModule.getDeployedApplicationName(),
-								exception.getMessage()), exception);
-			}
-		}
-	}
-
-	@Override
-	public synchronized void stop() {
-		// Also cancel any further loggregator streaming
-		if (loggregatorToken != null) {
-			loggregatorToken.cancel();
-			loggregatorToken = null;
-		}
-		super.stop();
 
 	}
-
 }

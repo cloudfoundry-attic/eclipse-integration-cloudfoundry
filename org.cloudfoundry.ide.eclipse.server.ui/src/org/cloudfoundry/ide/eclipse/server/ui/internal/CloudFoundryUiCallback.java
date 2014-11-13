@@ -86,7 +86,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	public void showCloudFoundryLogs(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
 			int showIndex, IProgressMonitor monitor) {
 		ConsoleManagerRegistry.getConsoleManager(cloudServer).showCloudFoundryLogs(cloudServer, cloudModule, showIndex,
-				true, monitor);
+				false, monitor);
 	}
 
 	@Override

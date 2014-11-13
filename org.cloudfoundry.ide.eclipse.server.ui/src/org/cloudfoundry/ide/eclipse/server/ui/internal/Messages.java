@@ -96,6 +96,8 @@ public class Messages extends NLS {
 	public static String ApplicationActionMenuControl_TEXT_SELECT_MODE;
 
 	public static String ApplicationActionMenuControl_TEXT_SELECT_MODE_FOR;
+	
+	public static String ApplicationLogConsoleManager_APPLICATION_NOT_PUBLISHED;
 
 	public static String ApplicationMasterPart_ERROR_DEPLOY_FAIL_BODY;
 

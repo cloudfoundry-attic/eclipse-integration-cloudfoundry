@@ -183,7 +183,7 @@ public class ConsoleManagerRegistry {
 			if (messageConsole == null) {
 				messageConsole = new MessageConsole(CLOUD_FOUNDRY_TRACE_CONSOLE_NAME, TRACE_CONSOLE_ID, null, true);
 			}
-			traceConsole = new CloudFoundryConsole(messageConsole);
+			traceConsole = new CloudFoundryConsole(new ConsoleConfig(messageConsole, null, null));
 
 			ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[] { messageConsole });
 
