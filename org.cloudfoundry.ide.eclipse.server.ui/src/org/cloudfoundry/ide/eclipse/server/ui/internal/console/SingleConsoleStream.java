@@ -22,8 +22,8 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
 import java.io.IOException;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.console.MessageConsole;
@@ -33,6 +33,8 @@ public class SingleConsoleStream extends ConsoleStream {
 	private final UILogConfig config;
 
 	protected IOConsoleOutputStream outputStream;
+
+	private MessageConsole console;
 
 	public SingleConsoleStream(UILogConfig config) {
 		this.config = config;
@@ -47,7 +49,7 @@ public class SingleConsoleStream extends ConsoleStream {
 	 * @return Returns the output stream IFF it is active. Returns null
 	 * otherwise.
 	 */
-	protected synchronized IOConsoleOutputStream getActiveOutputStream() {
+	protected synchronized IOConsoleOutputStream getOutputStream(LogContentType type) {
 		if (isActive()) {
 			return outputStream;
 		}
@@ -65,9 +67,8 @@ public class SingleConsoleStream extends ConsoleStream {
 		}
 	}
 
-	public synchronized void initialiseStream(MessageConsole console, CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer) {
-		this.console = console;
+	public synchronized void initialiseStream(ConsoleConfig descriptor) throws CoreException {
+		this.console = descriptor.getMessageConsole();
 		this.outputStream = console.newOutputStream();
 		if (isActive()) {
 			Display.getDefault().syncExec(new Runnable() {
@@ -83,4 +84,5 @@ public class SingleConsoleStream extends ConsoleStream {
 			outputStream.setColor(Display.getDefault().getSystemColor(config.getDisplayColour()));
 		}
 	}
+
 }

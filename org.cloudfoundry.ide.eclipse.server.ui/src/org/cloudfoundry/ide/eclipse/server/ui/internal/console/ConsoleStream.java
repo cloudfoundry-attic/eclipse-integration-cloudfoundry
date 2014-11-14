@@ -22,12 +22,10 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.console;
 import java.io.IOException;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
+import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.ui.console.IOConsoleOutputStream;
-import org.eclipse.ui.console.MessageConsole;
 
 /**
  * Basic console stream that manages an output stream to an Eclipse console,
@@ -39,37 +37,30 @@ import org.eclipse.ui.console.MessageConsole;
  */
 public abstract class ConsoleStream {
 
-	protected MessageConsole console;
-
 	protected ConsoleStream() {
 
 	}
 
-	abstract public void initialiseStream(MessageConsole console, CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer) throws CoreException;
+	abstract public void initialiseStream(ConsoleConfig descriptor) throws CoreException;
 
 	abstract public void close();
 
 	abstract public boolean isActive();
 
-	abstract protected IOConsoleOutputStream getActiveOutputStream();
-
-	public synchronized MessageConsole getMessageConsole() {
-		return this.console;
-	}
+	abstract protected IOConsoleOutputStream getOutputStream(LogContentType contentType);
 
 	public synchronized void write(CloudLog log) throws CoreException {
-		IOConsoleOutputStream activeOutStream = getActiveOutputStream();
+		if (log == null || log.getMessage() == null) {
+			return;
+		}
+		IOConsoleOutputStream outStream = getOutputStream(log.getLogType());
 
-		if (activeOutStream != null && log != null) {
-			String logMessage = log.getLog();
-			if (logMessage != null) {
-				try {
-					activeOutStream.write(logMessage);
-				}
-				catch (IOException e) {
-					throw CloudErrorUtil.toCoreException(e);
-				}
+		if (outStream != null) {
+			try {
+				outStream.write(log.getMessage());
+			}
+			catch (IOException e) {
+				throw CloudErrorUtil.toCoreException(e);
 			}
 		}
 	}

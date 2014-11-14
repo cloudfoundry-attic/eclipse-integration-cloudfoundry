@@ -23,9 +23,16 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
 
 public class ApplicationLogStreamProvider extends ConsoleStreamProvider {
 
-	private static final LogContentType[] SUPPORTED = new LogContentType[] { StandardLogContentType.APPLICATION_LOG,
-			StandardLogContentType.APPLICATION_LOG_STD_OUT, StandardLogContentType.APPLICATION_LOG_STS_ERROR,
-			StandardLogContentType.APPLICATION_LOG_UNKNOWN };
+	/**
+	 * Only define one supported type: the general Application log type, as the
+	 * application log stream is an aggregate of various streams, managed within
+	 * the {@link ApplicationLogConsoleStream} each for one type of application
+	 * log content type that is determined as logs are received from the Cloud
+	 * server. These various stream types are not defined at this level, but
+	 * rather in the application log stream itself. See
+	 * {@link ApplicationLogConsoleStream}
+	 */
+	private static final LogContentType[] SUPPORTED = new LogContentType[] { StandardLogContentType.APPLICATION_LOG };
 
 	@Override
 	public ConsoleStream getStream(LogContentType type) {

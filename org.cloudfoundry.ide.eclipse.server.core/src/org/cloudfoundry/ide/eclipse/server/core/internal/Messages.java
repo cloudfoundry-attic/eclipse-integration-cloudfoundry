@@ -28,6 +28,8 @@ public class Messages extends NLS {
 	public static String AbstractApplicationDelegate_ERROR_MISSING_DEPLOY_INFO;
 
 	public static String AbstractApplicationDelegate_ERROR_MISSING_MEM;
+	
+	public static String ApplicationLogConsoleManager_NO_RECENT_LOGS;
 
 	public static String ApplicationUrlLookupService_ERROR_GET_CLOUD_URL;
 
