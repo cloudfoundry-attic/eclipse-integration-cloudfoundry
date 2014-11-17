@@ -80,6 +80,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpac
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
@@ -1328,6 +1329,61 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				e.getMessage()));
 		CloudFoundryPlugin.log(errorStatus);
 		CloudFoundryPlugin.getCallback().handleError(errorStatus, BehaviourEventType.APP_START);
+	}
+
+	@Override
+	protected void publishModules(int kind, List modules, List deltaKind2, MultiStatus multi, IProgressMonitor monitor) {
+		// NOTE: this is a workaround to avoid server-wide publish when removing
+		// a module (i.e., deleting an application) as
+		// well as publishing
+		// an application for the first time. The issue: If there
+		// are other
+		// modules aside from the module being added or removed, that also have
+		// changes, those modules
+		// will be republished. There is a WST preference (
+		// ServerPreferences#setAutoPublishing) that prevent modules from being
+		// published automatically on
+		// add/delete, but since this is a global preference, and it
+		// affects all WST server contributions, not just Cloud Foundry.
+		// Therefore,
+		// preventing server-wide publish for just Cloud Foundry servers by
+		// setting this preference is not advisable. Until WST supports per-app
+		// add/delete without triggering a server publish, this seems to be a
+		// suitable
+		// workaround.
+		if (modules != null && deltaKind2 != null) {
+			List<IModule[]> filteredModules = new ArrayList<IModule[]>(modules.size());
+			List<Integer> filteredDeltaKinds = new ArrayList<Integer>(deltaKind2.size());
+
+			// To prevent server-wide publish. Only filter in the following
+			// modules:
+			// 1. Those being added
+			// 2. Those being deleted
+			// If neither is present, it means modules only have CHANGE or
+			// NOCHANGE delta kinds
+			// which means the publish operation was probably requested through
+			// an actual Server publish action. In this case,
+			// no filter should occur
+			for (int i = 0; i < modules.size() && i < deltaKind2.size(); i++) {
+
+				// should skip this publish
+				IModule[] module = (IModule[]) modules.get(i);
+
+				int knd = (Integer) deltaKind2.get(i);
+				if (ServerBehaviourDelegate.ADDED == knd || ServerBehaviourDelegate.REMOVED == knd) {
+					filteredModules.add(module);
+					filteredDeltaKinds.add(knd);
+				}
+
+			}
+
+			if (!filteredModules.isEmpty()) {
+				modules = filteredModules;
+				deltaKind2 = filteredDeltaKinds;
+			}
+		}
+
+		super.publishModules(kind, modules, deltaKind2, multi, monitor);
 	}
 
 	@Override
