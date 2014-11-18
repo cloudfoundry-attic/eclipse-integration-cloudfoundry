@@ -21,7 +21,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  lib/cloudfoundry-caldecott-lib-0.1.4.BUILD-SNAPSHOT.jar,
- lib/cloudfoundry-client-lib-1.0.5.BUILD-SNAPSHOT.jar,
+ lib/cloudfoundry-client-lib-1.0.5.jar,
  lib/commons-io-2.1.jar,
  lib/httpclient-4.2.5.jar,
  lib/httpcore-4.2.4.jar,
