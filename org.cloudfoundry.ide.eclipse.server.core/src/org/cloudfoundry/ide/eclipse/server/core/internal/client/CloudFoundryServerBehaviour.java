@@ -1366,8 +1366,22 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			// no filter should occur
 			for (int i = 0; i < modules.size() && i < deltaKind2.size(); i++) {
 
+				if (monitor.isCanceled()) {
+					return;
+				}
+
 				// should skip this publish
 				IModule[] module = (IModule[]) modules.get(i);
+
+				if (module.length == 0) {
+					continue;
+				}
+
+				IModule m = module[module.length - 1];
+
+				if (shouldIgnorePublishRequest(m)) {
+					continue;
+				}
 
 				int knd = (Integer) deltaKind2.get(i);
 				if (ServerBehaviourDelegate.ADDED == knd || ServerBehaviourDelegate.REMOVED == knd) {
