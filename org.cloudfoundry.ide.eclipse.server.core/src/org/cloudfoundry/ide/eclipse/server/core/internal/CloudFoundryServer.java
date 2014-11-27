@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -53,6 +53,7 @@ import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IModuleType;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
+import org.eclipse.wst.server.core.internal.IModuleVisitor;
 import org.eclipse.wst.server.core.internal.Server;
 import org.eclipse.wst.server.core.internal.ServerPlugin;
 import org.eclipse.wst.server.core.model.IURLProvider;
@@ -76,8 +77,9 @@ import org.eclipse.wst.server.core.model.ServerDelegate;
  * client calls in the server instance. These should be added to the
  * {@link CloudFoundryServerBehaviour}.
  * 
- * IMPORTANT NOTE: This class can be referred by the branding extension from adopter so this class 
- * should not be moved or renamed to avoid breakage to adopters. 
+ * IMPORTANT NOTE: This class can be referred by the branding extension from
+ * adopter so this class should not be moved or renamed to avoid breakage to
+ * adopters.
  * @author Christian Dupuis
  * @author Terry Denney
  * @author Leo Dos Santos
@@ -159,8 +161,8 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 			for (int i = 0; i < size; i++) {
 				IModule module = add[i];
 				if (!ApplicationRegistry.isSupportedModule(module)) {
-					return new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, 0,
-							NLS.bind(Messages.CloudFoundryServer_ERROR_APPTYPE_NOT_SUPPORTED, module.getModuleType().getId()),
+					return new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, 0, NLS.bind(
+							Messages.CloudFoundryServer_ERROR_APPTYPE_NOT_SUPPORTED, module.getModuleType().getId()),
 							null);
 				}
 
@@ -172,14 +174,16 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 				boolean ignoreFacetCheck = false;
 				// FIXNS: Enable with IModule2 workaround is in place, as its
 				// not available in Eclipse 4.3 and older.
-//				 if (module instanceof IModule2) {
-//					 String property = ((IModule2)module).getProperty(CloudFoundryConstants.PROPERTY_MODULE_NO_FACET);
-//					 if (property != null && property.equals("true")) {
-//						 ignoreFacetCheck = true;
-//					 }
-//				 }
+				// if (module instanceof IModule2) {
+				// String property =
+				// ((IModule2)module).getProperty(CloudFoundryConstants.PROPERTY_MODULE_NO_FACET);
+				// if (property != null && property.equals("true")) {
+				// ignoreFacetCheck = true;
+				// }
+				// }
 
-// Workaround - Remove the following and use the above commented out code
+				// Workaround - Remove the following and use the above commented
+				// out code
 				ClassLoader classLoader = module.getClass().getClassLoader();
 				if (classLoader != null) {
 					try {
@@ -187,15 +191,17 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 						if (iModule2 != null) {
 							Method getProperty = iModule2.getMethod("getProperty", String.class); //$NON-NLS-1$
 							Object o = getProperty.invoke(module, CloudFoundryConstants.PROPERTY_MODULE_NO_FACET);
-							if (o instanceof String && ((String)o).equals("true")) { //$NON-NLS-1$
+							if (o instanceof String && ((String) o).equals("true")) { //$NON-NLS-1$
 								ignoreFacetCheck = true;
 							}
 						}
-					} catch (Exception e) {
-						// If any issues, just go ahead and do the facet check below
+					}
+					catch (Exception e) {
+						// If any issues, just go ahead and do the facet check
+						// below
 					}
 				}
-// End of workaround
+				// End of workaround
 
 				if (module.getProject() != null && !ignoreFacetCheck) {
 					status = FacetUtil.verifyFacets(module.getProject(), getServer());
@@ -299,8 +305,8 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	 */
 	public IStatus refreshCloudModules() {
 		if (getServerOriginal() == null) {
-			return CloudFoundryPlugin
-					.getErrorStatus(NLS.bind(Messages.CloudFoundryServer_ERROR_SERVER_ORIGIN_NOT_FOUND, getDeploymentName()));
+			return CloudFoundryPlugin.getErrorStatus(NLS.bind(
+					Messages.CloudFoundryServer_ERROR_SERVER_ORIGIN_NOT_FOUND, getDeploymentName()));
 		}
 		IModule[] modules = getServerOriginal().getModules();
 		if (modules != null) {
@@ -362,7 +368,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 			if (webModule != null)
 				return webModule.getModules();
 		}
-		
+
 		return new IModule[0];
 	}
 
@@ -798,6 +804,30 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 			deleteServicesOnModuleRemove.set(Boolean.FALSE);
 			wc.modifyModules(null, deletedModules.toArray(new IModule[deletedModules.size()]), null);
 			wc.save(true, null);
+
+			// Note: This is normally performed as part of a server publish
+			// operation in WST, but to avoid doing a
+			// a full server publish, yet complete a proper module deletion and
+			// cache clearing, it is performed here.
+			final List<IModule[]> modules2 = new ArrayList<IModule[]>();
+			IServer server = getServer();
+
+			if (server instanceof Server) {
+				final Server serv = (Server) server;
+				serv.visit(new IModuleVisitor() {
+					public boolean visit(IModule[] module) {
+						if (serv.getModulePublishState(module) == IServer.PUBLISH_STATE_NONE)
+							serv.getServerPublishInfo().fill(module);
+
+						modules2.add(module);
+						return true;
+					}
+				}, null);
+
+				serv.getServerPublishInfo().removeDeletedModulePublishInfo(serv, modules2);
+				serv.getServerPublishInfo().save();
+			}
+
 		}
 		catch (CoreException e) {
 			// log error to avoid pop-up dialog
@@ -877,30 +907,35 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		}
 		return null;
 	}
-	
+
 	/**
-	 * Returns all modules that can be launched via the Open Home Page dialog 
-	 * In the form an array of IModule[], which represents the structure of modules
+	 * Returns all modules that can be launched via the Open Home Page dialog In
+	 * the form an array of IModule[], which represents the structure of modules
 	 * @param root The root module Open Home Page is based on
-	 * @return modules that can be launched via Open Home Page dialog 
+	 * @return modules that can be launched via Open Home Page dialog
 	 */
-	public IModule[][] getLaunchableModules(IModule root){
-		// For CF servers, default to an array of IModule containing only the root module.
-		// This preserves the original behavior of homePageUrl in OpenHomePageCommand
-		// by setting the contextRoot to null, and launches the default application entry URL.
-		
-		return new IModule[][]{new IModule[] {root}};
+	public IModule[][] getLaunchableModules(IModule root) {
+		// For CF servers, default to an array of IModule containing only the
+		// root module.
+		// This preserves the original behavior of homePageUrl in
+		// OpenHomePageCommand
+		// by setting the contextRoot to null, and launches the default
+		// application entry URL.
+
+		return new IModule[][] { new IModule[] { root } };
 	}
-	
+
 	/**
 	 * Get the context root of a given module
 	 * @param module The module to get context root from
 	 * @return The context root of given module
 	 */
-	public String getLaunchableModuleContextRoot(IModule[] module){
+	public String getLaunchableModuleContextRoot(IModule[] module) {
 		// For CF servers, default to null.
-		// This preserves the original behavior of homePageUrl in OpenHomePageCommand
-		// by setting the contextRoot to null, and launches the default application entry URL.
+		// This preserves the original behavior of homePageUrl in
+		// OpenHomePageCommand
+		// by setting the contextRoot to null, and launches the default
+		// application entry URL.
 		return null;
 	}
 }
