@@ -43,6 +43,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudFoundrySpac
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jst.server.core.FacetUtil;
@@ -809,22 +810,24 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 			// operation in WST, but to avoid doing a
 			// a full server publish, yet complete a proper module deletion and
 			// cache clearing, it is performed here.
-			final List<IModule[]> modules2 = new ArrayList<IModule[]>();
 			IServer server = getServer();
 
 			if (server instanceof Server) {
+				final List<IModule[]> modulesToVisit = new ArrayList<IModule[]>();
+
 				final Server serv = (Server) server;
 				serv.visit(new IModuleVisitor() {
 					public boolean visit(IModule[] module) {
-						if (serv.getModulePublishState(module) == IServer.PUBLISH_STATE_NONE)
+						if (serv.getModulePublishState(module) == IServer.PUBLISH_STATE_NONE) {
 							serv.getServerPublishInfo().fill(module);
+						}
 
-						modules2.add(module);
+						modulesToVisit.add(module);
 						return true;
 					}
-				}, null);
+				}, new NullProgressMonitor());
 
-				serv.getServerPublishInfo().removeDeletedModulePublishInfo(serv, modules2);
+				serv.getServerPublishInfo().removeDeletedModulePublishInfo(serv, modulesToVisit);
 				serv.getServerPublishInfo().save();
 			}
 
