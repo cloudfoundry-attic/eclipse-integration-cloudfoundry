@@ -26,9 +26,9 @@
             <configuration>
               <artifacts>
                 <artifact>
-                  <file>cloudfoundry-e3.7.target</file>
+                  <file>cloudfoundry-e4.3.target</file>
                   <type>target</type>
-                  <classifier>cloudfoundry-e3.7</classifier>
+                  <classifier>cloudfoundry-e4.3</classifier>
                 </artifact>
               </artifacts>
             </configuration>

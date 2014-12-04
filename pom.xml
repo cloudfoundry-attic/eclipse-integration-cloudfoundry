@@ -104,17 +104,16 @@
   <profiles>
 
     <profile>
-      <id>e37</id>
+      <id>e43</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
-        <dist.target>e3.7</dist.target>
-        <dist.platform.name>Indigo</dist.platform.name>
-        <dist.platform.id>indigo</dist.platform.id>		
-        <dist.platform.version>3.7</dist.platform.version>
-        <package.qualifierPrefix>e37</package.qualifierPrefix>
-        <version.weaving>1.0.0.R3_6_2</version.weaving>
+        <dist.target>e4.3</dist.target>
+        <dist.platform.name>Kepler</dist.platform.name>
+        <dist.platform.id>kepler</dist.platform.id>		
+        <dist.platform.version>4.3</dist.platform.version>
+        <package.qualifierPrefix>e43</package.qualifierPrefix>
       </properties>
     </profile>
 		
