@@ -2,7 +2,7 @@
 <feature
       id="org.cloudfoundry.ide.eclipse.server"
       label="%featureName"
-      version="1.7.4.qualifier"
+      version="1.7.5.qualifier"
       provider-name="%providerName"
       plugin="org.cloudfoundry.ide.eclipse.server.branding">
 
