@@ -29,7 +29,7 @@ then
 # else
 #  export JAVA_HOME=/opt/java/jdk/Sun/1.6
 # fi
- export JAVA_HOME=/opt/java/jdk/Sun/1.7
+ export JAVA_HOME=/opt/java/jdk/Sun/7.0/bin/java
  export MAVEN_HOME=/opt/java/tools/maven/apache-maven-3.0
  export PATH=$JAVA_HOME/bin:$MAVEN_HOME/bin:$PATH
  export DISPLAY=:1
