@@ -23,12 +23,13 @@ if [ "$BAMBOO" == "1" ]
 then
  ARGS="-Dmaven.repo.local=/opt/bamboo-home/.m2/repository-cloudfoundry-signed -Dhttpclient.retry-max=20 -Dtycho.localArtifacts=ignore"
 
- if [ "$JAVA_5" == "1" ]
- then
-  export JAVA_HOME=/opt/java/jdk/Sun/1.5/jre
- else
-  export JAVA_HOME=/opt/java/jdk/Sun/1.6
- fi
+# if [ "$JAVA_5" == "1" ]
+# then
+#  export JAVA_HOME=/opt/java/jdk/Sun/1.5/jre
+# else
+#  export JAVA_HOME=/opt/java/jdk/Sun/1.6
+# fi
+ export JAVA_HOME=/opt/java/jdk/Sun/1.7
  export MAVEN_HOME=/opt/java/tools/maven/apache-maven-3.0
  export PATH=$JAVA_HOME/bin:$MAVEN_HOME/bin:$PATH
  export DISPLAY=:1
