@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
- * 
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * are made available under the terms of the Apache License,
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *  
+ *
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
@@ -24,13 +24,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.Staging;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryClientFactory;
 import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ProxyHandler;
@@ -63,16 +60,13 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 					uris.add("test-proxy-upload.cloudfoundry.com");
 
 					// Do a direct client test with the proxy settings
-					client = CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
-							new CloudCredentials(serverBehavior.getCloudFoundryServer().getUsername(), serverBehavior
-									.getCloudFoundryServer().getPassword()),
-							new URL(serverBehavior.getCloudFoundryServer().getUrl()), false);
+					client = harness.createExternalClient();
 					client.createApplication("test", new Staging(), 128, uris, new ArrayList<String>());
 					fail("Expected ResourceAccessException due to invalid proxy configuration");
 				}
 				catch (Exception e) {
 					assertTrue("Expected ResourceAccessException, got: " + e, e instanceof ResourceAccessException);
-					assertEquals("invalid.proxy.test", e.getCause().getMessage());
+					assertTrue(e.getCause().getMessage().contains("invalid.proxy.test"));
 					ran[0] = true;
 				}
 

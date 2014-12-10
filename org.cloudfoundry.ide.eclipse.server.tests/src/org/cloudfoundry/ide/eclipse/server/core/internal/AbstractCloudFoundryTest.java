@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
- * 
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * are made available under the terms of the Apache License,
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *  
+ *
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
@@ -28,7 +28,6 @@ import junit.framework.TestCase;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.WaitForApplicationToStopOp;
@@ -49,7 +48,7 @@ import org.eclipse.wst.server.core.internal.Server;
  * server instance used to deploy applications during each test case, so it is
  * IMPORTANT to use the same harness that is created during setup through the
  * entire test case, including any helper methods invoked by the test case.
- * 
+ *
  */
 public abstract class AbstractCloudFoundryTest extends TestCase {
 
@@ -168,13 +167,13 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	}
 
 	/**
-	 * 
+	 *
 	 * Creates an application project based on the default project name defined
 	 * in the test fixture harness. Does NOT deploy the application. Also
 	 * creates the {@link IModule} associated with the application (but it does
 	 * not create the actual Cloud Foundry module or application, as these are
 	 * only created upon actual deployment)
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	protected void createWebApplicationProject() throws Exception {

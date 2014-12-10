@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
- * 
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * are made available under the terms of the Apache License,
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *  
+ *
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
@@ -23,13 +23,10 @@ import java.net.URL;
 
 import junit.framework.TestCase;
 
-import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudInfo;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryLoginHandler;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.tests.sts.util.StsTestUtil;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.CredentialProperties;
 import org.eclipse.core.runtime.CoreException;
@@ -42,139 +39,142 @@ import org.junit.Assert;
 public class CloudFoundryClientConnectionTest extends TestCase {
 
 	public void testConnectToNonSecureUrl() throws Exception {
-		CloudFoundryOperations client = CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
-				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
+
+		String url = getTestFixture().getUrl();
+
+		URL ur = new URL(url);
+		String host = ur.getHost();
+		String httpUrl = "http://" + host;
+
+		CredentialProperties credentials = getTestFixture().getCredentials();
+
+		CloudFoundryOperations client = StsTestUtil.createStandaloneClient(credentials.userEmail, credentials.password,
+				credentials.organization, credentials.space, httpUrl, getTestFixture().getSelfSignedCertificate());
+
+		new CloudFoundryLoginHandler(client).login(new NullProgressMonitor());
 
 		CloudInfo cloudInfo = client.getCloudInfo();
 		Assert.assertNotNull(cloudInfo);
 	}
 
 	public void testConnectToSecureUrl() throws Exception {
-		CloudFoundryOperations client = CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
-				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTPS);
+		String url = getTestFixture().getUrl();
+
+		URL ur = new URL(url);
+		String host = ur.getHost();
+		String httpUrl = "https://" + host;
+
+		CredentialProperties credentials = getTestFixture().getCredentials();
+
+		CloudFoundryOperations client = StsTestUtil.createStandaloneClient(credentials.userEmail, credentials.password,
+				credentials.organization, credentials.space, httpUrl, getTestFixture().getSelfSignedCertificate());
+
+		new CloudFoundryLoginHandler(client).login(new NullProgressMonitor());
+
+		CloudInfo cloudInfo = client.getCloudInfo();
+		Assert.assertNotNull(cloudInfo);
+	}
+
+	public void testValidCredentials() throws Exception {
+
+		CredentialProperties credentials = getTestFixture().getCredentials();
+
+		CloudFoundryOperations client = StsTestUtil.createStandaloneClient(credentials.userEmail, credentials.password,
+				credentials.organization, credentials.space, getTestFixture().getUrl(), getTestFixture()
+						.getSelfSignedCertificate());
+
 		CloudInfo cloudInfo = client.getCloudInfo();
 		Assert.assertNotNull(cloudInfo);
 
 	}
 
-	public void testValidPasswordOperationHandler() throws Exception {
-
-		CredentialProperties credentials = getTestFixture().getCredentials();
-		CloudCredentials cloudCredentials = new CloudCredentials(credentials.userEmail, credentials.password);
-
-		CloudFoundryOperations client = createClient(cloudCredentials,
-				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
-		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client);
-
-		try {
-			operationsHandler.login(new NullProgressMonitor());
-		}
-		catch (CoreException e) {
-			fail("Failed to log in due to: " + e.getMessage());
-		}
-
-	}
-
-	public void testInvalidPasswordOperationHandler() throws Exception {
+	public void testValidCredentialsLoginHandler() throws Exception {
 
 		CredentialProperties credentials = getTestFixture().getCredentials();
 
-		String invalidPassword = "invalid password";
-
-		CloudFoundryOperations client = createClient(new CloudCredentials(credentials.userEmail, invalidPassword),
-				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
+		CloudFoundryOperations client = StsTestUtil.createStandaloneClient(credentials.userEmail, credentials.password,
+				credentials.organization, credentials.space, getTestFixture().getUrl(), getTestFixture()
+						.getSelfSignedCertificate());
 
 		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client);
-		CoreException error = null;
 
-		try {
-			operationsHandler.login(new NullProgressMonitor());
-		}
-		catch (CoreException e) {
-			error = e;
-		}
+		operationsHandler.login(new NullProgressMonitor());
 
-		assertError(error);
+		CloudInfo cloudInfo = client.getCloudInfo();
+		Assert.assertNotNull(cloudInfo);
+
 	}
 
-	public void testInvalidUsernameOperationHandler() throws Exception {
-
+	public void testInvalidUsername() throws Exception {
 		CredentialProperties credentials = getTestFixture().getCredentials();
 
-		String invalidUsername = "invalid username";
+		String invalidUsername = "invalid@username";
 
-		CloudFoundryOperations client = createClient(new CloudCredentials(invalidUsername, credentials.password),
-				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
-
-		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client);
-		CoreException error = null;
-
+		CloudFoundryException cfe = null;
 		try {
-			operationsHandler.login(new NullProgressMonitor());
+			StsTestUtil.createStandaloneClient(invalidUsername, credentials.password, credentials.organization,
+					credentials.space, getTestFixture().getUrl(), getTestFixture().getSelfSignedCertificate());
 		}
-		catch (CoreException e) {
-			error = e;
-		}
-
-		assertError(error);
-	}
-
-	public void testInvalidAndValidCredentials() throws Exception {
-		CredentialProperties credentials = getTestFixture().getCredentials();
-
-		String invalidUsername = "invalid username";
-
-		CloudFoundryOperations client = createClient(new CloudCredentials(invalidUsername, credentials.password),
-				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
-
-		CloudFoundryLoginHandler operationsHandler = new CloudFoundryLoginHandler(client);
-		CoreException error = null;
-
-		try {
-			operationsHandler.login(new NullProgressMonitor());
-		}
-		catch (CoreException e) {
-			error = e;
+		catch (CloudFoundryException e) {
+			cfe = e;
 		}
 
-		assertError(error);
-
-		// CREATE a separate client to test valid connection. the purpose here
-		// is to ensure that the server does not retain the incorrect
-		// credentials
-
-		client = createClient(new CloudCredentials(credentials.userEmail, credentials.password),
-				CloudFoundryTestFixture.CF_PIVOTAL_SERVER_URL_HTTP);
-
-		operationsHandler = new CloudFoundryLoginHandler(client);
-
-		try {
-			operationsHandler.login(new NullProgressMonitor());
-		}
-		catch (CoreException e) {
-			fail("Failed to log in due to: " + e.getMessage());
-		}
-	}
-
-	/*
-	 * 
-	 * Helper methods
-	 */
-
-	protected void assertError(CoreException ce) {
-		Throwable cause = ce.getCause();
-
-		assertTrue("Expected " + CloudFoundryException.class.getName() + " but got " + cause.getClass().getName(),
-				cause instanceof CloudFoundryException);
-
-		CloudFoundryException cfe = (CloudFoundryException) cause;
-
+		assertNotNull(cfe);
 		assertTrue(CloudErrorUtil.getCloudFoundryErrorMessage(cfe).contains("403"));
 	}
 
-	protected CloudFoundryOperations createClient(CloudCredentials credentials, String url) throws Exception {
-		return CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(credentials, new URL(url),
-				false);
+	public void testInvalidPassword() throws Exception {
+		CredentialProperties credentials = getTestFixture().getCredentials();
+
+		String invalidPassword = "wrongpassword";
+
+		CloudFoundryException cfe = null;
+		try {
+			StsTestUtil.createStandaloneClient(credentials.userEmail, invalidPassword, credentials.organization,
+					credentials.space, getTestFixture().getUrl(), getTestFixture().getSelfSignedCertificate());
+		}
+		catch (CloudFoundryException e) {
+			cfe = e;
+		}
+
+		assertNotNull(cfe);
+		assertTrue(CloudErrorUtil.getCloudFoundryErrorMessage(cfe).contains("403"));
+	}
+
+	public void testInvalidOrg() throws Exception {
+		CredentialProperties credentials = getTestFixture().getCredentials();
+
+		String wrongOrg = "wrongorg";
+
+		IllegalArgumentException error = null;
+		try {
+			StsTestUtil.createStandaloneClient(credentials.userEmail, credentials.password, wrongOrg,
+					credentials.space, getTestFixture().getUrl(), getTestFixture().getSelfSignedCertificate());
+		}
+		catch (IllegalArgumentException e) {
+			error = e;
+		}
+
+		assertNotNull(error);
+		assertTrue(error.getMessage().toLowerCase().contains("no matching organization and space"));
+	}
+
+	public void testInvalidSpace() throws Exception {
+		CredentialProperties credentials = getTestFixture().getCredentials();
+
+		String wrongSpace = "wrongSpace";
+
+		IllegalArgumentException error = null;
+		try {
+			StsTestUtil.createStandaloneClient(credentials.userEmail, credentials.password, credentials.organization,
+					wrongSpace, getTestFixture().getUrl(), getTestFixture().getSelfSignedCertificate());
+		}
+		catch (IllegalArgumentException e) {
+			error = e;
+		}
+
+		assertNotNull(error);
+		assertTrue(error.getMessage().toLowerCase().contains("no matching organization and space"));
 	}
 
 	protected CloudFoundryTestFixture getTestFixture() throws CoreException {

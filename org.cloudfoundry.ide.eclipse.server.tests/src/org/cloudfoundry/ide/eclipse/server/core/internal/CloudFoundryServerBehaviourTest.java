@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
- * 
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * are made available under the terms of the Apache License,
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -13,13 +13,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *  
+ *
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal;
 
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,8 +28,6 @@ import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.eclipse.core.runtime.CoreException;
@@ -39,7 +36,7 @@ import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 
 /**
- * 
+ *
  * Each individual test creates only ONE application module, and checks that
  * only one module exists in the server instance.
  * @author Steffen Pingel
@@ -340,10 +337,9 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		// Now create a separate external standalone client (external to the WST
 		// CF Server instance) to delete the app
-		URL url = new URL(getTestFixture().getUrl());
-		CloudFoundryOperations client = CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
-				new CloudCredentials(getTestFixture().getCredentials().userEmail,
-						getTestFixture().getCredentials().password), url, false);
+
+		CloudFoundryOperations client = harness.createExternalClient();
+
 		client.login();
 		client.deleteApplication(appName);
 
@@ -439,10 +435,8 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		// Now create an external client to independently check that the
 		// application remains deployed and in started mode
-		URL url = new URL(getTestFixture().getUrl());
-		CloudFoundryOperations client = CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
-				new CloudCredentials(getTestFixture().getCredentials().userEmail,
-						getTestFixture().getCredentials().password), url, false);
+
+		CloudFoundryOperations client = harness.createExternalClient();
 		client.login();
 		List<CloudApplication> deployedApplications = client.getApplications();
 		assertTrue("Expected one cloud application for " + appPrefix + " but got: " + deployedApplications.size(),

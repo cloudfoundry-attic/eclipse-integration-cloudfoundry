@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
- * 
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * are made available under the terms of the Apache License,
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *  
+ *
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
@@ -29,6 +29,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.util.ConcurrentModificationException;
@@ -44,6 +45,12 @@ import javax.xml.transform.stream.StreamResult;
 
 import junit.framework.Assert;
 
+import org.cloudfoundry.client.lib.CloudCredentials;
+import org.cloudfoundry.client.lib.CloudFoundryOperations;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
+import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.CredentialProperties;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -112,6 +119,77 @@ public class StsTestUtil {
 		}
 		System.err.println("StsTestUtil: " + minimalVersion + " or later? => " + found);
 		return found;
+	}
+
+	public static void validateCredentials(CredentialProperties credentials) throws CoreException {
+		String userEmail = credentials.userEmail;
+		String password = credentials.password;
+		String org = credentials.organization;
+		String space = credentials.space;
+
+		if (userEmail == null || password == null) {
+			userEmail = System.getProperty("vcap.email", "");
+			password = System.getProperty("vcap.passwd", "");
+		}
+
+		String missingInfo = "";
+		if (userEmail == null) {
+			missingInfo += "-Username-";
+		}
+
+		if (password == null) {
+			missingInfo += "-Password-";
+		}
+
+		if (org == null) {
+			missingInfo += "-Org-";
+		}
+
+		if (space == null) {
+			missingInfo += "-Space-";
+		}
+
+		if (missingInfo.length() > 0) {
+			missingInfo = "Failed to run tests due to missing information: " + missingInfo;
+			throw CloudErrorUtil
+					.toCoreException(missingInfo
+							+ ". Ensure Cloud Foundry credentials are set as properties in a properties file and passed as an argument to the VM using \"-D"
+							+ CloudFoundryTestFixture.CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY
+							+ "=[full file location]\"");
+		}
+	}
+
+	/**
+	 *
+	 * @return standalone client based on the harness credentials, org and
+	 * space. This is not the client used by the server instance, but a new
+	 * client for testing purposes only.
+	 */
+	public static CloudFoundryOperations createStandaloneClient(CredentialProperties credentials, String url,
+			boolean selfsigned) throws CoreException {
+
+		validateCredentials(credentials);
+
+		try {
+			return CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
+					new CloudCredentials(credentials.userEmail, credentials.password), new URL(url),
+					credentials.organization, credentials.space, selfsigned);
+		}
+		catch (MalformedURLException e) {
+			throw CloudErrorUtil.toCoreException(e);
+		}
+	}
+
+	/**
+	 *
+	 * @return standalone client based on the harness credentials, org and
+	 * space. This is not the client used by the server instance, but a new
+	 * client for testing purposes only.
+	 */
+	public static CloudFoundryOperations createStandaloneClient(String userName, String password, String org,
+			String space, String url, boolean selfsigned) throws CoreException {
+		CredentialProperties credentials = new CredentialProperties(userName, password, org, space);
+		return createStandaloneClient(credentials, url, selfsigned);
 	}
 
 	public static final long WAIT_TIME = 2000;
@@ -370,7 +448,7 @@ public class StsTestUtil {
 	 * and whether or not it ends with a path separator.
 	 * <p>
 	 * For example
-	 * 
+	 *
 	 * "" length = 0 => type of resource is IWorkspaceRoot "foo" length = 1 =>
 	 * type of resource is IProject "foo/src/Foo.java" length > 1 and no
 	 * trailing "/" => type is IFile

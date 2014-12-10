@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
- * 
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * are made available under the terms of the Apache License,
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *  
+ *
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
@@ -24,14 +24,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 
-import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudDomain;
 import org.cloudfoundry.client.lib.domain.CloudRoute;
@@ -41,7 +39,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
-import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudFoundrySpace;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpaces;
 import org.cloudfoundry.ide.eclipse.server.tests.AllCloudFoundryTests;
 import org.cloudfoundry.ide.eclipse.server.tests.server.TestServlet;
@@ -78,7 +75,7 @@ import org.osgi.framework.Bundle;
  * <p/>
  * If state needs to be held on a per-test-case basis, use the {@link Harness}
  * to store state.
- * 
+ *
  * @author Steffen Pingel
  */
 public class CloudFoundryTestFixture {
@@ -95,12 +92,8 @@ public class CloudFoundryTestFixture {
 
 	public static final String CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY = "test.credentials";
 
-	public static final String CF_PIVOTAL_SERVER_URL_HTTP = "http://api.run.pivotal.io";
-
-	public static final String CF_PIVOTAL_SERVER_URL_HTTPS = "https://api.run.pivotal.io";
-
 	/**
-	 * 
+	 *
 	 * The intention of the harness is to create a web project and server
 	 * instance PER test case, and which holds state that is relevant only
 	 * during the lifetime of a single test case. It should NOT hold state that
@@ -199,13 +192,13 @@ public class CloudFoundryTestFixture {
 
 			cloudFoundryServer.setUrl(getUrl());
 
-			setDefaultCloudSpace(cloudFoundryServer, credentials.organization, credentials.space);
+			setCloudSpace(cloudFoundryServer, credentials.organization, credentials.space);
 
 			serverWC.save(true, null);
 			return server;
 		}
 
-		protected void setDefaultCloudSpace(CloudFoundryServer cloudServer, String orgName, String spaceName)
+		protected void setCloudSpace(CloudFoundryServer cloudServer, String orgName, String spaceName)
 				throws CoreException {
 			CloudOrgsAndSpaces spaces = CloudUiUtil.getCloudSpaces(cloudServer.getUsername(),
 					cloudServer.getPassword(), cloudServer.getUrl(), false, cloudServer.getSelfSignedCertificate(),
@@ -220,31 +213,6 @@ public class CloudFoundryTestFixture {
 						+ " - " + spaceName);
 			}
 			cloudServer.setSpace(cloudSpace);
-		}
-
-		/**
-		 * 
-		 * @return standalone client based on the harness credentials, org and
-		 * space. This is not the client used by the server instance, but a new
-		 * client for testing purposes only.
-		 */
-		public CloudFoundryOperations createStandaloneClient() throws CoreException {
-			CloudFoundryServer cloudFoundryServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class,
-					null);
-			CloudFoundrySpace space = cloudFoundryServer.getCloudFoundrySpace();
-			if (space == null) {
-				throw CloudErrorUtil.toCoreException("No org and space was set in test harness for: "
-						+ cloudFoundryServer.getServerId());
-			}
-			try {
-				return CloudFoundryPlugin.getCloudFoundryClientFactory().getCloudFoundryOperations(
-						new CloudCredentials(cloudFoundryServer.getUsername(), cloudFoundryServer.getPassword()),
-						new URL(cloudFoundryServer.getUrl()), space.getOrgName(), space.getSpaceName(),
-						cloudFoundryServer.getSelfSignedCertificate());
-			}
-			catch (MalformedURLException e) {
-				throw CloudErrorUtil.toCoreException(e);
-			}
 		}
 
 		public String getUrl() {
@@ -284,8 +252,16 @@ public class CloudFoundryTestFixture {
 
 		}
 
+		public CloudFoundryOperations createExternalClient() throws CoreException {
+			CredentialProperties cred = getTestFixture().getCredentials();
+			StsTestUtil.validateCredentials(cred);
+			CloudFoundryServer cfServer = (CloudFoundryServer) server.getAdapter(CloudFoundryServer.class);
+			return StsTestUtil.createStandaloneClient(cred, getTestFixture().getUrl(),
+					cfServer.getSelfSignedCertificate());
+		}
+
 		private void clearTestDomainAndRoutes() throws CoreException {
-			CloudFoundryOperations client = createStandaloneClient();
+			CloudFoundryOperations client = createExternalClient();
 			client.login();
 			String domain = getDomain();
 			if (domain != null) {
@@ -363,7 +339,7 @@ public class CloudFoundryTestFixture {
 		 * Given a prefix for an application name (e.g. "test01" in
 		 * "test01myprojectname") constructs the expected URL based on the
 		 * default web project name ("myprojectname") and the domain. E.g:
-		 * 
+		 *
 		 * <p/>
 		 * Arg = test01
 		 * <p/>
@@ -480,6 +456,10 @@ public class CloudFoundryTestFixture {
 		return url;
 	}
 
+	public boolean getSelfSignedCertificate() {
+		return false;
+	}
+
 	/**
 	 * New harness is created. To ensure proper behaviour for each test case.
 	 * Create the harness in the test setup, and use this SAME harness
@@ -556,37 +536,10 @@ public class CloudFoundryTestFixture {
 			}
 		}
 
-		if (userEmail == null || password == null) {
-			userEmail = System.getProperty("vcap.email", "");
-			password = System.getProperty("vcap.passwd", "");
-		}
-
-		String missingInfo = "";
-		if (userEmail == null) {
-			missingInfo += "-Username-";
-		}
-
-		if (password == null) {
-			missingInfo += "-Password-";
-		}
-
-		if (org == null) {
-			missingInfo += "-Org-";
-		}
-
-		if (space == null) {
-			missingInfo += "-Space-";
-		}
-
-		if (missingInfo.length() > 0) {
-			missingInfo = "Failed to run tests due to missing information: " + missingInfo;
-			throw CloudErrorUtil
-					.toCoreException(missingInfo
-							+ ". Ensure Cloud Foundry credentials are set as properties in a properties file and passed as an argument to the VM using \"-D"
-							+ CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY + "=[full file location]\"");
-		}
-
-		return new CredentialProperties(userEmail, password, org, space);
+		CredentialProperties cred = new CredentialProperties(userEmail, password, org, space);
+		StsTestUtil.validateCredentials(cred);
+		return cred;
 
 	}
+
 }
