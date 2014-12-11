@@ -46,14 +46,6 @@ public class AllCloudFoundryTests {
 	public static Test suite(boolean heartbeat) {
 		TestSuite suite = new ManagedTestSuite(AllCloudFoundryTests.class.getName());
 
-		// These need to be enabled only if a light-weight http servlet is
-		// included in the build. They have been commented out since CF 1.0.0
-		// See STS-3159
-		// XXX suite.addTestSuite(LocalCloudFoundryServerBehaviourTest.class);
-		// suite.addTestSuite(CloudFoundryMockServerTest.class);
-		// TODO: Enable when Caldecott is fixed post CF 1.5.1
-		// suite.addTestSuite(CaldecottTunnelTest.class);
-
 		suite.addTestSuite(CloudFoundryServerBehaviourTest.class);
 
 		suite.addTestSuite(CloudFoundryProxyTest.class);

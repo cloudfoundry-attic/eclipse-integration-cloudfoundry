@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
- * 
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * are made available under the terms of the Apache License,
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *  
+ *
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
@@ -27,7 +27,7 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 
 	public static final String SERVICE_NAME = "cfEclipseRegressionTestService";
 
-	public void testCreateAndDeleteMysqlService() throws Exception {
+	public void testCreateAndDeleteService() throws Exception {
 		CloudService service = createService();
 		assertServiceExists(service);
 		deleteService(service);
@@ -81,6 +81,6 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 	}
 
 	protected CloudService createService() throws Exception {
-		return createCloudService(SERVICE_NAME, "mongolab");
+		return createCloudService(SERVICE_NAME, "elephantsql", "turtle");
 	}
 }

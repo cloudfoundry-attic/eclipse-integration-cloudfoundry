@@ -250,38 +250,6 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		assertNotNull(serverBehavior.getInstancesInfo(appName, new NullProgressMonitor()));
 	}
 
-	public void testStartModuleInvalidToken() throws Exception {
-		String prefix = "startModuleInvalidToken";
-
-		createWebApplicationProject();
-		try {
-			connectClient("invalid", "invalidPassword");
-		}
-		catch (Exception e) {
-			assertTrue(e.getMessage().contains("403 Access token denied"));
-		}
-
-		try {
-			assertDeployApplicationStartMode(prefix);
-		}
-		catch (CoreException ce) {
-			assertNotNull(ce);
-		}
-
-		// Deploying application should have failed, so it must not exist in the
-		// server
-		String appName = harness.getDefaultWebAppName(prefix);
-		assertNull("Expecting no deployed application: " + appName + " but it exists in the server",
-				getUpdatedApplication(appName));
-
-		// Set the client again with the correct server-stored credentials
-		connectClient();
-
-		// Starting the app should now pass without errors
-		assertDeployApplicationStartMode(prefix);
-
-	}
-
 	public void testStartModuleInvalidPassword() throws Exception {
 
 		String prefix = "startModuleInvalidPassword";
@@ -293,6 +261,33 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 			String userName = cloudServer.getUsername();
 			CloudCredentials credentials = new CloudCredentials(userName, "invalid-password");
+			connectClient(credentials);
+
+			assertDeployApplicationStartMode(prefix);
+
+			fail("Expected CoreException due to invalid password");
+		}
+		catch (Throwable e) {
+			assertTrue(e.getMessage().contains("403 Access token denied"));
+		}
+
+		connectClient();
+
+		// Should now deploy without errors
+		assertDeployApplicationStartMode(prefix);
+
+	}
+
+	public void testStartModuleInvalidUsername() throws Exception {
+
+		String prefix = "startModuleInvalidUsername";
+
+		createWebApplicationProject();
+
+		try {
+			CloudFoundryServer cloudServer = (CloudFoundryServer) server.loadAdapter(CloudFoundryServer.class, null);
+
+			CloudCredentials credentials = new CloudCredentials("invalidusername", cloudServer.getPassword());
 			connectClient(credentials);
 
 			assertDeployApplicationStartMode(prefix);

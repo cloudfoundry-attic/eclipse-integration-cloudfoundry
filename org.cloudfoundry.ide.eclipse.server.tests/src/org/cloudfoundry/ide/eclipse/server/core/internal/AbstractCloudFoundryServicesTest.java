@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
- * 
+ * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * are made available under the terms of the Apache License,
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *  
+ *
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
@@ -25,6 +25,7 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
+import org.cloudfoundry.client.lib.domain.CloudServicePlan;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -35,19 +36,37 @@ public class AbstractCloudFoundryServicesTest extends AbstractCloudFoundryTest {
 		harness.deleteService(service);
 	}
 
-	protected CloudService createCloudService(String name, String vendor) throws CoreException {
-		CloudServiceOffering serviceConfiguration = getServiceConfiguration(vendor);
+	protected CloudService createCloudService(String name, String label, String plan) throws CoreException {
+		CloudServiceOffering serviceConfiguration = getServiceConfiguration(label);
 		if (serviceConfiguration != null) {
 			CloudService service = new CloudService();
 			service.setName(name);
-			service.setLabel(vendor);
+			service.setLabel(label);
 			service.setVersion(serviceConfiguration.getVersion());
-			service.setPlan(serviceConfiguration.getCloudServicePlans().get(0).getName());
+
+			boolean planExists = false;
+
+			List<CloudServicePlan> plans = serviceConfiguration.getCloudServicePlans();
+
+			for (CloudServicePlan pln : plans) {
+				if (plan.equals(pln.getName())) {
+					planExists = true;
+					break;
+				}
+			}
+
+			if (!planExists) {
+				throw CloudErrorUtil.toCoreException("No plan: " + plan + " found for service :" + label);
+			}
+			service.setPlan(plan);
 
 			createService(service);
 			return service;
 		}
-		return null;
+		else {
+			throw CloudErrorUtil.toCoreException("Unable to create service : " + label
+					+ ". Service does not exist in the Cloud space.");
+		}
 	}
 
 	protected CloudServiceOffering getServiceConfiguration(String vendor) throws CoreException {

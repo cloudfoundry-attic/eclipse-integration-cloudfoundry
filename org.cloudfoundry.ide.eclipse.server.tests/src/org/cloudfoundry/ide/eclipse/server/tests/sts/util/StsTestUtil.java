@@ -91,14 +91,9 @@ import org.xml.sax.InputSource;
  */
 public class StsTestUtil {
 
-	public static final boolean ECLIPSE_3_4 = Platform.getBundle("org.eclipse.equinox.p2.repository") == null;
-
-	public static final boolean ECLIPSE_3_6_OR_LATER;
-
-	public static final boolean ECLIPSE_3_7_OR_LATER;
+	public static final boolean SUPPORTED_ECLIPSE_OR_LATER;
 	static {
-		ECLIPSE_3_6_OR_LATER = isEclipseVersionAtLeast(new Version(3, 6, 0));
-		ECLIPSE_3_7_OR_LATER = isEclipseVersionAtLeast(new Version(3, 7, 0));
+		SUPPORTED_ECLIPSE_OR_LATER = isEclipseVersionAtLeast(new Version(4, 2, 0));
 	}
 
 	public static boolean isEclipseVersionAtLeast(Version minimalVersion) {
