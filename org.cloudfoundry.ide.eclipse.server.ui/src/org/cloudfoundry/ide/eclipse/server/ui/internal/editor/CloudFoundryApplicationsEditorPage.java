@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,6 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.editor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
@@ -65,6 +66,8 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 
 	private ServerListener serverListener;
 
+	private final List<CloudServerListener> cloudServerListeners = new ArrayList<CloudServerListener>();
+
 	private List<CloudService> services;
 
 	private ScrolledForm sform;
@@ -73,8 +76,11 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 
 	private final int MAX_ERROR_MESSAGE = 100;
 
+	private UIJob refreshJob;
+
 	@Override
 	public void createPartControl(Composite parent) {
+
 		mform = new ManagedForm(parent);
 		FormToolkit toolkit = getFormToolkit(parent.getDisplay());
 
@@ -91,13 +97,29 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 		refresh(RefreshArea.MASTER, true);
 
 		serverListener = new ServerListener();
-		ServerEventHandler.getDefault().addServerListener(serverListener);
+		addCloudServerListener(serverListener);
 		getServer().getOriginal().addServerListener(serverListener);
+	}
+
+	/**
+	 * 
+	 * @param listener to be notified of Cloud server and application changes.
+	 * The editor manages the lifecycle of the listener once it is added,
+	 * including removing it when the editor is disposed.
+	 */
+	public void addCloudServerListener(CloudServerListener listener) {
+		if (listener != null && !cloudServerListeners.contains(listener)) {
+			ServerEventHandler.getDefault().addServerListener(listener);
+			cloudServerListeners.add(listener);
+		}
 	}
 
 	@Override
 	public void dispose() {
-		ServerEventHandler.getDefault().removeServerListener(serverListener);
+		for (CloudServerListener listener : cloudServerListeners) {
+			ServerEventHandler.getDefault().removeServerListener(listener);
+		}
+
 		getServer().getOriginal().removeServerListener(serverListener);
 
 		if (mform != null) {
@@ -197,9 +219,10 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 				}
 			}
 
-			// ignore EVENT_UPDATE_INSTANCES as refresh will be called after
-			// instances are updated
-			if (event.getType() != CloudServerEvent.EVENT_UPDATE_INSTANCES) {
+			// ignore EVENT_UPDATE_INSTANCES and DEBUG as refresh will be called
+			// separately for these events
+			if (event.getType() != CloudServerEvent.EVENT_UPDATE_INSTANCES
+					&& event.getType() != CloudServerEvent.EVENT_APP_DEBUG) {
 				refresh(cloudServer.getServer());
 			}
 		}
@@ -213,31 +236,33 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 
 		private void refresh(final IServer server) {
 
-			UIJob job = new UIJob(Messages.CloudFoundryApplicationsEditorPage_JOB_REFRESH) {
+			if (refreshJob == null) {
+				refreshJob = new UIJob(Messages.CloudFoundryApplicationsEditorPage_JOB_REFRESH) {
 
-				@Override
-				public IStatus runInUIThread(IProgressMonitor monitor) {
-					try {
-						if (server != null) {
-							CloudFoundryServer cloudServer = (CloudFoundryServer) server.loadAdapter(
-									CloudFoundryServer.class, monitor);
-							if (cloudServer != null) {
-								setServices(cloudServer.getBehaviour().getServices(monitor));
+					@Override
+					public IStatus runInUIThread(IProgressMonitor monitor) {
+						try {
+							if (server != null) {
+								CloudFoundryServer cloudServer = (CloudFoundryServer) server.loadAdapter(
+										CloudFoundryServer.class, monitor);
+								if (cloudServer != null) {
+									setServices(cloudServer.getBehaviour().getServices(monitor));
+								}
+							}
+
+							if (mform != null && mform.getForm() != null && !mform.getForm().isDisposed()) {
+								masterDetailsBlock.refreshUI(RefreshArea.ALL);
 							}
 						}
-
-						if (mform != null && mform.getForm() != null && !mform.getForm().isDisposed()) {
-							masterDetailsBlock.refreshUI(RefreshArea.ALL);
+						catch (CoreException e) {
+							return e.getStatus();
 						}
+						return Status.OK_STATUS;
 					}
-					catch (CoreException e) {
-						return e.getStatus();
-					}
-					return Status.OK_STATUS;
-				}
-			};
+				};
+			}
 
-			job.schedule();
+			refreshJob.schedule();
 
 		}
 	}

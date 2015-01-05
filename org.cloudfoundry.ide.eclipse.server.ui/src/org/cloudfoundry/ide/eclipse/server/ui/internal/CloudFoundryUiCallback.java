@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -142,12 +142,15 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 			return;
 		}
 
-		// If application is not deployed (i.e., there are no application instances), still stop the console as
-		// a console may have been created for the application even if it failed to deploy or start.
+		// If application is not deployed (i.e., there are no application
+		// instances), still stop the console as
+		// a console may have been created for the application even if it failed
+		// to deploy or start.
 		int totalInstances = cloudModule.isDeployed() ? cloudModule.getApplication().getInstances() : 0;
 		int instance = 0;
 		do {
-			ConsoleManagerRegistry.getConsoleManager(cloudServer).stopConsole(cloudServer.getServer(), cloudModule, instance);
+			ConsoleManagerRegistry.getConsoleManager(cloudServer).stopConsole(cloudServer.getServer(), cloudModule,
+					instance);
 			++instance;
 		} while (instance < totalInstances);
 

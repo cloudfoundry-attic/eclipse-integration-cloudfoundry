@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -33,11 +33,11 @@ public class ConnectToDebuggerListener implements IDebugEventSetListener {
 
 	private Object eventSource;
 
-	private DebugCommand command;
+	private String launchId;
 
-	public ConnectToDebuggerListener(DebugCommand command, Object eventSource) {
+	public ConnectToDebuggerListener(String launchId, Object eventSource) {
 		this.eventSource = eventSource;
-		this.command = command;
+		this.launchId = launchId;
 	}
 
 	public void handleDebugEvents(DebugEvent[] events) {
@@ -67,15 +67,10 @@ public class ConnectToDebuggerListener implements IDebugEventSetListener {
 						if (eventSource.equals(debugTarget) && debugTarget.isDisconnected()) {
 
 							DebugPlugin.getDefault().removeDebugEventListener(this);
-							command.removeFromConnectionRegister();
-							ICloudFoundryDebuggerListener listener = command.getListener();
-							if (listener != null) {
-								listener.handleDebuggerTermination();
-							}
+							DebugOperations.terminateLaunch(launchId);
 							return;
 						}
 					}
-
 				}
 			}
 		}

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -20,11 +20,9 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.debug;
 
-
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
@@ -46,9 +44,9 @@ public enum CloudFoundryProperties {
 				return CloudServerUtil.isCloudFoundryServer(cloudFoundryServer.getServer());
 			}
 			return false;
-		}	
+		}
 	},
-	
+
 	isServerStarted {
 		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
 			if (cloudFoundryServer != null) {
@@ -60,7 +58,7 @@ public enum CloudFoundryProperties {
 			return false;
 		}
 	},
-	
+
 	isServerStopped {
 		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
 			if (cloudFoundryServer != null) {
@@ -70,26 +68,6 @@ public enum CloudFoundryProperties {
 				}
 			}
 			return false;
-		}
-    },
-	
-	isDebugEnabled {
-
-		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
-			// If the server is stopped, it's not possible to check it for
-			// debug
-			// enablement
-			if (cloudFoundryServer.getServer().getServerState() == IServer.STATE_STOPPED
-					|| cloudFoundryServer.getServer().getServerState() == IServer.STATE_STOPPING) {
-				return false;
-			}
-
-			CloudFoundryServerBehaviour behaviour = cloudFoundryServer.getBehaviour();
-
-			if (behaviour == null) {
-				return false;
-			}
-			return behaviour.isServerDebugModeAllowed();
 		}
 	},
 
@@ -108,46 +86,21 @@ public enum CloudFoundryProperties {
 
 	isCloudModuleStarted {
 		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
-			if (modules != null && modules.length > 0) {
-				// Selection is limited to one module
-				int moduleState = cloudFoundryServer.getServer().getModuleState(modules);
-				return IServer.STATE_STARTED == moduleState;
-			}
-			return false;
+			return isModuleStarted.testProperty(modules, cloudFoundryServer);
 		}
 	},
 
 	isCloudModuleLocal {
 		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
 			if (modules != null && modules.length > 0) {
-				
+
 				// Selection is limited to one module
 				CloudFoundryApplicationModule cloudModule = cloudFoundryServer.getExistingCloudModule(modules[0]);
 				if (cloudModule != null) {
 					return !cloudModule.isExternal();
-				}				
+				}
 			}
 			return false;
-		}
-	},
-
-	isApplicationRunningInDebugMode {
-
-		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
-			int appState = getDeployedAppState(modules, cloudFoundryServer.getServer());
-			if (appState == IServer.STATE_STARTED && modules != null && modules.length > 0) {
-				DebugModeType modeType = cloudFoundryServer.getBehaviour().getDebugModeType(modules[0], null);
-				return modeType != null;
-			}
-			return false;
-		}
-	},
-
-	isConnectedToDebugger {
-		public boolean testProperty(IModule[] modules, CloudFoundryServer cloudFoundryServer) {
-
-			return DebugCommand.isConnectedToDebugger(cloudFoundryServer, modules);
-
 		}
 	},
 

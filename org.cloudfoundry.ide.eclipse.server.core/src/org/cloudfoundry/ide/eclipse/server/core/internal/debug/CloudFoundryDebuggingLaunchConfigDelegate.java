@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -23,9 +23,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.sourcelookup.ISourceLookupDirector;
@@ -34,7 +36,6 @@ import org.eclipse.jdt.internal.launching.JavaSourceLookupDirector;
 import org.eclipse.jdt.launching.AbstractJavaLaunchConfigurationDelegate;
 import org.eclipse.jdt.launching.IVMConnector;
 import org.eclipse.jdt.launching.JavaRuntime;
-
 
 public class CloudFoundryDebuggingLaunchConfigDelegate extends AbstractJavaLaunchConfigurationDelegate {
 
@@ -47,8 +48,6 @@ public class CloudFoundryDebuggingLaunchConfigDelegate extends AbstractJavaLaunc
 	public static final String HOST_NAME = "hostname"; //$NON-NLS-1$
 
 	public static final String PORT = "port"; //$NON-NLS-1$
-
-	public static final String DEBUGGER_CONNECTION_ID = "debuggerconnectionid"; //$NON-NLS-1$
 
 	public void launch(ILaunchConfiguration configuration, String mode, ILaunch launch, IProgressMonitor monitor)
 			throws CoreException {
@@ -69,24 +68,27 @@ public class CloudFoundryDebuggingLaunchConfigDelegate extends AbstractJavaLaunc
 			argMap.put("port", port); //$NON-NLS-1$
 
 			setSourceLocator(launch);
-			connector.connect(argMap, monitor, launch);
-			addDebuggerConnectionListener(configuration.getAttribute(DEBUGGER_CONNECTION_ID, (String) null), launch);
+			try {
+				connector.connect(argMap, monitor, launch);
+				DebugOperations.addDebuggerConnectionListener(
+						configuration.getAttribute(DebugOperations.CLOUD_DEBUG_LAUNCH_ID, (String) null), launch);
+			}
+			catch (CoreException e) {
+				fireDebugChanged(configuration, e.getStatus());
+				throw e;
+			}
 		}
 		else {
 			CloudFoundryPlugin
 					.logError("Failed to launch debug configuration. IP and host for application instance cannot be resolved."); //$NON-NLS-1$
 		}
-
 	}
 
-	protected void addDebuggerConnectionListener(String connectionID, ILaunch launch) {
+	public final void fireDebugChanged(ILaunchConfiguration config, IStatus status) {
+		CloudFoundryServer cloudServer = DebugOperations.getCloudServer(config);
+		CloudFoundryApplicationModule appModule = DebugOperations.getCloudApplication(config);
+		DebugOperations.fireDebugChanged(cloudServer, appModule, status);
 
-		DebugCommand command = DebugCommand.getDebugCommand(connectionID);
-		if (command != null) {
-			Object source = launch.getDebugTarget();
-			ConnectToDebuggerListener debugListener = new ConnectToDebuggerListener(command, source);
-			DebugPlugin.getDefault().addDebugEventListener(debugListener);
-		}
 	}
 
 	protected void setSourceLocator(ILaunch launch) throws CoreException {

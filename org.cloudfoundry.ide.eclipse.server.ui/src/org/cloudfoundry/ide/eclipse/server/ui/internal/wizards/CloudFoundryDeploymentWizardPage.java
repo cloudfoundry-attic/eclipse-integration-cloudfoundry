@@ -30,7 +30,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ValueValidationUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryProperties;
+import org.cloudfoundry.ide.eclipse.server.core.internal.debug.DebugProvider;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudApplicationUrlPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.IEventSource;
@@ -55,7 +55,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.wst.server.core.IModule;
 
 /**
  * @author Christian Dupuis
@@ -280,7 +279,7 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 	}
 
 	protected boolean isServerDebugModeAllowed() {
-		return CloudFoundryProperties.isDebugEnabled.testProperty(new IModule[] { module }, server);
+		return DebugProvider.getCurrent(module, server).isCloudSpaceDebugEnabled();
 	}
 
 	protected void makeStartDeploymentControlsVisible(boolean makeVisible) {
