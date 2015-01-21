@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -20,11 +20,9 @@
 package org.cloudfoundry.ide.eclipse.server.ui.internal.editor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.MenuManager;
@@ -43,7 +41,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.ToolBar;
-import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
@@ -55,8 +52,6 @@ public class ApplicationActionMenuControl {
 
 	private Composite parent;
 
-	private ToolItem viewMenuButton;
-
 	private ApplicationAction selectedType;
 
 	private String selectionButtonLabel;
@@ -67,20 +62,17 @@ public class ApplicationActionMenuControl {
 
 	private List<IButtonMenuListener> listeners;
 
-	private List<ApplicationAction> actions;
-
 	private FormToolkit toolkit;
 
 	private ToolBar toolBar;
 
 	private Composite buttonComposite;
 
-	public ApplicationActionMenuControl(Composite parent, ApplicationAction[] actions, ApplicationAction defaultValue,
-			String selectionButtonLabel, Image selectionButtonImage, FormToolkit toolkit) {
+	public ApplicationActionMenuControl(Composite parent, ApplicationAction defaultValue, String selectionButtonLabel,
+			Image selectionButtonImage, FormToolkit toolkit) {
 		this.parent = parent;
 		selectedType = defaultValue;
 		listeners = new ArrayList<IButtonMenuListener>();
-		this.actions = actions != null ? Arrays.asList(actions) : null;
 		this.selectionButtonLabel = selectionButtonLabel;
 		this.selectionButtonImage = selectionButtonImage;
 		this.toolkit = toolkit;
@@ -168,33 +160,6 @@ public class ApplicationActionMenuControl {
 		GridDataFactory.fillDefaults().grab(true, false).align(SWT.END, SWT.BEGINNING).applyTo(applicationActionButton);
 		setDefaultTooltipMessage();
 
-		// Do not create toolbar and menu if there is only one or less actions
-		// in the given actionlist
-		if (actions != null && actions.size() > 1) {
-
-			final MenuManager viewMenuManager = new MenuManager();
-
-			ToolBarManager manager = createToolBarManager(buttonComposite);
-			toolBar = manager.getControl();
-
-			viewMenuButton = new ToolItem(toolBar, SWT.PUSH, 0);
-
-			viewMenuButton.setImage(CloudFoundryImages.getImage(CloudFoundryImages.MENU_VIEW_ENABLED));
-			viewMenuButton.setDisabledImage(CloudFoundryImages.getImage(CloudFoundryImages.MENU_VIEW_DISABLED));
-
-			viewMenuButton.setToolTipText(Messages.ApplicationActionMenuControl_TEXT_SELECT_MODE);
-			viewMenuButton.addSelectionListener(new SelectionAdapter() {
-
-				public void widgetSelected(SelectionEvent e) {
-					showViewMenu(viewMenuManager, toolBar);
-				}
-			});
-
-			for (ApplicationAction action : actions) {
-				viewMenuManager.add(new MenuAction(action));
-			}
-		}
-
 		setVisible(true);
 
 	}
@@ -267,7 +232,8 @@ public class ApplicationActionMenuControl {
 	public void setDefaultTooltipMessage() {
 
 		if (applicationActionButton != null) {
-			applicationActionButton.setToolTipText(NLS.bind(Messages.ApplicationActionMenuControl_TEXT_SELECT_MODE_FOR, selectedType.getDisplayName()));
+			applicationActionButton.setToolTipText(NLS.bind(Messages.ApplicationActionMenuControl_TEXT_SELECT_MODE_FOR,
+					selectedType.getDisplayName()));
 		}
 
 	}

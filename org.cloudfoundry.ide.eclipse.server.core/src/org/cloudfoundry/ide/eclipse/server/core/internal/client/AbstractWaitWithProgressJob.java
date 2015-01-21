@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -40,21 +40,30 @@ public abstract class AbstractWaitWithProgressJob<T> {
 
 	private final long sleepTime;
 
+	private final boolean shouldRetryOnError;
+
 	public AbstractWaitWithProgressJob(int attempts, long sleepTime) {
 		this.attempts = attempts;
 		this.sleepTime = sleepTime;
+		this.shouldRetryOnError = false;
+	}
+
+	public AbstractWaitWithProgressJob(int attempts, long sleepTime, boolean shouldRetryOnError) {
+		this.attempts = attempts;
+		this.sleepTime = sleepTime;
+		this.shouldRetryOnError = shouldRetryOnError;
 	}
 
 	/**
 	 * To continue waiting, return an invalid result that is checked as invalid
 	 * by the isValid(...) API
-	 * @param monitor may be  null
+	 * @param monitor may be null
 	 * @return
 	 */
 	abstract protected T runInWait(IProgressMonitor monitor) throws CoreException;
 
 	protected boolean shouldRetryOnError(Throwable t) {
-		return false;
+		return shouldRetryOnError;
 	}
 
 	protected boolean isValid(T result) {
@@ -78,7 +87,7 @@ public abstract class AbstractWaitWithProgressJob<T> {
 		T result = null;
 		int i = 0;
 		while (i < attempts) {
-			
+
 			if (monitor != null && monitor.isCanceled()) {
 				break;
 			}

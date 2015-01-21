@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -33,7 +33,6 @@ import org.eclipse.wst.server.core.IModule;
 
 public class UpdateRestartModuleCommand extends BaseCommandHandler {
 
-
 	private String getJobName() {
 		return "Update and restarting module"; //$NON-NLS-1$
 	}
@@ -41,6 +40,7 @@ public class UpdateRestartModuleCommand extends BaseCommandHandler {
 	private String getFailureMessage() {
 		return "Unable to update and restart module"; //$NON-NLS-1$
 	}
+
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		initializeSelection(event);
 		String error = null;
@@ -61,7 +61,7 @@ public class UpdateRestartModuleCommand extends BaseCommandHandler {
 
 		return null;
 	}
-	
+
 	protected void doRun(CloudFoundryServer server, CloudFoundryApplicationModule appModule) {
 		final CloudFoundryServer cloudServer = server;
 		Job job = new Job(getJobName()) {
@@ -69,19 +69,7 @@ public class UpdateRestartModuleCommand extends BaseCommandHandler {
 			protected IStatus run(IProgressMonitor monitor) {
 
 				try {
-					// FIXNS: Disabled debug for CF 1.5.0 until v2 supports
-					// debug
-					// if
-					// (CloudFoundryProperties.isApplicationRunningInDebugMode.testProperty(modules,
-					// getCloudFoundryServer())) {
-					// cloudServer.getBehaviour().updateRestartDebugModule(modules,
-					// getIncrementalPublish(), monitor);
-					// }
-					// else {
-					// }
-
-					cloudServer.getBehaviour().getUpdateRestartOperation(new IModule[] {selectedModule}).run(monitor);
-
+					cloudServer.getBehaviour().getUpdateRestartOperation(new IModule[] { selectedModule }).run(monitor);
 				}
 				catch (CoreException e) {
 					CloudFoundryPlugin.getDefault().getLog()
@@ -94,6 +82,5 @@ public class UpdateRestartModuleCommand extends BaseCommandHandler {
 
 		job.schedule();
 	}
-
 
 }

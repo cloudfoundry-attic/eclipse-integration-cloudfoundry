@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
+ * Copyright (c) 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -17,34 +17,26 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.core.internal;
+package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 
-public enum ApplicationAction {
-	RESTART, START("Run"), STOP, UPDATE_RESTART; //$NON-NLS-1$
+import org.cloudfoundry.ide.eclipse.server.ui.internal.DebugCommand;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 
-	private String displayName = ""; //$NON-NLS-1$
+public class TerminateDebugEditorAction extends DebugApplicationEditorAction {
 
-	private String shortDisplay = ""; //$NON-NLS-1$
-
-	private ApplicationAction(String displayName, String shortDisplay) {
-		this.displayName = displayName;
-		this.shortDisplay = shortDisplay;
+	public TerminateDebugEditorAction(CloudFoundryApplicationsEditorPage editorPage, DebugCommand debugCommand) {
+		super(editorPage, debugCommand);
 	}
 
-	private ApplicationAction(String displayName) {
-		this.displayName = displayName;
+	@Override
+	protected void runDebugOperation(DebugCommand command, IProgressMonitor monitor) throws CoreException {
+		command.terminate();
 	}
 
-	private ApplicationAction() {
-
+	@Override
+	protected String getOperationLabel() {
+		return "Terminating debugger connection"; //$NON-NLS-1$
 	}
-
-	public String getDisplayName() {
-		return displayName;
-	}
-
-	public String getShortDisplay() {
-		return shortDisplay;
-	}
-
 }

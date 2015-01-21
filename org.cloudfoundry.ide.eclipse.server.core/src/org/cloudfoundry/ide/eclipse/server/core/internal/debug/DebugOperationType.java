@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,10 +19,12 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.debug;
 
-/**
- * Listener that is invoked when an application is disconnected from a debugger.
- */
-public interface ICloudFoundryDebuggerListener {
 
-	public void handleDebuggerTermination();
+/**
+ * 
+ */
+public enum DebugOperationType {
+
+	Debug, Terminate;
+
 }

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -73,8 +73,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.RefreshHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
-import org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryProperties;
-import org.cloudfoundry.ide.eclipse.server.core.internal.debug.DebugModeType;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudFoundrySpace;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpaces;
 import org.eclipse.core.runtime.CoreException;
@@ -590,56 +588,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	/**
-	 * Starts an application in debug mode. Should ONLY be called if the
-	 * application is currently stopped. Otherwise use
-	 * {@link #updateRestartDebugModule(IModule[], boolean, IProgressMonitor)}.
-	 * @param modules
-	 * @param monitor
-	 * @return
-	 * @throws CoreException
-	 */
-	public ICloudFoundryApplicationModule debugModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		return doDebugModule(false, modules, false, monitor);
-	}
-
-	/**
-	 * Deploys or starts an app in debug mode and either a full publish or
-	 * incremental publish may be specified. If incremental publish, changes in
-	 * the app are automatically computed and only those changes are pushed to
-	 * the server.
-	 * @param modules
-	 * @param fullPublish
-	 * @param monitor
-	 * @return
-	 * @throws CoreException
-	 */
-	protected ICloudFoundryApplicationModule doDebugModule(boolean incrementalPublish, IModule[] modules,
-			final boolean stopModule, IProgressMonitor monitor) throws CoreException {
-
-		ApplicationOperation op = new StartOperation(incrementalPublish, modules) {
-
-			@Override
-			protected DeploymentConfiguration prepareForDeployment(CloudFoundryApplicationModule appModule,
-					IProgressMonitor monitor) throws CoreException {
-
-				if (stopModule) {
-					stopModule(modules, monitor);
-				}
-
-				return super.prepareForDeployment(appModule, monitor);
-			}
-
-			@Override
-			protected DeploymentConfiguration getDefaultDeploymentConfiguration() {
-				return new DeploymentConfiguration(ApplicationAction.DEBUG);
-			}
-		};
-		op.run(monitor);
-		return op.getApplicationModule();
-
-	}
-
-	/**
 	 * Get an operation to deploy an application in start mode.
 	 * @param modules
 	 * @return
@@ -757,21 +705,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return new StopApplicationOperation(modules);
 	}
 
-	/**
-	 * Updates and restarts an application in debug mode. Incremental publish
-	 * will occur on update restarts if any changes are detected.
-	 * @param modules
-	 * @param monitor
-	 * @param isIncrementalPublishing true if optimised incremental publishing
-	 * should be enabled. False otherwise
-	 * @return
-	 * @throws CoreException
-	 */
-	public ICloudFoundryApplicationModule updateRestartDebugModule(IModule[] modules, boolean isIncrementalPublishing,
-			IProgressMonitor monitor) throws CoreException {
-		return doDebugModule(true, modules, isIncrementalPublishing, monitor);
-	}
-
 	public StreamingLogToken addApplicationLogListener(final String appName, final ApplicationLogListener listener) {
 		if (appName != null && listener != null) {
 			try {
@@ -823,44 +756,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * existing mode is not required.
 	 */
 	public void restartModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-
-		if (CloudFoundryProperties.isApplicationRunningInDebugMode.testProperty(modules, getCloudFoundryServer())) {
-			restartDebugModule(modules, monitor);
-		}
-		else {
-			ICloudFoundryOperation operation = getRestartOperation(modules);
-			operation.run(monitor);
-		}
-
-	}
-
-	/**
-	 * This will restart an application in debug mode only. Does not push
-	 * application changes or create an application. Application must exist in
-	 * the CF server if using this operation.
-	 * @param modules
-	 * @param monitor
-	 * @throws CoreException
-	 */
-	public void restartDebugModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-
-		new RestartOperation(modules) {
-
-			@Override
-			protected DeploymentConfiguration prepareForDeployment(CloudFoundryApplicationModule appModule,
-					IProgressMonitor monitor) throws CoreException {
-				// Explicitly stop the module to ensure any existing debugger
-				// connections are terminated prior to starting a new connection
-				stopModule(modules, monitor);
-
-				return super.prepareForDeployment(appModule, monitor);
-			}
-
-			@Override
-			protected DeploymentConfiguration getDefaultDeploymentConfiguration() {
-				return new DeploymentConfiguration(ApplicationAction.DEBUG);
-			}
-		}.run(monitor);
+		ICloudFoundryOperation operation = getRestartOperation(modules);
+		operation.run(monitor);
 	}
 
 	/**
@@ -1496,48 +1393,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return false;
 	}
 
-	/**
-	 * Determines if a server supports debug mode. Typically this would be a
-	 * cached value for performance reasons, and will not reflect changes
-	 */
-	public synchronized boolean isServerDebugModeAllowed() {
-		return isDebugModeSupported == DebugSupportCheck.SUPPORTED;
-	}
-
-	/**
-	 * Obtains the debug mode type of the given module. Note that the module
-	 * need not be started. It could be stopped, and still have a debug mode
-	 * associated with it.
-	 * @param module
-	 * @param monitor
-	 * @return
-	 */
-	public DebugModeType getDebugModeType(IModule module, IProgressMonitor monitor) {
-		try {
-			CloudFoundryServer cloudServer = getCloudFoundryServer();
-			CloudFoundryApplicationModule cloudModule = cloudServer.getExistingCloudModule(module);
-
-			if (cloudModule == null) {
-				CloudFoundryPlugin.logError("No cloud application module found for: " + module.getId() //$NON-NLS-1$
-						+ ". Unable to determine debug mode."); //$NON-NLS-1$
-				return null;
-			}
-
-			// Check if a cloud application exists (i.e., it is deployed) before
-			// determining if it is deployed in debug mode
-			CloudApplication cloudApplication = cloudModule.getApplication();
-
-			if (cloudApplication != null) {
-				return DebugModeType.getDebugModeType(cloudApplication.getDebug());
-			}
-
-		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
-		}
-		return null;
-	}
-
+	
 	/**
 	 * Given a WTP module, the corresponding CF application module will have its
 	 * app instance stats updated. As the application module also has a
@@ -2773,26 +2629,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 								throws CoreException {
 							CloudFoundryPlugin.trace("Application " + deploymentName + " starting"); //$NON-NLS-1$ //$NON-NLS-2$
 
-							switch (deploymentMode) {
-							case DEBUG:
-								// Only launch in Suspend mode
-								client.debugApplication(deploymentName, DebugModeType.SUSPEND.getDebugMode());
-								break;
-							default:
-								client.stopApplication(deploymentName);
+							client.stopApplication(deploymentName);
 
-								StartingInfo info = client.startApplication(deploymentName);
-								if (info != null) {
+							StartingInfo info = client.startApplication(deploymentName);
+							if (info != null) {
 
-									cloudModule.setStartingInfo(info);
+								cloudModule.setStartingInfo(info);
 
-									// Inform through callback that application
-									// has started
-									CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(),
-											cloudModule);
-								}
-
-								break;
+								// Inform through callback that application
+								// has started
+								CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(),
+										cloudModule);
 							}
 							return null;
 						}

@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -43,6 +43,7 @@ public class DebugConnectionDescriptor {
 		return ip != null && ip.length() > 0 && port > 0;
 	}
 
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -51,6 +52,12 @@ public class DebugConnectionDescriptor {
 		return result;
 	}
 
+	@Override
+	public String toString() {
+		return "DebugConnectionDescriptor [ip=" + ip + ", port=" + port + "]";
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;

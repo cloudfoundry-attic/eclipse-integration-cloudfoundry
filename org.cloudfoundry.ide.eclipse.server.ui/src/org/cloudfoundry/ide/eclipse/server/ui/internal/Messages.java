@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -157,14 +157,14 @@ public class Messages extends NLS {
 
 	public static String ApplicationDetailsPart_TEXT_APP_SERVICES;
 
-	public static String ApplicationDetailsPart_TEXT_CONN_DEBUG;
-
 	public static String ApplicationDetailsPart_TEXT_CPU;
 
 	public static String ApplicationDetailsPart_TEXT_CPU_CIRE;
 
 	public static String ApplicationDetailsPart_TEXT_DEBUG;
-
+	
+	public static String ApplicationDetailsPart_TEXT_DEBUG_DISCONNECT;
+	
 	public static String ApplicationDetailsPart_TEXT_DISK;
 
 	public static String ApplicationDetailsPart_TEXT_DISK_LIMIT;
@@ -385,6 +385,10 @@ public class Messages extends NLS {
 
 	public static String DebugMenuActionHandler_TEXT_DEBUG_TOOLTIP;
 
+	public static String DebugUIProvider_DEBUG_TITLE;
+
+	public static String DebugUIProvider_DEBUG_APP_RESTART_MESSAGE;
+	
 	public static String DeleteServicesAction_TEXT_DELETE;
 
 	public static String DeleteServicesAction_TEXT_DELETE_CONFIRMATION;
@@ -642,7 +646,7 @@ public class Messages extends NLS {
 	public static String CloudRoutePart_UNDO;
 
 	public static String CloudFoundryUiCallback_ERROR_CALLBACK_TITLE;
-
+	
 	public static String CloudFoundryUiCallback_JOB_CF_ERROR;
 
 	public static String CloudFoundryURLNavigation_TEXT_OPEN_LABEL;
