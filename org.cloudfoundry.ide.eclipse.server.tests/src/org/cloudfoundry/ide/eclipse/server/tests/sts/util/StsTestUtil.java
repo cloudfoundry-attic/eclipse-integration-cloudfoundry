@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License,
- * Version 2.0 (the "License�); you may not use this file except in compliance
+ * Version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -77,8 +77,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.Version;
 import org.osgi.service.prefs.BackingStoreException;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -90,31 +88,6 @@ import org.xml.sax.InputSource;
  * @author Kris De Volder
  */
 public class StsTestUtil {
-
-	public static final boolean SUPPORTED_ECLIPSE_OR_LATER;
-	static {
-		SUPPORTED_ECLIPSE_OR_LATER = isEclipseVersionAtLeast(new Version(4, 2, 0));
-	}
-
-	public static boolean isEclipseVersionAtLeast(Version minimalVersion) {
-		System.err.println("StsTestUtil: " + minimalVersion + " or later? ...");
-		boolean found = false;
-		try {
-			Bundle platformBundle = Platform.getBundle("org.eclipse.platform");
-			System.err.println("platform bundle: " + platformBundle);
-			Version version = platformBundle.getVersion();
-			System.err.println("platform bundle version: " + version);
-			if (version.compareTo(minimalVersion) >= 0) {
-				found = true;
-			}
-		}
-		catch (Throwable e) {
-			System.err.println("StsTestUtil: Couldn't determine Eclipse version");
-			e.printStackTrace(System.err);
-		}
-		System.err.println("StsTestUtil: " + minimalVersion + " or later? => " + found);
-		return found;
-	}
 
 	public static void validateCredentials(CredentialProperties credentials) throws CoreException {
 		String userEmail = credentials.userEmail;
