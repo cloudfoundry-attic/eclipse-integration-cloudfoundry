@@ -102,6 +102,14 @@ public class DeleteModulesOperation extends AbstractDeploymentOperation {
 
 				this.cloudFoundryServerBehaviour.deleteApplication(application.getName(), monitor);
 
+				//Now the cloud application has been deleted successfully, 
+				//so the corresponding WST module can be deleted from
+				//the WST cloud server
+				if (appModule.getLocalModule() != null && !(appModule.getLocalModule() instanceof CloudFoundryApplicationModule)) {
+					cloudServer.deleteModulesLocally(new IModule[]{appModule.getLocalModule()}, monitor);
+				} else {
+					cloudServer.deleteModulesLocally(new IModule[]{appModule}, monitor);
+				}
 			}
 
 			CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, cloudServer);

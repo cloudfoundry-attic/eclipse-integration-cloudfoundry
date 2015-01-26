@@ -163,4 +163,10 @@ public class TestCallback extends CloudFoundryCallback {
 		// TODO Auto-generated method stub
 	}
 
+	@Override
+	public boolean confirmTheOperation(String title, String message) {
+		// ignore
+		return false;
+	}
+
 }
