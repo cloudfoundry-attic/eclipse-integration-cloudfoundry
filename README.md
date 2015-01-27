@@ -85,7 +85,7 @@
 
   The basic steps for using the Cloud Foundry Integration for Eclipse are described here:
 
-  http://docs.cloudfoundry.com/docs/using/managing-apps/ide/sts.html
+  http://docs.cloudfoundry.org/buildpacks/java/sts.html
 
   Just notice that this description is targeted at users of the SpringSource Tool Suite, but
   once you have the Eclipse integration for Cloud Foundry installed, you can use it in the
