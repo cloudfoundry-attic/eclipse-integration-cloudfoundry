@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. and IBM Corporation
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -14,42 +14,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *  
- *  Contributors:
+ * Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
- ********************************************************************************/
+ *     IBM Corporation - Additions to services wizard
+ *******************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.LocalCloudService;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.statushandlers.StatusManager;
 
 /**
  * @author Steffen Pingel
  * @author Christian Dupuis
  * @author Terry Denney
+ * @author Jonathan West
  */
 public class CloudFoundryServiceWizard extends Wizard {
-
+	
 	private final CloudFoundryServer cloudServer;
 
-	private CloudFoundryServiceWizardPage1 page;
+	private CloudFoundryServiceWizardPage page;
 
-	private CloudService createdService;
-
+	private List<CloudService> resultServices = null;
+	
 	/**
 	 * Set true if service should not be added during wizard completion.
 	 */
@@ -65,7 +66,7 @@ public class CloudFoundryServiceWizard extends Wizard {
 	}
 
 	/**
-	 * User this constructor if caller decides whether service should be added
+	 * Use this constructor if caller decides whether service should be added
 	 * automatically upon wizard completion
 	 * @param cloudServer
 	 * @param deferServiceAddition
@@ -75,76 +76,134 @@ public class CloudFoundryServiceWizard extends Wizard {
 		setWindowTitle(Messages.COMMONTXT_ADD_SERVICE);
 		setNeedsProgressMonitor(true);
 		this.deferServiceAddition = deferServiceAddition;
+		
+		
 	}
 
 	@Override
 	public void addPages() {
-		page = new CloudFoundryServiceWizardPage1(cloudServer);
+		page = new CloudFoundryServiceWizardPage(cloudServer);
 		addPage(page);
 	}
 
 	@Override
 	public boolean performFinish() {
-		if (!deferServiceAddition && page.getService() != null) {
-			try {
-				final LocalCloudService localService = page.getService();
-				getContainer().run(true, false, new IRunnableWithProgress() {
-					public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-						try {
-							cloudServer.getBehaviour().createService(new CloudService[] { localService }, monitor);
-							// Get the actual Service
-							List<CloudService> allServices = cloudServer.getBehaviour().getServices(monitor);
-							if (allServices != null) {
-								for (CloudService existingService : allServices) {
-									if (existingService.getName().equals(localService.getName())) {
-										createdService = existingService;
-										break;
-									}
-								}
-							}
-
-						}
-						catch (CoreException e) {
-							throw new InvocationTargetException(e);
-						}
-						catch (OperationCanceledException e) {
-							throw new InterruptedException();
-						}
-						finally {
-							monitor.done();
-						}
-					}
-				});
-				return true;
-			}
-			catch (InvocationTargetException e) {
-				if (e.getCause() != null) {
-					Status status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-							Messages.CloudFoundryServiceWizard_ERROR_ADD_SERVICE, cloudServer.getServer().getName(), e.getCause()
-									.getMessage() != null ? e.getCause().getMessage() : e.getCause().toString()), e);
-					StatusManager.getManager().handle(status,
-							StatusManager.SHOW | StatusManager.BLOCK | StatusManager.LOG);
-				}
-			}
-			catch (InterruptedException e) {
-				// ignore
-			}
-			return false;
+		
+		List<CloudService> localServices = page.getServices();
+		
+		if (!deferServiceAddition && localServices != null) {
+			ServiceCreationJob job = new ServiceCreationJob(localServices, cloudServer);
+			job.setUser(true);
+			job.setPriority(Job.SHORT);
+			job.schedule();
+			
 		}
-
+				
 		return true;
 	}
 
 	/**
 	 * Returns the service added by this wizard, or possibly null if wizard
 	 * hasn't completed yet or was cancelled.
+	 * 
+	 * These services have not necessarily been created it, depending on the result of deferAddition.
+	 * 
 	 * @return added service or null if nothing added at the time of the call
 	 */
-	public CloudService getService() {
-		if (createdService != null) {
-			return createdService;
+	public List<CloudService> getServices() {
+		if (resultServices != null) {
+			return resultServices;
 		}
-		return page != null ? page.getService() : null;
+
+		return page != null ? page.getServices() : null;
 	}
 
+	
+	/** Create the specified services and confirms their creation */
+	private static class ServiceCreationJob extends Job {
+		
+		final CloudFoundryServer cloudServer;
+		final List<CloudService> servicesToCreate;
+		
+		public ServiceCreationJob(List<CloudService> servicesToCreate, CloudFoundryServer cloudServer) {
+			super(Messages.CloudFoundryServiceWizard_JOB_TASK_CREATING_SERVICES);
+			this.servicesToCreate = servicesToCreate;
+			this.cloudServer = cloudServer;
+		}
+		
+		@Override
+		protected IStatus run(IProgressMonitor monitorParam) {
+			
+			SubMonitor monitor = SubMonitor.convert(monitorParam);
+			
+			monitor.beginTask(Messages.CloudFoundryServiceWizard_JOB_TASK_CREATING_SERVICES, servicesToCreate.size()*100+100);
+			
+			Status status = null;
+			
+			try {
+
+				for(CloudService cs : servicesToCreate) {
+					monitor.subTask(Messages.CloudFoundryServiceWizard_JOB_SUBTASK_ADDING_SERVICE+" "+cs.getName());
+					cloudServer.getBehaviour().createService(new CloudService[] { cs }, monitor.newChild(100));
+				}
+				
+				monitor.subTask(Messages.CloudFoundryServiceWizard_JOB_SUBTASK_VERIFYING_SERVICES);
+				
+				// Find the newly created services in the service list
+				List<CloudService> allServices = cloudServer.getBehaviour().getServices(monitor.newChild(100));
+
+				if (allServices != null) {
+
+					// Locate the new services from the server's service instances
+					for(CloudService localService : servicesToCreate) {
+					
+						boolean matchFound = false;
+						for (CloudService existingService : allServices) {					
+							
+							if (existingService.getName().equals(localService.getName())) {
+								allServices.add(existingService);
+								matchFound = true;
+								break;
+							}
+							
+						}
+						
+						if(!matchFound) {
+							
+							status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
+									Messages.CloudFoundryServiceWizard_ERROR_ADD_SERVICE, cloudServer.getServer().getName(), localService.getName())
+								);
+							break;
+						}
+						
+					}
+					monitor.worked(100);
+					
+				}
+				
+			} catch (CoreException e) {
+				status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
+				Messages.CloudFoundryServiceWizard_ERROR_ADD_SERVICE, cloudServer.getServer().getName(), e.getCause()
+						.getMessage() != null ? e.getCause().getMessage() : e.getCause().toString()), e);
+			}			
+
+			monitor.done();
+
+			if(status != null && !status.isOK()) {
+				final IStatus statusToDisplay = status;
+				Display.getDefault().asyncExec(new Runnable() {
+
+					@Override
+					public void run() {
+						StatusManager.getManager().handle(statusToDisplay, StatusManager.SHOW | StatusManager.BLOCK | StatusManager.LOG);					
+					} });
+
+				return Status.CANCEL_STATUS;
+			}
+
+			
+			return Status.OK_STATUS;
+		}
+				
+	}
 }

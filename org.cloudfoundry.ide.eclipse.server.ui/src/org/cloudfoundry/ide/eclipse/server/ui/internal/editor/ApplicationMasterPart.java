@@ -540,6 +540,7 @@ public class ApplicationMasterPart extends SectionPart {
 			public void run() {
 				IWizard wizard = new CloudFoundryServiceWizard(cloudServer);
 				WizardDialog dialog = new WizardDialog(getSection().getShell(), wizard);
+				dialog.setPageSize(900, 600);
 				dialog.setBlockOnOpen(true);
 				dialog.open();
 			}

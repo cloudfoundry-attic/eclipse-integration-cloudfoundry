@@ -617,31 +617,47 @@ public class Messages extends NLS {
 
 	public static String CloudFoundryServiceWizard_ERROR_ADD_SERVICE;
 
-	public static String CloudFoundryServiceWizardPage1_ERROR_CONFIG_RETRIVE;
+	public static String CloudFoundryServiceWizardPage_ERROR_CONFIG_RETRIVE;
 
-	public static String CloudFoundryServiceWizardPage1_ERROR_INVALID_CHAR;
+	public static String CloudFoundryServiceWizardPage_ERROR_INVALID_CHAR;
 
-	public static String CloudFoundryServiceWizardPage1_LABEL_NO_AVAIL_SERVICE;
+	public static String CloudFoundryServiceWizardPage_TEXT_FINISH;
 
-	public static String CloudFoundryServiceWizardPage1_LABEL_PLAN;
+	public static String CloudFoundryServiceWizardPage_TEXT_SELECT_SERVICE_LIST;
 
-	public static String CloudFoundryServiceWizardPage1_TEXT_FILTER;
+	public static String CloudFoundryServiceWizardPage_TEXT_SET_SERVICE_NAME;
+	
+	public static String CloudFoundryServiceWizardPage_TTILE_SERVICE_CONFIG;
+	
+	public static String CloudFoundryServiceWizard_JOB_SUBTASK_ADDING_SERVICE;
+	
+	public static String CloudFoundryServiceWizard_JOB_SUBTASK_VERIFYING_SERVICES;
+	
+	public static String CloudFoundryServiceWizard_JOB_TASK_CREATING_SERVICES;
 
-	public static String CloudFoundryServiceWizardPage1_TEXT_FINISH;
+	public static String CloudFoundryServiceWizardPageRightPanel_SERVICES_TO_CREATE;
+	
+	public static String CloudFoundryServiceWizardPageRightPanel_NAME;
+	
+	public static String CloudFoundryServiceWizardPageRightPanel_PLAN;
+	
+	public static String CloudFoundryServiceWizardPageRightPanel_ADD_A_SERVICE;
+	
+	public static String CloudFoundryServiceWizardPageRightPanel_REMOVE_TOOLTIP;
+	
+	public static String CloudFoundryServiceWizardPageRightPanel_EXISTING_SERVICE_DUPE;
+	
+	public static String CloudFoundryServiceWizardPageRightPanel_ERROR_DUPE_SERVICE_NAMES_FOUND;
 
-	public static String CloudFoundryServiceWizardPage1_TEXT_SELECT;
+	public static String CloudFoundryServiceWizardPageLeftPanel_FILTER_TITLE;
 
-	public static String CloudFoundryServiceWizardPage1_TEXT_SELECT_SERVICE;
+	public static String CloudFoundryServiceWizardPageLeftPanel_DEFAULT_FILTER_TEXT;
 
-	public static String CloudFoundryServiceWizardPage1_TEXT_SELECT_SERVICE_LIST;
-
-	public static String CloudFoundryServiceWizardPage1_TEXT_SET_NAME_PLAN;
-
-	public static String CloudFoundryServiceWizardPage1_TEXT_SET_SERVICE_NAME;
-
-	public static String CloudFoundryServiceWizardPage1_TEXT_TYPE_FILTER;
-
-	public static String CloudFoundryServiceWizardPage1_TTILE_SERVICE_CONFIG;
+	public static String CloudFoundryServiceWizardPageLeftPanel_AVAILABLE_SERVICES; 
+	
+	public static String CloudFoundryServiceWizardPageLeftPanel_ADD;
+	
+	public static String CloudFoundryServiceWizardPageLeftPanel_CLEAR;
 
 	public static String CloudRoutePart_UNDO;
 

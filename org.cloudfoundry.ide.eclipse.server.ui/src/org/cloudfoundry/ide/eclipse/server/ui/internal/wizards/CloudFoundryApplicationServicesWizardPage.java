@@ -194,15 +194,18 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 			public void run() {
 				// Do not create the service right away.
 				boolean deferAdditionOfService = true;
+				
 				CloudFoundryServiceWizard wizard = new CloudFoundryServiceWizard(cloudServer, deferAdditionOfService);
 				WizardDialog dialog = new WizardDialog(getShell(), wizard);
+				dialog.setPageSize(900, 600);
 				dialog.setBlockOnOpen(true);
+				
 				if (dialog.open() == Window.OK) {
 					// This cloud service does not yet exist. It will be created
 					// outside of the wizard
-					CloudService addedService = wizard.getService();
+					List<CloudService> addedService = wizard.getServices();
 					if (addedService != null) {
-						addService(addedService);
+						addServices(addedService);
 					}
 				}
 			}
@@ -225,16 +228,19 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 	 * @param service that was added and will also be automatically selected to
 	 * be bound to the application.
 	 */
-	protected void addService(CloudService service) {
-		if (service == null) {
+	protected void addServices(List<CloudService> services) {
+		if (services == null || services.size() == 0) {
 			return;
 		}
+		
+		for(CloudService service : services) {
+			allServices.put(service.getName(), service);
 
-		allServices.put(service.getName(), service);
+			servicesToAdd.add(service.getName());
 
-		servicesToAdd.add(service.getName());
+			selectedServicesToBind.add(service.getName());			
+		}
 
-		selectedServicesToBind.add(service.getName());
 		setServicesToBindInDescriptor();
 		setServicesToCreateInDescriptor();
 		setBoundServiceSelectionInUI();
