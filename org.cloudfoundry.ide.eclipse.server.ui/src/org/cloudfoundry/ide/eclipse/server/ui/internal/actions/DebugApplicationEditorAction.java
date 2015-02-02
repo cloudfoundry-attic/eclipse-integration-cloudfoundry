@@ -25,7 +25,7 @@ import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplic
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
-public class DebugApplicationEditorAction extends CloudFoundryEditorAction {
+public class DebugApplicationEditorAction extends EditorAction {
 
 	private final DebugCommand debugCommand;
 

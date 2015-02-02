@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -25,34 +25,32 @@ import java.util.List;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 
 /**
- * Deletes a given set of application modules. The modules need not have associated deployed
- * applications.
+ * Deletes a given set of application modules. The modules need not have
+ * associated deployed applications.
  */
-public class DeleteModulesOperation extends AbstractDeploymentOperation {
+public class DeleteModulesOperation extends AbstractCloudOperation {
 
 	/**
 	 * 
 	 */
-	private final CloudFoundryServerBehaviour cloudFoundryServerBehaviour;
 
 	private final boolean deleteServices;
 
 	private final IModule[] modules;
 
 	public DeleteModulesOperation(CloudFoundryServerBehaviour cloudFoundryServerBehaviour, IModule[] modules,
-			boolean deleteServices, CloudFoundryServerBehaviour behaviour) {
-		super(behaviour);
-		this.cloudFoundryServerBehaviour = cloudFoundryServerBehaviour;
+			boolean deleteServices) {
+		super(cloudFoundryServerBehaviour);
 		this.modules = modules;
 		this.deleteServices = deleteServices;
 	}
 
+	@Override
 	protected void performOperation(IProgressMonitor monitor) throws CoreException {
 		// NOTE that modules do NOT necessarily have to have deployed
 		// applications, so it's incorrect to assume
@@ -61,9 +59,9 @@ public class DeleteModulesOperation extends AbstractDeploymentOperation {
 		// A case for this is if a user cancels an application deployment. The
 		// IModule would have already been created
 		// but there would be no corresponding CloudApplication.
-		final CloudFoundryServer cloudServer = this.cloudFoundryServerBehaviour.getCloudFoundryServer();
+		final CloudFoundryServer cloudServer = getBehaviour().getCloudFoundryServer();
 
-		List<CloudApplication> updatedApplications = this.cloudFoundryServerBehaviour.getApplications(monitor);
+		List<CloudApplication> updatedApplications = getBehaviour().getApplications(monitor);
 
 		for (IModule module : modules) {
 			final CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
@@ -100,7 +98,7 @@ public class DeleteModulesOperation extends AbstractDeploymentOperation {
 					}
 				}
 
-				this.cloudFoundryServerBehaviour.deleteApplication(application.getName(), monitor);
+				getBehaviour().deleteApplication(application.getName(), monitor);
 
 			}
 
@@ -118,9 +116,13 @@ public class DeleteModulesOperation extends AbstractDeploymentOperation {
 			// Prompt the user to delete services as well
 			if (deleteServices && !servicesToDelete.isEmpty()) {
 				CloudFoundryPlugin.getCallback().deleteServices(servicesToDelete, cloudServer);
-				ServerEventHandler.getDefault().fireServicesUpdated(cloudServer);
 			}
 		}
+	}
+
+	@Override
+	protected void refresh(IProgressMonitor monitor) throws CoreException {
+		getBehaviour().getRefreshHandler().scheduleRefresh();
 	}
 
 }

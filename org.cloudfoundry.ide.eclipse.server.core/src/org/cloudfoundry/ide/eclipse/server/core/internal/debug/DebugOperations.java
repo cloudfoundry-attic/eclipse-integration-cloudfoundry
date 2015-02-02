@@ -24,7 +24,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
-import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationChangeEvent;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -80,7 +80,7 @@ public class DebugOperations {
 	public static final void fireDebugChanged(CloudFoundryServer cloudServer, CloudFoundryApplicationModule appModule,
 			IStatus status) {
 		ServerEventHandler.getDefault().fireServerEvent(
-				new ApplicationChangeEvent(cloudServer, CloudServerEvent.EVENT_APP_DEBUG, appModule, status));
+				new ModuleChangeEvent(cloudServer, CloudServerEvent.EVENT_APP_DEBUG, appModule.getLocalModule(), status));
 	}
 
 	/**

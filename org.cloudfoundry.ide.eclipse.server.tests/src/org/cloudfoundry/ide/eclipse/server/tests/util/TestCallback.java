@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License,
- * Version 2.0 (the "License�); you may not use this file except in compliance
+ * Version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -28,7 +28,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupSer
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
@@ -46,18 +45,22 @@ public class TestCallback extends CloudFoundryCallback {
 
 	private final String url;
 
+	private final int memory;
+
 	private final boolean deployStopped;
 
-	public TestCallback(String appName, boolean deployStopped) {
+	public TestCallback(String appName, int memory, boolean deployStopped) {
 		this.appName = appName;
 		this.url = null;
 		this.deployStopped = deployStopped;
+		this.memory = memory;
 	}
 
-	public TestCallback(String appName, String url) {
+	public TestCallback(String appName, String url, int memory) {
 		this.appName = appName;
 		this.url = url;
 		deployStopped = false;
+		this.memory = memory;
 	}
 
 	@Override
@@ -97,7 +100,7 @@ public class TestCallback extends CloudFoundryCallback {
 
 		DeploymentInfoWorkingCopy copy = module.resolveDeploymentInfoWorkingCopy(monitor);
 		copy.setDeploymentName(appName);
-		copy.setMemory(CloudUtil.DEFAULT_MEMORY);
+		copy.setMemory(memory);
 
 		if (url != null) {
 			copy.setUris(Collections.singletonList(url));

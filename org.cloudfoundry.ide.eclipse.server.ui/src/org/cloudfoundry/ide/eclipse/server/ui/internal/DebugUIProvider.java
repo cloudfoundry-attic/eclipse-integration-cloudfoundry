@@ -19,6 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
+import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryProperties;
@@ -104,7 +105,8 @@ class DebugUIProvider implements IDebugProvider {
 		provider.configureApp(appModule, cloudServer, monitor);
 
 		if (shouldRestart) {
-			cloudServer.getBehaviour().getUpdateRestartOperation(mod).run(monitor);
+			cloudServer.getBehaviour().operations()
+					.applicationDeployment(mod, ApplicationAction.UPDATE_RESTART).run(monitor);
 		}
 		return true;
 

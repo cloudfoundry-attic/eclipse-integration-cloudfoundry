@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -28,7 +28,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.RepublishModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.WaitWithProgressJob;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -67,8 +66,8 @@ public class RepublishApplicationHandler {
 		CloudApplication existingApp = appModule.getApplication();
 		if (existingApp == null) {
 			try {
-				existingApp = cloudServer.getBehaviour()
-						.getApplication(appModule.getDeployedApplicationName(), monitor);
+				existingApp = cloudServer.getBehaviour().getCloudApplication(appModule.getDeployedApplicationName(),
+						monitor);
 			}
 			catch (CoreException e) {
 				// Ignore it
@@ -104,22 +103,7 @@ public class RepublishApplicationHandler {
 					IServerWorkingCopy wc = server.createWorkingCopy();
 					wc.modifyModules(null, modules, monitor);
 					wc.save(true, null);
-					cloudServer.getBehaviour().refreshModules(monitor);
-
-					new WaitWithProgressJob(5, 1000) {
-
-						@Override
-						protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
-							boolean found = cloudServer.getExistingCloudModule(modules[0]) != null;
-							if (found) {
-								cloudServer.getBehaviour().refreshModules(monitor);
-							}
-							// If the app has been found, try again until it
-							// is not found
-							return !found;
-						}
-
-					}.run(monitor);
+					cloudServer.getBehaviour().updateCloudModule(modules[0], monitor);
 
 					// Create new ones
 					IModule[] newModules = ServerUtil.getModules(project);
@@ -149,8 +133,8 @@ public class RepublishApplicationHandler {
 		}
 
 		if (!republished) {
-			throw new CoreException(CloudFoundryPlugin.getErrorStatus(NLS.bind(Messages.RepublishApplicationHandler_ERROR_REPUBLISH_FAIL, 
-					appModule.getDeployedApplicationName())));
+			throw new CoreException(CloudFoundryPlugin.getErrorStatus(NLS.bind(
+					Messages.RepublishApplicationHandler_ERROR_REPUBLISH_FAIL, appModule.getDeployedApplicationName())));
 		}
 
 	}

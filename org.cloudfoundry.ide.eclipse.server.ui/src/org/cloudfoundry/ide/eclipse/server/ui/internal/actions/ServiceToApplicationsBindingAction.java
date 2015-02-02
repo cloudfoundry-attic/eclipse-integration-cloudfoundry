@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -20,7 +20,6 @@
 package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Logger;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
@@ -31,49 +30,45 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.ui.progress.UIJob;
 
-public class ServiceToApplicationsBindingAction extends CloudFoundryEditorAction {
+public class ServiceToApplicationsBindingAction extends Action {
 
 	private final CloudFoundryServerBehaviour serverBehaviour;
 
 	private final ServicesHandler servicesHandler;
-	
+
 	private final CloudFoundryApplicationsEditorPage editorPage;
 
-	public ServiceToApplicationsBindingAction(IStructuredSelection selection, CloudFoundryServerBehaviour serverBehaviour,
-			CloudFoundryApplicationsEditorPage editorPage) {
-		super(editorPage, RefreshArea.ALL);
+	public ServiceToApplicationsBindingAction(IStructuredSelection selection,
+			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
+
 		this.serverBehaviour = serverBehaviour;
 		this.editorPage = editorPage;
-		
+
 		setText(Messages.MANAGE_SERVICES_TO_APPLICATIONS_ACTION);
 		servicesHandler = new ServicesHandler(selection);
 	}
 
 	@Override
-	public String getJobName() {
-		return Messages.MANAGE_SERVICES_TO_APPLICATIONS_TITLE;
-	}
-
-	@Override
 	public void run() {
 		UIJob uiJob = new UIJob(Messages.MANAGE_SERVICES_TO_APPLICATIONS_TITLE) {
-			public IStatus runInUIThread(IProgressMonitor monitor) {				
+			public IStatus runInUIThread(IProgressMonitor monitor) {
 				try {
-					if (serverBehaviour != null){
-						ServiceToApplicationsBindingWizard wizard = new ServiceToApplicationsBindingWizard(servicesHandler, 
-								serverBehaviour.getCloudFoundryServer(),editorPage);
-						WizardDialog dialog = new WizardDialog(getEditorPage().getSite().getShell(), wizard);
-						dialog.open();					
+					if (serverBehaviour != null) {
+						ServiceToApplicationsBindingWizard wizard = new ServiceToApplicationsBindingWizard(
+								servicesHandler, serverBehaviour.getCloudFoundryServer(), editorPage);
+						WizardDialog dialog = new WizardDialog(editorPage.getSite().getShell(), wizard);
+						dialog.open();
 					}
 				}
 				catch (CoreException e) {
-			    	if (Logger.ERROR) {
-			    		Logger.println(Logger.ERROR_LEVEL, this, "runInUIThread", "Error launching wizard",e); //$NON-NLS-1$ //$NON-NLS-2$
-			    	}
+					if (Logger.ERROR) {
+						Logger.println(Logger.ERROR_LEVEL, this, "runInUIThread", "Error launching wizard", e); //$NON-NLS-1$ //$NON-NLS-2$
+					}
 				}
 
 				return Status.OK_STATUS;
@@ -85,8 +80,4 @@ public class ServiceToApplicationsBindingAction extends CloudFoundryEditorAction
 		uiJob.schedule();
 	}
 
-	@Override
-	protected ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
-		return null;
-	}
 }

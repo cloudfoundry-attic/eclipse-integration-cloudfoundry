@@ -21,7 +21,6 @@ package org.cloudfoundry.ide.eclipse.server.core.internal;
 
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
@@ -120,7 +119,7 @@ public abstract class CloudFoundryCallback {
 		return true;
 	}
 
-	public void handleError(IStatus status, BehaviourEventType eventType) {
+	public void handleError(IStatus status) {
 
 	}
 

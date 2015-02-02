@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2013, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -124,7 +124,8 @@ public class ApplicationDeploymentUIHandler {
 
 			if (providerDelegate == null) {
 				throw CloudErrorUtil.toCoreException("Failed to open application deployment wizard for: " //$NON-NLS-1$
-						+ appModule.getDeployedApplicationName() + " when attempting to push application to " //$NON-NLS-1$
+						+ appModule.getDeployedApplicationName()
+						+ " when attempting to push application to " //$NON-NLS-1$
 						+ server.getServer().getName()
 						+ ". No application provider found that corresponds to the application type: " //$NON-NLS-1$
 						+ appModule.getLocalModule().getModuleType().getId());
@@ -188,8 +189,8 @@ public class ApplicationDeploymentUIHandler {
 							if (addedServices != null && !addedServices.isEmpty()) {
 								IProgressMonitor subMonitor = new SubProgressMonitor(monitor, addedServices.size());
 								try {
-									server.getBehaviour().createService(addedServices.toArray(new CloudService[0]),
-											subMonitor);
+									server.getBehaviour().operations()
+											.createServices(addedServices.toArray(new CloudService[0])).run(monitor);
 								}
 								catch (CoreException e) {
 									// Do not let service creation errors

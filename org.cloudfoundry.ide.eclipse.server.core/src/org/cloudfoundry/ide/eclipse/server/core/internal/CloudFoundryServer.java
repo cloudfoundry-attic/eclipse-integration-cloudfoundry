@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -656,6 +656,22 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		final Set<IModule> deletedModules = new HashSet<IModule>();
 
 		synchronized (this) {
+
+			// There are three representations for an application:
+			// 1. CloudApplication, which represents an existing application in
+			// the
+			// Cloud space
+			// 2. WST IModule created by the WST framework that is the local
+			// representation of the application used by the WST framework
+			// 3. CloudFoundryApplicationModule which contains additional
+			// Cloud-specific API not found in the WST IModule or
+			// CloudApplication
+			// and always
+			// maps to a WST Module and CloudApplication.
+
+			// This refresh mechanism will make sure all three are updated and
+			// synchronised
+
 			// Iterate through the local WST modules, and update them based on
 			// which are external (have no accessible workspace resources),
 			// which
@@ -735,7 +751,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 				for (IModule module : deletedModules) {
 					server.setModuleState(new IModule[] { module }, IServer.STATE_UNKNOWN);
 				}
-				deleteModules(deletedModules);
+				doDeleteModules(deletedModules);
 			}
 
 			if (getData() != null) {
@@ -744,14 +760,145 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		}
 	}
 
-	private void deleteModules(final Set<IModule> deletedModules) {
-		Job deleteJob = new Job(Messages.CloudFoundryServer_JOB_UPDATE) {
-			@Override
-			protected IStatus run(IProgressMonitor arg0) {
-				return doDeleteModules(deletedModules);
+	/**
+	 * Updates the {@link IModule} and {@link ICloudFoundryApplicationModule}
+	 * associated with the given {@link CloudApplication}. If a null
+	 * {@link CloudApplication} is specified, the update operation will first
+	 * check if the app is not currently being deployed. Otherwise it will
+	 * delete any obsolete modules for that application.
+	 * <p/>
+	 * There are three representations for an application:
+	 * <p/>
+	 * 1. {@link CloudApplication}, which represents an existing application in
+	 * the Cloud space
+	 * <p/>
+	 * 2. WST {@link IModule} created by the WST framework that is the local
+	 * representation of the application used by the WST framework
+	 * <p/>
+	 * 3. {@link ICloudFoundryApplicationModule} which contains additional
+	 * Cloud-specific API not found in the WST IModule or CloudApplication and
+	 * always maps to a WST Module and CloudApplication.
+	 * <p/>
+	 * This refresh mechanism will make sure all three are updated and in synch
+	 * with one another
+	 * 
+	 * 
+	 * @param appName
+	 * @param monitor
+	 * @return updated Cloud module, if it exists, or null, if it no longer
+	 * exists and has been deleted both locally in the server instance as well
+	 * as the Cloud space
+	 * @throws CoreException
+	 */
+	public CloudFoundryApplicationModule updateModule(CloudApplication existingCloudApplication,
+			IProgressMonitor monitor) throws CoreException {
+		Server server = (Server) getServer();
+
+		List<CloudFoundryApplicationModule> externalModules = new ArrayList<CloudFoundryApplicationModule>();
+
+		synchronized (this) {
+
+			String appName = existingCloudApplication != null ? existingCloudApplication.getName() : null;
+
+			IModule wstModule = null;
+
+			if (appName != null) {
+				// Now check if WST and CloudFoundryApplicationModule exist for
+				// that
+				// application:
+				// 1. Find if a WST module exists for the pushed application.
+				// This
+				// is necessary if the corresponding Cloud module needs to be
+				// created or publish state of the application needs to be
+				// updated
+				// later on
+				// 2. Determine all external modules. This is required keep the
+				// list
+				// of modules in the server updated
+				for (IModule module : server.getModules()) {
+					// Find the wst module for the application, if it exists
+					CloudFoundryApplicationModule cloudModule = getExistingCloudModule(module);
+
+					if (cloudModule != null) {
+						if (cloudModule.getDeployedApplicationName().equals(appName)) {
+							wstModule = module;
+						}
+						if (cloudModule.isExternal()) {
+							externalModules.add(cloudModule);
+						}
+					}
+				}
 			}
-		};
-		deleteJob.schedule();
+
+			// Fetch the cloud module again, if it exists. Note that the wst may
+			// not exist anymore, as updating request could
+			// have been initiated after a delete operation, in which case
+			// neither the WST module or associated Cloud module may exist
+			// anymore.
+
+			CloudFoundryApplicationModule cloudModule = getExistingCloudModule(wstModule);
+
+			// Update the module cache, and if necessary create a module if one
+			// does not yet exists for CloudApplications
+			// that exist
+			if (getData() != null) {
+
+				// If the cloudApplication exists, then either the cloud
+				// module needs to be created or mapping updated.
+				if (existingCloudApplication != null) {
+
+					if (cloudModule == null) {
+						// Module needs to be created for the existing
+						// application
+						cloudModule = getData().createModule(existingCloudApplication);
+						externalModules.add(cloudModule);
+
+					}
+					else {
+						// If module already exists then just update the mapping
+						cloudModule.setCloudApplication(existingCloudApplication);
+					}
+				}
+				// if cloud application does not exist, first check that it
+				// is not currently being deployed. Otherwise
+				// delete it, as it means it no longer exists in the Cloud space
+				else if (!getData().isUndeployed(wstModule)) {
+
+					// Remove the WST module from WST server if it is still
+					// present
+					if (wstModule != null) {
+						server.setModuleState(new IModule[] { wstModule }, IServer.STATE_UNKNOWN);
+						deleteModule(wstModule);
+					}
+
+					// Remove the cloud module from the catch
+					if (cloudModule != null) {
+						getData().remove(cloudModule);
+					}
+				}
+
+			}
+
+			// Must update all external modules, not just the module that
+			// changed, otherwise the
+			// list of refreshed modules may be inaccurate
+			server.setExternalModules(externalModules.toArray(new IModule[0]));
+			for (IModule module : server.getModules()) {
+				CloudFoundryApplicationModule appModule = getExistingCloudModule(module);
+				if (appModule != null) {
+					updateState(server, appModule);
+				}
+			}
+
+			return cloudModule;
+
+		}
+	}
+
+	private void deleteModule(IModule module) {
+		List<IModule> modsToDelete = new ArrayList<IModule>();
+		modsToDelete.add(module);
+		doDeleteModules(modsToDelete);
 	}
 
 	public void removeApplication(CloudFoundryApplicationModule cloudModule) {
@@ -861,6 +1008,9 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	 */
 	public CloudFoundryApplicationModule getExistingCloudModule(String appName) throws CoreException {
 
+		if (appName == null) {
+			return null;
+		}
 		CloudFoundryApplicationModule appModule = null;
 		Collection<CloudFoundryApplicationModule> modules = getExistingCloudModules();
 		if (modules != null) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
+ * Copyright (c) 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -19,26 +19,29 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
-public class CloudOperationsConstants {
+import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 
-	/*
-	 * Intervals are how long a thread should sleep before moving to the next
-	 * iteration, or how long a refresh operation should wait before refreshing
-	 * the deployed apps.
-	 */
-	public static final long DEFAULT_INTERVAL = 60 * 1000;
+public class UpdateServicesOperation extends AbstractCloudOperation {
 
-	public static final long SHORT_INTERVAL = 5 * 1000;
+	private final BaseClientRequest<?> request;
 
-	public static final long MEDIUM_INTERVAL = 10 * 1000;
+	protected UpdateServicesOperation(BaseClientRequest<?> request, CloudFoundryServerBehaviour behaviour) {
+		super(behaviour);
+		this.request = request;
+	}
 
-	public static final long ONE_SECOND_INTERVAL = 1000;
+	@Override
+	protected void refresh(IProgressMonitor monitor) throws CoreException {
+		// Do not refresh modules for service changes. Just notify that
+		// services have changed
+		ServerEventHandler.getDefault().fireServicesUpdated(getBehaviour().getCloudFoundryServer());
+	}
 
-	public static final long LOGIN_INTERVAL = 2000;
+	@Override
+	protected void performOperation(IProgressMonitor monitor) throws CoreException {
+		request.run(monitor);
+	}
 
-	public static final long DEPLOYMENT_TIMEOUT = 10 * 60 * 1000;
-
-	public static final long UPLOAD_TIMEOUT = 60 * 1000;
-
-	public static final long DEFAULT_CF_CLIENT_REQUEST_TIMEOUT = 15 * 1000;
 }

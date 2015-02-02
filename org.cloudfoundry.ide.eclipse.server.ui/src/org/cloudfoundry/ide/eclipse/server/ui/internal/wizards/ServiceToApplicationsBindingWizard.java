@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -53,25 +53,27 @@ import org.eclipse.swt.widgets.Display;
 public class ServiceToApplicationsBindingWizard extends Wizard {
 
 	private final CloudFoundryServer cloudServer;
+
 	private ServiceToApplicationsBindingWizardPage bindServiceToApplicationPage;
+
 	private ServicesHandler servicesHandler;
+
 	private final CloudFoundryApplicationsEditorPage editorPage;
 
-	public ServiceToApplicationsBindingWizard(ServicesHandler servicesHandler, 
-			CloudFoundryServer server, 
+	public ServiceToApplicationsBindingWizard(ServicesHandler servicesHandler, CloudFoundryServer server,
 			CloudFoundryApplicationsEditorPage editorPage) {
 		this.cloudServer = server;
 		this.servicesHandler = servicesHandler;
 		this.editorPage = editorPage;
-		
+
 		setWindowTitle(server.getServer().getName());
 		setNeedsProgressMonitor(true);
 	}
 
 	@Override
 	public void addPages() {
-		bindServiceToApplicationPage = 
-				new ServiceToApplicationsBindingWizardPage(servicesHandler, cloudServer,editorPage);
+		bindServiceToApplicationPage = new ServiceToApplicationsBindingWizardPage(servicesHandler, cloudServer,
+				editorPage);
 		bindServiceToApplicationPage.setWizard(this);
 		addPage(bindServiceToApplicationPage);
 	}
@@ -84,133 +86,136 @@ public class ServiceToApplicationsBindingWizard extends Wizard {
 
 	static class ServiceToApplicationsBindingWizardPage extends PartsWizardPage {
 		private ServiceToApplicationsBindingPart serviceToApplicationsBindingPart;
-		private final CloudFoundryServer server;		
-		ServicesHandler servicesHandler;		
+
+		private final CloudFoundryServer server;
+
+		ServicesHandler servicesHandler;
+
 		CloudFoundryApplicationsEditorPage editorPage;
 
-		public ServiceToApplicationsBindingWizardPage(ServicesHandler servicesHandler, 
-				CloudFoundryServer server, 
+		public ServiceToApplicationsBindingWizardPage(ServicesHandler servicesHandler, CloudFoundryServer server,
 				CloudFoundryApplicationsEditorPage editorPage) {
-			super(Messages.MANAGE_SERVICES_TO_APPLICATIONS_TITLE, 
-					Messages.MANAGE_SERVICES_TO_APPLICATIONS_TITLE, 
+			super(Messages.MANAGE_SERVICES_TO_APPLICATIONS_TITLE, Messages.MANAGE_SERVICES_TO_APPLICATIONS_TITLE,
 					CloudFoundryImages.getWizardBanner(server.getServer().getServerType().getId()));
-			
-			setDescription(NLS.bind(Messages.MANAGE_SERVICES_TO_APPLICATIONS_DESCRIPTION, 
-					servicesHandler.toString()));
+
+			setDescription(NLS.bind(Messages.MANAGE_SERVICES_TO_APPLICATIONS_DESCRIPTION, servicesHandler.toString()));
 			this.server = server;
 			this.servicesHandler = servicesHandler;
 			this.editorPage = editorPage;
 		}
 
-		public void performWhenPageVisible(){
+		public void performWhenPageVisible() {
 			// When the page is visible, populate the page
 			runAsynchWithWizardProgress(new ICoreRunnable() {
 				@Override
 				public void run(IProgressMonitor monitor) throws CoreException {
-					if (server != null){
+					if (server != null) {
 						CloudFoundryServerBehaviour behaviour = server.getBehaviour();
-						if (behaviour != null){
-							monitor.beginTask(Messages.MANAGE_SERVICES_TO_APPLICATIONS_GET_APPLICATION_NAMES, 
+						if (behaviour != null) {
+							monitor.beginTask(Messages.MANAGE_SERVICES_TO_APPLICATIONS_GET_APPLICATION_NAMES,
 									IProgressMonitor.UNKNOWN);
-							final List<CloudApplication> allApps = behaviour.getApplications(monitor);		
-												
+							final List<CloudApplication> allApps = behaviour.getApplications(monitor);
+
 							monitor.done();
 							Display.getDefault().syncExec(new Runnable() {
 								public void run() {
 									serviceToApplicationsBindingPart.setInput(allApps);
 								}
-							});	
+							});
 						}
 					}
 				}
 				// The message used below cannot be seen from the UI. To ensure
 				// translation is correct, re-use the wizard's title
-			}, Messages.MANAGE_SERVICES_TO_APPLICATIONS_TITLE);			
-			
-			
+			}, Messages.MANAGE_SERVICES_TO_APPLICATIONS_TITLE);
+
 		}
-		
+
 		public boolean isPageComplete() {
-			// Finish can always be pressed, regardless of what is selected or not selected
+			// Finish can always be pressed, regardless of what is selected or
+			// not selected
 			return true;
 		}
 
-		protected void performFinish() {	
+		protected void performFinish() {
 			try {
 				CloudUiUtil.runForked(new ICoreRunnable() {
 					@Override
 					public void run(IProgressMonitor monitor) throws CoreException {
 						monitor.setTaskName(Messages.MANAGE_SERVICES_TO_APPLICATIONS_FINISH);
 						CloudFoundryServerBehaviour behaviour = server.getBehaviour();
-						if (serviceToApplicationsBindingPart != null && server != null && behaviour != null){
-							List<ApplicationToService> applicationsToProcess = 
-									serviceToApplicationsBindingPart.getApplicationToService();
-							
+						if (serviceToApplicationsBindingPart != null && server != null && behaviour != null) {
+							List<ApplicationToService> applicationsToProcess = serviceToApplicationsBindingPart
+									.getApplicationToService();
+
 							CloudService cloudService = null;
-														
+
 							try {
 								// Find the Cloud Service that was selected
-								List<CloudService> cloudServiceList = behaviour.getServices(null);
+								List<CloudService> cloudServiceList = behaviour.getServices(monitor);
 								int lenCloudService = cloudServiceList.size();
-								
+
 								String serviceName = servicesHandler.toString();
-								
-								for (int j=0;j<lenCloudService;j++){
+
+								for (int j = 0; j < lenCloudService; j++) {
 									CloudService currService = cloudServiceList.get(j);
-									if (currService != null){
+									if (currService != null) {
 										String currServiceName = currService.getName();
-										if (currServiceName != null && currServiceName.equals(serviceName)){
+										if (currServiceName != null && currServiceName.equals(serviceName)) {
 											cloudService = currService;
 											break;
 										}
 									}
 								}
-								StructuredSelection structuredSelection = new StructuredSelection(cloudService);					
-								
+								StructuredSelection structuredSelection = new StructuredSelection(cloudService);
+
 								int len = applicationsToProcess.size();
-								for (int i=0;i<len;i++){
+								for (int i = 0; i < len; i++) {
 									ApplicationToService curr = applicationsToProcess.get(i);
-									
-									// Detect if the service was modified for that application
-									// 
-									// Call AddServicesToApplicationAction and RemoveServicesFromApplicationAction,
-									// which will deal with the binding and unbinding of the service. In addition
-									// these actions refresh the Application and Services editor after the update
+
+									// Detect if the service was modified for
+									// that application
+									//
+									// Call AddServicesToApplicationAction and
+									// RemoveServicesFromApplicationAction,
+									// which will deal with the binding and
+									// unbinding of the service. In addition
+									// these actions refresh the Application and
+									// Services editor after the update
 									boolean isBoundToServiceAfter = curr.getBoundToServiceAfter();
-									if (isBoundToServiceAfter != curr.getBoundToServiceBefore()){
+									if (isBoundToServiceAfter != curr.getBoundToServiceBefore()) {
 										CloudApplication cloudApp = applicationsToProcess.get(i).getCloudApplication();
-										CloudFoundryApplicationModule module = server.getExistingCloudModule(cloudApp.getName());
-										if(isBoundToServiceAfter){							
-											ModifyServicesForApplicationAction bindService = 
-													new AddServicesToApplicationAction(structuredSelection, 
-															module, 
-															server.getBehaviour(), 
-															editorPage);
-											bindService.run();						
+										CloudFoundryApplicationModule module = server.getExistingCloudModule(cloudApp
+												.getName());
+										if (isBoundToServiceAfter) {
+											ModifyServicesForApplicationAction bindService = new AddServicesToApplicationAction(
+													structuredSelection, module, server.getBehaviour(), editorPage);
+											bindService.run();
 										}
 										else {
-											ModifyServicesForApplicationAction unbindService = 
-													new RemoveServicesFromApplicationAction(structuredSelection, 
-															module, 
-															server.getBehaviour(), 
-															editorPage);
+											ModifyServicesForApplicationAction unbindService = new RemoveServicesFromApplicationAction(
+													structuredSelection, module, server.getBehaviour(), editorPage);
 											unbindService.run();
 										}
 									}
-								}									
-														
+								}
+
 							}
 							catch (CoreException e) {
-						    	if (Logger.ERROR) {
-						    		Logger.println(Logger.ERROR_LEVEL, this, "performFinish", "Error when processing applications to bind or unbind with the service",e); //$NON-NLS-1$ //$NON-NLS-2$
-						    	}
-						    	
-						    	Display.getDefault().syncExec(new Runnable() {
+								if (Logger.ERROR) {
+									Logger.println(
+											Logger.ERROR_LEVEL,
+											this,
+											"performFinish", "Error when processing applications to bind or unbind with the service", e); //$NON-NLS-1$ //$NON-NLS-2$
+								}
+
+								Display.getDefault().syncExec(new Runnable() {
 									public void run() {
-										MessageDialog.openError(Display.getDefault().getActiveShell(), Messages.MANAGE_SERVICES_TO_APPLICATIONS_FINISH_ERROR_TITLE,
+										MessageDialog.openError(Display.getDefault().getActiveShell(),
+												Messages.MANAGE_SERVICES_TO_APPLICATIONS_FINISH_ERROR_TITLE,
 												Messages.MANAGE_SERVICES_TO_APPLICATIONS_FINISH_ERROR_DESCRIPTION);
 									}
-								});	
+								});
 
 							}
 						}
@@ -218,13 +223,19 @@ public class ServiceToApplicationsBindingWizard extends Wizard {
 				}, getWizard().getContainer());
 			}
 			catch (OperationCanceledException e1) {
-				if (Logger.ERROR){
-					Logger.println(Logger.ERROR_LEVEL, this, "performFinish", "Error when processing applications to bind or unbind with the service",e1); //$NON-NLS-1$ //$NON-NLS-2$
+				if (Logger.ERROR) {
+					Logger.println(
+							Logger.ERROR_LEVEL,
+							this,
+							"performFinish", "Error when processing applications to bind or unbind with the service", e1); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 			}
 			catch (CoreException e1) {
-				if (Logger.ERROR){
-					Logger.println(Logger.ERROR_LEVEL, this, "performFinish", "Error when processing applications to bind or unbind with the service",e1); //$NON-NLS-1$ //$NON-NLS-2$
+				if (Logger.ERROR) {
+					Logger.println(
+							Logger.ERROR_LEVEL,
+							this,
+							"performFinish", "Error when processing applications to bind or unbind with the service", e1); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 			}
 		}

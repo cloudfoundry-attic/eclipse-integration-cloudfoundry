@@ -21,33 +21,40 @@ package org.cloudfoundry.ide.eclipse.server.core.internal.application;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.wst.server.core.IModule;
 
-public class ApplicationChangeEvent extends CloudServerEvent {
-
-	private final IStatus status;
-
-	private final CloudFoundryApplicationModule appModule;
-
-	public ApplicationChangeEvent(CloudFoundryServer server, int type, CloudFoundryApplicationModule appModule,
-			IStatus status) {
-		super(server, type);
-		this.status = status != null ? status : Status.OK_STATUS;
-		this.appModule = appModule;
-	}
+/**
+ * Event indicating any type of change on a given module, whether the publish
+ * state has changed (added or removed), module is started/stopped, or any
+ * service bindings, URL mapping changes, or scaling that occurs for the
+ * associated Cloud application. It may also be used to indicate that the
+ * module's application has been updated from Cloud space.
+ *
+ */
+public class ModuleChangeEvent extends CloudServerEvent {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
+	private final IStatus status;
+
+	private final IModule appModule;
+
+	public ModuleChangeEvent(CloudFoundryServer server, int type, IModule appModule, IStatus status) {
+		super(server, type);
+		this.status = status != null ? status : Status.OK_STATUS;
+		this.appModule = appModule;
+	}
+
 	public IStatus getStatus() {
 		return status;
 	}
 
-	public CloudFoundryApplicationModule getApplication() {
+	public IModule getModule() {
 		return appModule;
 	}
 

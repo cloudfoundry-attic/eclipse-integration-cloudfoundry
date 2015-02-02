@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2013, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -79,8 +79,8 @@ public class EnvVarsWizard extends Wizard {
 			getContainer().run(true, true, new IRunnableWithProgress() {
 				public void run(IProgressMonitor monitor) {
 					try {
-						cloudServer.getBehaviour().updateEnvironmentVariables(appModule, monitor);
-
+						cloudServer.getBehaviour().operations().environmentVariablesUpdate(appModule)
+								.run(monitor);
 					}
 					catch (CoreException e) {
 						result[0] = e.getStatus();
@@ -97,8 +97,7 @@ public class EnvVarsWizard extends Wizard {
 
 		}
 		if (result[0] != null && !result[0].isOK()) {
-			envVarPage.setErrorMessage(Messages.EnvVarsWizard_ERROR_ENV_VAR
-					+ result[0].getMessage());
+			envVarPage.setErrorMessage(Messages.EnvVarsWizard_ERROR_ENV_VAR + result[0].getMessage());
 			return false;
 		}
 		else {

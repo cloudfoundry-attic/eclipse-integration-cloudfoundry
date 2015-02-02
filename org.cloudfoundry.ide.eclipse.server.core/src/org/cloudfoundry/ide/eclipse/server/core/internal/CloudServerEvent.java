@@ -22,6 +22,7 @@ package org.cloudfoundry.ide.eclipse.server.core.internal;
 import java.util.EventObject;
 
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IStatus;
 
 /**
  * @author Christian Dupuis
@@ -31,7 +32,7 @@ import org.eclipse.core.runtime.Assert;
  */
 public class CloudServerEvent extends EventObject {
 
-	public static final int EVENT_UPDATE_INSTANCES = 100;
+	public static final int EVENT_INSTANCES_UPDATED = 100;
 
 	public static final int EVENT_UPDATE_SERVICES = 200;
 
@@ -39,20 +40,31 @@ public class CloudServerEvent extends EventObject {
 
 	public static final int EVENT_SERVER_REFRESHED = 400;
 
+	public static final int EVENT_APP_CHANGED = 410;
+
 	public static final int EVENT_APP_DEBUG = 500;
+
+	public static final int EVENT_CLOUD_OP_ERROR = 600;
 
 	private static final long serialVersionUID = 1L;
 
 	private int type = -1;
+
+	private IStatus status;
 
 	public CloudServerEvent(CloudFoundryServer server) {
 		this(server, -1);
 	}
 
 	public CloudServerEvent(CloudFoundryServer server, int type) {
+		this(server, type, null);
+	}
+
+	public CloudServerEvent(CloudFoundryServer server, int type, IStatus status) {
 		super(server);
 		Assert.isNotNull(server);
 		this.type = type;
+		this.status = status;
 	}
 
 	public CloudFoundryServer getServer() {
@@ -63,8 +75,12 @@ public class CloudServerEvent extends EventObject {
 		return type;
 	}
 
-	public void setType(int type) {
-		this.type = type;
+	public IStatus getStatus() {
+		return status;
 	}
 
+	@Override
+	public String toString() {
+		return "CloudServerEvent [type=" + type + ", server=" + getServer().getServer().getId() + ")]";
+	}
 }

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -28,7 +28,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 /**
  * @author Terry Denney
  */
-public class UpdateApplicationMemoryAction extends CloudFoundryEditorAction {
+public class UpdateApplicationMemoryAction extends EditorAction {
 
 	private final int memory;
 
@@ -47,14 +47,8 @@ public class UpdateApplicationMemoryAction extends CloudFoundryEditorAction {
 	}
 
 	@Override
-	public ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
-		return new ModifyEditorOperation() {
-
-			@Override
-			protected void performOperation(IProgressMonitor monitor) throws CoreException {
-				getBehavior().updateApplicationMemory(module, memory, monitor);
-			}
-		};
+	protected ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
+		return getBehaviour().operations().memoryUpdate(module, memory);
 	}
 
 }

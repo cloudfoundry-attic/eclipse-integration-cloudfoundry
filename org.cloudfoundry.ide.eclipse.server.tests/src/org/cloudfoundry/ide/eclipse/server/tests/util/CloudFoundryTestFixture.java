@@ -38,6 +38,7 @@ import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpaces;
 import org.cloudfoundry.ide.eclipse.server.tests.AllCloudFoundryTests;
@@ -279,7 +280,7 @@ public class CloudFoundryTestFixture {
 			List<String> services = new ArrayList<String>();
 			services.add(serviceName);
 
-			serverBehavior.getDeleteServicesOperation(services).run(new NullProgressMonitor());
+			serverBehavior.operations().deleteServices(services).run(new NullProgressMonitor());
 		}
 
 		public void deleteAllServices() throws CoreException {
@@ -405,7 +406,7 @@ public class CloudFoundryTestFixture {
 	 * @throws CoreException
 	 */
 	public CloudFoundryTestFixture baseConfiguration() throws CoreException {
-		return configureForApplicationDeployment(null, false);
+		return configureForApplicationDeployment(null, CloudUtil.DEFAULT_MEMORY, false);
 	}
 
 	/**
@@ -417,9 +418,9 @@ public class CloudFoundryTestFixture {
 	 * @return
 	 * @throws CoreException
 	 */
-	public CloudFoundryTestFixture configureForApplicationDeployment(String fullApplicationName, boolean deployStopped)
-			throws CoreException {
-		CloudFoundryPlugin.setCallback(new TestCallback(fullApplicationName, deployStopped));
+	public CloudFoundryTestFixture configureForApplicationDeployment(String fullApplicationName, int memory,
+			boolean deployStopped) throws CoreException {
+		CloudFoundryPlugin.setCallback(new TestCallback(fullApplicationName, memory, deployStopped));
 		return getTestFixture();
 	}
 

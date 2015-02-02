@@ -19,6 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 
+import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
@@ -69,7 +70,11 @@ public class UpdateRestartModuleCommand extends BaseCommandHandler {
 			protected IStatus run(IProgressMonitor monitor) {
 
 				try {
-					cloudServer.getBehaviour().getUpdateRestartOperation(new IModule[] { selectedModule }).run(monitor);
+					cloudServer
+							.getBehaviour()
+							.operations()
+							.applicationDeployment(new IModule[] { selectedModule },
+									ApplicationAction.UPDATE_RESTART).run(monitor);
 				}
 				catch (CoreException e) {
 					CloudFoundryPlugin.getDefault().getLog()
