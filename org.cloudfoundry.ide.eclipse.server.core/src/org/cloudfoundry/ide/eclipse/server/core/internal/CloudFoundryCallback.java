@@ -124,4 +124,13 @@ public abstract class CloudFoundryCallback {
 
 	}
 
+	/**
+	 * Shows a confirmation dialog with the given operation title and message, and
+	 * asks the user the determine whether to execute the target operation.
+	 * 
+	 * @param title the title of the target operation
+	 * @param message the message presented to the user
+	 * @return true if the user chooses to execute the target operation, false otherwise
+	 */
+	public abstract boolean confirmTheOperation(final String title, final String message);
 }

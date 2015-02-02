@@ -237,4 +237,23 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean confirmTheOperation(final String title, final String message) {
+		final boolean[] confirm = new boolean[1];
+		confirm[0] = false;
+		Display.getDefault().syncExec(new Runnable() {
+
+			public void run() {
+				confirm[0] = MessageDialog.openConfirm(
+						Display.getCurrent().getActiveShell(), 
+						title, 
+						message);
+			}
+
+		});
+		return confirm[0];
+	}
 }

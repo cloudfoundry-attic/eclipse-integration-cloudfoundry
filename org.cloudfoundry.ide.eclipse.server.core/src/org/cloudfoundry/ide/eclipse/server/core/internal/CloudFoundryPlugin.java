@@ -218,6 +218,12 @@ public class CloudFoundryPlugin extends Plugin {
 			// TODO Auto-generated method stub
 
 		}
+
+		@Override
+		public boolean confirmTheOperation(String title, String message) {
+			// ignore
+			return false;
+		}
 	}
 
 	private static class AppStateTrackerEntry {
