@@ -156,7 +156,7 @@ public class StsTestUtil {
 	 */
 	public static CloudFoundryOperations createStandaloneClient(String userName, String password, String org,
 			String space, String url, boolean selfsigned) throws CoreException {
-		CredentialProperties credentials = new CredentialProperties(userName, password, org, space);
+		CredentialProperties credentials = new CredentialProperties(null, userName, password, org, space);
 		return createStandaloneClient(credentials, url, selfsigned);
 	}
 
