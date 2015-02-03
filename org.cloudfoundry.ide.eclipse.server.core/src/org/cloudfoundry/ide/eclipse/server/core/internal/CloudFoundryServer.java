@@ -45,7 +45,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jst.server.core.FacetUtil;
 import org.eclipse.jst.server.core.IWebModule;
 import org.eclipse.jst.server.core.internal.J2EEUtil;
@@ -480,30 +479,49 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 
 	@Override
 	public void modifyModules(final IModule[] add, IModule[] remove, IProgressMonitor monitor) throws CoreException {
-		if (remove != null && remove.length > 0) {
-			if (getData() != null) {
-				for (IModule module : remove) {
-					getData().tagAsDeployed(module);
-				}
-			}
 
-			try {
-				getBehaviour().deleteModules(remove, deleteServicesOnModuleRemove.get(), monitor);
+		CloudFoundryApplicationModule toRemap = remove != null && remove.length > 0
+				&& (remove[0] instanceof CloudFoundryApplicationModule) ? (CloudFoundryApplicationModule) remove[0]
+				: null;
+
+		if (toRemap != null && getData().isTaggedForRemap(toRemap)) {
+
+			IModule localModule = toRemap.getLocalModule();
+			if (getData() != null) {
+				getData().tagAsDeployed(localModule);
+				getData().remove(toRemap);
 			}
-			catch (CoreException e) {
-				// ignore deletion of applications that didn't exist
-				if (!CloudErrorUtil.isNotFoundException(e)) {
-					throw e;
-				}
-			}
+			deleteModule(localModule);
+			getData().untagForRemap(toRemap);
+			getBehaviour().getRefreshHandler().scheduleRefresh();
 		}
+		else {
+			if (remove != null && remove.length > 0) {
+				if (getData() != null) {
+					for (IModule module : remove) {
+						getData().tagAsDeployed(module);
+					}
+				}
 
-		if (add != null && add.length > 0) {
+				try {
+					getBehaviour().operations().deleteModules(remove, deleteServicesOnModuleRemove.get()).run(monitor);
+				}
+				catch (CoreException e) {
+					// ignore deletion of applications that didn't exist
+					if (!CloudErrorUtil.isNotFoundException(e)) {
+						throw e;
+					}
+				}
+			}
 
-			if (getData() != null) {
-				for (IModule module : add) {
-					// avoid automatic deletion before module has been deployed
-					getData().tagAsUndeployed(module);
+			if (add != null && add.length > 0) {
+
+				if (getData() != null) {
+					for (IModule module : add) {
+						// avoid automatic deletion before module has been
+						// deployed
+						getData().tagAsUndeployed(module);
+					}
 				}
 			}
 		}

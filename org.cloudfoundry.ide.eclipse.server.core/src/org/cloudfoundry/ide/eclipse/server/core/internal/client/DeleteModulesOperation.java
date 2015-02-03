@@ -52,15 +52,17 @@ public class DeleteModulesOperation extends AbstractCloudOperation {
 
 	@Override
 	protected void performOperation(IProgressMonitor monitor) throws CoreException {
-		// NOTE that modules do NOT necessarily have to have deployed
-		// applications, so it's incorrect to assume
-		// that any module being deleted will also have a corresponding
-		// CloudApplication.
-		// A case for this is if a user cancels an application deployment. The
-		// IModule would have already been created
-		// but there would be no corresponding CloudApplication.
-		final CloudFoundryServer cloudServer = getBehaviour().getCloudFoundryServer();
+		getBehaviour().getRefreshHandler().stop(true);
+		try {
+			doDelete(monitor);
+		}
+		finally {
+			getBehaviour().getRefreshHandler().stop(false);
+		}
+	}
 
+	protected void doDelete(IProgressMonitor monitor) throws CoreException {
+		final CloudFoundryServer cloudServer = getBehaviour().getCloudFoundryServer();
 		List<CloudApplication> updatedApplications = getBehaviour().getApplications(monitor);
 
 		for (IModule module : modules) {
@@ -69,6 +71,15 @@ public class DeleteModulesOperation extends AbstractCloudOperation {
 			if (appModule == null) {
 				continue;
 			}
+
+			// NOTE that modules do NOT necessarily have to have deployed
+			// applications, so it's incorrect to assume
+			// that any module being deleted will also have a corresponding
+			// CloudApplication.
+			// A case for this is if a user cancels an application deployment.
+			// The
+			// IModule would have already been created
+			// but there would be no corresponding CloudApplication.
 
 			List<String> servicesToDelete = new ArrayList<String>();
 

@@ -19,11 +19,8 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -47,7 +44,9 @@ public class RefreshModulesHandler {
 
 	private final CloudFoundryServer cloudServer;
 
-	private boolean isRunning;
+	private ICloudFoundryOperation opToRun;
+
+	private boolean forceStop = false;
 
 	public RefreshModulesHandler(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
@@ -61,56 +60,45 @@ public class RefreshModulesHandler {
 	 * any listeners that refresh has completed.
 	 */
 	public synchronized void scheduleRefresh() {
-		if (!isRunning) {
-			isRunning = true;
+		if (!forceStop && this.opToRun == null) {
+			this.opToRun = cloudServer.getBehaviour().operations().refreshAll(null);
 			refreshJob.schedule();
 		}
+	}
+
+	public synchronized void scheduleRefresh(ICloudFoundryOperation opToRun) {
+		if (!forceStop && this.opToRun == null) {
+			this.opToRun = opToRun;
+			refreshJob.schedule();
+		}
+	}
+
+	public synchronized void stop(boolean forceStop) {
+		this.forceStop = forceStop;
 	}
 
 	public void fireRefreshEvent(IModule module) {
 		ServerEventHandler.getDefault().fireApplicationChanged(cloudServer, module);
 	}
 
-	/**
-	 * Standard Behaviour refresh job, which refreshes the application modules
-	 * through Behaviour API.
-	 * 
-	 */
 	private class BehaviourRefreshJob extends Job {
 
 		public BehaviourRefreshJob() {
 			super("Refresh Server Job"); //$NON-NLS-1$
-			setSystem(true);
 		}
 
 		@Override
 		public IStatus run(IProgressMonitor monitor) {
+
 			try {
-
-				// Get updated list of cloud applications from the server
-				List<CloudApplication> applications = cloudServer.getBehaviour().getApplications(monitor);
-
-				// update applications and deployments from server
-				Map<String, CloudApplication> deployedApplicationsByName = new LinkedHashMap<String, CloudApplication>();
-
-				for (CloudApplication application : applications) {
-					deployedApplicationsByName.put(application.getName(), application);
-				}
-
-				cloudServer.updateModules(deployedApplicationsByName);
-
+				opToRun.run(monitor);
 			}
 			catch (Throwable t) {
 				CloudFoundryPlugin.logError(NLS.bind(Messages.ERROR_FAILED_MODULE_REFRESH, t.getMessage()));
 			}
 			finally {
-				isRunning = false;
+				opToRun = null;
 			}
-
-			// Don't synchronize around server refresh notification to avoid
-			// deadlock in case a listener requests another refresh modules
-			// operation.
-			ServerEventHandler.getDefault().fireServerRefreshed(cloudServer);
 
 			return Status.OK_STATUS;
 		}

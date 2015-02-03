@@ -44,7 +44,7 @@ import org.eclipse.wst.server.core.internal.Server;
  * 
  */
 @SuppressWarnings("restriction")
-abstract class ApplicationOperation extends AbstractPublishApplicationOperation {
+public abstract class ApplicationOperation extends AbstractPublishApplicationOperation {
 
 	/**
 	 * 
@@ -69,7 +69,7 @@ abstract class ApplicationOperation extends AbstractPublishApplicationOperation 
 	}
 
 	@Override
-	protected void performApplicationOperation(IProgressMonitor monitor) throws CoreException {
+	protected void doApplicationOperation(IProgressMonitor monitor) throws CoreException {
 
 		// Given that we only look at the root module for generating the
 		// appModule

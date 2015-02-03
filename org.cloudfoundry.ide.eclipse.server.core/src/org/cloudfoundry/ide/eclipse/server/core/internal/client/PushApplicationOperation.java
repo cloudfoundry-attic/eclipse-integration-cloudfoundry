@@ -59,7 +59,7 @@ import org.eclipse.wst.server.core.IServer;
  * <p/>
  *
  */
-class PushApplicationOperation extends StartOperation {
+public class PushApplicationOperation extends StartOperation {
 
 	/**
 	 * 

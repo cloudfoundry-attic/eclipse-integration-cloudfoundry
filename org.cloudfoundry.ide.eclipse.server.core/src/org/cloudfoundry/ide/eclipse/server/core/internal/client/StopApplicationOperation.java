@@ -44,7 +44,7 @@ class StopApplicationOperation extends AbstractPublishApplicationOperation {
 	}
 
 	@Override
-	protected void performApplicationOperation(IProgressMonitor monitor) throws CoreException {
+	protected void doApplicationOperation(IProgressMonitor monitor) throws CoreException {
 		Server server = (Server) getBehaviour().getServer();
 		boolean succeeded = false;
 		try {

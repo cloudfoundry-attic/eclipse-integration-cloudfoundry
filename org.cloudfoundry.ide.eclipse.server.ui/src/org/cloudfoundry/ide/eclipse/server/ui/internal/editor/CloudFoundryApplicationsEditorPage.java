@@ -31,7 +31,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.EditorAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.EditorAction.EditorCloudEvent;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.EditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.RefreshEditorAction;

@@ -35,7 +35,6 @@ import org.eclipse.wst.server.core.IModule;
  */
 public abstract class AbstractPublishApplicationOperation extends AbstractApplicationOperation {
 
-
 	public static String INTERNAL_ERROR_NO_MAPPED_CLOUD_MODULE = "Internal Error: No cloud application module found for: {0} - Unable to deploy or start application"; //$NON-NLS-1$
 
 	private final IModule[] modules;
@@ -77,10 +76,22 @@ public abstract class AbstractPublishApplicationOperation extends AbstractApplic
 
 		return appModule;
 	}
-	
+
 	@Override
 	protected void updateCloudModule(IModule module, IProgressMonitor monitor) throws CoreException {
 		getBehaviour().updateCloudModuleWithInstances(module, monitor);
 	}
 
+	@Override
+	protected void performApplicationOperation(IProgressMonitor monitor) throws CoreException {
+		getBehaviour().getRefreshHandler().stop(true);
+		try {
+			doApplicationOperation(monitor);
+		}
+		finally {
+			getBehaviour().getRefreshHandler().stop(false);
+		}
+	}
+
+	protected abstract void doApplicationOperation(IProgressMonitor monitor) throws CoreException;
 }

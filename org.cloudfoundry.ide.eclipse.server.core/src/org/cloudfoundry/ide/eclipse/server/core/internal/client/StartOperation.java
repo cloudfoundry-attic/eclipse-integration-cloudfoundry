@@ -72,7 +72,7 @@ import org.eclipse.wst.server.core.internal.Server;
  * <p/>
  */
 @SuppressWarnings("restriction")
-class StartOperation extends RestartOperation {
+public class StartOperation extends RestartOperation {
 
 	/**
 	 * 

@@ -19,14 +19,18 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.UnmapProjectOperation;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
@@ -116,8 +120,8 @@ public class CloudBehaviourOperations {
 	 */
 	public ICloudFoundryOperation memoryUpdate(final CloudFoundryApplicationModule appModule, final int memory)
 			throws CoreException {
-		return new BehaviourRequestOperation(behaviour.getUpdateApplicationMemoryRequest(appModule, memory),
-				behaviour, appModule);
+		return new BehaviourRequestOperation(behaviour.getUpdateApplicationMemoryRequest(appModule, memory), behaviour,
+				appModule);
 	}
 
 	/**
@@ -145,8 +149,8 @@ public class CloudBehaviourOperations {
 	 */
 	public ICloudFoundryOperation bindServices(final CloudFoundryApplicationModule appModule,
 			final List<String> services) throws CoreException {
-		return new BehaviourRequestOperation(behaviour.getUpdateServicesRequest(
-				appModule.getDeployedApplicationName(), services), behaviour, appModule.getLocalModule());
+		return new BehaviourRequestOperation(behaviour.getUpdateServicesRequest(appModule.getDeployedApplicationName(),
+				services), behaviour, appModule.getLocalModule());
 	}
 
 	/**
@@ -243,14 +247,28 @@ public class CloudBehaviourOperations {
 	 * <p/>
 	 * This may be a long running operation
 	 * @return Non-null operation
-	 * @throws CoreException if error when resolving operation
 	 */
-	public ICloudFoundryOperation refreshAll() {
+	public ICloudFoundryOperation refreshAll(final IModule module) {
 		return new ICloudFoundryOperation() {
 
 			@Override
 			public void run(IProgressMonitor monitor) throws CoreException {
-				behaviour.getRefreshHandler().scheduleRefresh();
+
+				if (module != null) {
+					behaviour.updateCloudModuleWithInstances(module, monitor);
+				}
+				// Get updated list of cloud applications from the server
+				List<CloudApplication> applications = behaviour.getApplications(monitor);
+
+				// update applications and deployments from server
+				Map<String, CloudApplication> deployedApplicationsByName = new LinkedHashMap<String, CloudApplication>();
+
+				for (CloudApplication application : applications) {
+					deployedApplicationsByName.put(application.getName(), application);
+				}
+
+				behaviour.getCloudFoundryServer().updateModules(deployedApplicationsByName);
+				ServerEventHandler.getDefault().fireServerRefreshed(behaviour.getCloudFoundryServer());
 			}
 		};
 	}
@@ -259,19 +277,18 @@ public class CloudBehaviourOperations {
 	 * Refreshes the instances of given module. The module must not be null.
 	 * @param module
 	 * @return Non-null operation.
-	 * @throws CoreException if failed to create operation
 	 */
-	public ICloudFoundryOperation refreshInstances(final IModule module) throws CoreException {
+	public ICloudFoundryOperation refreshInstances(final IModule module) {
 
-		if (module == null) {
-			throw CloudErrorUtil.toCoreException(AbstractApplicationOperation.NO_MODULE_ERROR
-					+ behaviour.getCloudFoundryServer().getServerId());
-		}
 		return new ICloudFoundryOperation() {
 
 			@Override
 			public void run(IProgressMonitor monitor) throws CoreException {
 
+				if (module == null) {
+					throw CloudErrorUtil.toCoreException(AbstractApplicationOperation.NO_MODULE_ERROR
+							+ behaviour.getCloudFoundryServer().getServerId());
+				}
 				behaviour.updateCloudModuleWithInstances(module, monitor);
 				behaviour.getRefreshHandler().fireRefreshEvent(module);
 			}
@@ -280,6 +297,10 @@ public class CloudBehaviourOperations {
 
 	public ICloudFoundryOperation deleteModules(IModule[] modules, final boolean deleteServices) {
 		return new DeleteModulesOperation(behaviour, modules, deleteServices);
+	}
+
+	public ICloudFoundryOperation unmapProject(CloudFoundryApplicationModule appModule, CloudFoundryServer cloudServer) {
+		return new UnmapProjectOperation(appModule, cloudServer);
 	}
 
 }

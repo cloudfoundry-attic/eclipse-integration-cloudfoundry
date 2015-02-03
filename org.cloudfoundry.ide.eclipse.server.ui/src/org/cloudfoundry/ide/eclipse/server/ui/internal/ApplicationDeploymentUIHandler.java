@@ -27,7 +27,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupSer
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.RepublishModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
@@ -45,7 +44,6 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.wst.server.core.IModule;
 
 /**
  * Prepares an application for deployment. Application deployments are defined
@@ -78,25 +76,6 @@ public class ApplicationDeploymentUIHandler {
 	public DeploymentConfiguration prepareForDeployment(final CloudFoundryServer server,
 			final CloudFoundryApplicationModule appModule, final IProgressMonitor monitor) throws CoreException,
 			OperationCanceledException {
-
-		// First check if the module is set for automatic republish (i.e. a
-		// prior publish for the application
-		// failed, but the deployment info is available through the republish
-		// module
-
-		IModule module = appModule.getLocalModule();
-
-		RepublishModule repModule = CloudFoundryPlugin.getModuleCache().getData(server.getServerOriginal())
-				.untagForAutomaticRepublish(module);
-
-		if (repModule != null) {
-			ApplicationDeploymentInfo republishDeploymentInfo = repModule.getDeploymentInfo();
-			if (republishDeploymentInfo != null) {
-				DeploymentInfoWorkingCopy copy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
-				copy.setInfo(republishDeploymentInfo);
-				copy.save();
-			}
-		}
 
 		// Validate the existing deployment info. Do NOT save or make changes to
 		// the deployment info prior to this stage

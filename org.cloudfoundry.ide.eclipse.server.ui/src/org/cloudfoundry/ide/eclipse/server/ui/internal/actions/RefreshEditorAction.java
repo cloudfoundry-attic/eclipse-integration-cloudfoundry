@@ -19,16 +19,12 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.EditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.jface.dialogs.IMessageProvider;
+import org.eclipse.jface.action.Action;
 import org.eclipse.wst.server.core.IModule;
 
 /**
@@ -40,30 +36,16 @@ import org.eclipse.wst.server.core.IModule;
  * @author Steffen Pingel
  * @author Christian Dupuis
  */
-public class RefreshEditorAction extends EditorAction {
+public class RefreshEditorAction extends Action {
+
+	private final CloudFoundryApplicationsEditorPage editorPage;
 
 	public RefreshEditorAction(CloudFoundryApplicationsEditorPage editorPage) {
-		super(editorPage, RefreshArea.ALL);
+
 		setImageDescriptor(CloudFoundryImages.REFRESH);
 		setText(Messages.RefreshApplicationEditorAction_TEXT_REFRESH);
-	}
 
-	@Override
-	public String getJobName() {
-		return "Refresh applications"; //$NON-NLS-1$
-	}
-
-	@Override
-	protected IStatus display404Error(IStatus status) {
-		IModule currentModule = getModule();
-		String message = currentModule != null ? Messages.RefreshApplicationEditorAction_WARNING_CANNOT_REFRESH
-				: Messages.RefreshApplicationEditorAction_MSG_REFRESH_NEEDED;
-		return CloudFoundryPlugin.getStatus(message, IMessageProvider.WARNING);
-	}
-
-	@Override
-	protected boolean shouldLogException(CoreException e) {
-		return !CloudErrorUtil.isNotFoundException(e);
+		this.editorPage = editorPage;
 	}
 
 	/**
@@ -73,10 +55,10 @@ public class RefreshEditorAction extends EditorAction {
 	 * @return Editor action for the given area. If no area is specified,
 	 * returns a general refresh action. Never null.
 	 */
-	public static EditorAction getRefreshAction(CloudFoundryApplicationsEditorPage editorPage, RefreshArea area) {
+	public static Action getRefreshAction(CloudFoundryApplicationsEditorPage editorPage, RefreshArea area) {
 
 		if (area == RefreshArea.DETAIL && editorPage.getMasterDetailsBlock().getCurrentModule() != null) {
-			return new RefreshModuleEditorAction(editorPage, area);
+			return new RefreshModuleEditorAction(editorPage);
 		}
 		else {
 			return new RefreshEditorAction(editorPage);
@@ -84,7 +66,9 @@ public class RefreshEditorAction extends EditorAction {
 	}
 
 	@Override
-	protected ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
-		return getBehaviour().operations().refreshAll();
+	public void run() {
+		IModule selectedModule = editorPage.getMasterDetailsBlock().getCurrentModule();
+		CloudFoundryServerBehaviour behaviour = editorPage.getCloudServer().getBehaviour();
+		behaviour.getRefreshHandler().scheduleRefresh(behaviour.operations().refreshAll(selectedModule));
 	}
 }
