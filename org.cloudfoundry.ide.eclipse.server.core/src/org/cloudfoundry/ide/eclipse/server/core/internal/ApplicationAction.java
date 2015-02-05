@@ -20,7 +20,7 @@
 package org.cloudfoundry.ide.eclipse.server.core.internal;
 
 public enum ApplicationAction {
-	RESTART, START("Run"), STOP, UPDATE_RESTART; //$NON-NLS-1$
+	RESTART, START("Run"), STOP, UPDATE_RESTART, PUSH; //$NON-NLS-1$
 
 	private String displayName = ""; //$NON-NLS-1$
 

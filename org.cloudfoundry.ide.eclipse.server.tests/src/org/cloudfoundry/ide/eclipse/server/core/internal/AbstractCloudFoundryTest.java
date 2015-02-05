@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License,
- * Version 2.0 (the "License�); you may not use this file except in compliance
+ * Version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -30,10 +30,10 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.WaitForApplicationToStopOp;
 import org.cloudfoundry.ide.eclipse.server.tests.server.TestServlet;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture.Harness;
+import org.cloudfoundry.ide.eclipse.server.tests.util.WaitForApplicationToStopOp;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -53,11 +53,12 @@ import org.eclipse.wst.server.core.internal.Server;
 public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	/**
-	 * IMPORTANT: Since each {@link #setUp()} is invoked on EACH test case, be
-	 * sure to reference the harness created during setup as to use the same
-	 * harness that created the server instance throughout all the helper
-	 * methods that may be invoked by a particular test case.
+	 * Since each {@link #setUp()} is invoked on EACH test case, be sure to
+	 * reference the harness created during setup as to use the same harness
+	 * that created the server instance throughout all the helper methods that
+	 * may be invoked by a particular test case.
 	 */
+
 	protected Harness harness;
 
 	protected IServer server;
@@ -129,7 +130,8 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		harness.dispose();
 	}
 
-	protected void assertApplicationIsRunning(IModule module, String prefix) throws Exception {
+	protected void waitForApplicationToStart(IModule module, String prefix) throws Exception {
+
 		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
 		assertApplicationIsRunning(appModule);
@@ -176,7 +178,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	 *
 	 * @throws Exception
 	 */
-	protected void createWebApplicationProject() throws Exception {
+	protected IProject createWebApplicationProject() throws Exception {
 
 		// Create the default web project in the workspace and create the local
 		// IModule for it. This does NOT create the application remotely, it
@@ -195,58 +197,24 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 						+ Arrays.toString(modules) + ". Modules from previous deployments may be present.", 1,
 				modules.length);
 		int moduleState = server.getModulePublishState(modules);
-		assertEquals(IServer.PUBLISH_STATE_UNKNOWN, moduleState);
+		assertTrue(IServer.PUBLISH_STATE_UNKNOWN == moduleState || IServer.PUBLISH_STATE_NONE == moduleState);
 
 		// Verify that the WST module that exists matches the app project app
 		IModule module = getModule(projectName);
 
 		assertNotNull(module);
 		assertTrue(module.getName().equals(projectName));
+		return project;
 
 	}
 
-	protected void assertStartModule(CloudFoundryApplicationModule appModule) throws Exception {
-
-		serverBehavior.startModule(new IModule[] { appModule.getLocalModule() }, new NullProgressMonitor());
-
-		assertApplicationIsRunning(appModule);
-
-	}
-
-	protected void assertRestartModule(CloudFoundryApplicationModule appModule) throws Exception {
-
-		serverBehavior.restartModule(new IModule[] { appModule.getLocalModule() }, new NullProgressMonitor());
-
-		assertApplicationIsRunning(appModule);
-
-	}
-
-	protected void assertStopModule(CloudFoundryApplicationModule appModule) throws Exception {
-		serverBehavior.stopModule(new IModule[] { appModule.getLocalModule() }, new NullProgressMonitor());
+	protected void waitForAppToStop(CloudFoundryApplicationModule appModule) throws Exception {
 
 		boolean stopped = new WaitForApplicationToStopOp(cloudServer, appModule).run(new NullProgressMonitor());
 		assertTrue("Expected application to be stopped", stopped);
 		assertTrue("Expected application to be stopped", appModule.getApplication().getState().equals(AppState.STOPPED));
 		assertTrue("Expected application to be stopped", appModule.getState() == Server.STATE_STOPPED);
 
-	}
-
-	protected void assertRemoveApplication(CloudApplication cloudApplication) throws Exception {
-		IModule module = getModule(cloudApplication.getName());
-		assertNotNull(module);
-		serverBehavior.deleteModules(new IModule[] { module }, false, new NullProgressMonitor());
-
-		serverBehavior.refreshModules(new NullProgressMonitor());
-		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
-		boolean found = false;
-
-		for (CloudApplication application : applications) {
-			if (application.getName().equals(cloudApplication.getName())) {
-				found = true;
-				break;
-			}
-		}
-		assertFalse(found);
 	}
 
 	/**
@@ -319,7 +287,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	 * server
 	 */
 	protected CloudApplication getUpdatedApplication(String appName) throws CoreException {
-		return serverBehavior.getApplication(appName, new NullProgressMonitor());
+		return serverBehavior.getCloudApplication(appName, new NullProgressMonitor());
 
 	}
 
@@ -330,9 +298,9 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	 * @return deployed app.
 	 * @throws Exception
 	 */
-	protected CloudFoundryApplicationModule assertDeployApplicationStartMode(String appPrefix) throws Exception {
+	protected CloudFoundryApplicationModule deployAndWaitForAppStart(String appPrefix) throws Exception {
 		CloudFoundryApplicationModule appModule = deployApplication(appPrefix, false);
-		assertApplicationIsRunning(appModule.getLocalModule(), appPrefix);
+		waitForApplicationToStart(appModule.getLocalModule(), appPrefix);
 		return appModule;
 	}
 
@@ -344,6 +312,11 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	 * @throws Exception
 	 */
 	protected CloudFoundryApplicationModule deployApplication(String appPrefix, boolean deployStopped) throws Exception {
+		return deployApplication(appPrefix, CloudUtil.DEFAULT_MEMORY, deployStopped);
+	}
+
+	protected CloudFoundryApplicationModule deployApplication(String appPrefix, int memory, boolean deployStopped)
+			throws Exception {
 
 		String projectName = harness.getDefaultWebAppProjectName();
 
@@ -351,7 +324,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 		// Configure the test fixture for deployment.
 		// This step is a substitute for the Application deployment wizard
-		getTestFixture().configureForApplicationDeployment(expectedAppName, deployStopped);
+		getTestFixture().configureForApplicationDeployment(expectedAppName, memory, deployStopped);
 
 		IModule module = getModule(projectName);
 

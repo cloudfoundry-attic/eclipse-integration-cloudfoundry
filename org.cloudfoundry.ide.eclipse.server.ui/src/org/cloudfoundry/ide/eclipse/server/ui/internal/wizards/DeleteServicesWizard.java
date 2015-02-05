@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -67,7 +67,7 @@ public class DeleteServicesWizard extends Wizard {
 					try {
 						List<String> selectedServices = page.getSelectedServices();
 						if (selectedServices.size() > 0) {
-							cloudServer.getBehaviour().getDeleteServicesOperation(selectedServices).run(monitor);
+							cloudServer.getBehaviour().operations().deleteServices(selectedServices).run(monitor);
 						}
 					}
 					catch (CoreException e) {
@@ -86,8 +86,8 @@ public class DeleteServicesWizard extends Wizard {
 		catch (InvocationTargetException e) {
 			if (e.getCause() instanceof CoreException) {
 				Status status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
-						Messages.DeleteServicesWizard_ERROR_DELETE_SERVICE, cloudServer.getServer().getName(), e.getCause()
-								.getMessage()), e);
+						Messages.DeleteServicesWizard_ERROR_DELETE_SERVICE, cloudServer.getServer().getName(), e
+								.getCause().getMessage()), e);
 				StatusManager.getManager().handle(status, StatusManager.SHOW | StatusManager.BLOCK | StatusManager.LOG);
 			}
 		}

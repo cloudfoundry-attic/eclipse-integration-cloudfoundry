@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License,
- * Version 2.0 (the "License�); you may not use this file except in compliance
+ * Version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -32,6 +32,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryClientFactory;
 import org.cloudfoundry.ide.eclipse.server.tests.sts.util.ProxyHandler;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
+import org.cloudfoundry.ide.eclipse.server.tests.util.ModulesRefreshListener;
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
@@ -39,7 +40,7 @@ import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.springframework.web.client.ResourceAccessException;
 
-public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
+public class CloudFoundryProxyTest extends AbstractAsynchCloudTest {
 
 	public static final String VALID_V1_HTTP_URL = "http://api.cloudfoundry.com";
 
@@ -92,7 +93,7 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 		String prefix = "InvalidProxyServerInstance";
 		createWebApplicationProject();
 
-		CloudFoundryApplicationModule appModule = assertDeployApplicationStartMode(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
 		final String appName = appModule.getDeployedApplicationName();
 
 		final boolean[] ran = { false };
@@ -124,7 +125,14 @@ public class CloudFoundryProxyTest extends AbstractCloudFoundryTest {
 				proxyService.setProxiesEnabled(getOriginalProxiesEnabled());
 				proxyService.setProxyData(getOriginalProxyData());
 
+				// Note that connecting again launches a refresh job
+				// therefore wait until refresh modules is completed before
+				// stopping it
+				ModulesRefreshListener listener = getModulesRefreshListener(null, cloudServer,
+						CloudServerEvent.EVENT_SERVER_REFRESHED);
 				connectClient();
+				assertModuleRefreshedAndDispose(listener, CloudServerEvent.EVENT_SERVER_REFRESHED);
+
 				IModule[] modules = server.getModules();
 
 				serverBehavior.stopModule(modules, null);

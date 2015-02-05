@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -23,13 +23,13 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.LaunchTunnelCommandManager;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.ServiceCommand;
+import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.CloudFoundryEditorAction;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.EditorAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -40,7 +40,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 
-public class LaunchTunnelCommandAction extends CloudFoundryEditorAction {
+public class LaunchTunnelCommandAction extends EditorAction {
 
 	private final String displayName;
 
@@ -162,11 +162,11 @@ public class LaunchTunnelCommandAction extends CloudFoundryEditorAction {
 		return Status.OK_STATUS;
 	}
 
-	public ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
-		return new ModifyEditorOperation() {
+	protected ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
 
-			@Override
-			protected void performOperation(IProgressMonitor monitor) throws CoreException {
+		return new ICloudFoundryOperation() {
+
+			public void run(IProgressMonitor monitor) throws CoreException {
 				IStatus status = launch(monitor);
 				if (!status.isOK()) {
 					throw new CoreException(status);

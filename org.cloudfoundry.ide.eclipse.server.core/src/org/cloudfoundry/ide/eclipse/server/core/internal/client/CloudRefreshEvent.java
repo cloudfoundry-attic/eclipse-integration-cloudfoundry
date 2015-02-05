@@ -17,38 +17,31 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.core.internal.application;
+package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
+import java.util.List;
+
+import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
+import org.eclipse.wst.server.core.IModule;
 
-public class ApplicationChangeEvent extends CloudServerEvent {
-
-	private final IStatus status;
-
-	private final CloudFoundryApplicationModule appModule;
-
-	public ApplicationChangeEvent(CloudFoundryServer server, int type, CloudFoundryApplicationModule appModule,
-			IStatus status) {
-		super(server, type);
-		this.status = status != null ? status : Status.OK_STATUS;
-		this.appModule = appModule;
-	}
+public class CloudRefreshEvent extends ModuleChangeEvent {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public IStatus getStatus() {
-		return status;
+	private final List<CloudService> services;
+
+	public CloudRefreshEvent(CloudFoundryServer server, IModule module, int type, List<CloudService> services) {
+		super(server, type, module, null);
+		this.services = services;
 	}
 
-	public CloudFoundryApplicationModule getApplication() {
-		return appModule;
+	public List<CloudService> getServices() {
+		return services;
 	}
 
 }

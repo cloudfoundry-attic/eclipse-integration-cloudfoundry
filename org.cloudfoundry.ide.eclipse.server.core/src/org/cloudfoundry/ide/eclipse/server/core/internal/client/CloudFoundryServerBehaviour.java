@@ -20,8 +20,6 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -30,7 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,9 +37,7 @@ import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.NotFinishedStagingException;
-import org.cloudfoundry.client.lib.StartingInfo;
 import org.cloudfoundry.client.lib.StreamingLogToken;
-import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.domain.ApplicationLog;
 import org.cloudfoundry.client.lib.domain.ApplicationStats;
@@ -54,11 +49,8 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
-import org.cloudfoundry.client.lib.domain.Staging;
-import org.cloudfoundry.ide.eclipse.server.core.AbstractAppStateTracker;
 import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
-import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CachingApplicationArchive;
@@ -69,8 +61,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleResourceDeltaWrapper;
-import org.cloudfoundry.ide.eclipse.server.core.internal.RefreshHandler;
-import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
+import org.cloudfoundry.ide.eclipse.server.core.internal.RefreshModulesHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudFoundrySpace;
@@ -80,7 +71,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -101,39 +91,26 @@ import org.springframework.web.client.RestClientException;
 
 /**
  * 
- * Contains many of the calls to the CF Java client. The CF server behaviour
- * should be the main call point for interacting with the actual cloud server,
- * with the exception of Caldecott, which is handled in a similar behaviour.
+ * This is the primary interface to the underlying Java Cloud client that
+ * performs actual requests to a target Cloud space. It contains API to start,
+ * stop, restart, and publish applications to a Cloud space, as well as scale
+ * application memory, instances, set environment variables and map application
+ * URLs.
  * <p/>
- * It's important to note that almost all Java client calls are wrapped around a
- * Request object, and it is important to wrap future client calls around a
- * Request object, as the request object handles automatic client login, server
- * state verification, and proxy handling.
- * 
+ * This is intended as a lower-level interface to interact with the underlying
+ * client, as well as to integrate with WST framework
  * <p/>
- * It is important to note that Application operations like deploying, starting,
- * restarting, update restarting, and stopping should be performed atomically as
- * {@link ApplicationOperation}, as the operation , among other things:
+ * However, the majority of these operations require additional functionality
+ * that are specific to the Cloud tooling, like firing refresh and server change
+ * events. Therefore, it is advisable to obtain the appropriate
+ * {@link ICloudFoundryOperation} for these operations through
+ * {@link #operations()}.
  * <p/>
- * 1. Ensures the deployment information for the application is complete and
- * valid before performing the operation.
- * <p/>
- * 2. Ensures any active refresh jobs running in the background are stopped
- * while the operation is performed
- * <p/>
- * 3. Ensures any active stopped refresh jobs are restarted after the operation.
- * <p/>
- * 4. Handles any common errors associated with these operations, in particular
- * staging errors.
- * <p/>
- * WST framework publishing of applications (e.g. drag/drop to Servers view, or
- * Run On Server), rely on
- * {@link #publishModule(int, int, IModule[], IProgressMonitor)}. It's important
- * to note that as of CF 1.6.1, all WST framework-based publishings will result
- * in server-level publishing, so even if deploying a particular application,
- * other applications that are already deployed and not external (i.e. have a
- * corresponding workspace project) that need republishing may be republished as
- * well.
+ * It's important to note that as of CF 1.6.1, all WST framework-based
+ * publishing will result in server-level publishing, so even if deploying a
+ * particular application, other applications that are already deployed and not
+ * external (i.e. have a corresponding workspace project) that need republishing
+ * may be republished as well.
  * 
  * IMPORTANT NOTE: This class can be referred by the branding extension from
  * adopter so this class should not be moved or renamed to avoid breakage to
@@ -150,13 +127,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	private CloudFoundryOperations client;
 
-	private RefreshHandler refreshHandler;
+	private RefreshModulesHandler refreshHandler;
 
 	private ApplicationUrlLookupService applicationUrlLookup;
 
-	public static String INTERNAL_ERROR_NO_WST_MODULE = "Internal Error: No WST IModule specified - Unable to deploy or start application"; //$NON-NLS-1$
-
-	public static String INTERNAL_ERROR_NO_MAPPED_CLOUD_MODULE = "Internal Error: No mapped application module found for: {0} - Unable to deploy or start application"; //$NON-NLS-1$
+	private CloudBehaviourOperations cloudBehaviourOperations;
 
 	/*
 	 * FIXNS: Until V2 MCF is released, disable debugging support for V2, as
@@ -209,7 +184,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		getApplicationUrlLookup().refreshDomains(monitor);
 
-		refreshModules(monitor);
+		getRefreshHandler().scheduleRefreshAll();
+	}
+
+	/**
+	 * Cloud operations ( {@link ICloudFoundryOperation} ) that can be performed
+	 * on the Cloud space targeted by the server behaviour.
+	 * @return Non-Null Cloud Operations
+	 */
+	public CloudBehaviourOperations operations() {
+		if (cloudBehaviourOperations == null) {
+			cloudBehaviourOperations = new CloudBehaviourOperations(this);
+		}
+		return cloudBehaviourOperations;
 	}
 
 	/**
@@ -226,31 +213,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 	}
 
-	public RefreshHandler getRefreshHandler() {
+	public RefreshModulesHandler getRefreshHandler() {
 		return refreshHandler;
 	}
 
 	/**
 	 * Creates the given list of services
+	 * @deprecated Use {@link #operations()} instead.
 	 * @param services
 	 * @param monitor
 	 * @throws CoreException
 	 */
 	public void createService(final CloudService[] services, IProgressMonitor monitor) throws CoreException {
-
-		new BehaviourRequest<Void>(services.length == 1 ? "Creating service " + services[0].getName() //$NON-NLS-1$
-		: "Creating services") { //$NON-NLS-1$
-			@Override
-			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-
-				for (CloudService service : services) {
-					client.createService(service);
-				}
-
-				return null;
-			}
-		}.run(monitor);
-		ServerEventHandler.getDefault().fireServicesUpdated(getCloudFoundryServer());
+		operations().createServices(services).run(monitor);
 	}
 
 	public synchronized List<CloudDomain> getDomainsFromOrgs(IProgressMonitor monitor) throws CoreException {
@@ -276,6 +251,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	/**
 	 * Deletes the given modules. Note that any refresh job is stopped while
 	 * this operation is running, and restarted after its complete.
+	 * @deprecated use {@link #operations()} instead
 	 * @param modules
 	 * @param deleteServices
 	 * @param monitor
@@ -283,9 +259,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public void deleteModules(final IModule[] modules, final boolean deleteServices, IProgressMonitor monitor)
 			throws CoreException {
-		new DeleteModulesOperation(this, modules, deleteServices, this).run(monitor);
+		operations().deleteModules(modules, deleteServices).run(monitor);
 	}
 
+	/**
+	 * Deletes a cloud application in the target Cloud space. May throw
+	 * {@link CoreException} if the application no longer exists, or failed to
+	 * delete..
+	 * @param appName
+	 * @param monitor
+	 * @throws CoreException
+	 */
 	public void deleteApplication(String appName, IProgressMonitor monitor) throws CoreException {
 		final String applicationName = appName;
 		new BehaviourRequest<Void>("Deleting applications") { //$NON-NLS-1$
@@ -301,29 +285,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	/**
 	 * Deletes the list of services.
+	 * @deprecated use {@link #operations()} instead
 	 * @param services
 	 * @throws CoreException if error occurred during service deletion.
 	 */
 	public ICloudFoundryOperation getDeleteServicesOperation(final List<String> services) throws CoreException {
-		return new ModifyOperation(CloudFoundryServerBehaviour.this) {
-
-			@Override
-			protected void performOperation(IProgressMonitor monitor) throws CoreException {
-				new BehaviourRequest<Void>("Deleting services") { //$NON-NLS-1$
-					@Override
-					protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-						TunnelBehaviour handler = new TunnelBehaviour(getCloudFoundryServer());
-						for (String service : services) {
-							client.deleteService(service);
-
-							// Also delete any existing Tunnels
-							handler.stopAndDeleteCaldecottTunnel(service, progress);
-						}
-						return null;
-					}
-				}.run(monitor);
-			}
-		};
+		return operations().deleteServices(services);
 	}
 
 	/**
@@ -388,7 +355,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		Server server = (Server) getServer();
 		server.setServerState(IServer.STATE_STOPPING);
 
-		getRefreshHandler().stop();
 		CloudFoundryServer cloudServer = getCloudFoundryServer();
 
 		Collection<CloudFoundryApplicationModule> cloudModules = cloudServer.getExistingCloudModules();
@@ -409,14 +375,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		server.setServerState(IServer.STATE_STOPPED);
 		server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
-		closeCaldecottTunnels(monitor);
 	}
 
 	@Override
 	public void dispose() {
 		super.dispose();
 		getServer().removeServerListener(serverListener);
-		closeCaldecottTunnelsAsynch();
 	}
 
 	/**
@@ -432,15 +396,167 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return cloudFoundryServer;
 	}
 
-	public CloudApplication getApplication(final String applicationId, IProgressMonitor monitor) throws CoreException {
-		return new BehaviourRequest<CloudApplication>("Getting Application " + applicationId) { //$NON-NLS-1$
-			@Override
-			protected CloudApplication doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-				return client.getApplication(applicationId);
-			}
-		}.run(monitor);
+	/**
+	 * @deprecated use {@link #getCloudApplication(String, IProgressMonitor)}
+	 * @param appName
+	 * @param monitor
+	 * @return
+	 * @throws CoreException
+	 */
+	public CloudApplication getApplication(final String appName, IProgressMonitor monitor) throws CoreException {
+		return getCloudApplication(appName, monitor);
 	}
 
+	/**
+	 * Fetches an updated {@link CloudApplication} from the target Cloud space.
+	 * 
+	 * <p/>
+	 * Note that his is a lower-level model of the application as presented by
+	 * the underlying Cloud Java client and does not contain additional API used
+	 * by the WST framework (for example, checking publish state or references
+	 * to the module's workspace project and resources) or the Cloud tooling
+	 * e.g. {@link DeploymentConfiguration}.
+	 * 
+	 * <p/>
+	 * To obtain the application's associated module with the additional API,
+	 * use {@link #updateCloudModule(String, IProgressMonitor)}
+	 * @param appName
+	 * @param monitor
+	 * @return Cloud application. Not null.
+	 * @throws CoreException if error occurs while resolving the Cloud
+	 * application, or the application does not exist.
+	 */
+	public CloudApplication getCloudApplication(final String appName, IProgressMonitor monitor) throws CoreException {
+		CloudApplication app = new BehaviourRequest<CloudApplication>("Getting Application " + appName) { //$NON-NLS-1$
+			@Override
+			protected CloudApplication doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				return client.getApplication(appName);
+			}
+		}.run(monitor);
+
+		return app;
+	}
+
+	/**
+	 * Update the given module with application stats and instance information
+	 * obtained from the Cloud space. Will only update the module if it is
+	 * deployed.
+	 * 
+	 * @param appName
+	 * @param monitor
+	 * @return cloud module with updated instances for the give app name, or
+	 * null if the app does not exist
+	 * @throws CoreException
+	 */
+	public CloudFoundryApplicationModule updateCloudModuleWithInstances(IModule module, IProgressMonitor monitor)
+			throws CoreException {
+		CloudFoundryApplicationModule appModule = getCloudFoundryServer().getExistingCloudModule(module);
+		String name = appModule != null ? appModule.getDeployedApplicationName() : null;
+		if (name != null) {
+			return updateCloudModuleWithInstances(name, monitor);
+		}
+		return null;
+	}
+
+	/**
+	 * Updates the given module with an application request to the Cloud space.
+	 * Returns null if the application no longer exists.
+	 * @param module
+	 * @param monitor
+	 * @return Updated {@link CloudFoundryApplicationModule} or null if the
+	 * application no longer exists in the Cloud Space
+	 * @throws CoreException
+	 */
+	public CloudFoundryApplicationModule updateCloudModule(IModule module, IProgressMonitor monitor)
+			throws CoreException {
+
+		CloudFoundryApplicationModule appModule = getCloudFoundryServer().getExistingCloudModule(module);
+
+		String name = appModule != null ? appModule.getDeployedApplicationName() : module.getName();
+		return updateCloudModule(name, monitor);
+	}
+
+	/**
+	 * Updates the given module with an application request to the Cloud space.
+	 * Returns null if the application no longer exists.
+	 * @param module
+	 * @param monitor
+	 * @return Updated {@link CloudFoundryApplicationModule} or null if the
+	 * application no longer exists in the Cloud Space
+	 * @throws CoreException if error occurs while resolving an updated
+	 * {@link CloudApplication} from the Cloud space
+	 */
+	public CloudFoundryApplicationModule updateCloudModule(String appName, IProgressMonitor monitor)
+			throws CoreException {
+		CloudApplication updatedApp = null;
+		try {
+			updatedApp = getCloudApplication(appName, monitor);
+		}
+		catch (CoreException e) {
+			// Ignore if it is application not found error. If the application
+			// does not exist
+			// anymore, update the modules accordingly
+			if (!CloudErrorUtil.isNotFoundException(e)) {
+				throw e;
+			}
+		}
+		return getCloudFoundryServer().updateModule(updatedApp, appName, monitor);
+	}
+
+	/**
+	 * Update the given module with application stats and instance information
+	 * obtained from the Cloud space.
+	 * @param appName
+	 * @param monitor
+	 * @return cloud module with updated instances for the give app name, or
+	 * null if the app does not exist
+	 * @throws CoreException
+	 */
+	public CloudFoundryApplicationModule updateCloudModuleWithInstances(String appName, IProgressMonitor monitor)
+			throws CoreException {
+		CloudFoundryApplicationModule appModule = updateCloudModule(appName, monitor);
+		updateInstancesAndStats(appModule, monitor);
+		return appModule;
+	}
+
+	/**
+	 * Updates the instances for the given Cloud module. If the module is null,
+	 * nothing will happen.
+	 * @param appModule
+	 * @param monitor
+	 * @throws CoreException
+	 */
+	private void updateInstancesAndStats(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
+			throws CoreException {
+		// Module may have been deleted and application no longer exists.
+		// Nothing to update
+		if (appModule == null) {
+			return;
+		}
+		try {
+			ApplicationStats stats = getApplicationStats(appModule.getDeployedApplicationName(), monitor);
+			InstancesInfo info = getInstancesInfo(appModule.getDeployedApplicationName(), monitor);
+			appModule.setApplicationStats(stats);
+			appModule.setInstancesInfo(info);		}
+		catch (CoreException e) {
+			// Ignore if it is application not found error. If the application
+			// does not exist
+			// anymore, update the modules accordingly
+			if (!CloudErrorUtil.isNotFoundException(e)) {
+				throw e;
+			}
+		}
+	}
+
+	/**
+	 * Fetches list of all applications in the Cloud space. No module updates
+	 * occur, as this is a low-level API meant to interact with the underlying
+	 * client directly. Callers should be responsible to update associated
+	 * modules.
+	 * @param monitor
+	 * @return List of all applications in the Cloud space.
+	 * @throws CoreException
+	 */
 	public List<CloudApplication> getApplications(IProgressMonitor monitor) throws CoreException {
 		return new BehaviourRequest<List<CloudApplication>>("Getting applications") { //$NON-NLS-1$
 			@Override
@@ -528,29 +644,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * job to execute at certain intervals. This will synch all local
 	 * application modules with the actual deployed applications. This may be a
 	 * long running operation.
+	 * @deprecated user {@link #getRefreshHandler()} instead
 	 * @param monitor
 	 */
 	public void refreshModules(IProgressMonitor monitor) {
-		try {
-			final CloudFoundryServer cloudServer = getCloudFoundryServer();
-
-			// Get updated list of cloud applications from the server
-			List<CloudApplication> applications = getApplications(monitor);
-
-			// update applications and deployments from server
-			Map<String, CloudApplication> deployedApplicationsByName = new LinkedHashMap<String, CloudApplication>();
-
-			for (CloudApplication application : applications) {
-				deployedApplicationsByName.put(application.getName(), application);
-			}
-
-			cloudServer.updateModules(deployedApplicationsByName);
-		}
-		catch (Throwable t) {
-			// refresh operations MUST not block any other operation.
-			// therefore catch all errors and log them
-			CloudFoundryPlugin.logError(NLS.bind(Messages.ERROR_FAILED_MODULE_REFRESH, t.getMessage()));
-		}
+		getRefreshHandler().scheduleRefreshAll();
 	}
 
 	/**
@@ -587,72 +685,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		applicationUrlLookup = null;
 	}
 
-	/**
-	 * Get an operation to deploy an application in start mode.
-	 * @param modules
-	 * @return
-	 * @throws CoreException
-	 */
-	protected ApplicationOperation internalGetDeployStartApplicationOperation(IModule[] modules) throws CoreException {
-		// Start operations always perform a full publish
-		boolean incrementalPublish = false;
-		return getDeployApplicationOperation(incrementalPublish, modules);
-	}
-
-	/**
-	 * Deploys or starts a module by doing either a full publish or incremental.
-	 * @param isIncremental true if incremental publish should be attempted.
-	 * False otherwise
-	 * @param modules
-	 * @return {@link ICloudFoundryOperation} that performs the operation when
-	 * run.
-	 * @throws CoreException
-	 */
-	protected ApplicationOperation getDeployApplicationOperation(boolean isIncremental, final IModule[] modules)
-			throws CoreException {
-		return new StartOperation(isIncremental, modules);
-	}
-
-	/**
-	 * Returns non-null Cloud application module mapped to the first module in
-	 * the list of modules. If the cloud module module does not exist for the
-	 * given module, it will attempt to create it. To avoid re-creating a cloud
-	 * application module that may have been deleted, restrict invoking this
-	 * method to only operations that start, restart, or update an application.
-	 * Should not be called when deleting an application.
-	 * @param local WST modules representing app to be deployed.
-	 * @return non-null Cloud Application module mapped to the given WST module.
-	 * @throws CoreException if no modules specified or mapped cloud application
-	 * module cannot be resolved.
-	 */
-	protected CloudFoundryApplicationModule getOrCreateCloudApplicationModule(IModule[] modules) throws CoreException {
-
-		CloudFoundryApplicationModule appModule = null;
-		if (modules == null || modules.length == 0) {
-			throw CloudErrorUtil.toCoreException(INTERNAL_ERROR_NO_WST_MODULE);
-		}
-		else {
-			IModule module = modules[0];
-
-			CloudFoundryServer cloudServer = getCloudFoundryServer();
-
-			appModule = cloudServer.getCloudModule(module);
-
-			if (appModule == null) {
-				throw CloudErrorUtil
-						.toCoreException(NLS.bind(INTERNAL_ERROR_NO_MAPPED_CLOUD_MODULE, modules[0].getId()));
-
-			}
-
-		}
-
-		return appModule;
-	}
-
 	@Override
 	public void startModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		ICloudFoundryOperation operation = internalGetDeployStartApplicationOperation(modules);
-		operation.run(monitor);
+		operations().applicationDeployment(modules, ApplicationAction.START).run(monitor);
 	}
 
 	@Override
@@ -660,49 +695,26 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		// This stops the server locally, it does NOT stop the remotely running
 		// applications
 		setServerState(IServer.STATE_STOPPED);
-		closeCaldecottTunnelsAsynch();
-	}
-
-	protected void closeCaldecottTunnelsAsynch() {
-		String jobName = "Stopping all tunnels"; //$NON-NLS-1$
-
-		try {
-			jobName += ": " + getCloudFoundryServer().getDeploymentName(); //$NON-NLS-1$
-		}
-		catch (CoreException e1) {
-			CloudFoundryPlugin.log(e1);
-		}
-
-		Job job = new Job(jobName) {
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				closeCaldecottTunnels(monitor);
-				return Status.OK_STATUS;
-			}
-
-		};
-		job.setSystem(false);
-		job.schedule();
-	}
-
-	protected void closeCaldecottTunnels(IProgressMonitor monitor) {
-		// Close all open Caldecott Tunnels
-		try {
-			new TunnelBehaviour(getCloudFoundryServer()).stopAndDeleteAllTunnels(monitor);
-		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.log(e);
-		}
 	}
 
 	@Override
 	public void stopModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		getStopAppOperation(modules).run(monitor);
+		operations().applicationDeployment(modules, ApplicationAction.STOP).run(monitor);
 	}
 
+	/**
+	 * @deprecated use {@link #operations()} instead
+	 * @param modules
+	 * @return
+	 */
 	public ICloudFoundryOperation getStopAppOperation(IModule[] modules) {
-		return new StopApplicationOperation(modules);
+		try {
+			return operations().applicationDeployment(modules, ApplicationAction.STOP);
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		return null;
 	}
 
 	public StreamingLogToken addApplicationLogListener(final String appName, final ApplicationLogListener listener) {
@@ -748,16 +760,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return logs;
 	}
 
-	@Override
 	/**
-	 * Note that this automatically restarts a module in the start mode it is currently, or was currently running in.
-	 * It automatically detects if an application is running in debug mode or regular run mode, and restarts it in that
-	 * same mode. Other API exists to restart an application in a specific mode, if automatic detection and restart in
-	 * existing mode is not required.
+	 * Note that this automatically restarts a module in the start mode it is
+	 * currently, or was currently running in. It automatically detects if an
+	 * application is running in debug mode or regular run mode, and restarts it
+	 * in that same mode. Other API exists to restart an application in a
+	 * specific mode, if automatic detection and restart in existing mode is not
+	 * required.
 	 */
+	@Override
 	public void restartModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		ICloudFoundryOperation operation = getRestartOperation(modules);
-		operation.run(monitor);
+		operations().applicationDeployment(modules, ApplicationAction.RESTART).run(monitor);
 	}
 
 	/**
@@ -767,29 +780,31 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * changes. It will only update restart an application in regular run mode.
 	 * It does not support debug mode.Publishing of changes is done
 	 * incrementally.
+	 * @deprecated use {@link #operations()} instead
 	 * @param module to update
-	 * 
 	 * @throws CoreException
 	 */
 	public ICloudFoundryOperation getUpdateRestartOperation(IModule[] modules) throws CoreException {
-		return getDeployApplicationOperation(CloudFoundryPlugin.getDefault().getIncrementalPublish(), modules);
+		return operations().applicationDeployment(modules, ApplicationAction.UPDATE_RESTART);
 	}
 
 	/**
 	 * This will restart an application in run mode. It does not restart an
 	 * application in debug mode. Does not push application resources or create
 	 * the application. The application must exist in the CloudFoundry server.
+	 * @deprecated user {@link #operations()} instead
 	 * @param modules
 	 * @throws CoreException
 	 */
 	public ICloudFoundryOperation getRestartOperation(IModule[] modules) throws CoreException {
-		return new RestartOperation(modules);
+		return operations().applicationDeployment(modules, ApplicationAction.RESTART);
 	}
 
 	/**
 	 * Updates an the number of application instances. Does not restart the
 	 * application if the application is already running. The CF server does
 	 * allow instance scaling to occur while the application is running.
+	 * @deprecated Use {@link #operations()} instead.
 	 * @param module representing the application. must not be null or empty
 	 * @param instanceCount must be 1 or higher.
 	 * @param monitor
@@ -798,7 +813,22 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public void updateApplicationInstances(final CloudFoundryApplicationModule module, final int instanceCount,
 			IProgressMonitor monitor) throws CoreException {
-		final String appName = module.getApplication().getName();
+		operations().instancesUpdate(module, instanceCount).run(monitor);
+	}
+
+	/**
+	 * Updates an the number of application instances in the Cloud space, but
+	 * does not update the associated application module. Does not restart the
+	 * application if the application is already running. The CF server does
+	 * allow instance scaling to occur while the application is running.
+	 * @param module representing the application. must not be null or empty
+	 * @param instanceCount must be 1 or higher.
+	 * @param monitor
+	 * @throws CoreException if error occurred during or after instances are
+	 * updated.
+	 */
+	void updateApplicationInstances(final String appName, final int instanceCount, IProgressMonitor monitor)
+			throws CoreException {
 		new AppInStoppedStateAwareRequest<Void>("Updating application instances") { //$NON-NLS-1$
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
@@ -807,7 +837,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		}.run(monitor);
 
-		ServerEventHandler.getDefault().fireInstancesUpdated(getCloudFoundryServer());
 	}
 
 	public void updatePassword(final String newPassword, IProgressMonitor monitor) throws CoreException {
@@ -829,6 +858,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param module must not be null or empty
 	 * @param memory must be above zero.
 	 * @param monitor
+	 * @deprecated use {@link #operations()} instead
 	 * @throws CoreException if error occurred during or after memory is scaled.
 	 * Exception does not always mean that the memory changes did not take
 	 * effect. Memory could have changed, but some post operation like
@@ -836,65 +866,27 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public void updateApplicationMemory(final CloudFoundryApplicationModule module, final int memory,
 			IProgressMonitor monitor) throws CoreException {
-		final String appName = module.getApplication().getName();
-		new AppInStoppedStateAwareRequest<Void>("Updating application memory for " + //$NON-NLS-1$
-				module.getDeployedApplicationName()) {
-			@Override
-			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-				client.updateApplicationMemory(appName, memory);
-				return null;
-			}
-		}.run(monitor);
+		operations().memoryUpdate(module, memory).run(monitor);
 	}
 
+	/**
+	 * @deprecated use {@link #operations()} instead
+	 * @param appName
+	 * @param uris
+	 * @param monitor
+	 * @throws CoreException
+	 */
 	public void updateApplicationUrls(final String appName, final List<String> uris, IProgressMonitor monitor)
 			throws CoreException {
-
-		new UpdateApplicationOperation(appName, this) {
-			@Override
-			protected void performOperation(IProgressMonitor monitor) throws CoreException {
-				new AppInStoppedStateAwareRequest<Void>("Updating application URLs for " + appName) { //$NON-NLS-1$
-					@Override
-					protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-						client.updateApplicationUris(appName, uris);
-						return null;
-					}
-				}.run(monitor);
-			}
-		}.run(monitor);
+		operations().mappedUrlsUpdate(appName, uris).run(monitor);
 	}
 
-	public List<String> findCaldecottTunnelsToClose(CloudFoundryOperations client, String appName,
-			List<String> servicesToUpdate) {
-		List<String> services = new ArrayList<String>();
-
-		CloudApplication caldecottApp = client.getApplication(appName);
-		if (caldecottApp != null) {
-			List<String> existingServices = caldecottApp.getServices();
-			if (existingServices != null) {
-				Set<String> possibleDeletedServices = new HashSet<String>();
-				// Must iterate rather than passing to constructor or using
-				// addAll, as some
-				// of the entries in existing services may be null
-				for (String existingService : existingServices) {
-					if (existingService != null) {
-						possibleDeletedServices.add(existingService);
-					}
-				}
-
-				for (String updatedService : servicesToUpdate) {
-					if (possibleDeletedServices.contains(updatedService)) {
-						possibleDeletedServices.remove(updatedService);
-					}
-				}
-				services.addAll(possibleDeletedServices);
-			}
-		}
-		return services;
-	}
-
+	/**
+	 * deprecated Use {@link #operations()} instead.
+	 */
 	public void updateServices(String appName, List<String> services, IProgressMonitor monitor) throws CoreException {
-		updateServices(appName, services, false, monitor);
+		CloudFoundryApplicationModule appModule = getCloudFoundryServer().getExistingCloudModule(appName);
+		operations().bindServices(appModule, services);
 	}
 
 	public void refreshApplicationBoundServices(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
@@ -930,42 +922,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 
 		}
-	}
-
-	public void updateServicesAndCloseCaldecottTunnels(String appName, List<String> services, IProgressMonitor monitor)
-			throws CoreException {
-		updateServices(appName, services, true, monitor);
-
-	}
-
-	protected void updateServices(final String appName, final List<String> services,
-			final boolean closeRelatedCaldecottTunnels, IProgressMonitor monitor) throws CoreException {
-		new StagingAwareRequest<Void>("Update services") { //$NON-NLS-1$
-			@Override
-			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-				// Prior to updating the services, obtain the current list of
-				// bound services for the app
-				// and determine if any services are being unbound. If unbound,
-				// check if it is the Caldecott app
-				// and accordingly, close related tunnels.
-				if (closeRelatedCaldecottTunnels && TunnelBehaviour.isCaldecottApp(appName)) {
-
-					List<String> caldecottServicesToClose = findCaldecottTunnelsToClose(client, appName, services);
-					// Close tunnels before the services are removed
-					if (caldecottServicesToClose != null) {
-						TunnelBehaviour handler = new TunnelBehaviour(getCloudFoundryServer());
-
-						for (String serviceName : caldecottServicesToClose) {
-							handler.stopAndDeleteCaldecottTunnel(serviceName, progress);
-						}
-					}
-				}
-
-				client.updateApplicationServices(appName, services);
-
-				return null;
-			}
-		}.run(monitor);
 	}
 
 	public void register(final String email, final String password, IProgressMonitor monitor) throws CoreException {
@@ -1026,60 +982,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return getClient((CloudCredentials) null, monitor);
 	}
 
-	/**
-	 * Updates the application's environment variables. Note that the
-	 * application needs to first exist in the server, and be in a state that
-	 * will accept environment variable changes (either stopped, or running
-	 * after staging has completed). WARNING: The {@link CloudApplication}
-	 * mapping in the module WILL be updated if the environment variable update
-	 * is successful, which will replace any existing deployment info in the app
-	 * module.
-	 * @param appModule
-	 * @param monitor
-	 * @throws CoreException
-	 */
-	public void updateEnvironmentVariables(final CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
-			throws CoreException {
-		new BehaviourRequest<Void>("Updating environment variables") { //$NON-NLS-1$
-
-			@Override
-			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-				// Update environment variables.
-				Map<String, String> varsMap = new HashMap<String, String>();
-
-				SubMonitor subProgress = SubMonitor.convert(progress);
-				subProgress
-						.setTaskName("Updating environment variables for: " + appModule.getDeployedApplicationName()); //$NON-NLS-1$
-
-				try {
-					List<EnvironmentVariable> vars = appModule.getDeploymentInfo().getEnvVariables();
-
-					if (vars != null) {
-						for (EnvironmentVariable var : vars) {
-							varsMap.put(var.getVariable(), var.getValue());
-						}
-					}
-
-					client.updateApplicationEnv(appModule.getDeployedApplicationName(), varsMap);
-
-					// Update the cloud application which contains the updated
-					// environment variables.
-					CloudApplication cloudApplication = getApplication(appModule.getDeployedApplicationName(),
-							subProgress);
-					appModule.setCloudApplication(cloudApplication);
-
-				}
-				finally {
-					subProgress.done();
-				}
-
-				return null;
-			}
-
-		}.run(monitor);
-
-	}
-
 	private boolean isApplicationReady(CloudApplication application) {
 		/*
 		 * RestTemplate restTemplate = new RestTemplate(); String response =
@@ -1091,7 +993,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return AppState.STARTED.equals(application.getState());
 	}
 
-	private boolean waitForStart(CloudFoundryOperations client, String deploymentId, IProgressMonitor monitor)
+	boolean waitForStart(CloudFoundryOperations client, String deploymentId, IProgressMonitor monitor)
 			throws InterruptedException {
 		long initialInterval = CloudOperationsConstants.SHORT_INTERVAL;
 		Thread.sleep(initialInterval);
@@ -1107,60 +1009,19 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return false;
 	}
 
-	private CloudApplication getDeployedCloudApplication(CloudFoundryOperations client, String applicationId,
-			IProgressMonitor monitor) {
-		long timeLeft = CloudOperationsConstants.UPLOAD_TIMEOUT;
-		while (timeLeft > 0) {
-			CloudApplication application = client.getApplication(applicationId);
-			if (applicationId.equals(application.getName())) {
-				return application;
-			}
-			try {
-				Thread.sleep(CloudOperationsConstants.SHORT_INTERVAL);
-			}
-			catch (InterruptedException e) {
-				// Ignore. Try again until time runs out
-			}
-			timeLeft -= CloudOperationsConstants.SHORT_INTERVAL;
-		}
-		return null;
-	}
-
-	/**
-	 * Will fetch the latest list of cloud applications from the server, and
-	 * update the local module mappings accordingly.
-	 * @param cloudServer
-	 * @param monitor
-	 * @return true if refresh was performed. False otherwise.
-	 */
-
 	@Override
 	protected void initialize(IProgressMonitor monitor) {
 		super.initialize(monitor);
 		getServer().addServerListener(serverListener, ServerEvent.SERVER_CHANGE);
 		try {
-			refreshHandler = new RefreshHandler(getCloudFoundryServer());
+			refreshHandler = new RefreshModulesHandler(getCloudFoundryServer());
 
-			// Be sure to refresh list of all deployed applications when a
-			// server instance is initialised. Otherwise, external modules may
-			// not appear
-			// in the list of Server apps until after some manual refresh
-			// occurs, or another operation
-			// triggers a refresh.
-			// Launch in Job as it could be long-running
-			Job job = new Job(NLS.bind(Messages.REFRESHING_MODULES, getServer().getName())) {
-
-				@Override
-				protected IStatus run(IProgressMonitor monitor) {
-					refreshModules(monitor);
-					return Status.OK_STATUS;
-				}
-
-			};
-
-			job.setPriority(Job.INTERACTIVE);
-			job.schedule();
-
+			// Important: Must perform a refresh operation
+			// as any operation that calls the CF client first
+			// performs a server connection and sets server state.
+			// The server connection is indirectly performed by this
+			// first refresh call.
+			getRefreshHandler().scheduleRefreshAll();
 		}
 		catch (CoreException e) {
 			CloudFoundryPlugin.logError(Messages.ERROR_INITIALISE_REFRESH_NO_SERVER);
@@ -1186,7 +1047,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		try {
 			for (IModule[] module : allModules) {
 				if (module[0].getName().equals(moduleName)) {
-					new PushApplicationOperation(module).run(monitor);
+					operations().applicationDeployment(module, ApplicationAction.PUSH).run(monitor);
 					return Status.OK_STATUS;
 				}
 			}
@@ -1225,7 +1086,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		IStatus errorStatus = CloudFoundryPlugin.getErrorStatus(NLS.bind(Messages.ERROR_FAILED_TO_PUSH_APP,
 				e.getMessage()));
 		CloudFoundryPlugin.log(errorStatus);
-		CloudFoundryPlugin.getCallback().handleError(errorStatus, BehaviourEventType.APP_START);
+		CloudFoundryPlugin.getCallback().handleError(errorStatus);
 	}
 
 	@Override
@@ -1338,15 +1199,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				if (deltaKind == ServerBehaviourDelegate.ADDED || publishState == IServer.PUBLISH_STATE_UNKNOWN) {
 					// Application has not been published, so do a full
 					// publish
-					op = new PushApplicationOperation(module);
+					op = operations().applicationDeployment(module, ApplicationAction.PUSH);
 				}
 				else if (deltaKind == ServerBehaviourDelegate.CHANGED) {
-					op = getApplicationOperation(module, ApplicationAction.UPDATE_RESTART);
+					op = operations().applicationDeployment(module, ApplicationAction.UPDATE_RESTART);
 				}
 				// Republish the root module if any of the child module requires
 				// republish
 				else if (isChildModuleChanged(module, monitor)) {
-					op = getApplicationOperation(module, ApplicationAction.UPDATE_RESTART);
+					op = operations().applicationDeployment(module, ApplicationAction.UPDATE_RESTART);
 				}
 
 				// NOTE: No need to run this as a separate Job, as publish
@@ -1393,27 +1254,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return false;
 	}
 
-	
-	/**
-	 * Given a WTP module, the corresponding CF application module will have its
-	 * app instance stats updated. As the application module also has a
-	 * reference to the actual cloud application, an updated cloud application
-	 * will be mapped.
-	 * @param module whos application instances and stats should be updated
-	 * @param monitor
-	 * @throws CoreException
-	 */
-	public void updateApplicationInstanceStats(IModule module, IProgressMonitor monitor) throws CoreException {
-		if (module != null) {
-
-			CloudFoundryApplicationModule appModule = getCloudFoundryServer().getExistingCloudModule(module);
-
-			if (appModule != null) {
-				internalUpdateAppStats(appModule, monitor);
-			}
-		}
-	}
-
 	/**
 	 * True if the application is running. False otherwise. Note that an
 	 * application refresh is performed on the cloud module, therefore the
@@ -1424,15 +1264,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @return true if application is running. False otherwise.
 	 */
 	public boolean isApplicationRunning(CloudFoundryApplicationModule appModule, IProgressMonitor monitor) {
-		try {
-			// Refresh the stats FIRST before checking for the app state, as
-			// stat refresh will upate the cloud application mapping (and
-			// therefore also update the app state)
-			return internalUpdateAppStats(appModule, monitor) && appModule.getApplication() != null
-					&& isApplicationReady(appModule.getApplication());
-		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
+		if (appModule != null) {
+			try {
+				updateInstancesAndStats(appModule, monitor);
+				ApplicationStats stats = appModule.getApplicationStats();
+				InstancesInfo info = appModule.getInstancesInfo();
+				return stats != null && info != null && appModule.isDeployed()
+						&& isApplicationReady(appModule.getApplication());
+			}
+			catch (CoreException e) {
+				CloudFoundryPlugin.logError(e);
+			}
 		}
 		return false;
 	}
@@ -1538,49 +1380,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return null;
 	}
 
-	/**
-	 * Updates the application instances stats for the given cloud application
-	 * module. It does not update the Cloud app module -> cloud application
-	 * mapping.
-	 * @param appModule cannot be null.
-	 * @param monitor
-	 * @throws CoreException error in retrieving application instances stats
-	 * from the server.
-	 * @return true if application stats are refreshed (application is running).
-	 * False is application is not running and stats could not be fetched.
-	 */
-	protected boolean internalUpdateAppStats(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
-			throws CoreException {
-
-		// Update the CloudApplication in the cloud module.
-		CloudApplication application = getApplication(appModule.getDeployedApplicationName(), monitor);
-		appModule.setCloudApplication(application);
-
-		if (application == null) {
-			throw CloudErrorUtil.toCoreException(Messages.ERROR_NO_CLOUD_APPLICATION_FOUND);
-		}
-
-		InstancesInfo info = internalUpdateInstancesInfo(appModule, monitor);
-		ApplicationStats stats = internalUpdateStats(appModule, monitor);
-		return info != null && stats != null;
-	}
-
-	protected ApplicationStats internalUpdateStats(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
-			throws CoreException {
-		ApplicationStats stats = getApplicationStats(appModule.getDeployedApplicationName(), monitor);
-		appModule.setApplicationStats(stats);
-
-		return stats;
-	}
-
-	protected InstancesInfo internalUpdateInstancesInfo(CloudFoundryApplicationModule appModule,
-			IProgressMonitor monitor) throws CoreException {
-		InstancesInfo info = getInstancesInfo(appModule.getDeployedApplicationName(), monitor);
-		appModule.setInstancesInfo(info);
-
-		return info;
-	}
-
 	public static void validate(final String location, String userName, String password, boolean selfSigned,
 			IProgressMonitor monitor) throws CoreException {
 		createExternalClientLogin(location, userName, password, selfSigned, monitor);
@@ -1638,6 +1437,15 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		finally {
 			progress.done();
 		}
+	}
+
+	/**
+	 * Resets publish state of the given modules to
+	 * {@link IServer#PUBLISH_STATE_NONE}
+	 * @param modules
+	 */
+	void resetPublishState(IModule[] modules) {
+		setModulePublishState(modules, IServer.PUBLISH_STATE_NONE);
 	}
 
 	/**
@@ -1832,603 +1640,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	}
 
-	/**
-	 * Returns an executable application operation based on the given Cloud
-	 * Foundry application module and an application start mode (
-	 * {@link ApplicationAction} ).
-	 * <p/>
-	 * Throws error if failure occurred while attempting to resolve an
-	 * operation. If no operation is resolved and no errors occurred while
-	 * attempting to resolve an operation, null is returned, meaning that no
-	 * operation is currently defined for the given deployment mode.
-	 * <p/>
-	 * It does NOT execute the operation.
-	 * @param application
-	 * @param action
-	 * @return resolved executable operation associated with the given
-	 * deployment mode, or null if an operation could not be resolved.
-	 * @throws CoreException
-	 */
-	public ICloudFoundryOperation getApplicationOperation(CloudFoundryApplicationModule application,
-			ApplicationAction action) throws CoreException {
-		IModule[] modules = new IModule[] { application.getLocalModule() };
-
-		return getApplicationOperation(modules, action);
-	}
-
-	public ICloudFoundryOperation getApplicationOperation(IModule[] modules, ApplicationAction action)
-			throws CoreException {
-		ICloudFoundryOperation operation = null;
-		// Set the deployment mode
-		switch (action) {
-		case START:
-			operation = internalGetDeployStartApplicationOperation(modules);
-			break;
-		case STOP:
-			operation = getStopAppOperation(modules);
-			break;
-		case RESTART:
-			operation = getRestartOperation(modules);
-			break;
-		case UPDATE_RESTART:
-			operation = getUpdateRestartOperation(modules);
-			break;
-		}
-		return operation;
-	}
-
-	/**
-	 * Deploys an application and or starts it in regular or debug mode. If
-	 * deployed in debug mode, an attempt will be made to connect the deployed
-	 * application to a debugger. An operation should performed atomically PER
-	 * APPLICATION.
-	 * <p/>
-	 * The operation performs some common tasks like checking that the
-	 * application's deployment info is complete and valid, and that any refresh
-	 * jobs running in the background are stopped prior to starting the
-	 * operation, and restarted afterward.
-	 * 
-	 */
-	protected abstract class ApplicationOperation extends AbstractDeploymentOperation {
-
-		final protected IModule[] modules;
-
-		private ICloudFoundryApplicationModule appModule;
-
-		private DeploymentConfiguration configuration;
-
-		protected ApplicationOperation(IModule[] modules) {
-			super(CloudFoundryServerBehaviour.this);
-			this.modules = modules;
-		}
-
-		public ICloudFoundryApplicationModule getApplicationModule() {
-			return appModule;
-		}
-
-		abstract protected String getOperationName();
-
-		/**
-		 * The local configuration for the app. It indicates what deployment
-		 * mode the app should be launched in (e.g. START, STOP..). If a
-		 * configuration cannot be resolved, a default one will be returned
-		 * instead.
-		 * @return deployment configuration. Never null.
-		 */
-		protected DeploymentConfiguration getDeploymentConfiguration() {
-			if (configuration == null) {
-				configuration = getDefaultDeploymentConfiguration();
-			}
-			return configuration;
-		}
-
-		protected void performOperation(IProgressMonitor monitor) throws CoreException {
-
-			// Given that we only look at the root module for generating the
-			// appModule
-			// ie: indicated by the following
-			// getOrCreateCloudApplicationModule() call
-			// we should ignore child modules of this root module so that
-			// we don't prompt multiple wizards for the same root module during
-			// deployment
-
-			if (modules.length != 1) {
-				return;
-			}
-
-			CloudFoundryApplicationModule appModule = getOrCreateCloudApplicationModule(modules);
-
-			try {
-				CloudFoundryServer cloudServer = getCloudFoundryServer();
-
-				// Stop any consoles
-				CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, cloudServer);
-
-				configuration = prepareForDeployment(appModule, monitor);
-
-				IStatus validationStatus = appModule.validateDeploymentInfo();
-				if (!validationStatus.isOK()) {
-					throw CloudErrorUtil.toCoreException(NLS.bind(Messages.ERROR_APP_DEPLOYMENT_VALIDATION_ERROR,
-							appModule.getDeployedApplicationName(), validationStatus.getMessage()));
-
-				}
-				// NOTE: Only print to a console AFTER an application has been
-				// prepared for deployment, as the application
-				// name may have changed during the deployment preparation
-				// stage, and consoles are mapped by application name.
-				// This prevents two different consoles with different names
-				// from appearing for the same application
-				clearAndPrintlnConsole(appModule,
-						NLS.bind(Messages.CONSOLE_PREPARING_APP, appModule.getDeployedApplicationName()));
-
-				performDeployment(appModule, monitor);
-
-				// Refresh the application instance stats as well
-				try {
-					internalUpdateAppStats(appModule, monitor);
-				}
-				catch (CoreException e) {
-					// Don't let errors in app instance stats stop the
-					// completion of the ApplicationOperation
-					CloudFoundryPlugin.logError(e);
-				}
-			}
-			catch (OperationCanceledException e) {
-				// ignore so webtools does not show an exception
-				((Server) getServer()).setModuleState(modules, IServer.STATE_UNKNOWN);
-			}
-			catch (CoreException ce) {
-				// Log the error in console
-				printErrorlnToConsole(appModule, ce.getMessage());
-				throw ce;
-			}
-
-		}
-
-		/**
-		 * Prepares an application to either be deployed, started or restarted.
-		 * The main purpose to ensure that the application's deployment
-		 * information is complete. If incomplete, it will prompt the user for
-		 * missing information.
-		 * @param monitor
-		 * @return Deployment configuration, or null if default configuration
-		 * should be used.
-		 * @throws CoreException if any failure during or after the operation.
-		 * @throws OperationCanceledException if the user cancelled deploying or
-		 * starting the application. The application's deployment information
-		 * should not be modified in this case.
-		 */
-		protected DeploymentConfiguration prepareForDeployment(CloudFoundryApplicationModule appModule,
-				IProgressMonitor monitor) throws CoreException, OperationCanceledException {
-			return null;
-		}
-
-		/**
-		 * 
-		 * @return default deployment configuration, that among other things
-		 * determines the deployment mode of an application (for example, START,
-		 * STOP, RESTART). Must not be null.
-		 */
-		protected abstract DeploymentConfiguration getDefaultDeploymentConfiguration();
-
-		/**
-		 * 
-		 * @param appModule to be deployed or started
-		 * @param monitor
-		 * @throws CoreException if error occurred during deployment or starting
-		 * the app, or resolving the updated cloud application from the client.
-		 */
-		protected abstract void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
-				throws CoreException;
-	}
-
 	protected boolean hasChildModules(IModule[] modules) {
 		IWebModule webModule = CloudUtil.getWebModule(modules);
 		return webModule != null && webModule.getModules() != null && webModule.getModules().length > 0;
-	}
-
-	/**
-	 * This action is the primary operation for uploading and starting an
-	 * application to a CF server.
-	 * <p/>
-	 * It does NOT publish the application if it doesn't exist in the server. It
-	 * is meant to start and update an application that already exists.
-	 * <p/>
-	 * 
-	 * Several primary steps are performed when deploying an application:
-	 * <p/>
-	 * 1. Create an archive file containing the application's resources.
-	 * Incremental publishing is may be used here to create an archive
-	 * containing only those files that have been changed.
-	 * <p/>
-	 * 2. Set local WTP module states to indicate the an application's contents
-	 * have been pushed (i.e. "published")
-	 * <p/>
-	 * 3. Start the application in the server, if specified by the deployment
-	 * configuration.
-	 * <p/>
-	 * 4. Set local WTP module states to indicate whether an application has
-	 * started, or is stopped if an error occurred while starting it.
-	 * <p/>
-	 * 5. Invoke callbacks to notify listeners that an application has been
-	 * started. One of the notification is to the CF console to display the app
-	 * logs in the CF console.
-	 * <p/>
-	 */
-	protected class StartOperation extends RestartOperation {
-
-		final protected boolean incrementalPublish;
-
-		/**
-		 * 
-		 * @param waitForDeployment
-		 * @param incrementalPublish
-		 * @param modules
-		 * @param alwaysStart if true, application will always start. if false,
-		 */
-		public StartOperation(boolean incrementalPublish, IModule[] modules) {
-			super(modules);
-			this.incrementalPublish = incrementalPublish;
-		}
-
-		@Override
-		protected String getOperationName() {
-			return Messages.CONSOLE_DEPLOYING_APP;
-		}
-
-		@Override
-		protected DeploymentConfiguration getDefaultDeploymentConfiguration() {
-			return new DeploymentConfiguration(ApplicationAction.START);
-		}
-
-		@Override
-		protected void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
-				throws CoreException {
-			final Server server = (Server) getServer();
-			final CloudFoundryServer cloudServer = getCloudFoundryServer();
-			final IModule module = modules[0];
-
-			try {
-
-				// Update the local cloud module representing the application
-				// first.
-				appModule.setErrorStatus(null);
-
-				server.setModuleState(modules, IServer.STATE_STARTING);
-
-				final String deploymentName = appModule.getDeploymentInfo().getDeploymentName();
-
-				// This request does three things:
-				// 1. Checks if the application external or mapped to a local
-				// project. If mapped to a local project
-				// it creates an archive of the application's content
-				// 2. If an archive file was created, it pushes the archive
-				// file.
-				// 3. While pushing the archive file, a check is made to see if
-				// the application exists remotely. If not, the application is
-				// created in the
-				// CF server.
-
-				if (!modules[0].isExternal()) {
-
-					printlnToConsole(appModule, Messages.CONSOLE_GENERATING_ARCHIVE);
-
-					final ApplicationArchive applicationArchive = generateApplicationArchiveFile(
-							appModule.getDeploymentInfo(), appModule, modules, server, incrementalPublish, monitor);
-					File warFile = null;
-					if (applicationArchive == null) {
-						// Create a full war archive
-						warFile = CloudUtil.createWarFile(modules, server, monitor);
-						if (warFile == null || !warFile.exists()) {
-							throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-									"Unable to create war file for application: " + deploymentName)); //$NON-NLS-1$
-						}
-
-						CloudFoundryPlugin.trace("War file " + warFile.getName() + " created"); //$NON-NLS-1$ //$NON-NLS-2$
-					}
-					// Tell webtools the module has been published
-					setModulePublishState(modules, IServer.PUBLISH_STATE_NONE);
-
-					// update server publish status
-					IModule[] serverModules = server.getModules();
-					boolean allSynched = true;
-					for (IModule serverModule : serverModules) {
-						int modulePublishState = server.getModulePublishState(new IModule[] { serverModule });
-						if (modulePublishState == IServer.PUBLISH_STATE_INCREMENTAL
-								|| modulePublishState == IServer.PUBLISH_STATE_FULL) {
-							allSynched = false;
-						}
-					}
-
-					if (allSynched) {
-						server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
-					}
-
-					final File warFileFin = warFile;
-					final CloudFoundryApplicationModule appModuleFin = appModule;
-					// Now push the application resources to the server
-
-					new BehaviourRequest<Void>("Pushing the application " + deploymentName) { //$NON-NLS-1$
-						@Override
-						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
-								throws CoreException {
-
-							pushApplication(client, appModuleFin, warFileFin, applicationArchive, progress);
-
-							CloudFoundryPlugin.trace("Application " + deploymentName //$NON-NLS-1$
-									+ " pushed to Cloud Foundry server."); //$NON-NLS-1$
-
-							cloudServer.tagAsDeployed(module);
-
-							return null;
-						}
-
-					}.run(monitor);
-
-					printlnToConsole(appModule, Messages.CONSOLE_APP_PUSHED_MESSAGE);
-
-				}
-
-				// Verify the application exists in the server
-				CloudApplication application = getDeployedCloudApplication(client,
-						appModule.getDeployedApplicationName(), monitor);
-
-				if (application == null) {
-					throw CloudErrorUtil
-							.toCoreException("No cloud application obtained from the Cloud Foundry server for :  " //$NON-NLS-1$
-									+ appModule.getDeployedApplicationName()
-									+ ". Application may not have deployed correctly to the Cloud Foundry server, or there are connection problems to the server."); //$NON-NLS-1$
-				}
-
-				// At this stage, the app is either created or it already
-				// exists.
-				// Set the environment variables BEFORE starting the app, and
-				// BEFORE updating
-				// the cloud application mapping in the module, which will
-				// replace the deployment info
-				updateEnvironmentVariables(appModule, monitor);
-
-				// Update instances if it is more than 1. By default, app starts
-				// with 1 instance.
-				int instances = appModule.getDeploymentInfo().getInstances();
-				if (instances > 1) {
-					updateApplicationInstances(appModule, instances, monitor);
-				}
-
-				// If reached here it means the application creation and content
-				// pushing probably succeeded without errors, therefore attempt
-				// to
-				// start the application
-				super.performDeployment(appModule, monitor);
-
-			}
-			catch (CoreException e) {
-				appModule.setErrorStatus(e);
-				server.setModulePublishState(modules, IServer.PUBLISH_STATE_UNKNOWN);
-				throw e;
-			}
-		}
-
-		/**
-		 * This performs the primary operation of creating an application and
-		 * then pushing the application contents to the server. These are
-		 * performed in separate requests via the CF client. If the application
-		 * does not exist, it is first created through an initial request. Once
-		 * the application is created, or if it already exists, the next step is
-		 * to upload (push) the application archive containing the application's
-		 * resources. This is performed in a second separate request.
-		 * <p/>
-		 * To avoid replacing the deployment info in the app module, the mapping
-		 * to the most recent {@link CloudApplication} in the app module is NOT
-		 * updated with newly created application. It is up to the caller to set
-		 * the mapping in {@link CloudFoundryApplicationModule}
-		 * @param client
-		 * @param appModule valid Cloud module with valid deployment info.
-		 * @param monitor
-		 * @throws CoreException if error creating the application
-		 */
-		protected void pushApplication(CloudFoundryOperations client, final CloudFoundryApplicationModule appModule,
-				File warFile, ApplicationArchive applicationArchive, final IProgressMonitor monitor)
-				throws CoreException {
-
-			String appName = appModule.getDeploymentInfo().getDeploymentName();
-
-			try {
-				printlnToConsole(appModule, Messages.CONSOLE_APP_PUSH_MESSAGE);
-				// Now push the application content.
-				if (warFile != null) {
-					client.uploadApplication(appName, warFile);
-				}
-				else if (applicationArchive != null) {
-					// Handle the incremental publish case separately as it
-					// requires
-					// a partial war file generation of only the changed
-					// resources
-					// AFTER
-					// the server determines the list of missing file names.
-					if (applicationArchive instanceof CachingApplicationArchive) {
-						final CachingApplicationArchive cachingArchive = (CachingApplicationArchive) applicationArchive;
-						client.uploadApplication(appName, cachingArchive, new UploadStatusCallback() {
-
-							public void onProcessMatchedResources(int length) {
-
-							}
-
-							public void onMatchedFileNames(Set<String> matchedFileNames) {
-								cachingArchive.generatePartialWarFile(matchedFileNames);
-							}
-
-							public void onCheckResources() {
-
-							}
-
-							public boolean onProgress(String status) {
-								return false;
-							}
-						});
-
-						// Once the application has run, do a clean up of the
-						// sha1
-						// cache for deleted resources
-
-					}
-					else {
-						client.uploadApplication(appName, applicationArchive, new UploadStatusCallback() {
-
-							public void onProcessMatchedResources(int length) {
-
-							}
-
-							public void onMatchedFileNames(Set<String> matchedFileNames) {
-								// try {
-								// printlnToConsole(appModule, ".", false,
-								// false, monitor);
-								// }
-								// catch (CoreException e) {
-								// CloudFoundryPlugin.logError(e);
-								// }
-							}
-
-							public void onCheckResources() {
-
-							}
-
-							public boolean onProgress(String status) {
-								return false;
-							}
-						});
-
-					}
-				}
-				else {
-					throw CloudErrorUtil
-							.toCoreException("Failed to deploy application " + appModule.getDeploymentInfo().getDeploymentName() + //$NON-NLS-1$
-									" since no deployable war or application archive file was generated."); //$NON-NLS-1$
-				}
-			}
-			catch (IOException e) {
-				throw new CoreException(CloudFoundryPlugin.getErrorStatus("Failed to deploy application " + //$NON-NLS-1$ 
-						appModule.getDeploymentInfo().getDeploymentName() + " due to " + e.getMessage(), e)); //$NON-NLS-1$
-			}
-
-		}
-	}
-
-	/**
-	 * Operation publish an application. If the application is already deployed
-	 * and synchronised, it will only update the mapping between the module and
-	 * the {@link CloudApplication}.
-	 * 
-	 * <p/>
-	 * 1. Prompts for deployment information.
-	 * <p/>
-	 * 2. Creates the application if the application does not currently exist in
-	 * the server
-	 * <p/>
-	 * 3. Starts the application if specified in the deployment configuration
-	 * for the application.
-	 * <p/>
-	 * If the application is already published (it exists in the server), it
-	 * will ONLY update the published cloud application mapping in the
-	 * {@link CloudFoundryApplicationModule}. It will NOT re-create, re-publish,
-	 * or restart the application.
-	 * <p/>
-	 *
-	 */
-	protected class PushApplicationOperation extends StartOperation {
-
-		public PushApplicationOperation(IModule[] modules) {
-			super(false, modules);
-		}
-
-		@Override
-		protected DeploymentConfiguration prepareForDeployment(CloudFoundryApplicationModule appModule,
-				IProgressMonitor monitor) throws CoreException {
-			// If the app is already published, just refresh the application
-			// mapping.
-			int moduleState = getServer().getModulePublishState(new IModule[] { appModule.getLocalModule() });
-			if (appModule.isDeployed() && moduleState == IServer.PUBLISH_STATE_NONE) {
-
-				printlnToConsole(appModule, Messages.CONSOLE_APP_FOUND);
-
-				CloudApplication cloudApp = null;
-
-				printlnToConsole(appModule,
-						NLS.bind(Messages.CONSOLE_APP_MAPPING_STARTED, appModule.getDeployedApplicationName()));
-				try {
-					cloudApp = getApplication(appModule.getDeployedApplicationName(), monitor);
-					appModule.setCloudApplication(cloudApp);
-					printlnToConsole(appModule,
-							NLS.bind(Messages.CONSOLE_APP_MAPPING_COMPLETED, appModule.getDeployedApplicationName()));
-
-				}
-				catch (CoreException e) {
-					// Do not log the error. The application may not exist
-					// anymore. If it is a network error, it will become evident
-					// in further steps
-				}
-			}
-			else {
-				try {
-					CloudFoundryServer cloudServer = getCloudFoundryServer();
-
-					// prompt user for missing details
-					return CloudFoundryPlugin.getCallback().prepareForDeployment(cloudServer, appModule, monitor);
-				}
-				catch (OperationCanceledException oce) {
-					// Prepare for deployment prompts the user for missing
-					// information for a non-published app. If a user
-					// cancels
-					// delete the application module
-					getCloudFoundryServer().doDeleteModules(Arrays.asList(modules));
-					throw oce;
-				}
-			}
-			return null;
-		}
-
-		@Override
-		protected void pushApplication(CloudFoundryOperations client, final CloudFoundryApplicationModule appModule,
-				File warFile, ApplicationArchive applicationArchive, final IProgressMonitor monitor)
-				throws CoreException {
-			String appName = appModule.getDeploymentInfo().getDeploymentName();
-
-			List<CloudApplication> existingApps = client.getApplications();
-			boolean found = false;
-			for (CloudApplication existingApp : existingApps) {
-				if (existingApp.getName().equals(appName)) {
-					found = true;
-					break;
-				}
-			}
-
-			// Create the application if it doesn't already exist
-			if (!found) {
-
-				printlnToConsole(appModule, Messages.CONSOLE_APP_CREATION);
-
-				Staging staging = appModule.getDeploymentInfo().getStaging();
-				List<String> uris = appModule.getDeploymentInfo().getUris() != null ? appModule.getDeploymentInfo()
-						.getUris() : new ArrayList<String>(0);
-				List<String> services = appModule.getDeploymentInfo().asServiceBindingList();
-
-				if (staging == null) {
-					// For v2, a non-null staging is required.
-					staging = new Staging();
-				}
-				client.createApplication(appName, staging, appModule.getDeploymentInfo().getMemory(), uris, services);
-			}
-			super.pushApplication(client, appModule, warFile, applicationArchive, monitor);
-		}
-
-		@Override
-		protected void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
-				throws CoreException {
-			if (!appModule.isDeployed()) {
-				super.performDeployment(appModule, monitor);
-			}
-		}
-
 	}
 
 	/**
@@ -2566,234 +1780,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		return moduleArchive;
 	}
 
-	/**
-	 * 
-	 * Attempts to start an application. It does not create an application, or
-	 * incrementally or fully push the application's resources. It simply starts
-	 * the application in the server with the application's currently published
-	 * resources, regardless of local changes have occurred or not.
-	 * 
-	 */
-	protected class RestartOperation extends ApplicationOperation {
-
-		public RestartOperation(IModule[] modules) {
-			super(modules);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.cloudfoundry.ide.eclipse.server.core.internal.client.
-		 * CloudFoundryServerBehaviour
-		 * .DeployAction#performDeployment(org.cloudfoundry
-		 * .ide.eclipse.internal.
-		 * server.core.client.CloudFoundryApplicationModule,
-		 * org.eclipse.core.runtime.IProgressMonitor)
-		 */
-		protected void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
-				throws CoreException {
-			final Server server = (Server) getServer();
-			final CloudFoundryApplicationModule cloudModule = appModule;
-
-			try {
-				cloudModule.setErrorStatus(null);
-
-				final String deploymentName = cloudModule.getDeploymentInfo().getDeploymentName();
-
-				server.setModuleState(modules, IServer.STATE_STARTING);
-
-				if (deploymentName == null) {
-					server.setModuleState(modules, IServer.STATE_STOPPED);
-
-					throw CloudErrorUtil
-							.toCoreException("Unable to start application. Missing application deployment name in application deployment information."); //$NON-NLS-1$
-				}
-
-				final ApplicationAction deploymentMode = getDeploymentConfiguration().getApplicationStartMode();
-				if (deploymentMode != ApplicationAction.STOP) {
-					// Start the application. Use a regular request rather than
-					// a staging-aware request, as any staging errors should not
-					// result in a reattempt, unlike other cases (e.g. get the
-					// staging
-					// logs or refreshing app instance stats after an app has
-					// started).
-
-					printlnToConsole(cloudModule, Messages.CONSOLE_PRE_STAGING_MESSAGE);
-
-					CloudFoundryPlugin.getCallback().startApplicationConsole(getCloudFoundryServer(), cloudModule, 0,
-							monitor);
-
-					new BehaviourRequest<Void>("Starting application " + deploymentName) { //$NON-NLS-1$
-						@Override
-						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
-								throws CoreException {
-							CloudFoundryPlugin.trace("Application " + deploymentName + " starting"); //$NON-NLS-1$ //$NON-NLS-2$
-
-							client.stopApplication(deploymentName);
-
-							StartingInfo info = client.startApplication(deploymentName);
-							if (info != null) {
-
-								cloudModule.setStartingInfo(info);
-
-								// Inform through callback that application
-								// has started
-								CloudFoundryPlugin.getCallback().applicationStarting(getCloudFoundryServer(),
-										cloudModule);
-							}
-							return null;
-						}
-					}.run(monitor);
-
-					// This should be staging aware, in order to reattempt on
-					// staging related issues when checking if an app has
-					// started or not
-					new StagingAwareRequest<Void>("Waiting for application to start: }" + deploymentName) { //$NON-NLS-1$
-						@Override
-						protected Void doRun(final CloudFoundryOperations client, SubMonitor progress)
-								throws CoreException {
-
-							// Now verify that the application did start
-							try {
-								if (!waitForStart(client, deploymentName, progress)) {
-									server.setModuleState(modules, IServer.STATE_STOPPED);
-
-									throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-											"Starting of " + cloudModule.getDeployedApplicationName() + " timed out")); //$NON-NLS-1$ //$NON-NLS-2$
-								}
-							}
-							catch (InterruptedException e) {
-								server.setModuleState(modules, IServer.STATE_STOPPED);
-								throw new OperationCanceledException();
-							}
-
-							AbstractAppStateTracker curTracker = CloudFoundryPlugin.getAppStateTracker(getServer()
-									.getServerType().getId(), cloudModule);
-							if (curTracker != null) {
-								curTracker.setServer(getServer());
-								curTracker.startTracking(cloudModule);
-							}
-
-							CloudFoundryPlugin.trace("Application " + deploymentName + " started"); //$NON-NLS-1$ //$NON-NLS-2$
-
-							CloudFoundryPlugin.getCallback().applicationStarted(getCloudFoundryServer(), cloudModule);
-
-							if (curTracker != null) {
-								// Wait for application to be ready or getting
-								// out of the starting state.
-								boolean isAppStarting = true;
-								while (isAppStarting && !progress.isCanceled()) {
-									if (curTracker.getApplicationState(cloudModule) == IServer.STATE_STARTING) {
-										try {
-											Thread.sleep(200);
-										}
-										catch (InterruptedException e) {
-											// Do nothing
-										}
-									}
-									else {
-										isAppStarting = false;
-									}
-								}
-								curTracker.stopTracking(cloudModule);
-							}
-
-							server.setModuleState(modules, IServer.STATE_STARTED);
-
-							return null;
-						}
-					}.run(monitor);
-				}
-				else {
-					// User has selected to deploy the app in STOP mode
-
-					server.setModuleState(modules, IServer.STATE_STOPPED);
-				}
-			}
-			catch (CoreException e) {
-				appModule.setErrorStatus(e);
-				server.setModulePublishState(modules, IServer.PUBLISH_STATE_UNKNOWN);
-				throw e;
-			}
-		}
-
-		@Override
-		protected String getOperationName() {
-			return Messages.CONSOLE_RESTARTING_APP;
-		}
-
-		@Override
-		protected DeploymentConfiguration getDefaultDeploymentConfiguration() {
-			return new DeploymentConfiguration(ApplicationAction.RESTART);
-		}
-	}
-
 	abstract class FileRequest<T> extends StagingAwareRequest<T> {
-
 		FileRequest() {
 			super("Retrieving file"); //$NON-NLS-1$
 		}
-	}
-
-	class StopApplicationOperation extends AbstractDeploymentOperation {
-
-		private final IModule[] modules;
-
-		protected StopApplicationOperation(IModule[] modules) {
-			super(CloudFoundryServerBehaviour.this);
-			this.modules = modules;
-		}
-
-		@Override
-		protected void performOperation(IProgressMonitor monitor) throws CoreException {
-			Server server = (Server) getServer();
-			boolean succeeded = false;
-			try {
-				server.setModuleState(modules, IServer.STATE_STOPPING);
-
-				CloudFoundryServer cloudServer = getCloudFoundryServer();
-				final CloudFoundryApplicationModule cloudModule = cloudServer.getExistingCloudModule(modules[0]);
-
-				if (cloudModule == null) {
-					throw CloudErrorUtil.toCoreException("Unable to stop application as no cloud module found for: " //$NON-NLS-1$
-							+ modules[0].getName());
-				}
-
-				String stoppingApplicationMessage = NLS.bind(Messages.CONSOLE_STOPPING_APPLICATION,
-						cloudModule.getDeployedApplicationName());
-
-				clearAndPrintlnConsole(cloudModule, stoppingApplicationMessage);
-
-				new BehaviourRequest<Void>(stoppingApplicationMessage) {
-					@Override
-					protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
-						client.stopApplication(cloudModule.getDeployedApplicationName());
-						return null;
-					}
-				}.run(monitor);
-
-				server.setModuleState(modules, IServer.STATE_STOPPED);
-				succeeded = true;
-
-				printlnToConsole(cloudModule, Messages.CONSOLE_APP_STOPPED);
-				CloudFoundryPlugin.getCallback().stopApplicationConsole(cloudModule, cloudServer);
-
-				// If succeeded, stop all Caldecott tunnels if the app is
-				// the
-				// Caldecott app
-				if (TunnelBehaviour.isCaldecottApp(cloudModule.getDeployedApplicationName())) {
-					TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
-					handler.stopAndDeleteAllTunnels(monitor);
-				}
-			}
-			finally {
-				if (!succeeded) {
-					server.setModuleState(modules, IServer.STATE_UNKNOWN);
-				}
-			}
-
-		}
-
 	}
 
 	/**
@@ -2865,4 +1855,99 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 
 	}
+
+	BaseClientRequest<?> getUpdateApplicationMemoryRequest(final CloudFoundryApplicationModule appModule,
+			final int memory) {
+		return new AppInStoppedStateAwareRequest<Void>("Updating application memory for " + //$NON-NLS-1$
+				appModule.getDeployedApplicationName()) {
+			@Override
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				client.updateApplicationMemory(appModule.getDeployedApplicationName(), memory);
+				return null;
+			}
+		};
+	}
+
+	BaseClientRequest<?> getUpdateAppUrlsRequest(final String appName, final List<String> urls) {
+		return new AppInStoppedStateAwareRequest<Void>("Updating application URLs for " + appName) { //$NON-NLS-1$
+			@Override
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				client.updateApplicationUris(appName, urls);
+				return null;
+			}
+		};
+	}
+
+	BaseClientRequest<?> getUpdateServicesRequest(final String appName, final List<String> services) {
+		return new StagingAwareRequest<Void>("Update services") { //$NON-NLS-1$
+			@Override
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+
+				client.updateApplicationServices(appName, services);
+				return null;
+			}
+		};
+	}
+
+	protected BaseClientRequest<Void> getUpdateEnvVarRequest(final CloudFoundryApplicationModule appModule) {
+		return new BehaviourRequest<Void>("Updating environment variables") { //$NON-NLS-1$
+
+			@Override
+			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				// Update environment variables.
+				Map<String, String> varsMap = new HashMap<String, String>();
+
+				SubMonitor subProgress = SubMonitor.convert(progress);
+				subProgress
+						.setTaskName("Updating environment variables for: " + appModule.getDeployedApplicationName()); //$NON-NLS-1$
+
+				try {
+					List<EnvironmentVariable> vars = appModule.getDeploymentInfo().getEnvVariables();
+
+					if (vars != null) {
+						for (EnvironmentVariable var : vars) {
+							varsMap.put(var.getVariable(), var.getValue());
+						}
+					}
+
+					client.updateApplicationEnv(appModule.getDeployedApplicationName(), varsMap);
+
+				}
+				finally {
+					subProgress.done();
+				}
+
+				return null;
+			}
+
+		};
+	}
+
+	BaseClientRequest<List<CloudService>> getDeleteServicesRequest(final List<String> services) {
+		return new BehaviourRequest<List<CloudService>>("Deleting services") { //$NON-NLS-1$
+			@Override
+			protected List<CloudService> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+				for (String service : services) {
+					client.deleteService(service);
+				}
+				return client.getServices();
+			}
+		};
+	}
+
+	BaseClientRequest<List<CloudService>> getCreateServicesRequest(final CloudService[] services) {
+		return new BehaviourRequest<List<CloudService>>(
+				services.length == 1 ? "Creating service " + services[0].getName() //$NON-NLS-1$
+				: "Creating services") { //$NON-NLS-1$
+			@Override
+			protected List<CloudService> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+
+				for (CloudService service : services) {
+					client.createService(service);
+				}
+				return client.getServices();
+			}
+		};
+	}
+
 }

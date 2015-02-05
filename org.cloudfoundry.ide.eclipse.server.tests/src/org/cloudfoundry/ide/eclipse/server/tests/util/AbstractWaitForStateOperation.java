@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
- * 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc.
+ *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * are made available under the terms of the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -13,19 +13,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *  
+ *
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.core.internal.client;
+package org.cloudfoundry.ide.eclipse.server.tests.util;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.WaitWithProgressJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.springframework.util.Assert;
 
 /**
  * Waits until a deployed application reaches an expected state.
@@ -42,14 +43,14 @@ public abstract class AbstractWaitForStateOperation extends WaitWithProgressJob 
 	public AbstractWaitForStateOperation(CloudFoundryServer cloudServer, CloudFoundryApplicationModule appModule,
 			int attempts, long sleep) {
 		super(attempts, sleep);
-		Assert.notNull(appModule);
 		this.cloudServer = cloudServer;
 		this.appModule = appModule;
 	}
 
+	@Override
 	protected boolean internalRunInWait(IProgressMonitor progress) throws CoreException {
 
-		CloudApplication updatedCloudApp = cloudServer.getBehaviour().getApplication(
+		CloudApplication updatedCloudApp = cloudServer.getBehaviour().getCloudApplication(
 				appModule.getDeployedApplicationName(), progress);
 
 		if (updatedCloudApp == null) {
@@ -61,6 +62,7 @@ public abstract class AbstractWaitForStateOperation extends WaitWithProgressJob 
 
 	}
 
+	@Override
 	protected boolean shouldRetryOnError(Throwable t) {
 		// If cloud application cannot be resolved due to any errors, stop any
 		// further attempts to check app state.

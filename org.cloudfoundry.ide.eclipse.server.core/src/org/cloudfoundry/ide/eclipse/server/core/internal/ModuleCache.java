@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -29,6 +29,7 @@ import java.util.Set;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -63,7 +64,7 @@ public class ModuleCache {
 		 */
 		private final List<IModule> undeployedModules = new ArrayList<IModule>();
 
-		private final Map<String, RepublishModule> automaticRepublishModules = new HashMap<String, RepublishModule>();
+		private final Map<CloudFoundryApplicationModule, IProject> mapProject = new HashMap<CloudFoundryApplicationModule, IProject>();
 
 		private int[] applicationMemoryChoices;
 
@@ -75,6 +76,11 @@ public class ModuleCache {
 			cloudModules.clear();
 		}
 
+		/**
+		 * 
+		 * @param application
+		 * @return Non-null new {@link CloudFoundryApplicationModule}
+		 */
 		public synchronized CloudFoundryApplicationModule createModule(CloudApplication application) {
 			CloudFoundryApplicationModule appModule = new CloudFoundryApplicationModule(application.getName(), server);
 			appModule.setCloudApplication(application);
@@ -117,6 +123,9 @@ public class ModuleCache {
 		}
 
 		public synchronized void remove(CloudFoundryApplicationModule module) {
+			if (module == null) {
+				return;
+			}
 			cloudModules.remove(module);
 			if (module.getLocalModule() != null) {
 				Map<String, String> mapping = getLocalModuleToCloudModuleMapping();
@@ -155,13 +164,18 @@ public class ModuleCache {
 			undeployedModules.add(module);
 		}
 
-		public synchronized void tagForAutomaticRepublish(RepublishModule module) {
-			// Tag modules based on their local name, not the deployed name
-			automaticRepublishModules.put(module.getModule().getName(), module);
+		public synchronized void tagForRemap(CloudFoundryApplicationModule appModule, IProject project) {
+			if (appModule != null) {
+				mapProject.put(appModule, project);
+			}
 		}
 
-		public synchronized RepublishModule untagForAutomaticRepublish(IModule module) {
-			return automaticRepublishModules.remove(module.getName());
+		public synchronized IProject untagForRemap(CloudFoundryApplicationModule appModule) {
+			return mapProject.remove(appModule);
+		}
+
+		public synchronized boolean isTaggedForRemap(CloudFoundryApplicationModule appModule) {
+			return mapProject.containsKey(appModule);
 		}
 
 		private void add(CloudFoundryApplicationModule module) {

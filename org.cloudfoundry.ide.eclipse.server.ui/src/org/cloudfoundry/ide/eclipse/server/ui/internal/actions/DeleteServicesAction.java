@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -36,7 +36,7 @@ import org.eclipse.osgi.util.NLS;
  * @author Steffen Pingel
  * @author Christian Dupuis
  */
-public class DeleteServicesAction extends CloudFoundryEditorAction {
+public class DeleteServicesAction extends EditorAction {
 
 	private final CloudFoundryServerBehaviour serverBehaviour;
 
@@ -60,13 +60,14 @@ public class DeleteServicesAction extends CloudFoundryEditorAction {
 
 	@Override
 	public ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
-		return serverBehaviour.getDeleteServicesOperation(servicesHandler.getServiceNames());
+		return serverBehaviour.operations().deleteServices(servicesHandler.getServiceNames());
 	}
 
 	@Override
 	public void run() {
 
-		boolean confirm = MessageDialog.openConfirm(getEditorPage().getSite().getShell(), Messages.DeleteServicesAction_TEXT_DELETE_SERVICE,
+		boolean confirm = MessageDialog.openConfirm(getEditorPage().getSite().getShell(),
+				Messages.DeleteServicesAction_TEXT_DELETE_SERVICE,
 				NLS.bind(Messages.DeleteServicesAction_TEXT_DELETE_CONFIRMATION, servicesHandler.toString()));
 		if (confirm) {
 			super.run();

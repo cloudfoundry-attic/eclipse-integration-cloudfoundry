@@ -20,6 +20,7 @@
 package org.cloudfoundry.ide.eclipse.server.ui.internal.editor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
@@ -28,11 +29,13 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerListener;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudRefreshEvent;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.RefreshApplicationEditorAction;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.CloudFoundryEditorAction.RefreshArea;
-import org.eclipse.core.runtime.CoreException;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.EditorAction.EditorCloudEvent;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.EditorAction.RefreshArea;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.RefreshEditorAction;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -44,8 +47,8 @@ import org.eclipse.ui.forms.ManagedForm;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.ScrolledForm;
 import org.eclipse.ui.progress.UIJob;
+import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.wst.server.core.IModule;
-import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerListener;
 import org.eclipse.wst.server.core.ServerEvent;
 import org.eclipse.wst.server.ui.editor.ServerEditorPart;
@@ -78,6 +81,8 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 
 	private UIJob refreshJob;
 
+	private RefreshEditorOperation currentRefreshOp;
+
 	@Override
 	public void createPartControl(Composite parent) {
 
@@ -94,7 +99,7 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 		masterDetailsBlock.createContent(mform);
 
 		sform.getForm().setImage(CloudFoundryImages.getImage(CloudFoundryImages.OBJ_APPLICATION));
-		refresh(RefreshArea.MASTER, true);
+		refresh(RefreshArea.MASTER);
 
 		serverListener = new ServerListener();
 		addCloudServerListener(serverListener);
@@ -153,21 +158,24 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 		mform.getForm().reflow(true);
 	}
 
-	public void refresh(RefreshArea area, boolean userAction) {
-		RefreshApplicationEditorAction action = new RefreshApplicationEditorAction(this, area);
-		action.setUserAction(userAction);
-		action.run();
+	public void refresh(RefreshArea area) {
+		RefreshEditorAction.getRefreshAction(this, area).run();
 	}
 
 	public void selectAndReveal(IModule module) {
+		// Refresh the UI immediately with the cached information for the module
 		masterDetailsBlock.refreshUI(RefreshArea.MASTER);
 		TableViewer viewer = masterDetailsBlock.getMasterPart().getApplicationsViewer();
 		viewer.setSelection(new StructuredSelection(module));
+
+		// Launch a fresh operation that will update the module. As this is
+		// longer
+		// running, it will eventually refresh the UI via events
+		refresh(RefreshArea.DETAIL);
 	}
 
 	@Override
 	public void setFocus() {
-		// TODO Auto-generated method stub
 	}
 
 	public void setMessage(String message, int messageType) {
@@ -207,63 +215,169 @@ public class CloudFoundryApplicationsEditorPage extends ServerEditorPart {
 		this.applicationMemoryChoices = applicationMemoryChoices;
 	}
 
+	private synchronized void setRefreshOp(RefreshEditorOperation op) {
+		this.currentRefreshOp = op;
+	}
+
+	private synchronized RefreshEditorOperation getRefreshOp() {
+		return this.currentRefreshOp;
+	}
+
 	private class ServerListener implements CloudServerListener, IServerListener {
 		public void serverChanged(final CloudServerEvent event) {
-			if (event.getType() == CloudServerEvent.EVENT_UPDATE_SERVICES) {
-				// refresh services
-				try {
-					setServices(cloudServer.getBehaviour().getServices(null));
-				}
-				catch (CoreException e) {
-					// FIXME: error handling
-				}
+
+			if (event.getServer() == null) {
+				CloudFoundryPlugin
+						.logError("Internal error: unable to refresh editor. No Cloud server specified in the server event."); // $NON-NLS-1$
+				return;
+			}
+			// Do not refresh if not from the same server
+			if (!cloudServer.getServer().getId().equals(event.getServer().getServer().getId())) {
+				return;
 			}
 
-			// ignore EVENT_UPDATE_INSTANCES and DEBUG as refresh will be called
-			// separately for these events
-			if (event.getType() != CloudServerEvent.EVENT_UPDATE_INSTANCES
-					&& event.getType() != CloudServerEvent.EVENT_APP_DEBUG) {
-				refresh(cloudServer.getServer());
+			// Don't trigger editor refresh on instances update to avoid
+			// multiple
+			// refreshes as it is performed
+			// as part of an application update operation which triggers
+			// a separate module refresh event
+			if (event.getType() != CloudServerEvent.EVENT_INSTANCES_UPDATED) {
+				RefreshArea area = event instanceof EditorCloudEvent ? ((EditorCloudEvent) event).getRefreshArea()
+						: RefreshArea.ALL;
+				launchRefresh(new RefreshEditorOperation(event, area));
 			}
 		}
 
 		public void serverChanged(ServerEvent event) {
 			// refresh when server is saved, e.g. due to add/remove of modules
 			if (event.getKind() == ServerEvent.SERVER_CHANGE) {
-				refresh(event.getServer());
+				launchRefresh(new RefreshEditorOperation(CloudServerEvent.EVENT_SERVER_REFRESHED, RefreshArea.ALL,
+						event.getStatus()));
 			}
 		}
+	}
 
-		private void refresh(final IServer server) {
+	protected void launchRefresh(RefreshEditorOperation refreshOp) {
 
-			if (refreshJob == null) {
-				refreshJob = new UIJob(Messages.CloudFoundryApplicationsEditorPage_JOB_REFRESH) {
+		setRefreshOp(refreshOp);
 
-					@Override
-					public IStatus runInUIThread(IProgressMonitor monitor) {
-						try {
-							if (server != null) {
-								CloudFoundryServer cloudServer = (CloudFoundryServer) server.loadAdapter(
-										CloudFoundryServer.class, monitor);
-								if (cloudServer != null) {
-									setServices(cloudServer.getBehaviour().getServices(monitor));
-								}
-							}
+		// Only schedule one job per editor page session, in case multiple
+		// refresh requests are received, only the one that is currently
+		// scheduled should execute
+		if (refreshJob == null) {
+			refreshJob = new UIJob(Messages.CloudFoundryApplicationsEditorPage_JOB_REFRESH) {
 
-							if (mform != null && mform.getForm() != null && !mform.getForm().isDisposed()) {
-								masterDetailsBlock.refreshUI(RefreshArea.ALL);
-							}
-						}
-						catch (CoreException e) {
-							return e.getStatus();
-						}
-						return Status.OK_STATUS;
+				@Override
+				public IStatus runInUIThread(IProgressMonitor monitor) {
+
+					RefreshEditorOperation op = getRefreshOp();
+					if (op != null) {
+						op.run(monitor);
 					}
-				};
+					return Status.OK_STATUS;
+				}
+			};
+		}
+
+		refreshJob.schedule();
+	}
+
+	protected void setErrorInPage(String message) {
+		if (message == null) {
+			setMessage(null, IMessageProvider.NONE);
+		}
+		else {
+			setMessage(message, IMessageProvider.ERROR);
+		}
+	}
+
+	protected void setMessageInPage(IStatus status) {
+		String message = status.getMessage();
+		int providerStatus = IMessageProvider.NONE;
+		switch (status.getSeverity()) {
+		case IStatus.INFO:
+			providerStatus = IMessageProvider.INFORMATION;
+			break;
+		case IStatus.WARNING:
+			providerStatus = IMessageProvider.WARNING;
+			break;
+		}
+
+		setMessage(message, providerStatus);
+	}
+
+	/**
+	 * Refresh operation that should only be run in UI thread.
+	 *
+	 */
+	private class RefreshEditorOperation {
+
+		private CloudServerEvent event;
+
+		private final RefreshArea area;
+
+		private final int type;
+
+		private final IStatus status;
+
+		public RefreshEditorOperation(CloudServerEvent event, RefreshArea area) {
+			this.event = event;
+			this.area = area;
+			this.type = event.getType();
+			this.status = event.getStatus() != null ? event.getStatus() : Status.OK_STATUS;
+		}
+
+		public RefreshEditorOperation(int eventType, RefreshArea area, IStatus status) {
+			this.area = area;
+			this.type = eventType;
+			this.status = status != null ? status : Status.OK_STATUS;
+		}
+
+		public void run(IProgressMonitor monitor) {
+
+			if (isDisposed() || mform == null || mform.getForm() == null || mform.getForm().isDisposed()
+					|| masterDetailsBlock.getMasterPart().getManagedForm().getForm().isDisposed()) {
+				return;
 			}
 
-			refreshJob.schedule();
+			if (event instanceof CloudRefreshEvent
+					&& (this.type == CloudServerEvent.EVENT_UPDATE_SERVICES || this.type == CloudServerEvent.EVENT_SERVER_REFRESHED)
+					&& status.getSeverity() != IStatus.ERROR) {
+				List<CloudService> services = ((CloudRefreshEvent) event).getServices();
+				if (services == null) {
+					services = Collections.emptyList();
+				}
+				setServices(services);
+			}
 
+			Throwable error = status.getException();
+
+			// Refresh the UI before handing any errors
+			masterDetailsBlock.refreshUI(area);
+
+			// Process errors
+			if (status.getSeverity() == IStatus.WARNING || status.getSeverity() == IStatus.INFO) {
+				setMessageInPage(status);
+			}
+			else if (error != null || status.getSeverity() == IStatus.ERROR) {
+				StatusManager.getManager().handle(status, StatusManager.LOG);
+				setErrorInPage(status.getMessage());
+			}
+			else {
+				IModule currentModule = getMasterDetailsBlock().getCurrentModule();
+
+				// If no error is found, be sure to set null for the
+				// message to
+				// clear any error messages
+				String errorMessage = null;
+				if (currentModule != null) {
+					CloudFoundryApplicationModule appModule = getCloudServer().getExistingCloudModule(currentModule);
+					if (appModule != null && appModule.getErrorMessage() != null) {
+						errorMessage = appModule.getErrorMessage();
+					}
+				}
+				setErrorInPage(errorMessage);
+			}
 		}
 	}
 

@@ -267,7 +267,7 @@
                	</and>    
 	        </with>  
 		</enabledWhen>
-      </handler>    
+      </handler>      
       <handler
         class="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.UpdateRestartModuleCommand"
         commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.updaterestartmodulecommand">

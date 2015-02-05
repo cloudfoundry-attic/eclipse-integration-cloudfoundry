@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2013, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -223,8 +223,10 @@ public abstract class AbstractApplicationDelegate {
 			String deploymentName = cloudApplication.getName();
 			ApplicationDeploymentInfo deploymentInfo = new ApplicationDeploymentInfo(deploymentName);
 
+			deploymentInfo.setInstances(cloudApplication.getInstances());
 			deploymentInfo.setStaging(cloudApplication.getStaging());
 			deploymentInfo.setMemory(cloudApplication.getMemory());
+			
 			List<String> boundServiceNames = cloudApplication.getServices();
 			if (boundServiceNames != null) {
 				List<CloudService> services = new ArrayList<CloudService>();

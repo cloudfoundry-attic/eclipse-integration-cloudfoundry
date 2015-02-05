@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -17,28 +17,30 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.core.internal;
+package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
-import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
 import org.eclipse.wst.server.core.IModule;
 
-public class RepublishModule {
+/**
+ * An operation performed in a {@link CloudFoundryServerBehaviour} target Cloud
+ * space on a target IModule
+ */
+public abstract class BehaviourOperation implements ICloudFoundryOperation {
+
+	private final CloudFoundryServerBehaviour behaviour;
 
 	private final IModule module;
 
-	private final ApplicationDeploymentInfo deploymentInfo;
-
-	public RepublishModule(IModule module, ApplicationDeploymentInfo deploymentInfo) {
+	public BehaviourOperation(CloudFoundryServerBehaviour behaviour, IModule module) {
+		this.behaviour = behaviour;
 		this.module = module;
-		this.deploymentInfo = deploymentInfo;
+	}
+
+	public CloudFoundryServerBehaviour getBehaviour() {
+		return behaviour;
 	}
 
 	public IModule getModule() {
 		return module;
 	}
-
-	public ApplicationDeploymentInfo getDeploymentInfo() {
-		return deploymentInfo;
-	}
-
 }

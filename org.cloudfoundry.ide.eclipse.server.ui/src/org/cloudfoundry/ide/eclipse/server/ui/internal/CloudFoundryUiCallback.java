@@ -25,7 +25,6 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.BehaviourEventType;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
@@ -70,7 +69,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		if (showIndex < 0) {
 			showIndex = 0;
 		}
-		for (int i = 0; i < cloudModule.getApplication().getInstances(); i++) {
+		for (int i = 0; i < cloudModule.getDeploymentInfo().getInstances(); i++) {
 			// Do not clear the console as pre application start information may
 			// have been already sent to the console
 			// output
@@ -216,7 +215,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public void handleError(final IStatus status, BehaviourEventType eventType) {
+	public void handleError(final IStatus status) {
 
 		if (status != null && status.getSeverity() == IStatus.ERROR) {
 

@@ -27,12 +27,12 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryProperties;
+import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.DeleteServicesAction;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.RefreshApplicationEditorAction;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.RefreshEditorAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.ServiceToApplicationsBindingAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryServiceWizard;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudRoutesWizard;
@@ -230,10 +230,8 @@ public class ApplicationMasterPart extends SectionPart {
 									Display.getDefault().asyncExec(new Runnable() {
 
 										public void run() {
-											MessageDialog.openError(
-													editorPage.getSite().getShell(),
-													Messages.ApplicationMasterPart_ERROR_DEPLOY_FAIL_TITLE,
-													NLS.bind(
+											MessageDialog.openError(editorPage.getSite().getShell(),
+													Messages.ApplicationMasterPart_ERROR_DEPLOY_FAIL_TITLE, NLS.bind(
 															Messages.ApplicationMasterPart_ERROR_DEPLOY_FAIL_BODY,
 															moduleName));
 										}
@@ -413,7 +411,7 @@ public class ApplicationMasterPart extends SectionPart {
 		toolBarManager.add(addRemoveApplicationAction);
 
 		// Fix for STS-2996. Moved from CloudFoundryApplicationsEditorPage
-		toolBarManager.add(new RefreshApplicationEditorAction(editorPage));
+		toolBarManager.add(RefreshEditorAction.getRefreshAction(editorPage, null));
 		toolBarManager.update(true);
 		section.setTextClient(headerComposite);
 
@@ -596,12 +594,9 @@ public class ApplicationMasterPart extends SectionPart {
 		}
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
-				
-		manager.add(new ServiceToApplicationsBindingAction(
-				selection, 
-				cloudServer.getBehaviour(), 
-				editorPage));		
-		
+
+		manager.add(new ServiceToApplicationsBindingAction(selection, cloudServer.getBehaviour(), editorPage));
+
 		// FIXNS: Disable Caldecott feature in 1.5.1 until feature is supported
 		// in the client-lib
 		// List<IAction> caldecottAction = new

@@ -34,9 +34,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerListener;
-import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
@@ -48,8 +45,8 @@ import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.DebugCommand;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.CloudFoundryEditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.DebugApplicationEditorAction;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.EditorAction.RefreshArea;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.RemoveServicesFromApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.ShowConsoleEditorAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.StartStopApplicationAction;
@@ -60,7 +57,6 @@ import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.AppStatsContentPro
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.ApplicationActionMenuControl.IButtonMenuListener;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.EnvVarsWizard;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.MappedURLsWizard;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -179,8 +175,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	private Text memoryText;
 
-	private CloudServerListener applicationChangeListener;
-
 	private Composite startButtonComposite;
 
 	private Composite restartButtonComposite;
@@ -236,12 +230,9 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			addDropSupport(servicesSection);
 			addDropSupport(instancesSection);
 		}
-
-		applicationChangeListener = new ApplicationChangeListener();
-		editorPage.addCloudServerListener(applicationChangeListener);
 	}
 
-	protected void refreshDebugControls(CloudFoundryApplicationModule appModule) {
+	public void refreshDebugControls(CloudFoundryApplicationModule appModule) {
 
 		if (debugControl == null || debugControl.isDisposed()) {
 			return;
@@ -366,13 +357,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		resizeTableColumns();
 
 		canUpdate = false;
-		CloudFoundryApplicationModule appModule = null;
-		try {
-			appModule = getUpdatedApplication();
-		}
-		catch (CoreException ce) {
-			logApplicationModuleFailureError(Messages.ApplicationDetailsPart_ERROR_UNABLE_REFRESH_EDITOR_STATE);
-		}
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
+
 		// Refresh the state of the editor regardless of whether there is a
 		// module or not
 		refreshPublishState(appModule);
@@ -532,7 +518,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		module = (IModule) sel.getFirstElement();
 
 		refreshUI();
-		editorPage.refresh(RefreshArea.DETAIL, true);
+		editorPage.refresh(RefreshArea.DETAIL);
 	}
 
 	private void adaptControl(Control control) {
@@ -1250,24 +1236,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		return appModule;
 	}
 
-	/**
-	 * @return an updated cloud application module. If it did not previously
-	 * exist, it will attempt to create it. Never null as requesting an app
-	 * module during the lifecycle of the editor should always result in
-	 * non-null app.
-	 * @throws CoreException if application does not exist
-	 */
-	protected CloudFoundryApplicationModule getUpdatedApplication() throws CoreException {
-		CloudFoundryApplicationModule appModule = cloudServer.getCloudModule(module);
-
-		if (appModule == null) {
-			String errorMessage = module != null ? NLS.bind(Messages.ApplicationDetailsPart_ERROR_NO_CF_APP_MODULE_FOR,
-					module.getId()) : Messages.ApplicationDetailsPart_ERROR_NO_CF_APP_MODULE;
-			throw CloudErrorUtil.toCoreException(errorMessage);
-		}
-		return appModule;
-	}
-
 	protected void logError(String message) {
 		logError(message, null);
 	}
@@ -1276,7 +1244,6 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		if (editorPage != null && !editorPage.isDisposed()) {
 			if (message != null) {
 				editorPage.setErrorMessage(message);
-
 			}
 			else {
 				editorPage.setErrorMessage(null);
@@ -1333,63 +1300,4 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		return result.toString();
 	}
 
-	protected class ApplicationChangeListener implements CloudServerListener {
-
-		@Override
-		public void serverChanged(CloudServerEvent event) {
-			if (event instanceof ApplicationChangeEvent) {
-
-				final ApplicationChangeEvent appEvent = (ApplicationChangeEvent) event;
-
-				if (appEvent.getType() == CloudServerEvent.EVENT_APP_DEBUG) {
-
-					// Both are required in order to check that the current
-					// visible application in the editor matches
-					// the event source
-					if (appEvent.getServer() == null || appEvent.getApplication() == null) {
-						return;
-					}
-
-					CloudFoundryApplicationModule appModule = null;
-
-					try {
-						appModule = getExistingApplication();
-					}
-					catch (CoreException ce) {
-						logApplicationModuleFailureError(Messages.ApplicationDetailsPart_ERROR_REFRESH_DEBUG_BUTTON);
-						return;
-					}
-
-					if (appModule.getDeployedApplicationName().equals(
-							appEvent.getApplication().getDeployedApplicationName())
-							&& cloudServer.getServer().getId().equals(appEvent.getServer().getServer().getId())) {
-						final CloudFoundryApplicationModule finAppModule = appModule;
-						UIJob job = new UIJob(Messages.ApplicationDetailsPart_JOB_DEBUG) {
-
-							public IStatus runInUIThread(IProgressMonitor arg0) {
-
-								final IStatus eventStatus = appEvent.getStatus();
-
-								if (!eventStatus.isOK() && startButtonComposite != null
-										&& !startButtonComposite.isDisposed()) {
-									logError(eventStatus.getMessage(), startButtonComposite.getShell());
-								}
-
-								refreshDebugControls(finAppModule);
-
-								// Return OK. If there is an error it gets
-								// handled separately above.
-								return Status.OK_STATUS;
-							}
-
-						};
-						job.setSystem(true);
-						job.setRule(ResourcesPlugin.getWorkspace().getRuleFactory().buildRule());
-						job.setPriority(Job.INTERACTIVE);
-						job.schedule();
-					}
-				}
-			}
-		}
-	}
 }

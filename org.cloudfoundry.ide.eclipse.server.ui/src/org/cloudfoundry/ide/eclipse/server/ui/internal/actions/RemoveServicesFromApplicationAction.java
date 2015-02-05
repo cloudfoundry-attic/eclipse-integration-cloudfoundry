@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -27,8 +27,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServ
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.IStructuredSelection;
 
 /**
@@ -40,8 +38,9 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 
 	private final List<String> services;
 
-	public RemoveServicesFromApplicationAction(IStructuredSelection selection, CloudFoundryApplicationModule application,
-			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
+	public RemoveServicesFromApplicationAction(IStructuredSelection selection,
+			CloudFoundryApplicationModule application, CloudFoundryServerBehaviour serverBehaviour,
+			CloudFoundryApplicationsEditorPage editorPage) {
 		super(application, serverBehaviour, editorPage);
 
 		setText(Messages.RemoveServicesFromApplicationAction_TEXT_UNBIND_FROM_APP);
@@ -64,10 +63,4 @@ public class RemoveServicesFromApplicationAction extends ModifyServicesForApplic
 	public List<String> getServicesToRemove() {
 		return services;
 	}
-
-	protected void updateServicesInClient(IProgressMonitor monitor, CloudFoundryApplicationModule appModule,
-			CloudFoundryServerBehaviour serverBehaviour, List<String> updatedServices) throws CoreException {
-		serverBehaviour.updateServicesAndCloseCaldecottTunnels(appModule.getDeployedApplicationName(), updatedServices, monitor);
-	}
-
 }

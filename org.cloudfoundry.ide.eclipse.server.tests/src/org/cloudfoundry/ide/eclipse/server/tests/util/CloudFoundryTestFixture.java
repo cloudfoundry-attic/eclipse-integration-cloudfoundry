@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License,
- * Version 2.0 (the "License�); you may not use this file except in compliance
+ * Version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -38,6 +38,7 @@ import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpaces;
 import org.cloudfoundry.ide.eclipse.server.tests.AllCloudFoundryTests;
@@ -89,6 +90,8 @@ public class CloudFoundryTestFixture {
 	public static final String ORG_PROPERTY = "org";
 
 	public static final String SPACE_PROPERTY = "space";
+
+	public static final String URL_PROPERTY = "url";
 
 	public static final String CLOUDFOUNDRY_TEST_CREDENTIALS_PROPERTY = "test.credentials";
 
@@ -279,7 +282,7 @@ public class CloudFoundryTestFixture {
 			List<String> services = new ArrayList<String>();
 			services.add(serviceName);
 
-			serverBehavior.getDeleteServicesOperation(services).run(new NullProgressMonitor());
+			serverBehavior.operations().deleteServices(services).run(new NullProgressMonitor());
 		}
 
 		public void deleteAllServices() throws CoreException {
@@ -405,7 +408,7 @@ public class CloudFoundryTestFixture {
 	 * @throws CoreException
 	 */
 	public CloudFoundryTestFixture baseConfiguration() throws CoreException {
-		return configureForApplicationDeployment(null, false);
+		return configureForApplicationDeployment(null, CloudUtil.DEFAULT_MEMORY, false);
 	}
 
 	/**
@@ -417,9 +420,9 @@ public class CloudFoundryTestFixture {
 	 * @return
 	 * @throws CoreException
 	 */
-	public CloudFoundryTestFixture configureForApplicationDeployment(String fullApplicationName, boolean deployStopped)
-			throws CoreException {
-		CloudFoundryPlugin.setCallback(new TestCallback(fullApplicationName, deployStopped));
+	public CloudFoundryTestFixture configureForApplicationDeployment(String fullApplicationName, int memory,
+			boolean deployStopped) throws CoreException {
+		CloudFoundryPlugin.setCallback(new TestCallback(fullApplicationName, memory, deployStopped));
 		return getTestFixture();
 	}
 
@@ -429,9 +432,34 @@ public class CloudFoundryTestFixture {
 
 	private final String url;
 
+	/**
+	 * This will create a Cloud server instances based either on the URL in a
+	 * properties file that also contains the credentials, or the default server
+	 * domain passed into the fixture. The URL in the properties file is
+	 * optional, if it is not found, the default server Domain will be used
+	 * instead
+	 * @param serverDomain default domain to use for the Cloud space.
+	 */
 	public CloudFoundryTestFixture(String serverDomain) {
+		String urlFromProperties = null;
+		try {
+			urlFromProperties = getCredentials().url;
+		}
+		catch (CoreException e) {
+			e.printStackTrace();
+		}
 
-		this.url = "http://api." + serverDomain;
+		if (urlFromProperties != null) {
+			if (urlFromProperties.startsWith("http://") || urlFromProperties.startsWith("https://")) {
+				this.url = urlFromProperties;
+			}
+			else {
+				this.url = "http://" + urlFromProperties;
+			}
+		}
+		else {
+			this.url = "http://api." + serverDomain;
+		}
 
 		ServerDescriptor descriptor = new ServerDescriptor("server") {
 			{
@@ -482,7 +510,10 @@ public class CloudFoundryTestFixture {
 
 		public final String space;
 
-		public CredentialProperties(String userEmail, String password, String organization, String space) {
+		public final String url;
+
+		public CredentialProperties(String url, String userEmail, String password, String organization, String space) {
+			this.url = url;
 			this.userEmail = userEmail;
 			this.password = password;
 			this.organization = organization;
@@ -502,6 +533,7 @@ public class CloudFoundryTestFixture {
 		String password = null;
 		String org = null;
 		String space = null;
+		String url = null;
 		if (propertiesLocation != null) {
 
 			File propertiesFile = new File(propertiesLocation);
@@ -516,6 +548,7 @@ public class CloudFoundryTestFixture {
 					password = properties.getProperty(PASSWORD_PROPERTY);
 					org = properties.getProperty(ORG_PROPERTY);
 					space = properties.getProperty(SPACE_PROPERTY);
+					url = properties.getProperty(URL_PROPERTY);
 				}
 			}
 			catch (FileNotFoundException e) {
@@ -536,7 +569,7 @@ public class CloudFoundryTestFixture {
 			}
 		}
 
-		CredentialProperties cred = new CredentialProperties(userEmail, password, org, space);
+		CredentialProperties cred = new CredentialProperties(url, userEmail, password, org, space);
 		StsTestUtil.validateCredentials(cred);
 		return cred;
 

@@ -28,7 +28,7 @@ public class Messages extends NLS {
 	public static String AbstractApplicationDelegate_ERROR_MISSING_DEPLOY_INFO;
 
 	public static String AbstractApplicationDelegate_ERROR_MISSING_MEM;
-	
+
 	public static String ApplicationLogConsoleManager_NO_RECENT_LOGS;
 
 	public static String ApplicationUrlLookupService_ERROR_GET_CLOUD_URL;
@@ -172,6 +172,12 @@ public class Messages extends NLS {
 	public static String CONSOLE_STOPPING_APPLICATION;
 
 	public static String REFRESHING_MODULES;
+
+	public static String RefreshModulesHandler_REFRESH_FAILURE;
+
+	public static String RefreshModulesHandler_REFRESH_JOB;
+	
+	public static String RefreshModulesHandler_EVENT_CLOUD_SERVER_NULL;
 
 	public static String PUBLISHING_MODULE;
 

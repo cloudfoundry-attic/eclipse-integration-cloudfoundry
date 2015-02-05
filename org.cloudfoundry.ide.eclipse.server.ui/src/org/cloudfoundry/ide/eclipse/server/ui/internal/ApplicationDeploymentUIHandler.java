@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2013, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -27,7 +27,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupSer
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.RepublishModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
@@ -45,7 +44,6 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.wst.server.core.IModule;
 
 /**
  * Prepares an application for deployment. Application deployments are defined
@@ -79,25 +77,6 @@ public class ApplicationDeploymentUIHandler {
 			final CloudFoundryApplicationModule appModule, final IProgressMonitor monitor) throws CoreException,
 			OperationCanceledException {
 
-		// First check if the module is set for automatic republish (i.e. a
-		// prior publish for the application
-		// failed, but the deployment info is available through the republish
-		// module
-
-		IModule module = appModule.getLocalModule();
-
-		RepublishModule repModule = CloudFoundryPlugin.getModuleCache().getData(server.getServerOriginal())
-				.untagForAutomaticRepublish(module);
-
-		if (repModule != null) {
-			ApplicationDeploymentInfo republishDeploymentInfo = repModule.getDeploymentInfo();
-			if (republishDeploymentInfo != null) {
-				DeploymentInfoWorkingCopy copy = appModule.resolveDeploymentInfoWorkingCopy(monitor);
-				copy.setInfo(republishDeploymentInfo);
-				copy.save();
-			}
-		}
-
 		// Validate the existing deployment info. Do NOT save or make changes to
 		// the deployment info prior to this stage
 		// (for example, saving a working copy of the deployment info with
@@ -124,7 +103,8 @@ public class ApplicationDeploymentUIHandler {
 
 			if (providerDelegate == null) {
 				throw CloudErrorUtil.toCoreException("Failed to open application deployment wizard for: " //$NON-NLS-1$
-						+ appModule.getDeployedApplicationName() + " when attempting to push application to " //$NON-NLS-1$
+						+ appModule.getDeployedApplicationName()
+						+ " when attempting to push application to " //$NON-NLS-1$
 						+ server.getServer().getName()
 						+ ". No application provider found that corresponds to the application type: " //$NON-NLS-1$
 						+ appModule.getLocalModule().getModuleType().getId());
@@ -188,8 +168,8 @@ public class ApplicationDeploymentUIHandler {
 							if (addedServices != null && !addedServices.isEmpty()) {
 								IProgressMonitor subMonitor = new SubProgressMonitor(monitor, addedServices.size());
 								try {
-									server.getBehaviour().createService(addedServices.toArray(new CloudService[0]),
-											subMonitor);
+									server.getBehaviour().operations()
+											.createServices(addedServices.toArray(new CloudService[0])).run(monitor);
 								}
 								catch (CoreException e) {
 									// Do not let service creation errors

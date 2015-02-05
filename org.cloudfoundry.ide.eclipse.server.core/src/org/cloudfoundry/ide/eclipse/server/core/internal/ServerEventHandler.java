@@ -22,6 +22,13 @@ package org.cloudfoundry.ide.eclipse.server.core.internal;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudRefreshEvent;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.wst.server.core.IModule;
+
 /**
  * Fires server refresh events. Only one handler is active per workbench runtime
  * session.
@@ -50,12 +57,8 @@ public class ServerEventHandler {
 		applicationListeners.remove(listener);
 	}
 
-	public void fireInstancesUpdated(CloudFoundryServer server) {
-		fireServerEvent(new CloudServerEvent(server, CloudServerEvent.EVENT_UPDATE_INSTANCES));
-	}
-
-	public void fireServicesUpdated(CloudFoundryServer server) {
-		fireServerEvent(new CloudServerEvent(server, CloudServerEvent.EVENT_UPDATE_SERVICES));
+	public void fireServicesUpdated(CloudFoundryServer server, List<CloudService> services) {
+		fireServerEvent(new CloudRefreshEvent(server, null, CloudServerEvent.EVENT_UPDATE_SERVICES, services));
 	}
 
 	public void firePasswordUpdated(CloudFoundryServer server) {
@@ -64,6 +67,25 @@ public class ServerEventHandler {
 
 	public void fireServerRefreshed(CloudFoundryServer server) {
 		fireServerEvent(new CloudServerEvent(server, CloudServerEvent.EVENT_SERVER_REFRESHED));
+	}
+
+	public void fireAppInstancesChanged(CloudFoundryServer server, IModule module) {
+		fireServerEvent(new ModuleChangeEvent(server, CloudServerEvent.EVENT_INSTANCES_UPDATED, module,
+				Status.OK_STATUS));
+	}
+
+	public void fireApplicationRefreshed(CloudFoundryServer server, IModule module) {
+		fireServerEvent(new ModuleChangeEvent(server, CloudServerEvent.EVENT_APPLICATION_REFRESHED, module,
+				Status.OK_STATUS));
+	}
+
+	public void fireAppDeploymentChanged(CloudFoundryServer server, IModule module) {
+		fireServerEvent(new ModuleChangeEvent(server, CloudServerEvent.EVENT_APP_DEPLOYMENT_CHANGED, module,
+				Status.OK_STATUS));
+	}
+
+	public void fireError(CloudFoundryServer server, IModule module, IStatus status) {
+		fireServerEvent(new ModuleChangeEvent(server, CloudServerEvent.EVENT_CLOUD_OP_ERROR, module, status));
 	}
 
 	public synchronized void fireServerEvent(CloudServerEvent event) {

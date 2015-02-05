@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -41,18 +41,15 @@ import org.eclipse.jface.viewers.IStructuredSelection;
  * @author Steffen Pingel
  * @author Christian Dupuis
  */
-public abstract class ModifyServicesForApplicationAction extends CloudFoundryEditorAction {
+public abstract class ModifyServicesForApplicationAction extends EditorAction {
 
 	private CloudFoundryApplicationModule appModule;
-
-	private final CloudFoundryServerBehaviour serverBehaviour;
 
 	public ModifyServicesForApplicationAction(CloudFoundryApplicationModule appModule,
 			CloudFoundryServerBehaviour serverBehaviour, CloudFoundryApplicationsEditorPage editorPage) {
 		super(editorPage, RefreshArea.DETAIL);
 
 		this.appModule = appModule;
-		this.serverBehaviour = serverBehaviour;
 	}
 
 	abstract public List<String> getServicesToAdd();
@@ -111,27 +108,11 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 
 			if (appModule.getApplication() != null) {
 				// update services right away, if app is already deployed
-				return new ModifyEditorOperation() {
-					protected void performOperation(IProgressMonitor monitor) throws CoreException {
-						ModifyServicesForApplicationAction.this.updateServicesInClient(monitor, appModule,
-								serverBehaviour, updatedServices);
-					}
-				};
+				return getBehaviour().operations().bindServices(appModule, updatedServices);
 			}
 		}
 		return null;
 	}
-
-	/**
-	 * Performs the actual services update through the CF server behaviour
-	 * @param monitor
-	 * @param appModule
-	 * @param serverBehaviour
-	 * @param updatedServices
-	 * @throws CoreException
-	 */
-	protected abstract void updateServicesInClient(IProgressMonitor monitor, CloudFoundryApplicationModule appModule,
-			CloudFoundryServerBehaviour serverBehaviour, List<String> updatedServices) throws CoreException;
 
 	@Override
 	protected boolean shouldLogException(CoreException e) {
@@ -160,7 +141,5 @@ public abstract class ModifyServicesForApplicationAction extends CloudFoundryEdi
 			}
 		}
 		return services;
-
 	}
-
 }

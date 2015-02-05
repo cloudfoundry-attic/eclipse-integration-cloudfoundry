@@ -17,7 +17,7 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.core.internal.client;
+package org.cloudfoundry.ide.eclipse.server.core.internal.tunnel;
 
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -41,7 +41,13 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.AbstractWaitWithProgressJob;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryClientFactory;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.LocalCloudService;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.LocalServerRequest;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -107,7 +113,6 @@ public class TunnelBehaviour {
 			updateCaldecottServices.add(serviceName);
 			CloudFoundryServerBehaviour behaviour = cloudServer.getBehaviour();
 			behaviour.stopModule(new IModule[] { caldecottModule }, monitor.newChild(1));
-			behaviour.updateServices(TunnelHelper.getTunnelAppName(), updateCaldecottServices, monitor.newChild(1));
 
 			setDeploymentServices(serviceName, monitor.newChild(1));
 
@@ -138,9 +143,6 @@ public class TunnelBehaviour {
 		}
 
 		cloudServer.getBehaviour().startModule(new IModule[] { appModule.getLocalModule() }, progress);
-
-		// Wait til application has started
-		new WaitApplicationToStartOp(cloudServer, appModule).run(progress);
 
 	}
 
@@ -575,7 +577,7 @@ public class TunnelBehaviour {
 		// refresh the list of modules to create a module for the
 		// deployed Caldecott App
 		if (deployed) {
-			cloudServer.getBehaviour().refreshModules(monitor);
+			cloudServer.getBehaviour().getRefreshHandler().scheduleRefreshAll();
 		}
 
 	}
