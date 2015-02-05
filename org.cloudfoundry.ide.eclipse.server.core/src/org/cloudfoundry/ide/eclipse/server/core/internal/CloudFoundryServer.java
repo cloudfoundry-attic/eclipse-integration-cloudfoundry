@@ -124,11 +124,41 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 
 	private static final String PROPERTY_DEPLOYMENT_NAME = "deployment_name"; //$NON-NLS-1$
 
-	static void updateState(Server server, CloudFoundryApplicationModule appModule) throws CoreException {
-		IModule localModule = appModule.getLocalModule();
-		server.setModuleState(new IModule[] { localModule }, appModule.getState());
-		if (server.getModulePublishState(new IModule[] { localModule }) == IServer.PUBLISH_STATE_UNKNOWN) {
-			server.setModulePublishState(new IModule[] { localModule }, appModule.getPublishState());
+	protected void updateState(Server server, CloudFoundryApplicationModule appModule) throws CoreException {
+		IModule[] localModule = new IModule[] {appModule.getLocalModule()};
+		server.setModuleState(localModule, appModule.getState());
+		if (server.getModulePublishState(localModule) == IServer.PUBLISH_STATE_UNKNOWN) {
+			if (!server.hasPublishedResourceDelta(localModule)) {
+				server.setModulePublishState(localModule, IServer.PUBLISH_STATE_NONE);
+			} else {
+				server.setModulePublishState(localModule, IServer.PUBLISH_STATE_INCREMENTAL);
+			}
+		}
+		// Update the child module states if available.
+		updateChildModuleStates(server, localModule);
+	}
+
+	private void updateChildModuleStates(Server server, IModule[] parentModule) throws CoreException {
+		if (parentModule == null || parentModule.length == 0) {
+			return;
+		}
+		
+		int parentModuleSize = parentModule.length;
+		
+		IModule[] childModules = server.getChildModules(parentModule, null);
+		for (IModule curChildModule : childModules) {
+			IModule[] curFullChildModule = new IModule[parentModuleSize+1];
+			System.arraycopy(parentModule, 0, curFullChildModule, 0, parentModuleSize);
+			curFullChildModule[parentModuleSize] = curChildModule;
+
+			if (server.getModulePublishState(curFullChildModule) == IServer.PUBLISH_STATE_UNKNOWN) {
+				if (!server.hasPublishedResourceDelta(curFullChildModule)) {
+					server.setModulePublishState(curFullChildModule, IServer.PUBLISH_STATE_NONE);
+				} else {
+					server.setModulePublishState(curFullChildModule, IServer.PUBLISH_STATE_INCREMENTAL);
+				}
+			}
+			updateChildModuleStates(server, curFullChildModule);
 		}
 	}
 
