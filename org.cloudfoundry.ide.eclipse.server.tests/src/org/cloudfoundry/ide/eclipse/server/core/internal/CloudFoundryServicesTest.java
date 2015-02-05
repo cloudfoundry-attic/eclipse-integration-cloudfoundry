@@ -98,7 +98,7 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
 
 		assertServiceNotBound(service.getName(), appModule.getApplication());
-		assertEquals(0, appModule.getDeploymentInfo().getServices());
+		assertEquals(0, appModule.getDeploymentInfo().getServices().size());
 
 	}
 
@@ -130,7 +130,7 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
 
 		assertServiceNotBound(service.getName(), appModule.getApplication());
-		assertEquals(0, appModule.getDeploymentInfo().getServices());
+		assertEquals(0, appModule.getDeploymentInfo().getServices().size());
 	}
 
 	public void testServiceCreationEvent() throws Exception {
