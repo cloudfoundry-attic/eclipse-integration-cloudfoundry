@@ -38,9 +38,11 @@ public class CloudServerEvent extends EventObject {
 
 	public static final int EVENT_UPDATE_PASSWORD = 300;
 
+	public static final int EVENT_APPLICATION_REFRESHED = 310;
+
 	public static final int EVENT_SERVER_REFRESHED = 400;
 
-	public static final int EVENT_APP_CHANGED = 410;
+	public static final int EVENT_APP_DEPLOYMENT_CHANGED = 410;
 
 	public static final int EVENT_APP_DEBUG = 500;
 

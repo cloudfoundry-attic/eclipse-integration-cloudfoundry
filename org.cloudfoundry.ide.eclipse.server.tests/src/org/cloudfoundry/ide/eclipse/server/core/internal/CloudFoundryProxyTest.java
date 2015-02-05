@@ -93,7 +93,7 @@ public class CloudFoundryProxyTest extends AbstractAsynchCloudTest {
 		String prefix = "InvalidProxyServerInstance";
 		createWebApplicationProject();
 
-		CloudFoundryApplicationModule appModule = assertDeployApplicationStartMode(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
 		final String appName = appModule.getDeployedApplicationName();
 
 		final boolean[] ran = { false };

@@ -33,7 +33,7 @@ import org.eclipse.wst.server.core.IModule;
  * Deletes a given set of application modules. The modules need not have
  * associated deployed applications.
  */
-public class DeleteModulesOperation extends AbstractCloudOperation {
+public class DeleteModulesOperation extends BehaviourOperation {
 
 	/**
 	 * 
@@ -45,20 +45,15 @@ public class DeleteModulesOperation extends AbstractCloudOperation {
 
 	public DeleteModulesOperation(CloudFoundryServerBehaviour cloudFoundryServerBehaviour, IModule[] modules,
 			boolean deleteServices) {
-		super(cloudFoundryServerBehaviour);
+		super(cloudFoundryServerBehaviour, modules.length > 0 ? modules[0] : null);
 		this.modules = modules;
 		this.deleteServices = deleteServices;
 	}
 
 	@Override
-	protected void performOperation(IProgressMonitor monitor) throws CoreException {
-		getBehaviour().getRefreshHandler().stop(true);
-		try {
-			doDelete(monitor);
-		}
-		finally {
-			getBehaviour().getRefreshHandler().stop(false);
-		}
+	public void run(IProgressMonitor monitor) throws CoreException {
+		doDelete(monitor);
+		getBehaviour().getRefreshHandler().scheduleRefreshAll();
 	}
 
 	protected void doDelete(IProgressMonitor monitor) throws CoreException {
@@ -129,11 +124,6 @@ public class DeleteModulesOperation extends AbstractCloudOperation {
 				CloudFoundryPlugin.getCallback().deleteServices(servicesToDelete, cloudServer);
 			}
 		}
-	}
-
-	@Override
-	protected void refresh(IProgressMonitor monitor) throws CoreException {
-		getBehaviour().getRefreshHandler().scheduleRefresh();
 	}
 
 }

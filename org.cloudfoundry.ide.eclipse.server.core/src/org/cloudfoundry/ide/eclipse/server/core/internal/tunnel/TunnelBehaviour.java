@@ -577,7 +577,7 @@ public class TunnelBehaviour {
 		// refresh the list of modules to create a module for the
 		// deployed Caldecott App
 		if (deployed) {
-			cloudServer.getBehaviour().getRefreshHandler().scheduleRefresh();
+			cloudServer.getBehaviour().getRefreshHandler().scheduleRefreshAll();
 		}
 
 	}

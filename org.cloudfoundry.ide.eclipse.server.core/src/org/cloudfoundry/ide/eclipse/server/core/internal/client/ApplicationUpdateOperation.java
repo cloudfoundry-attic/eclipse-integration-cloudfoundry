@@ -19,28 +19,29 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
-import java.util.List;
-
-import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.wst.server.core.IModule;
 
-public class UpdateServicesOperation extends BehaviourOperation {
+/**
+ * Performs a {@link BaseClientRequest} that updates an existing published
+ * application. After the request is performed it will fire an event indicating
+ * that the published application has been updated (e.g. memory scaled, mapped
+ * URL changed, etc.)
+ *
+ */
+public class ApplicationUpdateOperation extends BehaviourOperation {
 
-	private final BaseClientRequest<List<CloudService>> request;
+	private final BaseClientRequest<?> request;
 
-	protected UpdateServicesOperation(BaseClientRequest<List<CloudService>> request,
-			CloudFoundryServerBehaviour behaviour) {
-		super(behaviour, null);
+	public ApplicationUpdateOperation(BaseClientRequest<?> request, CloudFoundryServerBehaviour behaviour, IModule module) {
+		super(behaviour, module);
 		this.request = request;
 	}
 
 	@Override
 	public void run(IProgressMonitor monitor) throws CoreException {
-		List<CloudService> existingServices = request.run(monitor);
-		ServerEventHandler.getDefault().fireServicesUpdated(getBehaviour().getCloudFoundryServer(),
-				existingServices);
+		request.run(monitor);
+		getBehaviour().getRefreshHandler().schedulesRefreshApplication(getModule());
 	}
-
 }

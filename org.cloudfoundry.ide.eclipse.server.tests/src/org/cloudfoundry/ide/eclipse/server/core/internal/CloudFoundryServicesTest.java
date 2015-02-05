@@ -20,11 +20,15 @@
 package org.cloudfoundry.ide.eclipse.server.core.internal;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudRefreshEvent;
+import org.cloudfoundry.ide.eclipse.server.tests.util.ModulesRefreshListener;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
 public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
@@ -32,38 +36,34 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 	public static final String SERVICE_NAME = "cfEclipseRegressionTestService";
 
 	public void testCreateAndDeleteService() throws Exception {
-		CloudService service = createService();
+		CloudService service = createDefaultService();
 		assertServiceExists(service);
+
+		List<CloudService> existingServices = serverBehavior.getServices(new NullProgressMonitor());
+		assertTrue("Expected 1 service", existingServices.size() == 1);
+		assertEquals(SERVICE_NAME, existingServices.get(0).getName());
+		assertEquals("elephantsql", existingServices.get(0).getLabel());
+		assertEquals("turtle", existingServices.get(0).getPlan());
+
+		assertServiceExists(existingServices.get(0));
+
 		deleteService(service);
 		assertServiceNotExist(SERVICE_NAME);
-	}
 
-	public void testServiceBinding() throws Exception {
-		CloudService service = createService();
-		String prefix = "testServiceBinding";
-		createWebApplicationProject();
-		CloudFoundryApplicationModule appModule = assertDeployApplicationStartMode(prefix);
-
-		CloudApplication app = appModule.getApplication();
-		assertStopModule(appModule);
-
-		getBindServiceOp(appModule, service).run(new NullProgressMonitor());
-
-		assertStartModule(appModule);
-
-		assertServiceBound(service.getName(), app);
-
+		existingServices = serverBehavior.getServices(new NullProgressMonitor());
+		assertTrue("Expected empty list of services", existingServices.isEmpty());
 	}
 
 	public void testServiceBindingInDeploymentInfo() throws Exception {
-		CloudService serviceToCreate = createService();
+		CloudService serviceToCreate = createDefaultService();
 		String prefix = "testServiceBindingInDeploymentInfo";
 		createWebApplicationProject();
-		CloudFoundryApplicationModule appModule = assertDeployApplicationStartMode(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
 
 		CloudApplication app = appModule.getApplication();
 
-		getBindServiceOp(appModule, serviceToCreate).run(new NullProgressMonitor());
+		asynchExecuteOperationWaitForRefresh(getBindServiceOp(appModule, serviceToCreate), prefix,
+				CloudServerEvent.EVENT_APPLICATION_REFRESHED);
 
 		assertServiceBound(serviceToCreate.getName(), app);
 
@@ -75,32 +75,65 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		assertEquals(serviceToCreate.getName(), boundServices.get(0).getName());
 	}
 
-	public void testServiceUnBinding() throws Exception {
-		CloudService service = createService();
+	public void testServiceBindingUnbindingAppStarted() throws Exception {
+		CloudService service = createDefaultService();
 
-		String prefix = "testServiceUnbinding";
+		String prefix = "testServiceBindingUnbindingAppStarted";
 		createWebApplicationProject();
 
-		CloudFoundryApplicationModule appModule = assertDeployApplicationStartMode(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
 
-		assertStopModule(appModule);
-		getBindServiceOp(appModule, service).run(new NullProgressMonitor());
-
-		assertStartModule(appModule);
+		asynchExecuteOperationWaitForRefresh(getBindServiceOp(appModule, service), prefix,
+				CloudServerEvent.EVENT_APPLICATION_REFRESHED);
 
 		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
 
 		assertServiceBound(service.getName(), appModule.getApplication());
+		assertEquals(1, appModule.getDeploymentInfo().getServices().size());
+		assertEquals(SERVICE_NAME, appModule.getDeploymentInfo().getServices().get(0).getName());
 
-		assertStopModule(appModule);
-		getUnbindServiceOp(appModule, service).run(new NullProgressMonitor());
+		asynchExecuteOperationWaitForRefresh(getUnbindServiceOp(appModule, service), prefix,
+				CloudServerEvent.EVENT_APPLICATION_REFRESHED);
 
 		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
 
 		assertServiceNotBound(service.getName(), appModule.getApplication());
+		assertEquals(0, appModule.getDeploymentInfo().getServices());
+
 	}
 
-	public void testAsynchRefreshOnServiceCreation() throws Exception {
+	public void testServiceBindingUnbindingAppStopped() throws Exception {
+		CloudService service = createDefaultService();
+
+		String prefix = "testServiceBindingUnbindingAppStopped";
+		createWebApplicationProject();
+
+		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
+
+		serverBehavior.operations().applicationDeployment(appModule, ApplicationAction.STOP)
+				.run(new NullProgressMonitor());
+
+		waitForAppToStop(appModule);
+
+		asynchExecuteOperationWaitForRefresh(getBindServiceOp(appModule, service), prefix,
+				CloudServerEvent.EVENT_APPLICATION_REFRESHED);
+
+		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
+
+		assertServiceBound(service.getName(), appModule.getApplication());
+		assertEquals(1, appModule.getDeploymentInfo().getServices().size());
+		assertEquals(SERVICE_NAME, appModule.getDeploymentInfo().getServices().get(0).getName());
+
+		asynchExecuteOperationWaitForRefresh(getUnbindServiceOp(appModule, service), prefix,
+				CloudServerEvent.EVENT_APPLICATION_REFRESHED);
+
+		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
+
+		assertServiceNotBound(service.getName(), appModule.getApplication());
+		assertEquals(0, appModule.getDeploymentInfo().getServices());
+	}
+
+	public void testServiceCreationEvent() throws Exception {
 		// Test service creation operation and that asynchronous service
 		// creation triggers a service change event
 
@@ -109,13 +142,16 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 				serverBehavior.operations().createServices(new CloudService[] { service }), null,
 				CloudServerEvent.EVENT_UPDATE_SERVICES);
 		assertServiceExists(service);
+
+		List<CloudService> existingServices = serverBehavior.getServices(new NullProgressMonitor());
+		assertEquals(SERVICE_NAME, existingServices.get(0).getName());
 	}
 
-	public void testAsynchRefreshOnServiceDeletion() throws Exception {
+	public void testServiceDeletionEvent() throws Exception {
 		// Test service deletion operation and that asynchronous service
 		// creation triggers a service change event
 
-		final CloudService service = createService();
+		final CloudService service = createDefaultService();
 		assertServiceExists(service);
 
 		String serviceName = service.getName();
@@ -126,44 +162,149 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 				CloudServerEvent.EVENT_UPDATE_SERVICES);
 
 		assertServiceNotExist(SERVICE_NAME);
+
+		List<CloudService> existingServices = serverBehavior.getServices(new NullProgressMonitor());
+		assertTrue("Expected empty list of services", existingServices.isEmpty());
 	}
 
-	public void testAsynchRefreshOnServiceBinding() throws Exception {
-		// Test that asynchronous service binding triggers a module refresh
-		// event
-		final CloudService service = createService();
-		String prefix = "testAsynchRefreshOnServiceBinding";
-		createWebApplicationProject();
-		CloudFoundryApplicationModule appModule = assertDeployApplicationStartMode(prefix);
+	public void testServiceCreationOp() throws Exception {
 
-		asynchExecuteOperationWaitForRefresh(getBindServiceOp(appModule, service), prefix,
-				CloudServerEvent.EVENT_APP_CHANGED);
+		CloudService toCreate = getCloudServiceToCreate("testServiceCreationOp", "elephantsql", "turtle");
+		CloudService[] services = new CloudService[] { toCreate };
 
-		// Get updated module
-		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
-		assertServiceBound(service.getName(), appModule.getApplication());
+		serverBehavior.operations().createServices(services).run(new NullProgressMonitor());
+
+		List<CloudService> existing = serverBehavior.getServices(new NullProgressMonitor());
+		assertTrue("Expected 1 service", existing.size() == 1);
+		assertEquals("testServiceCreationOp", existing.get(0).getName());
+		assertEquals("elephantsql", existing.get(0).getLabel());
+		assertEquals("turtle", existing.get(0).getPlan());
+
+		assertServiceExists(existing.get(0));
 	}
 
-	public void testAsynchServerRefreshOnServiceUnbinding() throws Exception {
-		// Tests that unbinding a service triggers a module refresh
-		final CloudService service = createService();
+	public void testServiceDeletionOp() throws Exception {
 
-		String prefix = "testAsynchServerRefreshOnServiceUnbinding";
-		createWebApplicationProject();
+		CloudService toCreate = getCloudServiceToCreate("testServiceDeletionOp", "elephantsql", "turtle");
+		CloudService[] services = new CloudService[] { toCreate };
 
-		CloudFoundryApplicationModule appModule = assertDeployApplicationStartMode(prefix);
+		serverBehavior.operations().createServices(services).run(new NullProgressMonitor());
 
-		getBindServiceOp(appModule, service).run(new NullProgressMonitor());
+		List<CloudService> existing = serverBehavior.getServices(new NullProgressMonitor());
+		assertTrue("Expected 1 service", existing.size() == 1);
+		assertEquals("testServiceDeletionOp", existing.get(0).getName());
+		assertEquals("elephantsql", existing.get(0).getLabel());
+		assertEquals("turtle", existing.get(0).getPlan());
 
-		assertServiceBound(service.getName(), appModule.getApplication());
+		assertServiceExists(existing.get(0));
 
-		asynchExecuteOperationWaitForRefresh(getUnbindServiceOp(appModule, service), prefix,
-				CloudServerEvent.EVENT_APP_CHANGED);
+		List<String> toDelete = new ArrayList<String>();
+		toDelete.add("testServiceDeletionOp");
 
-		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
+		serverBehavior.operations().deleteServices(toDelete).run(new NullProgressMonitor());
 
-		assertServiceNotBound(service.getName(), appModule.getApplication());
+		List<CloudService> remainingServices = serverBehavior.getServices(new NullProgressMonitor());
+		assertTrue("Expected empty list of services", remainingServices.isEmpty());
+	}
 
+	public void testServiceCreationServicesInEvent() throws Exception {
+
+		CloudService toCreate = getCloudServiceToCreate("testServiceCreationServicesInEvent", "elephantsql", "turtle");
+		CloudService[] services = new CloudService[] { toCreate };
+
+		ModulesRefreshListener refreshListener = new ModulesRefreshListener(cloudServer,
+				CloudServerEvent.EVENT_UPDATE_SERVICES);
+
+		serverBehavior.operations().createServices(services).run(new NullProgressMonitor());
+
+		assertTrue(refreshListener.modulesRefreshed(new NullProgressMonitor()));
+		assertEquals(CloudServerEvent.EVENT_UPDATE_SERVICES, refreshListener.getMatchedEvent().getType());
+
+		assertTrue("Expected " + CloudRefreshEvent.class,
+				refreshListener.getMatchedEvent() instanceof CloudRefreshEvent);
+		CloudRefreshEvent cloudEvent = (CloudRefreshEvent) refreshListener.getMatchedEvent();
+		List<CloudService> existing = cloudEvent.getServices();
+		assertTrue("Expected 1 created service in cloud refresh event", existing.size() == 1);
+		assertEquals("testServiceCreationServicesInEvent", existing.get(0).getName());
+		assertEquals("elephantsql", existing.get(0).getLabel());
+		assertEquals("turtle", existing.get(0).getPlan());
+
+		assertServiceExists(existing.get(0));
+
+		refreshListener.dispose();
+	}
+
+	public void testServiceDeletionServicesInEvent() throws Exception {
+
+		CloudService service = createCloudService("testServiceDeletionServicesInEvent", "elephantsql", "turtle");
+		assertServiceExists(service);
+		service = createCloudService("testAnotherService", "elephantsql", "turtle");
+		List<CloudService> services = serverBehavior.getServices(new NullProgressMonitor());
+		assertEquals("Expected 2 services", 2, services.size());
+
+		ModulesRefreshListener refreshListener = new ModulesRefreshListener(cloudServer,
+				CloudServerEvent.EVENT_UPDATE_SERVICES);
+
+		serverBehavior.operations()
+				.deleteServices(Arrays.asList(new String[] { "testServiceDeletionServicesInEvent" }))
+				.run(new NullProgressMonitor());
+
+		assertTrue(refreshListener.modulesRefreshed(new NullProgressMonitor()));
+		assertEquals(CloudServerEvent.EVENT_UPDATE_SERVICES, refreshListener.getMatchedEvent().getType());
+		assertTrue("Expected " + CloudRefreshEvent.class,
+				refreshListener.getMatchedEvent() instanceof CloudRefreshEvent);
+
+		CloudRefreshEvent cloudEvent = (CloudRefreshEvent) refreshListener.getMatchedEvent();
+		List<CloudService> eventServices = cloudEvent.getServices();
+
+		assertTrue("Expected 1 service in cloud refresh event", eventServices.size() == 1);
+		assertEquals("testAnotherService", eventServices.get(0).getName());
+		assertEquals("elephantsql", eventServices.get(0).getLabel());
+		assertEquals("turtle", eventServices.get(0).getPlan());
+
+		assertServiceExists(eventServices.get(0));
+
+		refreshListener.dispose();
+	}
+
+	public void testExternalCreatedServiceRefresh() throws Exception {
+		CloudFoundryOperations client = harness.createExternalClient();
+		client.login();
+		CloudService service = getCloudServiceToCreate("testExternalCreatedServiceRefresh", "elephantsql", "turtle");
+
+		client.createService(service);
+
+		ModulesRefreshListener refreshListener = new ModulesRefreshListener(cloudServer,
+				CloudServerEvent.EVENT_SERVER_REFRESHED);
+
+		serverBehavior.getRefreshHandler().scheduleRefreshAll();
+
+		assertTrue(refreshListener.modulesRefreshed(new NullProgressMonitor()));
+
+		assertEquals(CloudServerEvent.EVENT_SERVER_REFRESHED, refreshListener.getMatchedEvent().getType());
+		assertTrue("Expected " + CloudRefreshEvent.class,
+				refreshListener.getMatchedEvent() instanceof CloudRefreshEvent);
+
+		CloudRefreshEvent cloudEvent = (CloudRefreshEvent) refreshListener.getMatchedEvent();
+		List<CloudService> eventServices = cloudEvent.getServices();
+		assertTrue("Expected 1 service in cloud refresh event", eventServices.size() == 1);
+		assertEquals("testExternalCreatedServiceRefresh", eventServices.get(0).getName());
+		assertEquals("elephantsql", eventServices.get(0).getLabel());
+		assertEquals("turtle", eventServices.get(0).getPlan());
+	}
+
+	public void testExternalCreatedServiceBehaviour() throws Exception {
+		CloudFoundryOperations client = harness.createExternalClient();
+		client.login();
+		CloudService service = getCloudServiceToCreate("testExternalCreatedServiceBehaviour", "elephantsql", "turtle");
+
+		client.createService(service);
+
+		List<CloudService> existingServices = serverBehavior.getServices(new NullProgressMonitor());
+		assertTrue("Expected 1 service", existingServices.size() == 1);
+		assertEquals("testExternalCreatedServiceBehaviour", existingServices.get(0).getName());
+		assertEquals("elephantsql", existingServices.get(0).getLabel());
+		assertEquals("turtle", existingServices.get(0).getPlan());
 	}
 
 	public void testNoService() throws Exception {
@@ -172,7 +313,7 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		assertServiceNotExist(SERVICE_NAME);
 	}
 
-	protected CloudService createService() throws Exception {
+	protected CloudService createDefaultService() throws Exception {
 		return createCloudService(SERVICE_NAME, "elephantsql", "turtle");
 	}
 }

@@ -123,6 +123,9 @@ public class ModuleCache {
 		}
 
 		public synchronized void remove(CloudFoundryApplicationModule module) {
+			if (module == null) {
+				return;
+			}
 			cloudModules.remove(module);
 			if (module.getLocalModule() != null) {
 				Map<String, String> mapping = getLocalModuleToCloudModuleMapping();

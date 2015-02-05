@@ -60,12 +60,11 @@ public class RestartOperation extends ApplicationOperation {
 	protected void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
 			throws CoreException {
 		final Server server = (Server) getBehaviour().getServer();
-		final CloudFoundryApplicationModule cloudModule = appModule;
 
 		try {
-			cloudModule.setErrorStatus(null);
+			appModule.setErrorStatus(null);
 
-			final String deploymentName = cloudModule.getDeploymentInfo().getDeploymentName();
+			final String deploymentName = appModule.getDeploymentInfo().getDeploymentName();
 
 			server.setModuleState(getModules(), IServer.STATE_STARTING);
 
@@ -77,7 +76,9 @@ public class RestartOperation extends ApplicationOperation {
 			}
 			
 			// Update the module with the latest CloudApplication from the client before starting the application
-			getBehaviour().updateCloudModuleWithInstances(appModule, monitor);
+			appModule = getBehaviour().updateCloudModule(appModule.getDeployedApplicationName(), monitor);
+
+			final CloudFoundryApplicationModule cloudModule = appModule;
 
 			final ApplicationAction deploymentMode = getDeploymentConfiguration().getApplicationStartMode();
 			if (deploymentMode != ApplicationAction.STOP) {
@@ -117,7 +118,7 @@ public class RestartOperation extends ApplicationOperation {
 				// This should be staging aware, in order to reattempt on
 				// staging related issues when checking if an app has
 				// started or not
-				getBehaviour().new StagingAwareRequest<Void>("Waiting for application to start: }" + deploymentName) { //$NON-NLS-1$
+				getBehaviour().new StagingAwareRequest<Void>("Waiting for application to start: " + deploymentName) { //$NON-NLS-1$
 					@Override
 					protected Void doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 

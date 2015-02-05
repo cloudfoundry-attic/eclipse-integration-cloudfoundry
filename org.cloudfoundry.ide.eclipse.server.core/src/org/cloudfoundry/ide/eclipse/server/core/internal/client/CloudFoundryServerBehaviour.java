@@ -184,7 +184,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		getApplicationUrlLookup().refreshDomains(monitor);
 
-		getRefreshHandler().scheduleRefresh();
+		getRefreshHandler().scheduleRefreshAll();
 	}
 
 	/**
@@ -439,7 +439,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	/**
 	 * Update the given module with application stats and instance information
-	 * obtained from the Cloud space.
+	 * obtained from the Cloud space. Will only update the module if it is
+	 * deployed.
 	 * 
 	 * @param appName
 	 * @param monitor
@@ -450,9 +451,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public CloudFoundryApplicationModule updateCloudModuleWithInstances(IModule module, IProgressMonitor monitor)
 			throws CoreException {
 		CloudFoundryApplicationModule appModule = getCloudFoundryServer().getExistingCloudModule(module);
-		String name = appModule != null ? appModule.getDeployedApplicationName() : module.getName();
-
-		return updateModuleWithInstances(name, monitor);
+		String name = appModule != null ? appModule.getDeployedApplicationName() : null;
+		if (name != null) {
+			return updateCloudModuleWithInstances(name, monitor);
+		}
+		return null;
 	}
 
 	/**
@@ -497,7 +500,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				throw e;
 			}
 		}
-		return getCloudFoundryServer().updateModule(updatedApp, monitor);
+		return getCloudFoundryServer().updateModule(updatedApp, appName, monitor);
 	}
 
 	/**
@@ -509,24 +512,39 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * null if the app does not exist
 	 * @throws CoreException
 	 */
-	public CloudFoundryApplicationModule updateModuleWithInstances(String appName, IProgressMonitor monitor)
+	public CloudFoundryApplicationModule updateCloudModuleWithInstances(String appName, IProgressMonitor monitor)
 			throws CoreException {
 		CloudFoundryApplicationModule appModule = updateCloudModule(appName, monitor);
 		updateInstancesAndStats(appModule, monitor);
 		return appModule;
 	}
 
+	/**
+	 * Updates the instances for the given Cloud module. If the module is null,
+	 * nothing will happen.
+	 * @param appModule
+	 * @param monitor
+	 * @throws CoreException
+	 */
 	private void updateInstancesAndStats(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
 			throws CoreException {
-		if (appModule != null) {
+		// Module may have been deleted and application no longer exists.
+		// Nothing to update
+		if (appModule == null) {
+			return;
+		}
+		try {
 			ApplicationStats stats = getApplicationStats(appModule.getDeployedApplicationName(), monitor);
 			InstancesInfo info = getInstancesInfo(appModule.getDeployedApplicationName(), monitor);
 			appModule.setApplicationStats(stats);
-			appModule.setInstancesInfo(info);
-		}
-		else {
-			throw CloudErrorUtil
-					.toCoreException("Missing Cloud module. Unable to update application instances and stats."); //$NON-NLS-1$
+			appModule.setInstancesInfo(info);		}
+		catch (CoreException e) {
+			// Ignore if it is application not found error. If the application
+			// does not exist
+			// anymore, update the modules accordingly
+			if (!CloudErrorUtil.isNotFoundException(e)) {
+				throw e;
+			}
 		}
 	}
 
@@ -630,7 +648,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @param monitor
 	 */
 	public void refreshModules(IProgressMonitor monitor) {
-		getRefreshHandler().scheduleRefresh();
+		getRefreshHandler().scheduleRefreshAll();
 	}
 
 	/**
@@ -1003,7 +1021,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			// performs a server connection and sets server state.
 			// The server connection is indirectly performed by this
 			// first refresh call.
-			refreshHandler.scheduleRefresh();
+			getRefreshHandler().scheduleRefreshAll();
 		}
 		catch (CoreException e) {
 			CloudFoundryPlugin.logError(Messages.ERROR_INITIALISE_REFRESH_NO_SERVER);
@@ -1246,15 +1264,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @return true if application is running. False otherwise.
 	 */
 	public boolean isApplicationRunning(CloudFoundryApplicationModule appModule, IProgressMonitor monitor) {
-		try {
-			updateInstancesAndStats(appModule, monitor);
-			ApplicationStats stats = appModule.getApplicationStats();
-			InstancesInfo info = appModule.getInstancesInfo();
-			return stats != null && info != null && appModule.isDeployed()
-					&& isApplicationReady(appModule.getApplication());
-		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
+		if (appModule != null) {
+			try {
+				updateInstancesAndStats(appModule, monitor);
+				ApplicationStats stats = appModule.getApplicationStats();
+				InstancesInfo info = appModule.getInstancesInfo();
+				return stats != null && info != null && appModule.isDeployed()
+						&& isApplicationReady(appModule.getApplication());
+			}
+			catch (CoreException e) {
+				CloudFoundryPlugin.logError(e);
+			}
 		}
 		return false;
 	}
@@ -1903,29 +1923,29 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		};
 	}
 
-	BaseClientRequest<?> getDeleteServicesRequest(final List<String> services) {
-		return new BehaviourRequest<Void>("Deleting services") { //$NON-NLS-1$
+	BaseClientRequest<List<CloudService>> getDeleteServicesRequest(final List<String> services) {
+		return new BehaviourRequest<List<CloudService>>("Deleting services") { //$NON-NLS-1$
 			@Override
-			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+			protected List<CloudService> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				for (String service : services) {
 					client.deleteService(service);
 				}
-				return null;
+				return client.getServices();
 			}
 		};
 	}
 
-	BaseClientRequest<?> getCreateServicesRequest(final CloudService[] services) {
-		return new BehaviourRequest<Void>(services.length == 1 ? "Creating service " + services[0].getName() //$NON-NLS-1$
-		: "Creating services") { //$NON-NLS-1$
+	BaseClientRequest<List<CloudService>> getCreateServicesRequest(final CloudService[] services) {
+		return new BehaviourRequest<List<CloudService>>(
+				services.length == 1 ? "Creating service " + services[0].getName() //$NON-NLS-1$
+				: "Creating services") { //$NON-NLS-1$
 			@Override
-			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+			protected List<CloudService> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 
 				for (CloudService service : services) {
 					client.createService(service);
 				}
-
-				return null;
+				return client.getServices();
 			}
 		};
 	}

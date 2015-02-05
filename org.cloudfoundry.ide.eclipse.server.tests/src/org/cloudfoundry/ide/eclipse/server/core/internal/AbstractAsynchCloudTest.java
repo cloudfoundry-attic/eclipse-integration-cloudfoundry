@@ -41,7 +41,7 @@ public abstract class AbstractAsynchCloudTest extends AbstractCloudFoundryTest {
 	 */
 	protected void asynchExecuteOperationWaitForRefresh(final ICloudFoundryOperation op, String testPrefix,
 			int expectedRefreshEventType) throws Exception {
-
+		waitForExistingRefreshJobComplete();
 		String expectedAppName = testPrefix != null ? harness.getDefaultWebAppName(testPrefix) : null;
 		IRunnableWithProgress runnable = new IRunnableWithProgress() {
 
@@ -56,6 +56,32 @@ public abstract class AbstractAsynchCloudTest extends AbstractCloudFoundryTest {
 			}
 		};
 		asynchExecuteOperationWaitForRefresh(runnable, expectedAppName, expectedRefreshEventType);
+	}
+
+	protected void waitForExistingRefreshJobComplete() throws CoreException {
+		int total = 10;
+		int attempts = total;
+		long wait = 3000;
+		boolean scheduled = serverBehavior.getRefreshHandler().isScheduled();
+
+		// Test the Server behaviour API that checks if application is running
+		for (; scheduled && attempts > 0; attempts--) {
+			scheduled = serverBehavior.getRefreshHandler().isScheduled();
+
+			if (scheduled) {
+				try {
+					Thread.sleep(wait);
+				}
+				catch (InterruptedException e) {
+
+				}
+			}
+
+		}
+
+		if (scheduled) {
+			throw CloudErrorUtil.toCoreException("Timed out waiting for existing refresh job to complete");
+		}
 	}
 
 	/**
@@ -109,7 +135,7 @@ public abstract class AbstractAsynchCloudTest extends AbstractCloudFoundryTest {
 			int expectedEventType) {
 		ModulesRefreshListener eventHandler = ModulesRefreshListener.getListener(appName, cloudServer,
 				expectedEventType);
-		assertFalse(eventHandler.isCurrentlyRefreshed());
+		assertFalse(eventHandler.hasBeenRefreshed());
 		return eventHandler;
 	}
 
@@ -123,8 +149,8 @@ public abstract class AbstractAsynchCloudTest extends AbstractCloudFoundryTest {
 	protected static void assertModuleRefreshedAndDispose(ModulesRefreshListener refreshHandler, int expectedEventType)
 			throws CoreException {
 		assertTrue(refreshHandler.modulesRefreshed(new NullProgressMonitor()));
-		assertTrue(refreshHandler.isCurrentlyRefreshed());
-		assertEquals(expectedEventType, refreshHandler.getActualEventType());
+		assertTrue(refreshHandler.hasBeenRefreshed());
+		assertEquals(expectedEventType, refreshHandler.getMatchedEvent().getType());
 		refreshHandler.dispose();
 	}
 

@@ -24,8 +24,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerListener;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
-import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.WaitWithProgressJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -63,7 +61,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
  */
 public class ModulesRefreshListener implements CloudServerListener {
 
-	protected boolean refreshed;
+	protected boolean refreshed = false;
 
 	protected final CloudFoundryServer cloudServer;
 
@@ -71,20 +69,16 @@ public class ModulesRefreshListener implements CloudServerListener {
 
 	protected final int eventToExpect;
 
-	protected int actualEvent;
+	protected CloudServerEvent matchedEvent = null;
 
-	public int getActualEventType() {
-		return actualEvent;
+	public CloudServerEvent getMatchedEvent() {
+		return matchedEvent;
 	}
 
-	ModulesRefreshListener(CloudFoundryServer cloudServer, int eventToExpect) {
+	public ModulesRefreshListener(CloudFoundryServer cloudServer, int eventToExpect) {
 		this.cloudServer = cloudServer;
 		this.eventToExpect = eventToExpect;
 		ServerEventHandler.getDefault().addServerListener(this);
-	}
-
-	public boolean isCurrentlyRefreshed() {
-		return refreshed || error != null;
 	}
 
 	/**
@@ -103,12 +97,11 @@ public class ModulesRefreshListener implements CloudServerListener {
 			}
 		}.run(monitor);
 
-		if (actualEvent != eventToExpect) {
-			error = "Expected refresh event: " + eventToExpect + " but got event type: " + actualEvent;
-
-		}
-		else if (!refreshed) {
+		if (!refreshed || matchedEvent == null) {
 			error = "Timed out waiting for refresh event: " + eventToExpect;
+		}
+		else if (matchedEvent.getType() != eventToExpect) {
+			error = "Expected refresh event: " + eventToExpect + " but got event type: " + matchedEvent.getType();
 		}
 
 		if (error != null) {
@@ -117,71 +110,41 @@ public class ModulesRefreshListener implements CloudServerListener {
 		return refreshed;
 	}
 
+	public boolean hasBeenRefreshed() {
+		return refreshed || error != null;
+	}
+
 	public void dispose() {
 		ServerEventHandler.getDefault().removeServerListener(this);
 	}
 
 	@Override
 	public void serverChanged(CloudServerEvent event) {
+		// if already refreshed on a previous notification do not handle any
+		// more events
+		if (refreshed || error != null) {
+			return;
+		}
 
-		error = null;
-		refreshed = true;
-		actualEvent = event.getType();
 		if (event.getServer() == null) {
 			error = "Null Cloud server in event.";
 		}
+		else if (event.getType() == eventToExpect) {
+			processEvent(event);
+		}
 	}
 
-	static class SingleModuleRefreshListener extends ModulesRefreshListener {
-
-		protected final String appName;
-
-		protected SingleModuleRefreshListener(String appName, CloudFoundryServer cloudServer, int expectedEvent) {
-			super(cloudServer, expectedEvent);
-			this.appName = appName;
-		}
-
-		@Override
-		public void serverChanged(CloudServerEvent event) {
-			error = null;
-			refreshed = true;
-			actualEvent = event.getType();
-			if (event.getServer() == null) {
-				error = "Null Cloud server in event.";
-			}
-			else if (actualEvent == eventToExpect) {
-				if (event instanceof ModuleChangeEvent) {
-					ModuleChangeEvent appEvent = (ModuleChangeEvent) event;
-
-					CloudFoundryApplicationModule appModule = event.getServer().getExistingCloudModule(
-							appEvent.getModule());
-					if (appModule == null) {
-						error = "Expected non-null appModule for event " + event;
-					}
-					else if (!appName.equals(appModule.getDeployedApplicationName())) {
-						error = "Expected refresh event for " + appName + " but got event for: "
-								+ appModule.getDeployedApplicationName();
-					}
-				}
-				else {
-					error = "Expected " + ModuleChangeEvent.class.toString() + " but got "
-							+ event.getClass().toString();
-				}
-			}
-		}
+	protected void processEvent(CloudServerEvent event) {
+		matchedEvent = event;
+		refreshed = true;
 	}
 
 	/**
-	 * Returns appropriate refresh listener based on whether a full refresh of
-	 * modules is expected ( app name is null) or refresh for only one
-	 * application module (app name is not null)
-	 * @param appName if refresh should be expected on only one app. Null if
-	 * refresh should be expected on all modules.
+	 *
 	 * @param cloudServer
 	 * @return
 	 */
 	public static ModulesRefreshListener getListener(String appName, CloudFoundryServer cloudServer, int expectedEvent) {
-		return appName != null ? new SingleModuleRefreshListener(appName, cloudServer, expectedEvent)
-				: new ModulesRefreshListener(cloudServer, expectedEvent);
+		return new ModulesRefreshListener(cloudServer, expectedEvent);
 	}
 }

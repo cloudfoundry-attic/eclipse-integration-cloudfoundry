@@ -111,11 +111,7 @@ public abstract class ApplicationOperation extends AbstractPublishApplicationOpe
 			performDeployment(appModule, monitor);
 
 			// If deployment was successful, update the module
-			appModule = getBehaviour().updateCloudModule(appModule.getDeployedApplicationName(), monitor);
-		}
-		catch (OperationCanceledException e) {
-			// ignore so webtools does not show an exception
-			((Server) getBehaviour().getServer()).setModuleState(getModules(), IServer.STATE_UNKNOWN);
+			appModule = getBehaviour().updateCloudModuleWithInstances(appModule.getDeployedApplicationName(), monitor);
 		}
 		catch (CoreException ce) {
 			// Log the error in console
@@ -159,4 +155,6 @@ public abstract class ApplicationOperation extends AbstractPublishApplicationOpe
 	 */
 	protected abstract void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
 			throws CoreException;
+
+
 }

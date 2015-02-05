@@ -480,48 +480,31 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	@Override
 	public void modifyModules(final IModule[] add, IModule[] remove, IProgressMonitor monitor) throws CoreException {
 
-		CloudFoundryApplicationModule toRemap = remove != null && remove.length > 0
-				&& (remove[0] instanceof CloudFoundryApplicationModule) ? (CloudFoundryApplicationModule) remove[0]
-				: null;
-
-		if (toRemap != null && getData().isTaggedForRemap(toRemap)) {
-
-			IModule localModule = toRemap.getLocalModule();
+		if (remove != null && remove.length > 0) {
 			if (getData() != null) {
-				getData().tagAsDeployed(localModule);
-				getData().remove(toRemap);
+				for (IModule module : remove) {
+					getData().tagAsDeployed(module);
+				}
 			}
-			deleteModule(localModule);
-			getData().untagForRemap(toRemap);
-			getBehaviour().getRefreshHandler().scheduleRefresh();
+
+			try {
+				getBehaviour().operations().deleteModules(remove, deleteServicesOnModuleRemove.get()).run(monitor);
+			}
+			catch (CoreException e) {
+				// ignore deletion of applications that didn't exist
+				if (!CloudErrorUtil.isNotFoundException(e)) {
+					throw e;
+				}
+			}
 		}
-		else {
-			if (remove != null && remove.length > 0) {
-				if (getData() != null) {
-					for (IModule module : remove) {
-						getData().tagAsDeployed(module);
-					}
-				}
 
-				try {
-					getBehaviour().operations().deleteModules(remove, deleteServicesOnModuleRemove.get()).run(monitor);
-				}
-				catch (CoreException e) {
-					// ignore deletion of applications that didn't exist
-					if (!CloudErrorUtil.isNotFoundException(e)) {
-						throw e;
-					}
-				}
-			}
+		if (add != null && add.length > 0) {
 
-			if (add != null && add.length > 0) {
-
-				if (getData() != null) {
-					for (IModule module : add) {
-						// avoid automatic deletion before module has been
-						// deployed
-						getData().tagAsUndeployed(module);
-					}
+			if (getData() != null) {
+				for (IModule module : add) {
+					// avoid automatic deletion before module has been
+					// deployed
+					getData().tagAsUndeployed(module);
 				}
 			}
 		}
@@ -788,7 +771,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	 * There are three representations for an application:
 	 * <p/>
 	 * 1. {@link CloudApplication}, which represents an existing application in
-	 * the Cloud space
+	 * the Cloud space.
 	 * <p/>
 	 * 2. WST {@link IModule} created by the WST framework that is the local
 	 * representation of the application used by the WST framework
@@ -799,62 +782,69 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	 * <p/>
 	 * This refresh mechanism will make sure all three are updated and in synch
 	 * with one another
+	 * <p/>
+	 * To update the module, either the {@link CloudApplication} or application
+	 * name, or both are needed. Otherwise it is not possible to update a module
+	 * with both of these two arguments missing, and null is returned
 	 * 
-	 * 
-	 * @param appName
+	 * @param existingCloudApplication a Cloud application the Cloud space
+	 * @param appName name of the application
 	 * @param monitor
 	 * @return updated Cloud module, if it exists, or null, if it no longer
 	 * exists and has been deleted both locally in the server instance as well
 	 * as the Cloud space
-	 * @throws CoreException
+	 * @throws CoreException if failure occurs while attempting to update the
+	 * {@link CloudFoundryApplicationModule}
 	 */
-	public CloudFoundryApplicationModule updateModule(CloudApplication existingCloudApplication,
+	public CloudFoundryApplicationModule updateModule(CloudApplication existingCloudApplication, String appName,
 			IProgressMonitor monitor) throws CoreException {
+		if (appName == null && existingCloudApplication != null) {
+			appName = existingCloudApplication.getName();
+		}
+
+		if (existingCloudApplication == null && appName == null) {
+			return null;
+		}
+
 		Server server = (Server) getServer();
 
 		List<CloudFoundryApplicationModule> externalModules = new ArrayList<CloudFoundryApplicationModule>();
 
 		synchronized (this) {
 
-			String appName = existingCloudApplication != null ? existingCloudApplication.getName() : null;
-
 			IModule wstModule = null;
+			CloudFoundryApplicationModule correspondingCloudModule = null;
 
-			if (appName != null) {
-				// Now check if WST and CloudFoundryApplicationModule exist for
-				// that
-				// application:
-				// 1. Find if a WST module exists for the pushed application.
-				// This
-				// is necessary if the corresponding Cloud module needs to be
-				// created or publish state of the application needs to be
-				// updated
-				// later on
-				// 2. Determine all external modules. This is required keep the
-				// list
-				// of modules in the server updated
-				for (IModule module : server.getModules()) {
-					// Find the wst module for the application, if it exists
-					CloudFoundryApplicationModule cloudModule = getExistingCloudModule(module);
+			// Now check if WST and CloudFoundryApplicationModule exist for
+			// that
+			// application:
+			// 1. Find if a WST module exists for the pushed application.
+			// This
+			// is necessary if the corresponding Cloud module needs to be
+			// created or publish state of the application needs to be
+			// updated
+			// later on
+			// 2. Determine all external modules. This is required keep the
+			// list
+			// of external modules in the server accurate and correct.
+			for (IModule module : server.getModules()) {
+				// Find the wst module for the application, if it exists
+				CloudFoundryApplicationModule cloudModule = getExistingCloudModule(module);
 
-					if (cloudModule != null) {
-						if (cloudModule.getDeployedApplicationName().equals(appName)) {
-							wstModule = module;
-						}
-						if (cloudModule.isExternal()) {
-							externalModules.add(cloudModule);
-						}
+				if (cloudModule != null) {
+					if (cloudModule.getDeployedApplicationName().equals(appName)) {
+						wstModule = module;
+						correspondingCloudModule = cloudModule;
+					}
+					// Any other external module should be placed back in
+					// the list of external modules. The only module of
+					// interest
+					// is the one that matches the given appName.
+					else if (cloudModule.isExternal()) {
+						externalModules.add(cloudModule);
 					}
 				}
 			}
-
-			// Fetch the cloud module again, if it exists. Note that the wst may
-			// not exist anymore, as updating request could
-			// have been initiated after a delete operation, in which case
-			// neither the WST module or associated Cloud module may exist
-			// anymore.
-
-			CloudFoundryApplicationModule cloudModule = getExistingCloudModule(wstModule);
 
 			// Update the module cache, and if necessary create a module if one
 			// does not yet exists for CloudApplications
@@ -864,17 +854,21 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 				// If the cloudApplication exists, then either the cloud
 				// module needs to be created or mapping updated.
 				if (existingCloudApplication != null) {
-
-					if (cloudModule == null) {
+					// if it doesn't exist create it
+					if (correspondingCloudModule == null) {
 						// Module needs to be created for the existing
 						// application
-						cloudModule = getData().createModule(existingCloudApplication);
-						externalModules.add(cloudModule);
-
+						correspondingCloudModule = getData().createModule(existingCloudApplication);
+						externalModules.add(correspondingCloudModule);
 					}
 					else {
 						// If module already exists then just update the mapping
-						cloudModule.setCloudApplication(existingCloudApplication);
+						// and be sure to add it back to list of externals if it
+						// previously existed and was external
+						if (correspondingCloudModule.isExternal()) {
+							externalModules.add(correspondingCloudModule);
+						}
+						correspondingCloudModule.setCloudApplication(existingCloudApplication);
 					}
 				}
 				// if cloud application does not exist, first check that it
@@ -890,8 +884,9 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 					}
 
 					// Remove the cloud module from the catch
-					if (cloudModule != null) {
-						getData().remove(cloudModule);
+					if (correspondingCloudModule != null) {
+						getData().remove(correspondingCloudModule);
+						correspondingCloudModule = null;
 					}
 				}
 
@@ -908,7 +903,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 				}
 			}
 
-			return cloudModule;
+			return correspondingCloudModule;
 
 		}
 	}

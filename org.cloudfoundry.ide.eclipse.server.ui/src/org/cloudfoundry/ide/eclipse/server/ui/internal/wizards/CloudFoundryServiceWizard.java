@@ -186,10 +186,11 @@ public class CloudFoundryServiceWizard extends Wizard {
 
 			}
 			catch (CoreException e) {
-				status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-						NLS.bind(Messages.CloudFoundryServiceWizard_ERROR_ADD_SERVICE, cloudServer.getServer()
-								.getName(), e.getCause().getMessage() != null ? e.getCause().getMessage() : e
-								.getCause().toString()), e);
+				status = new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, NLS.bind(
+						Messages.CloudFoundryServiceWizard_ERROR_ADD_SERVICE,
+						cloudServer.getServer().getName(),
+						e.getCause() != null && e.getCause().getMessage() != null ? e.getCause().getMessage() : e
+								.toString()), e);
 			}
 
 			monitor.done();

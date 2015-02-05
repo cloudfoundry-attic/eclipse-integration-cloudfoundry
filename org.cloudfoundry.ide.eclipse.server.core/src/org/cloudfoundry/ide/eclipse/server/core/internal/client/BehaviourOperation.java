@@ -19,36 +19,28 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.wst.server.core.IModule;
 
 /**
- * An operation that performs an operation in a
- * {@link CloudFoundryServerBehaviour} target Cloud space. Performs a refresh
- * operation after the behaviour operation is completed.
+ * An operation performed in a {@link CloudFoundryServerBehaviour} target Cloud
+ * space on a target IModule
  */
-public abstract class AbstractCloudOperation implements ICloudFoundryOperation {
+public abstract class BehaviourOperation implements ICloudFoundryOperation {
 
 	private final CloudFoundryServerBehaviour behaviour;
 
-	public AbstractCloudOperation(CloudFoundryServerBehaviour behaviour) {
+	private final IModule module;
+
+	public BehaviourOperation(CloudFoundryServerBehaviour behaviour, IModule module) {
 		this.behaviour = behaviour;
+		this.module = module;
 	}
 
-	protected CloudFoundryServerBehaviour getBehaviour() {
+	public CloudFoundryServerBehaviour getBehaviour() {
 		return behaviour;
 	}
 
-	public void run(IProgressMonitor monitor) throws CoreException {
-
-		performOperation(monitor);
-
-		// Only trigger a refresh IF the operation succeeded.
-		refresh(monitor);
+	public IModule getModule() {
+		return module;
 	}
-
-	protected abstract void refresh(IProgressMonitor monitor) throws CoreException;
-
-	protected abstract void performOperation(IProgressMonitor monitor) throws CoreException;
-
 }

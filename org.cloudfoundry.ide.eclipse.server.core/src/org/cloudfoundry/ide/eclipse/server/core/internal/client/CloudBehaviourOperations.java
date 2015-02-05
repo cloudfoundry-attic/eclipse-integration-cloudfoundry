@@ -28,9 +28,8 @@ import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
-import org.cloudfoundry.ide.eclipse.server.core.internal.application.UnmapProjectOperation;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
@@ -85,27 +84,31 @@ public class CloudBehaviourOperations {
 	public ICloudFoundryOperation instancesUpdate(final CloudFoundryApplicationModule appModule, final int instanceCount)
 			throws CoreException {
 
-		return new AbstractApplicationOperation(behaviour, appModule.getLocalModule()) {
+		return new BehaviourOperation(behaviour, appModule.getLocalModule()) {
 
 			@Override
-			protected void performApplicationOperation(IProgressMonitor monitor) throws CoreException {
+			public void run(IProgressMonitor monitor) throws CoreException {
 				String appName = appModule.getDeployedApplicationName();
 
 				// Update the instances in the Cloud space
 				getBehaviour().updateApplicationInstances(appName, instanceCount, monitor);
 
+				// Refresh the module with the new instances information
 				getBehaviour().updateCloudModuleWithInstances(appModule.getLocalModule(), monitor);
 
 				// Fire a separate instances update event to notify listener who
 				// are specifically listening
-				// to instance changes in addition to the refresh event fired by
-				// the base application operation, as there are some components
-				// that
-				// may only be listening to instances update, rather than
-				// updating instances
-				// indirectly via the general refresh event.
-				ServerEventHandler.getDefault().fireAppInstancesChanged(behaviour.getCloudFoundryServer());
+				// to instance changes that do not require a full application
+				// refresh event.
+				ServerEventHandler.getDefault().fireAppInstancesChanged(behaviour.getCloudFoundryServer(), getModule());
+
+				// Schedule another refresh application operation as instances
+				// may take
+				// time to be updated (the new instances may have to be
+				// restarted in the Cloud Space)
+				getBehaviour().getRefreshHandler().schedulesRefreshApplication(getModule());
 			}
+
 		};
 	}
 
@@ -120,8 +123,8 @@ public class CloudBehaviourOperations {
 	 */
 	public ICloudFoundryOperation memoryUpdate(final CloudFoundryApplicationModule appModule, final int memory)
 			throws CoreException {
-		return new BehaviourRequestOperation(behaviour.getUpdateApplicationMemoryRequest(appModule, memory), behaviour,
-				appModule);
+		return new ApplicationUpdateOperation(behaviour.getUpdateApplicationMemoryRequest(appModule, memory),
+				behaviour, appModule);
 	}
 
 	/**
@@ -134,7 +137,7 @@ public class CloudBehaviourOperations {
 				appName);
 
 		if (appModule != null) {
-			return new BehaviourRequestOperation(behaviour.getUpdateAppUrlsRequest(appName, urls), behaviour,
+			return new ApplicationUpdateOperation(behaviour.getUpdateAppUrlsRequest(appName, urls), behaviour,
 					appModule.getLocalModule());
 		}
 		else {
@@ -149,8 +152,8 @@ public class CloudBehaviourOperations {
 	 */
 	public ICloudFoundryOperation bindServices(final CloudFoundryApplicationModule appModule,
 			final List<String> services) throws CoreException {
-		return new BehaviourRequestOperation(behaviour.getUpdateServicesRequest(appModule.getDeployedApplicationName(),
-				services), behaviour, appModule.getLocalModule());
+		return new ApplicationUpdateOperation(behaviour.getUpdateServicesRequest(
+				appModule.getDeployedApplicationName(), services), behaviour, appModule.getLocalModule());
 	}
 
 	/**
@@ -168,7 +171,7 @@ public class CloudBehaviourOperations {
 	public ICloudFoundryOperation environmentVariablesUpdate(final CloudFoundryApplicationModule appModule)
 			throws CoreException {
 		BaseClientRequest<Void> request = behaviour.getUpdateEnvVarRequest(appModule);
-		return new BehaviourRequestOperation(request, behaviour, appModule.getLocalModule());
+		return new ApplicationUpdateOperation(request, behaviour, appModule.getLocalModule());
 	}
 
 	/**
@@ -243,22 +246,24 @@ public class CloudBehaviourOperations {
 	}
 
 	/**
-	 * Refreshes all modules
+	 * Refreshes all modules, services, and the instance info and stats for the
+	 * given optional module. If null is passed only the list of modules and
+	 * services is refreshed.
 	 * <p/>
 	 * This may be a long running operation
 	 * @return Non-null operation
 	 */
-	public ICloudFoundryOperation refreshAll(final IModule module) {
-		return new ICloudFoundryOperation() {
+	public BehaviourOperation refreshAll(final IModule module) {
+		return new BehaviourOperation(behaviour, module) {
 
 			@Override
 			public void run(IProgressMonitor monitor) throws CoreException {
 
-				if (module != null) {
-					behaviour.updateCloudModuleWithInstances(module, monitor);
+				if (getModule() != null) {
+					getBehaviour().updateCloudModuleWithInstances(getModule(), monitor);
 				}
 				// Get updated list of cloud applications from the server
-				List<CloudApplication> applications = behaviour.getApplications(monitor);
+				List<CloudApplication> applications = getBehaviour().getApplications(monitor);
 
 				// update applications and deployments from server
 				Map<String, CloudApplication> deployedApplicationsByName = new LinkedHashMap<String, CloudApplication>();
@@ -267,8 +272,29 @@ public class CloudBehaviourOperations {
 					deployedApplicationsByName.put(application.getName(), application);
 				}
 
-				behaviour.getCloudFoundryServer().updateModules(deployedApplicationsByName);
-				ServerEventHandler.getDefault().fireServerRefreshed(behaviour.getCloudFoundryServer());
+				getBehaviour().getCloudFoundryServer().updateModules(deployedApplicationsByName);
+
+				List<CloudService> services = getBehaviour().getServices(monitor);
+
+				ServerEventHandler.getDefault().fireServerEvent(
+						new CloudRefreshEvent(getBehaviour().getCloudFoundryServer(), getModule(),
+								CloudServerEvent.EVENT_SERVER_REFRESHED, services));
+			}
+		};
+	}
+
+	public BehaviourOperation refreshForDeploymentChange(final IModule module) {
+		return new BehaviourOperation(behaviour, module) {
+
+			@Override
+			public void run(IProgressMonitor monitor) throws CoreException {
+
+				if (module == null) {
+					throw CloudErrorUtil.toCoreException("Internal Error: No module to refresh - " + //$NON-NLS-1$
+							getBehaviour().getCloudFoundryServer().getServerId());
+				}
+				getBehaviour().updateCloudModuleWithInstances(module, monitor);
+				ServerEventHandler.getDefault().fireAppDeploymentChanged(behaviour.getCloudFoundryServer(), module);
 			}
 		};
 	}
@@ -278,29 +304,25 @@ public class CloudBehaviourOperations {
 	 * @param module
 	 * @return Non-null operation.
 	 */
-	public ICloudFoundryOperation refreshInstances(final IModule module) {
+	public BehaviourOperation refreshApplication(final IModule module) {
 
-		return new ICloudFoundryOperation() {
+		return new BehaviourOperation(behaviour, module) {
 
 			@Override
 			public void run(IProgressMonitor monitor) throws CoreException {
 
 				if (module == null) {
-					throw CloudErrorUtil.toCoreException(AbstractApplicationOperation.NO_MODULE_ERROR
-							+ behaviour.getCloudFoundryServer().getServerId());
+					throw CloudErrorUtil.toCoreException("Internal Error: No module to refresh - " + //$NON-NLS-1$
+							getBehaviour().getCloudFoundryServer().getServerId());
 				}
-				behaviour.updateCloudModuleWithInstances(module, monitor);
-				behaviour.getRefreshHandler().fireRefreshEvent(module);
+				getBehaviour().updateCloudModuleWithInstances(module, monitor);
+				ServerEventHandler.getDefault().fireApplicationRefreshed(behaviour.getCloudFoundryServer(), module);
 			}
 		};
 	}
 
 	public ICloudFoundryOperation deleteModules(IModule[] modules, final boolean deleteServices) {
 		return new DeleteModulesOperation(behaviour, modules, deleteServices);
-	}
-
-	public ICloudFoundryOperation unmapProject(CloudFoundryApplicationModule appModule, CloudFoundryServer cloudServer) {
-		return new UnmapProjectOperation(appModule, cloudServer);
 	}
 
 }

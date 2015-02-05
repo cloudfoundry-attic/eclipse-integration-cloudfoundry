@@ -130,7 +130,8 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 		harness.dispose();
 	}
 
-	protected void assertApplicationIsRunning(IModule module, String prefix) throws Exception {
+	protected void waitForApplicationToStart(IModule module, String prefix) throws Exception {
+
 		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
 		assertApplicationIsRunning(appModule);
@@ -207,47 +208,13 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 	}
 
-	protected void assertStartModule(CloudFoundryApplicationModule appModule) throws Exception {
-
-		serverBehavior.startModule(new IModule[] { appModule.getLocalModule() }, new NullProgressMonitor());
-
-		assertApplicationIsRunning(appModule);
-
-	}
-
-	protected void assertRestartModule(CloudFoundryApplicationModule appModule) throws Exception {
-
-		serverBehavior.restartModule(new IModule[] { appModule.getLocalModule() }, new NullProgressMonitor());
-
-		assertApplicationIsRunning(appModule);
-
-	}
-
-	protected void assertStopModule(CloudFoundryApplicationModule appModule) throws Exception {
-		serverBehavior.stopModule(new IModule[] { appModule.getLocalModule() }, new NullProgressMonitor());
+	protected void waitForAppToStop(CloudFoundryApplicationModule appModule) throws Exception {
 
 		boolean stopped = new WaitForApplicationToStopOp(cloudServer, appModule).run(new NullProgressMonitor());
 		assertTrue("Expected application to be stopped", stopped);
 		assertTrue("Expected application to be stopped", appModule.getApplication().getState().equals(AppState.STOPPED));
 		assertTrue("Expected application to be stopped", appModule.getState() == Server.STATE_STOPPED);
 
-	}
-
-	protected void assertRemoveApplication(CloudApplication cloudApplication) throws Exception {
-		IModule module = getModule(cloudApplication.getName());
-		assertNotNull(module);
-		serverBehavior.deleteModules(new IModule[] { module }, false, new NullProgressMonitor());
-
-		List<CloudApplication> applications = serverBehavior.getApplications(new NullProgressMonitor());
-		boolean found = false;
-
-		for (CloudApplication application : applications) {
-			if (application.getName().equals(cloudApplication.getName())) {
-				found = true;
-				break;
-			}
-		}
-		assertFalse(found);
 	}
 
 	/**
@@ -331,9 +298,9 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	 * @return deployed app.
 	 * @throws Exception
 	 */
-	protected CloudFoundryApplicationModule assertDeployApplicationStartMode(String appPrefix) throws Exception {
+	protected CloudFoundryApplicationModule deployAndWaitForAppStart(String appPrefix) throws Exception {
 		CloudFoundryApplicationModule appModule = deployApplication(appPrefix, false);
-		assertApplicationIsRunning(appModule.getLocalModule(), appPrefix);
+		waitForApplicationToStart(appModule.getLocalModule(), appPrefix);
 		return appModule;
 	}
 

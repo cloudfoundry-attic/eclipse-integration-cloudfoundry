@@ -42,12 +42,12 @@ public class ModuleChangeEvent extends CloudServerEvent {
 
 	private final IStatus status;
 
-	private final IModule appModule;
+	private final IModule module;
 
-	public ModuleChangeEvent(CloudFoundryServer server, int type, IModule appModule, IStatus status) {
+	public ModuleChangeEvent(CloudFoundryServer server, int type, IModule module, IStatus status) {
 		super(server, type);
 		this.status = status != null ? status : Status.OK_STATUS;
-		this.appModule = appModule;
+		this.module = module;
 	}
 
 	public IStatus getStatus() {
@@ -55,7 +55,7 @@ public class ModuleChangeEvent extends CloudServerEvent {
 	}
 
 	public IModule getModule() {
-		return appModule;
+		return module;
 	}
 
 }

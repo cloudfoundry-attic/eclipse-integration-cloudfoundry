@@ -96,6 +96,7 @@ public class AbstractCloudFoundryServicesTest extends AbstractAsynchCloudTest {
 			throws Exception {
 		List<String> servicesToBind = new ArrayList<String>();
 		servicesToBind.add(service.getName());
+
 		return serverBehavior.operations().bindServices(appModule, servicesToBind);
 	}
 
@@ -148,7 +149,6 @@ public class AbstractCloudFoundryServicesTest extends AbstractAsynchCloudTest {
 
 	protected void createService(CloudService service) throws CoreException {
 		serverBehavior.operations().createServices(new CloudService[] { service }).run(new NullProgressMonitor());
-		;
 	}
 
 	protected void assertServiceExists(CloudService expectedService) throws Exception {

@@ -188,8 +188,7 @@ public class StartOperation extends RestartOperation {
 
 			}
 
-
-
+			appModule = getBehaviour().updateCloudModule(appModule.getDeployedApplicationName(), monitor);
 			// At this stage, the app is either created or it already
 			// exists.
 			// Set the environment variables BEFORE starting the app, and
@@ -205,7 +204,6 @@ public class StartOperation extends RestartOperation {
 				getBehaviour().updateApplicationInstances(appModule.getDeployedApplicationName(), instances, monitor);
 			}
 
-			
 			// If reached here it means the application creation and content
 			// pushing probably succeeded without errors, therefore attempt
 			// to

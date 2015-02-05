@@ -19,27 +19,29 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
+import java.util.List;
+
+import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
 import org.eclipse.wst.server.core.IModule;
 
-/**
- * Performs a {@link BaseClientRequest}
- *
- */
-public class BehaviourRequestOperation extends AbstractApplicationOperation {
+public class CloudRefreshEvent extends ModuleChangeEvent {
 
-	private final BaseClientRequest<?> request;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-	public BehaviourRequestOperation(BaseClientRequest<?> request, CloudFoundryServerBehaviour behaviour, IModule module) {
-		super(behaviour, module);
-		this.request = request;
+	private final List<CloudService> services;
 
+	public CloudRefreshEvent(CloudFoundryServer server, IModule module, int type, List<CloudService> services) {
+		super(server, type, module, null);
+		this.services = services;
 	}
 
-	@Override
-	protected void performApplicationOperation(IProgressMonitor monitor) throws CoreException {
-		request.run(monitor);
+	public List<CloudService> getServices() {
+		return services;
 	}
 
 }

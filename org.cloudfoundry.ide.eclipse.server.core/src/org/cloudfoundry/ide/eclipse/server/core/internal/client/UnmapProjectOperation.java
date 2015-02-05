@@ -17,7 +17,7 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.core.internal.application;
+package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
@@ -25,8 +25,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleCache;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleCache.ServerData;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -71,10 +69,15 @@ public class UnmapProjectOperation implements ICloudFoundryOperation {
 		}
 
 		data.tagForRemap(appModule, project);
-		IServer server = cloudServer.getServer();
+		try {
+			IServer server = cloudServer.getServer();
 
-		IServerWorkingCopy wc = server.createWorkingCopy();
-		wc.modifyModules(null, new IModule[] { appModule }, monitor);
-		wc.save(true, monitor);
+			IServerWorkingCopy wc = server.createWorkingCopy();
+			wc.modifyModules(null, new IModule[] { appModule }, monitor);
+			wc.save(true, monitor);
+		}
+		finally {
+			data.untagForRemap(appModule);
+		}
 	}
 }

@@ -357,13 +357,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		resizeTableColumns();
 
 		canUpdate = false;
-		CloudFoundryApplicationModule appModule = null;
-		try {
-			appModule = getExistingApplication();
-		}
-		catch (CoreException ce) {
-			logApplicationModuleFailureError(Messages.ApplicationDetailsPart_ERROR_UNABLE_REFRESH_EDITOR_STATE);
-		}
+		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
+
 		// Refresh the state of the editor regardless of whether there is a
 		// module or not
 		refreshPublishState(appModule);

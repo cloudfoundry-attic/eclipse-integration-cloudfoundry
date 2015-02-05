@@ -69,6 +69,6 @@ public class RefreshEditorAction extends Action {
 	public void run() {
 		IModule selectedModule = editorPage.getMasterDetailsBlock().getCurrentModule();
 		CloudFoundryServerBehaviour behaviour = editorPage.getCloudServer().getBehaviour();
-		behaviour.getRefreshHandler().scheduleRefresh(behaviour.operations().refreshAll(selectedModule));
+		behaviour.getRefreshHandler().scheduleRefreshAll(selectedModule);
 	}
 }

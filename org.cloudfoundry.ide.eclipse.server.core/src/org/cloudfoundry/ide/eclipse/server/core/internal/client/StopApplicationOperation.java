@@ -51,7 +51,7 @@ class StopApplicationOperation extends AbstractPublishApplicationOperation {
 			server.setModuleState(getModules(), IServer.STATE_STOPPING);
 
 			CloudFoundryServer cloudServer = getBehaviour().getCloudFoundryServer();
-			
+
 			final CloudFoundryApplicationModule cloudModule = cloudServer.getExistingCloudModule(getModule());
 
 			if (cloudModule == null) {
@@ -74,6 +74,9 @@ class StopApplicationOperation extends AbstractPublishApplicationOperation {
 
 			server.setModuleState(getModules(), IServer.STATE_STOPPED);
 			succeeded = true;
+			
+			// Update the module
+			getBehaviour().updateCloudModuleWithInstances(cloudModule.getDeployedApplicationName(), monitor);
 
 			getBehaviour().printlnToConsole(cloudModule, Messages.CONSOLE_APP_STOPPED);
 			CloudFoundryPlugin.getCallback().stopApplicationConsole(cloudModule, cloudServer);

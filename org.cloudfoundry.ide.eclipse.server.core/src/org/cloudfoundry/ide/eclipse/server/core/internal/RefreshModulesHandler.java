@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
+ * Copyright (c) 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -20,7 +20,8 @@
 package org.cloudfoundry.ide.eclipse.server.core.internal;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.BehaviourOperation;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -29,13 +30,13 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 
 /**
- * Handles refresh of modules in a target Cloud Space. Fires refresh events when
- * refresh operations complete successfully
+ * Handles refresh of modules in a target Cloud Space.
  * <p/>
  * As refreshing modules may include fetch a list of {@link CloudApplication}
  * from the target Cloud space associated with the given
  * {@link CloudFoundryServer} which may be a long-running task, module refreshes
- * is performed asynchronously as a job.
+ * is performed asynchronously as a job, and only one job is scheduled per
+ * behaviour regardless of the number of refresh requests received
  * 
  */
 public class RefreshModulesHandler {
@@ -44,9 +45,7 @@ public class RefreshModulesHandler {
 
 	private final CloudFoundryServer cloudServer;
 
-	private ICloudFoundryOperation opToRun;
-
-	private boolean forceStop = false;
+	private BehaviourOperation opToRun;
 
 	public RefreshModulesHandler(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
@@ -54,47 +53,106 @@ public class RefreshModulesHandler {
 	}
 
 	/**
-	 * Refresh all modules in the Cloud space. Refresh is performed
-	 * asynchronously as it may be long running. Once refresh is complete a
-	 * {@link CloudServerEvent#EVENT_SERVER_REFRESHED} event is fired, notifying
-	 * any listeners that refresh has completed.
+	 * Refresh all modules in the Cloud space, as well as services, but does not
+	 * refresh the application instances information as that is triggered
+	 * individually on a module selection to avoid a slow refresh
 	 */
-	public synchronized void scheduleRefresh() {
-		if (!forceStop && this.opToRun == null) {
-			this.opToRun = cloudServer.getBehaviour().operations().refreshAll(null);
-			refreshJob.schedule();
+	public synchronized void scheduleRefreshAll() {
+		if (this.opToRun == null) {
+			scheduleRefresh(cloudServer.getBehaviour().operations().refreshAll(null));
 		}
 	}
 
-	public synchronized void scheduleRefresh(ICloudFoundryOperation opToRun) {
-		if (!forceStop && this.opToRun == null) {
+	public synchronized boolean isScheduled() {
+		return this.opToRun != null;
+	}
+
+	/**
+	 * Schedules to refresh all modules, services, as well as the instances for
+	 * the given module, if not null. Passing a module is optional. If not
+	 * module is passed, only a server-wide module refresh is performed.
+	 * @param module to refresh
+	 */
+	public synchronized void scheduleRefreshAll(IModule module) {
+		if (this.opToRun == null) {
+			scheduleRefresh(cloudServer.getBehaviour().operations().refreshAll(module));
+		}
+	}
+
+	/**
+	 * Schedule an application refresh to update the application's stats and
+	 * information, including its instances. Does not perform a refresh on any
+	 * other application, only on the given application module.
+	 * @param module to refresh
+	 */
+	public synchronized void schedulesRefreshApplication(IModule module) {
+		if (this.opToRun == null) {
+			scheduleRefresh(cloudServer.getBehaviour().operations().refreshApplication(module));
+		}
+	}
+
+	/**
+	 * Schedules an application refresh after there is a deployment change (app
+	 * is started, stopped, restarted, or removed). This is meant to indicate a
+	 * refresh is required after a long-running operation as opposed to
+	 * {@link #schedulesRefreshApplication(IModule)} which is meant for updates
+	 * on an existing application
+	 * @param module
+	 */
+	public synchronized void scheduleRefreshForDeploymentChange(IModule module) {
+		if (this.opToRun == null) {
+			scheduleRefresh(cloudServer.getBehaviour().operations().refreshForDeploymentChange(module));
+		}
+	}
+
+	private synchronized void scheduleRefresh(BehaviourOperation opToRun) {
+		if (this.opToRun == null) {
 			this.opToRun = opToRun;
-			refreshJob.schedule();
+			schedule();
 		}
 	}
 
-	public synchronized void stop(boolean forceStop) {
-		this.forceStop = forceStop;
-	}
-
-	public void fireRefreshEvent(IModule module) {
-		ServerEventHandler.getDefault().fireApplicationChanged(cloudServer, module);
+	private void schedule() {
+		refreshJob.setSystem(false);
+		refreshJob.schedule();
 	}
 
 	private class BehaviourRefreshJob extends Job {
 
 		public BehaviourRefreshJob() {
-			super("Refresh Server Job"); //$NON-NLS-1$
+			super(Messages.RefreshModulesHandler_REFRESH_JOB);
 		}
 
 		@Override
 		public IStatus run(IProgressMonitor monitor) {
-
 			try {
-				opToRun.run(monitor);
-			}
-			catch (Throwable t) {
-				CloudFoundryPlugin.logError(NLS.bind(Messages.ERROR_FAILED_MODULE_REFRESH, t.getMessage()));
+				CloudFoundryServer cloudServer = null;
+				IModule module = opToRun.getModule();
+
+				try {
+					cloudServer = opToRun.getBehaviour() != null ? opToRun.getBehaviour().getCloudFoundryServer()
+							: null;
+				}
+				catch (CoreException ce) {
+					CloudFoundryPlugin.logError(ce);
+				}
+
+				try {
+					opToRun.run(monitor);
+				}
+				catch (Throwable t) {
+					// Cloud server must not be null as it's the source of
+					// the event
+					if (cloudServer == null) {
+						CloudFoundryPlugin.logError(NLS.bind(Messages.RefreshModulesHandler_EVENT_CLOUD_SERVER_NULL,
+								opToRun.getClass()));
+					}
+					else {
+						ServerEventHandler.getDefault().fireError(cloudServer, module,
+								CloudFoundryPlugin.getErrorStatus(Messages.RefreshModulesHandler_REFRESH_FAILURE, t));
+
+					}
+				}
 			}
 			finally {
 				opToRun = null;

@@ -24,8 +24,11 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
+import org.eclipse.wst.server.core.IServer;
+import org.eclipse.wst.server.core.internal.Server;
 
 /**
  * Operation that focuses on publish operations for a given application. Among
@@ -33,7 +36,7 @@ import org.eclipse.wst.server.core.IModule;
  * {@link ICloudFoundryApplicationModule} for the given app if it doesn't
  * already exist.
  */
-public abstract class AbstractPublishApplicationOperation extends AbstractApplicationOperation {
+public abstract class AbstractPublishApplicationOperation extends BehaviourOperation {
 
 	public static String INTERNAL_ERROR_NO_MAPPED_CLOUD_MODULE = "Internal Error: No cloud application module found for: {0} - Unable to deploy or start application"; //$NON-NLS-1$
 
@@ -78,19 +81,17 @@ public abstract class AbstractPublishApplicationOperation extends AbstractApplic
 	}
 
 	@Override
-	protected void updateCloudModule(IModule module, IProgressMonitor monitor) throws CoreException {
-		getBehaviour().updateCloudModuleWithInstances(module, monitor);
-	}
+	public void run(IProgressMonitor monitor) throws CoreException {
 
-	@Override
-	protected void performApplicationOperation(IProgressMonitor monitor) throws CoreException {
-		getBehaviour().getRefreshHandler().stop(true);
 		try {
 			doApplicationOperation(monitor);
+			getBehaviour().getRefreshHandler().scheduleRefreshForDeploymentChange(getModule());
 		}
-		finally {
-			getBehaviour().getRefreshHandler().stop(false);
+		catch (OperationCanceledException e) {
+			// ignore so webtools does not show an exception
+			((Server) getBehaviour().getServer()).setModuleState(getModules(), IServer.STATE_UNKNOWN);
 		}
+
 	}
 
 	protected abstract void doApplicationOperation(IProgressMonitor monitor) throws CoreException;
