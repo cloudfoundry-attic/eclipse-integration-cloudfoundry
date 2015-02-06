@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. and IBM Corporation 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -197,6 +197,7 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 				
 				CloudFoundryServiceWizard wizard = new CloudFoundryServiceWizard(cloudServer, deferAdditionOfService);
 				WizardDialog dialog = new WizardDialog(getShell(), wizard);
+				wizard.setParent(dialog);
 				dialog.setPageSize(900, 600);
 				dialog.setBlockOnOpen(true);
 				

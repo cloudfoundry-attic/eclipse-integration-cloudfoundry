@@ -877,6 +877,8 @@ public class Messages extends NLS {
 	
 	public static String MANAGE_SERVICES_TO_APPLICATIONS_FINISH_ERROR_DESCRIPTION;
 	
+	public static String CloudFoundryServiceWizardPage_GETTING_AVAILABLE_SERVICES;
+	
 	private static final String BUNDLE_NAME = CloudFoundryServerUiPlugin.PLUGIN_ID + ".internal.Messages"; //$NON-NLS-1$
 
 	static {

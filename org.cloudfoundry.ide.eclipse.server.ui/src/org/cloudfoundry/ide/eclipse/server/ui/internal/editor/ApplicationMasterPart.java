@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software Inc and IBM Corporation 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -57,7 +57,6 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
@@ -536,8 +535,9 @@ public class ApplicationMasterPart extends SectionPart {
 		Action addServiceAction = new Action(Messages.COMMONTXT_ADD_SERVICE, CloudFoundryImages.NEW_SERVICE) {
 			@Override
 			public void run() {
-				IWizard wizard = new CloudFoundryServiceWizard(cloudServer);
+				CloudFoundryServiceWizard wizard = new CloudFoundryServiceWizard(cloudServer);
 				WizardDialog dialog = new WizardDialog(getSection().getShell(), wizard);
+				wizard.setParent(dialog);
 				dialog.setPageSize(900, 600);
 				dialog.setBlockOnOpen(true);
 				dialog.open();
