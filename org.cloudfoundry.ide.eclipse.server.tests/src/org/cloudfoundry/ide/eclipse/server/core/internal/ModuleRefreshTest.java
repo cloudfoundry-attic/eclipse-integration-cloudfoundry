@@ -49,7 +49,7 @@ import org.eclipse.wst.server.core.IModule;
  * {@link CloudFoundryServer} and {@link CloudFoundryServerBehaviour}
  *
  */
-public class ModuleRefreshTest extends AbstractAsynchCloudTest {
+public class ModuleRefreshTest extends AbstractRefreshCloudTest {
 
 	@Override
 	protected CloudFoundryTestFixture getTestFixture() throws CoreException {
@@ -264,7 +264,7 @@ public class ModuleRefreshTest extends AbstractAsynchCloudTest {
 		String prefix = "testModuleRefreshAllOp";
 		createWebApplicationProject();
 
-		deployAndWaitForAppStart(prefix);
+		deployAndWaitForDeploymentEvent(prefix);
 
 		asynchExecuteOperationWaitForRefresh(cloudServer.getBehaviour().operations().refreshAll(null), prefix,
 				CloudServerEvent.EVENT_SERVER_REFRESHED);
@@ -605,13 +605,12 @@ public class ModuleRefreshTest extends AbstractAsynchCloudTest {
 		String prefix = "testScheduleRefreshHandlerAllModules";
 		createWebApplicationProject();
 
-		deployAndWaitForAppStart(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForDeploymentEvent(prefix);
 
 		// Test the server-wide refresh of all modules without specifying a
 		// selected module.
 		ModulesRefreshListener refreshListener = ModulesRefreshListener.getListener(null, cloudServer,
 				CloudServerEvent.EVENT_SERVER_REFRESHED);
-		waitForExistingRefreshJobComplete();
 		cloudServer.getBehaviour().getRefreshHandler().scheduleRefreshAll();
 
 		assertModuleRefreshedAndDispose(refreshListener, CloudServerEvent.EVENT_SERVER_REFRESHED);
@@ -622,6 +621,13 @@ public class ModuleRefreshTest extends AbstractAsynchCloudTest {
 		cloudServer.getBehaviour().getRefreshHandler().scheduleRefreshAll(null);
 
 		assertModuleRefreshedAndDispose(refreshListener, CloudServerEvent.EVENT_SERVER_REFRESHED);
+
+		refreshListener = ModulesRefreshListener
+				.getListener(null, cloudServer, CloudServerEvent.EVENT_SERVER_REFRESHED);
+
+		cloudServer.getBehaviour().getRefreshHandler().scheduleRefreshAll(appModule.getLocalModule());
+
+		assertModuleRefreshedAndDispose(refreshListener, CloudServerEvent.EVENT_SERVER_REFRESHED);
 	}
 
 	public void testScheduleRefreshHandlerRefreshApplication() throws Exception {
@@ -630,7 +636,7 @@ public class ModuleRefreshTest extends AbstractAsynchCloudTest {
 		String prefix = "testScheduleRefreshHandlerRefreshApplication";
 		createWebApplicationProject();
 
-		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForDeploymentEvent(prefix);
 
 		// Test the server-wide refresh of all modules therefore do not pass the
 		// app name
@@ -647,7 +653,7 @@ public class ModuleRefreshTest extends AbstractAsynchCloudTest {
 		String prefix = "testScheduleRefreshHandlerAllModuleInstances";
 		createWebApplicationProject();
 
-		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForDeploymentEvent(prefix);
 
 		// Test the server-wide refresh of all modules including refreshing
 		// instances of a selected module
@@ -684,7 +690,7 @@ public class ModuleRefreshTest extends AbstractAsynchCloudTest {
 
 		String expectedAppName = harness.getDefaultWebAppName(prefix);
 
-		deployAndWaitForAppStart(prefix);
+		deployAndWaitForDeploymentEvent(prefix);
 
 		final IModule module = cloudServer.getExistingCloudModule(expectedAppName).getLocalModule();
 
@@ -713,7 +719,7 @@ public class ModuleRefreshTest extends AbstractAsynchCloudTest {
 
 		String expectedAppName = harness.getDefaultWebAppName(prefix);
 
-		deployAndWaitForAppStart(prefix);
+		deployAndWaitForDeploymentEvent(prefix);
 
 		final IModule module = cloudServer.getExistingCloudModule(expectedAppName).getLocalModule();
 
@@ -726,7 +732,7 @@ public class ModuleRefreshTest extends AbstractAsynchCloudTest {
 		String appPrefix = "testModuleRefreshDuringServerConnect1";
 		createWebApplicationProject();
 
-		deployAndWaitForAppStart(appPrefix);
+		deployAndWaitForDeploymentEvent(appPrefix);
 
 		// Cloud module should have been created.
 		Collection<CloudFoundryApplicationModule> appModules = cloudServer.getExistingCloudModules();
@@ -773,7 +779,7 @@ public class ModuleRefreshTest extends AbstractAsynchCloudTest {
 		// wait for the app change event from the deploy first, and then
 		// schedule the second listener to
 		// listen to the expected refresh event
-		deployAndWaitForAppStart(appPrefix);
+		deployAndWaitForDeploymentEvent(appPrefix);
 
 		// Cloud module should have been created.
 		Collection<CloudFoundryApplicationModule> appModules = cloudServer.getExistingCloudModules();

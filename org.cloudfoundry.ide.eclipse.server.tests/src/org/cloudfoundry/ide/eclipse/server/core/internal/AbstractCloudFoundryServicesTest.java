@@ -32,7 +32,7 @@ import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
-public class AbstractCloudFoundryServicesTest extends AbstractAsynchCloudTest {
+public class AbstractCloudFoundryServicesTest extends AbstractRefreshCloudTest {
 
 	protected void deleteService(CloudService service) throws CoreException {
 		harness.deleteService(service);

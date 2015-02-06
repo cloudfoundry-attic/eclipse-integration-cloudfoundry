@@ -49,7 +49,7 @@ import org.eclipse.wst.server.core.internal.Server;
  * deployments as well as waiting for refresh operations to complete.
  *
  */
-public class BehaviourOperationsTest extends AbstractAsynchCloudTest {
+public class BehaviourOperationsTest extends AbstractRefreshCloudTest {
 
 	@Override
 	protected CloudFoundryTestFixture getTestFixture() throws CoreException {
@@ -64,7 +64,7 @@ public class BehaviourOperationsTest extends AbstractAsynchCloudTest {
 		String expectedAppName = harness.getDefaultWebAppName(prefix);
 
 		createWebApplicationProject();
-		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForDeploymentEvent(prefix);
 
 		assertEquals(1, appModule.getApplicationStats().getRecords().size());
 		assertEquals(1, appModule.getInstanceCount());
@@ -95,7 +95,7 @@ public class BehaviourOperationsTest extends AbstractAsynchCloudTest {
 		String expectedAppName = harness.getDefaultWebAppName(prefix);
 
 		createWebApplicationProject();
-		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForDeploymentEvent(prefix);
 
 		final int changedMemory = 678;
 
@@ -120,7 +120,7 @@ public class BehaviourOperationsTest extends AbstractAsynchCloudTest {
 		String expectedAppName = harness.getDefaultWebAppName(prefix);
 
 		createWebApplicationProject();
-		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForDeploymentEvent(prefix);
 
 		EnvironmentVariable variable = new EnvironmentVariable();
 		variable.setVariable("JAVA_OPTS");
@@ -166,7 +166,7 @@ public class BehaviourOperationsTest extends AbstractAsynchCloudTest {
 		final String expectedAppName = harness.getDefaultWebAppName(prefix);
 
 		createWebApplicationProject();
-		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForDeploymentEvent(prefix);
 
 		String expectedURL = harness.getExpectedDefaultURL(prefix);
 		assertEquals(expectedURL, appModule.getDeploymentInfo().getUris().get(0));
@@ -222,9 +222,8 @@ public class BehaviourOperationsTest extends AbstractAsynchCloudTest {
 				cloudServer.getBehaviour().operations().applicationDeployment(appModule, ApplicationAction.START),
 				prefix, CloudServerEvent.EVENT_APP_DEPLOYMENT_CHANGED);
 
-
 		waitForApplicationToStart(appModule.getLocalModule(), prefix);
-		
+
 		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
 
 		assertTrue("Expected application to be started", appModule.getApplication().getState().equals(AppState.STARTED));
@@ -255,9 +254,8 @@ public class BehaviourOperationsTest extends AbstractAsynchCloudTest {
 				prefix, CloudServerEvent.EVENT_APP_DEPLOYMENT_CHANGED);
 
 		waitForApplicationToStart(appModule.getLocalModule(), prefix);
-		
-		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
 
+		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
 
 		assertTrue("Expected application to be started", appModule.getApplication().getState().equals(AppState.STARTED));
 		assertTrue("Expected application to be started", appModule.getState() == Server.STATE_STARTED);
@@ -288,7 +286,7 @@ public class BehaviourOperationsTest extends AbstractAsynchCloudTest {
 				CloudServerEvent.EVENT_APP_DEPLOYMENT_CHANGED);
 
 		waitForApplicationToStart(appModule.getLocalModule(), prefix);
-		
+
 		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
 
 		assertTrue("Expected application to be started", appModule.getApplication().getState().equals(AppState.STARTED));
@@ -337,9 +335,8 @@ public class BehaviourOperationsTest extends AbstractAsynchCloudTest {
 		CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(expectedAppName);
 
 		waitForApplicationToStart(appModule.getLocalModule(), prefix);
-		
-		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
 
+		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
 
 		assertTrue("Expected application to be started", appModule.getApplication().getState().equals(AppState.STARTED));
 		assertTrue("Expected application to be started", appModule.getState() == Server.STATE_STARTED);

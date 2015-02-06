@@ -58,7 +58,7 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		CloudService serviceToCreate = createDefaultService();
 		String prefix = "testServiceBindingInDeploymentInfo";
 		createWebApplicationProject();
-		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForDeploymentEvent(prefix);
 
 		CloudApplication app = appModule.getApplication();
 
@@ -81,7 +81,7 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		String prefix = "testServiceBindingUnbindingAppStarted";
 		createWebApplicationProject();
 
-		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForDeploymentEvent(prefix);
 
 		asynchExecuteOperationWaitForRefresh(getBindServiceOp(appModule, service), prefix,
 				CloudServerEvent.EVENT_APPLICATION_REFRESHED);
@@ -108,7 +108,7 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		String prefix = "testServiceBindingUnbindingAppStopped";
 		createWebApplicationProject();
 
-		CloudFoundryApplicationModule appModule = deployAndWaitForAppStart(prefix);
+		CloudFoundryApplicationModule appModule = deployAndWaitForDeploymentEvent(prefix);
 
 		serverBehavior.operations().applicationDeployment(appModule, ApplicationAction.STOP)
 				.run(new NullProgressMonitor());

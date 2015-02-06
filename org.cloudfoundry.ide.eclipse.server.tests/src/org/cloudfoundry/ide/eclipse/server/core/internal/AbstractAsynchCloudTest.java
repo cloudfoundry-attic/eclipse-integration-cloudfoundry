@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (c) 2015 Pivotal Software, Inc.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *  Contributors:
+ *     Pivotal Software, Inc. - initial API and implementation
+ ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal;
 
 import java.lang.reflect.InvocationTargetException;
@@ -41,7 +60,6 @@ public abstract class AbstractAsynchCloudTest extends AbstractCloudFoundryTest {
 	 */
 	protected void asynchExecuteOperationWaitForRefresh(final ICloudFoundryOperation op, String testPrefix,
 			int expectedRefreshEventType) throws Exception {
-		waitForExistingRefreshJobComplete();
 		String expectedAppName = testPrefix != null ? harness.getDefaultWebAppName(testPrefix) : null;
 		IRunnableWithProgress runnable = new IRunnableWithProgress() {
 
@@ -56,32 +74,6 @@ public abstract class AbstractAsynchCloudTest extends AbstractCloudFoundryTest {
 			}
 		};
 		asynchExecuteOperationWaitForRefresh(runnable, expectedAppName, expectedRefreshEventType);
-	}
-
-	protected void waitForExistingRefreshJobComplete() throws CoreException {
-		int total = 10;
-		int attempts = total;
-		long wait = 3000;
-		boolean scheduled = serverBehavior.getRefreshHandler().isScheduled();
-
-		// Test the Server behaviour API that checks if application is running
-		for (; scheduled && attempts > 0; attempts--) {
-			scheduled = serverBehavior.getRefreshHandler().isScheduled();
-
-			if (scheduled) {
-				try {
-					Thread.sleep(wait);
-				}
-				catch (InterruptedException e) {
-
-				}
-			}
-
-		}
-
-		if (scheduled) {
-			throw CloudErrorUtil.toCoreException("Timed out waiting for existing refresh job to complete");
-		}
 	}
 
 	/**
