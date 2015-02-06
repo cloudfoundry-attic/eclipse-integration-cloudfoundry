@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -63,7 +63,7 @@ public class CloudFoundryServerWizardUIControl extends
 
 			// Only enable user cloud.
 			if (curOldValue != curNewValue) {
-				if (curNewValue instanceof IServerType) {
+				if (curNewValue == null || curNewValue instanceof IServerType) {
 					if (isSupportedServerType((IServerType)curNewValue)) {
 						// Disable the host name field
 						if (controlListener != null) {

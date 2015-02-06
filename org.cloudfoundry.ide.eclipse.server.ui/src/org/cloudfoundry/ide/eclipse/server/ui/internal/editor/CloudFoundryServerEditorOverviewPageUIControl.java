@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -48,7 +48,7 @@ public class CloudFoundryServerEditorOverviewPageUIControl extends ServerEditorO
 						.getPropertyName())) {
 			Object curNewValue = event.getNewValue();
 
-			if (curNewValue instanceof IServerType && isSupportedServerType((IServerType)curNewValue)) {
+			if (curNewValue == null || curNewValue instanceof IServerType && isSupportedServerType((IServerType)curNewValue)) {
 				// Disable the host name field.
 				if (controlListener != null) {
 					controlMap.put(PROP_HOSTNAME, new UIControlEntry(false, null));
