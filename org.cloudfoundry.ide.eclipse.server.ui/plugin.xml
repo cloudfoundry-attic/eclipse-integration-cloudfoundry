@@ -117,7 +117,7 @@
  	   	</menuContribution>
      	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
-     	       label="Show Console"
+     	       label="Show Recent Logs"
      	       commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.showconsoleviewercommand">
   	         <visibleWhen
   	               checkEnabled="false">
@@ -197,8 +197,8 @@
 		</command>
 		<!-- Commands based on modules -->
 		<command
-			name="Show Console"
-			description="Show Console"
+			name="Show Recent Logs"
+			description="Show Recent Logs"
 			id="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.showconsoleviewercommand">
 		</command>
 		<command
