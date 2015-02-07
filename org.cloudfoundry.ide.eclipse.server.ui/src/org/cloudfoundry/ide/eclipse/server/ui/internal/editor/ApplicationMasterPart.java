@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -595,16 +595,11 @@ public class ApplicationMasterPart extends SectionPart {
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
 
-		manager.add(new ServiceToApplicationsBindingAction(selection, cloudServer.getBehaviour(), editorPage));
-
-		// FIXNS: Disable Caldecott feature in 1.5.1 until feature is supported
-		// in the client-lib
-		// List<IAction> caldecottAction = new
-		// TunnelActionProvider(cloudServer).getTunnelActions(selection,
-		// editorPage);
-		// for (IAction action : caldecottAction) {
-		// manager.add(action);
-		// }
+		// For now only support service binding/unbinding for one selected
+		// service
+		if (selection.size() == 1) {
+			manager.add(new ServiceToApplicationsBindingAction(selection, cloudServer.getBehaviour(), editorPage));
+		}
 	}
 
 	private void fillApplicationsContextMenu(IMenuManager manager) {
