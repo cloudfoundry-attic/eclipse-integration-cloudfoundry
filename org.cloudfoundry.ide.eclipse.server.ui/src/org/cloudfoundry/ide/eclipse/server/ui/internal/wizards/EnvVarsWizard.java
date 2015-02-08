@@ -79,7 +79,11 @@ public class EnvVarsWizard extends Wizard {
 			getContainer().run(true, true, new IRunnableWithProgress() {
 				public void run(IProgressMonitor monitor) {
 					try {
-						cloudServer.getBehaviour().operations().environmentVariablesUpdate(appModule)
+						cloudServer
+								.getBehaviour()
+								.operations()
+								.environmentVariablesUpdate(appModule.getLocalModule(),
+										appModule.getDeployedApplicationName(), infoWorkingCopy.getEnvVariables())
 								.run(monitor);
 					}
 					catch (CoreException e) {

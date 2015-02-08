@@ -96,6 +96,8 @@ public class Messages extends NLS {
 	public static String ERROR_APPLICATION_LOG_LISTENER;
 
 	public static String ERROR_NO_MAPPED_APPLICATION_URLS;
+	
+	public static String ERROR_HOST_TAKEN;
 
 	public static String INVALID_CHARACTERS_ERROR;
 
@@ -136,6 +138,8 @@ public class Messages extends NLS {
 	public static String CloudFoundryServer_ERROR_SERVER_ORIGIN_NOT_FOUND;
 
 	public static String CloudFoundryServer_JOB_UPDATE;
+	
+	public static String CloudFoundryServerBehaviour_UPDATE_ENV_VARS;
 
 	public static String CommandOptions_DESCRIPTION_VARIABLES_FOR_TUNNEL;
 

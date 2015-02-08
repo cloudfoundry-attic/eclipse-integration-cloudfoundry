@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;
@@ -53,18 +54,31 @@ public class DeleteModulesOperation extends BehaviourOperation {
 	@Override
 	public void run(IProgressMonitor monitor) throws CoreException {
 		doDelete(monitor);
-		getBehaviour().getRefreshHandler().scheduleRefreshAll();
+		getBehaviour().getRefreshHandler().scheduleRefreshForDeploymentChange(getModule());
 	}
 
 	protected void doDelete(IProgressMonitor monitor) throws CoreException {
 		final CloudFoundryServer cloudServer = getBehaviour().getCloudFoundryServer();
-		List<CloudApplication> updatedApplications = getBehaviour().getApplications(monitor);
 
 		for (IModule module : modules) {
 			final CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
 			if (appModule == null) {
 				continue;
+			}
+
+			// Fetch an updated application. Do not fetch all applications as it may slow down the
+			// deletion process, only fetch the app being deleted
+			CloudApplication application = null;
+
+			try {
+				application = getBehaviour().getCloudApplication(appModule.getDeployedApplicationName(), monitor);
+			}
+			catch (Throwable t) {
+				// Ignore if not found. The app does not exist
+				if (!CloudErrorUtil.isNotFoundException(t)) {
+					throw t;
+				}
 			}
 
 			// NOTE that modules do NOT necessarily have to have deployed
@@ -77,18 +91,6 @@ public class DeleteModulesOperation extends BehaviourOperation {
 			// but there would be no corresponding CloudApplication.
 
 			List<String> servicesToDelete = new ArrayList<String>();
-
-			// Fetch an updated application so that it has the lastest
-			// service list
-			CloudApplication application = null;
-			if (updatedApplications != null) {
-				for (CloudApplication app : updatedApplications) {
-					if (app.getName().equals(appModule.getDeployedApplicationName())) {
-						application = app;
-						break;
-					}
-				}
-			}
 
 			// ONLY delete a remote application if an application is found.
 			if (application != null) {

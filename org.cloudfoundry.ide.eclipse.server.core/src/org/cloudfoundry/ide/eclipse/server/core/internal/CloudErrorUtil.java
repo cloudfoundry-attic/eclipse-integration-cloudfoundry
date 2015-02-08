@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2013, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -165,6 +165,21 @@ public class CloudErrorUtil {
 			}
 		}
 		return false;
+	}
+
+	public static String getHostTakenError(Exception e) {
+		HttpClientErrorException badRequestException = getBadRequestException(e);
+		if (badRequestException != null) {
+			String message = getHttpErrorMessage(badRequestException);
+
+			if (message != null) {
+				message = message.toLowerCase();
+				if (message.contains("host") && message.contains("taken")) { //$NON-NLS-1$ //$NON-NLS-2$
+					return Messages.ERROR_HOST_TAKEN;
+				}
+			}
+		}
+		return null;
 	}
 
 	/**

@@ -39,6 +39,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpaces;
 import org.cloudfoundry.ide.eclipse.server.tests.AllCloudFoundryTests;
@@ -423,6 +424,14 @@ public class CloudFoundryTestFixture {
 	public CloudFoundryTestFixture configureForApplicationDeployment(String fullApplicationName, int memory,
 			boolean deployStopped) throws CoreException {
 		CloudFoundryPlugin.setCallback(new TestCallback(fullApplicationName, memory, deployStopped));
+		return getTestFixture();
+	}
+
+	public CloudFoundryTestFixture configureForApplicationDeployment(String fullApplicationName, int memory,
+			boolean deployStopped, List<EnvironmentVariable> variables, List<CloudService> services)
+			throws CoreException {
+		CloudFoundryPlugin
+				.setCallback(new TestCallback(fullApplicationName, memory, deployStopped, variables, services));
 		return getTestFixture();
 	}
 

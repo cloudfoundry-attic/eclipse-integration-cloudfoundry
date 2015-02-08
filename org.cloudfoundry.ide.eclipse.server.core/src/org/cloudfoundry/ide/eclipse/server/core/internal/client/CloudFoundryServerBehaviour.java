@@ -537,7 +537,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			ApplicationStats stats = getApplicationStats(appModule.getDeployedApplicationName(), monitor);
 			InstancesInfo info = getInstancesInfo(appModule.getDeployedApplicationName(), monitor);
 			appModule.setApplicationStats(stats);
-			appModule.setInstancesInfo(info);		}
+			appModule.setInstancesInfo(info);
+		}
 		catch (CoreException e) {
 			// Ignore if it is application not found error. If the application
 			// does not exist
@@ -552,7 +553,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * Fetches list of all applications in the Cloud space. No module updates
 	 * occur, as this is a low-level API meant to interact with the underlying
 	 * client directly. Callers should be responsible to update associated
-	 * modules.
+	 * modules. Note that this may be a long-running operation. If fetching a
+	 * known application , it is recommended to call
+	 * {@link #getCloudApplication(String, IProgressMonitor)} or
+	 * {@link #updateCloudModule(IModule, IProgressMonitor)} as it may be
+	 * potentially faster
 	 * @param monitor
 	 * @return List of all applications in the Cloud space.
 	 * @throws CoreException
@@ -1889,8 +1894,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		};
 	}
 
-	protected BaseClientRequest<Void> getUpdateEnvVarRequest(final CloudFoundryApplicationModule appModule) {
-		return new BehaviourRequest<Void>("Updating environment variables") { //$NON-NLS-1$
+	protected BaseClientRequest<Void> getUpdateEnvVarRequest(final String appName,
+			final List<EnvironmentVariable> variables) {
+		final String label = NLS.bind(Messages.CloudFoundryServerBehaviour_UPDATE_ENV_VARS, appName);
+		return new BehaviourRequest<Void>(label) { //$NON-NLS-1$
 
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
@@ -1898,19 +1905,17 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				Map<String, String> varsMap = new HashMap<String, String>();
 
 				SubMonitor subProgress = SubMonitor.convert(progress);
-				subProgress
-						.setTaskName("Updating environment variables for: " + appModule.getDeployedApplicationName()); //$NON-NLS-1$
+				subProgress.setTaskName(label); //$NON-NLS-1$
 
 				try {
-					List<EnvironmentVariable> vars = appModule.getDeploymentInfo().getEnvVariables();
 
-					if (vars != null) {
-						for (EnvironmentVariable var : vars) {
+					if (variables != null) {
+						for (EnvironmentVariable var : variables) {
 							varsMap.put(var.getVariable(), var.getValue());
 						}
 					}
 
-					client.updateApplicationEnv(appModule.getDeployedApplicationName(), varsMap);
+					client.updateApplicationEnv(appName, varsMap);
 
 				}
 				finally {

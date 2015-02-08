@@ -28,9 +28,11 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.Staging;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -131,16 +133,74 @@ public class PushApplicationOperation extends StartOperation {
 		if (!found) {
 			getBehaviour().printlnToConsole(appModule, Messages.CONSOLE_APP_CREATION);
 
+			// BUG - [87862532]: Fetch all the information BEFORE
+			// creating the application. The reason for this
+			// is to prevent any other operation that updates the module from
+			// clearing the deploymentinfo after the application is created
+			// but before other properties are updated like environment variables
+			// and instances
 			Staging staging = appModule.getDeploymentInfo().getStaging();
 			List<String> uris = appModule.getDeploymentInfo().getUris() != null ? appModule.getDeploymentInfo()
 					.getUris() : new ArrayList<String>(0);
 			List<String> services = appModule.getDeploymentInfo().asServiceBindingList();
+			List<EnvironmentVariable> variables = appModule.getDeploymentInfo().getEnvVariables();
+			int instances = appModule.getDeploymentInfo().getInstances();
 
 			if (staging == null) {
 				// For v2, a non-null staging is required.
 				staging = new Staging();
 			}
-			client.createApplication(appName, staging, appModule.getDeploymentInfo().getMemory(), uris, services);
+			CoreException cloudAppCreationClientError = null;
+
+			// Guard against host taken errors and other errors that may
+			// create the app but
+			// prevent further deployment. If the app was still created
+			// attempt to set env vars and instaces
+			try {
+				client.createApplication(appName, staging, appModule.getDeploymentInfo().getMemory(), uris, services);
+			}
+			catch (Exception e) {
+				String hostTaken = CloudErrorUtil.getHostTakenError(e);
+				if (hostTaken != null) {
+					cloudAppCreationClientError = CloudErrorUtil.toCoreException(hostTaken);
+				}
+				else {
+					cloudAppCreationClientError = CloudErrorUtil.toCoreException(e);
+				}
+			}
+
+			// [87881946] - Try setting the env vars and instances even if an
+			// error was thrown while creating the application
+			// as the application may still have been created in the Cloud space
+			// in spite of the error
+			try {
+				CloudApplication actualApp = getBehaviour().getCloudApplication(appName, monitor);
+
+				if (actualApp != null) {
+					getBehaviour().getUpdateEnvVarRequest(appName, variables).run(monitor);
+
+					// Update instances if it is more than 1. By default, app
+					// starts
+					// with 1 instance.
+
+					if (instances > 1) {
+						getBehaviour().updateApplicationInstances(appName, instances, monitor);
+					}
+				}
+			}
+			catch (CoreException ce) {
+				if (cloudAppCreationClientError == null) {
+					throw ce;
+				}
+			}
+
+			// Even if application was created in the Cloud space, and env vars
+			// and instances set, if an exception
+			// was thrown while creating the client, throw it
+			if (cloudAppCreationClientError != null) {
+				throw cloudAppCreationClientError;
+			}
+
 		}
 		super.pushApplication(client, appModule, warFile, applicationArchive, monitor);
 	}

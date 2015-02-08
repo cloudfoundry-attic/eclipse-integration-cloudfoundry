@@ -595,7 +595,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
 
-		// For now only support service binding/unbinding for one selected
+		// [87165642] - For now only support service binding/unbinding for one selected
 		// service
 		if (selection.size() == 1) {
 			manager.add(new ServiceToApplicationsBindingAction(selection, cloudServer.getBehaviour(), editorPage));

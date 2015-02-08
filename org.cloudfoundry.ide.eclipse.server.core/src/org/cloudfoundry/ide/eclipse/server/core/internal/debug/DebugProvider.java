@@ -28,7 +28,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.AbstractWaitWithProgressJob;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
@@ -114,9 +113,9 @@ public class DebugProvider implements IDebugProvider {
 	public boolean configureApp(CloudFoundryApplicationModule appModule, CloudFoundryServer cloudServer,
 			IProgressMonitor monitor) throws CoreException {
 
-		DeploymentInfoWorkingCopy wc = appModule.resolveDeploymentInfoWorkingCopy(monitor);
-		List<EnvironmentVariable> vars = wc.getEnvVariables();
-		EnvironmentVariable javaOpts = getDebugEnvironment(wc);
+		ApplicationDeploymentInfo info = appModule.getDeploymentInfo();
+		List<EnvironmentVariable> vars = info.getEnvVariables();
+		EnvironmentVariable javaOpts = getDebugEnvironment(info);
 
 		if (!containsDebugOption(javaOpts)) {
 			if (javaOpts == null) {
@@ -135,8 +134,12 @@ public class DebugProvider implements IDebugProvider {
 			}
 
 			javaOpts.setValue(value);
-			wc.setEnvVariables(vars);
-			wc.save();
+
+			cloudServer
+					.getBehaviour()
+					.operations()
+					.environmentVariablesUpdate(appModule.getLocalModule(), appModule.getDeployedApplicationName(),
+							vars).run(monitor);
 
 		}
 		return true;

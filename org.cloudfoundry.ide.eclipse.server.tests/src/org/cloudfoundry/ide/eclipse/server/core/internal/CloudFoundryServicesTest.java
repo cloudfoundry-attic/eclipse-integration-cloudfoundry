@@ -108,10 +108,7 @@ public class CloudFoundryServicesTest extends AbstractCloudFoundryServicesTest {
 		String prefix = "testServiceBindingUnbindingAppStopped";
 		createWebApplicationProject();
 
-		CloudFoundryApplicationModule appModule = deployAndWaitForDeploymentEvent(prefix);
-
-		serverBehavior.operations().applicationDeployment(appModule, ApplicationAction.STOP)
-				.run(new NullProgressMonitor());
+		CloudFoundryApplicationModule appModule = deployAndWaitForDeploymentEvent(prefix, true);
 
 		waitForAppToStop(appModule);
 

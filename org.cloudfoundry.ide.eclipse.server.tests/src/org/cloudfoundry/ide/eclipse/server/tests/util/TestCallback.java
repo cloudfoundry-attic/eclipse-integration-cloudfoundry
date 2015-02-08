@@ -23,11 +23,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudApplicationURL;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
@@ -48,6 +50,20 @@ public class TestCallback extends CloudFoundryCallback {
 	private final int memory;
 
 	private final boolean deployStopped;
+
+	private List<EnvironmentVariable> variables;
+
+	private List<CloudService> services;
+
+	public TestCallback(String appName,  int memory, boolean deployStopped,
+			List<EnvironmentVariable> variables, List<CloudService> services) {
+		this.appName = appName;
+		this.url = null;
+		this.deployStopped = deployStopped;
+		this.memory = memory;
+		this.variables = variables;
+		this.services = services;
+	}
 
 	public TestCallback(String appName, int memory, boolean deployStopped) {
 		this.appName = appName;
@@ -101,6 +117,12 @@ public class TestCallback extends CloudFoundryCallback {
 		DeploymentInfoWorkingCopy copy = module.resolveDeploymentInfoWorkingCopy(monitor);
 		copy.setDeploymentName(appName);
 		copy.setMemory(memory);
+		if (variables != null) {
+			copy.setEnvVariables(variables);
+		}
+		if (services != null) {
+			copy.setServices(services);
+		}
 
 		if (url != null) {
 			copy.setUris(Collections.singletonList(url));

@@ -30,6 +30,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
@@ -160,18 +161,14 @@ public class CloudBehaviourOperations {
 	 * Gets an operation that updates the application's environment variables.
 	 * Note that the application needs to first exist in the server, and be in a
 	 * state that will accept environment variable changes (either stopped, or
-	 * running after staging has completed). WARNING: The
-	 * {@link CloudApplication} mapping in the module WILL be updated if the
-	 * environment variable update is successful, which will replace any
-	 * existing deployment info in the app module.
-	 * @param appModule
-	 * @param monitor
+	 * running after staging has completed).
+	 * 
 	 * @throws CoreException if operation was not created
 	 */
-	public ICloudFoundryOperation environmentVariablesUpdate(final CloudFoundryApplicationModule appModule)
-			throws CoreException {
-		BaseClientRequest<Void> request = behaviour.getUpdateEnvVarRequest(appModule);
-		return new ApplicationUpdateOperation(request, behaviour, appModule.getLocalModule());
+	public ICloudFoundryOperation environmentVariablesUpdate(IModule module, String appName,
+			List<EnvironmentVariable> variables) throws CoreException {
+		BaseClientRequest<Void> request = behaviour.getUpdateEnvVarRequest(appName, variables);
+		return new ApplicationUpdateOperation(request, behaviour, module);
 	}
 
 	/**

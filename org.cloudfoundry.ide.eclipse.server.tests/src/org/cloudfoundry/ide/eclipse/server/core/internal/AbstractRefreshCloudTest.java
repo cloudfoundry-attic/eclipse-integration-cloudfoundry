@@ -33,12 +33,30 @@ public abstract class AbstractRefreshCloudTest extends AbstractAsynchCloudTest {
 	 * other refresh jobs launched by the test case are not ignored
 	 */
 	protected CloudFoundryApplicationModule deployAndWaitForDeploymentEvent(String appPrefix) throws Exception {
+		return deployAndWaitForDeploymentEvent(appPrefix, false);
+	}
+
+	/**
+	 * For refresh tests that do NOT explicitly test app deploy changes, make
+	 * sure that the deployment event does not interferer with refresh jobs
+	 * launched by the actual test cases. Since only one refresh job is active
+	 * per behaviour, and any schedule requests for refresh are ignored if one
+	 * is already active, handling the deploy change event will ensure that
+	 * other refresh jobs launched by the test case are not ignored. Application
+	 * is deployed in stop mode.
+	 */
+	protected CloudFoundryApplicationModule deployAndWaitForDeploymentEvent(String appPrefix, boolean deployedStopped)
+			throws Exception {
 
 		String appName = harness.getDefaultWebAppName(appPrefix);
 		ModulesRefreshListener listener = ModulesRefreshListener.getListener(appName, cloudServer,
 				CloudServerEvent.EVENT_APP_DEPLOYMENT_CHANGED);
-		CloudFoundryApplicationModule appModule = deployApplication(appPrefix, false);
-		waitForApplicationToStart(appModule.getLocalModule(), appPrefix);
+		CloudFoundryApplicationModule appModule = deployApplication(appPrefix, deployedStopped);
+
+		if (!deployedStopped) {
+			waitForApplicationToStart(appModule.getLocalModule(), appPrefix);
+		}
+
 		assertModuleRefreshedAndDispose(listener, CloudServerEvent.EVENT_APP_DEPLOYMENT_CHANGED);
 		return appModule;
 	}

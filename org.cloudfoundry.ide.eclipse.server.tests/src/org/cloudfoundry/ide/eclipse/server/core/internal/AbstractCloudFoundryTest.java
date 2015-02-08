@@ -47,6 +47,10 @@ import junit.framework.TestCase;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
+import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
+import org.cloudfoundry.client.lib.domain.CloudServicePlan;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.tests.server.TestServlet;
@@ -331,11 +335,11 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 	 * @throws Exception
 	 */
 	protected CloudFoundryApplicationModule deployApplication(String appPrefix, boolean deployStopped) throws Exception {
-		return deployApplication(appPrefix, CloudUtil.DEFAULT_MEMORY, deployStopped);
+		return deployApplication(appPrefix, CloudUtil.DEFAULT_MEMORY, deployStopped, null, null);
 	}
 
-	protected CloudFoundryApplicationModule deployApplication(String appPrefix, int memory, boolean deployStopped)
-			throws Exception {
+	protected CloudFoundryApplicationModule deployApplication(String appPrefix, int memory, boolean deployStopped,
+			List<EnvironmentVariable> variables, List<CloudService> services) throws Exception {
 
 		String projectName = harness.getDefaultWebAppProjectName();
 
@@ -343,7 +347,7 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 
 		// Configure the test fixture for deployment.
 		// This step is a substitute for the Application deployment wizard
-		getTestFixture().configureForApplicationDeployment(expectedAppName, memory, deployStopped);
+		getTestFixture().configureForApplicationDeployment(expectedAppName, memory, deployStopped, variables, services);
 
 		IModule module = getModule(projectName);
 
@@ -375,6 +379,48 @@ public abstract class AbstractCloudFoundryTest extends TestCase {
 			if (projectName.equals(module.getName())) {
 				return module;
 			}
+		}
+		return null;
+	}
+
+	protected CloudServiceOffering getServiceConfiguration(String vendor) throws CoreException {
+		List<CloudServiceOffering> serviceConfigurations = serverBehavior
+				.getServiceOfferings(new NullProgressMonitor());
+		if (serviceConfigurations != null) {
+			for (CloudServiceOffering serviceConfiguration : serviceConfigurations) {
+				if (vendor.equals(serviceConfiguration.getLabel())) {
+					return serviceConfiguration;
+				}
+			}
+		}
+		return null;
+	}
+
+	protected CloudService getCloudServiceToCreate(String name, String label, String plan) throws CoreException {
+		CloudServiceOffering serviceConfiguration = getServiceConfiguration(label);
+		if (serviceConfiguration != null) {
+			CloudService service = new CloudService();
+			service.setName(name);
+			service.setLabel(label);
+			service.setVersion(serviceConfiguration.getVersion());
+
+			boolean planExists = false;
+
+			List<CloudServicePlan> plans = serviceConfiguration.getCloudServicePlans();
+
+			for (CloudServicePlan pln : plans) {
+				if (plan.equals(pln.getName())) {
+					planExists = true;
+					break;
+				}
+			}
+
+			if (!planExists) {
+				throw CloudErrorUtil.toCoreException("No plan: " + plan + " found for service :" + label);
+			}
+			service.setPlan(plan);
+
+			return service;
 		}
 		return null;
 	}

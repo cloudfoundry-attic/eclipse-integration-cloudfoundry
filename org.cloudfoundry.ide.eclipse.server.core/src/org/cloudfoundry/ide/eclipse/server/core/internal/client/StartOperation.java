@@ -188,26 +188,6 @@ public class StartOperation extends RestartOperation {
 
 			}
 
-			appModule = getBehaviour().updateCloudModule(appModule.getDeployedApplicationName(), monitor);
-			// At this stage, the app is either created or it already
-			// exists.
-			// Set the environment variables BEFORE starting the app, and
-			// BEFORE updating
-			// the cloud application mapping in the module, which will
-			// replace the deployment info
-			getBehaviour().getUpdateEnvVarRequest(appModule).run(monitor);
-
-			// Update instances if it is more than 1. By default, app starts
-			// with 1 instance.
-			int instances = appModule.getDeploymentInfo().getInstances();
-			if (instances > 1) {
-				getBehaviour().updateApplicationInstances(appModule.getDeployedApplicationName(), instances, monitor);
-			}
-
-			// If reached here it means the application creation and content
-			// pushing probably succeeded without errors, therefore attempt
-			// to
-			// start the application
 			super.performDeployment(appModule, monitor);
 
 		}
@@ -240,6 +220,9 @@ public class StartOperation extends RestartOperation {
 			File warFile, ApplicationArchive applicationArchive, final IProgressMonitor monitor) throws CoreException {
 
 		String appName = appModule.getDeploymentInfo().getDeploymentName();
+		
+		SubMonitor subProgress = SubMonitor.convert(monitor);
+		subProgress.setTaskName(Messages.CONSOLE_APP_PUSH_MESSAGE); //$NON-NLS-1$
 
 		try {
 			getBehaviour().printlnToConsole(appModule, Messages.CONSOLE_APP_PUSH_MESSAGE);
@@ -317,6 +300,8 @@ public class StartOperation extends RestartOperation {
 		catch (IOException e) {
 			throw new CoreException(CloudFoundryPlugin.getErrorStatus("Failed to deploy application " + //$NON-NLS-1$ 
 					appModule.getDeploymentInfo().getDeploymentName() + " due to " + e.getMessage(), e)); //$NON-NLS-1$
+		} finally {
+			subProgress.done();
 		}
 
 	}

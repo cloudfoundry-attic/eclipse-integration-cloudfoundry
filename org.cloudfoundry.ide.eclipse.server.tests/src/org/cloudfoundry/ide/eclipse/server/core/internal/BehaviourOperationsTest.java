@@ -132,8 +132,11 @@ public class BehaviourOperationsTest extends AbstractRefreshCloudTest {
 		cp.save();
 
 		asynchExecuteOperationWaitForRefresh(
-				cloudServer.getBehaviour().operations().environmentVariablesUpdate(appModule), prefix,
-				CloudServerEvent.EVENT_APPLICATION_REFRESHED);
+				cloudServer
+						.getBehaviour()
+						.operations()
+						.environmentVariablesUpdate(appModule.getLocalModule(), appModule.getDeployedApplicationName(),
+								cp.getEnvVariables()), prefix, CloudServerEvent.EVENT_APPLICATION_REFRESHED);
 
 		// Get updated module
 		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());

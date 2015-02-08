@@ -19,6 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,7 +29,9 @@ import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
+import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
 import org.eclipse.core.runtime.CoreException;
@@ -65,10 +68,26 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 
 		String expectedAppName = harness.getDefaultWebAppName(prefix);
 
+		CloudFoundryOperations client = harness.createExternalClient();
+		client.login();
+		CloudService service = getCloudServiceToCreate("sqlService", "elephantsql", "turtle");
+		List<CloudService> servicesToBind = new ArrayList<CloudService>();
+		servicesToBind.add(service);
+		client.createService(service);
+
+		EnvironmentVariable variable = new EnvironmentVariable();
+		variable.setVariable("JAVA_OPTS");
+		variable.setValue("-Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=n");
+		List<EnvironmentVariable> vars = new ArrayList<EnvironmentVariable>();
+		vars.add(variable);
+
 		createWebApplicationProject();
 
-		final CloudFoundryApplicationModule appModule = deployApplication(prefix, CloudUtil.DEFAULT_MEMORY, false);
+		CloudFoundryApplicationModule appModule = deployApplication(prefix, CloudUtil.DEFAULT_MEMORY, false, vars,
+				servicesToBind);
 		waitForApplicationToStart(appModule.getLocalModule(), prefix);
+
+		appModule = cloudServer.getExistingCloudModule(appModule.getDeployedApplicationName());
 
 		assertNotNull(appModule.getApplication());
 		assertNotNull(appModule.getDeploymentInfo());
@@ -94,7 +113,19 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		assertEquals(actualApp.getMemory(), info.getMemory());
 		assertEquals(CloudUtil.DEFAULT_MEMORY, info.getMemory());
 
+		assertEquals("JAVA_OPTS", appModule.getDeploymentInfo().getEnvVariables().get(0).getVariable());
+		assertEquals("-Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=n", appModule
+				.getDeploymentInfo().getEnvVariables().get(0).getValue());
+
+		assertTrue(actualApp.getEnvAsMap().containsKey("JAVA_OPTS"));
+		assertEquals("-Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=n", actualApp.getEnvAsMap()
+				.get("JAVA_OPTS"));
+		assertEquals("sqlService", appModule.getDeploymentInfo().getServices().get(0).getName());
+		assertEquals("sqlService", actualApp.getServices().get(0));
+
 	}
+
+	
 
 	public void testCloudFoundryModuleCreationNonWSTPublish() throws Exception {
 		// Test that a cloud foundry module is created when an application is
@@ -254,7 +285,7 @@ public class CloudFoundryServerBehaviourTest extends AbstractCloudFoundryTest {
 		serverBehavior.stopModule(new IModule[] { appModule.getLocalModule() }, new NullProgressMonitor());
 
 		waitForAppToStop(appModule);
-		
+
 		assertTrue("Expected application to be stopped", appModule.getApplication().getState().equals(AppState.STOPPED));
 		assertTrue("Expected application to be stopped", appModule.getState() == IServer.STATE_STOPPED);
 

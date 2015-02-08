@@ -24,8 +24,6 @@ import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
-import org.cloudfoundry.client.lib.domain.CloudServicePlan;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.server.tests.util.CloudFoundryTestFixture;
@@ -48,48 +46,6 @@ public class AbstractCloudFoundryServicesTest extends AbstractRefreshCloudTest {
 
 		createService(toCreate);
 		return toCreate;
-	}
-
-	protected CloudService getCloudServiceToCreate(String name, String label, String plan) throws CoreException {
-		CloudServiceOffering serviceConfiguration = getServiceConfiguration(label);
-		if (serviceConfiguration != null) {
-			CloudService service = new CloudService();
-			service.setName(name);
-			service.setLabel(label);
-			service.setVersion(serviceConfiguration.getVersion());
-
-			boolean planExists = false;
-
-			List<CloudServicePlan> plans = serviceConfiguration.getCloudServicePlans();
-
-			for (CloudServicePlan pln : plans) {
-				if (plan.equals(pln.getName())) {
-					planExists = true;
-					break;
-				}
-			}
-
-			if (!planExists) {
-				throw CloudErrorUtil.toCoreException("No plan: " + plan + " found for service :" + label);
-			}
-			service.setPlan(plan);
-
-			return service;
-		}
-		return null;
-	}
-
-	protected CloudServiceOffering getServiceConfiguration(String vendor) throws CoreException {
-		List<CloudServiceOffering> serviceConfigurations = serverBehavior
-				.getServiceOfferings(new NullProgressMonitor());
-		if (serviceConfigurations != null) {
-			for (CloudServiceOffering serviceConfiguration : serviceConfigurations) {
-				if (vendor.equals(serviceConfiguration.getLabel())) {
-					return serviceConfiguration;
-				}
-			}
-		}
-		return null;
 	}
 
 	protected ICloudFoundryOperation getBindServiceOp(CloudFoundryApplicationModule appModule, CloudService service)
