@@ -30,7 +30,7 @@
  	        vendor="Pivotal"
             class="org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServerRuntime">
             <moduleType types="wst.web" versions="1.0" />
-         	<moduleType types="jst.web" versions="2.2, 2.3, 2.4, 2.5, 3.0"/>
+         	<moduleType types="jst.web" versions="2.2, 2.3, 2.4, 2.5, 3.0, 3.1"/>
          	<moduleType types="jst.utility" versions="1.0"/>
 		</runtimeType>
 	</extension>
@@ -84,7 +84,7 @@
 			<runtime-component
          id="org.cloudfoundry.cloudfoundryserver.test"
          version="1.0"/>
-			<facet id="jst.web" version="2.2,2.3,2.4,2.5,3.0"/>
+			<facet id="jst.web" version="2.2,2.3,2.4,2.5,3.0,3.1"/>
       		<facet id="jst.utility" version="1.0"/>
 			<facet id="grails.app" version="1.0"/>
 		</supported>
