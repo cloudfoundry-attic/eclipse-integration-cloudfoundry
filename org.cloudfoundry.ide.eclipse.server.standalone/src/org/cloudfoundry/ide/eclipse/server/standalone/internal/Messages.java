@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -40,7 +40,9 @@ public class Messages extends NLS {
 	public static String JavaCloudFoundryArchiver_ERROR_NO_MAIN_CLASS_IN_MANIFEST;
 
 	public static String JavaCloudFoundryArchiver_ERROR_MANIFEST_NOT_ACCESSIBLE;
-	
+
+	public static String JavaCloudFoundryArchiver_ERROR_FILE_NOT_FOUND_MANIFEST_YML;
+
 	public static String JavaCloudFoundryArchiver_ERROR_FAILED_READ_MANIFEST;
 
 	public static String JavaCloudFoundryArchiver_ERROR_NO_PACKAGE_FRAG_ROOTS;
@@ -59,7 +61,7 @@ public class Messages extends NLS {
 	public static String ProjectExplorerMenuFactory_LABEL_CONVERT_TOOLTIP;
 	public static String ProjectExplorerMenuFactory_LABEL_REMOVE_TEXT;
 	public static String ProjectExplorerMenuFactory_LABEL_REMOVE_TOOLTIP;
-	
+
 	static {
 		// initialize resource bundle
 		NLS.initializeMessages(BUNDLE_NAME, Messages.class);

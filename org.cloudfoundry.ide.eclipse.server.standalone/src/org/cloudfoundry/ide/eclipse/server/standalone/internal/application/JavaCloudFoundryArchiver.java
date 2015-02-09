@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2013, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -25,8 +25,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.zip.ZipFile;
@@ -56,7 +54,6 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.internal.ui.jarpackagerfat.FatJarRsrcUrlBuilder;
-import org.eclipse.jdt.launching.IRuntimeClasspathEntry;
 import org.eclipse.jdt.ui.jarpackager.IJarBuilder;
 import org.eclipse.jdt.ui.jarpackager.IJarExportRunnable;
 import org.eclipse.jdt.ui.jarpackager.JarPackageData;
@@ -98,39 +95,47 @@ public class JavaCloudFoundryArchiver {
 
 	public ApplicationArchive getApplicationArchive(IProgressMonitor monitor)
 			throws CoreException {
-		String archivePath = appModule.getDeploymentInfo().getArchive();
 
-		// FIXNS:
-		// Workaround to the fact that path manifest property does not get
-		// persisted in the server for the application,
-		// therefore if the deploymentinfo does not have it, parse it from the
-		// manifest, if one can be found for the application
-		// in a local project. The reason this is done here as opposed to when
-		// deployment info is updated for an application
-		// is that the path only gets used when pushing the application (either
-		// initial push, or through start/update restart)
-		// so it will keep manifest reading I/O only to these cases, rather than
-		// on deployment info update, which occurs on
-		// every refresh.
-		if (archivePath == null) {
-			archivePath = new ManifestParser(appModule, cloudServer)
-					.getApplicationProperty(null, ManifestParser.PATH_PROP);
+		String archivePath = null;
+		ManifestParser parser = new ManifestParser(appModule, cloudServer);
+		// Read the path again instead of deployment info, as a user may be
+		// correcting the path after the module was creating and simply attempting to push it again without the
+		// deployment wizard
+		if (parser.hasManifest()) {
+			archivePath = parser.getApplicationProperty(null,
+					ManifestParser.PATH_PROP);
 		}
 
 		File packagedFile = null;
 		if (archivePath != null) {
-			// URLs should be project relative
+			// Only support paths that point to archive files
 			IPath path = new Path(archivePath);
 			if (path.getFileExtension() != null) {
+				// Check if it is project relative first
+				IFile projectRelativeFile = null;
 				IProject project = CloudFoundryProjectUtil
 						.getProject(appModule);
 
 				if (project != null) {
-					IFile file = project.getFile(archivePath);
-					if (file.exists()) {
-						packagedFile = file.getLocation().toFile();
+					projectRelativeFile = project.getFile(archivePath);
+				}
+
+				if (projectRelativeFile != null && projectRelativeFile.exists()) {
+					packagedFile = projectRelativeFile.getLocation().toFile();
+				} else {
+					// See if it is an absolute path
+					File absoluteFile = new File(archivePath);
+					if (absoluteFile.exists() && absoluteFile.canRead()) {
+						packagedFile = absoluteFile;
 					}
 				}
+			}
+			// If a path is specified but no file found stop further deployment
+			if (packagedFile == null) {
+				String message = NLS
+						.bind(Messages.JavaCloudFoundryArchiver_ERROR_FILE_NOT_FOUND_MANIFEST_YML,
+								archivePath);
+				throw CloudErrorUtil.toCoreException(message);
 			}
 		}
 

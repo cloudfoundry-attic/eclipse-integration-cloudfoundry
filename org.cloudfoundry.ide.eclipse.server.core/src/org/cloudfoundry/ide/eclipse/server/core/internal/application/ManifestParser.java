@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2013, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -43,6 +43,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.LocalCloudService;
@@ -228,6 +229,11 @@ public class ManifestParser {
 	}
 
 	protected String getStringValue(Map<?, ?> containingMap, String propertyName) {
+
+		if (containingMap == null) {
+			return null;
+		}
+
 		Object valObj = containingMap.get(propertyName);
 
 		if (valObj instanceof String) {
@@ -237,6 +243,11 @@ public class ManifestParser {
 	}
 
 	protected Integer getIntegerValue(Map<?, ?> containingMap, String propertyName) {
+
+		if (containingMap == null) {
+			return null;
+		}
+
 		Object valObj = containingMap.get(propertyName);
 
 		if (valObj instanceof Integer) {
@@ -337,6 +348,9 @@ public class ManifestParser {
 			if (appName != null) {
 				workingCopy.setDeploymentName(appName);
 			}
+			else {
+				CloudFoundryPlugin.logError(Messages.ManifestParser_NO_APP_NAME);
+			}
 
 			readMemory(application, workingCopy);
 			subMonitor.worked(1);
@@ -361,6 +375,11 @@ public class ManifestParser {
 				workingCopy.setArchive(archiveURL);
 			}
 
+			Integer instances = getIntegerValue(application, INSTANCES_PROP);
+			if (instances != null) {
+				workingCopy.setInstances(instances);
+			}
+
 		}
 		finally {
 			subMonitor.done();
@@ -371,6 +390,10 @@ public class ManifestParser {
 
 	protected void readEnvars(DeploymentInfoWorkingCopy workingCopy, Map<?, ?> applications) {
 		Map<?, ?> propertiesMap = getContainingPropertiesMap(applications, ENV_PROP);
+
+		if (propertiesMap == null) {
+			return;
+		}
 
 		List<EnvironmentVariable> variables = new ArrayList<EnvironmentVariable>();
 		for (Entry<?, ?> entry : propertiesMap.entrySet()) {
@@ -430,24 +453,43 @@ public class ManifestParser {
 	}
 
 	protected void readApplicationURL(Map<?, ?> application, DeploymentInfoWorkingCopy workingCopy, String appName,
-			IProgressMonitor monitor) throws CoreException {
+			IProgressMonitor monitor) {
 		String subdomain = getStringValue(application, SUB_DOMAIN_PROP);
 		String domain = getStringValue(application, DOMAIN_PROP);
 
-		if (domain != null || subdomain != null) {
-			CloudApplicationURL cloudURL = new CloudApplicationURL(subdomain, domain);
+		// A URL can only be constructed from the manifest if either a domain or
+		// a subdomain is specified. If neither is specified, but the app name
+		// is, the app name is used as the subdomain.Otherwise the
+		// deployment process will generate a URL from the app name, but it is
+		// not necessary to specify that URL here.
+		if (subdomain == null && domain == null && appName == null) {
+			return;
+		}
+		CloudApplicationURL cloudURL = null;
 
-			try {
-				cloudURL = ApplicationUrlLookupService.update(cloudServer, monitor).validateCloudApplicationUrl(
-						cloudURL);
-			}
-			catch (CoreException e) {
-				// Log this as at this stage, but don't let it prevent
-				// further
-				// parsing
-				CloudFoundryPlugin.logError(e);
+		try {
+			ApplicationUrlLookupService urlLookup = ApplicationUrlLookupService.update(cloudServer, monitor);
+
+			if (subdomain == null) {
+				subdomain = appName;
 			}
 
+			if (domain == null) {
+				// If no domain is specified get a URL with a default domain
+				cloudURL = urlLookup.getDefaultApplicationURL(subdomain);
+			}
+			else {
+				// retain the URL even if it fails validation as it may contain partial information that can still be displayed
+				// to a user
+				cloudURL = new CloudApplicationURL(subdomain, domain);
+				cloudURL = urlLookup.validateCloudApplicationUrl(cloudURL);
+			}
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+
+		if (cloudURL != null) {
 			List<String> urls = Arrays.asList(cloudURL.getUrl());
 			workingCopy.setUris(urls);
 		}
@@ -457,7 +499,7 @@ public class ManifestParser {
 		Integer memoryVal = getIntegerValue(application, MEMORY_PROP);
 
 		// If not in Integer form, try String as the memory may end in with a
-		// 'G'
+		// 'G' or 'M'
 		if (memoryVal == null) {
 			String memoryStringVal = getStringValue(application, MEMORY_PROP);
 			if (memoryStringVal != null && memoryStringVal.length() > 0) {
