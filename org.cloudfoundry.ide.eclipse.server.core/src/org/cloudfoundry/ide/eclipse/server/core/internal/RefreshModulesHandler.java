@@ -49,7 +49,11 @@ public class RefreshModulesHandler {
 
 	public RefreshModulesHandler(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
-		this.refreshJob = new BehaviourRefreshJob();
+		String serverName = cloudServer != null ? cloudServer.getServer().getId() : "Unknown server"; //$NON-NLS-1$
+
+		String refreshJobLabel = NLS.bind(Messages.RefreshModulesHandler_REFRESH_JOB, serverName);
+
+		this.refreshJob = new BehaviourRefreshJob(refreshJobLabel);
 	}
 
 	/**
@@ -119,8 +123,8 @@ public class RefreshModulesHandler {
 
 	private class BehaviourRefreshJob extends Job {
 
-		public BehaviourRefreshJob() {
-			super(Messages.RefreshModulesHandler_REFRESH_JOB);
+		public BehaviourRefreshJob(String label) {
+			super(label);
 		}
 
 		@Override
