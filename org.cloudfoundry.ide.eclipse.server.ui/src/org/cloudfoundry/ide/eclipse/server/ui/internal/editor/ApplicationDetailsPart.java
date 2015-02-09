@@ -284,9 +284,13 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		// Show/hide action buttons based on server state
 		if (state == IServer.STATE_STOPPED || state == IServer.STATE_UNKNOWN) {
-			pushAppButton.setEnabled(true);
 			stopAppButton.setEnabled(false);
 
+			if (CloudFoundryProperties.isModuleProjectAccessible.testProperty(new IModule[] { module }, cloudServer)) {
+				pushAppButton.setEnabled(true);
+			} else {
+				pushAppButton.setEnabled(false);
+			}
 			startAppButton.setText(Messages.ApplicationDetailsPart_TEXT_START);
 			startAppButton.setImage(ImageResource.getImage(ImageResource.IMG_CLCL_START));
 			startAppButton.setToolTipText(Messages.ApplicationDetailsPart_TEXT_START_TOOLTIP);
@@ -310,10 +314,10 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				|| !CloudFoundryProperties.isModuleProjectAccessible
 						.testProperty(new IModule[] { module }, cloudServer)) {
 			updateRestartAppButton.setEnabled(false);
-
 		}
 		else {
 			updateRestartAppButton.setEnabled(true);
+
 		}
 
 		refreshDebugControls(appModule);
@@ -852,7 +856,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		pushAppButton = toolkit.createButton(lowerButtonRow, Messages.ApplicationDetailsPart_TEXT_PUSH, SWT.PUSH);
 		pushAppButton.setImage(CloudFoundryImages.getImage(CloudFoundryImages.PUSH));
-		pushAppButton.setEnabled(true);
+		pushAppButton.setEnabled(false);
 		pushAppButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				startStopApplication(ApplicationAction.START);
