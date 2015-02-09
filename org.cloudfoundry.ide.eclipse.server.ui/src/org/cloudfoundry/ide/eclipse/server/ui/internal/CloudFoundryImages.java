@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -43,7 +43,7 @@ public class CloudFoundryImages {
 	public static final ImageDescriptor EDIT = create(OBJ, "edit.gif"); //$NON-NLS-1$
 
 	public static final ImageDescriptor TUNNEL_EXTERNAL_TOOLS = create(OBJ, "external_tools.gif"); //$NON-NLS-1$
-	
+
 	public static final ImageDescriptor JDBC_DATA_TOOLS = create(OBJ, "jdbc_16.gif"); //$NON-NLS-1$
 
 	public static final ImageDescriptor DISCONNECT = create(OBJ, "disconnect.png"); //$NON-NLS-1$
@@ -75,6 +75,8 @@ public class CloudFoundryImages {
 	public static final ImageDescriptor RESTART_DEBUG_MODE = create(OBJ, "restart_debug.png"); //$NON-NLS-1$
 
 	public static final ImageDescriptor RESTART = create(OBJ, "restart.png"); //$NON-NLS-1$
+
+	public static final ImageDescriptor PUSH = create(OBJ, "push.gif"); //$NON-NLS-1$
 
 	public static final ImageDescriptor MENU_VIEW_ENABLED = create(OBJ, "view_menu_elcl.gif"); //$NON-NLS-1$
 

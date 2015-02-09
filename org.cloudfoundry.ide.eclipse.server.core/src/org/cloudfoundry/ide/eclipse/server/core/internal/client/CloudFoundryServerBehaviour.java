@@ -692,7 +692,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	@Override
 	public void startModule(IModule[] modules, IProgressMonitor monitor) throws CoreException {
-		operations().applicationDeployment(modules, ApplicationAction.START).run(monitor);
+		operations().applicationDeployment(modules, ApplicationAction.RESTART).run(monitor);
 	}
 
 	@Override

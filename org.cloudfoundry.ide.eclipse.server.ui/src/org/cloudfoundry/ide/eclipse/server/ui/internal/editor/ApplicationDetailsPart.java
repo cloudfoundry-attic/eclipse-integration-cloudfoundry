@@ -148,7 +148,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	private IModule module;
 
-	private Button restartAppButton;
+	private Button startAppButton;
 
 	private Button updateRestartAppButton;
 
@@ -164,9 +164,9 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	private TableViewer servicesViewer;
 
-	private Button startAppButton;
+	private Button pushAppButton;
 
-	private Button debugControl;
+	private Button debugButton;
 
 	private Button stopAppButton;
 
@@ -174,9 +174,9 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	private Text memoryText;
 
-	private Composite startButtonComposite;
+	private Composite topButtonRow;
 
-	private Composite restartButtonComposite;
+	private Composite lowerButtonRow;
 
 	/**
 	 * The toolkit used by the form part.
@@ -233,7 +233,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	public void refreshDebugControls(CloudFoundryApplicationModule appModule) {
 
-		if (debugControl == null || debugControl.isDisposed()) {
+		if (debugButton == null || debugButton.isDisposed()) {
 			return;
 		}
 
@@ -246,22 +246,22 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		}
 
 		if (command == null || !command.getLaunch().isDebugEnabled()) {
-			debugControl.setEnabled(false);
-			debugControl.setText(Messages.ApplicationDetailsPart_TEXT_DEBUG);
+			debugButton.setEnabled(false);
+			debugButton.setText(Messages.ApplicationDetailsPart_TEXT_DEBUG);
 			return;
 		}
 
-		debugControl.setEnabled(true);
+		debugButton.setEnabled(true);
 
 		if (!command.getLaunch().isConnectedToDebugger()) {
-			debugControl.setText(Messages.ApplicationDetailsPart_TEXT_DEBUG);
-			debugControl.setData(DebugOperationType.Debug);
+			debugButton.setText(Messages.ApplicationDetailsPart_TEXT_DEBUG);
+			debugButton.setData(DebugOperationType.Debug);
 		}
 		else {
-			debugControl.setText(Messages.ApplicationDetailsPart_TEXT_DEBUG_DISCONNECT);
-			debugControl.setData(DebugOperationType.Terminate);
+			debugButton.setText(Messages.ApplicationDetailsPart_TEXT_DEBUG_DISCONNECT);
+			debugButton.setData(DebugOperationType.Terminate);
 		}
-		debugControl.getParent().layout(true);
+		debugButton.getParent().layout(true);
 
 	}
 
@@ -271,8 +271,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 	protected void refreshDeploymentButtons(CloudFoundryApplicationModule appModule) {
 
-		if (startButtonComposite == null || restartButtonComposite == null || restartButtonComposite.isDisposed()
-				|| startButtonComposite.isDisposed()) {
+		if (topButtonRow == null || lowerButtonRow == null || lowerButtonRow.isDisposed() || topButtonRow.isDisposed()) {
 			return;
 		}
 		int state = appModule.getState();
@@ -285,15 +284,21 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		// Show/hide action buttons based on server state
 		if (state == IServer.STATE_STOPPED || state == IServer.STATE_UNKNOWN) {
-
-			startAppButton.setEnabled(true);
-
+			pushAppButton.setEnabled(true);
 			stopAppButton.setEnabled(false);
-		}
-		else {
-			startAppButton.setEnabled(false);
 
+			startAppButton.setText(Messages.ApplicationDetailsPart_TEXT_START);
+			startAppButton.setImage(ImageResource.getImage(ImageResource.IMG_CLCL_START));
+			startAppButton.setToolTipText(Messages.ApplicationDetailsPart_TEXT_START_TOOLTIP);
+		}
+		// Otherwise assume app is not running
+		else {
+			pushAppButton.setEnabled(false);
 			stopAppButton.setEnabled(true);
+
+			startAppButton.setText(Messages.ApplicationDetailsPart_TEXT_RESTART);
+			startAppButton.setImage(CloudFoundryImages.getImage(CloudFoundryImages.RESTART));
+			startAppButton.setToolTipText(Messages.ApplicationDetailsPart_TEXT_RESTART_TOOLTIP);
 		}
 
 		// handle the update and restart button separately.
@@ -312,6 +317,10 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		}
 
 		refreshDebugControls(appModule);
+
+		topButtonRow.getParent().layout(true);
+		lowerButtonRow.getParent().layout(true);
+
 	}
 
 	private void updateServerNameDisplay(CloudFoundryApplicationModule application) {
@@ -795,47 +804,27 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(client);
 		operationsSection.setClient(client);
 
-		startButtonComposite = toolkit.createComposite(client);
-		GridDataFactory.fillDefaults().span(2, 1).applyTo(startButtonComposite);
+		topButtonRow = toolkit.createComposite(client);
+		GridDataFactory.fillDefaults().span(2, 1).applyTo(topButtonRow);
 
 		RowLayout layout = RowLayoutFactory.fillDefaults().margins(0, 2).wrap(false).create();
 		layout.center = true;
-		startButtonComposite.setLayout(layout);
+		topButtonRow.setLayout(layout);
 
-		startAppButton = toolkit.createButton(startButtonComposite, Messages.ApplicationDetailsPart_TEXT_START,
-				SWT.PUSH);
+		startAppButton = toolkit.createButton(topButtonRow, Messages.ApplicationDetailsPart_TEXT_START, SWT.PUSH);
 		startAppButton.setImage(ImageResource.getImage(ImageResource.IMG_CLCL_START));
-		startAppButton.setEnabled(true);
-		startAppButton.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				startStopApplication(ApplicationAction.START);
-			}
-		});
+		startAppButton.setToolTipText(Messages.ApplicationDetailsPart_TEXT_START_TOOLTIP);
 
-		restartAppButton = toolkit.createButton(startButtonComposite, Messages.ApplicationDetailsPart_TEXT_RESTART,
-				SWT.PUSH);
-		restartAppButton.setImage(CloudFoundryImages.getImage(CloudFoundryImages.RESTART));
-		restartAppButton.addSelectionListener(new SelectionAdapter() {
+		startAppButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				restartApplication(ApplicationAction.RESTART);
 			}
 		});
-
 		// Always enable. App can be restarted both when it is stopped and
 		// started.
-		restartAppButton.setEnabled(true);
+		startAppButton.setEnabled(true);
 
-		createDebugArea(startButtonComposite);
-
-		restartButtonComposite = toolkit.createComposite(client);
-		GridDataFactory.fillDefaults().span(2, 1).applyTo(restartButtonComposite);
-
-		layout = RowLayoutFactory.fillDefaults().margins(0, 2).wrap(false).create();
-		layout.center = true;
-		restartButtonComposite.setLayout(layout);
-
-		stopAppButton = toolkit.createButton(restartButtonComposite, Messages.ApplicationDetailsPart_TEXT_STOP,
-				SWT.PUSH);
+		stopAppButton = toolkit.createButton(topButtonRow, Messages.ApplicationDetailsPart_TEXT_STOP, SWT.PUSH);
 		stopAppButton.setImage(ImageResource.getImage(ImageResource.IMG_CLCL_STOP));
 		stopAppButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
@@ -843,7 +832,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			}
 		});
 
-		updateRestartAppButton = toolkit.createButton(restartButtonComposite,
+		updateRestartAppButton = toolkit.createButton(topButtonRow,
 				Messages.ApplicationDetailsPart_TEXT_UPDATE_RESTART, SWT.PUSH);
 		updateRestartAppButton.setImage(CloudFoundryImages.getImage(CloudFoundryImages.RESTART));
 		updateRestartAppButton.addSelectionListener(new SelectionAdapter() {
@@ -851,6 +840,28 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				restartApplication(ApplicationAction.UPDATE_RESTART);
 			}
 		});
+
+		updateRestartAppButton.setToolTipText(Messages.ApplicationDetailsPart_TEXT_UPDATE_RESTART_TOOLTIP);
+
+		lowerButtonRow = toolkit.createComposite(client);
+		GridDataFactory.fillDefaults().span(2, 1).applyTo(lowerButtonRow);
+
+		layout = RowLayoutFactory.fillDefaults().margins(0, 2).wrap(false).create();
+		layout.center = true;
+		lowerButtonRow.setLayout(layout);
+
+		pushAppButton = toolkit.createButton(lowerButtonRow, Messages.ApplicationDetailsPart_TEXT_PUSH, SWT.PUSH);
+		pushAppButton.setImage(CloudFoundryImages.getImage(CloudFoundryImages.PUSH));
+		pushAppButton.setEnabled(true);
+		pushAppButton.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				startStopApplication(ApplicationAction.START);
+			}
+		});
+
+		pushAppButton.setToolTipText(Messages.ApplicationDetailsPart_TEXT_PUSH_TOOLTIP);
+
+		createDebugArea(lowerButtonRow);
 
 	}
 
@@ -919,23 +930,23 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	}
 
 	protected void createDebugArea(Composite parent) {
-		debugControl = toolkit.createButton(parent, Messages.ApplicationDetailsPart_TEXT_DEBUG, SWT.PUSH);
-		debugControl.setImage(CloudFoundryImages.getImage(CloudFoundryImages.DEBUG));
-		debugControl.setEnabled(false);
-		debugControl.setData(DebugOperationType.Debug);
-		debugControl.addSelectionListener(new SelectionAdapter() {
+		debugButton = toolkit.createButton(parent, Messages.ApplicationDetailsPart_TEXT_DEBUG, SWT.PUSH);
+		debugButton.setImage(CloudFoundryImages.getImage(CloudFoundryImages.DEBUG));
+		debugButton.setEnabled(false);
+		debugButton.setData(DebugOperationType.Debug);
+		debugButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				if (DebugOperationType.Debug.equals(debugControl.getData())) {
+				if (DebugOperationType.Debug.equals(debugButton.getData())) {
 					debug();
 				}
-				else if (DebugOperationType.Terminate.equals(debugControl.getData())) {
+				else if (DebugOperationType.Terminate.equals(debugButton.getData())) {
 					terminateDebug();
 				}
 			}
 		});
 
-		debugControl.setEnabled(false);
-
+		debugButton.setEnabled(false);
+		debugButton.setToolTipText(Messages.ApplicationDetailsPart_TEXT_DEBUG_TOOLTIP);
 	}
 
 	protected ApplicationAction getCurrentDeploymentStateApplicationAction() {
