@@ -146,6 +146,9 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		int parentModuleSize = parentModule.length;
 		
 		IModule[] childModules = server.getChildModules(parentModule, null);
+		if (childModules == null || childModules.length == 0) {
+			return;
+		}
 		for (IModule curChildModule : childModules) {
 			IModule[] curFullChildModule = new IModule[parentModuleSize+1];
 			System.arraycopy(parentModule, 0, curFullChildModule, 0, parentModuleSize);
@@ -376,7 +379,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	@Override
 	public IModule[] getChildModules(IModule[] module) {
 		if (module == null || module.length == 0) {
-			return null;
+			return new IModule[0];
 		}
 
 		// IModuleType moduleType = module[0].getModuleType();
