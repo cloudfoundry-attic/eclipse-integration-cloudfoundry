@@ -316,7 +316,6 @@
            		<and>
                		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>
                		<test property="org.cloudfoundry.ide.eclipse.server.ui.isModuleProjectAccessible" value="true"/>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isCloudModuleStarted" value="true"/>
                		<test property="org.cloudfoundry.ide.eclipse.server.ui.isCloudModuleLocal" value="true"/>
                	</and>    
 	        </with>  

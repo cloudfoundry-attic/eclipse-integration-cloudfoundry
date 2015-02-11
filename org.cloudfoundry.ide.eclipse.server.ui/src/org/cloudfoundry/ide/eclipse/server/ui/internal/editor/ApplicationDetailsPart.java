@@ -286,23 +286,27 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		if (state == IServer.STATE_STOPPED || state == IServer.STATE_UNKNOWN) {
 			stopAppButton.setEnabled(false);
 
-			if (CloudFoundryProperties.isModuleProjectAccessible.testProperty(new IModule[] { module }, cloudServer)) {
-				pushAppButton.setEnabled(true);
-			} else {
-				pushAppButton.setEnabled(false);
-			}
 			startAppButton.setText(Messages.ApplicationDetailsPart_TEXT_START);
 			startAppButton.setImage(ImageResource.getImage(ImageResource.IMG_CLCL_START));
 			startAppButton.setToolTipText(Messages.ApplicationDetailsPart_TEXT_START_TOOLTIP);
 		}
 		// Otherwise assume app is not running
 		else {
-			pushAppButton.setEnabled(false);
 			stopAppButton.setEnabled(true);
 
 			startAppButton.setText(Messages.ApplicationDetailsPart_TEXT_RESTART);
 			startAppButton.setImage(CloudFoundryImages.getImage(CloudFoundryImages.RESTART));
 			startAppButton.setToolTipText(Messages.ApplicationDetailsPart_TEXT_RESTART_TOOLTIP);
+		}
+
+		// Push can be enabled either when app is stopped or started, as the
+		// Push operation automatically stops an app if it is running
+		// before it push
+		if (CloudFoundryProperties.isModuleProjectAccessible.testProperty(new IModule[] { module }, cloudServer)) {
+			pushAppButton.setEnabled(true);
+		}
+		else {
+			pushAppButton.setEnabled(false);
 		}
 
 		// handle the update and restart button separately.
