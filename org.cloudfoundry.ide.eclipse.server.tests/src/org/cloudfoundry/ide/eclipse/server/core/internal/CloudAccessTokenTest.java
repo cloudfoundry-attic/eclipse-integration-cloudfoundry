@@ -45,6 +45,7 @@ public class CloudAccessTokenTest extends AbstractCloudFoundryTest {
 	public void testBasicHandlerLoginTimeout() throws Exception {
 		CloudFoundryOperations client = harness.createExternalClient();
 		CloudFoundryLoginHandler handler = new CloudFoundryLoginHandler(client);
+
 		OAuth2AccessToken token = handler.login(new NullProgressMonitor());
 		assertNotNull(token);
 		assertFalse(token.isExpired());
@@ -65,8 +66,12 @@ public class CloudAccessTokenTest extends AbstractCloudFoundryTest {
 		assertNotNull(
 				"Expected timeout or token access exception from client. Run test again and increase timeout if necessary",
 				error);
-		assertTrue("Expected access or auth exception", handler.shouldAttemptClientLogin(error));
-		assertTrue("Expected OAuth2AccessDeniedException", error.getCause() instanceof OAuth2AccessDeniedException);
+		assertTrue("Expected access or auth exception from handler", handler.shouldAttemptClientLogin(error));
+
+		OAuth2AccessDeniedException oauthError = error instanceof OAuth2AccessDeniedException ? (OAuth2AccessDeniedException) error
+				: (OAuth2AccessDeniedException) error.getCause();
+
+		assertNotNull("Expected OAuth2AccessDeniedException", oauthError);
 
 		token = handler.login(new NullProgressMonitor(), 3, 2000);
 		assertNotNull(token);
@@ -74,11 +79,10 @@ public class CloudAccessTokenTest extends AbstractCloudFoundryTest {
 
 		apps = client.getApplications();
 		assertNotNull(apps);
-
 	}
 
 	protected void longWait() throws CoreException {
-		waitForTimeout(20 * 60 * 1000, 60 * 1000);
+		waitForTimeout(15 * 60 * 1000, 60 * 1000);
 	}
 
 	protected void waitForTimeout(int total, int interval) throws CoreException {
