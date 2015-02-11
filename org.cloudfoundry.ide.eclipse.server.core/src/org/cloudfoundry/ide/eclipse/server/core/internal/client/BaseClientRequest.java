@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -37,6 +37,9 @@ import org.eclipse.osgi.util.NLS;
  * <p/>
  * By default, operations are performed only once and any error thrown will not
  * result in further attempts. Subclasses can override this behaviour.
+ * 
+ * @param <T> type of expected result from request. User {@link Void} if no
+ * result is expected
  */
 public abstract class BaseClientRequest<T> {
 
@@ -48,6 +51,10 @@ public abstract class BaseClientRequest<T> {
 	public BaseClientRequest(String label) {
 		Assert.isNotNull(label);
 		this.label = label;
+	}
+
+	public String getRequestLabel() {
+		return label;
 	}
 
 	/**

@@ -40,7 +40,7 @@ public class Messages extends NLS {
 	public static String ERROR_WRONG_EMAIL_OR_PASSWORD_UNAUTHORISED;
 
 	public static String ERROR_WRONG_EMAIL_OR_PASSWORD_FORBIDDEN;
-	
+
 	public static String ERROR_ACCESS_TOKEN;
 
 	public static String ERROR_UNABLE_TO_ESTABLISH_CONNECTION_UNKNOWN_HOST;
@@ -98,7 +98,7 @@ public class Messages extends NLS {
 	public static String ERROR_APPLICATION_LOG_LISTENER;
 
 	public static String ERROR_NO_MAPPED_APPLICATION_URLS;
-	
+
 	public static String ERROR_HOST_TAKEN;
 
 	public static String INVALID_CHARACTERS_ERROR;
@@ -110,6 +110,12 @@ public class Messages extends NLS {
 	public static String TunnelServiceCommandStore_ERROR_SERIALIZE_JAVAMAP;
 
 	public static String TunnelServiceCommandStore_ERROR_VALUE_CANNOT_SERILIZE;
+
+	public static String ClientRequest_SECOND_ATTEMPT_FAILED;
+
+	public static String ClientRequest_TOKEN_EXPIRED;
+
+	public static String ClientRequest_NO_TOKEN;
 
 	public static String CloudFoundryApplicationModule_STATE_DEPLOYABLE;
 
@@ -140,7 +146,7 @@ public class Messages extends NLS {
 	public static String CloudFoundryServer_ERROR_SERVER_ORIGIN_NOT_FOUND;
 
 	public static String CloudFoundryServer_JOB_UPDATE;
-	
+
 	public static String CloudFoundryServerBehaviour_UPDATE_ENV_VARS;
 
 	public static String CommandOptions_DESCRIPTION_VARIABLES_FOR_TUNNEL;
@@ -176,7 +182,7 @@ public class Messages extends NLS {
 	public static String CONSOLE_WAITING_FOR_APPLICATION_TO_START;
 
 	public static String CONSOLE_STOPPING_APPLICATION;
-	
+
 	public static String ManifestParser_NO_APP_NAME;
 
 	public static String REFRESHING_MODULES;
@@ -184,7 +190,7 @@ public class Messages extends NLS {
 	public static String RefreshModulesHandler_REFRESH_FAILURE;
 
 	public static String RefreshModulesHandler_REFRESH_JOB;
-	
+
 	public static String RefreshModulesHandler_EVENT_CLOUD_SERVER_NULL;
 
 	public static String PUBLISHING_MODULE;

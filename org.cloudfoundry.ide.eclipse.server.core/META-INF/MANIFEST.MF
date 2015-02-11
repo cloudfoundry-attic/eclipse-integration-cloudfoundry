@@ -64,6 +64,8 @@ Export-Package: org.cloudfoundry.caldecott.client,
  org.cloudfoundry.ide.eclipse.server.core.internal.log,
  org.cloudfoundry.ide.eclipse.server.core.internal.spaces,
  org.cloudfoundry.ide.eclipse.server.core.internal.tunnel,
+ org.springframework.security.oauth2.client.resource,
+ org.springframework.security.oauth2.common,
  org.springframework.web.client
 Import-Package: com.sun.jdi.connect,
  org.apache.commons.codec;version="1.3.0",

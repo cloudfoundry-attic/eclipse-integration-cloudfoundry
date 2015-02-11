@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -20,10 +20,11 @@
 package org.cloudfoundry.ide.eclipse.server.core.internal;
 
 import org.cloudfoundry.client.lib.CloudFoundryOperations;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.WaitWithProgressJob;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.AbstractWaitWithProgressJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
 
 public class CloudFoundryLoginHandler {
 
@@ -47,8 +48,8 @@ public class CloudFoundryLoginHandler {
 	 * @throws CoreException if login failed. The reason for the login failure
 	 * is contained in the core exception's
 	 */
-	public void login(IProgressMonitor monitor) throws CoreException {
-		login(monitor, 1, 0);
+	public OAuth2AccessToken login(IProgressMonitor monitor) throws CoreException {
+		return login(monitor, 1, 0);
 	}
 
 	/**
@@ -56,21 +57,20 @@ public class CloudFoundryLoginHandler {
 	 * specified sleep time between each attempt. If at the end of the attempts,
 	 * login has failed, Core exception is thrown.
 	 */
-	public void login(IProgressMonitor monitor, int tries, long sleep) throws CoreException {
-		internalLogin(monitor, tries, sleep);
+	public OAuth2AccessToken login(IProgressMonitor monitor, int tries, long sleep) throws CoreException {
+		return internalLogin(monitor, tries, sleep);
 	}
 
-	protected boolean internalLogin(IProgressMonitor monitor, int tries, long sleep) throws CoreException {
-		Boolean result = new WaitWithProgressJob(tries, sleep) {
+	protected OAuth2AccessToken internalLogin(IProgressMonitor monitor, int tries, long sleep) throws CoreException {
+		return new AbstractWaitWithProgressJob<OAuth2AccessToken>(tries, sleep) {
 
 			@Override
-			protected boolean internalRunInWait(IProgressMonitor monitor) throws CoreException {
+			protected OAuth2AccessToken runInWait(IProgressMonitor monitor) throws CoreException {
 				// Do not wrap CloudFoundryException or RestClientException in a
 				// CoreException.
 				// as they are uncaught exceptions and can be inspected directly
 				// by the shouldRetryOnError(..) method.
-				operations.login();
-				return true;
+				return operations.login();
 			}
 
 			@Override
@@ -79,7 +79,6 @@ public class CloudFoundryLoginHandler {
 			}
 
 		}.run(monitor);
-		return result != null ? result.booleanValue() : false;
 	}
 
 	protected SubMonitor getProgressMonitor(IProgressMonitor progressMonitor) {
