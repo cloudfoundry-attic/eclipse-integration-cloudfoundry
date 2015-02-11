@@ -110,6 +110,8 @@ public class Messages extends NLS {
 	public static String TunnelServiceCommandStore_ERROR_SERIALIZE_JAVAMAP;
 
 	public static String TunnelServiceCommandStore_ERROR_VALUE_CANNOT_SERILIZE;
+	
+	public static String ClientRequest_RETRY_REQUEST;
 
 	public static String ClientRequest_SECOND_ATTEMPT_FAILED;
 

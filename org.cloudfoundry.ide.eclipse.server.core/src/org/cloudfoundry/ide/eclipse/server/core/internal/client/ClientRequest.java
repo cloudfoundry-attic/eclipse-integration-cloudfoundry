@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -70,30 +70,43 @@ public abstract class ClientRequest<T> extends BaseClientRequest<T> {
 		}
 		catch (CoreException ce) {
 			CloudFoundryLoginHandler handler = new CloudFoundryLoginHandler(client);
+
+			CoreException accessError = null;
+			String accessErrorMessage = null;
+
 			if (handler.shouldAttemptClientLogin(ce)) {
+				CloudFoundryPlugin.logWarning(NLS.bind(Messages.ClientRequest_RETRY_REQUEST, getRequestLabel()));
+				accessError = ce;
+
 				int attempts = 3;
 				OAuth2AccessToken token = handler.login(subProgress, attempts, CloudOperationsConstants.LOGIN_INTERVAL);
 				if (token == null) {
-					throw CloudErrorUtil.toCoreException(
-							NLS.bind(Messages.ClientRequest_NO_TOKEN, getRequestLabel(), ce.getMessage()), ce);
+					accessErrorMessage = Messages.ClientRequest_NO_TOKEN;
 				}
 				else if (token.isExpired()) {
-					throw CloudErrorUtil.toCoreException(
-							NLS.bind(Messages.ClientRequest_TOKEN_EXPIRED, getRequestLabel(), ce.getMessage()), ce);
+					accessErrorMessage = Messages.ClientRequest_TOKEN_EXPIRED;
 				}
+				else {
+					try {
+						return super.runAndWait(client, subProgress);
+					}
+					catch (CoreException e) {
+						accessError = e;
+					}
+				}
+			}
 
-				try {
-					return super.runAndWait(client, subProgress);
+			if (accessError != null) {
+				Throwable cause = accessError.getCause() != null ? accessError.getCause() : accessError;
+				if (accessErrorMessage == null) {
+					accessErrorMessage = accessError.getMessage();
 				}
-				catch (CoreException e) {
-					CloudFoundryPlugin.logError(NLS.bind(Messages.ClientRequest_SECOND_ATTEMPT_FAILED,
-							getRequestLabel(), e.getMessage()));
-					throw e;
-				}
+				accessErrorMessage = NLS.bind(Messages.ClientRequest_SECOND_ATTEMPT_FAILED, getRequestLabel(),
+						accessErrorMessage);
+
+				throw CloudErrorUtil.toCoreException(accessErrorMessage, cause);
 			}
 			throw ce;
 		}
-
 	}
-
 }
