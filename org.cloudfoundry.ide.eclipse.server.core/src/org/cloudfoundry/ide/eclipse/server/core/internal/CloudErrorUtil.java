@@ -148,7 +148,7 @@ public class CloudErrorUtil {
 			else if (error.getCause() instanceof OAuth2AccessDeniedException) {
 				oauthException = (OAuth2AccessDeniedException) error.getCause();
 			}
-			if (oauthException != null && oauthException.getHttpErrorCode() == 403) {
+			if (oauthException != null) {
 				return NLS.bind(Messages.ERROR_ACCESS_TOKEN, oauthException.getOAuth2ErrorCode());
 			}
 		}

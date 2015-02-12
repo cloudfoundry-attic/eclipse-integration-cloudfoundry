@@ -61,7 +61,7 @@ public abstract class LocalServerRequest<T> extends ClientRequest<T> {
 				}
 			}
 			catch (Throwable e) {
-				// Don't log as the label may be called multiple times. If the
+				// Don't log. If the
 				// server failed to resolve, the request itself
 				// will fail and will log the error accordingly
 			}
