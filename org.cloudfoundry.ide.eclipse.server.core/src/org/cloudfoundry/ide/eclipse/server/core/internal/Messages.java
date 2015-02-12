@@ -185,6 +185,8 @@ public class Messages extends NLS {
 
 	public static String CONSOLE_STOPPING_APPLICATION;
 
+	public static String LocalServerRequest_SERVER_LABEL;
+	
 	public static String ManifestParser_NO_APP_NAME;
 
 	public static String REFRESHING_MODULES;

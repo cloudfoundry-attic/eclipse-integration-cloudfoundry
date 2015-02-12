@@ -65,11 +65,11 @@ public abstract class BaseClientRequest<T> {
 	 */
 	public T run(IProgressMonitor monitor) throws CoreException {
 
-		SubMonitor subProgress = SubMonitor.convert(monitor, label, 100);
+		SubMonitor subProgress = SubMonitor.convert(monitor, getRequestLabel(), 100);
 
 		CloudFoundryOperations client = getClient(subProgress);
 		if (client == null) {
-			throw CloudErrorUtil.toCoreException(NLS.bind(Messages.ERROR_NO_CLIENT, label));
+			throw CloudErrorUtil.toCoreException(NLS.bind(Messages.ERROR_NO_CLIENT, getRequestLabel()));
 		}
 
 		HttpTracer.getCurrent().trace(client);

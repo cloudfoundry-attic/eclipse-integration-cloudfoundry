@@ -75,7 +75,8 @@ public abstract class ClientRequest<T> extends BaseClientRequest<T> {
 			String accessErrorMessage = null;
 
 			if (handler.shouldAttemptClientLogin(ce)) {
-				CloudFoundryPlugin.logWarning(NLS.bind(Messages.ClientRequest_RETRY_REQUEST, getRequestLabel()));
+				CloudFoundryPlugin.logWarning(NLS.bind(Messages.ClientRequest_RETRY_REQUEST,
+						getTokenAccessErrorLabel()));
 				accessError = ce;
 
 				int attempts = 3;
@@ -101,12 +102,20 @@ public abstract class ClientRequest<T> extends BaseClientRequest<T> {
 				if (accessErrorMessage == null) {
 					accessErrorMessage = accessError.getMessage();
 				}
-				accessErrorMessage = NLS.bind(Messages.ClientRequest_SECOND_ATTEMPT_FAILED, getRequestLabel(),
-						accessErrorMessage);
+				accessErrorMessage = NLS.bind(Messages.ClientRequest_SECOND_ATTEMPT_FAILED,
+						getTokenAccessErrorLabel(), accessErrorMessage);
 
 				throw CloudErrorUtil.toCoreException(accessErrorMessage, cause);
 			}
 			throw ce;
 		}
+	}
+
+	/**
+	 * Return a label used to indicate the request type and other additional
+	 * information, like server name.
+	 */
+	protected String getTokenAccessErrorLabel() {
+		return getRequestLabel();
 	}
 }
