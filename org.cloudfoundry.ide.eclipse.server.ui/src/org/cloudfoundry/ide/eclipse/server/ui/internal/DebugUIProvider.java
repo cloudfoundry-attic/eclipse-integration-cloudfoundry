@@ -72,17 +72,12 @@ class DebugUIProvider implements IDebugProvider {
 			IProgressMonitor monitor) throws CoreException {
 		IModule[] mod = new IModule[] { appModule.getLocalModule() };
 
-		// If app is stopped then it is already in a state where it can be
-		// launched. Otherwise if application is running but it also cannot
-		// be launched in debug mode yet because it still needs to be
-		// configured, prompt the
-		// user whether to restart the application.
 		boolean shouldRestart = CloudFoundryProperties.isModuleStopped.testProperty(mod, cloudServer);
 
-		// If the application cannot yet launch and it is running, then it may
-		// require stopping the application
-		// before configuring it to launch in debug mode.
-		if (!shouldRestart && !provider.canLaunch(appModule, cloudServer, monitor)) {
+		// If the application cannot yet launch then prompt the user to restart
+		// the app in order for
+		// any changes that enables debug to be set in the Cloud container
+		if (!provider.canLaunch(appModule, cloudServer, monitor)) {
 
 			final boolean[] shouldProceed = new boolean[] { true };
 
@@ -105,8 +100,8 @@ class DebugUIProvider implements IDebugProvider {
 		provider.configureApp(appModule, cloudServer, monitor);
 
 		if (shouldRestart) {
-			cloudServer.getBehaviour().operations()
-					.applicationDeployment(mod, ApplicationAction.UPDATE_RESTART).run(monitor);
+			// Perform a full push and start
+			cloudServer.getBehaviour().operations().applicationDeployment(mod, ApplicationAction.START).run(monitor);
 		}
 		return true;
 
