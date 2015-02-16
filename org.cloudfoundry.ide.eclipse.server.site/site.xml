@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc.
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,7 +15,7 @@
    <feature url="features/org.cloudfoundry.ide.eclipse.server_0.0.0.jar" id="org.cloudfoundry.ide.eclipse.server" version="0.0.0">
       <category name="Core / Cloud Foundry Integration"/>
    </feature>
-   <feature url="features/org.cloudfoundry.ide.eclipse.server.sdk_1.8.0.qualifier.jar" id="org.cloudfoundry.ide.eclipse.server.sdk" version="0.0.0">
+   <feature url="features/org.cloudfoundry.ide.eclipse.server.sdk_1.8.1.qualifier.jar" id="org.cloudfoundry.ide.eclipse.server.sdk" version="0.0.0">
       <category name="Resources / Cloud Foundry Integration"/>
    </feature>
    <category-def name="Core / Cloud Foundry Integration" label="Core / Cloud Foundry Integration"/>
