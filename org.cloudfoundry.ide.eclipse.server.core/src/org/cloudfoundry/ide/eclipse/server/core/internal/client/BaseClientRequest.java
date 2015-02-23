@@ -53,6 +53,10 @@ public abstract class BaseClientRequest<T> {
 		this.label = label;
 	}
 
+	/**
+	 * User-visible label describing the request. Must not be null.
+	 * @return Non-null user-visible label.
+	 */
 	public String getRequestLabel() {
 		return label;
 	}
@@ -65,7 +69,8 @@ public abstract class BaseClientRequest<T> {
 	 */
 	public T run(IProgressMonitor monitor) throws CoreException {
 
-		SubMonitor subProgress = SubMonitor.convert(monitor, getRequestLabel(), 100);
+		SubMonitor subProgress = SubMonitor.convert(monitor);
+		subProgress.subTask(getRequestLabel());
 
 		CloudFoundryOperations client = getClient(subProgress);
 		if (client == null) {

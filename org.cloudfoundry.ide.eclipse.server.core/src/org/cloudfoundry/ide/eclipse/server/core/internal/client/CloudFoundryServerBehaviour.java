@@ -240,7 +240,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public synchronized List<CloudDomain> getDomainsForSpace(IProgressMonitor monitor) throws CoreException {
 
-		return new BehaviourRequest<List<CloudDomain>>("Getting domains for current space") { //$NON-NLS-1$
+		return new BehaviourRequest<List<CloudDomain>>(Messages.CloudFoundryServerBehaviour_DOMAINS_FOR_SPACE) {
 			@Override
 			protected List<CloudDomain> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getDomains();
@@ -427,7 +427,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * application, or the application does not exist.
 	 */
 	public CloudApplication getCloudApplication(final String appName, IProgressMonitor monitor) throws CoreException {
-		CloudApplication app = new BehaviourRequest<CloudApplication>("Getting Application " + appName) { //$NON-NLS-1$
+		CloudApplication app = new BehaviourRequest<CloudApplication>(NLS.bind(
+				Messages.CloudFoundryServerBehaviour_GET_APPLICATION, appName)) {
 			@Override
 			protected CloudApplication doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getApplication(appName);
@@ -489,8 +490,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	public CloudFoundryApplicationModule updateCloudModule(String appName, IProgressMonitor monitor)
 			throws CoreException {
 		CloudApplication updatedApp = null;
+		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+		subMonitor.subTask(NLS.bind(Messages.CloudFoundryServer_UPDATING_MODULE, appName, getServer().getId()));
+
 		try {
-			updatedApp = getCloudApplication(appName, monitor);
+			updatedApp = getCloudApplication(appName, subMonitor.newChild(50));
 		}
 		catch (CoreException e) {
 			// Ignore if it is application not found error. If the application
@@ -500,7 +504,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				throw e;
 			}
 		}
-		return getCloudFoundryServer().updateModule(updatedApp, appName, monitor);
+		return getCloudFoundryServer().updateModule(updatedApp, appName, subMonitor.newChild(50));
 	}
 
 	/**
@@ -514,8 +518,12 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 */
 	public CloudFoundryApplicationModule updateCloudModuleWithInstances(String appName, IProgressMonitor monitor)
 			throws CoreException {
-		CloudFoundryApplicationModule appModule = updateCloudModule(appName, monitor);
-		updateInstancesAndStats(appModule, monitor);
+		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+
+		CloudFoundryApplicationModule appModule = updateCloudModule(appName, subMonitor.newChild(50));
+
+		updateInstancesAndStats(appModule, subMonitor.newChild(50));
+
 		return appModule;
 	}
 
@@ -563,7 +571,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	 * @throws CoreException
 	 */
 	public List<CloudApplication> getApplications(IProgressMonitor monitor) throws CoreException {
-		return new BehaviourRequest<List<CloudApplication>>("Getting applications") { //$NON-NLS-1$
+
+		final String label = NLS.bind(Messages.CloudFoundryServerBehaviour_GET_ALL_APPS, getCloudFoundryServer()
+				.getServer().getId());
+		return new BehaviourRequest<List<CloudApplication>>(label) { 
 			@Override
 			protected List<CloudApplication> doRun(CloudFoundryOperations client, SubMonitor progress)
 					throws CoreException {
@@ -574,8 +585,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public ApplicationStats getApplicationStats(final String applicationId, IProgressMonitor monitor)
 			throws CoreException {
-		return new StagingAwareRequest<ApplicationStats>("Getting application statistics for " + //$NON-NLS-1$
-				applicationId) {
+		return new StagingAwareRequest<ApplicationStats>(NLS.bind(Messages.CloudFoundryServerBehaviour_APP_STATS,
+				applicationId)) {
 			@Override
 			protected ApplicationStats doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getApplicationStats(applicationId);
@@ -584,7 +595,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	public InstancesInfo getInstancesInfo(final String applicationId, IProgressMonitor monitor) throws CoreException {
-		return new StagingAwareRequest<InstancesInfo>("Getting application statistics for " + applicationId) { //$NON-NLS-1$
+		return new StagingAwareRequest<InstancesInfo>(NLS.bind(Messages.CloudFoundryServerBehaviour_APP_INFO,
+				applicationId)) {
 			@Override
 			protected InstancesInfo doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getApplicationInstances(applicationId);
@@ -636,7 +648,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	public List<CloudService> getServices(IProgressMonitor monitor) throws CoreException {
-		return new BehaviourRequest<List<CloudService>>("Getting available services") { //$NON-NLS-1$
+
+		final String label = NLS.bind(Messages.CloudFoundryServerBehaviour_GET_ALL_SERVICES, getCloudFoundryServer()
+				.getServer().getId());
+		return new BehaviourRequest<List<CloudService>>(label) {
 			@Override
 			protected List<CloudService> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getServices();
@@ -1719,17 +1734,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	private ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule cloudModule,
 			IProgressMonitor monitor, AbstractApplicationDelegate delegate, IModuleResource[] resources)
 			throws CoreException {
-		SubMonitor subProgress = SubMonitor.convert(monitor);
-		subProgress.setTaskName("Creating application archive for: " + cloudModule.getDeployedApplicationName()); //$NON-NLS-1$
-
-		ApplicationArchive archive = null;
-		try {
-			archive = delegate.getApplicationArchive(cloudModule, getCloudFoundryServer(), resources, monitor);
-		}
-		finally {
-			subProgress.done();
-		}
-		return archive;
+		return delegate.getApplicationArchive(cloudModule, getCloudFoundryServer(), resources, monitor);
 	}
 
 	/**
@@ -1863,8 +1868,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	BaseClientRequest<?> getUpdateApplicationMemoryRequest(final CloudFoundryApplicationModule appModule,
 			final int memory) {
-		return new AppInStoppedStateAwareRequest<Void>("Updating application memory for " + //$NON-NLS-1$
-				appModule.getDeployedApplicationName()) {
+		return new AppInStoppedStateAwareRequest<Void>(NLS.bind(Messages.CloudFoundryServerBehaviour_UPDATE_APP_MEMORY,
+				appModule.getDeployedApplicationName())) {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.updateApplicationMemory(appModule.getDeployedApplicationName(), memory);
@@ -1874,7 +1879,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	BaseClientRequest<?> getUpdateAppUrlsRequest(final String appName, final List<String> urls) {
-		return new AppInStoppedStateAwareRequest<Void>("Updating application URLs for " + appName) { //$NON-NLS-1$
+		return new AppInStoppedStateAwareRequest<Void>(NLS.bind(Messages.CloudFoundryServerBehaviour_UPDATE_APP_URLS,
+				appName)) {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				client.updateApplicationUris(appName, urls);
@@ -1884,7 +1890,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	BaseClientRequest<?> getUpdateServicesRequest(final String appName, final List<String> services) {
-		return new StagingAwareRequest<Void>("Update services") { //$NON-NLS-1$
+		return new StagingAwareRequest<Void>(NLS.bind(Messages.CloudFoundryServerBehaviour_UPDATE_SERVICE_BINDING,
+				appName)) {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 
@@ -1897,30 +1904,20 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	protected BaseClientRequest<Void> getUpdateEnvVarRequest(final String appName,
 			final List<EnvironmentVariable> variables) {
 		final String label = NLS.bind(Messages.CloudFoundryServerBehaviour_UPDATE_ENV_VARS, appName);
-		return new BehaviourRequest<Void>(label) { //$NON-NLS-1$
+		return new BehaviourRequest<Void>(label) {
 
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				// Update environment variables.
 				Map<String, String> varsMap = new HashMap<String, String>();
 
-				SubMonitor subProgress = SubMonitor.convert(progress);
-				subProgress.setTaskName(label); //$NON-NLS-1$
-
-				try {
-
-					if (variables != null) {
-						for (EnvironmentVariable var : variables) {
-							varsMap.put(var.getVariable(), var.getValue());
-						}
+				if (variables != null) {
+					for (EnvironmentVariable var : variables) {
+						varsMap.put(var.getVariable(), var.getValue());
 					}
-
-					client.updateApplicationEnv(appName, varsMap);
-
 				}
-				finally {
-					subProgress.done();
-				}
+
+				client.updateApplicationEnv(appName, varsMap);
 
 				return null;
 			}
@@ -1929,11 +1926,16 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	BaseClientRequest<List<CloudService>> getDeleteServicesRequest(final List<String> services) {
-		return new BehaviourRequest<List<CloudService>>("Deleting services") { //$NON-NLS-1$
+		return new BehaviourRequest<List<CloudService>>(Messages.CloudFoundryServerBehaviour_DELETE_SERVICES) {
 			@Override
 			protected List<CloudService> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+
+				SubMonitor serviceProgress = SubMonitor.convert(progress, services.size());
+
 				for (String service : services) {
+					serviceProgress.subTask(NLS.bind(Messages.CloudFoundryServerBehaviour_DELETING_SERVICE, service));
 					client.deleteService(service);
+					serviceProgress.worked(1);
 				}
 				return client.getServices();
 			}
@@ -1941,18 +1943,20 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	BaseClientRequest<List<CloudService>> getCreateServicesRequest(final CloudService[] services) {
-		return new BehaviourRequest<List<CloudService>>(
-				services.length == 1 ? "Creating service " + services[0].getName() //$NON-NLS-1$
-				: "Creating services") { //$NON-NLS-1$
+		return new BehaviourRequest<List<CloudService>>(Messages.CloudFoundryServerBehaviour_CREATE_SERVICES) {
 			@Override
 			protected List<CloudService> doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 
+				SubMonitor serviceProgress = SubMonitor.convert(progress, services.length);
+
 				for (CloudService service : services) {
+					serviceProgress.subTask(NLS.bind(Messages.CloudFoundryServerBehaviour_CREATING_SERVICE,
+							service.getName()));
 					client.createService(service);
+					serviceProgress.worked(1);
 				}
 				return client.getServices();
 			}
 		};
 	}
-
 }

@@ -48,30 +48,7 @@ public class StartStopApplicationAction extends EditorAction {
 		this.serverBehaviour = serverBehaviour;
 	}
 
-	@Override
-	public String getJobName() {
-		StringBuilder jobName = new StringBuilder();
-		switch (action) {
-		case START:
-			jobName.append("Starting"); //$NON-NLS-1$
-			break;
-		case STOP:
-			jobName.append("Stopping"); //$NON-NLS-1$
-			break;
-		case RESTART:
-			jobName.append("Restarting"); //$NON-NLS-1$
-			break;
-		case UPDATE_RESTART:
-			jobName.append("Update and Restarting"); //$NON-NLS-1$
-			break;
-		}
-
-		jobName.append(" application " + application.getDeployedApplicationName()); //$NON-NLS-1$
-		return jobName.toString();
-	}
-
 	public ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException {
 		return serverBehaviour.operations().applicationDeployment(application, action);
 	}
-
 }

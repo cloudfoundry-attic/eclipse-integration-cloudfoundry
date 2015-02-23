@@ -22,7 +22,10 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.AbstractPublishApplicationOperation;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.CoreException;
@@ -33,10 +36,6 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.wst.server.core.IModule;
 
 public class UpdateRestartModuleCommand extends BaseCommandHandler {
-
-	private String getJobName() {
-		return "Update and restarting module"; //$NON-NLS-1$
-	}
 
 	private String getFailureMessage() {
 		return "Unable to update and restart module"; //$NON-NLS-1$
@@ -65,16 +64,19 @@ public class UpdateRestartModuleCommand extends BaseCommandHandler {
 
 	protected void doRun(CloudFoundryServer server, CloudFoundryApplicationModule appModule) {
 		final CloudFoundryServer cloudServer = server;
-		Job job = new Job(getJobName()) {
+		Job job = new Job(Messages.PushApplicationOperation_UPDATE_APP_MESSAGE) {
 
 			protected IStatus run(IProgressMonitor monitor) {
 
 				try {
-					cloudServer
-							.getBehaviour()
-							.operations()
-							.applicationDeployment(new IModule[] { selectedModule },
-									ApplicationAction.UPDATE_RESTART).run(monitor);
+
+					ICloudFoundryOperation operation = cloudServer.getBehaviour().operations()
+							.applicationDeployment(new IModule[] { selectedModule }, ApplicationAction.UPDATE_RESTART);
+					if (operation instanceof AbstractPublishApplicationOperation) {
+						setName(((AbstractPublishApplicationOperation) operation).getOperationName());
+					}
+
+					operation.run(monitor);
 				}
 				catch (CoreException e) {
 					CloudFoundryPlugin.getDefault().getLog()

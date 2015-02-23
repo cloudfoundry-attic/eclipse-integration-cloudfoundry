@@ -39,8 +39,10 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
@@ -69,15 +71,19 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		if (showIndex < 0) {
 			showIndex = 0;
 		}
+		SubMonitor subMonitor = SubMonitor.convert(monitor, cloudModule.getDeploymentInfo().getInstances()*100);
+		
+		subMonitor.subTask(NLS.bind(Messages.CloudFoundryUiCallback_STARTING_CONSOLE, cloudModule.getDeployedApplicationName()));
+
 		for (int i = 0; i < cloudModule.getDeploymentInfo().getInstances(); i++) {
 			// Do not clear the console as pre application start information may
 			// have been already sent to the console
 			// output
 			boolean shouldClearConsole = false;
-
+			
 			ConsoleManagerRegistry.getConsoleManager(cloudServer)
 					.startConsole(cloudServer, StandardLogContentType.APPLICATION_LOG, cloudModule, i, i == showIndex,
-							shouldClearConsole, monitor);
+							shouldClearConsole, subMonitor.newChild(100));
 		}
 	}
 

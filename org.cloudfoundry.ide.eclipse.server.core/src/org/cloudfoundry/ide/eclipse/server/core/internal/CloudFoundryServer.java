@@ -125,12 +125,13 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	private static final String PROPERTY_DEPLOYMENT_NAME = "deployment_name"; //$NON-NLS-1$
 
 	protected void updateState(Server server, CloudFoundryApplicationModule appModule) throws CoreException {
-		IModule[] localModule = new IModule[] {appModule.getLocalModule()};
+		IModule[] localModule = new IModule[] { appModule.getLocalModule() };
 		server.setModuleState(localModule, appModule.getState());
 		if (server.getModulePublishState(localModule) == IServer.PUBLISH_STATE_UNKNOWN) {
 			if (!server.hasPublishedResourceDelta(localModule)) {
 				server.setModulePublishState(localModule, IServer.PUBLISH_STATE_NONE);
-			} else {
+			}
+			else {
 				server.setModulePublishState(localModule, IServer.PUBLISH_STATE_INCREMENTAL);
 			}
 		}
@@ -142,22 +143,23 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		if (parentModule == null || parentModule.length == 0) {
 			return;
 		}
-		
+
 		int parentModuleSize = parentModule.length;
-		
+
 		IModule[] childModules = server.getChildModules(parentModule, null);
 		if (childModules == null || childModules.length == 0) {
 			return;
 		}
 		for (IModule curChildModule : childModules) {
-			IModule[] curFullChildModule = new IModule[parentModuleSize+1];
+			IModule[] curFullChildModule = new IModule[parentModuleSize + 1];
 			System.arraycopy(parentModule, 0, curFullChildModule, 0, parentModuleSize);
 			curFullChildModule[parentModuleSize] = curChildModule;
 
 			if (server.getModulePublishState(curFullChildModule) == IServer.PUBLISH_STATE_UNKNOWN) {
 				if (!server.hasPublishedResourceDelta(curFullChildModule)) {
 					server.setModulePublishState(curFullChildModule, IServer.PUBLISH_STATE_NONE);
-				} else {
+				}
+				else {
 					server.setModulePublishState(curFullChildModule, IServer.PUBLISH_STATE_INCREMENTAL);
 				}
 			}
@@ -831,6 +833,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	 */
 	public CloudFoundryApplicationModule updateModule(CloudApplication existingCloudApplication, String appName,
 			IProgressMonitor monitor) throws CoreException {
+
 		if (appName == null && existingCloudApplication != null) {
 			appName = existingCloudApplication.getName();
 		}

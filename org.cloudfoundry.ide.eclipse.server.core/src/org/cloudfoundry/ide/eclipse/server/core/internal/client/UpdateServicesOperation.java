@@ -30,8 +30,7 @@ public class UpdateServicesOperation extends BehaviourOperation {
 
 	private final BaseClientRequest<List<CloudService>> request;
 
-	protected UpdateServicesOperation(BaseClientRequest<List<CloudService>> request,
-			CloudFoundryServerBehaviour behaviour) {
+	public UpdateServicesOperation(BaseClientRequest<List<CloudService>> request, CloudFoundryServerBehaviour behaviour) {
 		super(behaviour, null);
 		this.request = request;
 	}

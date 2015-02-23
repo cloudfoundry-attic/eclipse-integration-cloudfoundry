@@ -25,6 +25,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.AbstractPublishApplicationOperation;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryServerUiPlugin;
@@ -87,7 +88,7 @@ public abstract class EditorAction extends Action {
 	}
 
 	public String getJobName() {
-		return "Cloud Editor Action"; //$NON-NLS-1$
+		return Messages.EditorAction_CLOUD_OPERATION;
 	}
 
 	protected abstract ICloudFoundryOperation getOperation(IProgressMonitor monitor) throws CoreException;
@@ -113,21 +114,22 @@ public abstract class EditorAction extends Action {
 		}
 	}
 
-	protected void doRun(IProgressMonitor monitor) throws CoreException {
-		ICloudFoundryOperation operation = getOperation(monitor);
-		if (operation == null) {
-			throw CloudErrorUtil.toCoreException(Messages.CloudFoundryEditorAction_TEXT_NO_OP_EXECUTE);
-		}
-		operation.run(monitor);
-	}
-
 	protected Job getJob() {
-		Job job = new Job(getJobName()) {
+		final Job job = new Job(getJobName()) {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 
 				try {
-					doRun(monitor);
+					ICloudFoundryOperation operation = getOperation(monitor);
+
+					if (operation == null) {
+						throw CloudErrorUtil.toCoreException(Messages.CloudFoundryEditorAction_TEXT_NO_OP_EXECUTE);
+					}
+					if (operation instanceof AbstractPublishApplicationOperation) {
+						String name = ((AbstractPublishApplicationOperation) operation).getOperationName();
+						setName(name);
+					}
+					operation.run(monitor);
 				}
 				catch (CoreException ce) {
 					if (CloudErrorUtil.isWrongCredentialsException(ce)) {

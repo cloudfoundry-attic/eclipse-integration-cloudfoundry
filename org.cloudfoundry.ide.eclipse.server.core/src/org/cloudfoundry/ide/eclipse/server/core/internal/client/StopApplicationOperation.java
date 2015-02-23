@@ -44,8 +44,14 @@ class StopApplicationOperation extends AbstractPublishApplicationOperation {
 	}
 
 	@Override
+	public String getOperationName() {
+		return Messages.StopApplicationOperation_STOPPING_APP;
+	}
+
+	@Override
 	protected void doApplicationOperation(IProgressMonitor monitor) throws CoreException {
 		Server server = (Server) getBehaviour().getServer();
+
 		boolean succeeded = false;
 		try {
 			server.setModuleState(getModules(), IServer.STATE_STOPPING);
@@ -59,10 +65,14 @@ class StopApplicationOperation extends AbstractPublishApplicationOperation {
 						+ getModules()[0].getName());
 			}
 
+			SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+
 			String stoppingApplicationMessage = NLS.bind(Messages.CONSOLE_STOPPING_APPLICATION,
 					cloudModule.getDeployedApplicationName());
 
 			getBehaviour().clearAndPrintlnConsole(cloudModule, stoppingApplicationMessage);
+
+			subMonitor.worked(20);
 
 			getBehaviour().new BehaviourRequest<Void>(stoppingApplicationMessage) {
 				@Override
@@ -70,16 +80,19 @@ class StopApplicationOperation extends AbstractPublishApplicationOperation {
 					client.stopApplication(cloudModule.getDeployedApplicationName());
 					return null;
 				}
-			}.run(monitor);
+			}.run(subMonitor.newChild(20));
 
 			server.setModuleState(getModules(), IServer.STATE_STOPPED);
 			succeeded = true;
-			
+
 			// Update the module
-			getBehaviour().updateCloudModuleWithInstances(cloudModule.getDeployedApplicationName(), monitor);
+			getBehaviour().updateCloudModuleWithInstances(cloudModule.getDeployedApplicationName(),
+					subMonitor.newChild(40));
+
 
 			getBehaviour().printlnToConsole(cloudModule, Messages.CONSOLE_APP_STOPPED);
 			CloudFoundryPlugin.getCallback().stopApplicationConsole(cloudModule, cloudServer);
+			subMonitor.worked(20);
 		}
 		finally {
 			if (!succeeded) {
@@ -89,8 +102,4 @@ class StopApplicationOperation extends AbstractPublishApplicationOperation {
 
 	}
 
-	@Override
-	protected String getOperationName() {
-		return "Stopping application"; //$NON-NLS-1$
-	}
 }

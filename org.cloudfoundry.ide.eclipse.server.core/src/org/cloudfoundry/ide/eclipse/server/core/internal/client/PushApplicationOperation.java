@@ -36,6 +36,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.application.Environment
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
@@ -131,13 +132,15 @@ public class PushApplicationOperation extends StartOperation {
 
 		// Create the application if it doesn't already exist
 		if (!found) {
-			getBehaviour().printlnToConsole(appModule, Messages.CONSOLE_APP_CREATION);
+			String creatingAppLabel = NLS.bind(Messages.CONSOLE_APP_CREATION, appName);
+			getBehaviour().printlnToConsole(appModule, creatingAppLabel);
 
 			// BUG - [87862532]: Fetch all the information BEFORE
 			// creating the application. The reason for this
 			// is to prevent any other operation that updates the module from
 			// clearing the deploymentinfo after the application is created
-			// but before other properties are updated like environment variables
+			// but before other properties are updated like environment
+			// variables
 			// and instances
 			Staging staging = appModule.getDeploymentInfo().getStaging();
 			List<String> uris = appModule.getDeploymentInfo().getUris() != null ? appModule.getDeploymentInfo()
@@ -156,6 +159,8 @@ public class PushApplicationOperation extends StartOperation {
 			// create the app but
 			// prevent further deployment. If the app was still created
 			// attempt to set env vars and instaces
+			SubMonitor subMonitor = SubMonitor.convert(monitor, 50);
+			subMonitor.subTask(creatingAppLabel);
 			try {
 				client.createApplication(appName, staging, appModule.getDeploymentInfo().getMemory(), uris, services);
 			}
@@ -169,22 +174,28 @@ public class PushApplicationOperation extends StartOperation {
 				}
 			}
 
+			subMonitor.worked(30);
+
 			// [87881946] - Try setting the env vars and instances even if an
 			// error was thrown while creating the application
 			// as the application may still have been created in the Cloud space
 			// in spite of the error
 			try {
-				CloudApplication actualApp = getBehaviour().getCloudApplication(appName, monitor);
+				CloudApplication actualApp = getBehaviour().getCloudApplication(appName, subMonitor.newChild(20));
 
 				if (actualApp != null) {
-					getBehaviour().getUpdateEnvVarRequest(appName, variables).run(monitor);
+					SubMonitor updateMonitor = SubMonitor.convert(subMonitor, 100);
+					getBehaviour().getUpdateEnvVarRequest(appName, variables).run(updateMonitor.newChild(50));
 
 					// Update instances if it is more than 1. By default, app
 					// starts
 					// with 1 instance.
 
 					if (instances > 1) {
-						getBehaviour().updateApplicationInstances(appName, instances, monitor);
+						getBehaviour().updateApplicationInstances(appName, instances, updateMonitor.newChild(50));
+					}
+					else {
+						updateMonitor.worked(50);
 					}
 				}
 			}

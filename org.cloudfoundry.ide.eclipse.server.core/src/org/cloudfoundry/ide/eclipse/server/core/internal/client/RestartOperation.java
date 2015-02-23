@@ -32,6 +32,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.internal.Server;
@@ -55,6 +56,10 @@ public class RestartOperation extends ApplicationOperation {
 		super(behaviour, modules);
 	}
 
+	@Override
+	public String getOperationName() {
+		return Messages.RestartOperation_STARTING_APP;
+	}
 
 	@Override
 	protected void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
@@ -74,14 +79,19 @@ public class RestartOperation extends ApplicationOperation {
 				throw CloudErrorUtil
 						.toCoreException("Unable to start application. Missing application deployment name in application deployment information."); //$NON-NLS-1$
 			}
-			
-			// Update the module with the latest CloudApplication from the client before starting the application
-			appModule = getBehaviour().updateCloudModule(appModule.getDeployedApplicationName(), monitor);
+
+			SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+
+			// Update the module with the latest CloudApplication from the
+			// client before starting the application
+			appModule = getBehaviour().updateCloudModule(appModule.getDeployedApplicationName(),
+					subMonitor.newChild(20));
 
 			final CloudFoundryApplicationModule cloudModule = appModule;
 
 			final ApplicationAction deploymentMode = getDeploymentConfiguration().getApplicationStartMode();
 			if (deploymentMode != ApplicationAction.STOP) {
+
 				// Start the application. Use a regular request rather than
 				// a staging-aware request, as any staging errors should not
 				// result in a reattempt, unlike other cases (e.g. get the
@@ -89,12 +99,13 @@ public class RestartOperation extends ApplicationOperation {
 				// logs or refreshing app instance stats after an app has
 				// started).
 
-				getBehaviour().printlnToConsole(cloudModule, Messages.CONSOLE_PRE_STAGING_MESSAGE);
+				String startLabel = Messages.RestartOperation_STARTING_APP + " - " + deploymentName; //$NON-NLS-1$
+				getBehaviour().printlnToConsole(cloudModule, startLabel);
 
 				CloudFoundryPlugin.getCallback().startApplicationConsole(getBehaviour().getCloudFoundryServer(),
-						cloudModule, 0, monitor);
+						cloudModule, 0, subMonitor.newChild(20));
 
-				getBehaviour().new BehaviourRequest<Void>("Starting application " + deploymentName) { //$NON-NLS-1$
+				getBehaviour().new BehaviourRequest<Void>(startLabel) {
 					@Override
 					protected Void doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 						CloudFoundryPlugin.trace("Application " + deploymentName + " starting"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -113,12 +124,13 @@ public class RestartOperation extends ApplicationOperation {
 						}
 						return null;
 					}
-				}.run(monitor);
+				}.run(subMonitor.newChild(20));
 
 				// This should be staging aware, in order to reattempt on
 				// staging related issues when checking if an app has
 				// started or not
-				getBehaviour().new StagingAwareRequest<Void>("Waiting for application to start: " + deploymentName) { //$NON-NLS-1$
+				getBehaviour().new StagingAwareRequest<Void>(NLS.bind(
+						Messages.CloudFoundryServerBehaviour_WAITING_APP_START, deploymentName)) {
 					@Override
 					protected Void doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 
@@ -172,11 +184,12 @@ public class RestartOperation extends ApplicationOperation {
 
 						return null;
 					}
-				}.run(monitor);
+				}.run(subMonitor.newChild(40));
 			}
 			else {
 				// User has selected to deploy the app in STOP mode
 				server.setModuleState(getModules(), IServer.STATE_STOPPED);
+				subMonitor.worked(80);
 			}
 		}
 		catch (CoreException e) {
@@ -184,11 +197,6 @@ public class RestartOperation extends ApplicationOperation {
 			server.setModulePublishState(getModules(), IServer.PUBLISH_STATE_UNKNOWN);
 			throw e;
 		}
-	}
-
-	@Override
-	protected String getOperationName() {
-		return Messages.CONSOLE_RESTARTING_APP;
 	}
 
 	@Override

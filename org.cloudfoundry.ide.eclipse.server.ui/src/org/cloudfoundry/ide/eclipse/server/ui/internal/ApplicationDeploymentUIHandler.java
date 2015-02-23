@@ -19,6 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
@@ -39,7 +40,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
@@ -145,6 +145,11 @@ public class ApplicationDeploymentUIHandler {
 			final IStatus[] status = { Status.OK_STATUS };
 			final DeploymentInfoWorkingCopy finWorkingCopy = workingCopy;
 			final DeploymentConfiguration[] configuration = new DeploymentConfiguration[1];
+
+			// Update the lookup
+			ApplicationUrlLookupService.update(server, monitor);
+			final List<CloudService> addedServices = new ArrayList<CloudService>();
+
 			Display.getDefault().syncExec(new Runnable() {
 				public void run() {
 
@@ -152,8 +157,6 @@ public class ApplicationDeploymentUIHandler {
 							finWorkingCopy, providerDelegate);
 
 					try {
-						// Update the lookup
-						ApplicationUrlLookupService.update(server, monitor);
 						WizardDialog dialog = new WizardDialog(PlatformUI.getWorkbench().getModalDialogShellProvider()
 								.getShell(), wizard);
 						int dialogueStatus = dialog.open();
@@ -161,26 +164,12 @@ public class ApplicationDeploymentUIHandler {
 						if (dialogueStatus == Dialog.OK) {
 
 							// First add any new services to the server
-							final List<CloudService> addedServices = wizard.getCloudServicesToCreate();
+							List<CloudService> services = wizard.getCloudServicesToCreate();
+							if (services != null) {
+								addedServices.addAll(services);
+							}
 							writeToManifest[0] = wizard.persistManifestChanges();
 							configuration[0] = wizard.getDeploymentConfiguration();
-
-							if (addedServices != null && !addedServices.isEmpty()) {
-								IProgressMonitor subMonitor = new SubProgressMonitor(monitor, addedServices.size());
-								try {
-									server.getBehaviour().operations()
-											.createServices(addedServices.toArray(new CloudService[0])).run(monitor);
-								}
-								catch (CoreException e) {
-									// Do not let service creation errors
-									// stop the application deployment
-									CloudFoundryPlugin.log(e);
-								}
-								finally {
-									subMonitor.done();
-								}
-							}
-
 						}
 						else {
 							cancelled[0] = true;
@@ -203,6 +192,19 @@ public class ApplicationDeploymentUIHandler {
 				throw new OperationCanceledException();
 			}
 			else {
+
+				if (!addedServices.isEmpty()) {
+					try {
+						server.getBehaviour().operations().createServices(addedServices.toArray(new CloudService[0]))
+								.run(monitor);
+					}
+					catch (CoreException e) {
+						// Do not let service creation errors
+						// stop the application deployment
+						CloudFoundryPlugin.logError(e);
+					}
+				}
+
 				if (status[0].isOK()) {
 					status[0] = appModule.validateDeploymentInfo();
 				}
@@ -211,17 +213,13 @@ public class ApplicationDeploymentUIHandler {
 				}
 				else if (writeToManifest[0]) {
 
-					IProgressMonitor subMonitor = new SubProgressMonitor(monitor, 1);
 					try {
-						new ManifestParser(appModule, server).write(subMonitor, oldInfo);
+						new ManifestParser(appModule, server).write(monitor, oldInfo);
 					}
 					catch (Throwable ce) {
 						// Do not let this error propagate, as failing to write
 						// to the manifest should not stop the app's deployment
 						CloudFoundryPlugin.logError(ce);
-					}
-					finally {
-						subMonitor.done();
 					}
 				}
 

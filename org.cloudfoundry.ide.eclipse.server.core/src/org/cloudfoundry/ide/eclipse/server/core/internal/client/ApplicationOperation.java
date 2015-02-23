@@ -27,10 +27,9 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
-import org.eclipse.wst.server.core.IServer;
-import org.eclipse.wst.server.core.internal.Server;
 
 /**
  * Deploys an application and or starts it in regular or debug mode. If deployed
@@ -86,12 +85,15 @@ public abstract class ApplicationOperation extends AbstractPublishApplicationOpe
 		CloudFoundryApplicationModule appModule = getOrCreateCloudApplicationModule(getModules());
 
 		try {
+
 			CloudFoundryServer cloudServer = getBehaviour().getCloudFoundryServer();
 
 			// Stop any consoles
 			CloudFoundryPlugin.getCallback().stopApplicationConsole(appModule, cloudServer);
 
-			configuration = prepareForDeployment(appModule, monitor);
+			SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+
+			configuration = prepareForDeployment(appModule, subMonitor.newChild(20));
 
 			IStatus validationStatus = appModule.validateDeploymentInfo();
 			if (!validationStatus.isOK()) {
@@ -99,6 +101,7 @@ public abstract class ApplicationOperation extends AbstractPublishApplicationOpe
 						appModule.getDeployedApplicationName(), validationStatus.getMessage()));
 
 			}
+
 			// NOTE: Only print to a console AFTER an application has been
 			// prepared for deployment, as the application
 			// name may have changed during the deployment preparation
@@ -108,10 +111,12 @@ public abstract class ApplicationOperation extends AbstractPublishApplicationOpe
 			getBehaviour().clearAndPrintlnConsole(appModule,
 					NLS.bind(Messages.CONSOLE_PREPARING_APP, appModule.getDeployedApplicationName()));
 
-			performDeployment(appModule, monitor);
+			performDeployment(appModule, subMonitor.newChild(60));
 
 			// If deployment was successful, update the module
-			appModule = getBehaviour().updateCloudModuleWithInstances(appModule.getDeployedApplicationName(), monitor);
+			appModule = getBehaviour().updateCloudModuleWithInstances(appModule.getDeployedApplicationName(),
+					subMonitor.newChild(20));
+
 		}
 		catch (CoreException ce) {
 			// Log the error in console
@@ -155,6 +160,5 @@ public abstract class ApplicationOperation extends AbstractPublishApplicationOpe
 	 */
 	protected abstract void performDeployment(CloudFoundryApplicationModule appModule, IProgressMonitor monitor)
 			throws CoreException;
-
 
 }

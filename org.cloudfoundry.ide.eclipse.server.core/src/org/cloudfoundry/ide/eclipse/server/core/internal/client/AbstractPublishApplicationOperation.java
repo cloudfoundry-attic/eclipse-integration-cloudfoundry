@@ -50,8 +50,9 @@ public abstract class AbstractPublishApplicationOperation extends BehaviourOpera
 	protected IModule[] getModules() {
 		return modules;
 	}
+	
+	public abstract String getOperationName();
 
-	abstract protected String getOperationName();
 
 	/**
 	 * Returns non-null Cloud application module mapped to the first module in

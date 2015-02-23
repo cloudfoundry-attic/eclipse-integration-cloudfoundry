@@ -29,10 +29,13 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
+import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 
 /**
@@ -256,11 +259,18 @@ public class CloudBehaviourOperations {
 			@Override
 			public void run(IProgressMonitor monitor) throws CoreException {
 
+				SubMonitor subMonitor = SubMonitor.convert(monitor);
+				subMonitor.beginTask(
+						NLS.bind(Messages.CloudBehaviourOperations_REFRESHING_APPS_AND_SERVICES, getBehaviour()
+								.getCloudFoundryServer().getServer().getId()), 100);
+
 				if (getModule() != null) {
-					getBehaviour().updateCloudModuleWithInstances(getModule(), monitor);
+					getBehaviour().updateCloudModuleWithInstances(getModule(), subMonitor.newChild(40));
+				} else {
+					subMonitor.worked(40);
 				}
 				// Get updated list of cloud applications from the server
-				List<CloudApplication> applications = getBehaviour().getApplications(monitor);
+				List<CloudApplication> applications = getBehaviour().getApplications(subMonitor.newChild(20));
 
 				// update applications and deployments from server
 				Map<String, CloudApplication> deployedApplicationsByName = new LinkedHashMap<String, CloudApplication>();
@@ -271,11 +281,13 @@ public class CloudBehaviourOperations {
 
 				getBehaviour().getCloudFoundryServer().updateModules(deployedApplicationsByName);
 
-				List<CloudService> services = getBehaviour().getServices(monitor);
+				List<CloudService> services = getBehaviour().getServices(subMonitor.newChild(20));
 
 				ServerEventHandler.getDefault().fireServerEvent(
 						new CloudRefreshEvent(getBehaviour().getCloudFoundryServer(), getModule(),
 								CloudServerEvent.EVENT_SERVER_REFRESHED, services));
+
+				subMonitor.worked(20);
 			}
 		};
 	}
@@ -287,9 +299,10 @@ public class CloudBehaviourOperations {
 			public void run(IProgressMonitor monitor) throws CoreException {
 
 				if (module == null) {
-					throw CloudErrorUtil.toCoreException("Internal Error: No module to refresh - " + //$NON-NLS-1$
+					throw CloudErrorUtil.toCoreException("Internal Error: No module to refresh in - " + //$NON-NLS-1$
 							getBehaviour().getCloudFoundryServer().getServerId());
 				}
+
 				getBehaviour().updateCloudModuleWithInstances(module, monitor);
 				ServerEventHandler.getDefault().fireAppDeploymentChanged(behaviour.getCloudFoundryServer(), module);
 			}
@@ -309,10 +322,12 @@ public class CloudBehaviourOperations {
 			public void run(IProgressMonitor monitor) throws CoreException {
 
 				if (module == null) {
-					throw CloudErrorUtil.toCoreException("Internal Error: No module to refresh - " + //$NON-NLS-1$
+					throw CloudErrorUtil.toCoreException("Internal Error: No module to refresh in - " + //$NON-NLS-1$
 							getBehaviour().getCloudFoundryServer().getServerId());
 				}
+
 				getBehaviour().updateCloudModuleWithInstances(module, monitor);
+
 				ServerEventHandler.getDefault().fireApplicationRefreshed(behaviour.getCloudFoundryServer(), module);
 			}
 		};

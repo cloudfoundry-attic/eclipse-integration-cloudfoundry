@@ -162,7 +162,7 @@ public class Messages extends NLS {
 	public static String ApplicationDetailsPart_TEXT_CPU_CIRE;
 
 	public static String ApplicationDetailsPart_TEXT_DEBUG;
-	
+
 	public static String ApplicationDetailsPart_TEXT_DEBUG_TOOLTIP;
 
 	public static String ApplicationDetailsPart_TEXT_DEBUG_DISCONNECT;
@@ -248,6 +248,10 @@ public class Messages extends NLS {
 	public static String ApplicationURLWizard_TEXT_PAGE;
 
 	public static String ApplicationURLWizard_TITLE_MOD_APP_URL;
+
+	public static String CloudFoundryUiCallback_STARTING_CONSOLE;
+
+	public static String EditorAction_CLOUD_OPERATION;
 
 	public static String ERROR_VALID_SERVER_NAME;
 
@@ -636,8 +640,6 @@ public class Messages extends NLS {
 	public static String CloudFoundryServiceWizardPage_TEXT_SET_SERVICE_NAME;
 
 	public static String CloudFoundryServiceWizardPage_TTILE_SERVICE_CONFIG;
-
-	public static String CloudFoundryServiceWizard_JOB_SUBTASK_ADDING_SERVICE;
 
 	public static String CloudFoundryServiceWizard_JOB_SUBTASK_VERIFYING_SERVICES;
 

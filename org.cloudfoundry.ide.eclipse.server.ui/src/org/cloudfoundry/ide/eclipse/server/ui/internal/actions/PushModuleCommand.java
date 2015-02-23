@@ -22,7 +22,10 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.AbstractPublishApplicationOperation;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.CoreException;
@@ -33,10 +36,6 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.wst.server.core.IModule;
 
 public class PushModuleCommand extends BaseCommandHandler {
-
-	private String getJobName() {
-		return "Pushing and starting module"; //$NON-NLS-1$
-	}
 
 	private String getFailureMessage() {
 		return "Unable to push module"; //$NON-NLS-1$
@@ -65,14 +64,18 @@ public class PushModuleCommand extends BaseCommandHandler {
 
 	protected void doRun(CloudFoundryServer server, CloudFoundryApplicationModule appModule) {
 		final CloudFoundryServer cloudServer = server;
-		Job job = new Job(getJobName()) {
+		Job job = new Job(Messages.PushApplicationOperation_PUSH_MESSAGE) {
 
 			protected IStatus run(IProgressMonitor monitor) {
 
 				try {
-					cloudServer.getBehaviour().operations()
-							.applicationDeployment(new IModule[] { selectedModule }, ApplicationAction.START)
-							.run(monitor);
+					ICloudFoundryOperation operation = cloudServer.getBehaviour().operations()
+							.applicationDeployment(new IModule[] { selectedModule }, ApplicationAction.START);
+					if (operation instanceof AbstractPublishApplicationOperation) {
+						setName(((AbstractPublishApplicationOperation) operation).getOperationName());
+					}
+
+					operation.run(monitor);
 				}
 				catch (CoreException e) {
 					CloudFoundryPlugin.getDefault().getLog()
@@ -85,5 +88,4 @@ public class PushModuleCommand extends BaseCommandHandler {
 
 		job.schedule();
 	}
-
 }

@@ -39,6 +39,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.internal.Server;
@@ -84,7 +85,7 @@ public class StartOperation extends RestartOperation {
 	 * @param waitForDeployment
 	 * @param incrementalPublish
 	 * @param modules
-	 * @param cloudFoundryServerBehaviour TODO
+	 * @param cloudFoundryServerBehaviour
 	 * @param alwaysStart if true, application will always start. if false,
 	 */
 	public StartOperation(CloudFoundryServerBehaviour behaviour, boolean incrementalPublish, IModule[] modules) {
@@ -93,8 +94,9 @@ public class StartOperation extends RestartOperation {
 	}
 
 	@Override
-	protected String getOperationName() {
-		return Messages.CONSOLE_DEPLOYING_APP;
+	public String getOperationName() {
+		return incrementalPublish ? Messages.PushApplicationOperation_UPDATE_APP_MESSAGE
+				: Messages.PushApplicationOperation_PUSH_MESSAGE;
 	}
 
 	@Override
@@ -131,14 +133,21 @@ public class StartOperation extends RestartOperation {
 
 			if (!getModules()[0].isExternal()) {
 
-				getBehaviour().printlnToConsole(appModule, Messages.CONSOLE_GENERATING_ARCHIVE);
+				String generatingArchiveLabel = NLS.bind(Messages.CONSOLE_GENERATING_ARCHIVE,
+						appModule.getDeployedApplicationName());
+				getBehaviour().printlnToConsole(appModule, generatingArchiveLabel);
 
+				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+
+				subMonitor.subTask(generatingArchiveLabel);
 				final ApplicationArchive applicationArchive = getBehaviour().generateApplicationArchiveFile(
-						appModule.getDeploymentInfo(), appModule, getModules(), server, incrementalPublish, monitor);
+						appModule.getDeploymentInfo(), appModule, getModules(), server, incrementalPublish,
+						subMonitor.newChild(10));
 				File warFile = null;
 				if (applicationArchive == null) {
 					// Create a full war archive
-					warFile = CloudUtil.createWarFile(getModules(), server, monitor);
+
+					warFile = CloudUtil.createWarFile(getModules(), server, subMonitor.newChild(10));
 					if (warFile == null || !warFile.exists()) {
 						throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
 								"Unable to create war file for application: " + deploymentName)); //$NON-NLS-1$
@@ -146,6 +155,10 @@ public class StartOperation extends RestartOperation {
 
 					CloudFoundryPlugin.trace("War file " + warFile.getName() + " created"); //$NON-NLS-1$ //$NON-NLS-2$
 				}
+				else {
+					subMonitor.worked(10);
+				}
+
 				// Tell webtools the module has been published
 				getBehaviour().resetPublishState(getModules());
 
@@ -164,13 +177,17 @@ public class StartOperation extends RestartOperation {
 					server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
 				}
 
+				subMonitor.worked(10);
+
 				final File warFileFin = warFile;
 				final CloudFoundryApplicationModule appModuleFin = appModule;
 				// Now push the application resources to the server
 
-				getBehaviour().new BehaviourRequest<Void>("Pushing the application " + deploymentName) { //$NON-NLS-1$
+				getBehaviour().new BehaviourRequest<Void>(getOperationName() + " - " + deploymentName) { //$NON-NLS-1$
 					@Override
 					protected Void doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+
+						getBehaviour().printlnToConsole(appModuleFin, getRequestLabel());
 
 						pushApplication(client, appModuleFin, warFileFin, applicationArchive, progress);
 
@@ -182,7 +199,7 @@ public class StartOperation extends RestartOperation {
 						return null;
 					}
 
-				}.run(monitor);
+				}.run(subMonitor.newChild(70));
 
 				getBehaviour().printlnToConsole(appModule, Messages.CONSOLE_APP_PUSHED_MESSAGE);
 
@@ -220,12 +237,8 @@ public class StartOperation extends RestartOperation {
 			File warFile, ApplicationArchive applicationArchive, final IProgressMonitor monitor) throws CoreException {
 
 		String appName = appModule.getDeploymentInfo().getDeploymentName();
-		
-		SubMonitor subProgress = SubMonitor.convert(monitor);
-		subProgress.setTaskName(Messages.CONSOLE_APP_PUSH_MESSAGE); //$NON-NLS-1$
 
 		try {
-			getBehaviour().printlnToConsole(appModule, Messages.CONSOLE_APP_PUSH_MESSAGE);
 			// Now push the application content.
 			if (warFile != null) {
 				client.uploadApplication(appName, warFile);
@@ -300,8 +313,6 @@ public class StartOperation extends RestartOperation {
 		catch (IOException e) {
 			throw new CoreException(CloudFoundryPlugin.getErrorStatus("Failed to deploy application " + //$NON-NLS-1$ 
 					appModule.getDeploymentInfo().getDeploymentName() + " due to " + e.getMessage(), e)); //$NON-NLS-1$
-		} finally {
-			subProgress.done();
 		}
 
 	}
