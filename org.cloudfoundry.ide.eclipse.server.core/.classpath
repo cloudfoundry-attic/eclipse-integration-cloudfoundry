@@ -6,8 +6,8 @@
 	<classpathentry exported="true" kind="lib" path="lib/commons-logging-1.1.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/cloudfoundry-caldecott-lib-0.1.4.BUILD-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-io-2.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/httpclient-4.2.5.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/httpcore-4.2.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/httpclient-4.3.6.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/httpcore-4.3.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jackson-core-asl-1.9.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jackson-mapper-asl-1.9.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/juli-6.0.39.jar"/>
