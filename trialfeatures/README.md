@@ -17,7 +17,7 @@ Steps below describe how to manually enable the debug feature.
 
 NOTE: Debugging through ngrok.com may eventually be replaced with ssh integration in [Diego](https://github.com/cloudfoundry-incubator/diego-design-notes#diego-design-notes), once ssh support is available.
 
-For the current implementation in 1.8.0, a prerequisite to debug a Java application on Cloud Foundry is to have an [ngrok.com](ngrok.com) account and authtoken provided by ngrok when you register. 
+For the current implementation in 1.8.0, a prerequisite to debug a Java application on Cloud Foundry is to have an [ngrok.com](http://ngrok.com) account and authtoken provided by ngrok when you register. 
 
 Ngrok is used to establish a tunnel to the application running on Cloud Foundry. In order to establish this tunnel, an ngrok executable needs to be included in the application as well as a shell script to
 run ngrok and specify the ngrok authtoken. Both ngrok executable and shell script need to be included as part of the application resources when pushing it to Cloud Foundry.
