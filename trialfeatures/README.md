@@ -32,11 +32,7 @@ As of version 1.8.0, debugging is only supported for Spring Boot and Java apps p
 
 2. In ".profile.d", add the Linux ngrok executable, which can be downloaded from here: [ngrok](https://ngrok.com/download)
 
-3. Add a ngrok.sh script in ".profile.d" with the following content: [ngrok.sh](ngrok.sh)
-
-NOTE: Cloud Foundry Eclipse expects the ngrok output file, ngrok.txt, which is generated automatically by the ngrok.sh script when the application is started, to be present at /app/.profile.d/
-
-This output file will contain the port to connect the Eclipse debugger to ngrok.com, and is parsed automatically by Cloud Foundry Eclipse when it attempts to launch the Eclipse debugger.
+3. Add a ngrok.sh script in ".profile.d" with the following content: [ngrok.sh](ngrok.sh) NOTE: Cloud Foundry Eclipse expects the ngrok output file, ngrok.txt, which is generated automatically by the ngrok.sh script when the application is started, to be present at /app/.profile.d/ in Cloud Foundry. This output file will contain the port to connect the Eclipse debugger to ngrok.com, and is parsed automatically by Cloud Foundry Eclipse when it attempts to launch the Eclipse debugger.
 
 4. Push the application to your Cloud space using drag/drop or WTP Run on Server.
 
