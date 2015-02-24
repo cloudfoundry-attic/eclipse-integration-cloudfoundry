@@ -28,9 +28,9 @@ WARNING: Debugging through ngrok.com is NOT secure. It's meant as an experimenta
 
 As of version 1.8.0, debugging is only supported for Spring Boot and Java apps packaged as Jar.
 
-1. In your Spring Boot or Java project in Eclipse, create a ".profile.d" folder in src/main/resources and make sure src/main/resources is in the project's .classpath, if it isn't already. The presence of the ".profile.d" folder will enable the debug UI in Cloud Foundry Eclipse editor for that application.
+1. In your Spring Boot or Java project in Eclipse, create a ".profile.d" folder in src/main/resources and make sure src/main/resources is in the project's .classpath, if it isn't already. The presence of the ".profile.d" folder will enable the debug UI in the Cloud Foundry Eclipse editor for that application.
 
-2. In ".profile.d", add theLinux ngrok executable, which can be downloaded from here: [ngrok](https://ngrok.com/download)
+2. In ".profile.d", add the Linux ngrok executable, which can be downloaded from here: [ngrok](https://ngrok.com/download)
 
 3. Add a ngrok.sh script in ".profile.d" with the following content: [ngrok.sh](ngrok.sh)
 
