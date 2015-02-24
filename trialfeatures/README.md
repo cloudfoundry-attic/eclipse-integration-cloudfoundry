@@ -11,7 +11,7 @@ These features may change or even be removed or replaced in future releases of C
 ### Cloud Foundry Eclipse 1.8.0 Debug Support Using ngrok.com
 
 Version 1.8.0 of Cloud Foundry Eclipse includes an experimental feature for debugging certain types of Spring Boot
-and Java applications on Cloud Foundry. The debugging feature uses ngrok.com, and is experimental and disabled by default, as it is meant to be a trial integration to launch the Eclipse Java debugger through the Cloud Foundry Editor UI.
+and Java applications on Cloud Foundry. The debugging feature uses ngrok.com, and is experimental and disabled by default, as it is meant to be a trial integration to launch the Eclipse Java debugger through the Cloud Foundry Eclipse editor UI.
 
 Steps below describe how to manually enable the debug feature.
 
