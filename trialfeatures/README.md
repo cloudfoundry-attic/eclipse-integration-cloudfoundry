@@ -36,7 +36,7 @@ As of version 1.8.0, debugging is only supported for Spring Boot and Java apps p
 
 NOTE: Cloud Foundry Eclipse expects the ngrok output file, ngrok.txt, which is generated automatically by the ngrok.sh script when the application is started, to be present at /app/.profile.d/
 
-This output file will contain the port to connect the Eclipse debugger to ngrok.com, and is parsed automatically by Cloud Foundry Eclipse when it attempts to connect the Eclipse debugger to the running application in Cloud Foundry.
+This output file will contain the port to connect the Eclipse debugger to ngrok.com, and is parsed automatically by Cloud Foundry Eclipse when it attempts to launch the Eclipse debugger.
 
 4. Push the application to your Cloud space using drag/drop or WTP Run on Server.
 
