@@ -4,6 +4,11 @@
   PaaS: http://www.cloudfoundry.com/. It allows you to directly deploy applications from your
   workspace to a running Pivotal CF server instance, view and manage deployed applications and services,
   start and stop applications.
+  
+## Trial Features in Released Version
+
+Trial features that are still in development, but are present in released versions of Cloud Foundry Eclipse and can be used, like for example debugging Java applications on Cloud Foundry, are listed here:
+[Trial Features](trialfeatures/README.md)
 
 ## Installation (Release)
 
