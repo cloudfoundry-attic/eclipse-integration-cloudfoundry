@@ -574,7 +574,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		final String label = NLS.bind(Messages.CloudFoundryServerBehaviour_GET_ALL_APPS, getCloudFoundryServer()
 				.getServer().getId());
-		return new BehaviourRequest<List<CloudApplication>>(label) { 
+		return new BehaviourRequest<List<CloudApplication>>(label) {
 			@Override
 			protected List<CloudApplication> doRun(CloudFoundryOperations client, SubMonitor progress)
 					throws CoreException {
@@ -1033,8 +1033,11 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	protected void initialize(IProgressMonitor monitor) {
 		super.initialize(monitor);
 		getServer().addServerListener(serverListener, ServerEvent.SERVER_CHANGE);
+
 		try {
 			refreshHandler = new RefreshModulesHandler(getCloudFoundryServer());
+
+			getApplicationUrlLookup().refreshDomains(monitor);
 
 			// Important: Must perform a refresh operation
 			// as any operation that calls the CF client first
@@ -1044,7 +1047,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			getRefreshHandler().scheduleRefreshAll();
 		}
 		catch (CoreException e) {
-			CloudFoundryPlugin.logError(Messages.ERROR_INITIALISE_REFRESH_NO_SERVER);
+			CloudFoundryPlugin.logError(e);
 		}
 	}
 

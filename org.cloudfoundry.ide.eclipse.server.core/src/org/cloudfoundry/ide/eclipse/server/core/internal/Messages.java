@@ -77,7 +77,6 @@ public class Messages extends NLS {
 
 	public static String ERROR_FAILED_MODULE_REFRESH;
 
-	public static String ERROR_INITIALISE_REFRESH_NO_SERVER;
 
 	public static String ERROR_APP_DEPLOYMENT_VALIDATION_ERROR;
 
