@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -25,6 +25,8 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.LogContentType;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.console.ConsolePlugin;
+import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.console.MessageConsole;
 
@@ -41,7 +43,33 @@ public class SingleConsoleStream extends ConsoleStream {
 	}
 
 	public synchronized boolean isActive() {
-		return outputStream != null && !outputStream.isClosed();
+		if (this.console != null) {
+			// Check if the console still exists before checking if the
+			// console's
+			// output stream is open
+			IConsole[] activeConsoles = ConsolePlugin.getDefault().getConsoleManager().getConsoles();
+
+			boolean isActive = false;
+			if (activeConsoles != null) {
+				for (IConsole activeConsole : activeConsoles) {
+					if (activeConsole.equals(this.console)) {
+						isActive = true;
+						break;
+					}
+				}
+			}
+
+			if (isActive && outputStream != null && !outputStream.isClosed()) {
+				return true;
+			}
+			else {
+				// Console is no longer available. To avoid repeated checks on
+				// the
+				// console manager, clear the console reference
+				close();
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -65,6 +93,7 @@ public class SingleConsoleStream extends ConsoleStream {
 				CloudFoundryPlugin.logError("Failed to close console output stream due to: " + e.getMessage(), e); //$NON-NLS-1$
 			}
 		}
+		this.console = null;
 	}
 
 	public synchronized void initialiseStream(ConsoleConfig descriptor) throws CoreException {

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -231,8 +231,8 @@ public class ApplicationLogConsoleStream extends ConsoleStream {
 
 	/**
 	 * Writes a loggregator application log to the console. The content type of
-	 * the application log is resolved first and a corresponding stream is fetched
-	 * or created as part of streaming the log message to the console.
+	 * the application log is resolved first and a corresponding stream is
+	 * fetched or created as part of streaming the log message to the console.
 	 */
 	public synchronized void write(ApplicationLog appLog) throws CoreException {
 		if (appLog == null) {
