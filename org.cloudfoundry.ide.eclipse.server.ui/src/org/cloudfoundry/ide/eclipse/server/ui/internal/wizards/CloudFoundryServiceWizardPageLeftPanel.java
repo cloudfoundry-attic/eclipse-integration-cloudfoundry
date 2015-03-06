@@ -1244,18 +1244,27 @@ class CFServiceWizardDynamicIconLoader extends Thread {
 
 			// Grab the image from the provider, if needed
 			if (result == null) {
+				Image img = null;
 				ImageDescriptor imageDesc = iconProvider.getServiceIcon(entry.getOffering(), server);
-
-				if (imageDesc != null) {
-					try {
-						Image img = imageDesc.createImage();
-						final Image resizeImg = resizeImage(img, 32, 32);
-						result = resizeImg;
-						synchronized (imageMap) {
-							imageMap.put(mapId, resizeImg);
-						}
-					} catch(Exception e) {
-						/** Catch and ignore bad image files, here.*/
+				
+				if(imageDesc != null) {
+					img = imageDesc.createImage(false);
+				}
+				
+				if(img == null) {
+					// An error occurred while trying to create the image (for example, bad URL), 
+					// OR the getServiceIcon(...) call returned null, so request a replacement icon.
+					imageDesc = iconProvider.getDefaultServiceIcon(entry.getOffering(), server);
+					if (imageDesc != null) {
+						img = imageDesc.createImage();
+					}
+				}
+					
+				if(img != null) {
+					final Image resizeImg = resizeImage(img, 32, 32);
+					result = resizeImg;
+					synchronized (imageMap) {
+						imageMap.put(mapId, resizeImg);
 					}
 				}
 			}
@@ -1275,23 +1284,22 @@ class CFServiceWizardDynamicIconLoader extends Thread {
 					}
 				}
 			});
-
 		}
 
 		@SuppressWarnings("cast")
 		private Image resizeImage(Image oldImage, int newWidth, int newHeight) {
 			
 			Rectangle oldImageBounds = oldImage.getBounds();
-			
+						
 			if(oldImage.getBounds().width > oldImage.getBounds().height) {
 				// width > height
-				double shrinkRatio = ((double)newWidth/(double)oldImageBounds.width);
-				newHeight = (int)  (	shrinkRatio * (double)oldImageBounds.height);
+				double scaleRatio = ((double)newWidth/(double)oldImageBounds.width);
+				newHeight = (int)  (	scaleRatio * (double)oldImageBounds.height);
 				
 			} else {
 				// heigh > width, or equal
-				double shrinkRatio = ((double)newHeight/(double)oldImageBounds.height);
-				newWidth = (int)  (	shrinkRatio * (double)oldImageBounds.width );				
+				double scaleRatio = ((double)newHeight/(double)oldImageBounds.height);
+				newWidth = (int)  (	scaleRatio * (double)oldImageBounds.width );				
 			}
 			
 			Image newImage = new Image(Display.getDefault(), newWidth, newHeight);
