@@ -640,6 +640,8 @@ public class Messages extends NLS {
 	public static String CloudFoundryServiceWizardPage_TEXT_SET_SERVICE_NAME;
 
 	public static String CloudFoundryServiceWizardPage_TTILE_SERVICE_CONFIG;
+	
+	public static String CloudFoundryServiceWizardPageRightPanel_FREE_PLAN;
 
 	public static String CloudFoundryServiceWizard_JOB_SUBTASK_VERIFYING_SERVICES;
 
