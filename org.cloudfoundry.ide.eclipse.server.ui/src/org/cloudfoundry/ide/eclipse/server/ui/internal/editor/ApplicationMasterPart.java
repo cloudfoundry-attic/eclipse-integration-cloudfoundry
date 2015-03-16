@@ -33,7 +33,9 @@ import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.DeleteServicesAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.RefreshEditorAction;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.RemapToProjectEditorAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.ServiceToApplicationsBindingAction;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.UnmapProjectEditorAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryServiceWizard;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudRoutesWizard;
 import org.eclipse.core.resources.IProject;
@@ -595,7 +597,8 @@ public class ApplicationMasterPart extends SectionPart {
 
 		manager.add(new DeleteServicesAction(selection, cloudServer.getBehaviour(), editorPage));
 
-		// [87165642] - For now only support service binding/unbinding for one selected
+		// [87165642] - For now only support service binding/unbinding for one
+		// selected
 		// service
 		if (selection.size() == 1) {
 			manager.add(new ServiceToApplicationsBindingAction(selection, cloudServer.getBehaviour(), editorPage));
@@ -611,6 +614,11 @@ public class ApplicationMasterPart extends SectionPart {
 		IModule module = (IModule) selection.getFirstElement();
 		if (module != null) {
 			manager.add(new RemoveModuleAction(getSection().getShell(), editorPage.getServer().getOriginal(), module));
+			IProject project = module.getProject();
+			if (project != null && project.isAccessible()) {
+				manager.add(new UnmapProjectEditorAction(editorPage, module));
+			}
+			manager.add(new RemapToProjectEditorAction(editorPage, module));
 		}
 	}
 

@@ -37,14 +37,16 @@ import org.eclipse.wst.server.ui.IServerModule;
 public abstract class BaseCommandHandler extends AbstractHandler implements IHandler {
 
 	protected IServer selectedServer;
+
 	protected IModule selectedModule;
-	
-	
-	// Must first init selected server or module.  Or just override execute
+
+	protected IWorkbenchPartSite partSite;
+
+	// Must first init selected server or module. Or just override execute
 	protected void initializeSelection(ExecutionEvent event) throws ExecutionException {
 		IWorkbenchPart activePart = HandlerUtil.getActivePart(event);
 		if (activePart != null) {
-			IWorkbenchPartSite partSite = activePart.getSite();
+			partSite = activePart.getSite();
 			if (partSite != null) {
 				ISelectionProvider selectionProvider = partSite.getSelectionProvider();
 				if (selectionProvider != null) {
@@ -63,20 +65,24 @@ public abstract class BaseCommandHandler extends AbstractHandler implements IHan
 							}
 						}
 					}
-				} else {
+				}
+				else {
 					logSelectionDetectionFailure();
 				}
-			} else {
+			}
+			else {
 				logSelectionDetectionFailure();
 			}
-		} else {
+		}
+		else {
 			logSelectionDetectionFailure();
 		}
 	}
 
 	private void logSelectionDetectionFailure() {
-    	if (Logger.WARNING) {
-    		Logger.println(Logger.WARNING_LEVEL, this, "logSelectionDetectionFailure", "Failed to initialize command selection."); //$NON-NLS-1$ //$NON-NLS-2$
-    	}
+		if (Logger.WARNING) {
+			Logger.println(Logger.WARNING_LEVEL, this,
+					"logSelectionDetectionFailure", "Failed to initialize command selection."); //$NON-NLS-1$ //$NON-NLS-2$
+		}
 	}
 }

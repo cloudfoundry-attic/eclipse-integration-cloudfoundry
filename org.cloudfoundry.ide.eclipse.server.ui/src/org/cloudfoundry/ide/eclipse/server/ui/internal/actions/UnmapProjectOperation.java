@@ -14,28 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *  
- *  Contributors:
- *     Pivotal Software, Inc. - initial API and implementation
  ********************************************************************************/
-package org.cloudfoundry.ide.eclipse.server.core.internal.client;
+package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleCache;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleCache.ServerData;
-import org.eclipse.core.resources.IProject;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
+import org.eclipse.wst.server.core.ServerUtil;
 
-/**
- * 
- * 
- */
 public class UnmapProjectOperation implements ICloudFoundryOperation {
 
 	private final CloudFoundryApplicationModule appModule;
@@ -49,35 +43,16 @@ public class UnmapProjectOperation implements ICloudFoundryOperation {
 
 	@Override
 	public void run(IProgressMonitor monitor) throws CoreException {
+		IServer server = cloudServer.getServer();
 
-		if (appModule == null) {
-			throw CloudErrorUtil.toCoreException("No Cloud module specified."); //$NON-NLS-1$
-		}
-		IProject project = CloudFoundryProjectUtil.getProject(appModule);
-		if (project == null) {
-			// No workspace project. Nothing to unmap
-			return;
-		}
+		IServerWorkingCopy wc = server.createWorkingCopy();
 
 		ModuleCache moduleCache = CloudFoundryPlugin.getModuleCache();
 		ServerData data = moduleCache.getData(cloudServer.getServerOriginal());
+		data.tagForReplace(appModule);
 
-		// if it is being deployed, do not perform remap
-		if (data.isUndeployed(appModule.getLocalModule())) {
-			throw CloudErrorUtil
-					.toCoreException("Unable to unmap module. It is currently being published. Please wait until publish operation is complete before remapping."); //$NON-NLS-1$
-		}
-
-		data.tagForRemap(appModule, project);
-		try {
-			IServer server = cloudServer.getServer();
-
-			IServerWorkingCopy wc = server.createWorkingCopy();
-			wc.modifyModules(null, new IModule[] { appModule }, monitor);
-			wc.save(true, monitor);
-		}
-		finally {
-			data.untagForRemap(appModule);
-		}
+		ServerUtil.modifyModules(wc, new IModule[0], new IModule[] { appModule.getLocalModule() }, monitor);
+		wc.save(true, monitor);
 	}
+
 }

@@ -64,7 +64,7 @@ public class ModuleCache {
 		 */
 		private final List<IModule> undeployedModules = new ArrayList<IModule>();
 
-		private final Map<CloudFoundryApplicationModule, IProject> mapProject = new HashMap<CloudFoundryApplicationModule, IProject>();
+		private final Map<String, CloudFoundryApplicationModule> mapProject = new HashMap<String, CloudFoundryApplicationModule>();
 
 		private int[] applicationMemoryChoices;
 
@@ -164,18 +164,20 @@ public class ModuleCache {
 			undeployedModules.add(module);
 		}
 
-		public synchronized void tagForRemap(CloudFoundryApplicationModule appModule, IProject project) {
+		public synchronized void tagForReplace(CloudFoundryApplicationModule appModule) {
 			if (appModule != null) {
-				mapProject.put(appModule, project);
+				mapProject.put(appModule.getDeployedApplicationName(), appModule);
 			}
 		}
 
-		public synchronized IProject untagForRemap(CloudFoundryApplicationModule appModule) {
-			return mapProject.remove(appModule);
+		public synchronized void untagForReplace(CloudFoundryApplicationModule appModule) {
+			if (appModule != null) {
+				mapProject.remove(appModule.getDeployedApplicationName());
+			}
 		}
 
-		public synchronized boolean isTaggedForRemap(CloudFoundryApplicationModule appModule) {
-			return mapProject.containsKey(appModule);
+		public synchronized CloudFoundryApplicationModule getTaggedForReplace(CloudFoundryApplicationModule appModule) {
+			return appModule != null ? mapProject.get(appModule.getDeployedApplicationName()) : null;
 		}
 
 		private void add(CloudFoundryApplicationModule module) {

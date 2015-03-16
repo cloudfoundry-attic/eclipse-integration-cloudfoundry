@@ -149,6 +149,8 @@ public class Messages extends NLS {
 	public static String CloudFoundryServer_ERROR_FAIL_ON_CFAPP_CREATION;
 
 	public static String CloudFoundryServer_ERROR_SERVER_ORIGIN_NOT_FOUND;
+	
+	public static String CloudFoundryServer_ERROR_UNABLE_REPLACE_MODULE_NO_CLOUD_APP;
 
 	public static String CloudFoundryServer_JOB_UPDATE;
 
@@ -227,6 +229,8 @@ public class Messages extends NLS {
 	public static String RefreshModulesHandler_REFRESH_JOB;
 
 	public static String RefreshModulesHandler_EVENT_CLOUD_SERVER_NULL;
+	
+	public static String RemapModuleProjectCommand_JOB_LABEL;
 
 	public static String RestartOperation_STARTING_APP;
 

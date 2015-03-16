@@ -640,7 +640,7 @@ public class Messages extends NLS {
 	public static String CloudFoundryServiceWizardPage_TEXT_SET_SERVICE_NAME;
 
 	public static String CloudFoundryServiceWizardPage_TTILE_SERVICE_CONFIG;
-	
+
 	public static String CloudFoundryServiceWizardPageRightPanel_FREE_PLAN;
 
 	public static String CloudFoundryServiceWizard_JOB_SUBTASK_VERIFYING_SERVICES;
@@ -797,6 +797,13 @@ public class Messages extends NLS {
 
 	public static String GoToSpringLinkWidget_TEXT_SPRING_INSIGHT;
 
+	public static String MapToProjectOperation_PROJECT_SELECTION_DIALOGUE_TITLE;
+
+	public static String MapToProjectOperation_PROJECT_SELECTION_DIALOGUE_MESSAGE;
+
+	public static String MapToProjectOperation_PROJECT_SELECTION_CONFIRM_DIALOGUE_TITLE;
+	
+	public static String MapToProjectOperation_PROJECT_SELECTION_CONFIRM_DIALOGUE_MESSAGE;
 	public static String ManageCloudDialog_TEXT_CANCEL;
 
 	public static String ManageCloudDialog_TEXT_KEEP_OLD_URL;
@@ -869,9 +876,13 @@ public class Messages extends NLS {
 
 	public static String RegisterAccountWizardPage_TITLE_REGISTER_ACC;
 
+	public static String RemapToProjectEditorAction_ACTION_LABEL;
+
 	public static String RemoveServicesFromApplicationAction_TEXT_UNBIND_FROM_APP;
 
 	public static String RepublishApplicationHandler_ERROR_REPUBLISH_FAIL;
+
+	public static String UnmapProjectEditorAction_ACTION_LABEL;
 
 	public static String MANAGE_SERVICES_TO_APPLICATIONS_TITLE;
 
