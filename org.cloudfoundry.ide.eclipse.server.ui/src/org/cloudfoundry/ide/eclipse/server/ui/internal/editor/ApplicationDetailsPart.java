@@ -885,6 +885,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		try {
 			final CloudFoundryApplicationModule appModule = getExistingApplication();
 			if (appModule != null && saveManifest != null && !saveManifest.isDisposed()) {
+
 				if (MessageDialog.openConfirm(saveManifest.getShell(),
 						Messages.ApplicationDetailsPart_TEXT_SAVE_MANIFEST,
 						Messages.ApplicationDetailsPart_TEXT_SAVE_MANIFEST_BODY)) {
@@ -895,13 +896,21 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 						protected IStatus run(IProgressMonitor monitor) {
 
 							try {
+
+								// Fetch an updated cloud module to ensure that
+								// only up-to-date information is written to
+								// manifest
+								CloudFoundryApplicationModule updatedMod = cloudServer
+										.getBehaviour()
+										.updateCloudModuleWithInstances(appModule.getDeployedApplicationName(), monitor);
+
 								// Update the bound service mappings so they
 								// point
 								// to
 								// the updated services
-								serverBehaviour.refreshApplicationBoundServices(appModule, monitor);
+								serverBehaviour.refreshApplicationBoundServices(updatedMod, monitor);
 
-								ManifestParser parser = new ManifestParser(appModule, cloudServer);
+								ManifestParser parser = new ManifestParser(updatedMod, cloudServer);
 								parser.write(monitor, null);
 							}
 							catch (CoreException ce) {
