@@ -230,7 +230,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 				Messages.CloudFoundryAccountSection_BUTTON_CHANGE_PW, SWT.PUSH);
 
 		// Pivotal Tracker: 54644658 - Disable for CF 1.5.0 until fixed.
-		changePasswordButton.setEnabled(false);
+		changePasswordButton.setEnabled(true);
 
 		changePasswordButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 		changePasswordButton.addSelectionListener(new SelectionAdapter() {
