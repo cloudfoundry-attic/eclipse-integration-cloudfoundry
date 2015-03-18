@@ -34,6 +34,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaModelException;
@@ -51,15 +52,23 @@ public class DebugProvider implements IDebugProvider {
 	@Override
 	public DebugConnectionDescriptor getDebugConnectionDescriptor(final CloudFoundryApplicationModule appModule,
 			final CloudFoundryServer cloudServer, IProgressMonitor monitor) throws CoreException {
+		
+		final int attempts = 50;
+		final int totalChildWork = 10;
+		SubMonitor subMonitor = SubMonitor.convert(monitor, attempts*totalChildWork);
 
-		String fileContent = new AbstractWaitWithProgressJob<String>(50, 5000, true) {
+		String fileContent = new AbstractWaitWithProgressJob<String>(attempts, 5000, true) {
 
 			protected String runInWait(IProgressMonitor monitor) throws CoreException {
+				if (monitor.isCanceled()) {
+					return null;
+				}
+				SubMonitor subMonitor = SubMonitor.convert(monitor);
 				return cloudServer.getBehaviour().getFile(appModule.getDeployedApplicationName(), 0,
-						"app/.profile.d/ngrok.txt", monitor); //$NON-NLS-1$
+						"app/.profile.d/ngrok.txt", subMonitor.newChild(totalChildWork)); //$NON-NLS-1$
 			}
 
-		}.run(monitor);
+		}.run(subMonitor);
 
 		// NS: Note - replace with JSON parsing, as the ngrok output contains
 		// JSON with the port
