@@ -47,6 +47,12 @@ public class RefreshModulesHandler {
 
 	private BehaviourOperation opToRun;
 
+	private static final String NO_SERVER_ERROR = "Null server in refresh module handler. Unable to schedule module refresh."; //$NON-NLS-1$
+
+	/**
+	 * 
+	 * @param cloudServer may be null if not resolved.
+	 */
 	public RefreshModulesHandler(CloudFoundryServer cloudServer) {
 		this.cloudServer = cloudServer;
 		String serverName = cloudServer != null ? cloudServer.getServer().getId() : "Unknown server"; //$NON-NLS-1$
@@ -62,7 +68,10 @@ public class RefreshModulesHandler {
 	 * individually on a module selection to avoid a slow refresh
 	 */
 	public synchronized void scheduleRefreshAll() {
-		if (this.opToRun == null) {
+		if (cloudServer == null) {
+			CloudFoundryPlugin.logError(NO_SERVER_ERROR);
+		}
+		else if (this.opToRun == null) {
 			scheduleRefresh(cloudServer.getBehaviour().operations().refreshAll(null));
 		}
 	}
@@ -78,7 +87,10 @@ public class RefreshModulesHandler {
 	 * @param module to refresh
 	 */
 	public synchronized void scheduleRefreshAll(IModule module) {
-		if (this.opToRun == null) {
+		if (cloudServer == null) {
+			CloudFoundryPlugin.logError(NO_SERVER_ERROR);
+		}
+		else if (this.opToRun == null) {
 			scheduleRefresh(cloudServer.getBehaviour().operations().refreshAll(module));
 		}
 	}
@@ -90,7 +102,10 @@ public class RefreshModulesHandler {
 	 * @param module to refresh
 	 */
 	public synchronized void schedulesRefreshApplication(IModule module) {
-		if (this.opToRun == null) {
+		if (cloudServer == null) {
+			CloudFoundryPlugin.logError(NO_SERVER_ERROR);
+		}
+		else if (this.opToRun == null) {
 			scheduleRefresh(cloudServer.getBehaviour().operations().refreshApplication(module));
 		}
 	}
@@ -104,7 +119,10 @@ public class RefreshModulesHandler {
 	 * @param module
 	 */
 	public synchronized void scheduleRefreshForDeploymentChange(IModule module) {
-		if (this.opToRun == null) {
+		if (cloudServer == null) {
+			CloudFoundryPlugin.logError(NO_SERVER_ERROR);
+		}
+		else if (this.opToRun == null) {
 			scheduleRefresh(cloudServer.getBehaviour().operations().refreshForDeploymentChange(module));
 		}
 	}

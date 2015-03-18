@@ -361,8 +361,6 @@ public class Messages extends NLS {
 
 	public static String UpdatePasswordDialog_ERROR_VERIFY_PW_TITLE;
 
-	public static String UpdatePasswordDialog_TEXT_CHANGE_PW_TITLE;
-
 	public static String UpdatePasswordDialog_TEXT_ENTER_NEW_PW;
 
 	public static String UpdatePasswordDialog_TEXT_MISMATCH_PW;
@@ -374,6 +372,8 @@ public class Messages extends NLS {
 	public static String UpdatePasswordDialog_TEXT_VERIFY_PW_FOR;
 
 	public static String UpdatePasswordDialog_TEXT_VERIFY_PW_LABEL;
+
+	public static String UpdatePasswordDialog_TEXT_DESCRIPTION;
 
 	public static String SELECT_ALL;
 
@@ -802,8 +802,9 @@ public class Messages extends NLS {
 	public static String MapToProjectOperation_PROJECT_SELECTION_DIALOGUE_MESSAGE;
 
 	public static String MapToProjectOperation_PROJECT_SELECTION_CONFIRM_DIALOGUE_TITLE;
-	
+
 	public static String MapToProjectOperation_PROJECT_SELECTION_CONFIRM_DIALOGUE_MESSAGE;
+
 	public static String ManageCloudDialog_TEXT_CANCEL;
 
 	public static String ManageCloudDialog_TEXT_KEEP_OLD_URL;

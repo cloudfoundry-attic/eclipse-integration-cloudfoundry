@@ -104,7 +104,7 @@
  	   	</menuContribution>
     	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
-     	       label="Update Password"
+     	       label="Update Password..."
      	       commandId="org.cloudfoundry.ide.eclipse.server.ui.updatepasswordcommand">
   	         <visibleWhen
   	               checkEnabled="false">
@@ -248,7 +248,7 @@
 			id="org.cloudfoundry.ide.eclipse.server.ui.cloneservercommand">
 		</command>
 		<command
-			name="Update Password"
+			name="Update Password..."
 			description="Update Password"
 			id="org.cloudfoundry.ide.eclipse.server.ui.updatepasswordcommand">
 		</command>

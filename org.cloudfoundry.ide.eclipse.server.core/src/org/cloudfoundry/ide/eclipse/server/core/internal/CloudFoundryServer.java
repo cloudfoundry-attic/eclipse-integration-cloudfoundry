@@ -1122,6 +1122,28 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		super.saveConfiguration(monitor);
 	}
 
+	public void setAndSavePassword(String password) {
+		this.password = password;
+
+		// remove password in case an earlier version stored it in server
+		// properties
+		if (getServerWorkingCopy() != null) {
+			getServerWorkingCopy().setAttribute(PROP_PASSWORD_ID, (String) null);
+		}
+
+		if (getData() != null) {
+			getData().setPassword(password);
+		}
+
+		String serverId = getServerId();
+
+		// persist password
+		ServerCredentialsStore store = getCredentialsStore();
+		store.setUsername(getUsername());
+		store.setPassword(password);
+		store.flush(serverId);
+	}
+
 	public IStatus doDeleteModules(final Collection<IModule> deletedModules) {
 		IServerWorkingCopy wc = getServer().createWorkingCopy();
 		try {

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -33,10 +33,8 @@ import java.util.Set;
 import org.cloudfoundry.client.lib.CloudCredentials;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpaces;
 import org.eclipse.core.runtime.CoreException;
@@ -71,7 +69,6 @@ import org.eclipse.ui.internal.browser.WebBrowserPreference;
 import org.eclipse.ui.internal.browser.WorkbenchBrowserSupport;
 import org.eclipse.ui.views.IViewDescriptor;
 import org.eclipse.ui.views.IViewRegistry;
-import org.eclipse.wst.server.core.IServerWorkingCopy;
 import org.springframework.web.client.ResourceAccessException;
 
 /**
@@ -217,30 +214,6 @@ public class CloudUiUtil {
 		}
 
 		prefStore.setValue(ATTR_USER_DEFINED_URLS + "." + serverTypeId, builder.toString()); //$NON-NLS-1$
-	}
-
-	public static String updatePassword(final String newPassword, final CloudFoundryServer cfServer,
-			final IServerWorkingCopy serverWc) {
-		ICoreRunnable coreRunner = new ICoreRunnable() {
-			public void run(final IProgressMonitor monitor) throws CoreException {
-				cfServer.getBehaviour().updatePassword(newPassword, monitor);
-				cfServer.setPassword(newPassword);
-				cfServer.saveConfiguration(monitor);
-				ServerEventHandler.getDefault().firePasswordUpdated(cfServer);
-				serverWc.save(true, monitor);
-			}
-		};
-
-		try {
-			CloudUiUtil.runForked(coreRunner);
-		}
-		catch (OperationCanceledException ex) {
-		}
-		catch (CoreException ex) {
-			return ex.getMessage();
-		}
-
-		return null;
 	}
 
 	/**
@@ -436,16 +409,18 @@ public class CloudUiUtil {
 			}
 		}
 		catch (PartInitException e) {
-			MessageDialog.openError(Display.getDefault().getActiveShell(), Messages.CloudUiUtil_ERROR_OPEN_BROWSER_FAIL_TITLE,
-					Messages.CloudUiUtil_ERROR_OPEN_BROWSER_BODY);
+			MessageDialog.openError(Display.getDefault().getActiveShell(),
+					Messages.CloudUiUtil_ERROR_OPEN_BROWSER_FAIL_TITLE, Messages.CloudUiUtil_ERROR_OPEN_BROWSER_BODY);
 		}
 		catch (MalformedURLException e) {
 			if (location == null || location.trim().equals("")) { //$NON-NLS-1$
-				MessageDialog.openInformation(Display.getDefault().getActiveShell(), Messages.CloudUiUtil_ERROR_OPEN_BROWSER_FAIL_TITLE,
+				MessageDialog.openInformation(Display.getDefault().getActiveShell(),
+						Messages.CloudUiUtil_ERROR_OPEN_BROWSER_FAIL_TITLE,
 						NLS.bind(Messages.CloudUiUtil_ERROR_EMPTY_URL_BODY, location));
 			}
 			else {
-				MessageDialog.openInformation(Display.getDefault().getActiveShell(), Messages.CloudUiUtil_ERROR_OPEN_BROWSER_FAIL_TITLE,
+				MessageDialog.openInformation(Display.getDefault().getActiveShell(),
+						Messages.CloudUiUtil_ERROR_OPEN_BROWSER_FAIL_TITLE,
 						NLS.bind(Messages.CloudUiUtil_ERROR_MALFORM_URL_BODY, location));
 			}
 		}

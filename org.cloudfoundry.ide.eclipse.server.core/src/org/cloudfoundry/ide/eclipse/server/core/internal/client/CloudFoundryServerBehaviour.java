@@ -213,7 +213,21 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		}
 	}
 
+	/**
+	 * 
+	 * @return Handles refresh of modules for this server behaviour. Never null.
+	 */
 	public RefreshModulesHandler getRefreshHandler() {
+		if (refreshHandler == null) {
+			CloudFoundryServer server = null;
+			try {
+				server = getCloudFoundryServer();
+			}
+			catch (CoreException ce) {
+				CloudFoundryPlugin.logError(ce);
+			}
+			refreshHandler = new RefreshModulesHandler(server);
+		}
 		return refreshHandler;
 	}
 
@@ -375,6 +389,24 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		server.setServerState(IServer.STATE_STOPPED);
 		server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
+	}
+
+	public void reconnect(IProgressMonitor monitor) throws CoreException {
+		final SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+
+		subMonitor.subTask(NLS.bind(Messages.CloudFoundryServerBehaviour_RECONNECTING_SERVER, getCloudFoundryServer()
+				.getServer().getId()));
+
+		disconnect(subMonitor.newChild(40));
+
+		try {
+			resetClient(subMonitor.newChild(20));
+		}
+		catch (CloudFoundryException cfe) {
+			throw CloudErrorUtil.toCoreException(cfe);
+		}
+
+		connect(subMonitor.newChild(40));
 	}
 
 	@Override
@@ -703,6 +735,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	protected void internalResetClient() {
 		client = null;
 		applicationUrlLookup = null;
+		cloudBehaviourOperations = null;
+		refreshHandler = null;
 	}
 
 	@Override
@@ -1035,8 +1069,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		getServer().addServerListener(serverListener, ServerEvent.SERVER_CHANGE);
 
 		try {
-			refreshHandler = new RefreshModulesHandler(getCloudFoundryServer());
-
 			getApplicationUrlLookup().refreshDomains(monitor);
 
 			// Important: Must perform a refresh operation

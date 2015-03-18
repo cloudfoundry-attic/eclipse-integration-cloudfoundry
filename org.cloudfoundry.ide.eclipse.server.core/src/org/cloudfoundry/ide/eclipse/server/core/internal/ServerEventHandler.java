@@ -61,8 +61,8 @@ public class ServerEventHandler {
 		fireServerEvent(new CloudRefreshEvent(server, null, CloudServerEvent.EVENT_UPDATE_SERVICES, services));
 	}
 
-	public void firePasswordUpdated(CloudFoundryServer server) {
-		fireServerEvent(new CloudServerEvent(server, CloudServerEvent.EVENT_UPDATE_PASSWORD));
+	public void firePasswordUpdated(CloudFoundryServer server, IStatus status) {
+		fireServerEvent(new CloudServerEvent(server, CloudServerEvent.EVENT_UPDATE_PASSWORD, status));
 	}
 
 	public void fireServerRefreshed(CloudFoundryServer server) {

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -21,6 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.editor;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryConstants;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerListener;
@@ -28,16 +29,13 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryURLNavigation;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.UpdatePasswordDialog;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.UpdatePasswordOperation;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.OrgsAndSpacesWizard;
-import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.core.commands.operations.AbstractOperation;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -149,26 +147,33 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		emailLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
 		emailText = toolkit.createText(topComposite, ""); //$NON-NLS-1$
-		emailText.setEditable(false);
+
 		emailText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		emailText.setData(FormToolkit.KEY_DRAW_BORDER, FormToolkit.TEXT_BORDER);
 		if (cfServer.getUsername() != null) {
 			emailText.setText(cfServer.getUsername());
 		}
-		emailText.addModifyListener(new DataChangeListener(DataType.EMAIL));
+
+		// Changing username is not currently supported through the editor.
+		emailText.setEditable(false);
+		// emailText.addModifyListener(new DataChangeListener(DataType.EMAIL));
 
 		Label passwordLabel = toolkit.createLabel(topComposite, Messages.COMMONTXT_PW, SWT.NONE);
 		passwordLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 		passwordLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
 		passwordText = toolkit.createText(topComposite, "", SWT.PASSWORD); //$NON-NLS-1$
-		passwordText.setEditable(false);
 		passwordText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		passwordText.setData(FormToolkit.KEY_DRAW_BORDER, FormToolkit.TEXT_BORDER);
 		if (cfServer.getPassword() != null) {
 			passwordText.setText(cfServer.getPassword());
 		}
-		passwordText.addModifyListener(new DataChangeListener(DataType.PASSWORD));
+
+		// Setting password through text control is disabled. Passwords are
+		// instead set through a separate update password dialogue
+		passwordText.setEditable(false);
+		// passwordText.addModifyListener(new
+		// DataChangeListener(DataType.PASSWORD));
 
 		Label label = toolkit.createLabel(topComposite, Messages.COMMONTXT_URL);
 		label.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
@@ -207,11 +212,6 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 			spaceText.setText(cfServer.getCloudFoundrySpace().getSpaceName());
 		}
 
-		// urlWidget = new CloudUrlWidget(cfServer);
-		// urlWidget.createControls(topComposite);
-		// urlWidget.getUrlCombo().addModifyListener(new
-		// DataChangeListener(DataType.URL));
-		//
 		final Composite buttonComposite = toolkit.createComposite(composite);
 
 		buttonComposite.setLayout(new GridLayout(4, false));
@@ -229,7 +229,6 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		final Button changePasswordButton = toolkit.createButton(buttonComposite,
 				Messages.CloudFoundryAccountSection_BUTTON_CHANGE_PW, SWT.PUSH);
 
-		// Pivotal Tracker: 54644658 - Disable for CF 1.5.0 until fixed.
 		changePasswordButton.setEnabled(true);
 
 		changePasswordButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
@@ -245,21 +244,21 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 					}
 				}
 
-				UpdatePasswordDialog dialog = new UpdatePasswordDialog(getShell(), cfServer.getUsername());
+				Job job = new Job(Messages.UpdatePasswordCommand_TEXT_PW_UPDATE) {
+					protected IStatus run(IProgressMonitor monitor) {
 
-				if (dialog.open() == IDialogConstants.OK_ID) {
-					final String newPassword = dialog.getPassword();
-					String errorMsg = CloudUiUtil.updatePassword(newPassword, cfServer, server);
+						try {
+							new UpdatePasswordOperation(cfServer).run(monitor);
+						}
+						catch (CoreException e) {
+							CloudFoundryPlugin.logError(e);
+						}
 
-					if (errorMsg != null) {
-						validateLabel.setText(errorMsg);
-						validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
+						return Status.OK_STATUS;
 					}
-					else {
-						validateLabel.setText(Messages.CloudFoundryAccountSection_LABEL_PW_CHANGED);
-						passwordText.setText(newPassword);
-					}
-				}
+				};
+				job.schedule();
+
 			}
 		});
 
@@ -279,8 +278,8 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 							cfServer.getSelfSignedCertificate(), null);
 
 					if (org != null && space != null) {
+						validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_BLUE));
 						validateLabel.setText(Messages.VALID_ACCOUNT);
-						validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_BLACK));
 					}
 					else {
 						String errorMsg = null;
@@ -290,12 +289,20 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 						else if (space == null) {
 							errorMsg = Messages.ERROR_INVALID_SPACE;
 						}
-						validateLabel.setText(errorMsg);
-						validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
+
+						if (errorMsg != null) {
+							validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
+							validateLabel.setText(errorMsg);
+						}
+						else {
+							validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+							validateLabel.setText("");
+						}
 					}
 
 				}
 				catch (CoreException e) {
+					validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
 					validateLabel.setText(e.getMessage());
 				}
 				buttonComposite.layout(new Control[] { validateButton });
@@ -369,11 +376,16 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		// }
 	}
 
-	private class DataChangeListener implements ModifyListener {
+	// NOTE:The data change listener is execute as a WTP command
+	// which sets the editor in a dirty state. Editor saves are required if
+	// using the Data change listener,
+	// otherwise a warning is shown to the user indicating that the underlying
+	// server file has changed.
+	protected class DataChangeListener implements ModifyListener {
 
-		private String newValue;
-
-		private String oldValue;
+		// private String newValue;
+		//
+		// private String oldValue;
 
 		private final DataType type;
 
@@ -381,109 +393,104 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 			this.type = type;
 		}
 
-		public void modifyText(ModifyEvent e) {
+		protected void update(String value) {
 			switch (type) {
 			case EMAIL:
-				oldValue = cfServer.getUsername();
-				newValue = emailText.getText();
+				updateTextField(value, emailText);
 				break;
 			case PASSWORD:
-				oldValue = cfServer.getPassword();
-				newValue = passwordText.getText();
+				updateTextField(value, passwordText);
 				break;
-			// case URL:
-			// Combo urlCombo = urlWidget.getUrlCombo();
-			// int index = urlCombo.getSelectionIndex();
-			// oldValue = cfServer.getUrl();
-			// newValue = index < 0? null:
-			// CloudUiUtil.getUrlFromDisplayText(urlCombo.getItem(index));
-			// break;
 			}
+		}
 
-			execute(new AbstractOperation("CloudFoundryServerUpdate") { //$NON-NLS-1$
+		private void updateTextField(String input, Text text) {
+			if (text != null && !text.isDisposed() && !text.getText().equals(input)) {
+				text.setText(input == null ? "" : input); //$NON-NLS-1$
+			}
+		}
 
-				@Override
-				public IStatus execute(IProgressMonitor monitor, IAdaptable info) throws ExecutionException {
-					updateServer(newValue);
-					return Status.OK_STATUS;
-				}
+		public void modifyText(ModifyEvent e) {
+			// switch (type) {
+			// case EMAIL:
+			// oldValue = cfServer.getUsername();
+			// newValue = emailText.getText();
+			// break;
+			// case PASSWORD:
+			// oldValue = cfServer.getPassword();
+			// newValue = passwordText.getText();
+			// break;
+			//
+			// }
 
-				@Override
-				public IStatus redo(IProgressMonitor monitor, IAdaptable info) throws ExecutionException {
-					updateServer(newValue);
-					return Status.OK_STATUS;
-				}
-
-				@Override
-				public IStatus undo(IProgressMonitor monitor, IAdaptable info) throws ExecutionException {
-					updateServer(oldValue);
-					return Status.OK_STATUS;
-				}
-
-				private void updateServer(String value) {
-					switch (type) {
-					case EMAIL:
-						if (!value.equals(cfServer.getUsername())) {
-							cfServer.setUsername(value);
-						}
-						updateTextField(value, emailText);
-						break;
-					case PASSWORD:
-						if (!value.equals(cfServer.getPassword())) {
-							cfServer.setPassword(value);
-						}
-						updateTextField(value, passwordText);
-						break;
-					// case URL:
-					// cfServer.setUrl(value);
-					// updateComboBox(value, urlWidget.getUrlCombo());
-					// break;
-					}
-				}
-
-				private void updateTextField(String input, Text text) {
-					if (!text.getText().equals(input)) {
-						text.setText(input == null ? "" : input); //$NON-NLS-1$
-					}
-				}
-
-				// private void updateComboBox(String input, Combo combo) {
-				// int index = combo.getSelectionIndex();
-				// if (index < 0) {
-				// if (input == null) {
-				// return;
-				// }
-				// } else if (combo.getItem(index).equals(input)) {
-				// return;
-				// }
-				//
-				// for(int i=0; i<combo.getItemCount(); i++) {
-				// if (combo.getItem(i).equals(input)) {
-				// combo.select(i);
-				// return;
-				// }
-				// }
-				// combo.deselectAll();
-				// }
-			});
+			// Commenting out as it executing this command via WTP sets the
+			// editor
+			// to dirty state.
+			// Setting password automatically saves the server, so its not
+			// necessary to set the editor to dirty, unless
+			// passwords are set directly in the text controls (not currently
+			// supported as of CF 1.8.1
+			//			execute(new AbstractOperation("CloudFoundryServerUpdate") { //$NON-NLS-1$
+			//
+			// @Override
+			// public IStatus execute(IProgressMonitor monitor, IAdaptable info)
+			// throws ExecutionException {
+			// update(newValue);
+			// return Status.OK_STATUS;
+			// }
+			//
+			// @Override
+			// public IStatus redo(IProgressMonitor monitor, IAdaptable info)
+			// throws ExecutionException {
+			// update(newValue);
+			// return Status.OK_STATUS;
+			// }
+			//
+			// @Override
+			// public IStatus undo(IProgressMonitor monitor, IAdaptable info)
+			// throws ExecutionException {
+			// update(oldValue);
+			// return Status.OK_STATUS;
+			// }
+			// });
 		}
 	}
 
 	private enum DataType {
-		EMAIL, PASSWORD, URL
+		EMAIL, PASSWORD
 	}
 
+	@Override
 	public void serverChanged(CloudServerEvent event) {
-		if (event.getType() == CloudServerEvent.EVENT_UPDATE_PASSWORD) {
-			cfServer = event.getServer();
-
-			Display.getDefault().syncExec(new Runnable() {
+		if (event.getType() == CloudServerEvent.EVENT_UPDATE_PASSWORD && event.getServer() != null && cfServer != null
+				&& cfServer.getServerId().equals(event.getServer().getServerId())) {
+			final CloudServerEvent serverEvent = event;
+			Display.getDefault().asyncExec(new Runnable() {
 
 				public void run() {
-					if (passwordText != null && !passwordText.isDisposed()
-							&& !passwordText.getText().equals(cfServer.getPassword())) {
-						passwordText.setText(cfServer.getPassword());
+					final CloudFoundryServer eventServer = serverEvent.getServer();
+
+					if (passwordText == null || passwordText.isDisposed() || validateLabel == null
+							|| validateLabel.isDisposed()) {
+						return;
 					}
+					String password = eventServer.getPassword();
+					if (password != null && !passwordText.getText().equals(password)) {
+						passwordText.setText(password);
+					}
+					String errorMessage = serverEvent.getStatus() != null
+							&& serverEvent.getStatus().getSeverity() == IStatus.ERROR ? serverEvent.getStatus()
+							.getMessage() : null;
+
+					if (errorMessage != null) {
+						validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
+						validateLabel.setText(errorMessage);
+					}
+					else {
+						validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_BLUE));
+						validateLabel.setText(Messages.CloudFoundryAccountSection_LABEL_PW_CHANGED);
+					}
+					validateLabel.getParent().layout(new Control[] { validateLabel });
 				}
 			});
 		}

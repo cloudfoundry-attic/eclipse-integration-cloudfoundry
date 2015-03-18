@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,7 +19,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
-import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -36,103 +36,101 @@ import org.eclipse.swt.widgets.Text;
 /**
  * @author Terry Denney
  */
-public class UpdatePasswordDialog extends Dialog {
-	
+public class UpdatePasswordDialog extends MessageDialog {
+
 	private String password;
-	
+
 	private String verifyPassword;
-	
+
 	private final String username;
 
 	private Label description;
-	
-	public UpdatePasswordDialog(Shell parentShell, String username) {
-		super(parentShell);
+
+	public UpdatePasswordDialog(Shell parentShell, String username, String serverid) {
+		super(parentShell, Messages.UpdatePasswordCommand_TEXT_PW_UPDATE, null, NLS.bind(
+				Messages.UpdatePasswordDialog_TEXT_ENTER_NEW_PW, username, serverid), CONFIRM, new String[] {
+				IDialogConstants.OK_LABEL, IDialogConstants.CANCEL_LABEL }, 0);
+
+		setShellStyle(getShellStyle() | SWT.RESIZE);
 		this.username = username;
 	}
-	
+
 	public String getPassword() {
 		return password;
 	}
-	
+
 	@Override
-	protected Control createDialogArea(Composite parent) {
-		getShell().setText(Messages.UpdatePasswordDialog_TEXT_CHANGE_PW_TITLE);
-		
-		Composite control = (Composite) super.createDialogArea(parent);
-		
-		Composite composite = new Composite(control, SWT.NONE);
-		GridDataFactory.fillDefaults().applyTo(composite);
+	protected Control createCustomArea(Composite parent) {
+
+		Composite area = new Composite(parent, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(area);
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(area);
+
+		description = new Label(area, SWT.NONE);
+		GridDataFactory.fillDefaults().applyTo(description);
+		description.setText(Messages.UpdatePasswordDialog_TEXT_DESCRIPTION);
+
+		Composite composite = new Composite(area, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(composite);
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(composite);
-		
-		description = new Label(composite, SWT.NONE);
-		description.setText(NLS.bind(Messages.UpdatePasswordDialog_TEXT_ENTER_NEW_PW, username));
-		GridDataFactory.fillDefaults().span(2, 1).applyTo(description);
-		
-		Label newPasswordLabel = new Label(composite, SWT.NONE);
-		newPasswordLabel.setText(Messages.UpdatePasswordDialog_TEXT_NEW_PW_LABEL);
-		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(newPasswordLabel);
-		
+
+		Label updatePasswordLabel = new Label(composite, SWT.NONE);
+		updatePasswordLabel.setText(Messages.UpdatePasswordDialog_TEXT_NEW_PW_LABEL);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(updatePasswordLabel);
+
 		final Text newPasswordText = new Text(composite, SWT.PASSWORD | SWT.BORDER);
-		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).hint(250, SWT.DEFAULT).applyTo(newPasswordText);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(newPasswordText);
 		newPasswordText.addModifyListener(new ModifyListener() {
-			
+
 			public void modifyText(ModifyEvent e) {
 				password = newPasswordText.getText();
 				update();
 			}
 		});
-		
+
 		Label verifyPasswordLabel = new Label(composite, SWT.NONE);
 		verifyPasswordLabel.setText(Messages.UpdatePasswordDialog_TEXT_VERIFY_PW_LABEL);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(verifyPasswordLabel);
-		
+
 		final Text verifyPasswordText = new Text(composite, SWT.PASSWORD | SWT.BORDER);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(verifyPasswordText);
 		verifyPasswordText.addModifyListener(new ModifyListener() {
-			
+
 			public void modifyText(ModifyEvent e) {
 				verifyPassword = verifyPasswordText.getText();
 				update();
 			}
 		});
-		
-		return control;
+
+		return composite;
 	}
-	
+
 	private void update() {
-		getButton(OK).setEnabled(password != null && password.length() > 0 && verifyPassword != null && verifyPassword.length() > 0);
-		
+		getButton(OK).setEnabled(
+				password != null && password.length() > 0 && verifyPassword != null && verifyPassword.length() > 0);
+
 		if (password == null || password.length() == 0) {
-			description.setText(NLS.bind(Messages.UpdatePasswordDialog_TEXT_ENTER_NEW_PW, username));
+			description.setText(Messages.UpdatePasswordDialog_TEXT_DESCRIPTION);
 			getButton(OK).setEnabled(false);
-		} else if (verifyPassword == null || verifyPassword.length() == 0) {
+		}
+		else if (verifyPassword == null || verifyPassword.length() == 0) {
 			description.setText(NLS.bind(Messages.UpdatePasswordDialog_TEXT_VERIFY_PW_FOR, username));
 			getButton(OK).setEnabled(false);
-		} else if (! password.equals(verifyPassword)) {
+		}
+		else if (!password.equals(verifyPassword)) {
 			description.setText(Messages.UpdatePasswordDialog_TEXT_MISMATCH_PW);
 			getButton(OK).setEnabled(false);
-		} else {
+		}
+		else {
 			description.setText(Messages.UpdatePasswordDialog_TEXT_PROMPT_OK);
 			getButton(OK).setEnabled(true);
 		}
 	}
-	
+
 	@Override
 	protected Control createButtonBar(Composite parent) {
 		Control buttonBar = super.createButtonBar(parent);
 		getButton(OK).setEnabled(false);
 		return buttonBar;
 	}
-	
-	@Override
-	protected void okPressed() {
-		if (! verifyPassword.equals(password)) {
-			MessageDialog.openError(getParentShell(), Messages.UpdatePasswordDialog_ERROR_VERIFY_PW_TITLE, Messages.UpdatePasswordDialog_ERROR_VERIFY_PW_BODY);
-			return;
-		}
-		
-		super.okPressed();
-	}
-	
 }
