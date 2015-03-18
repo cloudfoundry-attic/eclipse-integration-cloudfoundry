@@ -610,21 +610,20 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		// later on
 		for (IModule module : server.getModules()) {
 			CloudFoundryApplicationModule appM = getExistingCloudModule(module);
-			if (module != existing.getLocalModule() && appM.isExternal()) {
-				externalModules.add(appM);
+
+			if (appM != null && appM.isExternal()) {
+				IModule appMLocalMod = appM.getLocalModule();
+				if (!appMLocalMod.getName().equals(existing.getLocalModule().getName())) {
+					externalModules.add(appM);
+				}
 			}
+
 		}
 
+		server.setModulePublishState(existingModule, IServer.PUBLISH_STATE_UNKNOWN);
+		server.setModuleState(existingModule, IServer.STATE_UNKNOWN);
+
 		getData().remove(existing);
-
-		// Read the current module state (whether it is started, stopped, or
-		// unknown) as the target module
-		// should have the same state
-
-		server.setModuleState(existingModule, IServer.PUBLISH_STATE_UNKNOWN);
-
-		// Handle the child module update state as well
-		updateState(server, existing);
 
 		final List<IModule[]> deleteModulePublishInfo = new ArrayList<IModule[]>();
 		deleteModulePublishInfo.add(existingModule);
@@ -655,17 +654,12 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 
 			// Do a direct refresh rather than scheduling a refresh to update
 			// the tools immediately.
-			getBehaviour().operations().refreshApplication(remappedMod.getLocalModule());
-
+			getBehaviour().getRefreshHandler().schedulesRefreshApplication(remappedMod.getLocalModule());
 		}
 		else {
 			server.setExternalModules(externalModules.toArray(new IModule[0]));
 
-			CloudFoundryApplicationModule updatedAppMod = updateModule(updatedCloudApplication,
-					updatedCloudApplication.getName(), monitor);
-			if (updatedAppMod != null) {
-				getBehaviour().operations().refreshApplication(updatedAppMod.getLocalModule());
-			}
+			getBehaviour().getRefreshHandler().scheduleRefreshAll();
 		}
 
 		ServerEventHandler.getDefault().fireServerRefreshed(this);
