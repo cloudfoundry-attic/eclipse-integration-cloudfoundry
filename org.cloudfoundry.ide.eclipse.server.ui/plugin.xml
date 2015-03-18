@@ -174,7 +174,7 @@
  	   	</menuContribution>
  	   	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
-     	       label="Remap to Project..."
+     	       label="Map to Project..."
      	       commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.remaptoprojectcommand">
   	         <visibleWhen
   	               checkEnabled="false">
@@ -269,8 +269,8 @@
 			id="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.pushcommand">
 		</command>
 		<command
-			name="Remap to Project"
-			description="Remap to Project"
+			name="Map to Project"
+			description="Map to Project"
 			id="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.remaptoprojectcommand">
 		</command>
 		<command
@@ -377,6 +377,7 @@
            		<count value="1" />
            		<and>
                		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>
+               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isModuleProjectAccessible" value="false"/>
                	</and>    
 	        </with>  
 		</enabledWhen>

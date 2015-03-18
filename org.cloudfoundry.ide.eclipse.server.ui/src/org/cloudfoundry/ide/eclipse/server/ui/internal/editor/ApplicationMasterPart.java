@@ -618,8 +618,9 @@ public class ApplicationMasterPart extends SectionPart {
 			if (project != null && project.isAccessible()) {
 				manager.add(new UnmapProjectEditorAction(editorPage, module));
 			}
-			manager.add(new RemapToProjectEditorAction(editorPage, module));
+			else if (project == null) {
+				manager.add(new RemapToProjectEditorAction(editorPage, module));
+			}
 		}
 	}
-
 }
