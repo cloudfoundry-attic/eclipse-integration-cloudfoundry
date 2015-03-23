@@ -63,20 +63,20 @@ public class UpdatePasswordDialog extends MessageDialog {
 	protected Control createCustomArea(Composite parent) {
 
 		Composite area = new Composite(parent, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(area);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(area);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(area);
 
-		description = new Label(area, SWT.NONE);
-		GridDataFactory.fillDefaults().applyTo(description);
+		description = new Label(area, SWT.NONE | SWT.WRAP);
+		GridDataFactory.fillDefaults().hint(80, SWT.DEFAULT).applyTo(description);
 		description.setText(Messages.UpdatePasswordDialog_TEXT_DESCRIPTION);
 
 		Composite composite = new Composite(area, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(composite);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(composite);
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(composite);
 
 		Label updatePasswordLabel = new Label(composite, SWT.NONE);
 		updatePasswordLabel.setText(Messages.UpdatePasswordDialog_TEXT_NEW_PW_LABEL);
-		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(updatePasswordLabel);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(false, false).applyTo(updatePasswordLabel);
 
 		final Text newPasswordText = new Text(composite, SWT.PASSWORD | SWT.BORDER);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(newPasswordText);
@@ -90,7 +90,7 @@ public class UpdatePasswordDialog extends MessageDialog {
 
 		Label verifyPasswordLabel = new Label(composite, SWT.NONE);
 		verifyPasswordLabel.setText(Messages.UpdatePasswordDialog_TEXT_VERIFY_PW_LABEL);
-		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(verifyPasswordLabel);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(false, false).applyTo(verifyPasswordLabel);
 
 		final Text verifyPasswordText = new Text(composite, SWT.PASSWORD | SWT.BORDER);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(verifyPasswordText);
