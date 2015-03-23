@@ -24,6 +24,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleCache;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.core.resources.IProject;
@@ -123,7 +124,11 @@ public class MapToProjectOperation implements ICloudFoundryOperation {
 
 		ServerUtil.modifyModules(wc, add, new IModule[] { appModule.getLocalModule() }, monitor);
 		wc.save(true, monitor);
-
+		
+		CloudFoundryServerBehaviour behaviour = cloudServer.getBehaviour();
+		if (behaviour != null) {
+			behaviour.cleanModuleStates(add, monitor);
+		}
 	}
 
 	/**

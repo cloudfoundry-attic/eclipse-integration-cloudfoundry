@@ -56,6 +56,7 @@ import org.eclipse.wst.server.core.IServerWorkingCopy;
 import org.eclipse.wst.server.core.internal.IModuleVisitor;
 import org.eclipse.wst.server.core.internal.Server;
 import org.eclipse.wst.server.core.internal.ServerPlugin;
+import org.eclipse.wst.server.core.internal.ServerPublishInfo;
 import org.eclipse.wst.server.core.model.IURLProvider;
 import org.eclipse.wst.server.core.model.ServerDelegate;
 
@@ -628,8 +629,10 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		final List<IModule[]> deleteModulePublishInfo = new ArrayList<IModule[]>();
 		deleteModulePublishInfo.add(existingModule);
 
-		server.getServerPublishInfo().removeDeletedModulePublishInfo(server, deleteModulePublishInfo);
-		server.getServerPublishInfo().save();
+		ServerPublishInfo info = server.getServerPublishInfo();
+		
+		info.removeDeletedModulePublishInfo(server, deleteModulePublishInfo);
+		info.save();
 
 		// Now create or get a new Cloud module for the target module, and
 		// map

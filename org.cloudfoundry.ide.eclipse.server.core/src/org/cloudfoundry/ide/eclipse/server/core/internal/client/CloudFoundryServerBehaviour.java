@@ -82,7 +82,9 @@ import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerListener;
 import org.eclipse.wst.server.core.ServerEvent;
+import org.eclipse.wst.server.core.internal.IModuleVisitor;
 import org.eclipse.wst.server.core.internal.Server;
+import org.eclipse.wst.server.core.internal.ServerPublishInfo;
 import org.eclipse.wst.server.core.model.IModuleFile;
 import org.eclipse.wst.server.core.model.IModuleResource;
 import org.eclipse.wst.server.core.model.IModuleResourceDelta;
@@ -557,6 +559,37 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		updateInstancesAndStats(appModule, subMonitor.newChild(50));
 
 		return appModule;
+	}
+
+	/**
+	 * Resets the module state of the module and all its children
+	 */
+	public void cleanModuleStates(IModule[] modules, IProgressMonitor monitor) {
+		IServer iServer = this.getServer();
+		if (iServer != null && iServer instanceof Server) {
+			Server server = (Server) iServer;
+			final ServerPublishInfo info = server.getServerPublishInfo();
+
+			info.startCaching();
+			info.clearCache();
+
+			info.fill(modules);
+
+			// The visit below will iterate through all children modules
+			final List<IModule[]> modules2 = new ArrayList<IModule[]>();
+			server.visit(new IModuleVisitor() {
+				public boolean visit(IModule[] module) {
+					info.fill(module);
+					modules2.add(module);
+					return true;
+				}
+			}, monitor);
+
+			info.removeDeletedModulePublishInfo(server, modules2);
+
+			info.save();
+			super.setModulePublishState(modules, IServer.PUBLISH_STATE_NONE);
+		}
 	}
 
 	/**
