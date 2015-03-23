@@ -67,7 +67,9 @@ public class UpdatePasswordDialog extends MessageDialog {
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(area);
 
 		description = new Label(area, SWT.NONE | SWT.WRAP);
-		GridDataFactory.fillDefaults().hint(80, SWT.DEFAULT).applyTo(description);
+		
+		// Set a minimum width such that the wrapped text does not enlarge the dialogue with extra space
+		GridDataFactory.fillDefaults().hint(400, SWT.DEFAULT).applyTo(description);
 		description.setText(Messages.UpdatePasswordDialog_TEXT_DESCRIPTION);
 
 		Composite composite = new Composite(area, SWT.NONE);
@@ -102,7 +104,7 @@ public class UpdatePasswordDialog extends MessageDialog {
 			}
 		});
 
-		return composite;
+		return area;
 	}
 
 	private void update() {
