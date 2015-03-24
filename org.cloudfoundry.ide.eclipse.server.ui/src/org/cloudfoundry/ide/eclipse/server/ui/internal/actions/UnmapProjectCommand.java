@@ -21,7 +21,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 
-public class UnmapProjectCommand extends ModuleCommand {
+public class UnmapProjectCommand extends UpdateMappingCommand {
 
 	protected ICloudFoundryOperation getCloudOperation(CloudFoundryApplicationModule appModule,
 			CloudFoundryServer cloudServer) {

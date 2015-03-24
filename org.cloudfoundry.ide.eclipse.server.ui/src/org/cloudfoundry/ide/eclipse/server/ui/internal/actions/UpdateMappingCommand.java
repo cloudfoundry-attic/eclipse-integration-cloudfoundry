@@ -20,42 +20,26 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudFoundryApplicationsEditorPage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.action.Action;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.wst.server.core.IModule;
 
-public class RemapToProjectEditorAction extends Action {
-
-	private final CloudFoundryApplicationsEditorPage editorPage;
-
-	private final IModule module;
-
-	public RemapToProjectEditorAction(CloudFoundryApplicationsEditorPage editorPage, IModule module) {
-
-		setText(Messages.RemapToProjectEditorAction_ACTION_LABEL);
-
-		this.editorPage = editorPage;
-		this.module = module;
-	}
+public abstract class UpdateMappingCommand extends ModuleCommand {
 
 	@Override
-	public void run() {
-		final CloudFoundryServer cloudServer = editorPage.getCloudServer();
-		final CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
-		if (appModule != null && editorPage.getSite() != null && editorPage.getSite().getShell() != null) {
+	protected void run(CloudFoundryApplicationModule appModule, CloudFoundryServer cloudServer) {
+		final ICloudFoundryOperation op = getCloudOperation(appModule, cloudServer);
 
+		if (op != null) {
 			Job job = new Job(NLS.bind(Messages.UPDATE_PROJECT_MAPPING, appModule.getDeployedApplicationName())) {
 				protected IStatus run(IProgressMonitor monitor) {
 					try {
-						new MapToProjectOperation(appModule, editorPage.getCloudServer(), editorPage.getSite()
-								.getShell()).run(monitor);
+						op.run(monitor);
 					}
 					catch (CoreException e) {
 						CloudFoundryPlugin.logError(e);
@@ -64,8 +48,13 @@ public class RemapToProjectEditorAction extends Action {
 					return Status.OK_STATUS;
 				}
 			};
-
 			job.schedule();
 		}
+		else {
+			CloudFoundryPlugin.logError("No operation resolved to run in this action"); //$NON-NLS-1$
+		}
 	}
+
+	abstract protected ICloudFoundryOperation getCloudOperation(CloudFoundryApplicationModule appModule,
+			CloudFoundryServer cloudServer);
 }

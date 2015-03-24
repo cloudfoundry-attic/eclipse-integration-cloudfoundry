@@ -22,7 +22,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 
-public class RemapModuleProjectCommand extends ModuleCommand {
+public class RemapModuleProjectCommand extends UpdateMappingCommand {
 
 	protected ICloudFoundryOperation getCloudOperation(CloudFoundryApplicationModule appModule,
 			CloudFoundryServer cloudServer) {

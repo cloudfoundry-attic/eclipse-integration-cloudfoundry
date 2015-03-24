@@ -570,19 +570,25 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	 * The existing module is deleted (but not its associated
 	 * {@link CloudApplication}), and the target module, if not already
 	 * existing, is created, and mapped to {@link CloudApplication}
+	 * <p/>
+	 * If no target module is specified to replace the existing module, then the
+	 * existing module is deleted and replaced with an external (that is, an
+	 * unmapped to a workspace project) module instead.
 	 * 
 	 * @param existing Cloud module to be replaced
 	 * @param target module to replace the original module
 	 * @param monitor
 	 * @throws CoreException
 	 */
-	protected void replace(CloudFoundryApplicationModule existing, final IModule[] target, IProgressMonitor monitor)
-			throws CoreException {
+	protected void replace( CloudFoundryApplicationModule existingCloudModule,  IModule[] targetModule,
+			IProgressMonitor monitor) throws CoreException {
 
 		// Since the underlying deployed application in the Cloud is not
 		// being deleted or modified,
 		// fetch an updated CloudApplication as it will be mapped to the new
 		// target module
+		final CloudFoundryApplicationModule existing = existingCloudModule;
+		final IModule[] target = targetModule;
 		final CloudApplication updatedCloudApplication = getBehaviour().getCloudApplication(
 				existing.getDeployedApplicationName(), monitor);
 
@@ -618,25 +624,37 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 					externalModules.add(appM);
 				}
 			}
-
 		}
 
 		server.setModulePublishState(existingModule, IServer.PUBLISH_STATE_UNKNOWN);
 		server.setModuleState(existingModule, IServer.STATE_UNKNOWN);
 
+		// Remove from the local Cloud cache
 		getData().remove(existing);
 
-		final List<IModule[]> deleteModulePublishInfo = new ArrayList<IModule[]>();
-		deleteModulePublishInfo.add(existingModule);
+		final List<IModule[]> remainingModules = new ArrayList<IModule[]>();
+
+		// Remove the publish info of the deleted module
+		server.visit(new IModuleVisitor() {
+			public boolean visit(IModule[] module) {
+
+				if (module.length > 0 && module[0].getName().equals(existing.getLocalModule().getName())) {
+					return false;
+				}
+				else {
+					remainingModules.add(module);
+					return true;
+				}
+			}
+		}, monitor);
 
 		ServerPublishInfo info = server.getServerPublishInfo();
-		
-		info.removeDeletedModulePublishInfo(server, deleteModulePublishInfo);
+
+		info.removeDeletedModulePublishInfo(server, remainingModules);
 		info.save();
 
-		// Now create or get a new Cloud module for the target module, and
-		// map
-		// it to the Cloud application
+		// Now create module for the target that will replace the existing
+		// moduel
 		if (target != null && target.length > 0) {
 			CloudFoundryApplicationModule remappedMod = getCloudModule(target[0]);
 			remappedMod.setCloudApplication(updatedCloudApplication);
@@ -654,19 +672,15 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 			// Restore the module state of the deleted module in the new
 			// module
 			server.setModuleState(new IModule[] { remappedMod.getLocalModule() }, existingModuleState);
-
-			// Do a direct refresh rather than scheduling a refresh to update
-			// the tools immediately.
-			getBehaviour().getRefreshHandler().schedulesRefreshApplication(remappedMod.getLocalModule());
 		}
 		else {
+			// Otherwise create an external module for the application that just
+			// got
+			// deleted
 			server.setExternalModules(externalModules.toArray(new IModule[0]));
 
-			getBehaviour().getRefreshHandler().scheduleRefreshAll();
+			updateModule(updatedCloudApplication, existing.getDeployedApplicationName(), monitor);
 		}
-
-		ServerEventHandler.getDefault().fireServerRefreshed(this);
-
 	}
 
 	@Override

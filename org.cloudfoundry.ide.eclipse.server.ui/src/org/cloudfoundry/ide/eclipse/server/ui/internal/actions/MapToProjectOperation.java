@@ -23,6 +23,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleCache;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
@@ -124,11 +125,20 @@ public class MapToProjectOperation implements ICloudFoundryOperation {
 
 		ServerUtil.modifyModules(wc, add, new IModule[] { appModule.getLocalModule() }, monitor);
 		wc.save(true, monitor);
-		
+
 		CloudFoundryServerBehaviour behaviour = cloudServer.getBehaviour();
 		if (behaviour != null) {
 			behaviour.cleanModuleStates(add, monitor);
 		}
+
+		CloudFoundryApplicationModule updatedModule = cloudServer.getExistingCloudModule(appModule
+				.getDeployedApplicationName());
+
+		if (updatedModule != null) {
+			cloudServer.getBehaviour().operations().refreshApplication(updatedModule.getLocalModule());
+		}
+
+		ServerEventHandler.getDefault().fireServerRefreshed(cloudServer);
 	}
 
 	/**

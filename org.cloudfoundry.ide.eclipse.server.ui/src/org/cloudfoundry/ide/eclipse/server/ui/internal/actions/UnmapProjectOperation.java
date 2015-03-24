@@ -21,6 +21,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleCache;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleCache.ServerData;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.eclipse.core.runtime.CoreException;
@@ -53,6 +54,15 @@ public class UnmapProjectOperation implements ICloudFoundryOperation {
 
 		ServerUtil.modifyModules(wc, new IModule[0], new IModule[] { appModule.getLocalModule() }, monitor);
 		wc.save(true, monitor);
+
+		CloudFoundryApplicationModule updatedModule = cloudServer.getExistingCloudModule(appModule
+				.getDeployedApplicationName());
+
+		if (updatedModule != null) {
+			cloudServer.getBehaviour().operations().refreshApplication(updatedModule.getLocalModule());
+		}
+
+		ServerEventHandler.getDefault().fireServerRefreshed(cloudServer);
 	}
 
 }

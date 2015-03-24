@@ -20,14 +20,8 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.actions;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.ICloudFoundryOperation;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 
 public abstract class ModuleCommand extends BaseCommandHandler {
 
@@ -45,34 +39,11 @@ public abstract class ModuleCommand extends BaseCommandHandler {
 			CloudFoundryPlugin.logError("No Cloud module resolved for the given selection."); //$NON-NLS-1$
 		}
 		else {
-
-			final ICloudFoundryOperation op = getCloudOperation(appModule, cloudServer);
-
-			if (op != null) {
-				Job job = new Job("Module Command") //$NON-NLS-1$
-				{
-					protected IStatus run(IProgressMonitor monitor) {
-						try {
-							op.run(monitor);
-						}
-						catch (CoreException e) {
-							CloudFoundryPlugin.logError(e);
-							return Status.CANCEL_STATUS;
-						}
-						return Status.OK_STATUS;
-					}
-				};
-				job.setSystem(true);
-				job.schedule();
-			}
-			else {
-				CloudFoundryPlugin.logError("No operation resolved to run in this action"); //$NON-NLS-1$
-			}
+			run(appModule, cloudServer);
 		}
 		return null;
 	}
 
-	abstract protected ICloudFoundryOperation getCloudOperation(CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer);
+	abstract protected void run(CloudFoundryApplicationModule appModule, CloudFoundryServer cloudServer);
 
 }

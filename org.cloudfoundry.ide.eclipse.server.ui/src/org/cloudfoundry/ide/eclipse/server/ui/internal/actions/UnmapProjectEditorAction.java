@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 
 public class UnmapProjectEditorAction extends Action {
@@ -49,8 +50,7 @@ public class UnmapProjectEditorAction extends Action {
 		final CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 		if (appModule != null && editorPage.getSite() != null && editorPage.getSite().getShell() != null) {
 
-			Job job = new Job("Module Command") //$NON-NLS-1$
-			{
+			Job job = new Job(NLS.bind(Messages.UPDATE_PROJECT_MAPPING, appModule.getDeployedApplicationName())) {
 				protected IStatus run(IProgressMonitor monitor) {
 					try {
 						new UnmapProjectOperation(appModule, editorPage.getCloudServer()).run(monitor);
@@ -62,9 +62,7 @@ public class UnmapProjectEditorAction extends Action {
 					return Status.OK_STATUS;
 				}
 			};
-			job.setSystem(true);
 			job.schedule();
 		}
-
 	}
 }
