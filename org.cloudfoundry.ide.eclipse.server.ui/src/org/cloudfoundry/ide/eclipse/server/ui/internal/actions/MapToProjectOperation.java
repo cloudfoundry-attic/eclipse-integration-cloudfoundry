@@ -150,6 +150,7 @@ public class MapToProjectOperation implements ICloudFoundryOperation {
 	protected IProject selectReplaceProject(final CloudFoundryServer cloudServer,
 			final CloudFoundryApplicationModule appModule) {
 
+		final String appToBeMappedName = appModule.getDeployedApplicationName();
 		ViewerFilter viewerFilter = new ViewerFilter() {
 			/**
 			 * {@inheritDoc}
@@ -163,10 +164,29 @@ public class MapToProjectOperation implements ICloudFoundryOperation {
 				if (potentialProject == null || !potentialProject.isAccessible()) {
 					return false;
 				}
+				// Allow mapping a project with the same name as the app. This
+				// case needs to be handled first before checking for other
+				// potentially unrelated
+				// modules in the server
+				// that have the same name as the project (see below), which as of 1.8.1 is
+				// not allowed.
+				if (appToBeMappedName.equals(potentialProject.getName())) {
+					return true;
+				}
+
 				IModule[] allModules = cloudServer.getServerOriginal().getModules();
 				if (allModules != null) {
 					for (IModule mod : allModules) {
+						// Filter out projects that already are mapped to
+						// modules
 						if (mod.getProject() != null && mod.getProject().equals(potentialProject)) {
+							return false;
+						}
+						// As of 1.8.1, mapping projects that have the same name
+						// as other (possibly unrelated modules) is
+						// not supported as WTP may create duplicate modules
+						// with the same name.
+						else if (mod.getName().equals(potentialProject.getName())) {
 							return false;
 						}
 					}
