@@ -8,7 +8,7 @@
 
   <groupId>org.cloudfoundry.ide.eclipse.server</groupId>
   <artifactId>org.cloudfoundry.ide.eclipse.server.parent</artifactId>
-  <version>1.8.1-SNAPSHOT</version>
+  <version>1.8.2-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <scm>
@@ -313,7 +313,7 @@
               <artifact>
                 <groupId>org.cloudfoundry.ide.eclipse.server</groupId>
                 <artifactId>org.cloudfoundry.ide.eclipse.server.target</artifactId>
-                <version>1.8.1-SNAPSHOT</version>
+                <version>1.8.2-SNAPSHOT</version>
                 <classifier>${dist.target.classifier}</classifier>
               </artifact>
             </target>
@@ -395,7 +395,7 @@
             <dependency>  
               <groupId>org.apache.ant</groupId>  
               <artifactId>ant-nodeps</artifactId>  
-              <version>1.8.1</version>  
+              <version>1.8.2</version>  
             </dependency>  
             <dependency>
               <groupId>org.springframework.build</groupId>
