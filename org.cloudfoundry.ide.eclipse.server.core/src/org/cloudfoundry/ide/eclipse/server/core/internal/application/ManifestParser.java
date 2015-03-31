@@ -29,10 +29,12 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
 import org.cloudfoundry.client.lib.domain.Staging;
@@ -213,7 +215,8 @@ public class ManifestParser {
 	 * 
 	 * @param containerMap
 	 * @param propertyName
-	 * @return
+	 * @return map of values for the given property name, or null if it cannot
+	 * be resolved
 	 */
 	protected Map<?, ?> getContainingPropertiesMap(Map<?, ?> containerMap, String propertyName) {
 		if (containerMap == null || propertyName == null) {
@@ -414,6 +417,8 @@ public class ManifestParser {
 
 	protected void readServices(DeploymentInfoWorkingCopy workingCopy, Map<?, ?> applications) {
 		Map<?, ?> services = getContainingPropertiesMap(applications, SERVICES_PROP);
+		// Backward compatibility with old manifest pre-1.8.2 where services
+		// were maps
 		if (services != null) {
 			Map<String, CloudService> servicesToBind = new LinkedHashMap<String, CloudService>();
 
@@ -450,6 +455,23 @@ public class ManifestParser {
 			}
 
 			workingCopy.setServices(new ArrayList<CloudService>(servicesToBind.values()));
+		}
+		else {
+			Object yamlElementObj = applications.get(SERVICES_PROP);
+			if (yamlElementObj instanceof List<?>) {
+				List<?> servListFromYaml = (List<?>) yamlElementObj;
+				Set<String> addedService = new HashSet<String>();
+				List<CloudService> cloudServices = new ArrayList<CloudService>();
+				for (Object servNameObj : servListFromYaml) {
+					if (servNameObj instanceof String && !addedService.contains(servNameObj)) {
+						String serviceName = (String) servNameObj;
+						addedService.add(serviceName);
+						cloudServices.add(new LocalCloudService(serviceName));
+					}
+				}
+				workingCopy.setServices(cloudServices);
+			}
+
 		}
 	}
 
@@ -791,35 +813,13 @@ public class ManifestParser {
 			List<CloudService> servicesToBind = deploymentInfo.getServices();
 			if (servicesToBind != null && !servicesToBind.isEmpty()) {
 
-				Map<Object, Object> services = new LinkedHashMap<Object, Object>();
+				List<String> services = new ArrayList<String>();
 				application.put(SERVICES_PROP, services);
 
 				for (CloudService service : servicesToBind) {
 					String serviceName = service.getName();
-					if (!services.containsKey(serviceName)) {
-
-						// Only persist the service if it has complete
-						// information
-						Map<String, String> serviceDescription = new LinkedHashMap<String, String>();
-						String label = service.getLabel();
-						if (label != null) {
-							serviceDescription.put(LABEL_PROP, label);
-						}
-						String version = service.getVersion();
-						if (version != null) {
-							serviceDescription.put(VERSION_PROP, version);
-						}
-						String plan = service.getPlan();
-						if (plan != null) {
-							serviceDescription.put(PLAN_PROP, plan);
-						}
-						String provider = service.getProvider();
-						if (provider != null) {
-							serviceDescription.put(PROVIDER_PROP, provider);
-						}
-
-						// Service name is the key in the yaml map
-						services.put(serviceName, serviceDescription);
+					if (serviceName != null && !services.contains(serviceName)) {
+						services.add(serviceName);
 					}
 				}
 			}
