@@ -605,16 +605,6 @@ public class ManifestParser {
 	}
 
 	/**
-	 * 
-	 * @param descriptor
-	 * @return true if it contains description to create a service
-	 */
-	protected boolean containsServiceCreationDescription(CloudService service) {
-		return service.getVersion() != null && service.getLabel() != null && service.getProvider() != null
-				&& service.getPlan() != null;
-	}
-
-	/**
 	 * Writes the app's current deployment info into a manifest file in the
 	 * app's related workspace project. If the workspace project is not
 	 * accessible, false is returned. If the manifest file does not exist in the
@@ -752,40 +742,57 @@ public class ManifestParser {
 					application.put(DOMAIN_PROP, domain);
 				}
 			}
+			else {
+				// If URL is not present, remove any exiting ones
+				application.remove(SUB_DOMAIN_PROP);
+				application.remove(DOMAIN_PROP);
+			}
 
 			List<EnvironmentVariable> envvars = deploymentInfo.getEnvVariables();
 
-			Map<Object, Object> varMap = new LinkedHashMap<Object, Object>();
+			if (envvars != null && !envvars.isEmpty()) {
+				Map<Object, Object> varMap = new LinkedHashMap<Object, Object>();
 
-			// Clear the list of environment variables first.
-			application.put(ENV_PROP, varMap);
-			if (envvars != null) {
+				// Clear the list of environment variables first.
+				application.put(ENV_PROP, varMap);
 				for (EnvironmentVariable var : envvars) {
 					varMap.put(var.getVariable(), var.getValue());
 				}
 			}
+			else {
+				// Avoid writing empty list or keeping obsolete env vars
+				// therefore always remove the property if no en vars are
+				// present
+				application.remove(ENV_PROP);
+			}
 
 			Staging staging = deploymentInfo.getStaging();
+
+			// Only overwrite the buildpack URL if it can be resolved
+			// Otherwise retain any old value from before
 			if (staging != null && staging.getBuildpackUrl() != null) {
 				application.put(BUILDPACK_PROP, staging.getBuildpackUrl());
 			}
 
+			// Only overwrite the archive path if present, but do not
+			// clear the property if it is not present as archive
+			// paths are local and the value may not be present if doing a
+			// refresh from the server
 			String archiveURL = deploymentInfo.getArchive();
 			if (archiveURL != null) {
 				application.put(PATH_PROP, archiveURL);
 			}
 
 			// Regardless if there are services or not, always clear list of
-			// services in the manifest, and replace with new list. The list of
+			// services in the manifest. The list of
 			// services in the
 			// deployment info has to match the content in the manifest.
 
-			Map<Object, Object> services = new LinkedHashMap<Object, Object>();
-			application.put(SERVICES_PROP, services);
-
 			List<CloudService> servicesToBind = deploymentInfo.getServices();
+			if (servicesToBind != null && !servicesToBind.isEmpty()) {
 
-			if (servicesToBind != null) {
+				Map<Object, Object> services = new LinkedHashMap<Object, Object>();
+				application.put(SERVICES_PROP, services);
 
 				for (CloudService service : servicesToBind) {
 					String serviceName = service.getName();
@@ -793,30 +800,31 @@ public class ManifestParser {
 
 						// Only persist the service if it has complete
 						// information
-						if (containsServiceCreationDescription(service)) {
-							Map<String, String> serviceDescription = new LinkedHashMap<String, String>();
-							String label = service.getLabel();
-							if (label != null) {
-								serviceDescription.put(LABEL_PROP, label);
-							}
-							String version = service.getVersion();
-							if (version != null) {
-								serviceDescription.put(VERSION_PROP, version);
-							}
-							String plan = service.getPlan();
-							if (plan != null) {
-								serviceDescription.put(PLAN_PROP, plan);
-							}
-							String provider = service.getProvider();
-							if (provider != null) {
-								serviceDescription.put(PROVIDER_PROP, provider);
-							}
-
-							// Service name is the key in the yaml map
-							services.put(serviceName, serviceDescription);
+						Map<String, String> serviceDescription = new LinkedHashMap<String, String>();
+						String label = service.getLabel();
+						if (label != null) {
+							serviceDescription.put(LABEL_PROP, label);
 						}
+						String version = service.getVersion();
+						if (version != null) {
+							serviceDescription.put(VERSION_PROP, version);
+						}
+						String plan = service.getPlan();
+						if (plan != null) {
+							serviceDescription.put(PLAN_PROP, plan);
+						}
+						String provider = service.getProvider();
+						if (provider != null) {
+							serviceDescription.put(PROVIDER_PROP, provider);
+						}
+
+						// Service name is the key in the yaml map
+						services.put(serviceName, serviceDescription);
 					}
 				}
+			}
+			else {
+				application.remove(SERVICES_PROP);
 			}
 
 			subProgress.worked(1);
