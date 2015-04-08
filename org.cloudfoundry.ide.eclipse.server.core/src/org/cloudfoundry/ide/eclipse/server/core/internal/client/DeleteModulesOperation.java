@@ -26,8 +26,12 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.wst.server.core.IModule;
 
 /**
@@ -67,7 +71,8 @@ public class DeleteModulesOperation extends BehaviourOperation {
 				continue;
 			}
 
-			// Fetch an updated application. Do not fetch all applications as it may slow down the
+			// Fetch an updated application. Do not fetch all applications as it
+			// may slow down the
 			// deletion process, only fetch the app being deleted
 			CloudApplication application = null;
 
@@ -114,6 +119,10 @@ public class DeleteModulesOperation extends BehaviourOperation {
 
 			// Delete the module locally
 			cloudServer.removeApplication(appModule);
+
+			ServerEventHandler.getDefault().fireServerEvent(
+					new ModuleChangeEvent(getBehaviour().getCloudFoundryServer(), CloudServerEvent.EVENT_APP_DELETED,
+							appModule.getLocalModule(), Status.OK_STATUS));
 
 			// Be sure the cloud application mapping is removed
 			// in case other components still have a reference to

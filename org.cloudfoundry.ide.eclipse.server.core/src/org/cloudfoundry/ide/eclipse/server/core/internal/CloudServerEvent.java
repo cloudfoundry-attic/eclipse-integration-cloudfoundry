@@ -44,6 +44,14 @@ public class CloudServerEvent extends EventObject {
 
 	public static final int EVENT_APP_DEPLOYMENT_CHANGED = 410;
 
+	public static final int EVENT_APP_DELETED = 420;
+
+	public static final int EVENT_APP_STOPPED = 425;
+
+	public static final int EVENT_APP_STARTED = 427;
+
+	public static final int EVENT_APP_URL_CHANGED = 430;
+
 	public static final int EVENT_APP_DEBUG = 500;
 
 	public static final int EVENT_CLOUD_OP_ERROR = 600;

@@ -23,9 +23,13 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
@@ -85,10 +89,13 @@ class StopApplicationOperation extends AbstractPublishApplicationOperation {
 			server.setModuleState(getModules(), IServer.STATE_STOPPED);
 			succeeded = true;
 
+			ServerEventHandler.getDefault().fireServerEvent(
+					new ModuleChangeEvent(getBehaviour().getCloudFoundryServer(), CloudServerEvent.EVENT_APP_STOPPED,
+							cloudModule.getLocalModule(), Status.OK_STATUS));
+
 			// Update the module
 			getBehaviour().updateCloudModuleWithInstances(cloudModule.getDeployedApplicationName(),
 					subMonitor.newChild(40));
-
 
 			getBehaviour().printlnToConsole(cloudModule, Messages.CONSOLE_APP_STOPPED);
 			CloudFoundryPlugin.getCallback().stopApplicationConsole(cloudModule, cloudServer);

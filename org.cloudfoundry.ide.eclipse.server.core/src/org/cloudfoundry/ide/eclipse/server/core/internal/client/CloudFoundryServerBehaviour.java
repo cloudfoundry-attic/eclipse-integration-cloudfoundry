@@ -58,12 +58,15 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryLoginHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleResourceDeltaWrapper;
 import org.cloudfoundry.ide.eclipse.server.core.internal.RefreshModulesHandler;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.EnvironmentVariable;
+import org.cloudfoundry.ide.eclipse.server.core.internal.jrebel.CloudRebelAppHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudFoundrySpace;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpaces;
 import org.eclipse.core.runtime.CoreException;
@@ -1099,6 +1102,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	@Override
 	protected void initialize(IProgressMonitor monitor) {
 		super.initialize(monitor);
+		CloudRebelAppHandler.init();
 		getServer().addServerListener(serverListener, ServerEvent.SERVER_CHANGE);
 
 		try {
@@ -1951,7 +1955,21 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				appName)) {
 			@Override
 			protected Void doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+
+				// Look up the existing urls locally first to avoid a client
+				// call
+				CloudFoundryApplicationModule existingAppModule = getCloudFoundryServer().getExistingCloudModule(
+						appName);
+
 				client.updateApplicationUris(appName, urls);
+				if (existingAppModule != null) {
+					List<String> oldUrls = existingAppModule.getDeploymentInfo() != null ? existingAppModule
+							.getDeploymentInfo().getUris() : client.getApplication(appName).getUris();
+					ServerEventHandler.getDefault().fireServerEvent(
+							new AppUrlChangeEvent(getCloudFoundryServer(), CloudServerEvent.EVENT_APP_URL_CHANGED,
+									existingAppModule.getLocalModule(), Status.OK_STATUS, oldUrls, urls));
+
+				}
 				return null;
 			}
 		};

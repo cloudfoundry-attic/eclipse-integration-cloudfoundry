@@ -25,6 +25,9 @@ import java.util.List;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryCallback;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
@@ -57,7 +60,9 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
 	public void applicationStarted(final CloudFoundryServer server, final CloudFoundryApplicationModule cloudModule) {
-
+		ServerEventHandler.getDefault().fireServerEvent(
+				new ModuleChangeEvent(server, CloudServerEvent.EVENT_APP_STARTED, cloudModule.getLocalModule(),
+						Status.OK_STATUS));
 	}
 
 	@Override
