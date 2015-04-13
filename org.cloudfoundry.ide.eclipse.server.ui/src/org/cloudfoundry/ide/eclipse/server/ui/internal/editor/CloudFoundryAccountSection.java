@@ -142,7 +142,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		topComposite.setLayout(new GridLayout(2, false));
 		topComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
-		Label emailLabel = toolkit.createLabel(topComposite, Messages.COMMONTXT_EMAIL_WITH_COLON, SWT.NONE);
+		Label emailLabel = toolkit.createLabel(topComposite, Messages.CloudFoundryAccountSection_LABEL_EMAIL, SWT.NONE);
 		emailLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 		emailLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
@@ -158,7 +158,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		emailText.setEditable(false);
 		// emailText.addModifyListener(new DataChangeListener(DataType.EMAIL));
 
-		Label passwordLabel = toolkit.createLabel(topComposite, Messages.COMMONTXT_PW, SWT.NONE);
+		Label passwordLabel = toolkit.createLabel(topComposite, Messages.CloudFoundryAccountSection_LABEL_PASSWORD, SWT.NONE);
 		passwordLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 		passwordLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
@@ -175,7 +175,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		// passwordText.addModifyListener(new
 		// DataChangeListener(DataType.PASSWORD));
 
-		Label label = toolkit.createLabel(topComposite, Messages.COMMONTXT_URL);
+		Label label = toolkit.createLabel(topComposite, Messages.CloudFoundryAccountSection_LABEL_URL);
 		label.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 		label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 

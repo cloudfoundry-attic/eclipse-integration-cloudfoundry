@@ -705,7 +705,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(client);
 		generalSectionRestartRequired.setClient(client);
 
-		createLabel(client, Messages.LABEL_MEMORY_LIMIT, SWT.CENTER);
+		createLabel(client, Messages.ApplicationDetailsPart_TEXT_MEMORY_LIMIT_LABEL, SWT.CENTER);
 		Composite memoryArea = toolkit.createComposite(client);
 		GridLayoutFactory.fillDefaults().numColumns(2).margins(0, 0).applyTo(memoryArea);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(memoryArea);
@@ -758,7 +758,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		});
 
 		createLabel(client, Messages.ApplicationDetailsPart_TEXT_ENV_VAR, SWT.CENTER);
-		Button envVarsButton = createGeneralPushButton(client, Messages.COMMONTXT_EDIT);
+		Button envVarsButton = createGeneralPushButton(client, Messages.ApplicationDetailsPart_TEXT_EDIT_BUTTON);
 
 		envVarsButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {

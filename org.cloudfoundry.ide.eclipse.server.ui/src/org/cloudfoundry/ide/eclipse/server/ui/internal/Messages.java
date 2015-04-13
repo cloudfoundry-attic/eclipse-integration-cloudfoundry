@@ -176,6 +176,8 @@ public class Messages extends NLS {
 	public static String ApplicationDetailsPart_TEXT_GENERAL;
 
 	public static String ApplicationDetailsPart_TEXT_GENERAL_APP_RESTART;
+	
+	public static String ApplicationDetailsPart_TEXT_EDIT_BUTTON;
 
 	public static String ApplicationDetailsPart_TEXT_HOST;
 
@@ -194,6 +196,8 @@ public class Messages extends NLS {
 	public static String ApplicationDetailsPart_TEXT_MAPPED_URL;
 
 	public static String ApplicationDetailsPart_TEXT_MEMORY_LIMIT;
+	
+	public static String ApplicationDetailsPart_TEXT_MEMORY_LIMIT_LABEL;
 
 	public static String ApplicationDetailsPart_TEXT_MODE;
 
@@ -504,6 +508,12 @@ public class Messages extends NLS {
 	public static String CloudApplicationUrlPart_TEXT_DEPLOYURL_LABEL;
 
 	public static String CloudApplicationUrlPart_TEXT_SUBDOMAIN_LABEL;
+	
+	public static String CloudFoundryAccountSection_LABEL_EMAIL;
+		
+	public static String CloudFoundryAccountSection_LABEL_PASSWORD;
+	
+	public static String CloudFoundryAccountSection_LABEL_URL;
 
 	public static String CloudFoundryAccountSection_BUTTON_CHANGE_PW;
 
