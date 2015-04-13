@@ -630,6 +630,8 @@ public class Messages extends NLS {
 	public static String CloudFoundryServiceWizard_ERROR_ADD_SERVICE;
 
 	public static String CloudFoundryServiceWizardPage_ERROR_CONFIG_RETRIVE;
+	
+	public static String CloudFoundryServiceWizardPage_ERROR_CONFIG_RETRIVE_SEE_LOG_FOR_DETAILS;
 
 	public static String CloudFoundryServiceWizardPage_ERROR_INVALID_CHAR;
 
@@ -670,6 +672,9 @@ public class Messages extends NLS {
 	public static String CloudFoundryServiceWizardPageLeftPanel_ADD;
 
 	public static String CloudFoundryServiceWizardPageLeftPanel_CLEAR;
+	
+	public static String CloudFoundryServiceWizard_NO_SERVICES_AVAILABLE_TITLE;
+	public static String CloudFoundryServiceWizard_NO_SERVICES_AVAILABLE_BODY;
 
 	public static String CloudRoutePart_UNDO;
 

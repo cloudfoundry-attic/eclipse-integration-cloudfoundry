@@ -37,6 +37,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jface.dialogs.IMessageProvider;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -103,21 +104,47 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 			ProgressMonitorDialog monitorDlg = new ProgressMonitorDialog(getShell());
 			monitorDlg.run(true, true, runnable);
 			
-			// If the user cancelled service acquisition, then just return null.
-			if(runnable.isUserCancelled()) {
+			GetServiceResult getServiceResult = runnable.getGetServiceOperationResult();
+
+			if(getServiceResult == GetServiceResult.SUCCESS) {
+				if (runnable.getServiceOfferingResult() != null) {
+					
+					if(runnable.getServiceOfferingResult().size() > 0) {
+					
+						int index = 0;
+						for (CloudServiceOffering o : runnable.getServiceOfferingResult()) {
+							
+							result.add(new AvailableService(o.getName(), o.getDescription(), index, o));
+							index++;
+						}
+					} else {
+						// Operation succeeded, but no services are available.
+						
+						MessageDialog.openWarning(getShell(), Messages.CloudFoundryServiceWizard_NO_SERVICES_AVAILABLE_TITLE, 
+								Messages.CloudFoundryServiceWizard_NO_SERVICES_AVAILABLE_BODY);
+				
+						return null;
+					}
+				}
+				
+			} else if(getServiceResult == GetServiceResult.ERROR) {
+				// Error is handled by the exception and by the runnable
 				return null;
+			} else {
+				// If the user cancelled service acquisition, then just return null.
+				return null;	
 			}
 
-			if (runnable.getServiceOfferingResult() != null) {
-				int index = 0;
-				for (CloudServiceOffering o : runnable.getServiceOfferingResult()) {
-					
-					result.add(new AvailableService(o.getName(), o.getDescription(), index, o));
-					index++;
-				}
-			}
 		} catch (InvocationTargetException e) {
-			IStatus status = cloudServer.error(NLS.bind(Messages.CloudFoundryServiceWizardPage_ERROR_CONFIG_RETRIVE, e.getCause().getMessage()), e);
+			Throwable ex = e.getCause() != null ? e.getCause() : e;
+			String msg = ex.getMessage();
+			
+			// Use a generic message if the exception did not provide one.
+			if(msg == null || msg.trim().length() == 0) {
+				msg = Messages.CloudFoundryServiceWizardPage_ERROR_CONFIG_RETRIVE_SEE_LOG_FOR_DETAILS;
+			}
+			
+			IStatus status = cloudServer.error(NLS.bind(Messages.CloudFoundryServiceWizardPage_ERROR_CONFIG_RETRIVE, msg), e);
 			StatusManager.getManager().handle(status, StatusManager.LOG);
 			setMessage(status.getMessage(), IMessageProvider.ERROR);
 		} catch (InterruptedException e) {
@@ -198,10 +225,14 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 		return rightPanel;
 	}
 
-	class GetServiceOfferingsRunnable implements IRunnableWithProgress {
+
+	private static enum GetServiceResult { INITIAL, SUCCESS, USER_CANCEL, ERROR };
+	
+	private class GetServiceOfferingsRunnable implements IRunnableWithProgress {
 		
 		private final List<CloudServiceOffering> serviceOfferingResult = new ArrayList<CloudServiceOffering>();
-		private boolean userCancelled = false;
+		
+		private GetServiceResult result = GetServiceResult.INITIAL;
 		
 		public GetServiceOfferingsRunnable() {
 		}
@@ -221,7 +252,7 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 						serviceOfferings = thread.getServiceOfferings();
 					}
 				} else {
-					userCancelled = true;
+					result = GetServiceResult.USER_CANCEL;
 					// User cancelled.
 					return;
 				}
@@ -251,13 +282,16 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 						}
 					}
 				}
-				
 				rightPanel.setExistingServicesNames(existingCloudServiceNames);
-			}
-			catch (OperationCanceledException e) {
+				
+				result = GetServiceResult.SUCCESS;
+			
+			} catch (OperationCanceledException e) {
+				result = GetServiceResult.USER_CANCEL;
 				throw new InterruptedException();
-			}
-			catch (Throwable e) {
+			
+			}catch (Throwable e) {
+				result = GetServiceResult.ERROR;
 				throw new InvocationTargetException(e);
 			}
 			finally {
@@ -265,8 +299,8 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 			}
 		}
 		
-		public boolean isUserCancelled() {
-			return userCancelled;
+		public GetServiceResult getGetServiceOperationResult() {
+			return result;
 		}
 		
 		public List<CloudServiceOffering> getServiceOfferingResult() {
