@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -40,6 +40,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.forms.IFormColors;
@@ -61,7 +62,7 @@ public class CloudFoundryServerStatusSection extends ServerEditorSection impleme
 
 	private CloudFoundryServer cfServer;
 	
-	private Label statusLabel;
+	private Text statusLabel;
 
 	private Button connectButton;
 
@@ -92,7 +93,16 @@ public class CloudFoundryServerStatusSection extends ServerEditorSection impleme
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(nameLabel);
 		nameLabel.setForeground(toolkit.getColors().getColor(IFormColors.TITLE));
 		
-		statusLabel = toolkit.createLabel(composite, ""); //$NON-NLS-1$
+		// Temporary switch for the border style to "no border", so this is drawn properly
+		int borderStyleBackup = toolkit.getBorderStyle();
+		try {
+			toolkit.setBorderStyle(SWT.NULL);
+			statusLabel = toolkit.createText(composite, "", SWT.READ_ONLY); //$NON-NLS-1$
+		} finally {
+			// Make sure under every circumstance, the previous border is restored
+			toolkit.setBorderStyle(borderStyleBackup);
+		}
+		
 		GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.CENTER).applyTo(statusLabel);
 		
 		connectButton = toolkit.createButton(composite, Messages.CloudFoundryServerStatusSection_TEXT_CONN_BUTTON, SWT.PUSH);

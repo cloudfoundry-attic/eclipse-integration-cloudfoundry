@@ -115,7 +115,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 	public ApplicationMasterPart(CloudFoundryApplicationsEditorPage editorPage, IManagedForm managedForm,
 			Composite parent, CloudFoundryServer cloudServer) {
-		super(parent, managedForm.getToolkit(), Section.TITLE_BAR | Section.DESCRIPTION);
+		super(parent, managedForm.getToolkit(), Section.TITLE_BAR | Section.DESCRIPTION | Section.TWISTIE);
 		this.editorPage = editorPage;
 		this.cloudServer = cloudServer;
 		this.toolkit = managedForm.getToolkit();
@@ -283,6 +283,7 @@ public class ApplicationMasterPart extends SectionPart {
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(section);
 		section.setText(Messages.COMMONTXT_APPLICATIONS);
 		section.setDescription(Messages.ApplicationMasterPart_TEXT_APP_DESCRIP);
+		section.setExpanded(true);
 
 		Composite client = toolkit.createComposite(section);
 		client.setLayout(new GridLayout());
@@ -421,8 +422,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 	private void createRoutesDomainsSection() {
 
-		Section routeSection = toolkit.createSection(getSection().getParent(), Section.TITLE_BAR | Section.DESCRIPTION
-				| Section.TWISTIE);
+		Section routeSection = toolkit.createSection(getSection().getParent(), Section.TITLE_BAR | Section.TWISTIE);
 		routeSection.setLayout(new GridLayout());
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(routeSection);
 		routeSection.setText(Messages.ApplicationMasterPart_TEXT_ROUTES);

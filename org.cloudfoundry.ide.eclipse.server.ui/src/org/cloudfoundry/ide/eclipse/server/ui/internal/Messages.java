@@ -172,6 +172,8 @@ public class Messages extends NLS {
 	public static String ApplicationDetailsPart_TEXT_DISK_LIMIT;
 
 	public static String ApplicationDetailsPart_TEXT_ENV_VAR;
+	
+	public static String ApplicationDetailsPart_TEXT_ENV_VAR_EDIT_BUTTON_ACC_LABEL;
 
 	public static String ApplicationDetailsPart_TEXT_GENERAL;
 
@@ -192,6 +194,8 @@ public class Messages extends NLS {
 	public static String ApplicationDetailsPart_TEXT_MANIFEST;
 
 	public static String ApplicationDetailsPart_TEXT_MANIFEST_UPDATE;
+	
+	public static String ApplicationDetailsPart_TEXT_MANIFEST_SAVE_BUTTON_ACC_LABEL;
 
 	public static String ApplicationDetailsPart_TEXT_MAPPED_URL;
 
@@ -344,6 +348,8 @@ public class Messages extends NLS {
 	public static String EnvironmentVariablesPart_TEXT_NEW_ENV_VAR;
 
 	public static String EnvironmentVariablesPart_TEXT_VALUE_LABEL;
+	
+	public static String EnvironmentVariablesPart_TEXT_TABLE_ACC_LABEL;
 
 	public static String EnvVarsWizard_ERROR_ENV_VAR;
 
@@ -550,6 +556,8 @@ public class Messages extends NLS {
 	public static String CloudFoundryApplicationServicesWizardPage_TEXT_SERVICE_SELECTION;
 
 	public static String CloudFoundryApplicationServicesWizardPage_TEXT_TOOLTIP;
+	
+	public static String CloudFoundryApplicationServicesWizardPage_TEXT_TABLE_ACC_LABEL;
 
 	public static String CloudFoundryApplicationServicesWizardPage_TEXT_VERIFY_SERVICE_PROGRESS;
 
@@ -701,6 +709,8 @@ public class Messages extends NLS {
 	public static String CloudRoutePart_TEXT_ROUTE_INUSE;
 
 	public static String CloudRoutePart_TEXT_ROUTES_REMOVED;
+	
+	public static String CloudRoutePart_TEXT_TABLE_ACC_LABEL;
 
 	public static String CloudRoutesWizard_TEXT_CLOUD_ROUTE_PAGE;
 

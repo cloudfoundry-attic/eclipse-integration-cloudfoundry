@@ -78,6 +78,8 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.accessibility.AccessibleAdapter;
+import org.eclipse.swt.accessibility.AccessibleEvent;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.Transfer;
@@ -601,7 +603,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	}
 
 	private void createGeneralSection(Composite parent) {
-		generalSection = toolkit.createSection(parent, Section.TITLE_BAR);
+		generalSection = toolkit.createSection(parent, Section.TITLE_BAR | Section.TWISTIE);
+		generalSection.setExpanded(true);
 		generalSection.setLayout(new GridLayout());
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(generalSection);
 		generalSection.setText(Messages.ApplicationDetailsPart_TEXT_GENERAL);
@@ -643,6 +646,13 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 					logApplicationModuleFailureError(Messages.ApplicationDetailsPart_ERROR_OPEN_URL_WIZ);
 				}
 
+			}
+		});
+		// Add accessibility message (the title for the wizard it opens)
+		editURI.getAccessible ().addAccessibleListener (new AccessibleAdapter() {
+			@Override
+			public void getName (AccessibleEvent e) {
+				e.result = Messages.MappedURLsWizard_TITLE_MOD_MAPPED_URL;
 			}
 		});
 
@@ -688,11 +698,19 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				writeToManifest();
 			}
 		});
+		// Add accessibility message so the button provides a better description of itself
+		saveManifest.getAccessible ().addAccessibleListener (new AccessibleAdapter() {
+			@Override
+			public void getName (AccessibleEvent e) {
+				e.result = Messages.ApplicationDetailsPart_TEXT_MANIFEST_SAVE_BUTTON_ACC_LABEL;
+			}
+		});
 
 	}
 
 	private void createGeneralSectionRestartRequired(Composite parent) {
-		generalSectionRestartRequired = toolkit.createSection(parent, Section.TITLE_BAR);
+		generalSectionRestartRequired = toolkit.createSection(parent, Section.TITLE_BAR | Section.TWISTIE);
+		generalSectionRestartRequired.setExpanded(true);
 		generalSectionRestartRequired.setLayout(new GridLayout());
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(generalSectionRestartRequired);
 		generalSectionRestartRequired.setText(Messages.ApplicationDetailsPart_TEXT_GENERAL_APP_RESTART);
@@ -795,11 +813,20 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				}
 			}
 		});
+		
+		// Add accessibility message so the button provides a better description of itself
+		envVarsButton.getAccessible ().addAccessibleListener (new AccessibleAdapter() {
+			@Override
+			public void getName (AccessibleEvent e) {
+				e.result = Messages.ApplicationDetailsPart_TEXT_ENV_VAR_EDIT_BUTTON_ACC_LABEL;
+			}
+		});
 	}
 
 	private void createApplicationOperationsSection(Composite parent) {
 
-		operationsSection = toolkit.createSection(parent, Section.TITLE_BAR);
+		operationsSection = toolkit.createSection(parent, Section.TITLE_BAR | Section.TWISTIE);
+		operationsSection.setExpanded(true);
 		operationsSection.setLayout(new GridLayout());
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(operationsSection);
 		operationsSection.setText(Messages.ApplicationDetailsPart_TEXT_APP_OP);
@@ -1044,7 +1071,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	}
 
 	private void createServicesSection(Composite parent) {
-		servicesSection = toolkit.createSection(parent, Section.TITLE_BAR);
+		servicesSection = toolkit.createSection(parent, Section.TITLE_BAR | Section.TWISTIE);
+		servicesSection.setExpanded(true);
 		servicesSection.setLayout(new GridLayout());
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(servicesSection);
 		servicesSection.setText(Messages.ApplicationDetailsPart_TEXT_APP_SERVICES);

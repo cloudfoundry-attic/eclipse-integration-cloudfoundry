@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2013, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -38,7 +38,10 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.window.Window;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.accessibility.AccessibleAdapter;
+import org.eclipse.swt.accessibility.AccessibleEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -136,6 +139,21 @@ public class EnvironmentVariablesPart extends UIPart {
 		}
 
 		envVariablesViewer.setColumnProperties(columnProperties);
+
+		// Add accessibility listener to the table, so screen reader can provide a good description
+		// of what is selected (in this case, an environment variable and its name)
+		envVariablesViewer.getControl().getAccessible ().addAccessibleListener (new AccessibleAdapter() {
+			@Override
+			public void getName (AccessibleEvent e) {
+				if (e.childID >= 0) {
+					if (e.result != null) {
+						e.result = NLS.bind(Messages.EnvironmentVariablesPart_TEXT_TABLE_ACC_LABEL, e.result);
+					} else {
+						e.result = Messages.COMMONTXT_ENV_VAR;
+					}
+				}
+			}
+		});
 
 		addEditButtons(commonArea);
 		return commonArea;

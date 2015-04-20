@@ -84,7 +84,7 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 
 	private Text spaceText;
 
-	private Label validateLabel;
+	private Text validateLabel;
 
 	// private CloudUrlWidget urlWidget;
 
@@ -221,8 +221,19 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 		validateComposite.setLayout(new GridLayout(1, false));
 		validateComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
-		validateLabel = toolkit.createLabel(validateComposite, "", SWT.NONE); //$NON-NLS-1$
+		// Temporary switch for the border style to "no border", so this is drawn properly
+		int borderStyleBackup = toolkit.getBorderStyle();
+		try {
+			toolkit.setBorderStyle(SWT.NULL);
+			validateLabel = toolkit.createText(validateComposite, "", SWT.READ_ONLY); //$NON-NLS-1$
+		} finally {
+			// Make sure under every circumstance, the previous border is restored
+			toolkit.setBorderStyle(borderStyleBackup);
+		}
+		
 		validateLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		// This is to avoid the cursor stopping at an empty label when navigating using keyboard
+		validateLabel.setVisible(false);
 
 		createCloneServerArea(buttonComposite, toolkit);
 
@@ -305,6 +316,10 @@ public class CloudFoundryAccountSection extends ServerEditorSection implements C
 					validateLabel.setForeground(validateLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
 					validateLabel.setText(e.getMessage());
 				}
+				
+				// If validate label is not empty, then make it visible so cursor can visit the control (and be read)
+				validateLabel.setVisible(validateLabel.getText().length() > 0);
+				
 				buttonComposite.layout(new Control[] { validateButton });
 				validateComposite.layout(new Control[] { validateLabel });
 			}

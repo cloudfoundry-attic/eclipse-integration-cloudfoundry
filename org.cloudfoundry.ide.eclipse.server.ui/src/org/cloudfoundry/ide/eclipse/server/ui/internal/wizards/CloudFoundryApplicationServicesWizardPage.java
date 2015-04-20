@@ -55,6 +55,8 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.accessibility.AccessibleAdapter;
+import org.eclipse.swt.accessibility.AccessibleEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -128,7 +130,7 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 		label.setText(Messages.CloudFoundryApplicationServicesWizardPage_LABEL_SELECT_SERVICE);
 
 		Table table = new Table(tableArea, SWT.BORDER | SWT.SINGLE | SWT.CHECK);
-
+		
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(table);
 
 		ToolBarManager toolBarManager = new ToolBarManager(SWT.FLAT);
@@ -215,6 +217,21 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 				return Messages.CloudFoundryApplicationServicesWizardPage_TEXT_TOOLTIP;
 			}
 		};
+		// Add accessibility text to the table, so at least when navigating through the table, the screen reader 
+		// know these are services being selected
+		servicesViewer.getControl().getAccessible().addAccessibleListener(new AccessibleAdapter() {
+			@Override
+			public void getName (AccessibleEvent e) {
+				if (e.childID >= 0) {
+					if (e.result != null) {
+						e.result = NLS.bind(Messages.CloudFoundryApplicationServicesWizardPage_TEXT_TABLE_ACC_LABEL, e.result);
+					} else {
+						e.result = Messages.CloudFoundryApplicationServicesWizardPage_TEXT_SERVICE_SELECTION;
+					}
+				}
+			}
+		});
+		
 		toolBarManager.add(addServiceAction);
 
 		toolBarManager.update(true);

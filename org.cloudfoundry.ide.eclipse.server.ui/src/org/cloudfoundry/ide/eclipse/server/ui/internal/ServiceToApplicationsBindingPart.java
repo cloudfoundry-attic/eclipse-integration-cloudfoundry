@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -43,10 +43,10 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Widget;
 
 /**
@@ -82,12 +82,12 @@ public class ServiceToApplicationsBindingPart extends UIPart {
 		return generalArea;
 	}
 	
-	protected void createTableArea(Composite parent) {	
-		Text t = new Text(parent, SWT.NONE | SWT.READ_ONLY);
-		t.setBackground(parent.getBackground());
-		t.setText(Messages.MANAGE_SERVICES_TO_APPLICATIONS_SELECTION_DESCRIPTION);		
-		
+	protected void createTableArea(Composite parent) {
 		Composite tableArea = new Composite(parent, SWT.NONE);
+		Label l = new Label(tableArea, SWT.NONE);
+		l.setBackground(parent.getBackground());
+		l.setText(Messages.MANAGE_SERVICES_TO_APPLICATIONS_SELECTION_DESCRIPTION);
+		
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(tableArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(tableArea);
 
