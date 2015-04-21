@@ -27,6 +27,8 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 /**
@@ -68,7 +70,7 @@ public class CloudFoundryImages {
 
 	public static final ImageDescriptor REFRESH = create(OBJ, "refresh.gif"); //$NON-NLS-1$
 
-	public static final ImageDescriptor REMOVE = create(OBJ, "remove.gif"); //$NON-NLS-1$
+	public static final ImageDescriptor REMOVE = PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_TOOL_DELETE);
 
 	public static final ImageDescriptor OVERLAY_ERROR = create(OBJ, "error_overlay.png"); //$NON-NLS-1$
 
