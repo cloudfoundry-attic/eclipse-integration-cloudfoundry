@@ -35,6 +35,7 @@ import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.client.lib.domain.CloudServicePlan;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.ui.ICloudFoundryServiceWizardIconProvider;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Logger;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
@@ -1248,7 +1249,16 @@ class CFServiceWizardDynamicIconLoader extends Thread {
 				ImageDescriptor imageDesc = iconProvider.getServiceIcon(entry.getOffering(), server);
 				
 				if(imageDesc != null) {
-					img = imageDesc.createImage(false);
+					try {
+						img = imageDesc.createImage(false);
+					} catch (Exception ex) {
+						// Do nothing, img is still null and will 
+						// be handled below using the default image.
+						if (Logger.INFO) {
+							Logger.println(Logger.INFO_LEVEL, this, "run", //$NON-NLS-1$
+									"Error creating image: " + imageDesc.toString(), ex); //$NON-NLS-1$
+						}
+					}
 				}
 				
 				if(img == null) {
