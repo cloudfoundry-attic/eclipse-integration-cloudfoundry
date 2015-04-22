@@ -32,9 +32,9 @@ import java.util.zip.ZipFile;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.archive.ZipApplicationArchive;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.Messages;
@@ -49,7 +49,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.SubMonitor;
-import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
@@ -163,7 +162,7 @@ public class JavaCloudFoundryArchiver {
 			JarPackageData jarPackageData = getJarPackageData(roots, mainType,
 					monitor);
 
-			boolean isBoot = isBootProject(javaProject);
+			boolean isBoot = CloudUtil.isBootProject(javaProject);
 
 			// Search for existing MANIFEST.MF
 			IFile metaFile = getManifest(roots, javaProject);
@@ -499,38 +498,5 @@ public class JavaCloudFoundryArchiver {
 			CloudErrorUtil.toCoreException(io);
 		}
 		return null;
-	}
-
-	/*
-	 * Derived from org.springframework.ide.eclipse.boot.core.BootPropertyTester
-	 * 
-	 * FIXNS: Remove when boot detection is moved to a common STS plug-in that
-	 * can be shared with CF Eclipse.
-	 */
-	public static boolean isBootProject(IJavaProject project) {
-		if (project == null) {
-			return false;
-		}
-		try {
-			IClasspathEntry[] classpath = project.getResolvedClasspath(true);
-			// Look for a 'spring-boot' jar entry
-			for (IClasspathEntry e : classpath) {
-				if (isBootJar(e)) {
-					return true;
-				}
-			}
-		} catch (Exception e) {
-			CloudFoundryPlugin.logError(e);
-		}
-		return false;
-	}
-
-	private static boolean isBootJar(IClasspathEntry e) {
-		if (e.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
-			IPath path = e.getPath();
-			String name = path.lastSegment();
-			return name.endsWith(".jar") && name.startsWith("spring-boot"); //$NON-NLS-1$ //$NON-NLS-2$
-		}
-		return false;
 	}
 }

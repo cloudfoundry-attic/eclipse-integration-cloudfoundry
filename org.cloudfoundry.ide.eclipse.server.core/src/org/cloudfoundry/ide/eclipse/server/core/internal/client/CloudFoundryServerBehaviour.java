@@ -190,6 +190,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		getApplicationUrlLookup().refreshDomains(monitor);
 
 		getRefreshHandler().scheduleRefreshAll();
+		
+		ServerEventHandler.getDefault().fireServerEvent(
+				new CloudServerEvent(getCloudFoundryServer(), CloudServerEvent.EVENT_SERVER_CONNECTED));
 	}
 
 	/**
@@ -394,6 +397,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 		server.setServerState(IServer.STATE_STOPPED);
 		server.setServerPublishState(IServer.PUBLISH_STATE_NONE);
+
+		ServerEventHandler.getDefault().fireServerEvent(
+				new CloudServerEvent(getCloudFoundryServer(), CloudServerEvent.EVENT_SERVER_DISCONNECTED));
 	}
 
 	public void reconnect(IProgressMonitor monitor) throws CoreException {
@@ -785,6 +791,14 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		// This stops the server locally, it does NOT stop the remotely running
 		// applications
 		setServerState(IServer.STATE_STOPPED);
+
+		try {
+			ServerEventHandler.getDefault().fireServerEvent(
+					new CloudServerEvent(getCloudFoundryServer(), CloudServerEvent.EVENT_SERVER_DISCONNECTED));
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
 	}
 
 	@Override
@@ -1114,6 +1128,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			// The server connection is indirectly performed by this
 			// first refresh call.
 			getRefreshHandler().scheduleRefreshAll();
+
+			ServerEventHandler.getDefault().fireServerEvent(
+					new CloudServerEvent(getCloudFoundryServer(), CloudServerEvent.EVENT_SERVER_CONNECTED));
 		}
 		catch (CoreException e) {
 			CloudFoundryPlugin.logError(e);

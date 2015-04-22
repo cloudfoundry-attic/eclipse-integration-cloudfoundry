@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -33,6 +33,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -43,6 +44,8 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jst.server.core.IJ2EEModule;
 import org.eclipse.jst.server.core.IWebModule;
 import org.eclipse.osgi.util.NLS;
@@ -122,8 +125,8 @@ public class CloudUtil {
 			return warFile;
 		}
 		catch (IOException e) {
-			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID, 
-					"Failed to create war file: "+ e.getMessage(), e)); //$NON-NLS-1$
+			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+					"Failed to create war file: " + e.getMessage(), e)); //$NON-NLS-1$
 		}
 	}
 
@@ -410,4 +413,45 @@ public class CloudUtil {
 		}
 	}
 
+	/*
+	 * Derived from org.springframework.ide.eclipse.boot.core.BootPropertyTester
+	 * 
+	 * FIXNS: Remove when boot detection is moved to a common STS plug-in that
+	 * can be shared with CF Eclipse.
+	 */
+	public static boolean isBootProject(IJavaProject project) {
+		if (project == null) {
+			return false;
+		}
+		try {
+			IClasspathEntry[] classpath = project.getResolvedClasspath(true);
+			// Look for a 'spring-boot' jar entry
+			for (IClasspathEntry e : classpath) {
+				if (isBootJar(e)) {
+					return true;
+				}
+			}
+		}
+		catch (Exception e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		return false;
+	}
+
+	public static boolean isBootApp(CloudFoundryApplicationModule appModule) {
+		if (appModule == null) {
+			return false;
+		}
+		IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(appModule);
+		return isBootProject(javaProject);
+	}
+
+	private static boolean isBootJar(IClasspathEntry e) {
+		if (e.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
+			IPath path = e.getPath();
+			String name = path.lastSegment();
+			return name.endsWith(".jar") && name.startsWith("spring-boot"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		return false;
+	}
 }

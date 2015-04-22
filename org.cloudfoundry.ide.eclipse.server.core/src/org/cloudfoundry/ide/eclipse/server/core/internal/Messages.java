@@ -185,6 +185,22 @@ public class Messages extends NLS {
 
 	public static String CloudFoundryServerBehaviour_WAITING_APP_START;
 
+	public static String CloudRebelAppHandler_ADDING_URL;
+
+	public static String CloudRebelAppHandler_ERROR;
+
+	public static String CloudRebelAppHandler_FINDING_REMOTING_AGENT;
+
+	public static String CloudRebelAppHandler_FOUND_REMOTING_AGENT;
+
+	public static String CloudRebelAppHandler_MESSAGE_PREFIX;
+
+	public static String CloudRebelAppHandler_REMOVING_URL;
+
+	public static String CloudRebelAppHandler_TIME_OUT_RESOLVING_REMOTING_AGENT;
+
+	public static String CloudRebelAppHandler_UPDATED_URL;
+
 	public static String CommandOptions_DESCRIPTION_VARIABLES_FOR_TUNNEL;
 
 	public static String CONSOLE_ERROR_MESSAGE;
