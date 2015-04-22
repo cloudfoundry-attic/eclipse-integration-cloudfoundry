@@ -19,6 +19,8 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.jrebel;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -26,29 +28,44 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.ExternalRestTemplate;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerListener;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ExternalRestTemplate;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.AppUrlChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.wst.common.project.facet.core.IFacetedProject;
+import org.eclipse.wst.common.project.facet.core.IProjectFacet;
+import org.eclipse.wst.common.project.facet.core.ProjectFacetsManager;
 import org.eclipse.wst.server.core.IModule;
 import org.osgi.framework.Bundle;
 import org.springframework.http.HttpEntity;
@@ -56,10 +73,18 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 public class CloudRebelAppHandler implements CloudServerListener {
 
 	private static CloudRebelAppHandler handler;
+
+	public static final String ID_MODULE_STANDALONE = "cloudfoundry.standalone.app"; //$NON-NLS-1$
 
 	private CloudRebelAppHandler() {
 		ServerEventHandler.getDefault().addServerListener(this);
@@ -130,8 +155,10 @@ public class CloudRebelAppHandler implements CloudServerListener {
 
 				attempts--;
 			}
-			printErrorToConsole(appModule, server, Messages.CloudRebelAppHandler_TIME_OUT_RESOLVING_REMOTING_AGENT);
-			CloudFoundryPlugin.logError(Messages.CloudRebelAppHandler_TIME_OUT_RESOLVING_REMOTING_AGENT);
+			if (!subMonitor.isCanceled()) {
+				printErrorToConsole(appModule, server, Messages.CloudRebelAppHandler_TIME_OUT_RESOLVING_REMOTING_AGENT);
+				CloudFoundryPlugin.logError(Messages.CloudRebelAppHandler_TIME_OUT_RESOLVING_REMOTING_AGENT);
+			}
 		}
 		catch (CoreException e) {
 			printErrorToConsole(appModule, server, NLS.bind(Messages.CloudRebelAppHandler_ERROR, e.getMessage()));
@@ -155,7 +182,9 @@ public class CloudRebelAppHandler implements CloudServerListener {
 			if (url != null) {
 
 				HttpHeaders headers = new HttpHeaders();
-				headers.set("x-rebel-id", "random"); //$NON-NLS-1$ //$NON-NLS-2$
+				String id = appModule.getLocalModule().getProject() != null ? appModule.getLocalModule().getProject()
+						.getName() : "random"; //$NON-NLS-1$
+				headers.set("x-rebel-id", id); //$NON-NLS-1$ 
 
 				HttpEntity<Object> requestEntity = new HttpEntity<Object>(headers);
 				ResponseEntity<String> responseEntity = new ExternalRestTemplate().exchange(url, HttpMethod.POST,
@@ -255,14 +284,12 @@ public class CloudRebelAppHandler implements CloudServerListener {
 					};
 
 					job.schedule();
-
 				}
 			}
 			catch (CoreException ce) {
 				CloudFoundryPlugin.logError(ce);
 			}
 		}
-
 	}
 
 	protected void handleRebelProject(CloudServerEvent event, IModule module) throws CoreException {
@@ -296,8 +323,8 @@ public class CloudRebelAppHandler implements CloudServerListener {
 							// If the app is started, check that rebel.xml is
 							// configured correctly for spring boot applications
 
-							if (event.getType() == CloudServerEvent.EVENT_APP_STARTED && CloudUtil.isBootApp(appModule)) {
-								configureSpringBootRebel(project);
+							if (event.getType() == CloudServerEvent.EVENT_APP_STARTED && isSpringBootJar(appModule)) {
+								configureSpringBootJarApp(project);
 							}
 
 							// This includes ALL URLs, not just the one
@@ -337,8 +364,10 @@ public class CloudRebelAppHandler implements CloudServerListener {
 
 							List<URL> updatedRebelUrls = new ArrayList<URL>();
 
+							boolean shouldSetUrls = false;
 							if (shouldAddRemotingUrl(event)) {
 
+								shouldSetUrls = true;
 								printToConsole(appModule, server, Messages.CloudRebelAppHandler_ADDING_URL);
 								// Remove old app URLs
 								for (URL rebelUrl : existingRebelUrls) {
@@ -350,7 +379,7 @@ public class CloudRebelAppHandler implements CloudServerListener {
 
 								// Add new app URLs
 								for (String appUrl : currentAppUrls) {
-									if (!appUrl.startsWith("http://") || !appUrl.startsWith("https://")) { //$NON-NLS-1$ //$NON-NLS-2$
+									if (!appUrl.startsWith("http://") && !appUrl.startsWith("https://")) { //$NON-NLS-1$ //$NON-NLS-2$
 										appUrl = "http://" + appUrl; //$NON-NLS-1$
 									}
 									try {
@@ -363,11 +392,12 @@ public class CloudRebelAppHandler implements CloudServerListener {
 										CloudFoundryPlugin.logError(e);
 									}
 								}
-
 							}
 							else if (shouldRemoveRemotingUrl(event)) {
 
+								shouldSetUrls = true;
 								printToConsole(appModule, server, Messages.CloudRebelAppHandler_REMOVING_URL);
+
 								for (URL rebelUrl : existingRebelUrls) {
 									String authority = rebelUrl.getAuthority();
 									// If deleting or removing an application,
@@ -378,14 +408,16 @@ public class CloudRebelAppHandler implements CloudServerListener {
 								}
 							}
 
-							Method setRebelRemotingUrls = remoteProjectObj.getClass().getDeclaredMethod(
-									"setRemoteUrls", URL[].class); //$NON-NLS-1$
+							if (shouldSetUrls) {
+								Method setRebelRemotingUrls = remoteProjectObj.getClass().getDeclaredMethod(
+										"setRemoteUrls", URL[].class); //$NON-NLS-1$
 
-							if (setRebelRemotingUrls != null) {
-								setRebelRemotingUrls.setAccessible(true);
-								setRebelRemotingUrls.invoke(remoteProjectObj,
-										new Object[] { updatedRebelUrls.toArray(new URL[0]) });
-								printToConsole(appModule, server, Messages.CloudRebelAppHandler_UPDATED_URL);
+								if (setRebelRemotingUrls != null) {
+									setRebelRemotingUrls.setAccessible(true);
+									setRebelRemotingUrls.invoke(remoteProjectObj,
+											new Object[] { updatedRebelUrls.toArray(new URL[0]) });
+									printToConsole(appModule, server, Messages.CloudRebelAppHandler_UPDATED_URL);
+								}
 							}
 						}
 					}
@@ -416,6 +448,138 @@ public class CloudRebelAppHandler implements CloudServerListener {
 		}
 	}
 
+	protected void configureSpringBootJarApp(IProject project) {
+
+		// rebel.xml is overwritten for Spring Boot Jar apps to skip the /lib
+		// folder which
+		// is only generated in the Spring Boot Jar but has no workspace
+		// equivalent
+
+		try {
+			// Only overwrite the rebel.xml if auto-generation is enabled. Don't
+			// change rebel.xml if auto-generate is off as to avoid
+			// changing user-specified changes to the file
+			String value = project.getPersistentProperty(new QualifiedName("org.zeroturnaround.eclipse.jrebel",//$NON-NLS-1$
+					"autoGenerateRebelXml")); //$NON-NLS-1$
+			if ("false".equals(value)) {//$NON-NLS-1$
+				return;
+			}
+
+			IFile file = project.getFile("/src/main/resources/rebel.xml"); //$NON-NLS-1$
+			if (file.isAccessible()) {
+				String path = file.getRawLocation() != null ? file.getRawLocation().toString() : null;
+
+				if (path != null) {
+					DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+
+					DocumentBuilder db = factory.newDocumentBuilder();
+					Document doc = db.parse(new File(path));
+
+					Element binElement = null;
+					NodeList nodeList = doc.getElementsByTagName("*"); //$NON-NLS-1$
+					if (nodeList != null) {
+
+						for (int i = 0; i < nodeList.getLength(); i++) {
+							Node node = nodeList.item(i);
+							if ((node instanceof Element) && node.getNodeName().equals("dir")) { //$NON-NLS-1$
+								Element el = (Element) node;
+								String att = el.getAttribute("name"); //$NON-NLS-1$
+								if (att != null && att.endsWith("/bin")) { //$NON-NLS-1$
+									binElement = el;
+									break;
+								}
+							}
+						}
+
+						if (binElement != null) {
+							NodeList binChildren = binElement.getChildNodes();
+							Element existingExcludeLib = null;
+							Element existingExcludeJavabuildpack = null;
+							if (binChildren != null) {
+
+								for (int i = 0; i < binChildren.getLength(); i++) {
+									Node node = binChildren.item(i);
+									if (node.getNodeName().equals("exclude") && node instanceof Element) { //$NON-NLS-1$
+										Element excludeElement = (Element) node;
+										Attr attr = excludeElement.getAttributeNode("name"); //$NON-NLS-1$
+										if (attr != null) {
+											if (attr.getNodeValue().equals("lib/**")) { //$NON-NLS-1$
+												existingExcludeLib = excludeElement;
+											}
+											else if (attr.getNodeValue().equals(".java-buildpack/**")) { //$NON-NLS-1$
+												existingExcludeJavabuildpack = excludeElement;
+											}
+										}
+									}
+								}
+							}
+
+							Element updatedExcludeLib = null;
+							if (existingExcludeLib == null) {
+								updatedExcludeLib = doc.createElement("exclude"); //$NON-NLS-1$
+								updatedExcludeLib.setAttribute("name", "lib/**"); //$NON-NLS-1$ //$NON-NLS-2$
+								binElement.appendChild(updatedExcludeLib);
+							}
+							Element updatedExcludeJavabuildpack = null;
+							if (existingExcludeJavabuildpack == null) {
+								updatedExcludeJavabuildpack = doc.createElement("exclude"); //$NON-NLS-1$
+								updatedExcludeJavabuildpack.setAttribute("name", ".java-buildpack/**"); //$NON-NLS-1$ //$NON-NLS-2$
+								binElement.appendChild(updatedExcludeJavabuildpack);
+							}
+							if (updatedExcludeLib != null || updatedExcludeJavabuildpack != null) {
+
+								// If replacing the exist rebel.xml file, be
+								// sure to switch off automatic rebel.xml
+								// generation
+								project.setPersistentProperty(new QualifiedName("org.zeroturnaround.eclipse.jrebel",//$NON-NLS-1$
+										"autoGenerateRebelXml"), "false"); //$NON-NLS-1$ //$NON-NLS-2$
+
+								Transformer transformer = TransformerFactory.newInstance().newTransformer();
+								transformer.setOutputProperty(OutputKeys.INDENT, "yes"); //$NON-NLS-1$
+								DOMSource source = new DOMSource(doc);
+								StreamResult console = new StreamResult(new File(path));
+								transformer.transform(source, console);
+							}
+						}
+					}
+				}
+			}
+		}
+		catch (ParserConfigurationException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		catch (SAXException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		catch (IOException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		catch (TransformerException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+	}
+
+	protected boolean isSpringBootJar(CloudFoundryApplicationModule appModule) {
+
+		if (CloudUtil.isBootApp(appModule)) {
+			IProject project = appModule.getLocalModule().getProject();
+			if (project != null) {
+				IProjectFacet facet = ProjectFacetsManager.getProjectFacet(ID_MODULE_STANDALONE);
+				try {
+					IFacetedProject facetedProject = ProjectFacetsManager.create(project);
+					return facetedProject != null && facetedProject.hasProjectFacet(facet);
+				}
+				catch (CoreException e) {
+					CloudFoundryPlugin.log(e);
+				}
+			}
+		}
+		return false;
+	}
+
 	protected boolean shouldAddRemotingUrl(CloudServerEvent event) {
 		return event != null
 				&& (event.getType() == CloudServerEvent.EVENT_APP_URL_CHANGED
@@ -426,10 +590,6 @@ public class CloudRebelAppHandler implements CloudServerListener {
 		return event != null
 				&& (event.getType() == CloudServerEvent.EVENT_APP_DELETED
 						|| event.getType() == CloudServerEvent.EVENT_APP_STOPPED || event.getType() == CloudServerEvent.EVENT_SERVER_DISCONNECTED);
-	}
-
-	protected void configureSpringBootRebel(IProject project) {
-
 	}
 
 	protected void printToConsole(CloudFoundryApplicationModule appModule, CloudFoundryServer server, String message) {
