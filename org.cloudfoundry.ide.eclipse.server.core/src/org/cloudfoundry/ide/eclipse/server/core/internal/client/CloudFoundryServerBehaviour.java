@@ -190,7 +190,7 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		getApplicationUrlLookup().refreshDomains(monitor);
 
 		getRefreshHandler().scheduleRefreshAll();
-		
+
 		ServerEventHandler.getDefault().fireServerEvent(
 				new CloudServerEvent(getCloudFoundryServer(), CloudServerEvent.EVENT_SERVER_CONNECTED));
 	}
@@ -680,7 +680,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public String getFile(final String applicationId, final int instanceIndex, final String path,
 			IProgressMonitor monitor) throws CoreException {
-		return new FileRequest<String>() {
+		String label = NLS.bind(Messages.CloudFoundryServerBehaviour_FETCHING_FILE, path, applicationId);
+		return new FileRequest<String>(label) {
 			@Override
 			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getFile(applicationId, instanceIndex, path);
@@ -690,7 +691,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 	public String getFile(final String applicationId, final int instanceIndex, final String filePath,
 			final int startPosition, IProgressMonitor monitor) throws CoreException {
-		return new FileRequest<String>() {
+		String label = NLS.bind(Messages.CloudFoundryServerBehaviour_FETCHING_FILE, filePath, applicationId);
+
+		return new FileRequest<String>(label) {
 			@Override
 			protected String doRun(CloudFoundryOperations client, SubMonitor progress) throws CoreException {
 				return client.getFile(applicationId, instanceIndex, filePath, startPosition);
@@ -1880,8 +1883,8 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	}
 
 	abstract class FileRequest<T> extends StagingAwareRequest<T> {
-		FileRequest() {
-			super("Retrieving file"); //$NON-NLS-1$
+		FileRequest(String label) {
+			super(label);
 		}
 	}
 
