@@ -1197,7 +1197,6 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 		// "Start").
 		IStatus errorStatus = CloudFoundryPlugin.getErrorStatus(NLS.bind(Messages.ERROR_FAILED_TO_PUSH_APP,
 				e.getMessage()));
-		CloudFoundryPlugin.log(errorStatus);
 		CloudFoundryPlugin.getCallback().handleError(errorStatus);
 	}
 

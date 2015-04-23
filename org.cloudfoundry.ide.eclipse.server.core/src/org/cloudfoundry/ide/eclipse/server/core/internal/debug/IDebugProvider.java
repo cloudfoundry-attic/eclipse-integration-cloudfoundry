@@ -23,6 +23,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationType;
 
@@ -34,11 +35,12 @@ public interface IDebugProvider {
 	 * @param appModule
 	 * @param cloudServer
 	 * @param monitor
-	 * @return
-	 * @throws CoreException if error occurs.
+	 * @return non-null descriptor.
+	 * @throws CoreException if failed to resolve descriptor
+	 * @throws OperationCanceledException if connection operation was canceled
 	 */
 	public DebugConnectionDescriptor getDebugConnectionDescriptor(CloudFoundryApplicationModule appModule,
-			CloudFoundryServer cloudServer, IProgressMonitor monitor) throws CoreException;
+			CloudFoundryServer cloudServer, IProgressMonitor monitor) throws CoreException, OperationCanceledException;
 
 	/**
 	 * Determine if the application is in a state where it can be launched. If

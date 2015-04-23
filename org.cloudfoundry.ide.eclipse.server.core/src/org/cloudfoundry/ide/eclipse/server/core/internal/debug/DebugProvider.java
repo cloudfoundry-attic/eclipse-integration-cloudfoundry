@@ -19,9 +19,21 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.debug;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.apache.commons.io.IOUtils;
+import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
@@ -29,11 +41,13 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.application.Environment
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.AbstractWaitWithProgressJob;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
@@ -49,30 +63,60 @@ public class DebugProvider implements IDebugProvider {
 
 	private static final String JAVA_OPTS = "JAVA_OPTS"; //$NON-NLS-1$
 
+	private final static Pattern NGROK_OUTPUT_FILE = Pattern.compile(".*ngrok\\.txt"); //$NON-NLS-1$
+
 	@Override
 	public DebugConnectionDescriptor getDebugConnectionDescriptor(final CloudFoundryApplicationModule appModule,
-			final CloudFoundryServer cloudServer, IProgressMonitor monitor) throws CoreException {
-		
-		final int attempts = 50;
-		final int totalChildWork = 10;
-		SubMonitor subMonitor = SubMonitor.convert(monitor, attempts*totalChildWork);
+			final CloudFoundryServer cloudServer, IProgressMonitor monitor) throws CoreException,
+			OperationCanceledException {
 
-		String fileContent = new AbstractWaitWithProgressJob<String>(attempts, 5000, true) {
+		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 
-			protected String runInWait(IProgressMonitor monitor) throws CoreException {
-				if (monitor.isCanceled()) {
-					return null;
+		IFile ngrokFile = getFile(appModule.getLocalModule().getProject(), ".profile.d", "ngrok.sh"); //$NON-NLS-1$ //$NON-NLS-2$ 
+
+		String remoteNgrokOutputFile = null;
+
+		if (ngrokFile != null && ngrokFile.getRawLocation() != null) {
+			try {
+
+				Reader reader = new FileReader(new File(ngrokFile.getRawLocation().toString()));
+				StringWriter writer = new StringWriter();
+				try {
+					IOUtils.copy(reader, writer);
 				}
-				SubMonitor subMonitor = SubMonitor.convert(monitor);
-				return cloudServer.getBehaviour().getFile(appModule.getDeployedApplicationName(), 0,
-						"app/.profile.d/ngrok.txt", subMonitor.newChild(totalChildWork)); //$NON-NLS-1$
+				finally {
+					reader.close();
+				}
+				String fileContents = writer.toString();
+				if (fileContents != null) {
+					String[] segments = fileContents.split(">");
+					if (segments.length >= 2) {
+						Matcher matcher = NGROK_OUTPUT_FILE.matcher(segments[1]);
+						if (matcher.find()) {
+							remoteNgrokOutputFile = segments[1].substring(matcher.start(), matcher.end());
+							if (remoteNgrokOutputFile != null) {
+								remoteNgrokOutputFile = remoteNgrokOutputFile.trim();
+							}
+						}
+					}
+				}
 			}
+			catch (FileNotFoundException e) {
+				throw CloudErrorUtil.toCoreException(e);
+			}
+			catch (IOException e) {
+				throw CloudErrorUtil.toCoreException(e);
+			}
+		}
 
-		}.run(subMonitor);
+		if (remoteNgrokOutputFile == null) {
+			String errorMessage = "Unable to connect the debugger. Failed to resolve a path to an output ngrok.txt file from the local ngrok.sh file. Please ensure the shell script file exists in your project and is in the project's classpath. Also please ensure that the script includes a command for the ngrok executable running on the Cloud to generate output to an ngrok.txt."; //$NON-NLS-1$
+			throw CloudErrorUtil.toCoreException(errorMessage);
+		}
 
-		// NS: Note - replace with JSON parsing, as the ngrok output contains
-		// JSON with the port
-		if (fileContent != null && fileContent.indexOf("Tunnel established at tcp://ngrok.com:") > -1) { //$NON-NLS-1$
+		String fileContent = getFileContent(appModule, cloudServer, remoteNgrokOutputFile, subMonitor);
+
+		if (fileContent.indexOf("Tunnel established at tcp://ngrok.com:") > -1) { //$NON-NLS-1$
 			String pattern = "Tunnel established at tcp://ngrok.com:"; //$NON-NLS-1$
 			int start = fileContent.indexOf(pattern);
 			String sub = fileContent.substring(start);
@@ -80,11 +124,91 @@ public class DebugProvider implements IDebugProvider {
 			sub = sub.substring(pattern.length(), end);
 			int port = Integer.parseInt(sub.trim());
 
-			if (port > 0) {
-				return new DebugConnectionDescriptor("ngrok.com", port); //$NON-NLS-1$
+			DebugConnectionDescriptor descriptor = new DebugConnectionDescriptor("ngrok.com", port); //$NON-NLS-1$
+
+			if (!descriptor.areValidIPandPort()) {
+				throw CloudErrorUtil
+						.toCoreException("Invalid port:" + descriptor.getPort() + " or ngrok server address: " + descriptor.getIp() //$NON-NLS-1$ //$NON-NLS-2$ 
+								+ " parsed from ngrok output file in the Cloud."); //$NON-NLS-1$
+			}
+			return descriptor;
+		}
+		else {
+			throw CloudErrorUtil
+					.toCoreException("Unable to parse port or ngrok server address from the ngrok output file in the Cloud for " + appModule.getDeployedApplicationName() + ". Please verify that ngrok executable is present in the application deployment and running in the Cloud"); //$NON-NLS-1$  //$NON-NLS-2$ 
+		}
+	}
+
+	/**
+	 * @return non-null file content
+	 * @throws CoreException if error occurred, or file not found
+	 */
+	protected String getFileContent(final CloudFoundryApplicationModule appModule,
+			final CloudFoundryServer cloudServer, final String outputFilePath, IProgressMonitor monitor)
+			throws CoreException, OperationCanceledException {
+
+		final int attempts = 100;
+		SubMonitor subMonitor = SubMonitor.convert(monitor, 100 * attempts);
+		String content = null;
+		CoreException error = null;
+		try {
+			content = new AbstractWaitWithProgressJob<String>(attempts, 3000, true) {
+
+				protected String runInWait(IProgressMonitor monitor) throws CoreException {
+					if (monitor.isCanceled()) {
+						return null;
+					}
+					SubMonitor subMonitor = SubMonitor.convert(monitor);
+					CloudApplication app = null;
+					try {
+						app = cloudServer.getBehaviour().getCloudApplication(appModule.getDeployedApplicationName(),
+								subMonitor.newChild(50));
+					}
+					catch (CoreException e) {
+						// Handle app errors separately
+						CloudFoundryPlugin.logError(e);
+					}
+
+					// Stop checking for the file if the application no longer
+					// exists or is not running
+					if (app != null && app.getState() == AppState.STARTED) {
+						return cloudServer.getBehaviour().getFile(appModule.getDeployedApplicationName(), 0,
+								outputFilePath, subMonitor.newChild(50));
+					}
+					else {
+						return null;
+					}
+				}
+
+				// Any result is valid for this operation, as errors are handled
+				// via exception
+				protected boolean isValid(String result) {
+					return true;
+				}
+
+			}.run(subMonitor);
+		}
+		catch (CoreException e) {
+			error = e;
+		}
+
+		if (subMonitor.isCanceled()) {
+			throw new OperationCanceledException();
+		}
+
+		if (content == null) {
+			String message = "Failed to connect debugger to Cloud application - Timed out fetching ngrok output file for: "//$NON-NLS-1$
+					+ appModule.getDeployedApplicationName()
+					+ ". Please verify that the ngrok output file exists in the Cloud or that the application is running correctly.";//$NON-NLS-1$
+			if (error != null) {
+				throw CloudErrorUtil.asCoreException(message, error, false);
+			}
+			else {
+				throw CloudErrorUtil.toCoreException(message);
 			}
 		}
-		return null;
+
+		return content;
 	}
 
 	@Override
@@ -167,10 +291,6 @@ public class DebugProvider implements IDebugProvider {
 		return defaultProvider;
 	}
 
-	/**
-	 * Returns either test sources, or non-test sources, based on a flag
-	 * setting. If nothing is found, returns empty list.
-	 */
 	protected boolean containsDebugFiles(IJavaProject project) {
 		try {
 
@@ -182,7 +302,7 @@ public class DebugProvider implements IDebugProvider {
 						IPath projectPath = project.getPath();
 						IPath relativePath = entry.getPath().makeRelativeTo(projectPath);
 						IFolder folder = project.getProject().getFolder(relativePath);
-						if (containsResource(folder, ".profile.d")) {//$NON-NLS-1$
+						if (getFile(folder, ".profile.d", "ngrok.sh") != null) {//$NON-NLS-1$ //$NON-NLS-2$
 							return true;
 						}
 					}
@@ -198,20 +318,27 @@ public class DebugProvider implements IDebugProvider {
 		return false;
 	}
 
-	protected boolean containsResource(IContainer container, String pattern) throws CoreException {
-		if (container != null && container.exists()) {
-			if (container.getName().contains(pattern)) {
-				return true;
-			}
-			for (IResource child : container.members()) {
-				if (child instanceof IContainer) {
-					IContainer childContainer = (IContainer) child;
-					if (containsResource(childContainer, pattern)) {
-						return true;
+	protected IFile getFile(IResource resource, String containingFolderName, String fileName) throws CoreException {
+
+		if (resource instanceof IFile && resource.getName().equals(fileName) && resource.getParent() != null
+				&& resource.getParent().getName().equals(containingFolderName)) {
+			return (IFile) resource;
+		}
+		else if (resource instanceof IContainer) {
+			IContainer container = (IContainer) resource;
+			IResource[] children = container.members();
+
+			if (children != null) {
+				for (IResource child : children) {
+
+					IFile file = getFile(child, containingFolderName, fileName);
+					if (file != null) {
+						return file;
 					}
 				}
 			}
 		}
-		return false;
+
+		return null;
 	}
 }

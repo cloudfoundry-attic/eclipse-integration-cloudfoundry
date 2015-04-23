@@ -28,6 +28,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.debug.DebugProvider;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -66,20 +67,13 @@ public class DebugCommand {
 			}
 
 		}
+		catch (OperationCanceledException e) {
+			// do nothing, debug should be cancelled without error
+			return;
+		}
 		catch (CoreException ce) {
-			DebugOperations.fireDebugChanged(launch.getCloudFoundryServer(), launch.getApplicationModule(),
-					ce.getStatus());
+			CloudFoundryPlugin.getCallback().handleError(ce.getStatus());
 		}
-		catch (Throwable t) {
-			// Catch other issues with debug launching
-			IStatus status = CloudFoundryPlugin.getErrorStatus(t);
-			DebugOperations.fireDebugChanged(launch.getCloudFoundryServer(), launch.getApplicationModule(), status);
-
-			// Propagate any other error to allow Eclipse debug
-			// to handle the error
-			throw t;
-		}
-
 	}
 
 	public void terminate() {

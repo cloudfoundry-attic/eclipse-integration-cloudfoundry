@@ -25,6 +25,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryAppl
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationType;
@@ -115,11 +116,12 @@ public class DebugLaunch {
 	 * @return Non-null launch configuration.
 	 * @throws CoreException if error occurred while resolving launch
 	 * configuration
+	 * @throws OperationCanceledException if cancelled.
 	 */
-	public ILaunchConfiguration resolveLaunchConfiguration(IProgressMonitor monitor) throws CoreException {
+	public ILaunchConfiguration resolveLaunchConfiguration(IProgressMonitor monitor) throws CoreException,
+			OperationCanceledException {
 
 		DebugConnectionDescriptor connectionDescriptor = resolveDescriptor(monitor);
-
 		return resolveLaunchConfiguration(connectionDescriptor.getIp(), connectionDescriptor.getPort(), 60000);
 	}
 
@@ -179,23 +181,19 @@ public class DebugLaunch {
 		return provider.configureApp(getApplicationModule(), getCloudFoundryServer(), monitor);
 	}
 
-	protected DebugConnectionDescriptor resolveDescriptor(IProgressMonitor monitor) throws CoreException {
+	/**
+	 * 
+	 * @param monitor
+	 * @return non-null descriptor
+	 * @throws CoreException if failed to resolve descriptor
+	 * @throws OperationCanceledException if cancelled
+	 */
+	protected DebugConnectionDescriptor resolveDescriptor(IProgressMonitor monitor) throws CoreException,
+			OperationCanceledException {
 
-		DebugConnectionDescriptor descriptor = null;
-		Throwable error = null;
-		try {
-			descriptor = provider
-					.getDebugConnectionDescriptor(getApplicationModule(), getCloudFoundryServer(), monitor);
-		}
-		catch (Throwable t) {
-			error = t;
-		}
-		if (descriptor == null || !descriptor.areValidIPandPort()) {
-			throw CloudErrorUtil
-					.toCoreException(
-							"Failed to connect debugger to Cloud application - Timed out resolving port and IP for application: " + getApplicationModule().getDeployedApplicationName(), error); //$NON-NLS-1$
-		}
+		DebugConnectionDescriptor descriptor = provider.getDebugConnectionDescriptor(getApplicationModule(),
+				getCloudFoundryServer(), monitor);
+
 		return descriptor;
 	}
-
 }

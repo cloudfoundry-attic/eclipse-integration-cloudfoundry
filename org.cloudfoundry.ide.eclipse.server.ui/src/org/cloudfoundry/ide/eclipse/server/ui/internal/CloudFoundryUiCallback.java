@@ -229,6 +229,8 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	public void handleError(final IStatus status) {
 
 		if (status != null && status.getSeverity() == IStatus.ERROR) {
+			
+			CloudFoundryPlugin.log(status);
 
 			UIJob job = new UIJob(Messages.CloudFoundryUiCallback_JOB_CF_ERROR) {
 				public IStatus runInUIThread(IProgressMonitor monitor) {
