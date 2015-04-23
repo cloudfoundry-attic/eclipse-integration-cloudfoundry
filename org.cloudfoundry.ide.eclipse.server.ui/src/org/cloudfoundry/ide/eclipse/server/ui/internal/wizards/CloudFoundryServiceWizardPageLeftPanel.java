@@ -39,11 +39,15 @@ import org.cloudfoundry.ide.eclipse.server.ui.internal.Logger;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.accessibility.AccessibleAdapter;
+import org.eclipse.swt.accessibility.AccessibleEvent;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.FocusAdapter;
+import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.ModifyEvent;
@@ -75,10 +79,11 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.Widget;
 import org.eclipse.wst.server.core.IRuntime;
 
 public class CloudFoundryServiceWizardPageLeftPanel {
-	
+
 	/** Services that are available for the user to click */
 	List<AvailableService> availableServices = new ArrayList<AvailableService>();
 	
@@ -97,6 +102,10 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 	
 	private Text filterText;
 	
+	/** The current focus of the panel: either the filter Text, or one of the services. Depending on the platform, this may or may not correspond to the 
+	 * window focus; see LABEL_SELECT below. */
+	private Widget currFocus = null;
+	
 	CloudFoundryServiceWizardPage parent;
 	
 	// Keyboard traversal listener; see description on class for details.
@@ -105,6 +114,18 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 	/** Optional field -- used to provide icons in service wizard if available */
 	CFServiceWizardDynamicIconLoader loader;
 	
+	/* 
+	 * This field indicates whether or not the platform allows keyboard focus to be placed on SWT Label objects.
+	 * This is true for Windows and Mac, but false for GTK/Linux.
+	 * 
+	 * On Linux, attempting to call forceFocus on a label is a no-op. On Linux, we leave the focus on 
+	 * filter text, and handle the key/select/traversal events accordingly.
+	 * 
+	 * (One alternative was to use a Text/StyledText for each of the Service names, instead of a Label. However there is no way to disable the
+	 * label cursor without disabling the ability to focus (for example setEnabled(false) does one but not the other.) )
+	 **/
+	private static final boolean LABEL_FOCUS_SUPPORTED = !( System.getProperty("os.name").toLowerCase().contains("linux") );
+
 	private Font boldFont;
 
 	private String filterTerm = null;
@@ -112,6 +133,7 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 	public CloudFoundryServiceWizardPageLeftPanel(CloudFoundryServiceWizardPage parent) {
 		traverseListener = new ServiceListTraverseListener();
 		this.parent = parent;
+		
 	}
 	
 	private Composite createFilterComp(Composite parent) {
@@ -121,8 +143,6 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 		layout.numColumns = 3;
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
-//		layout.horizontalSpacing = convertHorizontalDLUsToPixels(comp, 4);
-//		layout.verticalSpacing = convertHorizontalDLUsToPixels(comp, 4);
 		filterComp.setLayout(layout);
 
 		final Label filterLabel = new Label(filterComp, SWT.NONE);
@@ -134,9 +154,13 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 		filterText.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false, 2, 1));
 		filterText.setMessage(Messages.CloudFoundryServiceWizardPageLeftPanel_DEFAULT_FILTER_TEXT);
 
+		setCurrFocus(filterText);
+
 		filterText.addModifyListener(new ModifyListener() {
 			@Override
 			public void modifyText(ModifyEvent e) {
+				
+				setCurrFocus(filterText);
 				
 				String text = filterText.getText();
 				if (Messages.CloudFoundryServiceWizardPageLeftPanel_DEFAULT_FILTER_TEXT.equals(text)) {
@@ -149,6 +173,12 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 			}
 		});
 		
+		filterText.addFocusListener(new FocusAdapter() {
+			public void focusGained(FocusEvent e) {
+				setCurrFocus(filterText);
+			};
+		} );
+				
 		MouseWheelListener mwl = new MouseWheelListener() {
 
 			public void mouseScrolled(MouseEvent event) {
@@ -159,8 +189,21 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 		filterText.addMouseWheelListener(mwl);		
 		filterText.addTraverseListener(traverseListener);
 		
-		return filterComp;
+		if(!LABEL_FOCUS_SUPPORTED) {
+			// For Linux, page up and page down keys are received by the filter, so pass them on.
+			filterText.addKeyListener(new KeyAdapter() {
+				@Override
+				public void keyPressed(KeyEvent e) {
+					if(e.keyCode == SWT.PAGE_UP || e.keyCode == SWT.PAGE_DOWN || e.keyCode == SWT.HOME || e.keyCode == SWT.END) {
+						
+						handleServiceKeyEvent(e);
+					}
+					
+				}
+			});
+		}
 		
+		return filterComp;
 	}
 	
 	public Group createMainWindowComposite(Composite parent) {
@@ -199,12 +242,11 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 				if (c == null) {
 					return;
 				}
-				
+
 				Rectangle r = scrollComp.getClientArea();
 				
 				r.height = c.computeSize(r.width, SWT.DEFAULT).y;
 				c.setBounds(r);
-								
 			}
 		});
 		
@@ -290,8 +332,13 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 			
 			selEdgeColor = new Color(display, (c1.getRed() + c2.getRed() * 3) / 4,
 					(c1.getGreen() + c2.getGreen() * 3) / 4, (c1.getBlue() + c2.getBlue() * 3) / 4);
-			selFillColor = new Color(display, (c1.getRed() + c2.getRed() * 8) / 9,
-					(c1.getGreen() + c2.getGreen() * 8) / 9, (c1.getBlue() + c2.getBlue() * 8) / 9);
+		
+			// High contrast requires a stronger blend between background and selection colours
+			final double blendFactor = Display.getCurrent().getHighContrast() ? 0.3 : 0.1 ;
+			double red = 	(c1.getRed() * blendFactor) 	+ (c2.getRed() * (1-blendFactor));
+			double green = 	(c1.getGreen() * blendFactor) 	+ (c2.getGreen() * (1-blendFactor));
+			double blue = 	(c1.getBlue() * blendFactor) 	+ (c2.getBlue() * (1-blendFactor));
+			selFillColor = new Color(display, (int)red, (int)green, (int)blue);
 			
 			result.addDisposeListener(new DisposeListener() {
 
@@ -354,7 +401,7 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 		
 		for(int x = 0; x < availableServices.size(); x++) {
 
-			AvailableService service = availableServices.get(x);
+			final AvailableService service = availableServices.get(x);
 			
 			final Label imgLabel = new Label(result, SWT.NONE);
 			imgLabel.setBackground(color);
@@ -374,58 +421,22 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 			nameLabel.addKeyListener(new KeyAdapter() { 
 				@Override
 				public void keyPressed(KeyEvent e) {
-					if(e.keyCode == '\n' || e.keyCode == '\r') {
-						AvailableService currService = (AvailableService) (((Label)e.getSource()).getData());
-						
-						for(AvailableService as : selectedServices) {
-							if(as != currService) {
-								createNewServiceInstances(new AvailableService[] { as } );
-							}
-						}
-						
-						createNewServiceInstances(new AvailableService[] { currService } );
-						e.doit = false;
-						
-					}
-					if(e.keyCode == SWT.PAGE_UP || e.keyCode == SWT.PAGE_DOWN) {
-						AvailableService currService = (AvailableService) (((Label)e.getSource()).getData());
-						
-						int indexOfService = -1; // index of service in new visible service list
-						
-						// Add only visibles services to a new list
-						List<AvailableService> visibleServices = new ArrayList<AvailableService>();
-						for(AvailableService as : availableServices) {
-							if(as.getNameLabel() != null && as.getNameLabel().isVisible()) {
-								visibleServices.add(as);
-							}
-						}
-
-						// Locate the index of the selected service inside the visible service list
-						for(int x = 0; x < visibleServices.size(); x++) {
-							AvailableService as = visibleServices.get(x);
-							if(as == currService) {
-								indexOfService = x; 
-								break;
-							}
-						}
-						
-						// For page/up down, move up or down 5 _visible services_
-						if(indexOfService != -1 && visibleServices.size() > 0) {
-							if(e.keyCode == SWT.PAGE_UP) {
-								indexOfService = Math.max(0, indexOfService-5);
-							}  else {
-								indexOfService = Math.min(visibleServices.size()-1, indexOfService+5);
-							}
-																			
-							selectService(visibleServices.get(indexOfService), true, true);
-						}
-						
-						e.doit = false;
-					}
-				}} 
-			);
+					handleServiceKeyEvent(e);
+				}
+			});
 			
 			tabList[x] = nameLabel;
+			
+			// A hint to screenreaders 
+			nameLabel.getAccessible().addAccessibleListener(new AccessibleAdapter() {
+				@Override
+				public void getName(AccessibleEvent e) {
+					e.result = service.getName();
+				}
+				public void getDescription(org.eclipse.swt.accessibility.AccessibleEvent e) {
+					e.result = service.getDesc();
+				};
+			});
 
 			final Label descLabel = new Label(result, SWT.WRAP);
 			descLabel.setData(service);
@@ -498,7 +509,7 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 				
 				AvailableService service = getServiceAtClickPos(e, availableServices);
 				if(service != null/* && !isMultiSelect*/) {
-					selectService(service, false, !isMultiSelect);
+					selectService(service, true, !isMultiSelect);
 				}
 			}
 		}); // end mouse adapter
@@ -508,6 +519,84 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 		for(Control c : tabList) {
 			c.addTraverseListener(traverseListener);
 		}
+	}
+
+	/** Handle Enter/Page-Up/Page-Down/Home/End on services. */
+	private void handleServiceKeyEvent(KeyEvent e) {
+		
+		Object currFocus = getCurrFocus();
+		if(currFocus == filterText) {
+			// Ignore key events from the filter; these are handled correctly by the widget itself.
+			return;
+		}
+		
+		if(e.keyCode == SWT.HOME || e.keyCode == SWT.END) {
+			// Add only visible services to a new list
+			List<AvailableService> visibleServices = utilGetVisibleServices(availableServices);
+			
+			// Home moves to the top of the services list, end moves to the bottom.
+			if(visibleServices.size() > 0) {
+				if(e.keyCode == SWT.HOME) {
+					selectService(visibleServices.get(0), true, true);
+				}  else {
+					selectService(visibleServices.get(visibleServices.size()-1), true, true);
+				}
+			}
+			e.doit = false;
+		}
+		
+		// From this point, all events are from services.
+		if(e.keyCode == '\n' || e.keyCode == '\r') {
+			AvailableService currService = (AvailableService) (((Label)currFocus).getData());
+			
+			for(AvailableService as : selectedServices) {
+				if(as != currService) {
+					createNewServiceInstances(new AvailableService[] { as } );
+				}
+			}
+			
+			createNewServiceInstances(new AvailableService[] { currService } );
+			e.doit = false;
+		}
+		
+		if(e.keyCode == SWT.PAGE_UP || e.keyCode == SWT.PAGE_DOWN) {
+			handlePageUporDownOnService(e);
+		}
+	}
+	
+	private void handlePageUporDownOnService(KeyEvent e) {
+		AvailableService currService = (AvailableService) ((Label)currFocus).getData();
+		
+		int indexOfService = -1; // index of service in new visible service list
+		List<AvailableService> visibleServices = new ArrayList<AvailableService>();
+		for(AvailableService as : availableServices) {
+			// Add only visible services to a new list
+			if(as.getNameLabel() != null && as.getNameLabel().isVisible()) {
+				visibleServices.add(as);
+			}
+		}
+
+		// Locate the index of the selected service inside the visible service list
+		for(int x = 0; x < visibleServices.size(); x++) {
+			AvailableService as = visibleServices.get(x);
+			if(as == currService) {
+				indexOfService = x; 
+				break;
+			}
+		}
+		
+		// For page/up down, move up or down 5 _visible services_
+		if(indexOfService != -1 && visibleServices.size() > 0) {
+			if(e.keyCode == SWT.PAGE_UP) {
+				indexOfService = Math.max(0, indexOfService-5);
+			}  else {
+				indexOfService = Math.min(visibleServices.size()-1, indexOfService+5);
+			}
+															
+			selectService(visibleServices.get(indexOfService), true, true);
+		}
+		
+		e.doit = false;
 	}
 	
 	private static List<AvailableService> utilGetVisibleServices(List<AvailableService> inputServices) {
@@ -544,9 +633,10 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 		}
 		
 		layoutList.layout();
+		scrollComp.layout();
 	}
 	
-	/** Create one or more services instances, and adds them the right hand side of the wizard */
+	/** Creates one or more services instances, and adds them to the right hand side of the wizard */
 	private void createNewServiceInstances(AvailableService[] services) {
 		for(AvailableService service : services) {
 			
@@ -691,31 +781,62 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 		service.getImageLabel().setBackground(selFillColor);
 		service.getNameLabel().setBackground(selFillColor);
 		
-		service.getNameLabel().forceFocus();
+		
+		if(LABEL_FOCUS_SUPPORTED) {
+			// Set the focus to the name label if the OS supports it (Windows and Mac).
+			service.getNameLabel().forceFocus();
+		} else {
+			// Otherwise, keep focus on the filter text.
+			filterText.forceFocus();
+		}
+		
+		setCurrFocus(service.getNameLabel());
 		
 		layoutList.redraw();
 		
 		if(service.getAppxLocation() != null && scrollTo) {
+			List<AvailableService> visibleServices = utilGetVisibleServices(availableServices);
 			
-	        Rectangle bounds = service.getAppxLocation(); //child.getBounds();
-	        Rectangle area = scrollComp.getClientArea();
-	        Point origin = scrollComp.getOrigin();
-	        
-	        // Our view is lower than the item
-	        if (origin.y > bounds.y) {
-	          origin.y = Math.max(0, bounds.y);
-	        }
+			boolean isFirstOrLast = false;
+			
+			Point origin = scrollComp.getOrigin();
+			Rectangle bounds = service.getAppxLocation(); 
+			Rectangle area = scrollComp.getClientArea();
 
-	        // Our view is above the item
-	        if (origin.y + area.height < bounds.y + bounds.height) {
-	          origin.y = Math.max(0, bounds.y + bounds.height - area.height);
-	        }
+			if(visibleServices.size() > 0) {
+				if(service.getListPosition() == visibleServices.get(0).getListPosition()) {
+					// If the selected service is first in the visible list, origin is absolute top of the scroll composite
+					origin.x = 0;
+					origin.y = 0;
+					
+					isFirstOrLast = true;
+					
+				} else if(service.getListPosition() == visibleServices.get(visibleServices.size()-1).getListPosition()) {
+					// If the selected service is last in the visible list, then origin is the absolute bottom of the list item
+				
+					origin.x = 0;
+					origin.y = service.getAppxLocation().y + service.getAppxLocation().height;
+					
+					isFirstOrLast = true;
+				}
+			}
+			
+			if(!isFirstOrLast) {
+		        
+		        // Our view is lower than the item
+		        if (origin.y > bounds.y) {
+		        	origin.y = Math.max(0, bounds.y);
+		        }
+	
+		        // Our view is above the item
+		        if (origin.y + area.height < bounds.y + bounds.height) {
+		        	origin.y = Math.max(0, bounds.y + bounds.height - area.height);
+		        }
+			}
 	        
 	        scrollComp.setOrigin(origin);					        
-		}
-
+		} // end appx loct if
 	}
-
 
 	/** Clicking one of the service's widgets should select, or create it (depending on click type) */
 	private class CFAvailableServiceListener extends MouseAdapter implements SelectionListener {
@@ -730,7 +851,7 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 		public void widgetSelected(SelectionEvent e) {
 			boolean isMultiSelect = (e.stateMask & SWT.CTRL) != 0;
 			
-			selectService(service, false, !isMultiSelect);
+			selectService(service, true, !isMultiSelect);
 		}
 		
 		@Override
@@ -747,7 +868,7 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 		public void mouseUp(MouseEvent e) {
 			boolean isMultiSelect = (e.stateMask & SWT.CTRL) != 0;
 			
-			selectService(service, false, !isMultiSelect);
+			selectService(service, true, !isMultiSelect);
 		}
 
 		@Override
@@ -790,6 +911,13 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 	}
 
 	
+	private void setCurrFocus(Widget o) {
+		this.currFocus = o;
+	}
+	
+	private Widget getCurrFocus() {
+		return this.currFocus;
+	}	
 	
 	
 	/** Implement fully custom tab-traversal behaviour, such that arrow keys are used to move the selection inside
@@ -811,6 +939,29 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 		@Override
 		public void keyTraversed(TraverseEvent e) {
 
+			/** The current widget with focus: either one of the service names, or the filter text */
+			Widget focus = getCurrFocus();
+			
+			if(e.detail == SWT.TRAVERSE_RETURN && !LABEL_FOCUS_SUPPORTED) {
+				// On Linux, enter key should be passed to handleServiceKeyEvent
+				e.doit = false;
+				handleServiceKeyEvent(e);
+				return;
+			}
+			
+			if(e.detail == SWT.TRAVERSE_TAB_PREVIOUS) {
+				if(focus == filterText) {
+					// Move to previous widget (normally, this is wizard description)
+					e.doit = true;
+				} else {
+					// Move to filter text
+					filterText.forceFocus();
+					setCurrFocus(filterText);
+					e.doit = false;
+				}
+				return;
+			}			
+			
 			if(e.detail == SWT.TRAVERSE_ESCAPE) {
 				e.doit = true;
 				return;
@@ -826,9 +977,8 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 			if(e.detail == SWT.TRAVERSE_ARROW_NEXT || e.detail == SWT.TRAVERSE_ARROW_PREVIOUS) {
 				e.doit = false;
 				
-				if(e.getSource() instanceof Label && e.getSource() != null && ((Label)e.getSource() ).getData() instanceof AvailableService ) {
-					
-					Label source = (Label)e.getSource();						
+				if(focus != null && focus instanceof Label && focus != null && ((Label)focus).getData() instanceof AvailableService ) {	
+					Label source = (Label)focus;						
 					AvailableService service = (AvailableService)source.getData();
 					
 					AvailableService visibleServiceAbove = utilGetPreviousVisibleService(availableServices, service.getListPosition()-1);
@@ -842,8 +992,8 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 				}
 			}
 			
-			// If the traversal was from filter text, theres a few special cases to handle
-			if(e.getSource() == filterText) {
+			// If the traversal was from filter text, there are a few special cases to handle
+			if(focus != null && focus == filterText) {
 				
 				if(getNumberOfVisibleServices() == 0) {
 					// Special case: if the service list is empty (perhaps from filtering) then don't ignore tab traversal
@@ -852,7 +1002,8 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 				}
 				
 				if(e.detail == SWT.TRAVERSE_TAB_PREVIOUS) {
-					// ignore
+					e.doit = true;
+					return;
 				} else {
 					AvailableService firstVisible = null;
 					for(AvailableService as : availableServices) {
@@ -877,15 +1028,14 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 				
 				return;
 			}
-			
-			
-			// Sanity check on our mouse event
-			if(	! ( e.getSource() instanceof Label && e.getSource() != null && ((Label)e.getSource() ).getData() instanceof AvailableService)  ) {
+
+			// Sanity check on our mouse event: at this point it should only be a label w/ a service
+			if(	! ( focus != null && focus instanceof Label && ((Label)focus ).getData() instanceof AvailableService)  ) {
 				return;
 			}
 			
 			// The service we are moving _from_
-			AvailableService selectedService = (AvailableService)((Label)e.getSource() ).getData();
+			AvailableService selectedService = (AvailableService)((Label)focus ).getData();
 			
 			if(e.detail == SWT.TRAVERSE_ARROW_NEXT || e.detail == SWT.TRAVERSE_ARROW_PREVIOUS) {
 			
@@ -902,12 +1052,9 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 				if(servicePos != -1) {
 
 					if(e.detail == SWT.TRAVERSE_ARROW_NEXT) {
-					
-//						// Find the next service in the list that is visible
+						// Find the next service in the list that is visible
 						service = utilGetNextVisibleService(availableServices, servicePos+1);
-						
 					} else if(e.detail == SWT.TRAVERSE_ARROW_PREVIOUS) {
-
 						// Find the previous service in the list that is visible
 						service = utilGetPreviousVisibleService(availableServices, servicePos-1);
 					}
@@ -919,7 +1066,6 @@ public class CloudFoundryServiceWizardPageLeftPanel {
 				}
 			} else {
 				// A TAB next/prev from one of the items in our service list
-
 				e.doit = false;
 				if(e.detail == SWT.TRAVERSE_TAB_NEXT) {
 					clearButton.setFocus();
@@ -954,7 +1100,6 @@ class TextCompositeLayout extends Layout {
 	}	
 	
 	protected int[] layoutImpl(Composite composite, int wHint, boolean flushCache, boolean apply) {
-			
 		Control[] children = composite.getChildren();
 		
 		final int width = wHint > 0 ? wHint : composite.getParent().getClientArea().width;
@@ -1020,8 +1165,7 @@ class TextCompositeLayout extends Layout {
 			
 			y+= 10;
 		}		
-		
-		
+				
 		if(apply) {
 			// This is necessary for cases where the user has changed the filter term, which will cause some widgets to no longer be visible;
 			// in this scenario, our layout manager does not size invisible elements, thus the y value will be much smaller, and needs to be
@@ -1346,3 +1490,4 @@ class CFServiceWizardDynamicIconLoader extends Thread {
 	}
 
 }
+
