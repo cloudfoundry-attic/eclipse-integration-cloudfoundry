@@ -463,18 +463,18 @@ public class ApplicationMasterPart extends SectionPart {
 
 	private void createJebelSection() {
 
-		Section routeSection = toolkit.createSection(getSection().getParent(), Section.TITLE_BAR | Section.TWISTIE);
-		routeSection.setLayout(new GridLayout());
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(routeSection);
-		routeSection.setText(Messages.ApplicationMasterPart_TEXT_JREBEL);
-		routeSection.setExpanded(true);
+		Section section = toolkit.createSection(getSection().getParent(), Section.TITLE_BAR | Section.TWISTIE);
+		section.setLayout(new GridLayout());
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(section);
+		section.setText(Messages.ApplicationMasterPart_TEXT_JREBEL);
+		section.setExpanded(true);
 
-		routeSection.clientVerticalSpacing = 0;
+		section.clientVerticalSpacing = 0;
 
-		Composite client = toolkit.createComposite(routeSection);
+		Composite client = toolkit.createComposite(section);
 		client.setLayout(new GridLayout(1, false));
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(client);
-		routeSection.setClient(client);
+		section.setClient(client);
 
 		final Button button = toolkit.createButton(client, Messages.ApplicationMasterPart_TEXT_JREBEL_ENABLE_SYNCH,
 				SWT.CHECK);
@@ -484,7 +484,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 		button.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				UIJob job = new UIJob("Setting JRebel Property") {
+				UIJob job = new UIJob("Setting JRebel Property") { //$NON-NLS-1$
 
 					public IStatus runInUIThread(IProgressMonitor monitor) {
 						cloudServer.setJrebelAutomaticAppUrlSynch(button.getSelection());
