@@ -20,6 +20,7 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -46,6 +47,8 @@ import org.cloudfoundry.client.lib.domain.CloudApplication.AppState;
 import org.cloudfoundry.client.lib.domain.CloudDomain;
 import org.cloudfoundry.client.lib.domain.CloudRoute;
 import org.cloudfoundry.client.lib.domain.CloudService;
+import org.cloudfoundry.client.lib.domain.CloudServiceBinding;
+import org.cloudfoundry.client.lib.domain.CloudServiceInstance;
 import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.client.lib.domain.InstancesInfo;
@@ -2037,10 +2040,37 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 
 				SubMonitor serviceProgress = SubMonitor.convert(progress, services.size());
 
+				List<String> boundServices = new ArrayList<String>();
 				for (String service : services) {
 					serviceProgress.subTask(NLS.bind(Messages.CloudFoundryServerBehaviour_DELETING_SERVICE, service));
-					client.deleteService(service);
+					CloudServiceInstance instance = client.getServiceInstance(service);
+					List<CloudServiceBinding> bindings = null;
+					if (instance != null) {
+						bindings = instance.getBindings();
+					}
+
+					if (bindings == null || bindings.isEmpty()) {
+						client.deleteService(service);
+					}
+					else {
+						boundServices.add(service);
+					}
 					serviceProgress.worked(1);
+				}
+				if (!boundServices.isEmpty()) {
+					StringWriter writer = new StringWriter();
+					int size = boundServices.size();
+					for (int i = 0; i < size; i++) {
+						writer.append(boundServices.get(i));
+						if (i < size - 1) {
+							writer.append(',');
+							writer.append(' ');
+						}
+					}
+					String boundServs = writer.toString();
+					CloudFoundryPlugin.getCallback().handleError(
+							CloudFoundryPlugin.getErrorStatus(NLS.bind(
+									Messages.CloudFoundryServerBehaviour_ERROR_DELETE_SERVICES_BOUND, boundServs)));
 				}
 				return client.getServices();
 			}

@@ -162,6 +162,8 @@ public class Messages extends NLS {
 	public static String CloudFoundryServerBehaviour_CREATING_SERVICE;
 
 	public static String CloudFoundryServerBehaviour_DELETE_SERVICES;
+	
+	public static String CloudFoundryServerBehaviour_ERROR_DELETE_SERVICES_BOUND;
 
 	public static String CloudFoundryServerBehaviour_DELETING_SERVICE;
 
