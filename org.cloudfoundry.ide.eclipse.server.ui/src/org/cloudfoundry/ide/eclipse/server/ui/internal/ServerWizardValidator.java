@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2013, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -59,10 +59,6 @@ public abstract class ServerWizardValidator implements ServerValidator {
 		}
 	};
 
-	// Session cache as long as the validator is used, as to not keep
-	// prompting the user multiple times
-	private boolean acceptSelfSigned = false;
-
 	public ServerWizardValidator(CloudFoundryServer cloudServer, CloudSpacesDelegate cloudServerSpaceDelegate) {
 		this.cfServer = cloudServer;
 		this.cloudServerSpaceDelegate = cloudServerSpaceDelegate;
@@ -101,7 +97,7 @@ public abstract class ServerWizardValidator implements ServerValidator {
 
 		// If validating against server, also check self-signed errors.
 		if (validateAgainstServer) {
-			status = checkSelfSigned(status, runnableContext);
+			status = checkSelfSignedError(status, runnableContext);
 			if (status != null && status.getStatus().isOK()) {
 				status = serverValidation(validateAgainstServer, validateSpace, runnableContext);
 			}
@@ -118,7 +114,7 @@ public abstract class ServerWizardValidator implements ServerValidator {
 	 * @return {@link IStatus#OK} if self-signed was accepted. IStatus.ERROR if
 	 * Null if initial status is also null.
 	 */
-	protected ValidationStatus checkSelfSigned(final ValidationStatus status, final IRunnableContext context) {
+	protected ValidationStatus checkSelfSignedError(final ValidationStatus status, final IRunnableContext context) {
 		// If not status is passes that may contain self-signed information, no
 		// further validation is possible
 		if (status == null) {
@@ -145,16 +141,14 @@ public abstract class ServerWizardValidator implements ServerValidator {
 
 						if (MessageDialog.openQuestion(Display.getDefault().getActiveShell(),
 								Messages.TITLE_SELF_SIGNED_PROMPT_USER, message)) {
-							acceptSelfSigned = true;
+							storedSelfSign = true;
+							cfServer.setSelfSignedCertificate(storedSelfSign);
 						}
-					}
-					else {
-						acceptSelfSigned = storedSelfSign;
 					}
 
 					// Re-validate if the user has selected to continue with
 					// self-signed certificate
-					if (acceptSelfSigned) {
+					if (storedSelfSign) {
 						validationStatus[0] = new ValidationStatus(Status.OK_STATUS, ValidationEvents.VALIDATION);
 					}
 					else {
@@ -167,16 +161,9 @@ public abstract class ServerWizardValidator implements ServerValidator {
 					}
 				}
 			});
+
 		}
 
-		// Always update the value in the server. For example, if a
-		// previous run has determined that this URL needs
-		// self-signed
-		// certificate
-		// but no SSL error was thrown, it means that Server
-		// condition
-		// has changed (i.e it no longer needs the certificate).
-		cfServer.setSelfSignedCertificate(acceptSelfSigned);
 		return validationStatus[0];
 	}
 
@@ -214,11 +201,14 @@ public abstract class ServerWizardValidator implements ServerValidator {
 
 			try {
 
-				// Space validation also validates credentials, so if request is made
-				// to validate space, there is no need to do a separate credential validation.
+				// Space validation also validates credentials, so if request is
+				// made
+				// to validate space, there is no need to do a separate
+				// credential validation.
+				boolean acceptSelfSigned = cfServer.getSelfSignedCertificate();
 				if (validateSpace) {
-					cloudServerSpaceDelegate.resolveDescriptor(url, userName, password, acceptSelfSigned, runnableContext,
-							validateAgainstServer);
+					cloudServerSpaceDelegate.resolveDescriptor(url, userName, password, acceptSelfSigned,
+							runnableContext, validateAgainstServer);
 				}
 				else if (validateAgainstServer) {
 					// If validation is requested but not space validation.

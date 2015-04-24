@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -87,6 +87,11 @@ public class CloudFoundryClientFactory {
 	}
 
 	public CloudFoundryOperations getCloudFoundryOperations(String cloudControllerUrl) throws MalformedURLException {
+		return getCloudFoundryOperations(cloudControllerUrl, false);
+	}
+
+	public CloudFoundryOperations getCloudFoundryOperations(String cloudControllerUrl, boolean selfSigned)
+			throws MalformedURLException {
 		URL url = new URL(cloudControllerUrl);
 		// Proxies are always updated on each client call by the
 		// CloudFoundryServerBehaviour Request as well as the client login
@@ -94,7 +99,7 @@ public class CloudFoundryClientFactory {
 		// therefore it is not critical to set the proxy in the client on client
 		// creation
 		HttpProxyConfiguration proxyConfiguration = getProxy(url);
-		return new CloudFoundryClient(url, proxyConfiguration);
+		return new CloudFoundryClient(url, proxyConfiguration, selfSigned);
 	}
 
 	protected static CloudCredentials getCredentials(String userName, String password) {

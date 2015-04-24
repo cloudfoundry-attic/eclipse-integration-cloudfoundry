@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -54,12 +54,15 @@ public class CloudUrlWizard extends Wizard {
 	private String url;
 
 	private String name;
+	
+	private boolean selfSigned;
 
-	public CloudUrlWizard(String serverID, List<CloudServerURL> allCloudUrls, String url, String name) {
+	public CloudUrlWizard(String serverID, List<CloudServerURL> allCloudUrls, String url, String name, boolean selfSigned) {
 		this.serverID = serverID;
 		this.allCloudUrls = allCloudUrls;
 		this.url = url;
 		this.name = name;
+		this.selfSigned = selfSigned;
 		setWindowTitle(Messages.CloudUrlWizard_TITLE_ADD_VALIDATE);
 
 		// Does not require a modal progress monitor.
@@ -70,15 +73,15 @@ public class CloudUrlWizard extends Wizard {
 
 	@Override
 	public void addPages() {
-
-		page = new CloudUrlWizardPage(allCloudUrls, CloudFoundryImages.getWizardBanner(serverID), url, name);
+		page = new CloudUrlWizardPage(allCloudUrls, CloudFoundryImages.getWizardBanner(serverID), url, name, selfSigned);
 		addPage(page);
 	}
 
 	public CloudServerURL getCloudUrl() {
 		String dURL = page != null ? page.getUrl() : url;
 		String dName = page != null ? page.getName() : name;
-		return new CloudServerURL(dName, dURL, true);
+		boolean selfSigned = page != null ? page.getSelfSigned() : this.selfSigned;
+		return new CloudServerURL(dName, dURL, true, selfSigned);
 	}
 
 	public boolean performFinish() {
@@ -105,10 +108,11 @@ public class CloudUrlWizard extends Wizard {
 
 	protected boolean launchURLValidation(final Exception[] exception, final IProgressMonitor monitor) {
 
-		url = page.getUrl();
+		this.url = page.getUrl();
+		this.selfSigned = page.getSelfSigned();
 		final String jobName = Messages.CloudUrlWizard_JOB_VALIDATE_URL;
 
-		final Boolean shouldProceed[] = new Boolean[] { new Boolean(false) };
+		final boolean shouldProceed[] =  { false };
 		try {
 
 			int useAnimatedProgress = 0;
@@ -131,8 +135,8 @@ public class CloudUrlWizard extends Wizard {
 
 						try {
 							CloudFoundryPlugin.getCloudFoundryClientFactory()
-									.getCloudFoundryOperations(url).getCloudInfo();
-							shouldProceed[0] = new Boolean(true);
+									.getCloudFoundryOperations(url, CloudUrlWizard.this.selfSigned).getCloudInfo();
+							shouldProceed[0] = true;
 
 						}
 						catch (Exception e) {

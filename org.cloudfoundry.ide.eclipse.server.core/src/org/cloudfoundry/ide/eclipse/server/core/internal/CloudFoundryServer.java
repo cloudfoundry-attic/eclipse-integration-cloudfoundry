@@ -581,7 +581,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	 * @param monitor
 	 * @throws CoreException
 	 */
-	protected void replace( CloudFoundryApplicationModule existingCloudModule,  IModule[] targetModule,
+	protected void replace(CloudFoundryApplicationModule existingCloudModule, IModule[] targetModule,
 			IProgressMonitor monitor) throws CoreException {
 
 		// Since the underlying deployed application in the Cloud is not
@@ -776,13 +776,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	 * including if server preference can't be resolved.
 	 */
 	public boolean getSelfSignedCertificate() {
-		try {
-			return new SelfSignedStore(getUrl()).isSelfSignedCert();
-		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
-		}
-		return false;
+		return getSelfSignedCertificate(getUrl());
 	}
 
 	public void setSelfSignedCertificate(boolean isSelfSigned) {
@@ -1254,7 +1248,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	}
 
 	/**
-	 * Convinience method to set signed certificate for server URLs that do not
+	 * Convenience method to set signed certificate for server URLs that do not
 	 * yet have a server instance (e.g. when managing server URLs)
 	 * @param isSelfSigned true if server uses self-signed certificate
 	 * @param cloudServerURL non-null Cloud Foundry server URL
@@ -1263,9 +1257,19 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		try {
 			new SelfSignedStore(cloudServerURL).setSelfSignedCert(isSelfSigned);
 		}
-		catch (CoreException e) {
+		catch (Throwable e) {
 			CloudFoundryPlugin.logError(e);
 		}
+	}
+
+	public static boolean getSelfSignedCertificate(String cloudServerURL) {
+		try {
+			return new SelfSignedStore(cloudServerURL).isSelfSignedCert();
+		}
+		catch (Throwable e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		return false;
 	}
 
 	public URL getModuleRootURL(final IModule curModule) {

@@ -35,6 +35,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpaces;
 import org.eclipse.core.runtime.CoreException;
@@ -210,6 +211,9 @@ public class CloudUiUtil {
 				builder.append(url.getUrl());
 
 				builder.append("||"); //$NON-NLS-1$
+
+				// Also store the self-signed for each user-defined URL
+				CloudFoundryServer.setSelfSignedCertificate(url.getSelfSigned(), url.getUrl());
 			}
 		}
 

@@ -80,6 +80,8 @@ public class CloudFoundryBrandingExtensionPoint {
 
 		private final String signupURL;
 
+		private final boolean selfSigned;
+
 		public CloudServerURL(String name, String url, boolean userDefined) {
 			this(name, url, userDefined, null);
 		}
@@ -89,6 +91,15 @@ public class CloudFoundryBrandingExtensionPoint {
 			this.url = url;
 			this.userDefined = userDefined;
 			this.signupURL = signupURL;
+			this.selfSigned = false;
+		}
+
+		public CloudServerURL(String name, String url, boolean userDefined, boolean selfSigned) {
+			this.name = name;
+			this.url = url;
+			this.userDefined = userDefined;
+			this.signupURL = null;
+			this.selfSigned = selfSigned;
 		}
 
 		public String getName() {
@@ -105,6 +116,10 @@ public class CloudFoundryBrandingExtensionPoint {
 
 		public String getSignupURL() {
 			return signupURL;
+		}
+
+		public boolean getSelfSigned() {
+			return selfSigned;
 		}
 
 	}

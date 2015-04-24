@@ -796,6 +796,8 @@ public class Messages extends NLS {
 	public static String CloudUrlWizardPage_TEXT_DESCRIPT;
 
 	public static String CloudUrlWizardPage_TITLE_CLOUD_URL;
+	
+	public static String CloudUrlWizardPage_SELF_SIGNED;
 
 	public static String CommandDefinitionActions_TEXT_CMD_DEF;
 
