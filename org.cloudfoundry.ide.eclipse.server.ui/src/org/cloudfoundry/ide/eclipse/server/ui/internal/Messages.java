@@ -107,6 +107,10 @@ public class Messages extends NLS {
 
 	public static String ApplicationMasterPart_TEXT_APP_DESCRIP;
 
+	public static String ApplicationMasterPart_TEXT_JREBEL;
+
+	public static String ApplicationMasterPart_TEXT_JREBEL_ENABLE_SYNCH;
+
 	public static String ApplicationMasterPart_TEXT_REMOVE_BUTTON;
 
 	public static String ApplicationMasterPart_TEXT_ROUTES;
@@ -172,13 +176,13 @@ public class Messages extends NLS {
 	public static String ApplicationDetailsPart_TEXT_DISK_LIMIT;
 
 	public static String ApplicationDetailsPart_TEXT_ENV_VAR;
-	
+
 	public static String ApplicationDetailsPart_TEXT_ENV_VAR_EDIT_BUTTON_ACC_LABEL;
 
 	public static String ApplicationDetailsPart_TEXT_GENERAL;
 
 	public static String ApplicationDetailsPart_TEXT_GENERAL_APP_RESTART;
-	
+
 	public static String ApplicationDetailsPart_TEXT_EDIT_BUTTON;
 
 	public static String ApplicationDetailsPart_TEXT_HOST;
@@ -194,13 +198,13 @@ public class Messages extends NLS {
 	public static String ApplicationDetailsPart_TEXT_MANIFEST;
 
 	public static String ApplicationDetailsPart_TEXT_MANIFEST_UPDATE;
-	
+
 	public static String ApplicationDetailsPart_TEXT_MANIFEST_SAVE_BUTTON_ACC_LABEL;
 
 	public static String ApplicationDetailsPart_TEXT_MAPPED_URL;
 
 	public static String ApplicationDetailsPart_TEXT_MEMORY_LIMIT;
-	
+
 	public static String ApplicationDetailsPart_TEXT_MEMORY_LIMIT_LABEL;
 
 	public static String ApplicationDetailsPart_TEXT_MODE;
@@ -348,7 +352,7 @@ public class Messages extends NLS {
 	public static String EnvironmentVariablesPart_TEXT_NEW_ENV_VAR;
 
 	public static String EnvironmentVariablesPart_TEXT_VALUE_LABEL;
-	
+
 	public static String EnvironmentVariablesPart_TEXT_TABLE_ACC_LABEL;
 
 	public static String EnvVarsWizard_ERROR_ENV_VAR;
@@ -514,11 +518,11 @@ public class Messages extends NLS {
 	public static String CloudApplicationUrlPart_TEXT_DEPLOYURL_LABEL;
 
 	public static String CloudApplicationUrlPart_TEXT_SUBDOMAIN_LABEL;
-	
+
 	public static String CloudFoundryAccountSection_LABEL_EMAIL;
-		
+
 	public static String CloudFoundryAccountSection_LABEL_PASSWORD;
-	
+
 	public static String CloudFoundryAccountSection_LABEL_URL;
 
 	public static String CloudFoundryAccountSection_BUTTON_CHANGE_PW;
@@ -556,7 +560,7 @@ public class Messages extends NLS {
 	public static String CloudFoundryApplicationServicesWizardPage_TEXT_SERVICE_SELECTION;
 
 	public static String CloudFoundryApplicationServicesWizardPage_TEXT_TOOLTIP;
-	
+
 	public static String CloudFoundryApplicationServicesWizardPage_TEXT_TABLE_ACC_LABEL;
 
 	public static String CloudFoundryApplicationServicesWizardPage_TEXT_VERIFY_SERVICE_PROGRESS;
@@ -648,7 +652,7 @@ public class Messages extends NLS {
 	public static String CloudFoundryServiceWizard_ERROR_ADD_SERVICE;
 
 	public static String CloudFoundryServiceWizardPage_ERROR_CONFIG_RETRIVE;
-	
+
 	public static String CloudFoundryServiceWizardPage_ERROR_CONFIG_RETRIVE_SEE_LOG_FOR_DETAILS;
 
 	public static String CloudFoundryServiceWizardPage_ERROR_INVALID_CHAR;
@@ -690,8 +694,9 @@ public class Messages extends NLS {
 	public static String CloudFoundryServiceWizardPageLeftPanel_ADD;
 
 	public static String CloudFoundryServiceWizardPageLeftPanel_CLEAR;
-	
+
 	public static String CloudFoundryServiceWizard_NO_SERVICES_AVAILABLE_TITLE;
+
 	public static String CloudFoundryServiceWizard_NO_SERVICES_AVAILABLE_BODY;
 
 	public static String CloudRoutePart_UNDO;
@@ -709,7 +714,7 @@ public class Messages extends NLS {
 	public static String CloudRoutePart_TEXT_ROUTE_INUSE;
 
 	public static String CloudRoutePart_TEXT_ROUTES_REMOVED;
-	
+
 	public static String CloudRoutePart_TEXT_TABLE_ACC_LABEL;
 
 	public static String CloudRoutesWizard_TEXT_CLOUD_ROUTE_PAGE;
@@ -925,7 +930,7 @@ public class Messages extends NLS {
 	public static String MANAGE_SERVICES_TO_APPLICATIONS_FINISH_ERROR_TITLE;
 
 	public static String MANAGE_SERVICES_TO_APPLICATIONS_FINISH_ERROR_DESCRIPTION;
-	
+
 	public static String UPDATE_PROJECT_MAPPING;
 
 	public static String CloudFoundryServiceWizardPage_GETTING_AVAILABLE_SERVICES;

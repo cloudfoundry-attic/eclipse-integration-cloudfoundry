@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -35,6 +35,10 @@ import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Stores self-signed certificate preferences per server URL.
+ * 
+ * <p/>
+ * WARNING: Changing the internal serialisation of the self-signed property may
+ * break backward compatibility
  */
 public class SelfSignedStore {
 
@@ -131,6 +135,12 @@ public class SelfSignedStore {
 		return servers;
 	}
 
+	/**
+	 * WARNING: Changing the internal serialisation of the self-signed property
+	 * will break backward compatibility. The JSON mapping should not be changed
+	 * or refactored unless a migration solution is also present
+	 *
+	 */
 	public static class SelfSignedServers {
 
 		private Map<String, Boolean> servers;

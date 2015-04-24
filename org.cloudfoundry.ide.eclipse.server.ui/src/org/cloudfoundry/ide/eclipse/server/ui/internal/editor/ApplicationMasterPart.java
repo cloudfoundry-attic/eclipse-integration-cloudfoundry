@@ -135,6 +135,8 @@ public class ApplicationMasterPart extends SectionPart {
 		}
 
 		createRoutesDomainsSection();
+
+		createJebelSection();
 	}
 
 	public TableViewer getApplicationsViewer() {
@@ -457,6 +459,44 @@ public class ApplicationMasterPart extends SectionPart {
 			}
 		});
 
+	}
+
+	private void createJebelSection() {
+
+		Section routeSection = toolkit.createSection(getSection().getParent(), Section.TITLE_BAR | Section.TWISTIE);
+		routeSection.setLayout(new GridLayout());
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(routeSection);
+		routeSection.setText(Messages.ApplicationMasterPart_TEXT_JREBEL);
+		routeSection.setExpanded(true);
+
+		routeSection.clientVerticalSpacing = 0;
+
+		Composite client = toolkit.createComposite(routeSection);
+		client.setLayout(new GridLayout(1, false));
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(client);
+		routeSection.setClient(client);
+
+		final Button button = toolkit.createButton(client, Messages.ApplicationMasterPart_TEXT_JREBEL_ENABLE_SYNCH,
+				SWT.CHECK);
+		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(button);
+
+		button.setSelection(cloudServer.jrebelAutomaticAppUrlSynch());
+
+		button.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				UIJob job = new UIJob("Setting JRebel Property") {
+
+					public IStatus runInUIThread(IProgressMonitor monitor) {
+						cloudServer.setJrebelAutomaticAppUrlSynch(button.getSelection());
+						return Status.OK_STATUS;
+					}
+
+				};
+				job.setSystem(true);
+				job.setPriority(Job.INTERACTIVE);
+				job.schedule();
+			}
+		});
 	}
 
 	private void createServicesSection() {

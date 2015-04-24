@@ -210,7 +210,8 @@ public class CloudRebelAppHandler implements CloudServerListener {
 	@Override
 	public void serverChanged(CloudServerEvent event) {
 
-		if (shouldAddRemotingUrl(event) || shouldRemoveRemotingUrl(event)) {
+		if (event.getServer() != null && event.getServer().jrebelAutomaticAppUrlSynch()
+				&& (shouldAddRemotingUrl(event) || shouldRemoveRemotingUrl(event))) {
 
 			List<IModule> modules = new ArrayList<IModule>();
 
