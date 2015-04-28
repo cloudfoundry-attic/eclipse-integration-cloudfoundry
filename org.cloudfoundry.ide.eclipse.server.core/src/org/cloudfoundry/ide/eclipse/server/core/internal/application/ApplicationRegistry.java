@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2013, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -96,7 +96,7 @@ public class ApplicationRegistry {
 
 					if (supportsModule(module, prv)) {
 						provider = prv;
-						break;
+						return provider;
 					}
 
 				}

@@ -21,6 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.core;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.cloudfoundry.client.lib.domain.CloudService;
@@ -39,7 +40,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.application.Environment
  * applicable when an operation is being performed on the application, like
  * selecting its deployment mode) should not be defined here).
  */
-public class ApplicationDeploymentInfo {
+public class ApplicationDeploymentInfo extends Observable{
 
 	private Staging staging;
 
@@ -65,6 +66,9 @@ public class ApplicationDeploymentInfo {
 		this.envVars.clear();
 		if (envVars != null) {
 			this.envVars.addAll(envVars);
+			// Notify Observers
+			setChanged();
+			notifyObservers(envVars);
 		}
 	}
 
@@ -94,6 +98,9 @@ public class ApplicationDeploymentInfo {
 
 	public void setDeploymentName(String name) {
 		this.name = name;
+		// Notify Observers
+		setChanged();
+		notifyObservers(name);
 	}
 
 	public void setUris(List<String> uris) {

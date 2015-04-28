@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -21,6 +21,8 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
@@ -34,6 +36,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.debug.DebugProvider;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudApplicationUrlPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.IEventSource;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.Logger;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.UIPart;
@@ -63,7 +66,7 @@ import org.eclipse.swt.widgets.Text;
  * @author Steffen Pingel
  * @author Nieraj Singh
  */
-public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
+public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage implements Observer{
 
 	protected final String serverTypeId;
 
@@ -100,6 +103,8 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 		urlPart = createUrlPart(urlLookup);
 		urlPart.addPartChangeListener(this);
 		this.wizardDelegate = wizardDelegate;
+		
+		descriptor.getDeploymentInfo().addObserver(this);
 	}
 
 	/**
@@ -438,4 +443,17 @@ public class CloudFoundryDeploymentWizardPage extends AbstractURLWizardPage {
 		updateApplicationURL();
 	}
 
+	@Override
+	public void update(Observable o, Object arg) {
+		if (arg != null && arg instanceof String ) {
+			try {
+				updateApplicationURLFromAppName();
+			} catch (Exception e) {
+				if (Logger.ERROR) {
+					Logger.println(Logger.ERROR_LEVEL, this, "update", "Error updating Application name", e); //$NON-NLS-1$ //$NON-NLS-2$
+				}
+			}
+		}		
+	} 
+	
 }
