@@ -113,6 +113,8 @@ public class ApplicationMasterPart extends SectionPart {
 
 	private Section servicesSection;
 
+	private Section jrebelSection;
+
 	public ApplicationMasterPart(CloudFoundryApplicationsEditorPage editorPage, IManagedForm managedForm,
 			Composite parent, CloudFoundryServer cloudServer) {
 		super(parent, managedForm.getToolkit(), Section.TITLE_BAR | Section.DESCRIPTION | Section.TWISTIE);
@@ -136,7 +138,7 @@ public class ApplicationMasterPart extends SectionPart {
 
 		createRoutesDomainsSection();
 
-		createJebelSection();
+		createJRebelSection();
 	}
 
 	public TableViewer getApplicationsViewer() {
@@ -461,26 +463,28 @@ public class ApplicationMasterPart extends SectionPart {
 
 	}
 
-	private void createJebelSection() {
+	private void createJRebelSection() {
 
-		Section section = toolkit.createSection(getSection().getParent(), Section.TITLE_BAR | Section.TWISTIE);
-		section.setLayout(new GridLayout());
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(section);
-		section.setText(Messages.ApplicationMasterPart_TEXT_JREBEL);
-		section.setExpanded(true);
+		jrebelSection = toolkit.createSection(getSection().getParent(), Section.TITLE_BAR | Section.TWISTIE);
+		jrebelSection.setLayout(new GridLayout());
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(jrebelSection);
+		jrebelSection.setText(Messages.ApplicationMasterPart_TEXT_JREBEL);
+		jrebelSection.setExpanded(true);
 
-		section.clientVerticalSpacing = 0;
+		jrebelSection.clientVerticalSpacing = 0;
 
-		Composite client = toolkit.createComposite(section);
+		Composite client = toolkit.createComposite(jrebelSection);
 		client.setLayout(new GridLayout(1, false));
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(client);
-		section.setClient(client);
+		jrebelSection.setClient(client);
 
-		final Button button = toolkit.createButton(client, Messages.ApplicationMasterPart_TEXT_JREBEL_ENABLE_SYNCH,
+		final Button button = toolkit.createButton(client, Messages.ApplicationMasterPart_TEXT_JREBEL_ENABLE_AUTO_URL_UPDATE,
 				SWT.CHECK);
 		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(button);
 
 		button.setSelection(cloudServer.jrebelAutomaticAppUrlSynch());
+		
+		button.setToolTipText(Messages.ApplicationMasterPart_TEXT_JREBEL_ENABLE_AUTO_URL_UPDATE_TOOLTIP);
 
 		button.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {

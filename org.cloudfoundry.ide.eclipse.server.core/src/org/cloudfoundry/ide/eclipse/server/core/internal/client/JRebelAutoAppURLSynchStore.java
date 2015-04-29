@@ -27,10 +27,13 @@ public class JRebelAutoAppURLSynchStore extends ServerPropertyStore {
 
 	public static final String PREF_ID = CloudFoundryPlugin.PLUGIN_ID + ".jrebel.auto.appurl.synch"; //$NON-NLS-1$
 
-	private String errorMessage = NLS.bind(Messages.ERROR_FAILED_STORE_SELF_SIGNED_PREFS, getServerUrl());
+	private String errorMessage;
 
-	public JRebelAutoAppURLSynchStore(String serverURL) {
-		super(serverURL);
+	private final String serverUrl;
+
+	public JRebelAutoAppURLSynchStore(String serverUrl, String org, String space) {
+		super(new ServerProperty(serverUrl, org, space));
+		this.serverUrl = serverUrl;
 	}
 
 	@Override
@@ -40,6 +43,9 @@ public class JRebelAutoAppURLSynchStore extends ServerPropertyStore {
 
 	@Override
 	protected String getError() {
+		if (errorMessage == null) {
+			errorMessage = NLS.bind(Messages.ERROR_FAILED_ACCESS_JREBEL_PREF, serverUrl);
+		}
 		return errorMessage;
 	}
 }

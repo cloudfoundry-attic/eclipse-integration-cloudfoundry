@@ -210,8 +210,9 @@ public class CloudRebelAppHandler implements CloudServerListener {
 	@Override
 	public void serverChanged(CloudServerEvent event) {
 
-		if (event.getServer() != null && event.getServer().jrebelAutomaticAppUrlSynch()
-				&& (shouldAddRemotingUrl(event) || shouldRemoveRemotingUrl(event))) {
+		if (event.getServer() != null
+				&& (event.getType() == CloudServerEvent.EVENT_JREBEL_APP_URL_SYNCH || ((shouldAddRemotingUrl(event) || shouldRemoveRemotingUrl(event)) && event
+						.getServer().jrebelAutomaticAppUrlSynch()))) {
 
 			List<IModule> modules = new ArrayList<IModule>();
 
@@ -247,48 +248,39 @@ public class CloudRebelAppHandler implements CloudServerListener {
 		}
 
 		for (IModule module : modules) {
-			final IProject project = module.getProject();
 			final IModule appModule = module;
 			final CloudServerEvent moduleEvent = event;
-			try {
-				// Only check remoting agent if it is a JRebel project as the
-				// remoting check may
-				// require multiple requests to the Cloud
-				if (project != null && project.isAccessible()
-						&& project.hasNature("org.zeroturnaround.eclipse.remoting.remotingNature") //$NON-NLS-1$
-						&& project.hasNature("org.zeroturnaround.eclipse.jrebelNature")) { //$NON-NLS-1$
+			// Only check remoting agent if it is a JRebel project as the
+			// remoting check may
+			// require multiple requests to the Cloud
+			if (isJRebelEnabled(module)) {
 
-					Job job = new Job(NLS.bind(Messages.CloudRebelAppHandler_FINDING_REMOTING_AGENT, module.getName())) {
+				Job job = new Job(NLS.bind(Messages.CloudRebelAppHandler_FINDING_REMOTING_AGENT, module.getName())) {
 
-						@Override
-						protected IStatus run(IProgressMonitor monitor) {
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
 
-							// Only check the presence of remoting agent if
-							// adding URL, which requires the application to be
-							// started. Removing URL does should not check
-							// for the presence of the agent as the app would be
-							// stopped and agent not available.
-							if (!shouldAddRemotingUrl(moduleEvent)
-									|| isRemotingEnabled(appModule, moduleEvent, monitor)) {
-								try {
-									handleRebelProject(moduleEvent, appModule);
-								}
-								catch (CoreException e) {
-									CloudFoundryPlugin.logError(e);
-									return e.getStatus();
-								}
+						// Only check the presence of remoting agent if
+						// adding URL, which requires the application to be
+						// started. Removing URL does should not check
+						// for the presence of the agent as the app would be
+						// stopped and agent not available.
+						if (!shouldAddRemotingUrl(moduleEvent) || isRemotingEnabled(appModule, moduleEvent, monitor)) {
+							try {
+								handleRebelProject(moduleEvent, appModule);
 							}
-
-							return Status.OK_STATUS;
+							catch (CoreException e) {
+								CloudFoundryPlugin.logError(e);
+								return e.getStatus();
+							}
 						}
 
-					};
+						return Status.OK_STATUS;
+					}
 
-					job.schedule();
-				}
-			}
-			catch (CoreException ce) {
-				CloudFoundryPlugin.logError(ce);
+				};
+
+				job.schedule();
 			}
 		}
 	}
@@ -352,7 +344,6 @@ public class CloudRebelAppHandler implements CloudServerListener {
 							if (event instanceof AppUrlChangeEvent) {
 								AppUrlChangeEvent appUrlEvent = (AppUrlChangeEvent) event;
 								if (appUrlEvent.getChangedUrls() != null) {
-									currentAppUrls = appUrlEvent.getChangedUrls();
 									currentAppUrls.addAll(appUrlEvent.getChangedUrls());
 								}
 								if (appUrlEvent.getOldUrls() != null) {
@@ -379,14 +370,28 @@ public class CloudRebelAppHandler implements CloudServerListener {
 								}
 
 								// Add new app URLs
-								for (String appUrl : currentAppUrls) {
-									if (!appUrl.startsWith("http://") && !appUrl.startsWith("https://")) { //$NON-NLS-1$ //$NON-NLS-2$
-										appUrl = "http://" + appUrl; //$NON-NLS-1$
+								for (String url : currentAppUrls) {
+									if (!url.startsWith("http://") && !url.startsWith("https://")) { //$NON-NLS-1$ //$NON-NLS-2$
+										url = "http://" + url; //$NON-NLS-1$
 									}
 									try {
-										URL appURL = new URL(appUrl);
-										if (!updatedRebelUrls.contains(appURL)) {
-											updatedRebelUrls.add(appURL);
+										URL appUrl = new URL(url);
+										// Check the authority instead of the
+										// full URL to verify if it
+										// already exists, as the URL from
+										// JRebel may not be exactly the same as
+										// the constructed URL (e.g. JRebel URL
+										// may
+										// end in '/')
+										for (URL rebelUrl : updatedRebelUrls) {
+											String authority = rebelUrl.getAuthority();
+											if (authority.equals(appUrl.getAuthority())) {
+												appUrl = null;
+												break;
+											}
+										}
+										if (appUrl != null) {
+											updatedRebelUrls.add(appUrl);
 										}
 									}
 									catch (MalformedURLException e) {
@@ -583,7 +588,8 @@ public class CloudRebelAppHandler implements CloudServerListener {
 
 	protected boolean shouldAddRemotingUrl(CloudServerEvent event) {
 		return event != null
-				&& (event.getType() == CloudServerEvent.EVENT_APP_URL_CHANGED
+				&& (event.getType() == CloudServerEvent.EVENT_JREBEL_APP_URL_SYNCH
+						|| event.getType() == CloudServerEvent.EVENT_APP_URL_CHANGED
 						|| event.getType() == CloudServerEvent.EVENT_APP_STARTED || event.getType() == CloudServerEvent.EVENT_SERVER_CONNECTED);
 	}
 
@@ -608,5 +614,19 @@ public class CloudRebelAppHandler implements CloudServerListener {
 			message = Messages.CloudRebelAppHandler_MESSAGE_PREFIX + " - " + message + '\n'; //$NON-NLS-1$
 			CloudFoundryPlugin.getCallback().printToConsole(server, appModule, message, false, error);
 		}
+	}
+
+	public static boolean isJRebelEnabled(IModule module) {
+		IProject project = module != null ? module.getProject() : null;
+
+		try {
+			return project != null && project.isAccessible()
+					&& project.hasNature("org.zeroturnaround.eclipse.remoting.remotingNature") //$NON-NLS-1$
+					&& project.hasNature("org.zeroturnaround.eclipse.jrebelNature"); //$NON-NLS-1$
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		return false;
 	}
 }

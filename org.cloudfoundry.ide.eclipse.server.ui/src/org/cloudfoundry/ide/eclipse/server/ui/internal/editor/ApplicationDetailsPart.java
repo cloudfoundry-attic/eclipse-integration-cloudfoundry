@@ -34,12 +34,16 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
+import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ManifestParser;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
 import org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryProperties;
 import org.cloudfoundry.ide.eclipse.server.core.internal.debug.DebugOperationType;
+import org.cloudfoundry.ide.eclipse.server.core.internal.jrebel.CloudRebelAppHandler;
 import org.cloudfoundry.ide.eclipse.server.rse.internal.ConfigureRemoteCloudFoundryAction;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
@@ -173,6 +177,8 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 	private Button stopAppButton;
 
 	private Button saveManifest;
+
+	private Button jrebelManualAppUrlUpdate;
 
 	private Text memoryText;
 
@@ -390,11 +396,16 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				saveManifest.setToolTipText(Messages.ApplicationDetailsPart_TEXT_MANIFEST_UPDATE);
 			}
 		}
+		int state = appModule.getState();
+
+		if (jrebelManualAppUrlUpdate != null) {
+			// URL updating only is enabled when app is running
+			jrebelManualAppUrlUpdate.setEnabled(state == IServer.STATE_STARTED
+					&& CloudRebelAppHandler.isJRebelEnabled(module));
+		}
 
 		// The rest of the refresh requires appModule to be non-null
 		updateServerNameDisplay(appModule);
-
-		int state = appModule.getState();
 
 		instanceSpinner.setSelection(appModule.getInstanceCount());
 
@@ -649,9 +660,9 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			}
 		});
 		// Add accessibility message (the title for the wizard it opens)
-		editURI.getAccessible ().addAccessibleListener (new AccessibleAdapter() {
+		editURI.getAccessible().addAccessibleListener(new AccessibleAdapter() {
 			@Override
-			public void getName (AccessibleEvent e) {
+			public void getName(AccessibleEvent e) {
 				e.result = Messages.MappedURLsWizard_TITLE_MOD_MAPPED_URL;
 			}
 		});
@@ -698,14 +709,49 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				writeToManifest();
 			}
 		});
-		// Add accessibility message so the button provides a better description of itself
-		saveManifest.getAccessible ().addAccessibleListener (new AccessibleAdapter() {
+		// Add accessibility message so the button provides a better description
+		// of itself
+		saveManifest.getAccessible().addAccessibleListener(new AccessibleAdapter() {
 			@Override
-			public void getName (AccessibleEvent e) {
+			public void getName(AccessibleEvent e) {
 				e.result = Messages.ApplicationDetailsPart_TEXT_MANIFEST_SAVE_BUTTON_ACC_LABEL;
 			}
 		});
 
+		createLabel(client, Messages.ApplicationDetailsPart_TEXT_JREBEL, SWT.CENTER);
+		jrebelManualAppUrlUpdate = toolkit.createButton(client,
+				Messages.ApplicationDetailsPart_TEXT_JREBEL_UPDATE_APP_URL, SWT.PUSH);
+		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(jrebelManualAppUrlUpdate);
+
+		jrebelManualAppUrlUpdate.setSelection(cloudServer.jrebelAutomaticAppUrlSynch());
+		jrebelManualAppUrlUpdate.setEnabled(false);
+
+		jrebelManualAppUrlUpdate.getAccessible().addAccessibleListener(new AccessibleAdapter() {
+			@Override
+			public void getName(AccessibleEvent e) {
+				e.result = Messages.ApplicationDetailsPart_TEXT_JREBEL_UPDATE_APP_URL;
+			}
+		});
+
+		jrebelManualAppUrlUpdate.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				if (module != null) {
+					Job job = new Job(Messages.ApplicationDetailsPart_TEXT_JREBEL_UPDATE_APP_URL_JOB) {
+
+						public IStatus run(IProgressMonitor monitor) {
+
+							ServerEventHandler.getDefault().fireServerEvent(
+									new ModuleChangeEvent(cloudServer, CloudServerEvent.EVENT_JREBEL_APP_URL_SYNCH,
+											module, Status.OK_STATUS));
+
+							return Status.OK_STATUS;
+						}
+
+					};
+					job.schedule();
+				}
+			}
+		});
 	}
 
 	private void createGeneralSectionRestartRequired(Composite parent) {
@@ -813,11 +859,12 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 				}
 			}
 		});
-		
-		// Add accessibility message so the button provides a better description of itself
-		envVarsButton.getAccessible ().addAccessibleListener (new AccessibleAdapter() {
+
+		// Add accessibility message so the button provides a better description
+		// of itself
+		envVarsButton.getAccessible().addAccessibleListener(new AccessibleAdapter() {
 			@Override
-			public void getName (AccessibleEvent e) {
+			public void getName(AccessibleEvent e) {
 				e.result = Messages.ApplicationDetailsPart_TEXT_ENV_VAR_EDIT_BUTTON_ACC_LABEL;
 			}
 		});

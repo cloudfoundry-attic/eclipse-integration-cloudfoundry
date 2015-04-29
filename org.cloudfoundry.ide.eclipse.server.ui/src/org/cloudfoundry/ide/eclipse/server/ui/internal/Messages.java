@@ -109,8 +109,6 @@ public class Messages extends NLS {
 
 	public static String ApplicationMasterPart_TEXT_JREBEL;
 
-	public static String ApplicationMasterPart_TEXT_JREBEL_ENABLE_SYNCH;
-
 	public static String ApplicationMasterPart_TEXT_REMOVE_BUTTON;
 
 	public static String ApplicationMasterPart_TEXT_ROUTES;
@@ -193,6 +191,12 @@ public class Messages extends NLS {
 
 	public static String ApplicationDetailsPart_TEXT_INSTANCES;
 
+	public static String ApplicationDetailsPart_TEXT_JREBEL;
+
+	public static String ApplicationDetailsPart_TEXT_JREBEL_UPDATE_APP_URL;
+
+	public static String ApplicationDetailsPart_TEXT_JREBEL_UPDATE_APP_URL_JOB;
+
 	public static String ApplicationDetailsPart_TEXT_MANIFEST_SAVE_CREATE_TOOLTIP;
 
 	public static String ApplicationDetailsPart_TEXT_MANIFEST;
@@ -254,6 +258,10 @@ public class Messages extends NLS {
 	public static String ApplicationDetailsPart_TEXT_UPTIME;
 
 	public static String ApplicationMasterPart_JOB_REMOVE_ROUTE;
+
+	public static String ApplicationMasterPart_TEXT_JREBEL_ENABLE_AUTO_URL_UPDATE;
+
+	public static String ApplicationMasterPart_TEXT_JREBEL_ENABLE_AUTO_URL_UPDATE_TOOLTIP;
 
 	public static String ApplicationURLWizard_TEXT_MOD_APP_URL;
 
@@ -796,7 +804,7 @@ public class Messages extends NLS {
 	public static String CloudUrlWizardPage_TEXT_DESCRIPT;
 
 	public static String CloudUrlWizardPage_TITLE_CLOUD_URL;
-	
+
 	public static String CloudUrlWizardPage_SELF_SIGNED;
 
 	public static String CommandDefinitionActions_TEXT_CMD_DEF;

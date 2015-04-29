@@ -20,8 +20,8 @@
 package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
@@ -32,48 +32,47 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
- * Stores a property for a particular server. Property is persisted.
+ * Stores or reads a {@link ServerProperty} in a preference store
  * 
  */
 public abstract class ServerPropertyStore {
 
-	private final String serverURL;
+	private final ServerProperty property;
 
 	private final static ObjectMapper mapper = new ObjectMapper();
 
-	public static final String VALUE_SEPARATOR = " "; //$NON-NLS-1$
-
-	public ServerPropertyStore(String serverURL) {
-		Assert.isNotNull(serverURL);
-		this.serverURL = serverURL;
+	public ServerPropertyStore(ServerProperty property) {
+		Assert.isNotNull(property);
+		this.property = property;
 	}
 
 	/**
 	 * 
-	 * @return True if server has property. False otherwise.
-	 * @throws CoreException if error occurred
+	 * @return True if the property exists in the store. False otherwise
+	 * @throws CoreException if error occurred reading the store
 	 */
 	public boolean hasProperty() throws CoreException {
-		BooleanProperties servers = getStoredProperties();
-		return servers != null && servers.getProperties().get(serverURL) != null
-				&& servers.getProperties().get(serverURL);
+		ServerProperties properties = getStoredProperties();
+		return properties != null && properties.getProperties().contains(property);
 	}
 
 	/**
 	 * 
-	 * @param property value.
-	 * @throws CoreException if failed to store value.
+	 * @param value true if the property should be stored. False if it should be
+	 * removed.
+	 * @throws CoreException if failed to add or remove the property in the
+	 * store
 	 */
 	public void setProperty(boolean value) throws CoreException {
-		BooleanProperties properties = getStoredProperties();
+		ServerProperties properties = getStoredProperties();
 		if (properties == null) {
-			properties = new BooleanProperties();
+			properties = new ServerProperties();
 		}
 		if (value) {
-			properties.getProperties().put(serverURL, value);
+			properties.getProperties().add(property);
 		}
 		else {
-			properties.getProperties().remove(serverURL);
+			properties.getProperties().remove(property);
 		}
 
 		String asString = null;
@@ -105,22 +104,22 @@ public abstract class ServerPropertyStore {
 
 	abstract protected String getError();
 
-	protected String getServerUrl() {
-		return serverURL;
+	protected ServerProperty getProperty() {
+		return property;
 	}
 
 	/**
-	 * 
-	 * @return stored property for the servers
-	 * @throws CoreException if error occurred while reading servers from
-	 * storage
+	 * Gets all the the stored {@link ServerProperty}
+	 * @return All stored properties or null if no properties are stored
+	 * @throws CoreException if error occurred while reading properties from
+	 * store
 	 */
-	protected BooleanProperties getStoredProperties() throws CoreException {
+	protected ServerProperties getStoredProperties() throws CoreException {
 		String storedValue = CloudFoundryPlugin.getDefault().getPreferences().get(getPropertyID(), null);
-		BooleanProperties properties = null;
+		ServerProperties properties = null;
 		if (storedValue != null) {
 			try {
-				properties = mapper.readValue(storedValue, BooleanProperties.class);
+				properties = mapper.readValue(storedValue, ServerProperties.class);
 			}
 			catch (IOException e) {
 				throw CloudErrorUtil.toCoreException(getError(), e);
@@ -129,23 +128,16 @@ public abstract class ServerPropertyStore {
 		return properties;
 	}
 
-	public static class BooleanProperties {
+	public static class ServerProperties {
 
-		private Map<String, Boolean> properties;
+		final private List<ServerProperty> properties;
 
-		public BooleanProperties() {
-			properties = new HashMap<String, Boolean>();
+		public ServerProperties() {
+			properties = new ArrayList<ServerProperty>();
 		}
 
-		public Map<String, Boolean> getProperties() {
+		public List<ServerProperty> getProperties() {
 			return properties;
-		}
-
-		public void setProperties(Map<String, Boolean> servers) {
-			this.properties.clear();
-			if (servers != null) {
-				this.properties.putAll(servers);
-			}
 		}
 	}
 }

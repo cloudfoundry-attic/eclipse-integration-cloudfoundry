@@ -785,7 +785,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	
 	public boolean jrebelAutomaticAppUrlSynch() {
 		try {
-			return new JRebelAutoAppURLSynchStore(getUrl()).hasProperty();
+			return new JRebelAutoAppURLSynchStore(getUrl(), getOrg(), getSpace()).hasProperty();
 		}
 		catch (CoreException e) {
 			CloudFoundryPlugin.logError(e);
@@ -795,7 +795,7 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 
 	public void setJrebelAutomaticAppUrlSynch(boolean enable) {
 		try {
-			new JRebelAutoAppURLSynchStore(getUrl()).setProperty(enable);
+			new JRebelAutoAppURLSynchStore(getUrl(), getOrg(), getSpace()).setProperty(enable);
 		}
 		catch (CoreException e) {
 			CloudFoundryPlugin.logError(e);

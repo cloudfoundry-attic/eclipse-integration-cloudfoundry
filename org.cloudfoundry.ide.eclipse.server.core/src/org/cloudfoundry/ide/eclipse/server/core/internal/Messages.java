@@ -70,6 +70,8 @@ public class Messages extends NLS {
 	public static String ERROR_FAILED_READ_SELF_SIGNED_PREFS;
 
 	public static String ERROR_FAILED_STORE_SELF_SIGNED_PREFS;
+	
+	public static String ERROR_FAILED_ACCESS_JREBEL_PREF;
 
 	public static String ERROR_UNABLE_CONNECT_SERVER_CREDENTIALS;
 
