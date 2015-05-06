@@ -298,8 +298,21 @@ public abstract class CloudRebelAppHandler implements CloudServerListener {
 
 							List<URL> updatedRebelUrls = new ArrayList<URL>();
 
-							if (shouldReplaceRemotingUrl(cloudEventType)
-									|| cloudEventType == CloudServerEvent.EVENT_JREBEL_REMOTING_UPDATE) {
+							boolean replace = false;
+
+							// Only do an automatic replacement if an old URL
+							// is detected in JRebel remoting
+							if (shouldReplaceRemotingUrl(cloudEventType)) {
+								for (URL rebelUrl : existingRebelUrls) {
+									String authority = rebelUrl.getAuthority();
+									if (oldAppUrls.contains(authority)) {
+										replace = true;
+										break;
+									}
+								}
+							}
+
+							if (replace || cloudEventType == CloudServerEvent.EVENT_JREBEL_REMOTING_UPDATE) {
 
 								if (!currentAppUrls.isEmpty()) {
 
