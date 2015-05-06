@@ -188,7 +188,8 @@ public class CloudUiUtil {
 								url = values[1];
 							}
 
-							urls.add(new CloudServerURL(name, url, true));
+							boolean selfSigned = url != null && CloudFoundryServer.getSelfSignedCertificate(url);
+							urls.add(new CloudServerURL(name, url, true, selfSigned));
 						}
 					}
 
@@ -453,7 +454,8 @@ public class CloudUiUtil {
 				url = dialog.getUrl();
 				String name = dialog.getName();
 				// CloudUiUtil.addUserDefinedUrl(serverTypeId, name, url);
-				return new CloudServerURL(name, url, true);
+				boolean selfSigned = url != null && CloudFoundryServer.getSelfSignedCertificate(url);
+				return new CloudServerURL(name, url, true, selfSigned);
 			}
 			else {
 				return null;
