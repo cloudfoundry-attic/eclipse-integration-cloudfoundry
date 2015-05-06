@@ -39,12 +39,16 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.jrebel.CloudRebelAppHandler;
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Display;
@@ -94,17 +98,19 @@ public class CloudRebelUIHandler extends CloudRebelAppHandler {
 		// equivalent
 		try {
 
-			IFile file = project.getFile("/src/main/resources/rebel.xml"); //$NON-NLS-1$
-			if (file.isAccessible()) {
+			IFile file = getRebelXMLFile(project);
+			if (file != null && file.isAccessible()) {
 				String path = file.getRawLocation() != null ? file.getRawLocation().toString() : null;
 
 				if (path != null) {
+					List<String> outputPaths = getClasspathSourceOutputPaths(project);
+
 					DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
 					DocumentBuilder db = factory.newDocumentBuilder();
 					Document doc = db.parse(new File(path));
 
-					Element binElement = null;
+					Element javaProjectOutputElement = null;
 					NodeList nodeList = doc.getElementsByTagName("*"); //$NON-NLS-1$
 					if (nodeList != null) {
 
@@ -112,20 +118,34 @@ public class CloudRebelUIHandler extends CloudRebelAppHandler {
 
 						String javaBuildpackFolderName = ".java-buildpack/**"; //$NON-NLS-1$
 
+						// Find the node element that corresponds to the
+						// project's source output. Check all the resolved
+						// output paths to find
+						// the one that matches the "dir" element in the
+						// rebel.xml
 						for (int i = 0; i < nodeList.getLength(); i++) {
 							Node node = nodeList.item(i);
 							if ((node instanceof Element) && node.getNodeName().equals("dir")) { //$NON-NLS-1$
-								Element el = (Element) node;
-								String att = el.getAttribute("name"); //$NON-NLS-1$
-								if (att != null && att.endsWith("/bin")) { //$NON-NLS-1$
-									binElement = el;
-									break;
+								Element element = (Element) node;
+								String att = element.getAttribute("name"); //$NON-NLS-1$
+								if (att != null) {
+
+									for (String outpath : outputPaths) {
+										if (att.contains(outpath)) {
+											javaProjectOutputElement = element;
+											break;
+										}
+									}
+
+									if (javaProjectOutputElement != null) {
+										break;
+									}
 								}
 							}
 						}
 
-						if (binElement != null) {
-							NodeList binChildren = binElement.getChildNodes();
+						if (javaProjectOutputElement != null) {
+							NodeList binChildren = javaProjectOutputElement.getChildNodes();
 							Element existingExcludeLib = null;
 							Element existingExcludeJavabuildpack = null;
 							if (binChildren != null) {
@@ -151,13 +171,13 @@ public class CloudRebelUIHandler extends CloudRebelAppHandler {
 							if (existingExcludeLib == null) {
 								updatedExcludeLib = doc.createElement("exclude"); //$NON-NLS-1$
 								updatedExcludeLib.setAttribute("name", libFolderName); //$NON-NLS-1$ 
-								binElement.appendChild(updatedExcludeLib);
+								javaProjectOutputElement.appendChild(updatedExcludeLib);
 							}
 							Element updatedExcludeJavabuildpack = null;
 							if (existingExcludeJavabuildpack == null) {
 								updatedExcludeJavabuildpack = doc.createElement("exclude"); //$NON-NLS-1$
 								updatedExcludeJavabuildpack.setAttribute("name", javaBuildpackFolderName); //$NON-NLS-1$ 
-								binElement.appendChild(updatedExcludeJavabuildpack);
+								javaProjectOutputElement.appendChild(updatedExcludeJavabuildpack);
 							}
 							if (updatedExcludeLib != null || updatedExcludeJavabuildpack != null) {
 
@@ -222,5 +242,76 @@ public class CloudRebelUIHandler extends CloudRebelAppHandler {
 		catch (CoreException e) {
 			CloudFoundryPlugin.logError(e);
 		}
+	}
+
+	protected List<String> getClasspathSourceOutputPaths(IProject project) {
+
+		IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(project);
+		List<String> outputPaths = new ArrayList<String>();
+		if (javaProject != null) {
+			try {
+				IClasspathEntry[] classpath = javaProject.getResolvedClasspath(true);
+
+				if (classpath != null) {
+					for (IClasspathEntry entry : classpath) {
+						if (entry != null && entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+							String outputPath = entry.getOutputLocation() != null ? entry.getOutputLocation()
+									.toString() : null;
+							if (outputPath != null && !outputPaths.contains(outputPath)
+									&& !outputPath.contains("target/test-classes")) {//$NON-NLS-1$
+								outputPaths.add(outputPath);
+							}
+						}
+					}
+				}
+
+				String outputPath = javaProject.getOutputLocation() != null ? javaProject.getOutputLocation()
+						.toString() : null;
+				if (outputPath != null && !outputPaths.contains(outputPath)) {
+					outputPaths.add(outputPath);
+				}
+			}
+			catch (JavaModelException e) {
+				CloudFoundryPlugin.logError(e);
+			}
+		}
+
+		return outputPaths;
+	}
+
+	protected IFile getRebelXMLFile(IProject project) {
+		if (project != null && project.isAccessible()) {
+			try {
+				return getFile(project, "rebel.xml"); //$NON-NLS-1$
+			}
+			catch (CoreException e) {
+				CloudFoundryPlugin.logError(e);
+			}
+		}
+
+		return null;
+	}
+
+	protected IFile getFile(IResource resource, String fileName) throws CoreException {
+
+		if (resource instanceof IFile && resource.getName().equals(fileName)) {
+			return (IFile) resource;
+		}
+		else if (resource instanceof IContainer) {
+			IContainer container = (IContainer) resource;
+			IResource[] children = container.members();
+
+			if (children != null) {
+				for (IResource child : children) {
+
+					IFile file = getFile(child, fileName);
+					if (file != null) {
+						return file;
+					}
+				}
+			}
+		}
+
+		return null;
 	}
 }
