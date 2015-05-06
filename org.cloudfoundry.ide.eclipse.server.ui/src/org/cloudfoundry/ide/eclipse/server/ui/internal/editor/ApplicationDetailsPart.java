@@ -400,8 +400,7 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 
 		if (jrebelManualAppUrlUpdate != null) {
 			// URL updating only is enabled when app is running
-			jrebelManualAppUrlUpdate.setEnabled(state == IServer.STATE_STARTED
-					&& CloudRebelAppHandler.isJRebelEnabled(module));
+			jrebelManualAppUrlUpdate.setEnabled(CloudRebelAppHandler.isJRebelEnabled(module));
 		}
 
 		// The rest of the refresh requires appModule to be non-null
@@ -718,30 +717,39 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 			}
 		});
 
-		createLabel(client, Messages.ApplicationDetailsPart_TEXT_JREBEL, SWT.CENTER);
-		jrebelManualAppUrlUpdate = toolkit.createButton(client,
-				Messages.ApplicationDetailsPart_TEXT_JREBEL_UPDATE_APP_URL, SWT.PUSH);
+		createJRebelSection(client);
+	}
+
+	private void createJRebelSection(Composite parent) {
+		if (!CloudRebelAppHandler.isJRebelIDEInstalled()) {
+			return;
+		}
+		Label label = createLabel(parent, Messages.ApplicationDetailsPart_TEXT_JREBEL, SWT.CENTER);
+		label.setToolTipText(Messages.ApplicationDetailsPart_TEXT_JREBEL_UPDATE_REMOTING_TOOLTIP);
+
+		jrebelManualAppUrlUpdate = toolkit.createButton(parent,
+				Messages.ApplicationDetailsPart_TEXT_JREBEL_UPDATE_REMOTING, SWT.PUSH);
 		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(jrebelManualAppUrlUpdate);
 
-		jrebelManualAppUrlUpdate.setSelection(cloudServer.jrebelAutomaticAppUrlSynch());
 		jrebelManualAppUrlUpdate.setEnabled(false);
+		jrebelManualAppUrlUpdate.setToolTipText(Messages.ApplicationDetailsPart_TEXT_JREBEL_UPDATE_REMOTING_TOOLTIP);
 
 		jrebelManualAppUrlUpdate.getAccessible().addAccessibleListener(new AccessibleAdapter() {
 			@Override
 			public void getName(AccessibleEvent e) {
-				e.result = Messages.ApplicationDetailsPart_TEXT_JREBEL_UPDATE_APP_URL;
+				e.result = Messages.ApplicationDetailsPart_TEXT_JREBEL_UPDATE_REMOTING;
 			}
 		});
 
 		jrebelManualAppUrlUpdate.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				if (module != null) {
-					Job job = new Job(Messages.ApplicationDetailsPart_TEXT_JREBEL_UPDATE_APP_URL_JOB) {
+					Job job = new Job(Messages.ApplicationDetailsPart_TEXT_JREBEL_UPDATE_REMOTING_JOB) {
 
 						public IStatus run(IProgressMonitor monitor) {
 
 							ServerEventHandler.getDefault().fireServerEvent(
-									new ModuleChangeEvent(cloudServer, CloudServerEvent.EVENT_JREBEL_APP_URL_SYNCH,
+									new ModuleChangeEvent(cloudServer, CloudServerEvent.EVENT_JREBEL_REMOTING_UPDATE,
 											module, Status.OK_STATUS));
 
 							return Status.OK_STATUS;

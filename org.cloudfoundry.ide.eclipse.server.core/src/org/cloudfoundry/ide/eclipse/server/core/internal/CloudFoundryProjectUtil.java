@@ -23,10 +23,17 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryAppl
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.wst.common.project.facet.core.IFacetedProject;
+import org.eclipse.wst.common.project.facet.core.IProjectFacet;
+import org.eclipse.wst.common.project.facet.core.ProjectFacetsManager;
 
 public class CloudFoundryProjectUtil {
+
+	public static final String ID_MODULE_STANDALONE = "cloudfoundry.standalone.app"; //$NON-NLS-1$
 
 	public static final String SPRING_NATURE_ID = "org.springframework.ide.eclipse.core.springnature"; //$NON-NLS-1$
 
@@ -105,6 +112,82 @@ public class CloudFoundryProjectUtil {
 	 */
 	public static IJavaProject getJavaProject(CloudFoundryApplicationModule appModule) {
 		return getJavaProject(getProject(appModule));
+	}
+
+	/**
+	 *
+	 * @param project
+	 * @return true if the Spring boot application is a standalone Java
+	 * application (jar app) False if it is not Spring Boot app or it is not a
+	 * standalone Java application.
+	 */
+	public static boolean isSpringBootJarProject(IProject project) {
+
+		IJavaProject javaProject = getJavaProject(project);
+
+		if (javaProject != null && isSpringBootProject(javaProject)) {
+			IProjectFacet facet = ProjectFacetsManager.getProjectFacet(ID_MODULE_STANDALONE);
+			try {
+				IFacetedProject facetedProject = ProjectFacetsManager.create(project);
+				return facetedProject != null && facetedProject.hasProjectFacet(facet);
+			}
+			catch (CoreException e) {
+				CloudFoundryPlugin.log(e);
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * 
+	 * 
+	 * Derived from org.springframework.ide.eclipse.boot.core.BootPropertyTester
+	 * 
+	 * FIXNS: Remove when boot detection is moved to a common STS plug-in that
+	 * can be shared with CF Eclipse.
+	 * @return true if the given project is a Spring boot project, false
+	 * otherwise
+	 */
+	public static boolean isSpringBootProject(IJavaProject project) {
+		if (project == null) {
+			return false;
+		}
+		try {
+			IClasspathEntry[] classpath = project.getResolvedClasspath(true);
+			// Look for a 'spring-boot' jar entry
+			for (IClasspathEntry e : classpath) {
+				if (hasBootDependencies(e)) {
+					return true;
+				}
+			}
+		}
+		catch (Exception e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		return false;
+	}
+
+	/**
+	 * 
+	 * @param appModule
+	 * @return true if it is a Spring Boot app. False otherwise. It makes no
+	 * checks on the type of packaging (war, jar, etc..)
+	 */
+	public static boolean isSpringBootApp(CloudFoundryApplicationModule appModule) {
+		if (appModule == null) {
+			return false;
+		}
+		IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(appModule);
+		return isSpringBootProject(javaProject);
+	}
+
+	private static boolean hasBootDependencies(IClasspathEntry e) {
+		if (e.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
+			IPath path = e.getPath();
+			String name = path.lastSegment();
+			return name.endsWith(".jar") && name.startsWith("spring-boot"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		return false;
 	}
 
 }

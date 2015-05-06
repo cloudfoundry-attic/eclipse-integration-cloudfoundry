@@ -34,7 +34,6 @@ import org.cloudfoundry.client.lib.archive.ZipApplicationArchive;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.Messages;
@@ -162,7 +161,7 @@ public class JavaCloudFoundryArchiver {
 			JarPackageData jarPackageData = getJarPackageData(roots, mainType,
 					monitor);
 
-			boolean isBoot = CloudUtil.isBootProject(javaProject);
+			boolean isBoot = CloudFoundryProjectUtil.isSpringBootProject(javaProject);
 
 			// Search for existing MANIFEST.MF
 			IFile metaFile = getManifest(roots, javaProject);

@@ -60,7 +60,7 @@ public class CloudServerEvent extends EventObject {
 
 	public static final int EVENT_CLOUD_OP_ERROR = 600;
 	
-	public static final int EVENT_JREBEL_APP_URL_SYNCH = 700;
+	public static final int EVENT_JREBEL_REMOTING_UPDATE = 700;
 
 	private static final long serialVersionUID = 1L;
 

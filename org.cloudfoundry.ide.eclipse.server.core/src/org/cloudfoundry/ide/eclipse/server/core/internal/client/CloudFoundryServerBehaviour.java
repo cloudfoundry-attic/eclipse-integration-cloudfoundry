@@ -1122,7 +1122,10 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 	@Override
 	protected void initialize(IProgressMonitor monitor) {
 		super.initialize(monitor);
-		CloudRebelAppHandler.init();
+		CloudRebelAppHandler appHandler = CloudFoundryPlugin.getCallback().getJRebelHandler();
+		if (appHandler != null) {
+			appHandler.register();
+		}
 		getServer().addServerListener(serverListener, ServerEvent.SERVER_CHANGE);
 
 		try {
@@ -1983,10 +1986,16 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				CloudFoundryApplicationModule existingAppModule = getCloudFoundryServer().getExistingCloudModule(
 						appName);
 
+				List<String> oldUrls = existingAppModule != null && existingAppModule.getDeploymentInfo() != null ? existingAppModule
+						.getDeploymentInfo().getUris() : null;
+
+				if (oldUrls == null) {
+					oldUrls = client.getApplication(appName).getUris();
+				}
+
 				client.updateApplicationUris(appName, urls);
+
 				if (existingAppModule != null) {
-					List<String> oldUrls = existingAppModule.getDeploymentInfo() != null ? existingAppModule
-							.getDeploymentInfo().getUris() : client.getApplication(appName).getUris();
 					ServerEventHandler.getDefault().fireServerEvent(
 							new AppUrlChangeEvent(getCloudFoundryServer(), CloudServerEvent.EVENT_APP_URL_CHANGED,
 									existingAppModule.getLocalModule(), Status.OK_STATUS, oldUrls, urls));

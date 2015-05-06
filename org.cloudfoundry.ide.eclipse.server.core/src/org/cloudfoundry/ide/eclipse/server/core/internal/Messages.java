@@ -70,7 +70,7 @@ public class Messages extends NLS {
 	public static String ERROR_FAILED_READ_SELF_SIGNED_PREFS;
 
 	public static String ERROR_FAILED_STORE_SELF_SIGNED_PREFS;
-	
+
 	public static String ERROR_FAILED_ACCESS_JREBEL_PREF;
 
 	public static String ERROR_UNABLE_CONNECT_SERVER_CREDENTIALS;
@@ -164,13 +164,13 @@ public class Messages extends NLS {
 	public static String CloudFoundryServerBehaviour_CREATING_SERVICE;
 
 	public static String CloudFoundryServerBehaviour_DELETE_SERVICES;
-	
+
 	public static String CloudFoundryServerBehaviour_ERROR_DELETE_SERVICES_BOUND;
 
 	public static String CloudFoundryServerBehaviour_DELETING_SERVICE;
 
 	public static String CloudFoundryServerBehaviour_DOMAINS_FOR_SPACE;
-	
+
 	public static String CloudFoundryServerBehaviour_FETCHING_FILE;
 
 	public static String CloudFoundryServerBehaviour_GET_ALL_APPS;
@@ -191,21 +191,17 @@ public class Messages extends NLS {
 
 	public static String CloudFoundryServerBehaviour_WAITING_APP_START;
 
-	public static String CloudRebelAppHandler_ADDING_URL;
-
 	public static String CloudRebelAppHandler_ERROR;
 
-	public static String CloudRebelAppHandler_FINDING_REMOTING_AGENT;
-
-	public static String CloudRebelAppHandler_FOUND_REMOTING_AGENT;
+	public static String CloudRebelAppHandler_UPDATING_JREBEL_REMOTING;
 
 	public static String CloudRebelAppHandler_MESSAGE_PREFIX;
-
-	public static String CloudRebelAppHandler_REMOVING_URL;
 
 	public static String CloudRebelAppHandler_TIME_OUT_RESOLVING_REMOTING_AGENT;
 
 	public static String CloudRebelAppHandler_UPDATED_URL;
+	
+	public static String CloudRebelAppHandler_UP_TO_DATE;
 
 	public static String CommandOptions_DESCRIPTION_VARIABLES_FOR_TUNNEL;
 

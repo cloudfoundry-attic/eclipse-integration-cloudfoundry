@@ -38,7 +38,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ModuleCache.ServerData;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.JRebelAutoAppURLSynchStore;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.SelfSignedStore;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudFoundrySpace;
 import org.eclipse.core.runtime.CoreException;
@@ -781,25 +780,6 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 
 	public void setSelfSignedCertificate(boolean isSelfSigned) {
 		setSelfSignedCertificate(isSelfSigned, getUrl());
-	}
-	
-	public boolean jrebelAutomaticAppUrlSynch() {
-		try {
-			return new JRebelAutoAppURLSynchStore(getUrl(), getOrg(), getSpace()).hasProperty();
-		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
-		}
-		return false;
-	}
-
-	public void setJrebelAutomaticAppUrlSynch(boolean enable) {
-		try {
-			new JRebelAutoAppURLSynchStore(getUrl(), getOrg(), getSpace()).setProperty(enable);
-		}
-		catch (CoreException e) {
-			CloudFoundryPlugin.logError(e);
-		}
 	}
 
 	private void updateServerId() {

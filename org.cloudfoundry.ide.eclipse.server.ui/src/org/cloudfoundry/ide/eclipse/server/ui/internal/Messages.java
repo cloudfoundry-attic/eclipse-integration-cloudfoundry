@@ -107,8 +107,6 @@ public class Messages extends NLS {
 
 	public static String ApplicationMasterPart_TEXT_APP_DESCRIP;
 
-	public static String ApplicationMasterPart_TEXT_JREBEL;
-
 	public static String ApplicationMasterPart_TEXT_REMOVE_BUTTON;
 
 	public static String ApplicationMasterPart_TEXT_ROUTES;
@@ -193,9 +191,11 @@ public class Messages extends NLS {
 
 	public static String ApplicationDetailsPart_TEXT_JREBEL;
 
-	public static String ApplicationDetailsPart_TEXT_JREBEL_UPDATE_APP_URL;
+	public static String ApplicationDetailsPart_TEXT_JREBEL_UPDATE_REMOTING;
 
-	public static String ApplicationDetailsPart_TEXT_JREBEL_UPDATE_APP_URL_JOB;
+	public static String ApplicationDetailsPart_TEXT_JREBEL_UPDATE_REMOTING_JOB;
+
+	public static String ApplicationDetailsPart_TEXT_JREBEL_UPDATE_REMOTING_TOOLTIP;
 
 	public static String ApplicationDetailsPart_TEXT_MANIFEST_SAVE_CREATE_TOOLTIP;
 
@@ -258,10 +258,6 @@ public class Messages extends NLS {
 	public static String ApplicationDetailsPart_TEXT_UPTIME;
 
 	public static String ApplicationMasterPart_JOB_REMOVE_ROUTE;
-
-	public static String ApplicationMasterPart_TEXT_JREBEL_ENABLE_AUTO_URL_UPDATE;
-
-	public static String ApplicationMasterPart_TEXT_JREBEL_ENABLE_AUTO_URL_UPDATE_TOOLTIP;
 
 	public static String ApplicationURLWizard_TEXT_MOD_APP_URL;
 
@@ -714,6 +710,10 @@ public class Messages extends NLS {
 	public static String CloudFoundryUiCallback_JOB_CF_ERROR;
 
 	public static String CloudFoundryURLNavigation_TEXT_OPEN_LABEL;
+
+	public static String CloudRebelUIHandler_TEXT_REPLACE_REBEL_XML_BODY;
+
+	public static String CloudRebelUIHandler_TEXT_REPLACE_REBEL_XML_TITLE;
 
 	public static String CloudRoutePart_ERROR_NO_ROUTE_AVAIL;
 

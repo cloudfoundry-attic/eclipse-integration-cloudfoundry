@@ -113,8 +113,6 @@ public class ApplicationMasterPart extends SectionPart {
 
 	private Section servicesSection;
 
-	private Section jrebelSection;
-
 	public ApplicationMasterPart(CloudFoundryApplicationsEditorPage editorPage, IManagedForm managedForm,
 			Composite parent, CloudFoundryServer cloudServer) {
 		super(parent, managedForm.getToolkit(), Section.TITLE_BAR | Section.DESCRIPTION | Section.TWISTIE);
@@ -137,8 +135,6 @@ public class ApplicationMasterPart extends SectionPart {
 		}
 
 		createRoutesDomainsSection();
-
-		createJRebelSection();
 	}
 
 	public TableViewer getApplicationsViewer() {
@@ -461,46 +457,6 @@ public class ApplicationMasterPart extends SectionPart {
 			}
 		});
 
-	}
-
-	private void createJRebelSection() {
-
-		jrebelSection = toolkit.createSection(getSection().getParent(), Section.TITLE_BAR | Section.TWISTIE);
-		jrebelSection.setLayout(new GridLayout());
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(jrebelSection);
-		jrebelSection.setText(Messages.ApplicationMasterPart_TEXT_JREBEL);
-		jrebelSection.setExpanded(true);
-
-		jrebelSection.clientVerticalSpacing = 0;
-
-		Composite client = toolkit.createComposite(jrebelSection);
-		client.setLayout(new GridLayout(1, false));
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(client);
-		jrebelSection.setClient(client);
-
-		final Button button = toolkit.createButton(client, Messages.ApplicationMasterPart_TEXT_JREBEL_ENABLE_AUTO_URL_UPDATE,
-				SWT.CHECK);
-		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(button);
-
-		button.setSelection(cloudServer.jrebelAutomaticAppUrlSynch());
-		
-		button.setToolTipText(Messages.ApplicationMasterPart_TEXT_JREBEL_ENABLE_AUTO_URL_UPDATE_TOOLTIP);
-
-		button.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				UIJob job = new UIJob("Setting JRebel Property") { //$NON-NLS-1$
-
-					public IStatus runInUIThread(IProgressMonitor monitor) {
-						cloudServer.setJrebelAutomaticAppUrlSynch(button.getSelection());
-						return Status.OK_STATUS;
-					}
-
-				};
-				job.setSystem(true);
-				job.setPriority(Job.INTERACTIVE);
-				job.schedule();
-			}
-		});
 	}
 
 	private void createServicesSection() {

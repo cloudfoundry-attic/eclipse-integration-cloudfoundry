@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
+import org.cloudfoundry.ide.eclipse.server.core.internal.jrebel.CloudRebelAppHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
@@ -123,4 +124,7 @@ public abstract class CloudFoundryCallback {
 
 	}
 
+	public CloudRebelAppHandler getJRebelHandler() {
+		return null;
+	}
 }

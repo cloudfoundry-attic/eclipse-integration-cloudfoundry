@@ -33,7 +33,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.cloudfoundry.client.lib.domain.CloudService;
-import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -44,8 +43,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jdt.core.IClasspathEntry;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jst.server.core.IJ2EEModule;
 import org.eclipse.jst.server.core.IWebModule;
 import org.eclipse.osgi.util.NLS;
@@ -70,6 +67,7 @@ import org.eclipse.wst.server.core.util.PublishHelper;
  */
 @SuppressWarnings("restriction")
 public class CloudUtil {
+
 
 	public static final int DEFAULT_MEMORY = 512;
 
@@ -411,47 +409,5 @@ public class CloudUtil {
 		for (int i = 0; i < size; i++) {
 			result.add(status[i]);
 		}
-	}
-
-	/*
-	 * Derived from org.springframework.ide.eclipse.boot.core.BootPropertyTester
-	 * 
-	 * FIXNS: Remove when boot detection is moved to a common STS plug-in that
-	 * can be shared with CF Eclipse.
-	 */
-	public static boolean isBootProject(IJavaProject project) {
-		if (project == null) {
-			return false;
-		}
-		try {
-			IClasspathEntry[] classpath = project.getResolvedClasspath(true);
-			// Look for a 'spring-boot' jar entry
-			for (IClasspathEntry e : classpath) {
-				if (isBootJar(e)) {
-					return true;
-				}
-			}
-		}
-		catch (Exception e) {
-			CloudFoundryPlugin.logError(e);
-		}
-		return false;
-	}
-
-	public static boolean isBootApp(CloudFoundryApplicationModule appModule) {
-		if (appModule == null) {
-			return false;
-		}
-		IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(appModule);
-		return isBootProject(javaProject);
-	}
-
-	private static boolean isBootJar(IClasspathEntry e) {
-		if (e.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
-			IPath path = e.getPath();
-			String name = path.lastSegment();
-			return name.endsWith(".jar") && name.startsWith("spring-boot"); //$NON-NLS-1$ //$NON-NLS-2$
-		}
-		return false;
 	}
 }

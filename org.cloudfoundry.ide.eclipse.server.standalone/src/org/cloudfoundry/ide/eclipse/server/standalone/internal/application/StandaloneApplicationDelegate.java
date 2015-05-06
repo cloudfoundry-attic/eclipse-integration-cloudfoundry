@@ -22,12 +22,10 @@ package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleResourceApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.wst.server.core.model.IModuleResource;
 
 /**
@@ -50,9 +48,7 @@ public class StandaloneApplicationDelegate extends
 
 	@Override
 	public boolean shouldSetDefaultUrl(CloudFoundryApplicationModule appModule) {
-		IJavaProject project = CloudFoundryProjectUtil
-				.getJavaProject(appModule);
-		return CloudUtil.isBootProject(project);
+		return CloudFoundryProjectUtil.isSpringBootApp(appModule);
 	}
 
 	/*

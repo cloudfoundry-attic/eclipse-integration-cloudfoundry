@@ -33,19 +33,19 @@ public class AppUrlChangeEvent extends ModuleChangeEvent {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private final List<String> changedUrls;
+	private final List<String> currentUrls;
 
 	private final List<String> oldUrls;
 
 	public AppUrlChangeEvent(CloudFoundryServer server, int type, IModule module, IStatus status, List<String> oldUrls,
-			List<String> changedUrls) {
+			List<String> currentUrls) {
 		super(server, type, module, status);
-		this.changedUrls = changedUrls;
+		this.currentUrls = currentUrls;
 		this.oldUrls = oldUrls;
 	}
 
-	public List<String> getChangedUrls() {
-		return changedUrls;
+	public List<String> getCurrentUrls() {
+		return currentUrls;
 	}
 
 	public List<String> getOldUrls() {

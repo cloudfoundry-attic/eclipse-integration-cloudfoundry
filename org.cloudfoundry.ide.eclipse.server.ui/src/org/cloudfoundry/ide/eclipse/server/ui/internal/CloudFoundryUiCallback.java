@@ -30,6 +30,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
+import org.cloudfoundry.ide.eclipse.server.core.internal.jrebel.CloudRebelAppHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
 import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.console.ConsoleManagerRegistry;
@@ -76,19 +77,20 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		if (showIndex < 0) {
 			showIndex = 0;
 		}
-		SubMonitor subMonitor = SubMonitor.convert(monitor, cloudModule.getDeploymentInfo().getInstances()*100);
-		
-		subMonitor.subTask(NLS.bind(Messages.CloudFoundryUiCallback_STARTING_CONSOLE, cloudModule.getDeployedApplicationName()));
+		SubMonitor subMonitor = SubMonitor.convert(monitor, cloudModule.getDeploymentInfo().getInstances() * 100);
+
+		subMonitor.subTask(NLS.bind(Messages.CloudFoundryUiCallback_STARTING_CONSOLE,
+				cloudModule.getDeployedApplicationName()));
 
 		for (int i = 0; i < cloudModule.getDeploymentInfo().getInstances(); i++) {
 			// Do not clear the console as pre application start information may
 			// have been already sent to the console
 			// output
 			boolean shouldClearConsole = false;
-			
-			ConsoleManagerRegistry.getConsoleManager(cloudServer)
-					.startConsole(cloudServer, StandardLogContentType.APPLICATION_LOG, cloudModule, i, i == showIndex,
-							shouldClearConsole, subMonitor.newChild(100));
+
+			ConsoleManagerRegistry.getConsoleManager(cloudServer).startConsole(cloudServer,
+					StandardLogContentType.APPLICATION_LOG, cloudModule, i, i == showIndex, shouldClearConsole,
+					subMonitor.newChild(100));
 		}
 	}
 
@@ -229,7 +231,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	public void handleError(final IStatus status) {
 
 		if (status != null && status.getSeverity() == IStatus.ERROR) {
-			
+
 			CloudFoundryPlugin.log(status);
 
 			UIJob job = new UIJob(Messages.CloudFoundryUiCallback_JOB_CF_ERROR) {
@@ -249,4 +251,8 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		}
 	}
 
+	public CloudRebelAppHandler getJRebelHandler() {
+		CloudRebelAppHandler handler = new CloudRebelUIHandler();
+		return handler;
+	}
 }
