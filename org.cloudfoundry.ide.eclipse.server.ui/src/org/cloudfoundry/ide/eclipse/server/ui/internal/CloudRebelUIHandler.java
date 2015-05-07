@@ -156,7 +156,7 @@ public class CloudRebelUIHandler extends CloudRebelAppHandler {
 										Element excludeElement = (Element) node;
 										Attr attr = excludeElement.getAttributeNode("name"); //$NON-NLS-1$
 										if (attr != null && attr.getNodeValue() != null) {
-											if (attr.getNodeValue().equals(libFolderName)) { //$NON-NLS-1$
+											if (attr.getNodeValue().equals(libFolderName)) { 
 												existingExcludeLib = excludeElement;
 											}
 											else if (attr.getNodeValue().equals(javaBuildpackFolderName)) {
