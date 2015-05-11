@@ -1,5 +1,8 @@
 ## Update Sites for Offline Installation
 
+
+  [Cloud Foundry Eclipse 1.8.2](http://dist.springsource.com/release/TOOLS/cloudfoundry/1.8.2/cloudfoundry-1.8.2.201505070649-RELEASE-updatesite.zip)
+  
   [Cloud Foundry Eclipse 1.8.1](http://dist.springsource.com/release/TOOLS/cloudfoundry/1.8.1/cloudfoundry-1.8.1.201503242338-RELEASE-updatesite.zip)
 
   [Cloud Foundry Eclipse 1.8.0](http://dist.springsource.com/release/TOOLS/cloudfoundry/1.8.0/cloudfoundry-1.8.0.201502131756-RELEASE-updatesite.zip)
