@@ -90,17 +90,24 @@ public abstract class CloudSpacesDelegate {
 			else {
 				List<CloudSpace> spaces = orgsSpaces.getAllSpaces();
 				if (spaces != null) {
-					// Find a space that does not have a corresponding server
-					// instance.
+
+					String url = cloudServer.getUrl();
+
 					for (CloudSpace space : spaces) {
-						CloudFoundryServer existingServer = null;
-						for (CloudFoundryServer cloudServer : cloudServers) {
-							if (matchesExisting(space, cloudServer.getCloudFoundrySpace())) {
-								existingServer = cloudServer;
+						CloudFoundryServer foundServer = null;
+
+						for (CloudFoundryServer existingServer : cloudServers) {
+							// Be sure to only check existing servers with the
+							// same URL, as other existing server instances may
+							// have same
+							// org and space name, but have different URL
+							if (existingServer.getUrl().equals(url)
+									&& matchesSpace(space, existingServer.getCloudFoundrySpace())) {
+								foundServer = cloudServer;
 								break;
 							}
 						}
-						if (existingServer == null) {
+						if (foundServer == null) {
 							return space;
 						}
 					}
@@ -159,7 +166,7 @@ public abstract class CloudSpacesDelegate {
 				for (CloudFoundryServer cloudServer : cloudServers) {
 					// Can ignore the cloud space check if the URL is different.
 					if (cloudServerURL.equals(cloudServer.getUrl())
-							&& matchesExisting(selectedCloudSpace, cloudServer.getCloudFoundrySpace())) {
+							&& matchesSpace(selectedCloudSpace, cloudServer.getCloudFoundrySpace())) {
 						errorMessage = NLS.bind(Messages.ERROR_SERVER_INSTANCE_CLOUD_SPACE_EXISTS, cloudServer
 								.getServer().getName(), selectedCloudSpace.getName());
 						break;
@@ -290,7 +297,7 @@ public abstract class CloudSpacesDelegate {
 		return cloudServer;
 	}
 
-	public static boolean matchesExisting(CloudSpace selectedCloudSpace, CloudFoundrySpace existingSpace) {
+	public static boolean matchesSpace(CloudSpace selectedCloudSpace, CloudFoundrySpace existingSpace) {
 		return (existingSpace == null && selectedCloudSpace == null)
 				|| (existingSpace != null && selectedCloudSpace != null
 						&& existingSpace.getOrgName().equals(selectedCloudSpace.getOrganization().getName()) && existingSpace
