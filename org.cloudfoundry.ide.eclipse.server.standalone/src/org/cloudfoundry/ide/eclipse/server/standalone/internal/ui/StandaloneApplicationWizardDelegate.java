@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2013, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -51,7 +51,7 @@ public class StandaloneApplicationWizardDelegate extends
 				cloudServer, applicationModule, descriptor, urllookup, this);
 
 		CloudFoundryApplicationWizardPage applicationNamePage = new CloudFoundryApplicationWizardPage(
-				cloudServer, deploymentPage, applicationModule, descriptor);
+				cloudServer, applicationModule, descriptor);
 
 		defaultPages.add(applicationNamePage);
 

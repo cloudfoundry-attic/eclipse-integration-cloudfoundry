@@ -358,6 +358,14 @@ public class Messages extends NLS {
 	public static String EnvironmentVariablesPart_TEXT_VALUE_LABEL;
 
 	public static String EnvironmentVariablesPart_TEXT_TABLE_ACC_LABEL;
+	
+	public static String EnvironmentVariablesPart_DUP_VARIABLE_ERROR;
+
+	public static String EnvironmentVariablesPart_EMPTY_VARIABLE_ERROR;
+
+	public static String EnvironmentVariablesPart_EDIT_TITLE;
+
+	public static String EnvironmentVariablesPart_ADD_TITLE;
 
 	public static String EnvVarsWizard_ERROR_ENV_VAR;
 

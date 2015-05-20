@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -38,7 +38,6 @@ import org.cloudfoundry.ide.eclipse.server.ui.internal.UIPart;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.WizardPartChangeEvent;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
@@ -81,14 +80,22 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 
 	protected final ApplicationWizardDescriptor descriptor;
 
-	protected final CloudFoundryDeploymentWizardPage deploymentPage;
-
+	// Preserving the old constructor to avoid API breakage
 	public CloudFoundryApplicationWizardPage(CloudFoundryServer server,
 			CloudFoundryDeploymentWizardPage deploymentPage, CloudFoundryApplicationModule module,
 			ApplicationWizardDescriptor descriptor) {
 		super(Messages.CloudFoundryApplicationWizardPage_TEXT_DEPLOY_WIZ, null, null);
 		this.server = server;
-		this.deploymentPage = deploymentPage;
+		// Simply ignore the deploymentPage, this is preserved to avoid API breakage
+		this.module = module;
+		this.descriptor = descriptor;
+		this.serverTypeId = module.getServerTypeId();
+	}
+	
+	public CloudFoundryApplicationWizardPage(CloudFoundryServer server, CloudFoundryApplicationModule module,
+			ApplicationWizardDescriptor descriptor) {
+		super(Messages.CloudFoundryApplicationWizardPage_TEXT_DEPLOY_WIZ, null, null);
+		this.server = server;
 		this.module = module;
 		this.descriptor = descriptor;
 		this.serverTypeId = module.getServerTypeId();
@@ -123,7 +130,12 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 	}
 
 	protected Composite createContents(Composite parent) {
+		Composite composite = preCreateContents(parent);
+		createManifestSection(composite);
+		return composite;
+	}
 
+	protected Composite preCreateContents(Composite parent) {
 		// This must be called first as the values are then populate into the UI
 		// widgets
 		init();
@@ -135,7 +147,6 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 		final UIPart appPart = new AppNamePart();
 		// Add the listener first so that it can be notified of changes during
 		// the part creation.
-		appPart.addPartChangeListener(deploymentPage);
 		appPart.addPartChangeListener(this);
 
 		appPart.createPart(composite);
@@ -161,12 +172,19 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 			}
 		});
 
+		return composite;
+	}
+	
+	protected void createManifestSection(Composite composite) {
+		
+		Label emptyLabel = new Label(composite, SWT.NONE);
+		emptyLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 2, 1));
+		
 		final Button saveToManifest = new Button(composite, SWT.CHECK);
 		saveToManifest.setText(Messages.CloudFoundryApplicationWizardPage_BUTTON_SAVE_MANIFEST);
 		saveToManifest.setToolTipText(Messages.CloudFoundryApplicationWizardPage_TEXT_SAVE_MANIFEST_TOOLTIP);
-
-		GridDataFactory.fillDefaults().grab(false, false).applyTo(saveToManifest);
-
+		saveToManifest.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, false, false, 2, 1));
+		
 		saveToManifest.setSelection(false);
 
 		saveToManifest.addSelectionListener(new SelectionAdapter() {
@@ -177,8 +195,6 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 			}
 
 		});
-		return composite;
-
 	}
 
 	protected void validateBuildPack() {
@@ -267,6 +283,9 @@ public class CloudFoundryApplicationWizardPage extends PartsWizardPage {
 			nameText.addModifyListener(new ModifyListener() {
 				public void modifyText(ModifyEvent e) {
 					appName = nameText.getText();
+					
+					// Utilize the observer to do the notification
+					descriptor.getDeploymentInfo().setDeploymentName(appName);
 					// If first time initialising, dont update the wizard
 					// buttons as the may not be available to update yet
 					boolean updateButtons = true;

@@ -36,12 +36,12 @@ import org.eclipse.swt.widgets.Composite;
 
 public class CloudFoundryApplicationEnvVarWizardPage extends PartsWizardPage {
 
-	private final CloudFoundryServer cloudServer;
-
+	protected final CloudFoundryServer cloudServer;
+	
 	protected final ApplicationDeploymentInfo deploymentInfo;
 
-	private EnvironmentVariablesPart envVarPart;
-
+	protected EnvironmentVariablesPart envVarPart;
+	
 	public CloudFoundryApplicationEnvVarWizardPage(CloudFoundryServer cloudServer,
 			ApplicationDeploymentInfo deploymentInfo) {
 		super(Messages.CloudFoundryApplicationEnvVarWizardPage_TEXT_ENV_VAR_WIZ, null, null);
@@ -62,14 +62,11 @@ public class CloudFoundryApplicationEnvVarWizardPage extends PartsWizardPage {
 		Composite mainArea = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(2).spacing(new Point(SWT.DEFAULT,20)).applyTo(mainArea);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainArea);
-		envVarPart = new EnvironmentVariablesPart();
-
-		envVarPart.addPartChangeListener(new IPartChangeListener() {
-
-			public void handleChange(PartChangeEvent event) {
-				deploymentInfo.setEnvVariables(envVarPart.getVariables());
-			}
-		});
+		envVarPart = new EnvironmentVariablesPart(deploymentInfo);
+		
+		// Make it extendible for injecting any actions upon environment variable change 
+		addPartChangeListner();
+		
 		envVarPart.createPart(mainArea);
 
 		if (deploymentInfo.getEnvVariables() != null) {
@@ -84,4 +81,12 @@ public class CloudFoundryApplicationEnvVarWizardPage extends PartsWizardPage {
 		return true;
 	}
 
+	protected void addPartChangeListner() {
+		envVarPart.addPartChangeListener(new IPartChangeListener() {
+
+			public void handleChange(PartChangeEvent event) {
+				deploymentInfo.setEnvVariables(envVarPart.getVariables());
+			}
+		});
+	}
 }
