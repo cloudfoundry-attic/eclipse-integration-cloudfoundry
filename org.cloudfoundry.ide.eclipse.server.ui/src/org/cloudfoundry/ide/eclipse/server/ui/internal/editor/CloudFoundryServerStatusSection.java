@@ -174,9 +174,9 @@ public class CloudFoundryServerStatusSection extends ServerEditorSection impleme
 					nameLabel.setText(cfServer.getServer().getName() + ": "); //$NON-NLS-1$
 					
 					int s = cfServer.getServer().getServerState();
-					String statusString = ""; //$NON-NLS-1$
+					String statusString = Messages.CloudFoundryServerStatusSection_TEXT_NOT_CONNECTED;
 					if (s == IServer.STATE_STARTED) {
-						statusString = ""; //$NON-NLS-1$
+						statusString = Messages.CloudFoundryServerStatusSection_TEXT_CONNECTED;
 					}
 					statusLabel.setText(statusString);
 					
