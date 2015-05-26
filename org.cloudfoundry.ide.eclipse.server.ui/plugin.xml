@@ -174,7 +174,7 @@
  	   	</menuContribution>
  	   	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
-     	       label="Map to Project..."
+     	       label="Link with Project..."
      	       commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.remaptoprojectcommand">
   	         <visibleWhen
   	               checkEnabled="false">
@@ -193,7 +193,7 @@
  	   	</menuContribution>
  	   	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
-     	       label="Unmap Project"
+     	       label="Unlink Project"
      	       commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.unmapprojectcommand">
   	         <visibleWhen
   	               checkEnabled="false">
@@ -269,13 +269,13 @@
 			id="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.pushcommand">
 		</command>
 		<command
-			name="Map to Project"
-			description="Map to Project"
+			name="Link with Project"
+			description="Link the cloud application with the project."
 			id="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.remaptoprojectcommand">
 		</command>
 		<command
-			name="Unmap Project"
-			description="Unmap Project"
+			name="Unlink Project"
+			description="Unlink the cloud application and the project."
 			id="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.unmapprojectcommand">
 		</command>
 		<command

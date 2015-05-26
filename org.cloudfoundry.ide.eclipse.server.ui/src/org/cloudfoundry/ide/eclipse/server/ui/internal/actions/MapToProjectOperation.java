@@ -39,7 +39,11 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.window.Window;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.dialogs.ElementTreeSelectionDialog;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
@@ -79,11 +83,11 @@ public class MapToProjectOperation implements ICloudFoundryOperation {
 
 	public void map(IProject project, IProgressMonitor monitor) throws CoreException {
 		if (project == null || !project.isAccessible()) {
-			throw CloudErrorUtil.toCoreException("No accessible project specified. Unable to map module to project.");//$NON-NLS-1$
+			throw CloudErrorUtil.toCoreException("No accessible project specified. Unable to link the cloud module with the project.");//$NON-NLS-1$
 		}
 		if (appModule == null) {
 			throw CloudErrorUtil
-					.toCoreException("No Cloud module specified. Unable to map to project: " + project.getName()); //$NON-NLS-1$
+					.toCoreException("No Cloud module specified. Unable to link cloud module with the project: " + project.getName()); //$NON-NLS-1$
 		}
 
 		ModuleCache moduleCache = CloudFoundryPlugin.getModuleCache();
@@ -92,7 +96,7 @@ public class MapToProjectOperation implements ICloudFoundryOperation {
 		// if it is being deployed, do not perform remap
 		if (data.isUndeployed(appModule.getLocalModule())) {
 			throw CloudErrorUtil
-					.toCoreException("Unable to unmap module. It is currently being published. Please wait until publish operation is complete before remapping."); //$NON-NLS-1$
+					.toCoreException("Unable to unlink the module. It is currently being published. Please wait until the publish operation is complete before relinking the project."); //$NON-NLS-1$
 		}
 
 		data.tagForReplace(appModule);
@@ -113,12 +117,12 @@ public class MapToProjectOperation implements ICloudFoundryOperation {
 
 		if (modules == null || modules.length == 0) {
 			throw CloudErrorUtil
-					.toCoreException("Unable to create module for " + project.getName() + ". Failed to map to " + appModule.getDeployedApplicationName()); //$NON-NLS-1$ //$NON-NLS-2$
+					.toCoreException("Unable to create module for " + project.getName() + ". Failed to link the project with " + appModule.getDeployedApplicationName()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		if (ServerUtil.containsModule(server, modules[0], monitor)) {
 			throw CloudErrorUtil
-					.toCoreException("Unable to create module for " + project.getName() + ". Module already exists. Failed to map to " + appModule.getDeployedApplicationName()); //$NON-NLS-1$ //$NON-NLS-2$
+					.toCoreException("Unable to create module for " + project.getName() + ". Module already exists. Failed to link the project with " + appModule.getDeployedApplicationName()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		IModule[] add = new IModule[] { modules[0] };
@@ -231,7 +235,24 @@ public class MapToProjectOperation implements ICloudFoundryOperation {
 		};
 
 		ILabelProvider labelProvider = new WorkbenchLabelProvider();
-		ElementTreeSelectionDialog dialog = new ElementTreeSelectionDialog(shell, labelProvider, contentProvider);
+		ElementTreeSelectionDialog dialog = new ElementTreeSelectionDialog(shell, labelProvider, contentProvider) {
+			@Override
+			protected Label createMessageArea(Composite composite) {
+				Label label = new Label(composite, SWT.WRAP);
+				GridData gd = new GridData();
+				gd.horizontalAlignment = SWT.FILL;
+				// The default ElementTreeSelectionDialog label doesn't wrap.
+				// Since our description text is long, we need to do this adjustment.
+				gd.widthHint = composite.getShell().getSize().x / 5;
+				label.setLayoutData(gd);
+				String msg = getMessage();
+				if (msg != null) {
+					label.setText(msg);
+				}
+				label.setFont(composite.getFont());
+				return label;
+			}
+		};
 		dialog.setComparator(new WorkbenchViewerComparator());
 
 		dialog.setTitle(Messages.MapToProjectOperation_PROJECT_SELECTION_DIALOGUE_TITLE);
