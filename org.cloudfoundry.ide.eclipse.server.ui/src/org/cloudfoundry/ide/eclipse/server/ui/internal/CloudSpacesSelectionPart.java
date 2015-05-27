@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License√ì); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -217,7 +217,7 @@ public class CloudSpacesSelectionPart extends UIPart {
 		}
 
 		public int compare(Viewer viewer, Object e1, Object e2) {
-			if (e1 instanceof CloudEntity && e1 instanceof CloudEntity) {
+			if (e1 instanceof CloudEntity && e2 instanceof CloudEntity) {
 				String name1 = ((CloudEntity) e1).getName();
 				String name2 = ((CloudEntity) e2).getName();
 				return name1.compareTo(name2);
