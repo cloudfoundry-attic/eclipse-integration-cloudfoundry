@@ -238,6 +238,22 @@ public class StartOperation extends RestartOperation {
 
 		String appName = appModule.getDeploymentInfo().getDeploymentName();
 
+		// [95636410] - verify that the application actually exists.
+		// Otherwise a cryptic error may be thrown and the user may not
+		// know that the upload failed because the application no longer exists
+		try {
+			getBehaviour().getCloudApplication(appName, monitor);
+		}
+		catch (CoreException e) {
+			if (CloudErrorUtil.isNotFoundException(e)) {
+				throw CloudErrorUtil.toCoreException(
+						NLS.bind(Messages.ERROR_FAILED_TO_PUSH_APP_DOES_NOT_EXIST, appName), e);
+			}
+			else {
+				throw e;
+			}
+		}
+
 		try {
 			// Now push the application content.
 			if (warFile != null) {

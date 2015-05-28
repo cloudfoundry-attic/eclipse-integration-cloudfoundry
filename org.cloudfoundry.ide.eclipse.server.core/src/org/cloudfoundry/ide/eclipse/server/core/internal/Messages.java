@@ -83,6 +83,8 @@ public class Messages extends NLS {
 
 	public static String ERROR_FAILED_TO_PUSH_APP;
 
+	public static String ERROR_FAILED_TO_PUSH_APP_DOES_NOT_EXIST;
+
 	public static String ERROR_NO_CLOUD_APPLICATION_FOUND;
 
 	public static String ERROR_NO_MODULES_TO_PUBLISH;
@@ -200,7 +202,7 @@ public class Messages extends NLS {
 	public static String CloudRebelAppHandler_TIME_OUT_RESOLVING_REMOTING_AGENT;
 
 	public static String CloudRebelAppHandler_UPDATED_URL;
-	
+
 	public static String CloudRebelAppHandler_UP_TO_DATE;
 
 	public static String CommandOptions_DESCRIPTION_VARIABLES_FOR_TUNNEL;
