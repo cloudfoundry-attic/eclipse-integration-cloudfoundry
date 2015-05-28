@@ -607,6 +607,8 @@ public class Messages extends NLS {
 
 	public static String CloudFoundryCredentialsWizardPage_TEXT_CRENDENTIAL;
 
+	public static String CloudFoundryDecorator_SUFFIX_DEPLOYED;
+
 	public static String CloudFoundryDecorator_SUFFIX_DEPLOYED_AS;
 
 	public static String CloudFoundryDecorator_SUFFIX_NOT_DEPLOYED;

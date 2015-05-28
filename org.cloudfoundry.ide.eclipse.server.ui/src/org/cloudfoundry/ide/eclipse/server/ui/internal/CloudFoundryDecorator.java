@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -90,17 +90,15 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 					}
 
 					CloudApplication application = module.getApplication();
-					// if (application != null) {
-					// decoration.addSuffix(NLS.bind("  [{0}, {1}, {2}]",
-					// new Object[]{application.getName(),
-					// getAppStateString(application.getState()),
-					// application.getUris()}));
-					// } else if (module.getName() != null) {
-					// decoration.addSuffix(NLS.bind("  [{0}]",
-					// module.getName()));
-					// }
 					if (application != null) {
-						decoration.addSuffix(NLS.bind(Messages.CloudFoundryDecorator_SUFFIX_DEPLOYED_AS, application.getName()));
+						String deployedAppName = application.getName();
+						IModule localModule = module.getLocalModule();
+						// Only show "Deployed as" when the local module name does not match the deployed app name.
+						if (localModule != null && !localModule.getName().equals(deployedAppName)) {
+							decoration.addSuffix(NLS.bind(Messages.CloudFoundryDecorator_SUFFIX_DEPLOYED_AS, deployedAppName));
+						} else {
+							decoration.addSuffix(Messages.CloudFoundryDecorator_SUFFIX_DEPLOYED);
+						}
 					}
 					else {
 						decoration.addSuffix(Messages.CloudFoundryDecorator_SUFFIX_NOT_DEPLOYED);
