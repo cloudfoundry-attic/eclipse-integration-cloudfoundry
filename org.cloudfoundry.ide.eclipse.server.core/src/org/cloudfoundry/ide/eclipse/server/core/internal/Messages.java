@@ -234,6 +234,8 @@ public class Messages extends NLS {
 	public static String CONSOLE_WAITING_FOR_APPLICATION_TO_START;
 
 	public static String CONSOLE_STOPPING_APPLICATION;
+	
+	public static String DeleteModulesOperation_ERROR_DELETE_APP_MESSAGE;
 
 	public static String LocalServerRequest_SERVER_LABEL;
 

@@ -27,11 +27,13 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
+import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 
 /**
@@ -82,7 +84,12 @@ public class DeleteModulesOperation extends BehaviourOperation {
 			catch (Throwable t) {
 				// Ignore if not found. The app does not exist
 				if (!CloudErrorUtil.isNotFoundException(t)) {
-					throw t;
+					// If it is any other error, like a 500 error or network
+					// connection, still proceed with the deletion as to not
+					// have the module in the server instance that cannot be deleted, but log the error
+					String error = NLS.bind(Messages.DeleteModulesOperation_ERROR_DELETE_APP_MESSAGE,
+							appModule.getDeployedApplicationName(), t.getMessage());
+					CloudFoundryPlugin.logError(error, t);
 				}
 			}
 
