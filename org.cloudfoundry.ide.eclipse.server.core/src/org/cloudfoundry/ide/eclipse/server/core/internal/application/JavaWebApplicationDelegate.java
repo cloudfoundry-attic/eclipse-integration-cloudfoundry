@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -16,15 +16,19 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM - Turning into base WAR packaging provider.
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.application;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.zip.ZipFile;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
+import org.cloudfoundry.client.lib.archive.ZipApplicationArchive;
 import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
@@ -33,6 +37,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.eclipse.core.resources.IProject;
@@ -46,6 +51,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.wst.server.core.IModule;
+import org.eclipse.wst.server.core.internal.Server;
 import org.eclipse.wst.server.core.model.IModuleResource;
 
 /**
@@ -169,9 +175,8 @@ public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 	}
 
 	public boolean providesApplicationArchive(IModule module) {
-		// No need for application archive as Java Web applications
-		// require a .war file created by the CF plugin framework
-		return false;
+		// Returns a default WAR archive package
+		return true;
 	}
 
 	/*
@@ -188,9 +193,20 @@ public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 	public ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule module,
 			CloudFoundryServer cloudServer, IModuleResource[] moduleResources, IProgressMonitor monitor)
 			throws CoreException {
-		// No need for application archive, as the CF plugin framework generates
-		// .war files for Java Web applications.
-		return null;
+		try { 
+			File warFile = CloudUtil.createWarFile(new IModule [] { module.getLocalModule() },
+					(Server)cloudServer.getServer(), monitor);
+			
+			CloudFoundryPlugin.trace("War file " + warFile.getName() + " created"); //$NON-NLS-1$ //$NON-NLS-2$
+			
+			return new ZipApplicationArchive(new ZipFile(warFile));
+		} catch (Exception e) {
+			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+					"Failed to create war file. " + 
+							"\nApplication: " + module.getApplication().getName() + 
+							"\nModule: " + module.getName() + 
+							"\nException: " + e.getMessage(), e)); //$NON-NLS-1$
+		}
 	}
 
 	@Override
