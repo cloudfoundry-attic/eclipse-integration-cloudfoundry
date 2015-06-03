@@ -32,6 +32,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ModuleChangeEvent;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
@@ -66,6 +67,8 @@ public class DeleteModulesOperation extends BehaviourOperation {
 	protected void doDelete(IProgressMonitor monitor) throws CoreException {
 		final CloudFoundryServer cloudServer = getBehaviour().getCloudFoundryServer();
 
+		List<String> failedToDeleteApps = new ArrayList<String>();
+		Throwable failedDeleteError = null;
 		for (IModule module : modules) {
 			final CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 
@@ -77,19 +80,18 @@ public class DeleteModulesOperation extends BehaviourOperation {
 			// may slow down the
 			// deletion process, only fetch the app being deleted
 			CloudApplication application = null;
-
 			try {
 				application = getBehaviour().getCloudApplication(appModule.getDeployedApplicationName(), monitor);
 			}
 			catch (Throwable t) {
 				// Ignore if not found. The app does not exist
+				// If it is any other error, like a 500 error or network
+				// connection, still proceed with the deletion as to not
+				// have the module in the server instance that cannot be
+				// deleted, but log the error
 				if (!CloudErrorUtil.isNotFoundException(t)) {
-					// If it is any other error, like a 500 error or network
-					// connection, still proceed with the deletion as to not
-					// have the module in the server instance that cannot be deleted, but log the error
-					String error = NLS.bind(Messages.DeleteModulesOperation_ERROR_DELETE_APP_MESSAGE,
-							appModule.getDeployedApplicationName(), t.getMessage());
-					CloudFoundryPlugin.logError(error, t);
+					failedDeleteError = t;
+					failedToDeleteApps.add(appModule.getDeployedApplicationName());
 				}
 			}
 
@@ -141,6 +143,13 @@ public class DeleteModulesOperation extends BehaviourOperation {
 			if (deleteServices && !servicesToDelete.isEmpty()) {
 				CloudFoundryPlugin.getCallback().deleteServices(servicesToDelete, cloudServer);
 			}
+
+		}
+		if (!failedToDeleteApps.isEmpty() && failedDeleteError != null) {
+			String errorMessage = NLS.bind(Messages.DeleteModulesOperation_ERROR_DELETE_APP_MESSAGE,
+					failedToDeleteApps, failedDeleteError.getMessage());
+			IStatus status = CloudFoundryPlugin.getErrorStatus(errorMessage, failedDeleteError);
+			CloudFoundryPlugin.getCallback().handleError(status);
 		}
 	}
 
