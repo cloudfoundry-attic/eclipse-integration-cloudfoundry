@@ -28,7 +28,6 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.cloudfoundry.client.lib.archive.ZipApplicationArchive;
 import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
@@ -199,7 +198,7 @@ public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 			
 			CloudFoundryPlugin.trace("War file " + warFile.getName() + " created"); //$NON-NLS-1$ //$NON-NLS-2$
 			
-			return new ZipApplicationArchive(new ZipFile(warFile));
+			return new CloudZipApplicationArchive(new ZipFile(warFile));
 		} catch (Exception e) {
 			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
 					"Failed to create war file. " + 
