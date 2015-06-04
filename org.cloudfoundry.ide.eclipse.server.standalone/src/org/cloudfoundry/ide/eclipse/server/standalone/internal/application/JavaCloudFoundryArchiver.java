@@ -30,10 +30,10 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipFile;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
-import org.cloudfoundry.client.lib.archive.ZipApplicationArchive;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.CloudZipApplicationArchive;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.ManifestParser;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.Messages;
@@ -260,7 +260,7 @@ public class JavaCloudFoundryArchiver {
 
 		// At this stage a packaged file should have been created or found
 		try {
-			return new ZipApplicationArchive(new ZipFile(packagedFile));
+			return new CloudZipApplicationArchive(new ZipFile(packagedFile));
 		} catch (IOException ioe) {
 			handleApplicationDeploymentFailure(NLS.bind(
 					Messages.JavaCloudFoundryArchiver_ERROR_CREATE_CF_ARCHIVE,

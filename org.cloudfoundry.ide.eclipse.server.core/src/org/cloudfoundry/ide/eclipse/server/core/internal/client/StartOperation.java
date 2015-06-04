@@ -34,6 +34,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.CloudApplicationArchive;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -266,58 +267,71 @@ public class StartOperation extends RestartOperation {
 				// resources
 				// AFTER
 				// the server determines the list of missing file names.
-				if (applicationArchive instanceof CachingApplicationArchive) {
-					final CachingApplicationArchive cachingArchive = (CachingApplicationArchive) applicationArchive;
-					client.uploadApplication(appName, cachingArchive, new UploadStatusCallback() {
+				try {
+					if (applicationArchive instanceof CachingApplicationArchive) {
+						final CachingApplicationArchive cachingArchive = (CachingApplicationArchive) applicationArchive;
+						client.uploadApplication(appName, cachingArchive, new UploadStatusCallback() {
 
-						public void onProcessMatchedResources(int length) {
+							public void onProcessMatchedResources(int length) {
 
-						}
+							}
 
-						public void onMatchedFileNames(Set<String> matchedFileNames) {
-							cachingArchive.generatePartialWarFile(matchedFileNames);
-						}
+							public void onMatchedFileNames(Set<String> matchedFileNames) {
+								cachingArchive.generatePartialWarFile(matchedFileNames);
+							}
 
-						public void onCheckResources() {
+							public void onCheckResources() {
 
-						}
+							}
 
-						public boolean onProgress(String status) {
-							return false;
-						}
-					});
+							public boolean onProgress(String status) {
+								return false;
+							}
+						});
 
-					// Once the application has run, do a clean up of the
-					// sha1
-					// cache for deleted resources
+						// Once the application has run, do a clean up of the
+						// sha1
+						// cache for deleted resources
 
+					}
+					else {
+						client.uploadApplication(appName, applicationArchive, new UploadStatusCallback() {
+
+							public void onProcessMatchedResources(int length) {
+
+							}
+
+							public void onMatchedFileNames(Set<String> matchedFileNames) {
+								// try {
+								// printlnToConsole(appModule, ".", false,
+								// false, monitor);
+								// }
+								// catch (CoreException e) {
+								// CloudFoundryPlugin.logError(e);
+								// }
+							}
+
+							public void onCheckResources() {
+
+							}
+
+							public boolean onProgress(String status) {
+								return false;
+							}
+						});
+					}
 				}
-				else {
-					client.uploadApplication(appName, applicationArchive, new UploadStatusCallback() {
-
-						public void onProcessMatchedResources(int length) {
-
+				finally {
+					if (applicationArchive instanceof CloudApplicationArchive) {
+						try {
+							((CloudApplicationArchive) applicationArchive).close();
 						}
-
-						public void onMatchedFileNames(Set<String> matchedFileNames) {
-							// try {
-							// printlnToConsole(appModule, ".", false,
-							// false, monitor);
-							// }
-							// catch (CoreException e) {
-							// CloudFoundryPlugin.logError(e);
-							// }
+						catch (CoreException e) {
+							// Don't let errors in closing the archive stop the
+							// publish operation
+							CloudFoundryPlugin.logError(e);
 						}
-
-						public void onCheckResources() {
-
-						}
-
-						public boolean onProgress(String status) {
-							return false;
-						}
-					});
-
+					}
 				}
 			}
 			else {
