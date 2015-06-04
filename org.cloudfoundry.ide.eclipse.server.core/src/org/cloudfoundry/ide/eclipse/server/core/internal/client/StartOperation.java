@@ -16,10 +16,11 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM - Switching to NOT provide a default WAR package here
+ *     		(default implementation is done through JavaWebApplicationDelegate)
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
@@ -27,13 +28,14 @@ import org.cloudfoundry.client.lib.CloudFoundryOperations;
 import org.cloudfoundry.client.lib.UploadStatusCallback;
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.domain.CloudApplication;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationAction;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CachingApplicationArchive;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.ApplicationRegistry;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.CloudApplicationArchive;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -141,20 +143,24 @@ public class StartOperation extends RestartOperation {
 				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 
 				subMonitor.subTask(generatingArchiveLabel);
-				final ApplicationArchive applicationArchive = getBehaviour().generateApplicationArchiveFile(
+				ApplicationArchive applicationArchive = getBehaviour().generateApplicationArchiveFile(
 						appModule.getDeploymentInfo(), appModule, getModules(), server, incrementalPublish,
 						subMonitor.newChild(10));
-				File warFile = null;
 				if (applicationArchive == null) {
-					// Create a full war archive
-
-					warFile = CloudUtil.createWarFile(getModules(), server, subMonitor.newChild(10));
-					if (warFile == null || !warFile.exists()) {
-						throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-								"Unable to create war file for application: " + deploymentName)); //$NON-NLS-1$
+					if (ApplicationRegistry.getDefaultJavaWebApplicationProvider() != null) {
+						AbstractApplicationDelegate delegate = ApplicationRegistry.getDefaultJavaWebApplicationProvider().getDelegate();
+						if (delegate != null) {
+							applicationArchive = delegate.
+											getApplicationArchive(appModule, cloudServer, server.getResources(getModules()), subMonitor);		
+						}
 					}
-
-					CloudFoundryPlugin.trace("War file " + warFile.getName() + " created"); //$NON-NLS-1$ //$NON-NLS-2$
+					
+					if (applicationArchive == null) {
+						// An app archive must be always available, so if we reached this point and we have none
+						// then we must throw an exception.
+						throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+								"Application archive is not available for application: " + deploymentName)); //$NON-NLS-1$
+					}
 				}
 				else {
 					subMonitor.worked(10);
@@ -179,8 +185,8 @@ public class StartOperation extends RestartOperation {
 				}
 
 				subMonitor.worked(10);
-
-				final File warFileFin = warFile;
+				
+				final ApplicationArchive applicationArchiveFin = applicationArchive;
 				final CloudFoundryApplicationModule appModuleFin = appModule;
 				// Now push the application resources to the server
 
@@ -190,7 +196,7 @@ public class StartOperation extends RestartOperation {
 
 						getBehaviour().printlnToConsole(appModuleFin, getRequestLabel());
 
-						pushApplication(client, appModuleFin, warFileFin, applicationArchive, progress);
+						pushApplication(client, appModuleFin, applicationArchiveFin, progress);
 
 						CloudFoundryPlugin.trace("Application " + deploymentName //$NON-NLS-1$
 								+ " pushed to Cloud Foundry server."); //$NON-NLS-1$
@@ -235,7 +241,7 @@ public class StartOperation extends RestartOperation {
 	 * @throws CoreException if error creating the application
 	 */
 	protected void pushApplication(CloudFoundryOperations client, final CloudFoundryApplicationModule appModule,
-			File warFile, ApplicationArchive applicationArchive, final IProgressMonitor monitor) throws CoreException {
+			ApplicationArchive applicationArchive, final IProgressMonitor monitor) throws CoreException {
 
 		String appName = appModule.getDeploymentInfo().getDeploymentName();
 
@@ -257,10 +263,7 @@ public class StartOperation extends RestartOperation {
 
 		try {
 			// Now push the application content.
-			if (warFile != null) {
-				client.uploadApplication(appName, warFile);
-			}
-			else if (applicationArchive != null) {
+			if (applicationArchive != null) {
 				// Handle the incremental publish case separately as it
 				// requires
 				// a partial war file generation of only the changed

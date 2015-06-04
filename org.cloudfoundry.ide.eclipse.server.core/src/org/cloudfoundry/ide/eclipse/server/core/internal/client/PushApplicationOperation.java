@@ -19,7 +19,6 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -118,7 +117,7 @@ public class PushApplicationOperation extends StartOperation {
 
 	@Override
 	protected void pushApplication(CloudFoundryOperations client, final CloudFoundryApplicationModule appModule,
-			File warFile, ApplicationArchive applicationArchive, final IProgressMonitor monitor) throws CoreException {
+			ApplicationArchive applicationArchive, final IProgressMonitor monitor) throws CoreException {
 		String appName = appModule.getDeploymentInfo().getDeploymentName();
 
 		List<CloudApplication> existingApps = client.getApplications();
@@ -213,7 +212,7 @@ public class PushApplicationOperation extends StartOperation {
 			}
 
 		}
-		super.pushApplication(client, appModule, warFile, applicationArchive, monitor);
+		super.pushApplication(client, appModule, applicationArchive, monitor);
 	}
 
 	@Override
