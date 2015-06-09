@@ -24,6 +24,7 @@
     <module>org.cloudfoundry.ide.eclipse.server.rse</module>
     <module>org.cloudfoundry.ide.eclipse.server.tests</module>
     <module>org.cloudfoundry.ide.eclipse.server.ui</module>
+    <module>org.cloudfoundry.ide.eclipse.server.verify.ui</module>
     <module>org.cloudfoundry.ide.eclipse.server.standalone</module>
     <module>org.cloudfoundry.ide.eclipse.server.branding</module>
     <module>org.cloudfoundry.ide.eclipse.server.site</module>
