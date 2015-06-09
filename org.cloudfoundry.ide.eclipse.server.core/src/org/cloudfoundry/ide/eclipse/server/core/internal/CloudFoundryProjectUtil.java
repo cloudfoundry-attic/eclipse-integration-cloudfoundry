@@ -138,6 +138,18 @@ public class CloudFoundryProjectUtil {
 		return false;
 	}
 
+	public static boolean isWarApp(IProject project) {
+		IProjectFacet facet = ProjectFacetsManager.getProjectFacet("jst.web"); //$NON-NLS-1$
+		try {
+			IFacetedProject facetedProject = ProjectFacetsManager.create(project);
+			return facetedProject != null && facetedProject.hasProjectFacet(facet);
+		}
+		catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		return false;
+	}
+
 	/**
 	 * 
 	 * 

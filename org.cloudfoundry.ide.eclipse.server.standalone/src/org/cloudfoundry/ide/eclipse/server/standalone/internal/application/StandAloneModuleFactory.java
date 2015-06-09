@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License”); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -21,14 +21,16 @@ package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.ModuleDelegate;
 import org.eclipse.wst.server.core.util.ProjectModuleFactoryDelegate;
 
 /**
- * Required factory to support Java applications in the Eclipse
- * WST-based Cloud Foundry server, including Spring boot applications.
+ * Required factory to support Java applications in the Eclipse WST-based Cloud
+ * Foundry server, including Spring boot applications.
  * 
  */
 public class StandAloneModuleFactory extends ProjectModuleFactoryDelegate {
@@ -70,8 +72,26 @@ public class StandAloneModuleFactory extends ProjectModuleFactoryDelegate {
 	}
 
 	public static boolean canHandle(IProject project) {
+		if (!CloudFoundryProjectUtil.hasNature(project, JavaCore.NATURE_ID)) {
+			return false;
+		}
+
 		StandaloneFacetHandler handler = new StandaloneFacetHandler(project);
-		return CloudFoundryProjectUtil.hasNature(project, JavaCore.NATURE_ID)
-				&& handler.hasFacet();
+
+		// If it is Spring boot, and it doesn't have the facet, add it to avoid
+		// having users manually add the facet
+		if (!CloudFoundryProjectUtil.isWarApp(project) && !handler.hasFacet()) {
+			IJavaProject javaProject = CloudFoundryProjectUtil
+					.getJavaProject(project);
+
+			if (javaProject != null
+					&& CloudFoundryProjectUtil.isSpringBootProject(javaProject)) {
+				// Only add the face if jst.web is NOT present, to avoid
+				// configuring a WAR Spring boot.
+				handler.addFacet(new NullProgressMonitor());
+			}
+		}
+
+		return handler.hasFacet();
 	}
 }
