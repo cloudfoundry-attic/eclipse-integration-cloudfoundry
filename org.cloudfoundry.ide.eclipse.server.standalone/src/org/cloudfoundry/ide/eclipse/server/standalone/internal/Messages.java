@@ -41,8 +41,6 @@ public class Messages extends NLS {
 
 	public static String JavaCloudFoundryArchiver_ERROR_MANIFEST_NOT_ACCESSIBLE;
 
-	public static String JavaCloudFoundryArchiver_ERROR_FILE_NOT_FOUND_MANIFEST_YML;
-
 	public static String JavaCloudFoundryArchiver_ERROR_FAILED_READ_MANIFEST;
 
 	public static String JavaCloudFoundryArchiver_ERROR_NO_PACKAGE_FRAG_ROOTS;

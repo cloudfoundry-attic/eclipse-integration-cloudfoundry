@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "License�); you may not use this file except in compliance 
+ * Version 2.0 (the "License"); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -21,10 +21,12 @@
 package org.cloudfoundry.ide.eclipse.server.core.internal.application;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
@@ -32,6 +34,7 @@ import org.cloudfoundry.ide.eclipse.server.core.AbstractApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.ApplicationDeploymentInfo;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ApplicationUrlLookupService;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudApplicationURL;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryConstants;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
@@ -39,16 +42,20 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IClasspathContainer;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.internal.Server;
 import org.eclipse.wst.server.core.model.IModuleResource;
@@ -192,18 +199,24 @@ public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 	public ApplicationArchive getApplicationArchive(CloudFoundryApplicationModule module,
 			CloudFoundryServer cloudServer, IModuleResource[] moduleResources, IProgressMonitor monitor)
 			throws CoreException {
-		try { 
-			File warFile = CloudUtil.createWarFile(new IModule [] { module.getLocalModule() },
-					(Server)cloudServer.getServer(), monitor);
-			
+
+		ApplicationArchive manifestArchive = getArchiveFromManifest(module, cloudServer);
+		if (manifestArchive != null) {
+			return manifestArchive;
+		}
+		try {
+			File warFile = CloudUtil.createWarFile(new IModule[] { module.getLocalModule() },
+					(Server) cloudServer.getServer(), monitor);
+
 			CloudFoundryPlugin.trace("War file " + warFile.getName() + " created"); //$NON-NLS-1$ //$NON-NLS-2$
-			
+
 			return new CloudZipApplicationArchive(new ZipFile(warFile));
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-					"Failed to create war file. " + 
-							"\nApplication: " + module.getApplication().getName() + 
-							"\nModule: " + module.getName() + 
+					"Failed to create war file. " + //$NON-NLS-1$
+							"\nApplication: " + module.getApplication().getName() + //$NON-NLS-1$
+							"\nModule: " + module.getName() + //$NON-NLS-1$
 							"\nException: " + e.getMessage(), e)); //$NON-NLS-1$
 		}
 	}
@@ -244,5 +257,62 @@ public class JavaWebApplicationDelegate extends AbstractApplicationDelegate {
 			info.setUris(Arrays.asList(url.getUrl()));
 		}
 		return info;
+	}
+
+	public static ApplicationArchive getArchiveFromManifest(CloudFoundryApplicationModule appModule,
+			CloudFoundryServer cloudServer) throws CoreException {
+		String archivePath = null;
+		ManifestParser parser = new ManifestParser(appModule, cloudServer);
+		// Read the path again instead of deployment info, as a user may be
+		// correcting the path after the module was creating and simply
+		// attempting to push it again without the
+		// deployment wizard
+		if (parser.hasManifest()) {
+			archivePath = parser.getApplicationProperty(null, ManifestParser.PATH_PROP);
+		}
+
+		File packagedFile = null;
+		if (archivePath != null) {
+			// Only support paths that point to archive files
+			IPath path = new Path(archivePath);
+			if (path.getFileExtension() != null) {
+				// Check if it is project relative first
+				IFile projectRelativeFile = null;
+				IProject project = CloudFoundryProjectUtil.getProject(appModule);
+
+				if (project != null) {
+					projectRelativeFile = project.getFile(archivePath);
+				}
+
+				if (projectRelativeFile != null && projectRelativeFile.exists()) {
+					packagedFile = projectRelativeFile.getLocation().toFile();
+				}
+				else {
+					// See if it is an absolute path
+					File absoluteFile = new File(archivePath);
+					if (absoluteFile.exists() && absoluteFile.canRead()) {
+						packagedFile = absoluteFile;
+					}
+				}
+			}
+			// If a path is specified but no file found stop further deployment
+			if (packagedFile == null) {
+				String message = NLS.bind(Messages.JavaWebApplicationDelegate_ERROR_FILE_NOT_FOUND_MANIFEST_YML,
+						archivePath);
+				throw CloudErrorUtil.toCoreException(message);
+			}
+			else {
+				try {
+					return new CloudZipApplicationArchive(new ZipFile(packagedFile));
+				}
+				catch (ZipException e) {
+					throw CloudErrorUtil.toCoreException(e);
+				}
+				catch (IOException e) {
+					throw CloudErrorUtil.toCoreException(e);
+				}
+			}
+		}
+		return null;
 	}
 }

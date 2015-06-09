@@ -234,7 +234,7 @@ public class Messages extends NLS {
 	public static String CONSOLE_WAITING_FOR_APPLICATION_TO_START;
 
 	public static String CONSOLE_STOPPING_APPLICATION;
-	
+
 	public static String DeleteModulesOperation_ERROR_DELETE_APP_MESSAGE;
 
 	public static String LocalServerRequest_SERVER_LABEL;
@@ -268,6 +268,8 @@ public class Messages extends NLS {
 	public static String ROUTES;
 
 	public static String EMPTY_URL_ERROR;
+
+	public static String JavaWebApplicationDelegate_ERROR_FILE_NOT_FOUND_MANIFEST_YML;
 
 	public static String JavaWebApplicationDelegate_ERROR_NO_MAPPED_APP_URL;
 

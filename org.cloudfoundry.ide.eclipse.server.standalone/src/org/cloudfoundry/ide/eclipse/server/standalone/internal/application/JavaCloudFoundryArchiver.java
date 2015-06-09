@@ -34,14 +34,13 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.application.CloudZipApplicationArchive;
-import org.cloudfoundry.ide.eclipse.server.core.internal.application.ManifestParser;
+import org.cloudfoundry.ide.eclipse.server.core.internal.application.JavaWebApplicationDelegate;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -94,50 +93,12 @@ public class JavaCloudFoundryArchiver {
 	public ApplicationArchive getApplicationArchive(IProgressMonitor monitor)
 			throws CoreException {
 
-		String archivePath = null;
-		ManifestParser parser = new ManifestParser(appModule, cloudServer);
-		// Read the path again instead of deployment info, as a user may be
-		// correcting the path after the module was creating and simply attempting to push it again without the
-		// deployment wizard
-		if (parser.hasManifest()) {
-			archivePath = parser.getApplicationProperty(null,
-					ManifestParser.PATH_PROP);
-		}
+		ApplicationArchive archive = JavaWebApplicationDelegate
+				.getArchiveFromManifest(appModule, cloudServer);
 
-		File packagedFile = null;
-		if (archivePath != null) {
-			// Only support paths that point to archive files
-			IPath path = new Path(archivePath);
-			if (path.getFileExtension() != null) {
-				// Check if it is project relative first
-				IFile projectRelativeFile = null;
-				IProject project = CloudFoundryProjectUtil
-						.getProject(appModule);
+		if (archive == null) {
 
-				if (project != null) {
-					projectRelativeFile = project.getFile(archivePath);
-				}
-
-				if (projectRelativeFile != null && projectRelativeFile.exists()) {
-					packagedFile = projectRelativeFile.getLocation().toFile();
-				} else {
-					// See if it is an absolute path
-					File absoluteFile = new File(archivePath);
-					if (absoluteFile.exists() && absoluteFile.canRead()) {
-						packagedFile = absoluteFile;
-					}
-				}
-			}
-			// If a path is specified but no file found stop further deployment
-			if (packagedFile == null) {
-				String message = NLS
-						.bind(Messages.JavaCloudFoundryArchiver_ERROR_FILE_NOT_FOUND_MANIFEST_YML,
-								archivePath);
-				throw CloudErrorUtil.toCoreException(message);
-			}
-		}
-
-		if (packagedFile == null) {
+			File packagedFile = null;
 
 			IJavaProject javaProject = CloudFoundryProjectUtil
 					.getJavaProject(appModule);
@@ -161,7 +122,8 @@ public class JavaCloudFoundryArchiver {
 			JarPackageData jarPackageData = getJarPackageData(roots, mainType,
 					monitor);
 
-			boolean isBoot = CloudFoundryProjectUtil.isSpringBootProject(javaProject);
+			boolean isBoot = CloudFoundryProjectUtil
+					.isSpringBootProject(javaProject);
 
 			// Search for existing MANIFEST.MF
 			IFile metaFile = getManifest(roots, javaProject);
@@ -256,17 +218,19 @@ public class JavaCloudFoundryArchiver {
 			if (isBoot) {
 				bootRepackage(roots, packagedFile);
 			}
+
+			// At this stage a packaged file should have been created or found
+			try {
+				archive = new CloudZipApplicationArchive(new ZipFile(
+						packagedFile));
+			} catch (IOException ioe) {
+				handleApplicationDeploymentFailure(NLS
+						.bind(Messages.JavaCloudFoundryArchiver_ERROR_CREATE_CF_ARCHIVE,
+								ioe.getMessage()));
+			}
 		}
 
-		// At this stage a packaged file should have been created or found
-		try {
-			return new CloudZipApplicationArchive(new ZipFile(packagedFile));
-		} catch (IOException ioe) {
-			handleApplicationDeploymentFailure(NLS.bind(
-					Messages.JavaCloudFoundryArchiver_ERROR_CREATE_CF_ARCHIVE,
-					ioe.getMessage()));
-		}
-		return null;
+		return archive;
 	}
 
 	/**
