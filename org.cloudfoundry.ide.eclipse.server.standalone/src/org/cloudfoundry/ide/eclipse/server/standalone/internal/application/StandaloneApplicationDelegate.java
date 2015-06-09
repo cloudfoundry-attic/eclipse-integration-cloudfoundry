@@ -48,7 +48,7 @@ public class StandaloneApplicationDelegate extends
 
 	@Override
 	public boolean shouldSetDefaultUrl(CloudFoundryApplicationModule appModule) {
-		return CloudFoundryProjectUtil.isSpringBootApp(appModule);
+		return CloudFoundryProjectUtil.isSpringBoot(appModule);
 	}
 
 	/*

@@ -83,7 +83,7 @@ public class CloudRebelUIHandler extends CloudRebelAppHandler {
 		// Only replace rebel xml file if a manual Remoting
 		// update is performed on Spring boot applications
 		if (event.getType() == CloudServerEvent.EVENT_JREBEL_REMOTING_UPDATE
-				&& CloudFoundryProjectUtil.isSpringBootJarProject(project)) {
+				&& CloudFoundryProjectUtil.isSpringBootCloudFoundryConfigured(project)) {
 			updateRebelXML(project, monitor);
 		}
 

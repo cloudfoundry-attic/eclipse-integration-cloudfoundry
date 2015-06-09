@@ -22,7 +22,6 @@ package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.ModuleDelegate;
@@ -80,16 +79,11 @@ public class StandAloneModuleFactory extends ProjectModuleFactoryDelegate {
 
 		// If it is Spring boot, and it doesn't have the facet, add it to avoid
 		// having users manually add the facet
-		if (!CloudFoundryProjectUtil.isWarApp(project) && !handler.hasFacet()) {
-			IJavaProject javaProject = CloudFoundryProjectUtil
-					.getJavaProject(project);
-
-			if (javaProject != null
-					&& CloudFoundryProjectUtil.isSpringBootProject(javaProject)) {
-				// Only add the face if jst.web is NOT present, to avoid
-				// configuring a WAR Spring boot.
-				handler.addFacet(new NullProgressMonitor());
-			}
+		if (!CloudFoundryProjectUtil.isWarApp(project) && !handler.hasFacet()
+				&& CloudFoundryProjectUtil.isSpringBoot(project)) {
+			// Only add the face if jst.web is NOT present, to avoid
+			// configuring a WAR Spring boot.
+			handler.addFacet(new NullProgressMonitor());
 		}
 
 		return handler.hasFacet();

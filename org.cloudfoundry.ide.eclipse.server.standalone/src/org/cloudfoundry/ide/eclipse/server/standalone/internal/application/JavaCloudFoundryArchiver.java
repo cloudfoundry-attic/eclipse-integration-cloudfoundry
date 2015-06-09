@@ -123,7 +123,7 @@ public class JavaCloudFoundryArchiver {
 					monitor);
 
 			boolean isBoot = CloudFoundryProjectUtil
-					.isSpringBootProject(javaProject);
+					.isSpringBoot(appModule);
 
 			// Search for existing MANIFEST.MF
 			IFile metaFile = getManifest(roots, javaProject);

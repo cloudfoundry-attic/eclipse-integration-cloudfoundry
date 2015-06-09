@@ -118,14 +118,12 @@ public class CloudFoundryProjectUtil {
 	 *
 	 * @param project
 	 * @return true if the Spring boot application is a standalone Java
-	 * application (jar app) False if it is not Spring Boot app or it is not a
-	 * standalone Java application.
+	 * application (jar app) configured for CF deployment. False if it is not
+	 * Spring Boot app or it is not a standalone Java application.
 	 */
-	public static boolean isSpringBootJarProject(IProject project) {
+	public static boolean isSpringBootCloudFoundryConfigured(IProject project) {
 
-		IJavaProject javaProject = getJavaProject(project);
-
-		if (javaProject != null && isSpringBootProject(javaProject)) {
+		if (isSpringBoot(project)) {
 			IProjectFacet facet = ProjectFacetsManager.getProjectFacet(ID_MODULE_STANDALONE);
 			try {
 				IFacetedProject facetedProject = ProjectFacetsManager.create(project);
@@ -160,22 +158,26 @@ public class CloudFoundryProjectUtil {
 	 * @return true if the given project is a Spring boot project, false
 	 * otherwise
 	 */
-	public static boolean isSpringBootProject(IJavaProject project) {
-		if (project == null) {
-			return false;
-		}
-		try {
-			IClasspathEntry[] classpath = project.getResolvedClasspath(true);
-			// Look for a 'spring-boot' jar entry
-			for (IClasspathEntry e : classpath) {
-				if (hasBootDependencies(e)) {
-					return true;
+	public static boolean isSpringBoot(IProject project) {
+		if (project != null && isSpringProject(project)) {
+			try {
+				IJavaProject javaProject = getJavaProject(project);
+
+				if (javaProject != null) {
+					IClasspathEntry[] classpath = javaProject.getResolvedClasspath(true);
+					// Look for a 'spring-boot' jar entry
+					for (IClasspathEntry e : classpath) {
+						if (hasBootDependencies(e)) {
+							return true;
+						}
+					}
 				}
 			}
+			catch (Exception e) {
+				CloudFoundryPlugin.logError(e);
+			}
 		}
-		catch (Exception e) {
-			CloudFoundryPlugin.logError(e);
-		}
+
 		return false;
 	}
 
@@ -185,12 +187,11 @@ public class CloudFoundryProjectUtil {
 	 * @return true if it is a Spring Boot app. False otherwise. It makes no
 	 * checks on the type of packaging (war, jar, etc..)
 	 */
-	public static boolean isSpringBootApp(CloudFoundryApplicationModule appModule) {
+	public static boolean isSpringBoot(CloudFoundryApplicationModule appModule) {
 		if (appModule == null) {
 			return false;
 		}
-		IJavaProject javaProject = CloudFoundryProjectUtil.getJavaProject(appModule);
-		return isSpringBootProject(javaProject);
+		return isSpringBoot(getProject(appModule));
 	}
 
 	private static boolean hasBootDependencies(IClasspathEntry e) {
