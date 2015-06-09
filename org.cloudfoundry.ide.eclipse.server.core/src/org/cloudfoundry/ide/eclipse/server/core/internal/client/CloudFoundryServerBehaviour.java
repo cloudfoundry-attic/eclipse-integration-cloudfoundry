@@ -2052,13 +2052,40 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 				List<String> boundServices = new ArrayList<String>();
 				for (String service : services) {
 					serviceProgress.subTask(NLS.bind(Messages.CloudFoundryServerBehaviour_DELETING_SERVICE, service));
-					CloudServiceInstance instance = client.getServiceInstance(service);
-					List<CloudServiceBinding> bindings = null;
-					if (instance != null) {
-						bindings = instance.getBindings();
+
+					boolean shouldDelete = true;
+					try {
+						CloudServiceInstance instance = client.getServiceInstance(service);
+						List<CloudServiceBinding> bindings = (instance != null) ? instance.getBindings() : null;
+						shouldDelete = bindings == null || bindings.isEmpty();
+					}
+					catch (CloudFoundryException cfe) {
+						// [96494172] - If fetching service instances fails, try
+						// finding an app with the bound service through the
+						// list of
+						// apps. This is treated as an alternate way only if the
+						// primary form fails as fetching list of
+						// apps may be potentially slower
+						List<CloudApplication> apps = client.getApplications();
+						if (apps != null) {
+							for (int i = 0; shouldDelete && i < apps.size(); i++) {
+								CloudApplication app = apps.get(i);
+								if (app != null) {
+									List<String> appServices = app.getServices();
+									if (appServices != null) {
+										for (String appServ : appServices) {
+											if (service.equals(appServ)) {
+												shouldDelete = false;
+												break;
+											}
+										}
+									}
+								}
+							}
+						}
 					}
 
-					if (bindings == null || bindings.isEmpty()) {
+					if (shouldDelete) {
 						client.deleteService(service);
 					}
 					else {
