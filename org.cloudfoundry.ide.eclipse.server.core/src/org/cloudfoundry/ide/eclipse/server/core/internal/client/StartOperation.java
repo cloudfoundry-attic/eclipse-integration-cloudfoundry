@@ -145,25 +145,13 @@ public class StartOperation extends RestartOperation {
 				subMonitor.subTask(generatingArchiveLabel);
 				ApplicationArchive applicationArchive = getBehaviour().generateApplicationArchiveFile(
 						appModule.getDeploymentInfo(), appModule, getModules(), server, incrementalPublish,
-						subMonitor.newChild(10));
+						subMonitor.newChild(20));
 				if (applicationArchive == null) {
-					if (ApplicationRegistry.getDefaultJavaWebApplicationProvider() != null) {
-						AbstractApplicationDelegate delegate = ApplicationRegistry.getDefaultJavaWebApplicationProvider().getDelegate();
-						if (delegate != null) {
-							applicationArchive = delegate.
-											getApplicationArchive(appModule, cloudServer, server.getResources(getModules()), subMonitor);		
-						}
-					}
-					
-					if (applicationArchive == null) {
-						// An app archive must be always available, so if we reached this point and we have none
-						// then we must throw an exception.
-						throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
-								"Application archive is not available for application: " + deploymentName)); //$NON-NLS-1$
-					}
-				}
-				else {
-					subMonitor.worked(10);
+					// An app archive must be always available, so if we reached
+					// this point and we have none
+					// then we must throw an exception.
+					throw new CoreException(new Status(IStatus.ERROR, CloudFoundryPlugin.PLUGIN_ID,
+							"Application archive is not available for application: " + deploymentName)); //$NON-NLS-1$
 				}
 
 				// Tell webtools the module has been published
@@ -185,7 +173,7 @@ public class StartOperation extends RestartOperation {
 				}
 
 				subMonitor.worked(10);
-				
+
 				final ApplicationArchive applicationArchiveFin = applicationArchive;
 				final CloudFoundryApplicationModule appModuleFin = appModule;
 				// Now push the application resources to the server
