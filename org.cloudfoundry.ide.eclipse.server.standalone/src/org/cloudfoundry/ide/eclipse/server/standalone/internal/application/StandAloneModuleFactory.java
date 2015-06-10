@@ -19,13 +19,22 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.standalone.internal.application;
 
+import java.util.Set;
+
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryProjectUtil;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.wst.common.project.facet.core.IFacetedProject;
+import org.eclipse.wst.common.project.facet.core.IProjectFacetVersion;
+import org.eclipse.wst.common.project.facet.core.ProjectFacetsManager;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.model.ModuleDelegate;
 import org.eclipse.wst.server.core.util.ProjectModuleFactoryDelegate;
+import org.osgi.framework.Bundle;
 
 /**
  * Required factory to support Java applications in the Eclipse WST-based Cloud
@@ -78,14 +87,56 @@ public class StandAloneModuleFactory extends ProjectModuleFactoryDelegate {
 		StandaloneFacetHandler handler = new StandaloneFacetHandler(project);
 
 		// If it is Spring boot, and it doesn't have the facet, add it to avoid
-		// having users manually add the facet
-		if (!CloudFoundryProjectUtil.isWarApp(project) && !handler.hasFacet()
+		// having users manually add the facet. Auto-configuration of Spring
+		// Boot is only
+		// enabled if Spring IDE is installed and also if project has no other
+		// facets as to avoid
+		// corrupting the project and making it undeployable in other WST server
+		// types that do not
+		// support the Cloud Foundry facet.
+		if (isSpringIDEInstalled() && hasNoFacets(project)
 				&& CloudFoundryProjectUtil.isSpringBoot(project)) {
-			// Only add the face if jst.web is NOT present, to avoid
-			// configuring a WAR Spring boot.
+
 			handler.addFacet(new NullProgressMonitor());
 		}
 
 		return handler.hasFacet();
+	}
+
+	/**
+	 * @return true if and only if it is possible to determine that the project
+	 *         has no facets. False otherwise
+	 */
+	private static boolean hasNoFacets(IProject project) {
+		// As adding facets can corrupt projects that are deployable to other
+		// WST server instances, if facets
+		// cannot be resolved, assume the project has facets.
+		boolean hasNoFacets = false;
+		try {
+			IFacetedProject facetedProject = ProjectFacetsManager
+					.create(project);
+			if (facetedProject != null) {
+				Set<IProjectFacetVersion> facets = facetedProject
+						.getProjectFacets();
+				hasNoFacets = facets == null || facets.isEmpty();
+			} else {
+				hasNoFacets = true;
+			}
+		} catch (CoreException e) {
+			CloudFoundryPlugin.logError(e);
+		}
+		return hasNoFacets;
+	}
+
+	private static boolean isSpringIDEInstalled() {
+		Bundle bundle = null;
+		try {
+			bundle = Platform.getBundle("org.springframework.ide.eclipse.core"); //$NON-NLS-1$
+		} catch (Throwable e) {
+			// Ignore. if it can't be resolved, assume not installed to avoid
+			// errors in non-STS environments
+		}
+
+		return bundle != null;
 	}
 }
