@@ -107,12 +107,22 @@ public class RestartOperation extends ApplicationOperation {
 
 				getBehaviour().new BehaviourRequest<Void>(startLabel) {
 					@Override
-					protected Void doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+					protected Void doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException, OperationCanceledException {
 						CloudFoundryPlugin.trace("Application " + deploymentName + " starting"); //$NON-NLS-1$ //$NON-NLS-2$
 
 						client.stopApplication(deploymentName);
+						// Can be more fine-grained.  Could pass progress to client's stopApplication method.  
+						// For now, we should check for cancel at this point, prior to starting the application
+						if (progress.isCanceled()) {
+							throw new OperationCanceledException(Messages.bind(Messages.OPERATION_CANCELED, getRequestLabel()));
+						}
 
 						StartingInfo info = client.startApplication(deploymentName);
+						
+						// Similarly, check for cancel at this point
+						if (progress.isCanceled()) {
+							throw new OperationCanceledException(Messages.bind(Messages.OPERATION_CANCELED, getRequestLabel()));
+						}
 						if (info != null) {
 
 							cloudModule.setStartingInfo(info);
@@ -145,14 +155,17 @@ public class RestartOperation extends ApplicationOperation {
 						}
 						catch (InterruptedException e) {
 							server.setModuleState(getModules(), IServer.STATE_STOPPED);
-							throw new OperationCanceledException();
+							throw new OperationCanceledException(Messages.bind(Messages.OPERATION_CANCELED, getRequestLabel()));
 						}
-
 						AbstractAppStateTracker curTracker = CloudFoundryPlugin.getAppStateTracker(
 								RestartOperation.this.getBehaviour().getServer().getServerType().getId(), cloudModule);
+						// Check for cancel
+						if (progress.isCanceled()) {
+							throw new OperationCanceledException(Messages.bind(Messages.OPERATION_CANCELED, getRequestLabel()));
+						}
 						if (curTracker != null) {
 							curTracker.setServer(RestartOperation.this.getBehaviour().getServer());
-							curTracker.startTracking(cloudModule);
+							curTracker.startTracking(cloudModule, progress);
 						}
 
 						CloudFoundryPlugin.trace("Application " + deploymentName + " started"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -177,7 +190,7 @@ public class RestartOperation extends ApplicationOperation {
 									isAppStarting = false;
 								}
 							}
-							curTracker.stopTracking(cloudModule);
+							curTracker.stopTracking(cloudModule, progress);
 						}
 
 						server.setModuleState(getModules(), IServer.STATE_STARTED);

@@ -40,6 +40,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.application.CloudApplic
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.osgi.util.NLS;
@@ -180,10 +181,14 @@ public class StartOperation extends RestartOperation {
 
 				getBehaviour().new BehaviourRequest<Void>(getOperationName() + " - " + deploymentName) { //$NON-NLS-1$
 					@Override
-					protected Void doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException {
+					protected Void doRun(final CloudFoundryOperations client, SubMonitor progress) throws CoreException, OperationCanceledException {
 
 						getBehaviour().printlnToConsole(appModuleFin, getRequestLabel());
 
+						// Check for cancel here prior to pushing the application
+						if (progress.isCanceled()) {
+						   throw new OperationCanceledException(Messages.bind(Messages.OPERATION_CANCELED, getRequestLabel()));
+						}
 						pushApplication(client, appModuleFin, applicationArchiveFin, progress);
 
 						CloudFoundryPlugin.trace("Application " + deploymentName //$NON-NLS-1$
@@ -310,6 +315,10 @@ public class StartOperation extends RestartOperation {
 								return false;
 							}
 						});
+					}
+					// Check for cancel
+					if (monitor.isCanceled()) {
+						throw new OperationCanceledException(Messages.bind(Messages.OPERATION_CANCELED, getOperationName()));
 					}
 				}
 				finally {
