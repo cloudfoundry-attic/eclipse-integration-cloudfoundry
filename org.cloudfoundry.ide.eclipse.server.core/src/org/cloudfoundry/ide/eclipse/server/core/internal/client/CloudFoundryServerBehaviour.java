@@ -2059,7 +2059,9 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 						List<CloudServiceBinding> bindings = (instance != null) ? instance.getBindings() : null;
 						shouldDelete = bindings == null || bindings.isEmpty();
 					}
-					catch (CloudFoundryException cfe) {
+					catch (Throwable t) {
+						// If it is a server or network error, it will still be caught below
+						// when fetching the list of apps:
 						// [96494172] - If fetching service instances fails, try
 						// finding an app with the bound service through the
 						// list of
