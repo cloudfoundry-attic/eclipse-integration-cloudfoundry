@@ -139,9 +139,10 @@ public class MapToProjectOperation implements ICloudFoundryOperation {
 				.getDeployedApplicationName());
 
 		if (updatedModule != null) {
-			cloudServer.getBehaviour().operations().refreshApplication(updatedModule.getLocalModule());
+			cloudServer.getBehaviour().operations().refreshApplication(updatedModule.getLocalModule()).run(monitor);
 		}
 
+		
 		ServerEventHandler.getDefault().fireServerRefreshed(cloudServer);
 	}
 
