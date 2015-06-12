@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2014, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -21,6 +21,7 @@
 package org.cloudfoundry.ide.eclipse.server.core;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.wst.server.core.IServer;
 
 /**
@@ -61,4 +62,28 @@ public abstract class AbstractAppStateTracker {
 	 * @param appModule The application module to be tracked
 	 */
 	public abstract void stopTracking(CloudFoundryApplicationModule appModule);
+
+	/**
+	 * Start tracking the given application module and this can also be used to start the initialization.
+	 * Intended to be overridden.  If not overridden, then calls original implemented startTracking(CloudFoundryApplicationModule appModule).  
+	 * Overrides should not have to call super.
+	 * of the tracking, e.g. start monitoring the console output.
+	 * @param appModule The application module to be tracked
+	 * @param monitor The progress monitor to allow for canceling tracking
+	 */
+	public void startTracking(CloudFoundryApplicationModule appModule, IProgressMonitor monitor) {
+		startTracking(appModule);
+	}
+
+	/**
+	 * Stop tracking the given application module and this can also be used to clean up
+ 	 * Intended to be overridden.  If not overridden, then calls original implemented stopTracking(CloudFoundryApplicationModule appModule).  
+	 * Overrides should not have to call super.
+	 * the tracking, e.g. stop monitoring the console output.
+	 * @param appModule The application module to be tracked
+	 * @param monitor The progress monitor to allow for canceling tracking
+	 */
+	public void stopTracking(CloudFoundryApplicationModule appModule, IProgressMonitor monitor) {
+		stopTracking(appModule);
+	}
 }

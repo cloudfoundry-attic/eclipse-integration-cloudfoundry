@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others
+ * Copyright (c) 2014, 2015 IBM Corporation and others
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -27,6 +27,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Logger;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.console.ConsoleManagerRegistry;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ui.console.IPatternMatchListener;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.PatternMatchEvent;
@@ -140,7 +141,7 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
     protected abstract String getAppStartedPattern();
 
 	@Override
-	public void startTracking(CloudFoundryApplicationModule appModule) {
+	public void startTracking(CloudFoundryApplicationModule appModule, IProgressMonitor monitor) {
 		if (server == null || appModule == null) {
 			return;
 		}
@@ -156,7 +157,7 @@ public abstract class AbstractConsoleMonitorAppStateTracker extends AbstractAppS
 	}
 
 	@Override
-	public void stopTracking(CloudFoundryApplicationModule appModule) {
+	public void stopTracking(CloudFoundryApplicationModule appModule, IProgressMonitor monitor) {
 		if (server == null || consoleMonitor == null || appModule == null) {
 			return;
 		}

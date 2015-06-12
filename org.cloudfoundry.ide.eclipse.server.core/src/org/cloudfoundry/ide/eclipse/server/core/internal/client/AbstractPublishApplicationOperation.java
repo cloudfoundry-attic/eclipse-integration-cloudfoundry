@@ -21,6 +21,7 @@ package org.cloudfoundry.ide.eclipse.server.core.internal.client;
 
 import org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -91,6 +92,14 @@ public abstract class AbstractPublishApplicationOperation extends BehaviourOpera
 		catch (OperationCanceledException e) {
 			// ignore so webtools does not show an exception
 			((Server) getBehaviour().getServer()).setModuleState(getModules(), IServer.STATE_UNKNOWN);
+
+			// If application operations, like Restart, Start, or PushApplication are canceled, then the publish state is 'indeterminate'
+			// TODO: Don't reference internal Server class.  We need to revisit this change and revert back to the original state.
+			((Server) getBehaviour().getServer()).setServerPublishState(IServer.PUBLISH_STATE_INCREMENTAL);
+			((Server) getBehaviour().getServer()).setModulePublishState(modules, IServer.PUBLISH_STATE_INCREMENTAL);
+			
+			// Record the canceled operation 'description' to the log file.
+			CloudFoundryPlugin.logWarning(e.getMessage());
 		}
 
 	}

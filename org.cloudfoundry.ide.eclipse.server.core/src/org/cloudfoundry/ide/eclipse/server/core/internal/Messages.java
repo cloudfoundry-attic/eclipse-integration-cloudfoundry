@@ -275,6 +275,8 @@ public class Messages extends NLS {
 
 	public static String ModuleResourceApplicationArchive_ERROR_NO_DEPLOYABLE_RES_FOUND;
 
+	public static String OPERATION_CANCELED;
+
 	private static final String BUNDLE_NAME = CloudFoundryPlugin.PLUGIN_ID + ".internal.Messages"; //$NON-NLS-1$
 
 	static {

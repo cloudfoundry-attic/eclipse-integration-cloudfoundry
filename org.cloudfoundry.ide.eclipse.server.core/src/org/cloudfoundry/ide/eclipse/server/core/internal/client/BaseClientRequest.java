@@ -157,7 +157,8 @@ public abstract class BaseClientRequest<T> {
 		}
 
 		if (subProgress.isCanceled()) {
-			throw new OperationCanceledException();
+			// check for cancel here, if specialized requests do not do it
+			throw new OperationCanceledException(Messages.bind(Messages.OPERATION_CANCELED, label));
 		}
 		else if (error instanceof CoreException) {
 			throw (CoreException) error;
