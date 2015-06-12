@@ -156,7 +156,7 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 	@Override
 	public MessageConsole findCloudFoundryConsole(IServer server, CloudFoundryApplicationModule appModule) {
 		String curConsoleId = getConsoleId(server, appModule);
-		if (curConsoleId != null) {
+		if (curConsoleId != null && consoleByUri.get(curConsoleId) != null) {
 			return consoleByUri.get(curConsoleId).getConsole();
 		}
 		return null;
@@ -258,9 +258,8 @@ public class ApplicationLogConsoleManager extends CloudConsoleManager {
 	public static MessageConsole getApplicationConsole(CloudFoundryServer server,
 			CloudFoundryApplicationModule appModule) {
 		MessageConsole appConsole = null;
-		String consoleName = getConsoleId(server.getServer(), appModule);
 		for (IConsole console : ConsolePlugin.getDefault().getConsoleManager().getConsoles()) {
-			if (console instanceof MessageConsole && console.getName().equals(consoleName)) {
+			if (console instanceof MessageConsole && console.getName().equals(getConsoleDisplayName(server, appModule))) {
 				appConsole = (MessageConsole) console;
 			}
 		}

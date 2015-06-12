@@ -52,6 +52,8 @@ public class CloudFoundryImages {
 
 	public static final ImageDescriptor CONNECT = create(OBJ, "connect.png"); //$NON-NLS-1$
 
+	public static final ImageDescriptor CLOSE_CONSOLE = create(OBJ, "close_console.gif"); //$NON-NLS-1$
+
 	public static final ImageDescriptor NEW_SERVICE = create(OBJ, "service_new.png"); //$NON-NLS-1$
 
 	public static final ImageDescriptor OBJ_APPLICATION = create(OBJ, "application.png"); //$NON-NLS-1$
@@ -70,7 +72,8 @@ public class CloudFoundryImages {
 
 	public static final ImageDescriptor REFRESH = create(OBJ, "refresh.gif"); //$NON-NLS-1$
 
-	public static final ImageDescriptor REMOVE = PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_TOOL_DELETE);
+	public static final ImageDescriptor REMOVE = PlatformUI.getWorkbench().getSharedImages()
+			.getImageDescriptor(ISharedImages.IMG_TOOL_DELETE);
 
 	public static final ImageDescriptor OVERLAY_ERROR = create(OBJ, "error_overlay.png"); //$NON-NLS-1$
 
