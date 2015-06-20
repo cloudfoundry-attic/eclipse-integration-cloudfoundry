@@ -1,7 +1,7 @@
 # Cloud Foundry Integration for Eclipse
       
-  The Cloud Foundry Integration for Eclipse provides first-class support for the Cloud Foundry
-  PaaS: http://www.cloudfoundry.com/. It allows you to directly deploy applications from your
+  The Cloud Foundry Integration for Eclipse provides first-class support for the [Cloud Foundry
+  PaaS] (http://www.cloudfoundry.com/). It allows you to directly deploy applications from your
   workspace to a running Pivotal CF server instance, view and manage deployed applications and services,
   start and stop applications.
 
@@ -12,7 +12,7 @@
 
 ### when using Eclipse
 
-  Go to the Eclipse Marketplace and search for "Cloud Foundry". You will find the release 
+  Go to the [Eclipse Marketplace] (https://marketplace.eclipse.org/) and search for "Cloud Foundry". You will find the release 
   of the Cloud Foundry Integration for Eclipse and can install that into your existing Eclipse
   installation. An Eclipse JEE package is recommended.
 
@@ -133,7 +133,7 @@
 
   1. Please select, sign and submit the appropriate CLA: [individuals](http://www.cloudfoundry.org/individualcontribution.pdf) or [corporations](http://www.cloudfoundry.org/corpcontribution.pdf). 
 
-  2. After submitting the CLA, please [fork this repository](http://help.github.com/forking/).
+  2. After submitting the CLA, please [fork this repository](https://github.com/cloudfoundry/eclipse-integration-cloudfoundry).
 
   3. Set your name and email
   
