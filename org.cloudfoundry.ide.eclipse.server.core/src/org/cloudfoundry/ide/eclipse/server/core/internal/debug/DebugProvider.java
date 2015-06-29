@@ -320,6 +320,9 @@ public class DebugProvider implements IDebugProvider {
 
 	protected IFile getFile(IResource resource, String containingFolderName, String fileName) throws CoreException {
 
+		if (resource == null || !resource.exists()) {
+			return null;
+		}
 		if (resource instanceof IFile && resource.getName().equals(fileName) && resource.getParent() != null
 				&& resource.getParent().getName().equals(containingFolderName)) {
 			return (IFile) resource;
