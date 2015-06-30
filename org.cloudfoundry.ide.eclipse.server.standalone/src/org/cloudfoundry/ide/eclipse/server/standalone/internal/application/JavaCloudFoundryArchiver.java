@@ -306,7 +306,7 @@ public class JavaCloudFoundryArchiver {
 			IJavaProject javaProject, IProgressMonitor monitor)
 			throws CoreException {
 
-		return new JavaPackageFragmentRootHandler(javaProject, null);
+		return new JavaPackageFragmentRootHandler(javaProject, cloudServer);
 	}
 
 	protected void bootRepackage(final IPackageFragmentRoot[] roots,

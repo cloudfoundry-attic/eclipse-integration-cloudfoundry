@@ -60,6 +60,14 @@ public class Messages extends NLS {
 	public static String ProjectExplorerMenuFactory_LABEL_REMOVE_TEXT;
 	public static String ProjectExplorerMenuFactory_LABEL_REMOVE_TOOLTIP;
 
+	public static String SelectMainTypeWizardPage_LABEL;
+
+	public static String SelectMainTypeWizardPage_TITLE;
+
+	public static String SelectMainTypeWizardPage_NO_SHELL;
+
+	public static String SelectMainTypeWizardPage_WIZARD_DESCRIPTION;
+
 	static {
 		// initialize resource bundle
 		NLS.initializeMessages(BUNDLE_NAME, Messages.class);

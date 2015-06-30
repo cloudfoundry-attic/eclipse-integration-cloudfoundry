@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.standalone.internal.startcommand.JavaTypeResolver;
 import org.eclipse.core.resources.IProject;
@@ -61,16 +62,18 @@ public class JavaPackageFragmentRootHandler {
 
 	private IType type;
 
-	public JavaPackageFragmentRootHandler(IJavaProject javaProject, IType type) {
-		this.type = type;
+	private CloudFoundryServer cloudServer;
+
+	public JavaPackageFragmentRootHandler(IJavaProject javaProject,
+			CloudFoundryServer cloudServer) {
 		this.javaProject = javaProject;
+		this.cloudServer = cloudServer;
 	}
 
 	public IPackageFragmentRoot[] getPackageFragmentRoots(
 			IProgressMonitor monitor) throws CoreException {
 		IType type = getMainType(monitor);
 
-		
 		IPath[] classpathEntries = null;
 		ILaunchConfiguration configuration = null;
 		try {
@@ -151,8 +154,8 @@ public class JavaPackageFragmentRootHandler {
 	 */
 	public IType getMainType(IProgressMonitor monitor) throws CoreException {
 		if (type == null) {
-			type = new JavaTypeResolver(javaProject)
-					.getMainTypesFromSource(monitor);
+			type = new JavaTypeResolver(javaProject, cloudServer.getServer()
+					.getServerType().getId()).getMainTypesFromSource(monitor);
 			if (type == null) {
 				throw CloudErrorUtil
 						.toCoreException(Messages.JavaCloudFoundryArchiver_ERROR_NO_MAIN);
@@ -302,8 +305,9 @@ public class JavaPackageFragmentRootHandler {
 	 * <p/>
 	 * target/classes.
 	 * <p/>
-	 * In this case, the output folder will have a class path entry - target/classes - and it will be the same
-	 * for both roots, and this method will return true for both roots if passed the entry for target/classes
+	 * In this case, the output folder will have a class path entry -
+	 * target/classes - and it will be the same for both roots, and this method
+	 * will return true for both roots if passed the entry for target/classes
 	 * 
 	 * @param root
 	 *            to check if it corresponds to the given class path entry path
