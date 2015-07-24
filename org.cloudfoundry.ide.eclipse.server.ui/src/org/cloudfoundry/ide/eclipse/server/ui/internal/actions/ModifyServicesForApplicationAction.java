@@ -98,19 +98,9 @@ public abstract class ModifyServicesForApplicationAction extends EditorAction {
 		serviceChanges |= updatedServices.removeAll(getServicesToRemove());
 
 		if (serviceChanges) {
-			// Save the changes even if an app is not deployed
-			List<CloudService> boundServices = new ArrayList<CloudService>();
-			for (String serName : updatedServices) {
-				boundServices.add(new LocalCloudService(serName));
-			}
-			workingCopy.setServices(boundServices);
-			workingCopy.save();
-
-			if (appModule.getApplication() != null) {
-				// update services right away, if app is already deployed
-				return getBehaviour().operations().bindServices(appModule, updatedServices);
-			}
+			return new ModifyServicesForApplicationActionOperation(updatedServices, workingCopy);
 		}
+		
 		return null;
 	}
 
@@ -142,4 +132,40 @@ public abstract class ModifyServicesForApplicationAction extends EditorAction {
 		}
 		return services;
 	}
+
+	/** Attempt to bind the services to the application; if it succeeds, then update the services list. */
+	private class ModifyServicesForApplicationActionOperation implements ICloudFoundryOperation {
+
+		/** Copy of the updated deployment info, which will be saved on success.*/
+		final DeploymentInfoWorkingCopy workingCopy;
+		
+		/** List of services to add to the application*/
+		final List<String> updatedServices;
+		
+		public ModifyServicesForApplicationActionOperation(List<String> updatedServices, DeploymentInfoWorkingCopy workingCopy) {
+			this.updatedServices = updatedServices;
+			this.workingCopy = workingCopy;
+		}
+		
+
+		@Override
+		public void run(IProgressMonitor monitor) throws CoreException {
+			// Save the changes even if an app is not deployed
+			List<CloudService> boundServices = new ArrayList<CloudService>();
+			for (String serName : updatedServices) {
+				boundServices.add(new LocalCloudService(serName));
+			}
+
+			if (appModule.getApplication() != null) {
+				// update services right away, if app is already deployed
+				ICloudFoundryOperation bindOp = getBehaviour().operations().bindServices(appModule, updatedServices);
+				bindOp.run(monitor); // This will throw an exception on bind failure.
+			}
+			// Save the workingCopy after the bind operation, otherwise the WC may contain a service that failed to bind.
+			workingCopy.setServices(boundServices);
+			workingCopy.save();
+		}
+	}
 }
+
+
