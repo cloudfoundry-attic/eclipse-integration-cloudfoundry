@@ -190,6 +190,34 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 		}
 	}
 
+	/** Convenience method to determine if a module is for a non-faceted project */
+	public static boolean isNonfacetedModule(IModule module) {
+		boolean isNonfacetedProjResult = false;
+		
+		// Workaround - Remove the following and use the above commented
+		// out code
+		ClassLoader classLoader = module.getClass().getClassLoader();
+		if (classLoader != null) {
+			try {
+				Class iModule2 = classLoader.loadClass("org.eclipse.wst.server.core.IModule2"); //$NON-NLS-1$
+				if (iModule2 != null) {
+					Method getProperty = iModule2.getMethod("getProperty", String.class); //$NON-NLS-1$
+					Object o = getProperty.invoke(module, CloudFoundryConstants.PROPERTY_MODULE_NO_FACET);
+					if (o instanceof String && ((String) o).equals("true")) { //$NON-NLS-1$
+						isNonfacetedProjResult = true;
+					}
+				}
+			}
+			catch (Exception e) {
+				// If any issues, just go ahead and do the facet check
+				// below
+			}
+		}
+		// End of workaround
+		
+		return isNonfacetedProjResult;
+	}
+	
 	@Override
 	public IStatus canModifyModules(IModule[] add, IModule[] remove) {
 		if (add != null) {
@@ -205,39 +233,8 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 				IStatus status;
 				// If the module, in a non-faceted project, has been determined
 				// to be deployable to CF (ie. a single zip application
-				// archive), then
-				// this facet check is unnecessary.
-				boolean ignoreFacetCheck = false;
-				// FIXNS: Enable with IModule2 workaround is in place, as its
-				// not available in Eclipse 4.3 and older.
-				// if (module instanceof IModule2) {
-				// String property =
-				// ((IModule2)module).getProperty(CloudFoundryConstants.PROPERTY_MODULE_NO_FACET);
-				// if (property != null && property.equals("true")) {
-				// ignoreFacetCheck = true;
-				// }
-				// }
-
-				// Workaround - Remove the following and use the above commented
-				// out code
-				ClassLoader classLoader = module.getClass().getClassLoader();
-				if (classLoader != null) {
-					try {
-						Class iModule2 = classLoader.loadClass("org.eclipse.wst.server.core.IModule2"); //$NON-NLS-1$
-						if (iModule2 != null) {
-							Method getProperty = iModule2.getMethod("getProperty", String.class); //$NON-NLS-1$
-							Object o = getProperty.invoke(module, CloudFoundryConstants.PROPERTY_MODULE_NO_FACET);
-							if (o instanceof String && ((String) o).equals("true")) { //$NON-NLS-1$
-								ignoreFacetCheck = true;
-							}
-						}
-					}
-					catch (Exception e) {
-						// If any issues, just go ahead and do the facet check
-						// below
-					}
-				}
-				// End of workaround
+				// archive), then this facet check is unnecessary.
+				boolean ignoreFacetCheck = isNonfacetedModule(module);
 
 				if (module.getProject() != null && !ignoreFacetCheck) {
 					status = FacetUtil.verifyFacets(module.getProject(), getServer());

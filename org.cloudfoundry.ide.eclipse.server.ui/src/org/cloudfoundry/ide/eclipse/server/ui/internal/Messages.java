@@ -952,6 +952,7 @@ public class Messages extends NLS {
 	public static String MANAGE_SERVICES_TO_APPLICATIONS_FINISH_ERROR_DESCRIPTION;
 
 	public static String UPDATE_PROJECT_MAPPING;
+	public static String REMOVE_PROJECT_MAPPING;
 
 	public static String CloudFoundryServiceWizardPage_GETTING_AVAILABLE_SERVICES;
 

@@ -48,6 +48,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.dialogs.ElementTreeSelectionDialog;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.model.WorkbenchViewerComparator;
+import org.eclipse.wst.common.project.facet.core.IFacetedProject;
+import org.eclipse.wst.common.project.facet.core.ProjectFacetsManager;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 import org.eclipse.wst.server.core.IServerWorkingCopy;
@@ -166,9 +168,30 @@ public class MapToProjectOperation implements ICloudFoundryOperation {
 				if (element instanceof IProject) {
 					potentialProject = (IProject) element;
 				}
+
 				if (potentialProject == null || !potentialProject.isAccessible()) {
 					return false;
 				}
+				
+				// If a module is set as nonfaceted, we do not need to check it.
+				if(!CloudFoundryServer.isNonfacetedModule(appModule)) {
+				
+					// .. otherwise, all projects should be faceted.
+					IFacetedProject facetedProject;
+					try {
+						facetedProject = ProjectFacetsManager.create(potentialProject);
+						
+						if(facetedProject == null) {
+							// Unfaceted projects are not supported, so return false.
+							return false;
+						}					
+					} catch (CoreException e) {
+						// If an error occurs when attempting to convert an individual project, then
+						// it likely is not supported (for example, not faceted), so return false.
+						return false;
+					}
+				}
+				
 				// Allow mapping a project with the same name as the app. This
 				// case needs to be handled first before checking for other
 				// potentially unrelated
@@ -291,4 +314,5 @@ public class MapToProjectOperation implements ICloudFoundryOperation {
 		return null;
 	}
 
+	
 }

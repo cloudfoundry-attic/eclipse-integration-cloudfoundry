@@ -50,7 +50,7 @@ public class UnmapProjectEditorAction extends Action {
 		final CloudFoundryApplicationModule appModule = cloudServer.getExistingCloudModule(module);
 		if (appModule != null && editorPage.getSite() != null && editorPage.getSite().getShell() != null) {
 
-			Job job = new Job(NLS.bind(Messages.UPDATE_PROJECT_MAPPING, appModule.getDeployedApplicationName())) {
+			Job job = new Job(NLS.bind(Messages.REMOVE_PROJECT_MAPPING, appModule.getDeployedApplicationName())) {
 				protected IStatus run(IProgressMonitor monitor) {
 					try {
 						new UnmapProjectOperation(appModule, editorPage.getCloudServer()).run(monitor);

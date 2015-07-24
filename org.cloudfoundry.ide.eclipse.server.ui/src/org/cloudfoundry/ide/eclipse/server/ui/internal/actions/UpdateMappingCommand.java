@@ -43,6 +43,9 @@ public abstract class UpdateMappingCommand extends ModuleCommand {
 					}
 					catch (CoreException e) {
 						CloudFoundryPlugin.logError(e);
+						if(e.getStatus() != null) {
+							return e.getStatus();
+						}
 						return Status.CANCEL_STATUS;
 					}
 					return Status.OK_STATUS;
