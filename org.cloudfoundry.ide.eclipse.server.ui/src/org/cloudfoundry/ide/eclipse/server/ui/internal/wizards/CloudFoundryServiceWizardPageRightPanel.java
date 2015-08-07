@@ -250,7 +250,7 @@ public class CloudFoundryServiceWizardPageRightPanel {
 		}
 
 		if (serviceInstances.size() == 0) {
-			Label noServicesLabel = new Label(result, SWT.NONE);
+			Label noServicesLabel = new Label(result, SWT.WRAP);
 			noServicesLabel.setText(Messages.CloudFoundryServiceWizardPageRightPanel_ADD_A_SERVICE);
 		}
 

@@ -60,6 +60,14 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 	private CloudFoundryServer cloudServer;
 
 	Composite topComp;
+
+	/** Available services: these are the entries on the left-hand side of the wizard page */
+	private List<AvailableService> availableServices;
+
+	/** Retrieve the names of existing services in the space; these are the (bound or unbound) 
+	 * services that are already present in the account and are used for validation. */
+	private List<String> existingCloudServiceNames = new ArrayList<String>();
+
 	
 	public CloudFoundryServiceWizardPage(CloudFoundryServer cloudServer, CloudFoundryServiceWizard parent) {
 		super(CloudFoundryServiceWizardPage.class.getName());
@@ -75,25 +83,26 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 			setImageDescriptor(banner);
 		}
 		
+		// Acquire the services list in a UI-thread-safe, cancellable job. 
+		availableServices = updateConfiguration(); 
+		if(availableServices == null && parent.getParent() != null) {
+			// User cancelled the service, so close the dialog.
+			parent.getParent().close();
+			return;
+		}
+
 	}
 	
 	@Override
 	public void setVisible(boolean isVis) {
 		super.setVisible(isVis);
 		
-		List<AvailableService> services = updateConfiguration();
-		if(services == null && parent.getParent() != null) {
-			// User cancelled the service, so close the dialog.
-			parent.getParent().close();
-			return;
-		}
-		
-		leftPanel.createInnerLayoutList(services, leftPanel.layoutList);
+		leftPanel.createInnerLayoutList(availableServices, leftPanel.layoutList);
 		
 	}
 	
 	/** Returns the list of available services, or null if the user cancelled the monitor. */
-	private List<AvailableService> updateConfiguration() {
+	private List<AvailableService> updateConfiguration() { 
 		final List<AvailableService> result = new ArrayList<AvailableService>();
 
 		try {
@@ -184,8 +193,11 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 		leftPanel.createMainWindowComposite(central);
 		
 		rightPanel = new CloudFoundryServiceWizardPageRightPanel(this);
-		rightPanel.createMainWindowComposite(central);		
+		rightPanel.createMainWindowComposite(central);
 
+		// Now that the panel is created, pass the retrieved names to the right panel for validation
+		rightPanel.setExistingServicesNames(existingCloudServiceNames);
+		
 		setControl(main);
 	}
 	
@@ -270,8 +282,6 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 				serviceOfferingResult.addAll(serviceOfferings);
 				
 				// Retrieve the names of existing services in the space
-				List<String> existingCloudServiceNames = new ArrayList<String>();
-				
 				List<CloudService> allServices = cloudServer.getBehaviour().getServices(monitor);
 				if(allServices != null) {
 					for(CloudService existingService : allServices) {
@@ -282,7 +292,6 @@ public class CloudFoundryServiceWizardPage extends WizardPage {
 						}
 					}
 				}
-				rightPanel.setExistingServicesNames(existingCloudServiceNames);
 				
 				result = GetServiceResult.SUCCESS;
 			
