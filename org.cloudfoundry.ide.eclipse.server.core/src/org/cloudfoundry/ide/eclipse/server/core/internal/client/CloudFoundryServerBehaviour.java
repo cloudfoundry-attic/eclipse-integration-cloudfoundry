@@ -2132,4 +2132,33 @@ public class CloudFoundryServerBehaviour extends ServerBehaviourDelegate {
 			}
 		};
 	}
+	
+	@Override
+	public boolean canRestartModule (IModule[] modules) {
+		try {
+			CloudFoundryServer cloudServer = getCloudFoundryServer();
+			IServer server = cloudServer.getServerOriginal();
+			
+			// If module is started, we should return true, regardless of the
+			// publish state (this is for example an unlinked project that is
+			// available and running, just not bound to any project in the
+			// workspace)
+			int moduleState = server.getModuleState(modules);
+			if (moduleState == IServer.STATE_STARTED) {
+				return true;
+			}
+						
+			int publishState = server.getModulePublishState(modules);
+			// If state is unknown, then inform module(s) can't be
+			// restarted (which will disable push/start context menu operations)
+			if (publishState == IServer.PUBLISH_STATE_UNKNOWN) {
+				return false;
+			}
+		}
+		catch (CoreException ce) {
+			CloudFoundryPlugin.logError(ce);
+		}
+		
+		return super.canRestartModule(modules);
+	}
 }
