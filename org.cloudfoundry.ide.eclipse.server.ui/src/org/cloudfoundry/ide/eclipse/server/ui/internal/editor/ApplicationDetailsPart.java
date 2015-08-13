@@ -1197,7 +1197,10 @@ public class ApplicationDetailsPart extends AbstractFormPart implements IDetails
 		// container.setLayout(layout);
 
 		Table table = toolkit.createTable(parent, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(table);
+		
+		// Allow for some space vertically as the viewer doesn't seem to refresh when instances are added
+		// and is not easy to select the first instance or scroll.
+		GridDataFactory.fillDefaults().grab(true, true).hint(SWT.DEFAULT, 60).applyTo(table);
 		table.setHeaderVisible(true);
 
 		for (int i = 0; i < columnNames.length; i++) {
