@@ -33,7 +33,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.application.Environment
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentInfoWorkingCopy;
-import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -55,8 +54,8 @@ public class TestCallback extends CloudFoundryCallback {
 
 	private List<CloudService> services;
 
-	public TestCallback(String appName,  int memory, boolean deployStopped,
-			List<EnvironmentVariable> variables, List<CloudService> services) {
+	public TestCallback(String appName, int memory, boolean deployStopped, List<EnvironmentVariable> variables,
+			List<CloudService> services) {
 		this.appName = appName;
 		this.url = null;
 		this.deployStopped = deployStopped;
@@ -100,8 +99,8 @@ public class TestCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public DeploymentConfiguration prepareForDeployment(CloudFoundryServer server,
-			CloudFoundryApplicationModule module, IProgressMonitor monitor) throws CoreException {
+	public DeploymentConfiguration prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
+			IProgressMonitor monitor) throws CoreException {
 
 		// NOTE:
 		// This
@@ -175,11 +174,6 @@ public class TestCallback extends CloudFoundryCallback {
 
 	@Override
 	public void deleteApplication(CloudFoundryApplicationModule cloudModule, CloudFoundryServer cloudServer) {
-		// ignore
-	}
-
-	@Override
-	public void displayCaldecottTunnelConnections(CloudFoundryServer server, List<CaldecottTunnelDescriptor> descriptors) {
 		// ignore
 	}
 

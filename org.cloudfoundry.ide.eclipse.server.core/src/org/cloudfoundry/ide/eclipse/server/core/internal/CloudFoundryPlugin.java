@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -28,10 +28,6 @@ import org.cloudfoundry.ide.eclipse.server.core.AbstractAppStateTracker;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryClientFactory;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
-import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelCache;
-import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
-import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.PredefinedServiceCommands;
-import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.TunnelServiceCommandStore;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -46,7 +42,6 @@ import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.util.tracker.ServiceTracker;
@@ -98,10 +93,11 @@ public class CloudFoundryPlugin extends Plugin {
 			try {
 				Object object = configurationElement.createExecutableExtension(ELEMENT_CLASS);
 				if (!(object instanceof CloudFoundryCallback)) {
-					getDefault().getLog().log(
-							new Status(IStatus.ERROR, PLUGIN_ID, "Could not load " //$NON-NLS-1$
-									+ object.getClass().getCanonicalName() + " must implement " //$NON-NLS-1$
-									+ CloudFoundryCallback.class.getCanonicalName()));
+					getDefault().getLog()
+							.log(new Status(IStatus.ERROR, PLUGIN_ID,
+									"Could not load " //$NON-NLS-1$
+											+ object.getClass().getCanonicalName() + " must implement " //$NON-NLS-1$
+											+ CloudFoundryCallback.class.getCanonicalName()));
 					return null;
 				}
 
@@ -126,16 +122,16 @@ public class CloudFoundryPlugin extends Plugin {
 			// }
 			appStateTrackerEntries = new ArrayList<AppStateTrackerEntry>();
 			IExtensionRegistry registry = Platform.getExtensionRegistry();
-			IConfigurationElement[] cf = registry
-					.getConfigurationElementsFor(PLUGIN_ID, EXTENSION_ID_APP_STATE_TRACKER);
+			IConfigurationElement[] cf = registry.getConfigurationElementsFor(PLUGIN_ID,
+					EXTENSION_ID_APP_STATE_TRACKER);
 
 			for (IConfigurationElement curConfigElement : cf) {
 				// load the extension in a safe environment. If there are NPEs
 				// or miss configurations they will be caught by try/catch
 				String[] curServerTypeIds = tokenize(curConfigElement.getAttribute("serverTypeIds"), ","); //$NON-NLS-1$ //$NON-NLS-2$
 				String[] curModuleTypeIds = tokenize(curConfigElement.getAttribute("moduleTypeIds"), ","); //$NON-NLS-1$ //$NON-NLS-2$
-				appStateTrackerEntries.add(new AppStateTrackerEntry(curServerTypeIds, curModuleTypeIds,
-						curConfigElement));
+				appStateTrackerEntries
+						.add(new AppStateTrackerEntry(curServerTypeIds, curModuleTypeIds, curConfigElement));
 			}
 			// if (Trace.CONFIG) {
 			// Trace.trace(Trace.STRING_CONFIG,
@@ -208,12 +204,6 @@ public class CloudFoundryPlugin extends Plugin {
 		}
 
 		@Override
-		public void displayCaldecottTunnelConnections(CloudFoundryServer cloudServer,
-				List<CaldecottTunnelDescriptor> descriptor) {
-			// ignore
-		}
-
-		@Override
 		public void applicationStarting(CloudFoundryServer server, CloudFoundryApplicationModule cloudModule) {
 			// TODO Auto-generated method stub
 
@@ -252,7 +242,7 @@ public class CloudFoundryPlugin extends Plugin {
 				tracker = (AbstractAppStateTracker) configElement.createExecutableExtension("class"); //$NON-NLS-1$
 				// if (Trace.CONFIG) {
 				// Trace.trace(Trace.STRING_CONFIG,
-				// "  Loaded .appStateTracker: " +
+				// " Loaded .appStateTracker: " +
 				// curConfigElement.getAttribute("id")
 				// + ", loaded class=" + tracker);
 				// }
@@ -260,10 +250,11 @@ public class CloudFoundryPlugin extends Plugin {
 			catch (Throwable t) {
 				// if (Trace.SEVERE) {
 				// Trace.trace(Trace.STRING_SEVERE,
-				// "  Could not load .appStateTracker: " +
+				// " Could not load .appStateTracker: " +
 				// curConfigElement.getAttribute("id"), t);
 				// }
-				CloudFoundryPlugin.logError(("Internal Error: Failed to load application start tracker due to - " + t.getMessage()), t); //$NON-NLS-1$
+				CloudFoundryPlugin.logError(
+						("Internal Error: Failed to load application start tracker due to - " + t.getMessage()), t); //$NON-NLS-1$
 			}
 			return tracker;
 		}
@@ -292,10 +283,6 @@ public class CloudFoundryPlugin extends Plugin {
 	private DeployedResourceCache sha1Cache = new DeployedResourceCache();
 
 	private InstanceScope INSTANCE_SCOPE = new InstanceScope();
-
-	private static CaldecottTunnelCache caldecottCache = new CaldecottTunnelCache();
-
-	private TunnelServiceCommandStore serviceCommandsStore;
 
 	/**
 	 * Returns the app state tracker for a given server type. Only the first
@@ -328,10 +315,6 @@ public class CloudFoundryPlugin extends Plugin {
 		}
 
 		return null;
-	}
-
-	public static CaldecottTunnelCache getCaldecottTunnelCache() {
-		return caldecottCache;
 	}
 
 	public static synchronized CloudFoundryCallback getCallback() {
@@ -381,13 +364,6 @@ public class CloudFoundryPlugin extends Plugin {
 			moduleCache = new ModuleCache();
 		}
 		return moduleCache;
-	}
-
-	public synchronized TunnelServiceCommandStore getTunnelCommandsStore() {
-		if (serviceCommandsStore == null) {
-			serviceCommandsStore = new TunnelServiceCommandStore(new PredefinedServiceCommands());
-		}
-		return serviceCommandsStore;
 	}
 
 	private ServiceTracker tracker;

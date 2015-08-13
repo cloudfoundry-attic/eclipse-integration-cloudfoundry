@@ -25,7 +25,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.server.core.internal.jrebel.CloudRebelAppHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
-import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -88,9 +87,6 @@ public abstract class CloudFoundryCallback {
 	public abstract void disconnecting(CloudFoundryServer server);
 
 	public abstract void getCredentials(CloudFoundryServer server);
-
-	public abstract void displayCaldecottTunnelConnections(CloudFoundryServer server,
-			List<CaldecottTunnelDescriptor> descriptors);
 
 	/**
 	 * Prepares an application to either be deployed, started or restarted. The

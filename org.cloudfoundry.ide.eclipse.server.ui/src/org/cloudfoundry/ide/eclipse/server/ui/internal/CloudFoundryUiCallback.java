@@ -19,7 +19,6 @@
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryCallback;
@@ -32,10 +31,8 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryAppl
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.DeploymentConfiguration;
 import org.cloudfoundry.ide.eclipse.server.core.internal.jrebel.CloudRebelAppHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.log.CloudLog;
-import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.CaldecottTunnelDescriptor;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.console.ConsoleManagerRegistry;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.console.StandardLogContentType;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.tunnel.CaldecottUIHelper;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryCredentialsWizard;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.DeleteServicesWizard;
 import org.eclipse.core.runtime.CoreException;
@@ -61,17 +58,16 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	@Override
 	public void applicationStarted(final CloudFoundryServer server, final CloudFoundryApplicationModule cloudModule) {
-		ServerEventHandler.getDefault().fireServerEvent(
-				new ModuleChangeEvent(server, CloudServerEvent.EVENT_APP_STARTED, cloudModule.getLocalModule(),
-						Status.OK_STATUS));
+		ServerEventHandler.getDefault().fireServerEvent(new ModuleChangeEvent(server,
+				CloudServerEvent.EVENT_APP_STARTED, cloudModule.getLocalModule(), Status.OK_STATUS));
 	}
 
 	@Override
 	public void startApplicationConsole(CloudFoundryServer cloudServer, CloudFoundryApplicationModule cloudModule,
 			int showIndex, IProgressMonitor monitor) {
 		if (cloudModule == null || cloudModule.getApplication() == null) {
-			CloudFoundryPlugin
-					.logError("No application content to display to the console while starting application in the Cloud Foundry server."); //$NON-NLS-1$
+			CloudFoundryPlugin.logError(
+					"No application content to display to the console while starting application in the Cloud Foundry server."); //$NON-NLS-1$
 			return;
 		}
 		if (showIndex < 0) {
@@ -79,8 +75,8 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 		}
 		SubMonitor subMonitor = SubMonitor.convert(monitor, cloudModule.getDeploymentInfo().getInstances() * 100);
 
-		subMonitor.subTask(NLS.bind(Messages.CloudFoundryUiCallback_STARTING_CONSOLE,
-				cloudModule.getDeployedApplicationName()));
+		subMonitor.subTask(
+				NLS.bind(Messages.CloudFoundryUiCallback_STARTING_CONSOLE, cloudModule.getDeployedApplicationName()));
 
 		for (int i = 0; i < cloudModule.getDeploymentInfo().getInstances(); i++) {
 			// Do not clear the console as pre application start information may
@@ -168,19 +164,6 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 	}
 
-	public void displayCaldecottTunnelConnections(CloudFoundryServer cloudServer,
-			List<CaldecottTunnelDescriptor> descriptors) {
-
-		if (descriptors != null && !descriptors.isEmpty()) {
-			List<String> serviceNames = new ArrayList<String>();
-
-			for (CaldecottTunnelDescriptor descriptor : descriptors) {
-				serviceNames.add(descriptor.getServiceName());
-			}
-			new CaldecottUIHelper(cloudServer).displayCaldecottTunnels(serviceNames);
-		}
-	}
-
 	@Override
 	public void disconnecting(CloudFoundryServer cloudServer) {
 		ConsoleManagerRegistry.getConsoleManager(cloudServer).stopConsoles();
@@ -192,8 +175,8 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 
 			public void run() {
 				CloudFoundryCredentialsWizard wizard = new CloudFoundryCredentialsWizard(server);
-				WizardDialog dialog = new WizardDialog(PlatformUI.getWorkbench().getModalDialogShellProvider()
-						.getShell(), wizard);
+				WizardDialog dialog = new WizardDialog(
+						PlatformUI.getWorkbench().getModalDialogShellProvider().getShell(), wizard);
 				dialog.open();
 			}
 		});
@@ -205,8 +188,8 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 	}
 
 	@Override
-	public DeploymentConfiguration prepareForDeployment(CloudFoundryServer server,
-			CloudFoundryApplicationModule module, IProgressMonitor monitor) throws CoreException {
+	public DeploymentConfiguration prepareForDeployment(CloudFoundryServer server, CloudFoundryApplicationModule module,
+			IProgressMonitor monitor) throws CoreException {
 		return new ApplicationDeploymentUIHandler().prepareForDeployment(server, module, monitor);
 	}
 
@@ -240,7 +223,7 @@ public class CloudFoundryUiCallback extends CloudFoundryCallback {
 					if (shell != null) {
 						new MessageDialog(shell, Messages.CloudFoundryUiCallback_ERROR_CALLBACK_TITLE, null,
 								status.getMessage(), MessageDialog.ERROR, new String[] { Messages.COMMONTXT_OK }, 0)
-								.open();
+										.open();
 					}
 					return Status.OK_STATUS;
 				}

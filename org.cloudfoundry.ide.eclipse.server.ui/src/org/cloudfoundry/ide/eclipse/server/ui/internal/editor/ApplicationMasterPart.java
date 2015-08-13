@@ -28,7 +28,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExt
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.debug.CloudFoundryProperties;
-import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.actions.DeleteServicesAction;
@@ -119,8 +118,8 @@ public class ApplicationMasterPart extends SectionPart {
 		this.editorPage = editorPage;
 		this.cloudServer = cloudServer;
 		this.toolkit = managedForm.getToolkit();
-		this.provideServices = CloudFoundryBrandingExtensionPoint.getProvideServices(editorPage.getServer()
-				.getServerType().getId());
+		this.provideServices = CloudFoundryBrandingExtensionPoint
+				.getProvideServices(editorPage.getServer().getServerType().getId());
 	}
 
 	/**
@@ -232,8 +231,8 @@ public class ApplicationMasterPart extends SectionPart {
 
 										public void run() {
 											MessageDialog.openError(editorPage.getSite().getShell(),
-													Messages.ApplicationMasterPart_ERROR_DEPLOY_FAIL_TITLE, NLS.bind(
-															Messages.ApplicationMasterPart_ERROR_DEPLOY_FAIL_BODY,
+													Messages.ApplicationMasterPart_ERROR_DEPLOY_FAIL_TITLE,
+													NLS.bind(Messages.ApplicationMasterPart_ERROR_DEPLOY_FAIL_BODY,
 															moduleName));
 										}
 
@@ -348,10 +347,9 @@ public class ApplicationMasterPart extends SectionPart {
 							// Be sure not to show a null WTP module name,
 							// although
 							// that should not be encountered
-							if (moduleName != null
-									&& !cfAppName.equals(moduleName)
-									&& CloudFoundryProperties.isModuleProjectAccessible.testProperty(
-											new IModule[] { module }, cloudServer)) {
+							if (moduleName != null && !cfAppName.equals(moduleName)
+									&& CloudFoundryProperties.isModuleProjectAccessible
+											.testProperty(new IModule[] { module }, cloudServer)) {
 								moduleName = cfAppName + " (" + moduleName + ")"; //$NON-NLS-1$ //$NON-NLS-2$
 							}
 							else {
@@ -460,8 +458,8 @@ public class ApplicationMasterPart extends SectionPart {
 	}
 
 	private void createServicesSection() {
-		servicesSection = toolkit.createSection(getSection().getParent(), Section.TITLE_BAR | Section.DESCRIPTION
-				| Section.TWISTIE);
+		servicesSection = toolkit.createSection(getSection().getParent(),
+				Section.TITLE_BAR | Section.DESCRIPTION | Section.TWISTIE);
 		servicesSection.setLayout(new GridLayout());
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(servicesSection);
 		servicesSection.setText(Messages.COMMONTXT_SERVICES);
@@ -496,39 +494,8 @@ public class ApplicationMasterPart extends SectionPart {
 		new ServiceViewerConfigurator().configureViewer(servicesViewer);
 
 		servicesViewer.setContentProvider(new TreeContentProvider());
-		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
-
-			protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
-				if (column == ServiceViewColumn.Tunnel) {
-					TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
-					if (handler.hasCaldecottTunnel(service.getName())) {
-						return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
-					}
-				}
-				return null;
-			}
-
-		});
-		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer) {
-
-			@Override
-			protected int compare(CloudService service1, CloudService service2, ServiceViewColumn sortColumn) {
-				if (sortColumn == ServiceViewColumn.Tunnel) {
-					TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
-					if (handler.hasCaldecottTunnel(service1.getName())) {
-						return -1;
-					}
-					else if (handler.hasCaldecottTunnel(service2.getName())) {
-						return 1;
-					}
-					else {
-						return 0;
-					}
-				}
-				return super.compare(service1, service2, sortColumn);
-			}
-
-		});
+		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer));
+		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer));
 
 		servicesViewer.setInput(new CloudService[0]);
 

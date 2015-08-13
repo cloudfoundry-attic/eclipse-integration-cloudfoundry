@@ -18,7 +18,6 @@ Require-Bundle: org.eclipse.core.runtime,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
- lib/cloudfoundry-caldecott-lib-0.1.4.BUILD-SNAPSHOT.jar,
  lib/cloudfoundry-client-lib-1.1.2.jar,
  lib/commons-io-2.1.jar,
  lib/httpclient-4.3.6.jar,
@@ -49,8 +48,7 @@ Bundle-ClassPath: .,
  lib/commons-logging-1.1.3.jar,
  lib/tomcat-juli-8.0.15.jar
 Bundle-Activator: org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin
-Export-Package: org.cloudfoundry.caldecott.client,
- org.cloudfoundry.client.lib,
+Export-Package: org.cloudfoundry.client.lib,
  org.cloudfoundry.client.lib.archive,
  org.cloudfoundry.client.lib.domain,
  org.cloudfoundry.client.lib.io,
@@ -64,7 +62,6 @@ Export-Package: org.cloudfoundry.caldecott.client,
  org.cloudfoundry.ide.eclipse.server.core.internal.jrebel,
  org.cloudfoundry.ide.eclipse.server.core.internal.log,
  org.cloudfoundry.ide.eclipse.server.core.internal.spaces,
- org.cloudfoundry.ide.eclipse.server.core.internal.tunnel,
  org.springframework.security.oauth2.client.resource,
  org.springframework.security.oauth2.common,
  org.springframework.web.client

@@ -31,7 +31,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.LocalCloudService;
-import org.cloudfoundry.ide.eclipse.server.core.internal.tunnel.TunnelBehaviour;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
@@ -140,39 +139,8 @@ public class CloudFoundryApplicationServicesWizardPage extends PartsWizardPage {
 		servicesViewer = new CheckboxTableViewer(table);
 
 		servicesViewer.setContentProvider(new TreeContentProvider());
-		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer) {
-
-			protected Image getColumnImage(CloudService service, ServiceViewColumn column) {
-				if (column == ServiceViewColumn.Tunnel) {
-					TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
-					if (handler.hasCaldecottTunnel(service.getName())) {
-						return CloudFoundryImages.getImage(CloudFoundryImages.CONNECT);
-					}
-				}
-				return null;
-			}
-
-		});
-		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer) {
-
-			@Override
-			protected int compare(CloudService service1, CloudService service2, ServiceViewColumn sortColumn) {
-				if (sortColumn == ServiceViewColumn.Tunnel) {
-					TunnelBehaviour handler = new TunnelBehaviour(cloudServer);
-					if (handler.hasCaldecottTunnel(service1.getName())) {
-						return -1;
-					}
-					else if (handler.hasCaldecottTunnel(service2.getName())) {
-						return 1;
-					}
-					else {
-						return 0;
-					}
-				}
-				return super.compare(service1, service2, sortColumn);
-			}
-
-		});
+		servicesViewer.setLabelProvider(new ServicesTreeLabelProvider(servicesViewer));
+		servicesViewer.setSorter(new ServiceViewerSorter(servicesViewer));
 
 		new ServiceViewerConfigurator().enableAutomaticViewerResizing().configureViewer(servicesViewer);
 
