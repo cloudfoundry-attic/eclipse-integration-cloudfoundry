@@ -16,6 +16,8 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM - Switching to use the more generic AbstractCloudFoundryUrl
+ *     		instead concrete CloudServerURL, deprecating non-recommended methods
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
@@ -24,18 +26,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.cloudfoundry.client.lib.CloudCredentials;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractCloudFoundryUrl;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudErrorUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudOrgsAndSpaces;
 import org.eclipse.core.runtime.CoreException;
@@ -44,11 +42,9 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.DialogPage;
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -123,102 +119,89 @@ public class CloudUiUtil {
 		}
 		return Status.OK_STATUS;
 	}
-
-	public static List<CloudServerURL> getAllUrls(String serverTypeId) {
+	
+	private static CloudServerURL convertAbstractCloudFoundryUrlToCloudServerURL (AbstractCloudFoundryUrl abstractUrl) {
+		CloudServerURL cloudUrl = null;
+		if (abstractUrl != null) {
+			// Nothing to do, this is already an old CloudServerURL, just return it
+			if (abstractUrl instanceof CloudServerURL) {
+				cloudUrl = (CloudServerURL)(abstractUrl);
+			} else {
+				cloudUrl = new CloudServerURL(abstractUrl.getName(), abstractUrl.getUrl(), abstractUrl.getUserDefined(), 
+						abstractUrl.getSignUpUrl(), abstractUrl.getSelfSigned()); 
+			}
+		}
+		return cloudUrl;
+	}
+	
+	private static List<CloudServerURL> convertAbstractCloudFoundryUrlListToCloudServerURLList (List <AbstractCloudFoundryUrl> abstractUrls) {
+		if (abstractUrls == null)
+			return null;
+		
 		List<CloudServerURL> urls = new ArrayList<CloudFoundryBrandingExtensionPoint.CloudServerURL>();
-		urls.add(getDefaultUrl(serverTypeId));
-		urls.addAll(getUrls(serverTypeId));
+		for (AbstractCloudFoundryUrl abstractUrl : abstractUrls) {
+			if (abstractUrl != null) {
+				urls.add (convertAbstractCloudFoundryUrlToCloudServerURL(abstractUrl));	
+			}
+		}
 		return urls;
 	}
 
-	public static CloudServerURL getDefaultUrl(String serverTypeId) {
-		return CloudFoundryBrandingExtensionPoint.getDefaultUrl(serverTypeId);
+	/**
+	 * @throws CoreException 
+	 * @deprecated use {@link CloudServerUIUtil#getAllUrls(String, IRunnableContext)}
+	 */
+	public static List<CloudServerURL> getAllUrls(String serverTypeId) throws CoreException {
+		// Switch to new generic utility method, then convert to the expected return type
+		return convertAbstractCloudFoundryUrlListToCloudServerURLList(CloudServerUIUtil.getAllUrls(serverTypeId, null));
 	}
 
-	public static List<CloudServerURL> getUrls(String serverTypeId) {
-		List<CloudServerURL> cloudUrls = new ArrayList<CloudServerURL>();
-
-		Set<String> urlNames = new HashSet<String>();
-
-		List<CloudServerURL> userDefinedUrls = CloudUiUtil.getUserDefinedUrls(serverTypeId);
-		for (CloudServerURL userDefinedUrl : userDefinedUrls) {
-			cloudUrls.add(userDefinedUrl);
-			urlNames.add(userDefinedUrl.getName());
-		}
-
-		List<CloudServerURL> defaultUrls = CloudFoundryBrandingExtensionPoint.getCloudUrls(serverTypeId);
-		if (defaultUrls != null) {
-			for (CloudServerURL defaultUrl : defaultUrls) {
-				if (!urlNames.contains(defaultUrl.getName())) {
-					cloudUrls.add(defaultUrl);
-				}
-			}
-
-			Collections.sort(cloudUrls, new Comparator<CloudServerURL>() {
-
-				public int compare(CloudServerURL o1, CloudServerURL o2) {
-					return o1.getName().compareToIgnoreCase(o2.getName());
-				}
-
-			});
-		}
-
-		return cloudUrls;
+	/**
+	 * @throws CoreException 
+	 * @deprecated use {@link CloudServerUIUtil#getDefaultUrl(String, IRunnableContext)}
+	 */
+	public static CloudServerURL getDefaultUrl(String serverTypeId) throws CoreException {		
+		CloudServerURL url = null;
+		// Switch to new generic utility method, then convert to the expected return type
+		AbstractCloudFoundryUrl abstractUrl = CloudServerUIUtil.getDefaultUrl(serverTypeId, null);
+		if (abstractUrl != null) {
+			url = convertAbstractCloudFoundryUrlToCloudServerURL(abstractUrl);
+		} 
+		
+		return url;
 	}
 
+	/**
+	 * @throws CoreException 
+	 * @deprecated use {@link CloudServerUIUtil#getUrls(String, IRunnableContext)}
+	 */
+	public static List<CloudServerURL> getUrls(String serverTypeId) throws CoreException {
+		// Switch to new generic utility method, then convert to the expected return type
+		return convertAbstractCloudFoundryUrlListToCloudServerURLList(CloudServerUIUtil.getUrls(serverTypeId, null));
+	}
+
+	/**
+	 * @deprecated use {@link CloudServerUIUtil#getUserDefinedUrls(String))}
+	 */
 	public static List<CloudServerURL> getUserDefinedUrls(String serverTypeId) {
-		List<CloudServerURL> urls = new ArrayList<CloudServerURL>();
-
-		IPreferenceStore prefStore = CloudFoundryServerUiPlugin.getDefault().getPreferenceStore();
-		String urlString = prefStore.getString(ATTR_USER_DEFINED_URLS + "." + serverTypeId); //$NON-NLS-1$
-
-		if (urlString != null && urlString.length() > 0) {
-			// Split on "||"
-			String[] urlEntries = urlString.split("\\|\\|"); //$NON-NLS-1$
-			if (urlEntries != null) {
-				for (String entry : urlEntries) {
-					if (entry.length() > 0) {
-						String[] values = entry.split(","); //$NON-NLS-1$
-						if (values != null) {
-							String name = null;
-							String url = null;
-
-							if (values.length >= 2) {
-								name = values[0];
-								url = values[1];
-							}
-
-							boolean selfSigned = url != null && CloudFoundryServer.getSelfSignedCertificate(url);
-							urls.add(new CloudServerURL(name, url, true, selfSigned));
-						}
-					}
-
-				}
-			}
-		}
-
-		return urls;
+		// Switch to new generic utility method, then convert to the expected return type
+		return convertAbstractCloudFoundryUrlListToCloudServerURLList(CloudServerUIUtil.getUserDefinedUrls(serverTypeId));
 	}
 
+	/**
+	 * @deprecated user {@link CloudServerUIUtil#storeUserDefinedUrls(String, List)}
+	 */
 	public static void storeUserDefinedUrls(String serverTypeId, List<CloudServerURL> urls) {
-		IPreferenceStore prefStore = CloudFoundryServerUiPlugin.getDefault().getPreferenceStore();
-		StringBuilder builder = new StringBuilder();
-
-		for (CloudServerURL url : urls) {
-			if (url.getUserDefined()) {
-				builder.append(url.getName());
-
-				builder.append(","); //$NON-NLS-1$
-				builder.append(url.getUrl());
-
-				builder.append("||"); //$NON-NLS-1$
-
-				// Also store the self-signed for each user-defined URL
-				CloudFoundryServer.setSelfSignedCertificate(url.getSelfSigned(), url.getUrl());
-			}
+		if (urls == null)
+			return;
+		
+		List <AbstractCloudFoundryUrl> abstractUrls = new ArrayList <AbstractCloudFoundryUrl> ();
+		for (CloudServerURL cloudUrl : urls) {
+			abstractUrls.add(cloudUrl);
 		}
-
-		prefStore.setValue(ATTR_USER_DEFINED_URLS + "." + serverTypeId, builder.toString()); //$NON-NLS-1$
+		
+		// Use the new correct method
+		CloudServerUIUtil.storeUserDefinedUrls(serverTypeId, abstractUrls);
 	}
 
 	/**
@@ -280,9 +263,8 @@ public class CloudUiUtil {
 	 * @param password must not be null
 	 * @param urlText must not be null. Can be either display or actual URL
 	 * @param displayURL true if URL is display URL
+	 * @param selfSigned true if connecting to a self-signing server. False otherwise
 	 * @param context may be optional
-	 * @param fork if true, an attempt will be made to get the cloud spaces
-	 * asynchronously
 	 * @return spaces descriptor, or null if it couldn't be determined
 	 * @throws CoreException
 	 */
@@ -329,11 +311,15 @@ public class CloudUiUtil {
 	}
 
 	public static String getDisplayTextFromUrl(String url, String serverTypeId) {
-		List<CloudServerURL> cloudUrls = getAllUrls(serverTypeId);
-		for (CloudServerURL cloudUrl : cloudUrls) {
-			if (cloudUrl.getUrl().equals(url)) {
-				return cloudUrl.getName() + " - " + url; //$NON-NLS-1$
+		try {
+			List<AbstractCloudFoundryUrl> cloudUrls = CloudServerUIUtil.getAllUrls(serverTypeId, null);
+			for (AbstractCloudFoundryUrl cloudUrl : cloudUrls) {
+				if (cloudUrl.getUrl().equals(url)) {
+					return cloudUrl.getName() + " - " + url; //$NON-NLS-1$
+				}
 			}
+		} catch (CoreException ex) {
+			CloudFoundryServerUiPlugin.logError(ex);
 		}
 		return url;
 	}
@@ -441,27 +427,22 @@ public class CloudUiUtil {
 	 * @param shell
 	 * @return new URL, null if no wildcard appears in cloudUrl or if user
 	 * cancels out of defining a new value
+	 * @deprecated use {@link CloudServerUIUtil#getWildcardUrl(AbstractCloudFoundryUrl, List, Shell)} instead.
 	 */
 	public static CloudServerURL getWildcardUrl(CloudServerURL cloudUrl, List<CloudServerURL> allCloudUrls, Shell shell) {
-		String url = cloudUrl.getUrl();
-		if (url.contains("{")) { //$NON-NLS-1$
-			int startIndex = url.indexOf("{"); //$NON-NLS-1$
-			int endIndex = url.indexOf("}"); //$NON-NLS-1$
-			String wildcard = url.substring(startIndex + 1, endIndex);
-
-			TargetURLDialog dialog = new TargetURLDialog(shell, cloudUrl, wildcard, allCloudUrls);
-			if (dialog.open() == IDialogConstants.OK_ID) {
-				url = dialog.getUrl();
-				String name = dialog.getName();
-				// CloudUiUtil.addUserDefinedUrl(serverTypeId, name, url);
-				boolean selfSigned = url != null && CloudFoundryServer.getSelfSignedCertificate(url);
-				return new CloudServerURL(name, url, true, selfSigned);
-			}
-			else {
-				return null;
+		// Switch to new generic utility method, then convert to the expected return type
+		ArrayList <AbstractCloudFoundryUrl> allCloudFoundryUrls = new ArrayList<AbstractCloudFoundryUrl>();
+		if (allCloudUrls != null) {
+			for (CloudServerURL _cloudUrl : allCloudUrls) {
+				allCloudFoundryUrls.add (_cloudUrl);
 			}
 		}
-
+		
+		AbstractCloudFoundryUrl returnUrl = CloudServerUIUtil.getWildcardUrl(cloudUrl, allCloudFoundryUrls, shell);
+		if (returnUrl != null) {
+			return new CloudServerURL(returnUrl.getName(), returnUrl.getUrl(), true, returnUrl.getSelfSigned());
+		}
+		
 		return null;
 	}
 

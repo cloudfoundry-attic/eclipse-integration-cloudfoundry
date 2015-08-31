@@ -22,6 +22,7 @@ limitations under the License.
 
 Contributors:
 Pivotal Software, Inc. - initial API and implementation
+IBM - Adding a dynamic provider for CloudFoundry Urls
       </documentation>
    </annotation>
 
@@ -65,7 +66,7 @@ Pivotal Software, Inc. - initial API and implementation
    <element name="service">
       <complexType>
          <sequence>
-            <element ref="defaultUrl"/>
+            <element ref="defaultUrl" minOccurs="0" maxOccurs="1"/>
             <element ref="cloudUrl" minOccurs="0" maxOccurs="unbounded"/>
          </sequence>
          <attribute name="name" type="string" use="required">
@@ -111,6 +112,18 @@ Pivotal Software, Inc. - initial API and implementation
                <documentation>
                   
                </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="urlProviderClass" type="string">
+            <annotation>
+               <documentation>
+                  An optional Url provider class to dynamically provide CloudFoundry server endpoint information.
+                  
+IMPORTANT: It is highly recommended that any Url provider implements a cache mechanism when calculating the urls that will be provided to the base framework, specially of those obtained dynamically (as for example, from a web service), since the retrieval methods could be invoked multiple times and no cache is implemented at the base level.
+               </documentation>
+               <appInfo>
+                  <meta.attribute kind="java" basedOn=":org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryUrlProvider"/>
+               </appInfo>
             </annotation>
          </attribute>
       </complexType>

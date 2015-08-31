@@ -16,16 +16,21 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM - Switching to use the more generic AbstractCloudFoundryUrl
+ *     		instead concrete CloudServerURL
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractCloudFoundryUrl;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.UserDefinedCloudFoundryUrl;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -47,7 +52,7 @@ public class CloudUrlWizard extends Wizard {
 
 	private final String serverID;
 
-	private final List<CloudServerURL> allCloudUrls;
+	private final List<AbstractCloudFoundryUrl> allCloudUrls;
 
 	private CloudUrlWizardPage page;
 
@@ -57,7 +62,31 @@ public class CloudUrlWizard extends Wizard {
 	
 	private boolean selfSigned;
 
+	/**
+	 * @deprecated use {@link #CloudUrlWizard(String, String, String, boolean, List)} instead.
+	 */
 	public CloudUrlWizard(String serverID, List<CloudServerURL> allCloudUrls, String url, String name, boolean selfSigned) {
+		this.serverID = serverID;
+		if (allCloudUrls == null) {
+			this.allCloudUrls = null;
+		} else {
+			this.allCloudUrls = new ArrayList <AbstractCloudFoundryUrl> ();
+			for (CloudServerURL serverUrl : allCloudUrls) {
+				 this.allCloudUrls.add(serverUrl);
+			}
+		}
+		this.url = url;
+		this.name = name;
+		this.selfSigned = selfSigned;
+		setWindowTitle(Messages.CloudUrlWizard_TITLE_ADD_VALIDATE);
+
+		// Does not require a modal progress monitor.
+		// Long running application are run using specialised non-blocking
+		// execution
+		setNeedsProgressMonitor(true);
+	}
+	
+	public CloudUrlWizard(String serverID, String url, String name, boolean selfSigned, List<AbstractCloudFoundryUrl> allCloudUrls) {
 		this.serverID = serverID;
 		this.allCloudUrls = allCloudUrls;
 		this.url = url;
@@ -71,17 +100,28 @@ public class CloudUrlWizard extends Wizard {
 		setNeedsProgressMonitor(true);
 	}
 
+
 	@Override
 	public void addPages() {
-		page = new CloudUrlWizardPage(allCloudUrls, CloudFoundryImages.getWizardBanner(serverID), url, name, selfSigned);
+		page = new CloudUrlWizardPage(CloudFoundryImages.getWizardBanner(serverID), url, name, selfSigned, allCloudUrls);
 		addPage(page);
 	}
 
+	/**
+	 * @deprecated use {@link #getCloudFoundryUrl()} instead.
+	 */
 	public CloudServerURL getCloudUrl() {
 		String dURL = page != null ? page.getUrl() : url;
 		String dName = page != null ? page.getName() : name;
 		boolean selfSigned = page != null ? page.getSelfSigned() : this.selfSigned;
 		return new CloudServerURL(dName, dURL, true, selfSigned);
+	}
+	
+	public AbstractCloudFoundryUrl getCloudFoundryUrl () {
+		String dURL = page != null ? page.getUrl() : url;
+		String dName = page != null ? page.getName() : name;
+		boolean selfSigned = page != null ? page.getSelfSigned() : this.selfSigned;
+		return new UserDefinedCloudFoundryUrl(dName, dURL, selfSigned);
 	}
 
 	public boolean performFinish() {

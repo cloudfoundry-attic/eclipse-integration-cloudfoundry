@@ -17,13 +17,14 @@
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
  *     Elson Yuen, IBM - Improve logic in determining whether a server type is a Cloud Foundry Server
+ *     IBM - Moving decoration to a non UI thread to avoid blocking the interface.
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
 import java.util.List;
 
 import org.cloudfoundry.client.lib.domain.CloudApplication;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractCloudFoundryUrl;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerEvent;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerListener;
@@ -31,6 +32,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.CloudServerUtil;
 import org.cloudfoundry.ide.eclipse.server.core.internal.ServerEventHandler;
 import org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryApplicationModule;
 import org.cloudfoundry.ide.eclipse.server.core.internal.spaces.CloudFoundrySpace;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -66,7 +68,7 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 		ServerEventHandler.getDefault().addServerListener(listener);
 	}
 
-	public void decorate(Object element, IDecoration decoration) {
+	public void decorate(Object element, final IDecoration decoration) {
 		if (element instanceof ModuleServer) {
 			ModuleServer moduleServer = (ModuleServer) element;
 			IServer s = moduleServer.getServer();
@@ -113,29 +115,41 @@ public class CloudFoundryDecorator extends LabelProvider implements ILightweight
 		else if (element instanceof Server) {
 			Server server = (Server) element;
 			if (CloudServerUtil.isCloudFoundryServer(server)) {
-				CloudFoundryServer cfServer = getCloudFoundryServer(server);
+				final CloudFoundryServer cfServer = getCloudFoundryServer(server);
 				if (cfServer != null && cfServer.getUsername() != null) {
-					// decoration.addSuffix(NLS.bind("  [{0}, {1}]",
-					// cfServer.getUsername(), cfServer.getUrl()));
-					if (cfServer.hasCloudSpace()) {
-						CloudFoundrySpace clSpace = cfServer.getCloudFoundrySpace();
-						if (clSpace != null) {
-							decoration
-									.addSuffix(NLS.bind(" - {0} - {1}", clSpace.getOrgName(), clSpace.getSpaceName())); //$NON-NLS-1$
-
+					// This now runs on a non UI thread, so we need to join this
+					// update to a UI thread.
+					Display.getDefault().syncExec(new Runnable() {
+						
+						@Override
+						public void run() {
+							// decoration.addSuffix(NLS.bind("  [{0}, {1}]",
+							// cfServer.getUsername(), cfServer.getUrl()));
+							if (cfServer.hasCloudSpace()) {
+								CloudFoundrySpace clSpace = cfServer.getCloudFoundrySpace();
+								if (clSpace != null) {
+									decoration
+											.addSuffix(NLS.bind(" - {0} - {1}", clSpace.getOrgName(), clSpace.getSpaceName())); //$NON-NLS-1$
+								}
+							}
+							try {
+								List<AbstractCloudFoundryUrl> cloudUrls = CloudServerUIUtil.getAllUrls(cfServer.getBehaviour().getServer()
+										.getServerType().getId(), null);
+								String url = cfServer.getUrl();
+								// decoration.addSuffix(NLS.bind("  {0}",
+								// cfServer.getUsername()));
+								for (AbstractCloudFoundryUrl cloudUrl : cloudUrls) {
+									if (cloudUrl.getUrl().equals(url)) {
+										decoration.addSuffix(NLS.bind(" - {0}", cloudUrl.getUrl())); //$NON-NLS-1$
+										break;
+									}
+								}
+							}
+							catch (CoreException e) {
+								CloudFoundryServerUiPlugin.logError(e);
+							}
 						}
-					}
-					List<CloudServerURL> cloudUrls = CloudUiUtil.getAllUrls(cfServer.getBehaviour().getServer()
-							.getServerType().getId());
-					String url = cfServer.getUrl();
-					// decoration.addSuffix(NLS.bind("  {0}",
-					// cfServer.getUsername()));
-					for (CloudServerURL cloudUrl : cloudUrls) {
-						if (cloudUrl.getUrl().equals(url)) {
-							decoration.addSuffix(NLS.bind(" - {0}", cloudUrl.getUrl())); //$NON-NLS-1$
-							break;
-						}
-					}
+					});
 				}
 			}
 		}
