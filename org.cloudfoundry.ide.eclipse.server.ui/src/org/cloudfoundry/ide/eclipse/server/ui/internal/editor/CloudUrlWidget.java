@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -16,16 +16,22 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM - Switching to use the more generic AbstractCloudFoundryUrl
+ *     		instead concrete CloudServerURL
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal.editor;
 
 import java.util.List;
 
+import org.cloudfoundry.ide.eclipse.server.core.AbstractCloudFoundryUrl;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer;
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryServerUiPlugin;
+import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudServerUIUtil;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudUiUtil;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -54,71 +60,8 @@ public class CloudUrlWidget {
 		this.serverTypeId = cfServer.getServer().getServerType().getId();
 	}
 
-	public void createControls(final Composite parent) {
-		Label urlLabel = new Label(parent, SWT.NONE);
-		urlLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		urlLabel.setText(Messages.COMMONTXT_URL);
-
-		Composite urlComposite = new Composite(parent, SWT.NONE);
-		urlComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
-		GridLayout urlCompositelayout = new GridLayout(2, false);
-		urlCompositelayout.marginHeight = 0;
-		urlCompositelayout.marginWidth = 0;
-		urlComposite.setLayout(urlCompositelayout);
-
-		urlCombo = new Combo(urlComposite, SWT.BORDER | SWT.READ_ONLY);
-		urlCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-
-		updateUrlCombo(null);
-
-		urlCombo.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				int index = urlCombo.getSelectionIndex();
-
-				if (index >= 0 && index != comboIndex) {
-					CloudServerURL cloudUrl = CloudUiUtil.getAllUrls(serverTypeId).get(index);
-					if (cloudUrl.getUrl().contains("{")) { //$NON-NLS-1$
-						CloudServerURL newUrl = CloudUiUtil.getWildcardUrl(cloudUrl,
-								CloudUiUtil.getAllUrls(serverTypeId), parent.getShell());
-						if (newUrl != null) {
-							List<CloudServerURL> userDefinedUrls = CloudUiUtil.getUserDefinedUrls(serverTypeId);
-							userDefinedUrls.add(newUrl);
-							CloudUiUtil.storeUserDefinedUrls(serverTypeId, userDefinedUrls);
-							String newUrlName = newUrl.getName();
-
-							updateUrlCombo(null);
-							for (int i = 0; i < urlCombo.getItemCount(); i++) {
-								if (urlCombo.getItem(i).startsWith(newUrlName + " - ")) { //$NON-NLS-1$
-									urlCombo.select(i);
-									comboIndex = i;
-									break;
-								}
-							}
-						}
-						else {
-							urlCombo.select(comboIndex);
-						}
-					}
-				}
-				setUpdatedSelectionInServer();
-			}
-		});
-
-		final Button manageUrlButton = new Button(urlComposite, SWT.PUSH);
-		manageUrlButton.setText(Messages.CloudUrlWidget_TEXT_MANAGE_CLOUD);
-		manageUrlButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		manageUrlButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				ManageCloudDialog dialog = new ManageCloudDialog(manageUrlButton.getShell(), serverTypeId);
-				if (dialog.open() == Dialog.OK) {
-					CloudServerURL lastAddedEditedURL = dialog.getLastAddedOrEditedURL();
-					updateUrlCombo(lastAddedEditedURL);
-					setUpdatedSelectionInServer();
-				}
-			}
-		});
+	public void createControls(final Composite parent) throws CoreException {
+		createControls(parent, null);
 	}
 
 	public String getURLSelection() {
@@ -129,11 +72,11 @@ public class CloudUrlWidget {
 		return null;
 	}
 
-	protected String getComboURLDisplay(CloudServerURL url) {
+	protected String getComboURLDisplay(AbstractCloudFoundryUrl url) {
 		return url.getName() + " - " + url.getUrl(); //$NON-NLS-1$
 	}
-
-	protected void updateUrlCombo(CloudServerURL lastAddedEditedUrl) {
+	
+	protected void updateUrlCombo(AbstractCloudFoundryUrl lastAddedEditedUrl, IRunnableContext runnableContext) throws CoreException {
 		String newSelection = null;
 		String oldSelection = null;
 
@@ -148,7 +91,7 @@ public class CloudUrlWidget {
 		}
 
 		// Get updated list of URLs
-		List<CloudServerURL> cloudUrls = CloudUiUtil.getAllUrls(serverTypeId);
+		List<AbstractCloudFoundryUrl> cloudUrls = CloudServerUIUtil.getAllUrls(serverTypeId, runnableContext);
 		String[] updatedUrls = new String[cloudUrls.size()];
 
 		// If there is a last edited URL, set that as the selection in the combo
@@ -196,6 +139,10 @@ public class CloudUrlWidget {
 		comboIndex = selectionIndex;
 	}
 
+	protected void updateUrlCombo(AbstractCloudFoundryUrl lastAddedEditedUrl) throws CoreException {
+		updateUrlCombo(lastAddedEditedUrl, null);
+	}
+
 	/**
 	 * This gets invoked any time there is a URL selection change. It sets the
 	 * newly selected URL in the server, if selected URL is not null.
@@ -208,6 +155,84 @@ public class CloudUrlWidget {
 
 			cfServer.setUrl(url);
 		}
+	}
+
+	public void createControls(final Composite parent, final IRunnableContext runnableContext) throws CoreException {
+		Label urlLabel = new Label(parent, SWT.NONE);
+		urlLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+		urlLabel.setText(Messages.COMMONTXT_URL);
+
+		Composite urlComposite = new Composite(parent, SWT.NONE);
+		urlComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
+		GridLayout urlCompositelayout = new GridLayout(2, false);
+		urlCompositelayout.marginHeight = 0;
+		urlCompositelayout.marginWidth = 0;
+		urlComposite.setLayout(urlCompositelayout);
+
+		urlCombo = new Combo(urlComposite, SWT.BORDER | SWT.READ_ONLY);
+		urlCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+		updateUrlCombo(null, runnableContext);
+
+		urlCombo.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				int index = urlCombo.getSelectionIndex();
+
+				if (index >= 0 && index != comboIndex) {
+					try {
+						List <AbstractCloudFoundryUrl> allUrls = CloudServerUIUtil.getAllUrls(serverTypeId, runnableContext); 
+						AbstractCloudFoundryUrl cloudUrl = allUrls.get(index);
+						if (cloudUrl.getUrl().contains("{")) { //$NON-NLS-1$
+							AbstractCloudFoundryUrl newUrl = CloudServerUIUtil.getWildcardUrl(cloudUrl,
+									allUrls, parent.getShell());
+							if (newUrl != null) {
+								List<AbstractCloudFoundryUrl> userDefinedUrls = CloudServerUIUtil.getUserDefinedUrls(serverTypeId);
+								userDefinedUrls.add(newUrl);
+								CloudServerUIUtil.storeUserDefinedUrls(serverTypeId, userDefinedUrls);
+								String newUrlName = newUrl.getName();
+
+								updateUrlCombo(null, runnableContext);
+								for (int i = 0; i < urlCombo.getItemCount(); i++) {
+									if (urlCombo.getItem(i).startsWith(newUrlName + " - ")) { //$NON-NLS-1$
+										urlCombo.select(i);
+										comboIndex = i;
+										break;
+									}
+								}
+							}
+							else {
+								urlCombo.select(comboIndex);
+							}
+						}
+					}
+					catch (CoreException ex) {
+						CloudFoundryServerUiPlugin.logError(ex);
+					}
+				}
+				setUpdatedSelectionInServer();
+			}
+		});
+
+		final Button manageUrlButton = new Button(urlComposite, SWT.PUSH);
+		manageUrlButton.setText(Messages.CloudUrlWidget_TEXT_MANAGE_CLOUD);
+		manageUrlButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+		manageUrlButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				ManageCloudDialog dialog = new ManageCloudDialog(manageUrlButton.getShell(), serverTypeId, runnableContext);
+				if (dialog.open() == Dialog.OK) {
+					AbstractCloudFoundryUrl lastAddedEditedURL = dialog.getLastAddedOrEditedCloudFoundryUrl();
+					try {
+						updateUrlCombo(lastAddedEditedURL, runnableContext);
+					}
+					catch (CoreException ex) {
+						CloudFoundryServerUiPlugin.logError(ex);
+					}
+					setUpdatedSelectionInServer();
+				}
+			}
+		});
 	}
 
 }

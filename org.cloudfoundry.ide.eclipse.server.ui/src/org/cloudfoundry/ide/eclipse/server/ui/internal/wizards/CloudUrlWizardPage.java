@@ -21,9 +21,11 @@ package org.cloudfoundry.ide.eclipse.server.ui.internal.wizards;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudfoundry.client.lib.CloudFoundryException;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractCloudFoundryUrl;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
 import org.eclipse.jface.dialogs.Dialog;
@@ -63,14 +65,40 @@ public class CloudUrlWizardPage extends WizardPage {
 
 	boolean canFinish = false;
 
-	private final List<CloudServerURL> allCloudUrls;
+	private final List<AbstractCloudFoundryUrl> allCloudUrls;
 
 	protected static final String TITLE = Messages.CloudUrlWizardPage_TITLE_CLOUD_URL;
 
 	protected static final String DESCRIPTION = Messages.CloudUrlWizardPage_TEXT_DESCRIPT;
 
+	/**
+	 * @deprecated use {@link #CloudUrlWizardPage(ImageDescriptor, String, String, boolean, List)} instead.
+	 */
 	protected CloudUrlWizardPage(List<CloudServerURL> allCloudUrls, ImageDescriptor descriptor, String url,
 			String name, boolean selfSigned) {
+		super(Messages.CloudUrlWizardPage_TEXT_CLOUD_URL);
+		if (allCloudUrls == null) {
+			this.allCloudUrls = null;
+		} else {
+			this.allCloudUrls = new ArrayList <AbstractCloudFoundryUrl> ();
+			for (CloudServerURL serverUrl : allCloudUrls) {
+				 this.allCloudUrls.add(serverUrl);
+			}
+		}
+		this.name = name;
+		this.url = url;
+		this.selfSigned = selfSigned;
+
+		setTitle(TITLE);
+		setDescription(DESCRIPTION);
+
+		if (descriptor != null) {
+			setImageDescriptor(descriptor);
+		}
+	}
+	
+	protected CloudUrlWizardPage(ImageDescriptor descriptor, String url,
+			String name, boolean selfSigned, List<AbstractCloudFoundryUrl> allCloudUrls) {
 		super(Messages.CloudUrlWizardPage_TEXT_CLOUD_URL);
 		this.allCloudUrls = allCloudUrls;
 		this.name = name;
@@ -179,7 +207,7 @@ public class CloudUrlWizardPage extends WizardPage {
 			canFinish = true;
 
 			// List<CloudURL> cloudUrls = CloudUiUtil.getAllUrls(serverTypeId);
-			for (CloudServerURL cloudUrl : allCloudUrls) {
+			for (AbstractCloudFoundryUrl cloudUrl : allCloudUrls) {
 				if (!cloudUrl.getUrl().contains("{")) { //$NON-NLS-1$
 					if (cloudUrl.getName().equals(name)) {
 						canFinish = false;
