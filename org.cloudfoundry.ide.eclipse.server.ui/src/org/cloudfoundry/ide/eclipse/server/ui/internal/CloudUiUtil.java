@@ -147,37 +147,52 @@ public class CloudUiUtil {
 		return urls;
 	}
 
-	/**
-	 * @throws CoreException 
+	/** 
 	 * @deprecated use {@link CloudServerUIUtil#getAllUrls(String, IRunnableContext)}
 	 */
-	public static List<CloudServerURL> getAllUrls(String serverTypeId) throws CoreException {
-		// Switch to new generic utility method, then convert to the expected return type
-		return convertAbstractCloudFoundryUrlListToCloudServerURLList(CloudServerUIUtil.getAllUrls(serverTypeId, null));
+	public static List<CloudServerURL> getAllUrls(String serverTypeId) {
+		try {
+			// Switch to new generic utility method, then convert to the expected return type
+			return convertAbstractCloudFoundryUrlListToCloudServerURLList(CloudServerUIUtil.getAllUrls(serverTypeId, null));
+		} catch (CoreException ex) {
+			CloudFoundryServerUiPlugin.logError(ex);
+		}
+		
+		// If an exception shows up, return an empty list (to have backwards compatibility)
+		return new ArrayList<CloudServerURL>();
 	}
 
-	/**
-	 * @throws CoreException 
+	/** 
 	 * @deprecated use {@link CloudServerUIUtil#getDefaultUrl(String, IRunnableContext)}
 	 */
-	public static CloudServerURL getDefaultUrl(String serverTypeId) throws CoreException {		
+	public static CloudServerURL getDefaultUrl(String serverTypeId) {		
 		CloudServerURL url = null;
-		// Switch to new generic utility method, then convert to the expected return type
-		AbstractCloudFoundryUrl abstractUrl = CloudServerUIUtil.getDefaultUrl(serverTypeId, null);
-		if (abstractUrl != null) {
-			url = convertAbstractCloudFoundryUrlToCloudServerURL(abstractUrl);
-		} 
+		try {
+			// Switch to new generic utility method, then convert to the expected return type
+			AbstractCloudFoundryUrl abstractUrl = CloudServerUIUtil.getDefaultUrl(serverTypeId, null);
+			if (abstractUrl != null) {
+				url = convertAbstractCloudFoundryUrlToCloudServerURL(abstractUrl);
+			} 
+		} catch (CoreException ex) {
+			CloudFoundryServerUiPlugin.logError(ex);
+		}
 		
 		return url;
 	}
 
-	/**
-	 * @throws CoreException 
+	/** 
 	 * @deprecated use {@link CloudServerUIUtil#getUrls(String, IRunnableContext)}
 	 */
-	public static List<CloudServerURL> getUrls(String serverTypeId) throws CoreException {
-		// Switch to new generic utility method, then convert to the expected return type
-		return convertAbstractCloudFoundryUrlListToCloudServerURLList(CloudServerUIUtil.getUrls(serverTypeId, null));
+	public static List<CloudServerURL> getUrls(String serverTypeId) {
+		try {
+			// Switch to new generic utility method, then convert to the expected return type
+			return convertAbstractCloudFoundryUrlListToCloudServerURLList(CloudServerUIUtil.getUrls(serverTypeId, null));
+		} catch (CoreException ex) {
+			CloudFoundryServerUiPlugin.logError(ex);
+		}
+		
+		// If an exception shows up, return an empty list (to have backwards compatibility)
+		return new ArrayList<CloudServerURL>();
 	}
 
 	/**
