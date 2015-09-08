@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Pivotal Software, Inc. 
+ * Copyright (c) 2012, 2015 Pivotal Software, Inc. 
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
@@ -16,13 +16,17 @@
  *  
  *  Contributors:
  *     Pivotal Software, Inc. - initial API and implementation
+ *     IBM - Switching to use the more generic AbstractCloudFoundryUrl
+ *     		instead concrete CloudServerURL
  ********************************************************************************/
 package org.cloudfoundry.ide.eclipse.server.ui.internal;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
+import org.cloudfoundry.ide.eclipse.server.core.AbstractCloudFoundryUrl;
 import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryBrandingExtensionPoint.CloudServerURL;
+import org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryPlugin;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -44,7 +48,7 @@ import org.eclipse.swt.widgets.Text;
  */
 public class TargetURLDialog extends Dialog {
 	
-	private final CloudServerURL cloudUrl;
+	private final AbstractCloudFoundryUrl cloudUrl;
 	
 	private final String wildcard;
 		
@@ -58,9 +62,23 @@ public class TargetURLDialog extends Dialog {
 
 	private Text nameText;
 
-	private final List<CloudServerURL> allCloudUrls;
+	private final List<AbstractCloudFoundryUrl> allCloudUrls;
 
+	/**
+	 * @deprecated use {@link #TargetURLDialog(Shell, AbstractCloudFoundryUrl, String, List)} instead
+	 */
 	public TargetURLDialog(Shell parentShell, CloudServerURL cloudUrl, String wildcard, List<CloudServerURL> allCloudUrls) {
+		super(parentShell);
+		this.cloudUrl = cloudUrl;
+		this.wildcard = wildcard;
+		this.allCloudUrls = new ArrayList <AbstractCloudFoundryUrl>();
+		for (int i = 0; i < allCloudUrls.size(); ++i) {
+			this.allCloudUrls.add(allCloudUrls.get(i));
+		}
+		this.url = cloudUrl.getUrl();
+	}
+	
+	public TargetURLDialog(Shell parentShell, AbstractCloudFoundryUrl cloudUrl, String wildcard, List<AbstractCloudFoundryUrl> allCloudUrls) {
 		super(parentShell);
 		this.cloudUrl = cloudUrl;
 		this.wildcard = wildcard;
@@ -127,7 +145,7 @@ public class TargetURLDialog extends Dialog {
 	@Override
 	protected void okPressed() {
 //		List<CloudURL> allUrls = CloudUiUtil.getAllUrls(serverTypeId);
-		for(CloudServerURL url: allCloudUrls) {
+		for(AbstractCloudFoundryUrl url: allCloudUrls) {
 			if (url.getName().equals(name)) {
 				MessageDialog.openError(getParentShell(), Messages.TargetURLDialog_ERROR_DUPLICATE_TITLE, NLS.bind(Messages.TargetURLDialog_ERROR_DUPLICATE_BODY, name));
 				return;

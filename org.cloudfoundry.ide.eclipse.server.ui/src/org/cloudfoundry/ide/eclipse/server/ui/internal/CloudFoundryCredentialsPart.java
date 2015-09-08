@@ -28,6 +28,7 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.ValidationEvents;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.CloudUrlWidget;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.RegisterAccountWizard;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.WizardHandleContext;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -154,7 +155,7 @@ public class CloudFoundryCredentialsPart extends UIPart implements IPartChangeLi
 		this.cfServer = server;
 	}
 
-	private void createExistingUserComposite(TabFolder folder) {
+	private void createExistingUserComposite(TabFolder folder) throws CoreException {
 		Composite composite = new Composite(folder, SWT.NONE);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -213,7 +214,7 @@ public class CloudFoundryCredentialsPart extends UIPart implements IPartChangeLi
 
 		};
 
-		urlWidget.createControls(topComposite);
+		urlWidget.createControls(topComposite, runnableContext);
 
 		String url = urlWidget.getURLSelection();
 		if (url != null) {

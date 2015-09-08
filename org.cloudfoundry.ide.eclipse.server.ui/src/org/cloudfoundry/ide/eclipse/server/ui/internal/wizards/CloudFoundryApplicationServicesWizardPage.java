@@ -34,7 +34,6 @@ import org.cloudfoundry.ide.eclipse.server.core.internal.client.LocalCloudServic
 import org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryImages;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.ICoreRunnable;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.Messages;
-import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.ServiceViewColumn;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.ServiceViewerConfigurator;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.ServiceViewerSorter;
 import org.cloudfoundry.ide.eclipse.server.ui.internal.editor.ServicesTreeLabelProvider;
@@ -56,7 +55,6 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.accessibility.AccessibleAdapter;
 import org.eclipse.swt.accessibility.AccessibleEvent;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
