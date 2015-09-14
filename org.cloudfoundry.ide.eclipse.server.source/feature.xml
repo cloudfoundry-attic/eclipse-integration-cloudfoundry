@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.cloudfoundry.ide.eclipse.server.source"
+      id="org.eclipse.cloudfoundry.ide.server.source"
       label="%featureName"
       version="1.8.3.qualifier"
       provider-name="%providerName"
-      plugin="org.cloudfoundry.ide.eclipse.server.branding">
+      plugin="org.eclipse.cloudfoundry.ide.server.branding">
 
    <description>
       %description
@@ -19,42 +19,42 @@
    </license>
 
    <plugin
-         id="org.cloudfoundry.ide.eclipse.server.core.source"
+         id="org.eclipse.cloudfoundry.ide.server.core.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.cloudfoundry.ide.eclipse.server.rse.source"
+         id="org.eclipse.cloudfoundry.ide.server.rse.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.cloudfoundry.ide.eclipse.server.ui.source"
+         id="org.eclipse.cloudfoundry.ide.server.ui.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.cloudfoundry.ide.eclipse.server.tests.source"
+         id="org.eclipse.cloudfoundry.ide.server.tests.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.cloudfoundry.ide.eclipse.server.branding.source"
+         id="org.eclipse.cloudfoundry.ide.server.branding.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.cloudfoundry.ide.eclipse.server.standalone.source"
+         id="org.eclipse.cloudfoundry.ide.server.standalone.source"
          download-size="0"
          install-size="0"
          version="0.0.0"

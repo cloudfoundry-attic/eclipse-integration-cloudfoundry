@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.cloudfoundry.ide.eclipse.server.sdk"
+      id="org.eclipse.cloudfoundry.ide.server.sdk"
       label="%featureName"
       version="1.8.3.qualifier"
       provider-name="%providerName"
-      plugin="org.cloudfoundry.ide.eclipse.server.branding">
+      plugin="org.eclipse.cloudfoundry.ide.server.branding">
 
    <description>
       %description
@@ -19,11 +19,11 @@
    </license>
 
    <includes
-         id="org.cloudfoundry.ide.eclipse.server.source"
+         id="org.eclipse.cloudfoundry.ide.server.source"
          version="0.0.0"/>
 
    <includes
-         id="org.cloudfoundry.ide.eclipse.server"
+         id="org.eclipse.cloudfoundry.ide.server"
          version="0.0.0"/>
 
    <plugin

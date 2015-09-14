@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>org.cloudfoundry.ide.eclipse.server.rse</name>
+	<name>org.eclipse.cloudfoundry.ide.server.rse</name>
 	<comment></comment>
 	<projects>
 	</projects>

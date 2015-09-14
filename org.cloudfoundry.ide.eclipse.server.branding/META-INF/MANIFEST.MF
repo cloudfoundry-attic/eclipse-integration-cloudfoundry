@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Cloud Foundry Integration for Eclipse
-Bundle-SymbolicName: org.cloudfoundry.ide.eclipse.server.branding;singleton:=true
+Bundle-Name: Eclipse Cloud Foundry Tools
+Bundle-SymbolicName: org.eclipse.cloudfoundry.ide.server.branding;singleton:=true
 Bundle-Version: 1.8.3.qualifier
 Bundle-Vendor: Pivotal Software, Inc.
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
@@ -13,5 +13,5 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.wst.common.project.facet.core,
  org.eclipse.jst.server.core,
  org.eclipse.jst.common.project.facet.core,
- org.cloudfoundry.ide.eclipse.server.core,
- org.cloudfoundry.ide.eclipse.server.ui
+ org.eclipse.cloudfoundry.ide.server.core,
+ org.eclipse.cloudfoundry.ide.server.ui

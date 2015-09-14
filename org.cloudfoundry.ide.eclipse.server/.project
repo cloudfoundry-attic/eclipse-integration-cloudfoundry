@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>org.cloudfoundry.ide.eclipse.server-feature</name>
+	<name>org.eclipse.cloudfoundry.ide.server-feature</name>
 	<comment></comment>
 	<projects>
 	</projects>

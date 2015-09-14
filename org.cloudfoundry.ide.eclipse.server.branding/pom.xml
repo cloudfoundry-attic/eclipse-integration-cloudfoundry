@@ -4,11 +4,11 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.cloudfoundry.ide.eclipse.server</groupId>
-    <artifactId>org.cloudfoundry.ide.eclipse.server.parent</artifactId>
+    <groupId>org.eclipse.cloudfoundry.ide.server</groupId>
+    <artifactId>org.eclipse.cloudfoundry.ide.server.parent</artifactId>
     <version>1.8.3-SNAPSHOT</version>
   </parent>
-  <artifactId>org.cloudfoundry.ide.eclipse.server.branding</artifactId>
+  <artifactId>org.eclipse.cloudfoundry.ide.server.branding</artifactId>
   <packaging>eclipse-plugin</packaging>
 
   <build>
