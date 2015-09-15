@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>org.eclipse.cloudfoundry.ide.server.sdk</name>
+	<name>org.eclipse.cft.server.sdk</name>
 	<comment></comment>
 	<projects>
 	</projects>

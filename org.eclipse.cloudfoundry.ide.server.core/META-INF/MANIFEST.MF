@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
-Bundle-SymbolicName: org.eclipse.cloudfoundry.ide.server.core;singleton:=true
+Bundle-SymbolicName: org.eclipse.cft.server.core;singleton:=true
 Bundle-Version: 1.8.3.qualifier
 Bundle-Vendor: %Bundle-Vendor
 Require-Bundle: org.eclipse.core.runtime,
@@ -47,7 +47,7 @@ Bundle-ClassPath: .,
  lib/commons-codec-1.6.jar,
  lib/commons-logging-1.1.3.jar,
  lib/tomcat-juli-8.0.15.jar
-Bundle-Activator: org.eclipse.cloudfoundry.ide.server.core.internal.CloudFoundryPlugin
+Bundle-Activator: org.eclipse.cft.server.core.internal.CloudFoundryPlugin
 Export-Package: org.cloudfoundry.client.lib,
  org.cloudfoundry.client.lib.archive,
  org.cloudfoundry.client.lib.domain,

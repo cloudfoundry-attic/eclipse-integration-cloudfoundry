@@ -6,8 +6,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.eclipse.cloudfoundry.ide.server</groupId>
-  <artifactId>org.eclipse.cloudfoundry.ide.server.parent</artifactId>
+  <groupId>org.eclipse.cft.server</groupId>
+  <artifactId>org.eclipse.cft.server.parent</artifactId>
   <version>1.8.3-SNAPSHOT</version>
   <packaging>pom</packaging>
 
@@ -19,18 +19,18 @@
   </scm>
 
   <modules>
-    <module>org.eclipse.cloudfoundry.ide.server</module>
-    <module>org.eclipse.cloudfoundry.ide.server.core</module>
-    <module>org.eclipse.cloudfoundry.ide.server.rse</module>
-    <module>org.eclipse.cloudfoundry.ide.server.tests</module>
-    <module>org.eclipse.cloudfoundry.ide.server.ui</module>
-    <module>org.eclipse.cloudfoundry.ide.server.verify.ui</module>
-    <module>org.eclipse.cloudfoundry.ide.server.standalone</module>
-    <module>org.eclipse.cloudfoundry.ide.server.branding</module>
-    <module>org.eclipse.cloudfoundry.ide.server.site</module>
-    <module>org.eclipse.cloudfoundry.ide.server.target</module>
-    <module>org.eclipse.cloudfoundry.ide.server.source</module>
-    <module>org.eclipse.cloudfoundry.ide.server.sdk</module>
+    <module>org.eclipse.cft.server</module>
+    <module>org.eclipse.cft.server.core</module>
+    <module>org.eclipse.cft.server.rse</module>
+    <module>org.eclipse.cft.server.tests</module>
+    <module>org.eclipse.cft.server.ui</module>
+    <module>org.eclipse.cft.server.verify.ui</module>
+    <module>org.eclipse.cft.server.standalone</module>
+    <module>org.eclipse.cft.server.branding</module>
+    <module>org.eclipse.cft.server.site</module>
+    <module>org.eclipse.cft.server.target</module>
+    <module>org.eclipse.cft.server.source</module>
+    <module>org.eclipse.cft.server.sdk</module>
   </modules>
 
   <!-- Common Configuration -->
@@ -312,8 +312,8 @@
             <resolver>p2</resolver>
             <target>
               <artifact>
-                <groupId>org.eclipse.cloudfoundry.ide.server</groupId>
-                <artifactId>org.eclipse.cloudfoundry.ide.server.target</artifactId>
+                <groupId>org.eclipse.cft.server</groupId>
+                <artifactId>org.eclipse.cft.server.target</artifactId>
                 <version>1.8.3-SNAPSHOT</version>
                 <classifier>${dist.target.classifier}</classifier>
               </artifact>

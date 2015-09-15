@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
-Bundle-SymbolicName: org.eclipse.cloudfoundry.ide.server.rse;singleton:=true
+Bundle-SymbolicName: org.eclipse.cft.server.rse;singleton:=true
 Bundle-Version: 1.8.3.qualifier
-Bundle-Activator: org.eclipse.cloudfoundry.ide.server.rse.internal.CloudFoundryRsePlugin
+Bundle-Activator: org.eclipse.cft.server.rse.internal.CloudFoundryRsePlugin
 Bundle-Vendor: %Bundle-Vendor
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
@@ -12,7 +12,7 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.rse.services;resolution:=optional;x-installation:=greedy,
  org.eclipse.rse.subsystems.files.core;resolution:=optional;x-installation:=greedy,
  org.eclipse.rse.files.ui;resolution:=optional;x-installation:=greedy,
- org.eclipse.cloudfoundry.ide.server.core,
+ org.eclipse.cft.server.core,
  org.eclipse.ui.views,
  org.eclipse.wst.server.core
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

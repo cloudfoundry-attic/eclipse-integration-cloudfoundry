@@ -1,12 +1,12 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
-Bundle-SymbolicName: org.eclipse.cloudfoundry.ide.server.verify.ui;singleton:=true
+Bundle-SymbolicName: org.eclipse.cft.server.verify.ui;singleton:=true
 Bundle-Version: 1.8.3.qualifier
 Bundle-Vendor: %Bundle-Vendor
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
-Bundle-Activator: org.eclipse.cloudfoundry.ide.server.verify.ui.internal.Activator
+Bundle-Activator: org.eclipse.cft.server.verify.ui.internal.Activator
 

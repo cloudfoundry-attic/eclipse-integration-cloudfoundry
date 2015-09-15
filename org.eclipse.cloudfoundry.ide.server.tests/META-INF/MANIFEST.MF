@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Cloud Foundry Integration (Tests)
-Bundle-SymbolicName: org.eclipse.cloudfoundry.ide.server.tests;singleton:=true
+Bundle-SymbolicName: org.eclipse.cft.server.tests;singleton:=true
 Bundle-Version: 1.8.3.qualifier
 Bundle-Vendor: Pivotal Software, Inc.
 Require-Bundle: org.eclipse.core.runtime,
@@ -10,8 +10,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.jdt.launching,
  org.eclipse.jst.server.core,
  org.eclipse.wst.server.core,
- org.eclipse.cloudfoundry.ide.server.core,
- org.eclipse.cloudfoundry.ide.server.ui,
+ org.eclipse.cft.server.core,
+ org.eclipse.cft.server.ui,
  org.eclipse.ui,
  org.junit;bundle-version="4.8.0",
  org.eclipse.jdt.core,

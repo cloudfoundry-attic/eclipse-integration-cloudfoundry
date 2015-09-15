@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.eclipse.cloudfoundry.ide.server"
+      id="org.eclipse.cft.server"
       label="%featureName"
       version="1.8.3.qualifier"
       provider-name="%providerName"
-      plugin="org.eclipse.cloudfoundry.ide.server.branding">
+      plugin="org.eclipse.cft.server.branding">
 
    <description>
       %description
@@ -19,42 +19,42 @@
    </license>
 
    <plugin
-         id="org.eclipse.cloudfoundry.ide.server.core"
+         id="org.eclipse.cft.server.core"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.cloudfoundry.ide.server.rse"
+         id="org.eclipse.cft.server.rse"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.cloudfoundry.ide.server.ui"
+         id="org.eclipse.cft.server.ui"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.cloudfoundry.ide.server.branding"
+         id="org.eclipse.cft.server.branding"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.cloudfoundry.ide.server.standalone"
+         id="org.eclipse.cft.server.standalone"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.cloudfoundry.ide.server.verify.ui"
+         id="org.eclipse.cft.server.verify.ui"
          download-size="0"
          install-size="0"
          version="0.0.0"

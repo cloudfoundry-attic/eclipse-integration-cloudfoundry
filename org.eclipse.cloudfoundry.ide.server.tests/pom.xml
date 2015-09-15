@@ -4,11 +4,11 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.eclipse.cloudfoundry.ide.server</groupId>
-    <artifactId>org.eclipse.cloudfoundry.ide.server.parent</artifactId>
+    <groupId>org.eclipse.cft.server</groupId>
+    <artifactId>org.eclipse.cft.server.parent</artifactId>
     <version>1.8.3-SNAPSHOT</version>
   </parent>
-  <artifactId>org.eclipse.cloudfoundry.ide.server.tests</artifactId>
+  <artifactId>org.eclipse.cft.server.tests</artifactId>
   <packaging>eclipse-test-plugin</packaging>
   <properties>
 	<test.class>org.cloudfoundry.ide.eclipse.server.tests.AllCloudFoundryTests</test.class>
