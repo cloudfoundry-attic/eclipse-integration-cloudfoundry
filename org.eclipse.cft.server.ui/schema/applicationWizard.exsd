@@ -1,16 +1,16 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="org.cloudfoundry.ide.eclipse.server.ui" xmlns="http://www.w3.org/2001/XMLSchema">
+<schema targetNamespace="org.eclipse.cft.server.ui" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appInfo>
-         <meta.schema plugin="org.cloudfoundry.ide.eclipse.server.ui" id="applicationWizard" name="Application Wizard"/>
+         <meta.schema plugin="org.eclipse.cft.server.ui" id="applicationWizard" name="Application Wizard"/>
       </appInfo>
       <documentation>
          INTERNAL EXTENSION POINT
 
 Contribute pages to the application deployment wizard for an application type. The wizard page provider must contribute a provider ID that matches the provider ID of the related application type contribution through the extension point: 
 
-org.cloudfoundry.ide.eclipse.server.core.application
+org.eclipse.cft.server.core.application
 
 As this is an internal extension point, API for the Java delegate contribution through this extension point may change overtime.
       </documentation>
@@ -65,7 +65,7 @@ As this is an internal extension point, API for the Java delegate contribution t
                <documentation>
                   This must match the same provider ID as specified by the related application extension point:
 
-org.cloudfoundry.ide.eclipse.server.core.application
+org.eclipse.cft.server.core.application
                </documentation>
             </annotation>
          </attribute>

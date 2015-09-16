@@ -96,7 +96,7 @@
 			class="org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryServerWizardFragment"/>
 	</extension>
 	 <extension
-       point="org.cloudfoundry.ide.eclipse.server.core.branding">
+       point="org.eclipse.cft.server.core.branding">
 	    <service
            name="Cloud Foundry"
            provideServices="true"

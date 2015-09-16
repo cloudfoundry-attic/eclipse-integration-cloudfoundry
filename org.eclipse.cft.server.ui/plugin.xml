@@ -421,7 +421,7 @@
      </serverToolTip>
   </extension-->
   <extension
-        point="org.cloudfoundry.ide.eclipse.server.core.callback">
+        point="org.eclipse.cft.server.core.callback">
      <callback
            class="org.cloudfoundry.ide.eclipse.server.ui.internal.CloudFoundryUiCallback"></callback>
   </extension>
@@ -610,7 +610,7 @@
       </page>
    </extension>
    <extension
-         point="org.cloudfoundry.ide.eclipse.server.ui.applicationWizard">
+         point="org.eclipse.cft.server.ui.applicationWizard">
       <applicationWizardDelegate
             class="org.cloudfoundry.ide.eclipse.server.ui.DefaultApplicationWizardDelegate"
             providerID="org.cloudfoundry.ide.eclipse.server.application.javaweb">

@@ -54,7 +54,7 @@
      </sourcePathComputer>
   </extension>
   <extension
-        point="org.cloudfoundry.ide.eclipse.server.core.application">
+        point="org.eclipse.cft.server.core.application">
      <applicationDelegate
            class="org.cloudfoundry.ide.eclipse.server.core.internal.application.JavaWebApplicationDelegate"
            priority="Low"

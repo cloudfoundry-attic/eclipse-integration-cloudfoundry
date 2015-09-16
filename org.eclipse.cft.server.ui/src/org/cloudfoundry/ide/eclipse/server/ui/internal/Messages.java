@@ -956,7 +956,7 @@ public class Messages extends NLS {
 
 	public static String CloudFoundryServiceWizardPage_GETTING_AVAILABLE_SERVICES;
 
-	private static final String BUNDLE_NAME = CloudFoundryServerUiPlugin.PLUGIN_ID + ".internal.Messages"; //$NON-NLS-1$
+	private static final String BUNDLE_NAME = "org.cloudfoundry.ide.eclipse.server.ui.internal.Messages"; //$NON-NLS-1$
 
 	static {
 		// initialize resource bundle

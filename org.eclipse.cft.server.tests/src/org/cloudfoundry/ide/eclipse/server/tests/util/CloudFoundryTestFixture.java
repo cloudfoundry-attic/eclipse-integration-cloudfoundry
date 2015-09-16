@@ -204,17 +204,16 @@ public class CloudFoundryTestFixture {
 
 		protected void setCloudSpace(CloudFoundryServer cloudServer, String orgName, String spaceName)
 				throws CoreException {
-			CloudOrgsAndSpaces spaces = CloudUiUtil.getCloudSpaces(cloudServer.getUsername(),
-					cloudServer.getPassword(), cloudServer.getUrl(), false, cloudServer.getSelfSignedCertificate(),
-					null);
+			CloudOrgsAndSpaces spaces = CloudUiUtil.getCloudSpaces(cloudServer.getUsername(), cloudServer.getPassword(),
+					cloudServer.getUrl(), false, cloudServer.getSelfSignedCertificate(), null);
 			Assert.isTrue(spaces != null, "Failed to resolve orgs and spaces.");
 			Assert.isTrue(spaces.getDefaultCloudSpace() != null,
 					"No default space selected in cloud space lookup handler.");
 
 			CloudSpace cloudSpace = spaces.getSpace(orgName, spaceName);
 			if (cloudSpace == null) {
-				throw CloudErrorUtil.toCoreException("Failed to resolve cloud space when running junits: " + orgName
-						+ " - " + spaceName);
+				throw CloudErrorUtil.toCoreException(
+						"Failed to resolve cloud space when running junits: " + orgName + " - " + spaceName);
 			}
 			cloudServer.setSpace(cloudSpace);
 		}
@@ -310,8 +309,8 @@ public class CloudFoundryTestFixture {
 			}
 
 			if (server != null) {
-				CloudFoundryServerBehaviour cloudFoundryServer = (CloudFoundryServerBehaviour) server.loadAdapter(
-						CloudFoundryServerBehaviour.class, null);
+				CloudFoundryServerBehaviour cloudFoundryServer = (CloudFoundryServerBehaviour) server
+						.loadAdapter(CloudFoundryServerBehaviour.class, null);
 				if (projectCreated) {
 					try {
 						cloudFoundryServer.deleteAllApplications(null);
@@ -391,7 +390,7 @@ public class CloudFoundryTestFixture {
 
 	}
 
-	public static final String PLUGIN_ID = "org.cloudfoundry.ide.eclipse.server.tests";
+	public static final String PLUGIN_ID = "org.eclipse.cft.server.tests";
 
 	private static CloudFoundryTestFixture current;
 
@@ -429,7 +428,7 @@ public class CloudFoundryTestFixture {
 
 	public CloudFoundryTestFixture configureForApplicationDeployment(String fullApplicationName, int memory,
 			boolean deployStopped, List<EnvironmentVariable> variables, List<CloudService> services)
-			throws CoreException {
+					throws CoreException {
 		CloudFoundryPlugin
 				.setCallback(new TestCallback(fullApplicationName, memory, deployStopped, variables, services));
 		return getTestFixture();

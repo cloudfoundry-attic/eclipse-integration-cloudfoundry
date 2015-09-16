@@ -70,7 +70,7 @@ public class CloudFoundryBrandingExtensionPoint {
 	
 	public static String ATTR_URL_PROVIDER_CLASS = "urlProviderClass"; //$NON-NLS-1$
 
-	public static String POINT_ID = "org.cloudfoundry.ide.eclipse.server.core.branding"; //$NON-NLS-1$
+	public static String POINT_ID = "org.eclipse.cft.server.core.branding"; //$NON-NLS-1$
 
 	private static Map<String, IConfigurationElement> brandingDefinitions = new HashMap<String, IConfigurationElement>();
 	

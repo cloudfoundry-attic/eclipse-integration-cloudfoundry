@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="org.cloudfoundry.ide.eclipse.server.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<schema targetNamespace="org.eclipse.cft.server.core" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appInfo>
-         <meta.schema plugin="org.cloudfoundry.ide.eclipse.server.core" id="appStateTracker" name="Application State Tracker"/>
+         <meta.schema plugin="org.eclipse.cft.server.core" id="appStateTracker" name="Application State Tracker"/>
       </appInfo>
       <documentation>
          Defines an extension for tracking application state during a publish operation.
@@ -95,7 +95,7 @@
 &lt;pre&gt;
  &lt;extension
        id=&quot;com.my.module.MyModuleAppStateTracker&quot;
-       point=&quot;org.cloudfoundry.ide.eclipse.server.core.appStateTracker&quot;&gt;
+       point=&quot;org.eclipse.cft.server.core.core.appStateTracker&quot;&gt;
      &lt;appStateTracker
            class=&quot;com.my.module.MyModuleAppStateTracker&quot;
            serverTypeIds=&quot;com.my.server.type&quot;

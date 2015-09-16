@@ -69,7 +69,7 @@
    </extension>
    
     <extension
-          point="org.cloudfoundry.ide.eclipse.server.core.application">
+          point="org.eclipse.cft.server.core.application">
        <applicationDelegate
              class="org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandaloneApplicationDelegate"
              priority="Medium"
@@ -97,7 +97,7 @@
 	</extension>
 	
     <extension
-          point="org.cloudfoundry.ide.eclipse.server.ui.applicationWizard">
+          point="org.eclipse.cft.server.ui.applicationWizard">
        <applicationWizardDelegate
              class="org.cloudfoundry.ide.eclipse.server.standalone.internal.ui.StandaloneApplicationWizardDelegate"
              providerID="org.cloudfoundry.ide.eclipse.server.application.standalone">

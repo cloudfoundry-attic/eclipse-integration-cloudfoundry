@@ -3,7 +3,7 @@
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Apache License, 
- * Version 2.0 (the "LicenseÓ); you may not use this file except in compliance 
+ * Version 2.0 (the "Licenseï¿½); you may not use this file except in compliance 
  * with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -28,7 +28,7 @@ import org.osgi.framework.BundleContext;
 public class CloudFoundryJavaStandalonePlugin extends AbstractUIPlugin {
 
 	// The plug-in ID
-	public static final String PLUGIN_ID = "org.cloudfoundry.ide.eclipse.server.java.standalone"; //$NON-NLS-1$
+	public static final String PLUGIN_ID = "org.eclipse.cft.server.java.standalone"; //$NON-NLS-1$
 
 	// The shared instance
 	private static CloudFoundryJavaStandalonePlugin plugin;

@@ -55,7 +55,7 @@ public class ApplicationRegistry {
 
 	public static final String DEFAULT_JAVA_WEB_PROVIDER_ID = "org.cloudfoundry.ide.eclipse.server.application.javaweb"; //$NON-NLS-1$
 
-	public static String EXTENSION_POINT = "org.cloudfoundry.ide.eclipse.server.core.application"; //$NON-NLS-1$
+	public static String EXTENSION_POINT = "org.eclipse.cft.server.core.application"; //$NON-NLS-1$
 
 	public static AbstractApplicationDelegate getApplicationDelegate(IModule module) {
 		ApplicationProvider provider = getApplicationProvider(module);

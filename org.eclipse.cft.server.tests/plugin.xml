@@ -119,7 +119,7 @@
             typeIds="org.cloudfoundry.cloudfoundryserver.test.10" />
 	</extension>
 	
-	<extension point="org.cloudfoundry.ide.eclipse.server.core.branding">
+	<extension point="org.eclipse.cft.server.core.branding">
 		<service
           name="Cloud Foundry Test"
           provideServices="true"

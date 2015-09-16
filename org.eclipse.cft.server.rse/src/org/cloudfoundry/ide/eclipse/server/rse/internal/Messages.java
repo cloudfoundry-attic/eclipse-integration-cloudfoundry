@@ -22,7 +22,7 @@ package org.cloudfoundry.ide.eclipse.server.rse.internal;
 import org.eclipse.osgi.util.NLS;
 
 public class Messages extends NLS {
-	private static final String BUNDLE_NAME = CloudFoundryRsePlugin.PLUGIN_ID + ".internal.Messages"; //$NON-NLS-1$
+	private static final String BUNDLE_NAME = "org.cloudfoundry.ide.eclipse.server.rse.internal.Messages"; //$NON-NLS-1$
 
 	public static String ApplicationSubSystem_DESCRIPTION;
 

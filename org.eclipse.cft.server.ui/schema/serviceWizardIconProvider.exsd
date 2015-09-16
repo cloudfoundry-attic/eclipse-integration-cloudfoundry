@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="org.cloudfoundry.ide.eclipse.server.ui" xmlns="http://www.w3.org/2001/XMLSchema">
+<schema targetNamespace="org.eclipse.cft.server.ui" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appInfo>
-         <meta.schema plugin="org.cloudfoundry.ide.eclipse.server.ui" id="serviceWizardIconProvider" name="Service Wizard Icon Provider"/>
+         <meta.schema plugin="org.eclipse.cft.server.ui" id="serviceWizardIconProvider" name="Service Wizard Icon Provider"/>
       </appInfo>
       <documentation>
          Allows consuming code to provide icons to the Add Service wizard to be displayed alongside services.
@@ -86,7 +86,7 @@
          The following is an example of an extension point:
 
 &lt;pre&gt;
-  &lt;extension point=&quot;org.cloudfoundry.ide.eclipse.server.ui.serviceWizardIconProvider&quot;&gt;
+  &lt;extension point=&quot;org.eclipse.cft.server.ui.serviceWizardIconProvider&quot;&gt;
      &lt;serviceIconProvider runtimeTypeId=&quot;com.my.server.runtimetype.id&quot;
            providerClass=&quot;com.my.MyServiceWizardIconProvider&quot;/&gt;
 

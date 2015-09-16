@@ -263,7 +263,7 @@ public class CloudFoundryPlugin extends Plugin {
 	// public static final String CLOUD_CONTROLLER_DEFAULT_URL_ATTRIBUTE =
 	// "cloudfoundry.cloudcontroller.url.default";
 
-	public static final String PLUGIN_ID = "org.cloudfoundry.ide.eclipse.server.core"; //$NON-NLS-1$
+	public static final String PLUGIN_ID = "org.eclipse.cft.server.core"; //$NON-NLS-1$
 
 	public static final String ENABLE_INCREMENTAL_PUBLISH_PREFERENCE = PLUGIN_ID + ".publish.incremental.properties"; //$NON-NLS-1$
 
