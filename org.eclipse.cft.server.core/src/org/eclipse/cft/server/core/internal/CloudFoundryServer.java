@@ -100,28 +100,28 @@ public class CloudFoundryServer extends ServerDelegate implements IURLProvider {
 	 * Attribute key for the a unique server ID used to store credentials in the
 	 * secure store.
 	 */
-	static final String PROP_SERVER_ID = "org.cloudfoundry.ide.eclipse.serverId"; //$NON-NLS-1$
+	static final String PROP_SERVER_ID = "org.eclipse.cft.serverId"; //$NON-NLS-1$
 
 	/**
 	 * Attribute key for the password.
 	 */
-	static final String PROP_PASSWORD_ID = "org.cloudfoundry.ide.eclipse.password"; //$NON-NLS-1$
+	static final String PROP_PASSWORD_ID = "org.eclipse.cft.password"; //$NON-NLS-1$
 
 	/**
 	 * Attribute key for the API url.
 	 */
-	static final String PROP_URL = "org.cloudfoundry.ide.eclipse.url"; //$NON-NLS-1$
+	static final String PROP_URL = "org.eclipse.cft.url"; //$NON-NLS-1$
 
 	/**
 	 * Attribute key for the username.
 	 */
-	static final String PROP_USERNAME_ID = "org.cloudfoundry.ide.eclipse.username"; //$NON-NLS-1$
+	static final String PROP_USERNAME_ID = "org.eclipse.cft.username"; //$NON-NLS-1$
 
-	static final String PROP_ORG_ID = "org.cloudfoundry.ide.eclipse.org"; //$NON-NLS-1$
+	static final String PROP_ORG_ID = "org.eclipse.cft.org"; //$NON-NLS-1$
 
-	static final String PROP_SPACE_ID = "org.cloudfoundry.ide.eclipse.space"; //$NON-NLS-1$
+	static final String PROP_SPACE_ID = "org.eclipse.cft.space"; //$NON-NLS-1$
 
-	static final String TUNNEL_SERVICE_COMMANDS_PROPERTY = "org.cloudfoundry.ide.eclipse.tunnel.service.commands"; //$NON-NLS-1$
+	static final String TUNNEL_SERVICE_COMMANDS_PROPERTY = "org.eclipse.cft.tunnel.service.commands"; //$NON-NLS-1$
 
 	private static final String PROPERTY_DEPLOYMENT_NAME = "deployment_name"; //$NON-NLS-1$
 

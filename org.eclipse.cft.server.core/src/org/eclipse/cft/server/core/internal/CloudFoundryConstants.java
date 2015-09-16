@@ -38,6 +38,6 @@ public class CloudFoundryConstants {
 	// Does this have to be vendor specific?  Removing Pivotal CF
 	public static final String PUBLIC_CF_SERVER_SIGNUP_LABEL = Messages.CloudFoundryConstants_LABEL_SIGNUP;
 
-	public static final String PROPERTY_MODULE_NO_FACET = "org.cloudfoundry.ide.eclipse.server.core.property.PROPERTY_MODULE_NO_FACET"; //$NON-NLS-1$
+	public static final String PROPERTY_MODULE_NO_FACET = "org.eclipse.cft.server.core.property.PROPERTY_MODULE_NO_FACET"; //$NON-NLS-1$
 
 }

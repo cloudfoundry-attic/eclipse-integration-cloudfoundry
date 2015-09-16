@@ -116,9 +116,9 @@ public class ValidationEventHandler implements IPartChangeListener {
 	 * 
 	 * (non-Javadoc)
 	 * 
-	 * @see org.cloudfoundry.ide.eclipse.server.ui.internal.IPartChangeListener#
+	 * @see org.eclipse.cft.server.ui.internal.IPartChangeListener#
 	 * handleChange
-	 * (org.cloudfoundry.ide.eclipse.server.ui.internal.PartChangeEvent)
+	 * (org.eclipse.cft.server.ui.internal.PartChangeEvent)
 	 */
 	public synchronized void handleChange(PartChangeEvent event) {
 		if (validator == null || event == null) {

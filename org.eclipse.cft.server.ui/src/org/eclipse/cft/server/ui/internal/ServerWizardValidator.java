@@ -88,7 +88,7 @@ public abstract class ServerWizardValidator implements ServerValidator {
 	/**
 	 * Note that this will be run in the UI thread.
 	 * 
-	 * @see org.cloudfoundry.ide.eclipse.server.ui.internal.editor.ServerValidator
+	 * @see org.eclipse.cft.server.ui.internal.editor.ServerValidator
 	 * #validate(boolean, org.eclipse.jface.operation.IRunnableContext)
 	 */
 	public synchronized ValidationStatus validate(boolean validateAgainstServer, boolean validateSpace,

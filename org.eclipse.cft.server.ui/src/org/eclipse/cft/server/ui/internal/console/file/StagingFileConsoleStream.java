@@ -94,7 +94,7 @@ public class StagingFileConsoleStream extends FileConsoleStream {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.cloudfoundry.ide.eclipse.internal.server.ui.console.FileConsoleContent
+	 * org.eclipse.cft.internal.server.ui.console.FileConsoleContent
 	 * #getMessageOnRetry(org.eclipse.core.runtime.CoreException, int)
 	 */
 	@Override

@@ -53,7 +53,7 @@ public class ApplicationRegistry {
 
 	private static final String APPLICATION_DELEGATE_EXT_ELEMENT = "applicationDelegate"; //$NON-NLS-1$
 
-	public static final String DEFAULT_JAVA_WEB_PROVIDER_ID = "org.cloudfoundry.ide.eclipse.server.application.javaweb"; //$NON-NLS-1$
+	public static final String DEFAULT_JAVA_WEB_PROVIDER_ID = "org.eclipse.cft.server.application.javaweb"; //$NON-NLS-1$
 
 	public static String EXTENSION_POINT = "org.eclipse.cft.server.core.application"; //$NON-NLS-1$
 
@@ -108,7 +108,7 @@ public class ApplicationRegistry {
 
 	/**
 	 * Get the application delegate provider based on the provider ID (e.g.
-	 * org.cloudfoundry.ide.eclipse.server.application.javaweb). This is used in
+	 * org.eclipse.cft.server.application.javaweb). This is used in
 	 * case a IModule is not available.
 	 * @param providerID
 	 * @return ApplicationProvider matching the specified providerID, or null if

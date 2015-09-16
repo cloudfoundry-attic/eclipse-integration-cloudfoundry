@@ -43,7 +43,7 @@ public class ConsoleManagerRegistry {
 
 	public static final String CLOUD_FOUNDRY_TRACE_CONSOLE_NAME = "Cloud Foundry Trace"; //$NON-NLS-1$ 
 
-	static final String TRACE_CONSOLE_ID = "org.cloudfoundry.ide.eclipse.server.trace"; //$NON-NLS-1$ 
+	static final String TRACE_CONSOLE_ID = "org.eclipse.cft.server.trace"; //$NON-NLS-1$ 
 
 	private static ConsoleManagerRegistry registry;
 

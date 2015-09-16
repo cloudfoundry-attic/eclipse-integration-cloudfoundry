@@ -30,7 +30,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
  * 
  * A wrapper around a application contribution from the extension point:
  * 
- * org.cloudfoundry.ide.eclipse.server.core.application
+ * org.eclipse.cft.server.core.application
  * 
  * Reads the attributes and application delegate from the extension point
  * configuration element, and contains additional API to access the extension

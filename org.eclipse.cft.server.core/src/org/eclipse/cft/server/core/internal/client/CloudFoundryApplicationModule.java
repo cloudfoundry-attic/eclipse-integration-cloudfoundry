@@ -130,7 +130,7 @@ public class CloudFoundryApplicationModule extends ExternalModule implements ICl
 
 	public static String DEPLOYMENT_STATE_WAITING_TO_LAUNCH = Messages.CloudFoundryApplicationModule_STATE_WAITING_TO_LAUNCH;
 
-	private static final String MODULE_ID = "org.cloudfoundry.ide.eclipse.server.core.CloudFoundryApplicationModule"; //$NON-NLS-1$
+	private static final String MODULE_ID = "org.eclipse.cft.server.core.CloudFoundryApplicationModule"; //$NON-NLS-1$
 
 	private static final String MODULE_VERSION = "1.0"; //$NON-NLS-1$
 

@@ -34,7 +34,7 @@ import org.eclipse.jface.wizard.IWizardPage;
  * application type from the extension point:
  * 
  * <p/>
- * org.cloudfoundry.ide.eclipse.server.ui.applicationWizard
+ * org.eclipse.cft.server.ui.applicationWizard
  * <p/>
  * 
  * The wrapper converts an {@link IApplicationWizardDelegate} as defined in the

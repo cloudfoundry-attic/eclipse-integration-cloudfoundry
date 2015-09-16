@@ -78,7 +78,7 @@ public class CloudUiUtil {
 
 	public static final String SERVERS_VIEW_ID = "org.eclipse.wst.server.ui.ServersView"; //$NON-NLS-1$
 
-	public static String ATTR_USER_DEFINED_URLS = "org.cloudfoundry.ide.eclipse.server.user.defined.urls"; //$NON-NLS-1$
+	public static String ATTR_USER_DEFINED_URLS = "org.eclipse.cft.server.user.defined.urls"; //$NON-NLS-1$
 
 	public static IStatus runForked(final ICoreRunnable coreRunner, IWizard wizard) {
 		try {

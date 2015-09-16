@@ -66,7 +66,7 @@ public class CloudFoundryServerTest extends TestCase {
 
 	public void testGetPasswordLegacy() throws CoreException {
 		// create legacy password attribute
-		((ServerWorkingCopy) serverWC).setAttribute("org.cloudfoundry.ide.eclipse.password", "pwd");
+		((ServerWorkingCopy) serverWC).setAttribute("org.eclipse.cft.password", "pwd");
 		serverWC.save(true, null);
 
 		// assertEquals(null, CloudFoundryServer.getServerId());
@@ -87,7 +87,7 @@ public class CloudFoundryServerTest extends TestCase {
 
 	public void testSetPasswordMigrateLegacy() throws CoreException {
 		// create legacy password attribute
-		((ServerWorkingCopy) serverWC).setAttribute("org.cloudfoundry.ide.eclipse.password", "pwd");
+		((ServerWorkingCopy) serverWC).setAttribute("org.eclipse.cft.password", "pwd");
 		serverWC.save(true, null);
 
 		// create new server instance
@@ -104,9 +104,9 @@ public class CloudFoundryServerTest extends TestCase {
 
 	public void testSetPasswordMigrateChangePasswordOnly() throws CoreException {
 		// create legacy password attribute
-		((ServerWorkingCopy) serverWC).setAttribute("org.cloudfoundry.ide.eclipse.url", "http://url");
-		((ServerWorkingCopy) serverWC).setAttribute("org.cloudfoundry.ide.eclipse.username", "user");
-		((ServerWorkingCopy) serverWC).setAttribute("org.cloudfoundry.ide.eclipse.password", "pwd");
+		((ServerWorkingCopy) serverWC).setAttribute("org.eclipse.cft.url", "http://url");
+		((ServerWorkingCopy) serverWC).setAttribute("org.eclipse.cft.username", "user");
+		((ServerWorkingCopy) serverWC).setAttribute("org.eclipse.cft.password", "pwd");
 		serverWC.save(true, null);
 
 		// create new server instance
@@ -132,11 +132,11 @@ public class CloudFoundryServerTest extends TestCase {
 	// public void testSetPasswordMigrateUpdatesClient() throws CoreException {
 	// // create legacy password attribute
 	// ((ServerWorkingCopy)
-	// serverWC).setAttribute("org.cloudfoundry.ide.eclipse.password", "pwd");
+	// serverWC).setAttribute("org.eclipse.cft.password", "pwd");
 	// ((ServerWorkingCopy)
-	// serverWC).setAttribute("org.cloudfoundry.ide.eclipse.username", "user");
+	// serverWC).setAttribute("org.eclipse.cft.username", "user");
 	// // ((ServerWorkingCopy)
-	// // serverWC).setAttribute("org.cloudfoundry.ide.eclipse.url", "url");
+	// // serverWC).setAttribute("org.eclipse.cft.url", "url");
 	// serverWC.save(true, null);
 	//
 	// assertEquals("user", cloudFoundryServer.getUsername());

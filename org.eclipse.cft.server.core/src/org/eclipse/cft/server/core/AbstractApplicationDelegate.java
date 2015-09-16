@@ -46,7 +46,7 @@ import org.eclipse.wst.server.core.model.IModuleResource;
 /**
  * API that application contributions through the extension point:
  * <p/>
- * org.cloudfoundry.ide.eclipse.server.core.application
+ * org.eclipse.cft.server.core.application
  * <p/>
  * are required to implement. Applications are represented as Eclipse WST
  * IModules. The main contributions for an application is:
@@ -169,11 +169,11 @@ public abstract class AbstractApplicationDelegate {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.cloudfoundry.ide.eclipse.server.core.internal.application.
+	 * @see org.eclipse.cft.server.core.internal.application.
 	 * AbstractApplicationDelegate
 	 * #getDefaultApplicationDeploymentInfo(org.cloudfoundry.
 	 * ide.eclipse.internal.server.core.client.CloudFoundryApplicationModule,
-	 * org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer,
+	 * org.eclipse.cft.server.core.internal.CloudFoundryServer,
 	 * org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public ApplicationDeploymentInfo getDefaultApplicationDeploymentInfo(CloudFoundryApplicationModule appModule,

@@ -35,7 +35,7 @@ import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
 
 /**
- * A general implementation class of the org.cloudfoundry.ide.eclipse.server.core.internal.AbstractAppStateTracker
+ * A general implementation class of the org.eclipse.cft.server.core.internal.AbstractAppStateTracker
  * that provides easy implementation to track console output to decide whether the app is started or not. In
  * most of the cases, the adopter only need to implement the getAppStartedPattern() method.  In more complex cases, 
  * the adopter can override the createPatternMatchListener() to provide their own pattern match listener.

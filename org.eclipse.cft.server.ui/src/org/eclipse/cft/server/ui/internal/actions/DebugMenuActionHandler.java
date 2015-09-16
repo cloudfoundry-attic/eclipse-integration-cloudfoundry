@@ -43,7 +43,7 @@ public class DebugMenuActionHandler extends MenuActionHandler<IServerModule> {
 		super(IServerModule.class);
 	}
 
-	public static final String DEBUG_ACTION_ID = "org.cloudfoundry.ide.eclipse.server.ui.action.debug"; //$NON-NLS-1$
+	public static final String DEBUG_ACTION_ID = "org.eclipse.cft.server.ui.action.debug"; //$NON-NLS-1$
 
 	static class DebugAction extends Action {
 

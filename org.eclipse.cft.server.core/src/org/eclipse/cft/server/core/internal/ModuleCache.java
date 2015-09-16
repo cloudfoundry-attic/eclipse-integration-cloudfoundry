@@ -347,7 +347,7 @@ public class ModuleCache {
 	/**
 	 * List of appName, module id pairs.
 	 */
-	static final String KEY_MODULE_MAPPING_LIST = "org.cloudfoundry.ide.eclipse.moduleMapping"; //$NON-NLS-1$
+	static final String KEY_MODULE_MAPPING_LIST = "org.eclipse.cft.moduleMapping"; //$NON-NLS-1$
 
 	private Map<IServer, ServerData> dataByServer;
 

@@ -128,7 +128,7 @@ public class FileConsoleManager extends CloudConsoleManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.cloudfoundry.ide.eclipse.server.ui.internal.console.file.
+	 * @see org.eclipse.cft.server.ui.internal.console.file.
 	 * TEMPFILEConsoleManager
 	 * #findCloudFoundryConsole(org.eclipse.wst.server.core.IServer,
 	 * org.cloudfoundry
@@ -146,10 +146,10 @@ public class FileConsoleManager extends CloudConsoleManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.cloudfoundry.ide.eclipse.server.ui.internal.console.file.
+	 * @see org.eclipse.cft.server.ui.internal.console.file.
 	 * TEMPFILEConsoleManager#synchWriteToStd(java.lang.String,
-	 * org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer,
-	 * org.cloudfoundry.ide.eclipse.server.core.internal.client.
+	 * org.eclipse.cft.server.core.internal.CloudFoundryServer,
+	 * org.eclipse.cft.server.core.internal.client.
 	 * CloudFoundryApplicationModule, int, boolean, boolean,
 	 * org.eclipse.core.runtime.IProgressMonitor)
 	 */

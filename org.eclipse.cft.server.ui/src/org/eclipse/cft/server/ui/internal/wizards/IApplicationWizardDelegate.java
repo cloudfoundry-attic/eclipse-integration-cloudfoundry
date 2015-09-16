@@ -30,7 +30,7 @@ import org.eclipse.jface.wizard.IWizardPage;
  * Delegate that provides Application deployment wizard pages through the
  * extension point:
  * 
- * org.cloudfoundry.ide.eclipse.server.ui.applicationWizard
+ * org.eclipse.cft.server.ui.applicationWizard
  * 
  * <p/>
  * The wizard delegate may correspond got an AbstractApplicationDelegate, with the
