@@ -44,7 +44,7 @@
          point="org.eclipse.wst.server.core.moduleArtifactAdapters">
       <moduleArtifactAdapter
             class="org.eclipse.cft.server.standalone.internal.application.StandaloneArtifactAdapter"
-            id="org.cloudfoundry.ide.eclipse.server.core.StandaloneArtifactAdapter"
+            id="org.eclipse.cft.server.core.StandaloneArtifactAdapter"
             priority="1">
          <enablement>
             <with variable="selection">
@@ -59,7 +59,7 @@
          point="org.eclipse.wst.server.core.moduleFactories">
       <moduleFactory
             class="org.eclipse.cft.server.standalone.internal.application.StandAloneModuleFactory"
-            id="org.cloudfoundry.ide.eclipse.server.core.StandAloneModuleFactory"
+            id="org.eclipse.cft.server.core.StandAloneModuleFactory"
             order="1"
             projects="true">
          <moduleType
@@ -73,7 +73,7 @@
        <applicationDelegate
              class="org.eclipse.cft.server.standalone.internal.application.StandaloneApplicationDelegate"
              priority="Medium"
-             providerID="org.cloudfoundry.ide.eclipse.server.application.standalone">
+             providerID="org.eclipse.cft.server.application.standalone">
           <moduleID
                 id="cloudfoundry.standalone.app">
           </moduleID>
@@ -100,7 +100,7 @@
           point="org.eclipse.cft.server.ui.applicationWizard">
        <applicationWizardDelegate
              class="org.eclipse.cft.server.standalone.internal.ui.StandaloneApplicationWizardDelegate"
-             providerID="org.cloudfoundry.ide.eclipse.server.application.standalone">
+             providerID="org.eclipse.cft.server.application.standalone">
        </applicationWizardDelegate>
     </extension>
 

@@ -28,8 +28,8 @@
 	<extension point="org.eclipse.wst.server.ui.serverImages">
 		<image
         	icon="icons/full/obj16/cloud.png"
-        	id="org.cloudfoundry.ide.eclipse.server.ui.image.CloudApplication"
-        	typeIds="org.cloudfoundry.ide.eclipse.server.core.CloudFoundryApplicationModule" />
+        	id="org.eclipse.cft.server.ui.image.CloudApplication"
+        	typeIds="org.eclipse.cft.server.core.CloudFoundryApplicationModule" />
 	</extension>
 
 	<extension point="org.eclipse.wst.common.project.facet.ui.images">
@@ -59,44 +59,44 @@
     <action
              class="org.eclipse.cft.server.ui.internal.actions.GoToSpringInsightAction"
              enablesFor="1"
-             id="org.cloudfoundry.ide.eclipse.server.ui.action.gotoinsight"
+             id="org.eclipse.cft.server.ui.action.gotoinsight"
              label="Go to Spring Insight">
        </action>
      -->	
 
 	<extension
-       id="org.cloudfoundry.ide.eclipse.server.ui.menus"
+       id="org.eclipse.cft.server.ui.menus"
        point="org.eclipse.ui.menus">
     	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView?after=org.eclipse.wst.server.ui.internal.cnf.controlServerSectionStart">
      	   <command
      	       label="%POPUP_MENU_LABEL_SERVER_CONNECT"
-     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.connectcommand"
+     	       commandId="org.eclipse.cft.server.ui.connectcommand"
                icon="icons/full/obj16/connect.png">
   	         <visibleWhen
   	               checkEnabled="false">
-  	               <test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+  	               <test property="org.eclipse.cft.server.ui.isServerSupported" value="true"/>
   	         </visibleWhen>
    	  	   </command>
  	   	</menuContribution>
     	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView?after=org.eclipse.wst.server.ui.internal.cnf.controlServerSectionStart">
      	   <command
      	       label="%POPUP_MENU_LABEL_SERVER_DISCONNECT"
-     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.disconnectcommand"
+     	       commandId="org.eclipse.cft.server.ui.disconnectcommand"
                icon="icons/full/obj16/disconnect.png">
   	         <visibleWhen
   	               checkEnabled="false">
-  	               <test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+  	               <test property="org.eclipse.cft.server.ui.isServerSupported" value="true"/>
   	         </visibleWhen>
    	  	   </command>
  	   	</menuContribution>
     	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
      	       label="%POPUP_MENU_LABEL_SERVER_CLONE"
-     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.cloneservercommand">
+     	       commandId="org.eclipse.cft.server.ui.cloneservercommand">
   	         <visibleWhen
   	               checkEnabled="false">
   	               <and>
-  	               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+  	               		<test property="org.eclipse.cft.server.ui.isServerSupported" value="true"/>
   	               		<count value="1"/>
   	               </and>
   	         </visibleWhen>
@@ -105,11 +105,11 @@
     	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
      	       label="%POPUP_MENU_LABEL_SERVER_UPDATE_PASSWORD"
-     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.updatepasswordcommand">
+     	       commandId="org.eclipse.cft.server.ui.updatepasswordcommand">
   	         <visibleWhen
   	               checkEnabled="false">
   	               <and>
-  	               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+  	               		<test property="org.eclipse.cft.server.ui.isServerSupported" value="true"/>
   	               		<count value="1"/>
   	               </and>
   	         </visibleWhen>
@@ -118,7 +118,7 @@
      	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
      	       label="%POPUP_MENU_LABEL_SERVER_SHOW_RECENT_LOGS"
-     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.showconsoleviewercommand">
+     	       commandId="org.eclipse.cft.server.ui.internal.actions.showconsoleviewercommand">
   	         <visibleWhen
   	               checkEnabled="false">
 				   <with variable="activeMenuSelection">
@@ -128,7 +128,7 @@
                            	type="org.eclipse.wst.server.ui.internal.view.servers.ModuleServer">
                      	  </adapt>
                   	    </iterate>
-						<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+						<test property="org.eclipse.cft.server.ui.isServerSupported" value="true"/>
                   	 </and>
                	   </with>
   	         </visibleWhen>
@@ -137,7 +137,7 @@
     	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
      	       label="%POPUP_MENU_LABEL_SERVER_UPDATE_AND_RESTART"
-     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.updaterestartmodulecommand">
+     	       commandId="org.eclipse.cft.server.ui.internal.actions.updaterestartmodulecommand">
   	         <visibleWhen
   	               checkEnabled="false">
 				   <with variable="activeMenuSelection">
@@ -147,7 +147,7 @@
                            	type="org.eclipse.wst.server.ui.internal.view.servers.ModuleServer">
                      	  </adapt>
                   	    </iterate>
-						<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+						<test property="org.eclipse.cft.server.ui.isServerSupported" value="true"/>
                   	 </and>
                	   </with>
   	         </visibleWhen>
@@ -156,7 +156,7 @@
  	   	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
      	       label="%POPUP_MENU_LABEL_SERVER_PUSH"
-     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.pushcommand">
+     	       commandId="org.eclipse.cft.server.ui.internal.actions.pushcommand">
   	         <visibleWhen
   	               checkEnabled="false">
 				   <with variable="activeMenuSelection">
@@ -166,7 +166,7 @@
                            	type="org.eclipse.wst.server.ui.internal.view.servers.ModuleServer">
                      	  </adapt>
                   	    </iterate>
-						<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+						<test property="org.eclipse.cft.server.ui.isServerSupported" value="true"/>
                   	 </and>
                	   </with>
   	         </visibleWhen>
@@ -175,7 +175,7 @@
  	   	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
      	       label="%POPUP_MENU_LABEL_SERVER_LINK_WITH_PROJECT"
-     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.remaptoprojectcommand">
+     	       commandId="org.eclipse.cft.server.ui.internal.actions.remaptoprojectcommand">
   	         <visibleWhen
   	               checkEnabled="false">
 				   <with variable="activeMenuSelection">
@@ -185,7 +185,7 @@
                            	type="org.eclipse.wst.server.ui.internal.view.servers.ModuleServer">
                      	  </adapt>
                   	    </iterate>
-						<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+						<test property="org.eclipse.cft.server.ui.isServerSupported" value="true"/>
                   	 </and>
                	   </with>
   	         </visibleWhen>
@@ -194,7 +194,7 @@
  	   	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
      	       label="%POPUP_MENU_LABEL_SERVER_UNLINK_PROJECT"
-     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.unmapprojectcommand">
+     	       commandId="org.eclipse.cft.server.ui.internal.actions.unmapprojectcommand">
   	         <visibleWhen
   	               checkEnabled="false">
 				   <with variable="activeMenuSelection">
@@ -204,7 +204,7 @@
                            	type="org.eclipse.wst.server.ui.internal.view.servers.ModuleServer">
                      	  </adapt>
                   	    </iterate>
-						<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+						<test property="org.eclipse.cft.server.ui.isServerSupported" value="true"/>
                   	 </and>
                	   </with>
   	         </visibleWhen>
@@ -213,7 +213,7 @@
     	<menuContribution locationURI="popup:org.eclipse.wst.server.ui.ServersView">
      	   <command
      	       label="%POPUP_MENU_LABEL_SERVER_OPEN_HOME_PAGE"
-     	       commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.openhomepagecommand">
+     	       commandId="org.eclipse.cft.server.ui.internal.actions.openhomepagecommand">
   	         <visibleWhen
   	               checkEnabled="false">
 				   <with variable="activeMenuSelection">
@@ -223,7 +223,7 @@
                            	type="org.eclipse.wst.server.ui.internal.view.servers.ModuleServer">
                      	  </adapt>
                   	    </iterate>
-						<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>
+						<test property="org.eclipse.cft.server.ui.isServerSupported" value="true"/>
                   	 </and>
                	   </with>
   	         </visibleWhen>
@@ -235,175 +235,175 @@
 		<command
 			name="%COMMAND_NAME_SERVER_CONNECT"
 			description="%COMMAND_DESCRIPTION_SERVER_CONNECT"
-			id="org.cloudfoundry.ide.eclipse.server.ui.connectcommand">
+			id="org.eclipse.cft.server.ui.connectcommand">
 		</command>
 		<command
 			name="%COMMAND_NAME_SERVER_DISCONNECT"
 			description="%COMMAND_DESCRIPTION_SERVER_DISCONNECT"
-			id="org.cloudfoundry.ide.eclipse.server.ui.disconnectcommand">
+			id="org.eclipse.cft.server.ui.disconnectcommand">
 		</command>
 		<command
 			name="%COMMAND_NAME_SERVER_CLONE"
 			description="%COMMAND_DESCRIPTION_SERVER_CLONE"
-			id="org.cloudfoundry.ide.eclipse.server.ui.cloneservercommand">
+			id="org.eclipse.cft.server.ui.cloneservercommand">
 		</command>
 		<command
 			name="%COMMAND_NAME_SERVER_UPDATE_PASSWORD"
 			description="%COMMAND_DESCRIPTION_SERVER_UPDATE_PASSWORD"
-			id="org.cloudfoundry.ide.eclipse.server.ui.updatepasswordcommand">
+			id="org.eclipse.cft.server.ui.updatepasswordcommand">
 		</command>
 		<!-- Commands based on modules -->
 		<command
 			name="%COMMAND_NAME_SERVER_SHOW_RECENT_LOGS"
 			description="%COMMAND_DESCRIPTION_SERVER_SHOW_RECENT_LOGS"
-			id="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.showconsoleviewercommand">
+			id="org.eclipse.cft.server.ui.internal.actions.showconsoleviewercommand">
 		</command>
 		<command
 			name="%COMMAND_NAME_SERVER_UPDATE_AND_RESTART"
 			description="%COMMAND_DESCRIPTION_SERVER_UPDATE_AND_RESTART"
-			id="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.updaterestartmodulecommand">
+			id="org.eclipse.cft.server.ui.internal.actions.updaterestartmodulecommand">
 		</command>
 		<command
 			name="%COMMAND_NAME_SERVER_PUSH"
 			description="%COMMAND_DESCRIPTION_SERVER_PUSH"
-			id="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.pushcommand">
+			id="org.eclipse.cft.server.ui.internal.actions.pushcommand">
 		</command>
 		<command
 			name="%COMMAND_NAME_SERVER_LINK_WITH_PROJECT"
 			description="%COMMAND_DESCRIPTION_SERVER_LINK_WITH_PROJECT"
-			id="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.remaptoprojectcommand">
+			id="org.eclipse.cft.server.ui.internal.actions.remaptoprojectcommand">
 		</command>
 		<command
 			name="%COMMAND_NAME_SERVER_UNLINK_PROJECT"
 			description="%COMMAND_DESCRIPTION_SERVER_UNLINK_PROJECT"
-			id="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.unmapprojectcommand">
+			id="org.eclipse.cft.server.ui.internal.actions.unmapprojectcommand">
 		</command>
 		<command
 			name="%COMMAND_NAME_SERVER_OPEN_HOME_PAGE"
 			description="%COMMAND_DESCRIPTION_SERVER_OPEN_HOME_PAGE"
-			id="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.openhomepagecommand">
+			id="org.eclipse.cft.server.ui.internal.actions.openhomepagecommand">
 		</command>
 	</extension>
 	
    <extension point="org.eclipse.ui.handlers">
       <handler
         class="org.eclipse.cft.server.ui.internal.actions.ConnectCommand"
-        commandId="org.cloudfoundry.ide.eclipse.server.ui.connectcommand">
+        commandId="org.eclipse.cft.server.ui.connectcommand">
  		<enabledWhen>
            	<with variable="selection">
            		<count value="1" />
-               	<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStopped" value="true"/>    
+               	<test property="org.eclipse.cft.server.ui.isServerStopped" value="true"/>    
 	        </with>  
 		</enabledWhen>
       </handler>
       <handler
         class="org.eclipse.cft.server.ui.internal.actions.DisconnectCommand"
-        commandId="org.cloudfoundry.ide.eclipse.server.ui.disconnectcommand">
+        commandId="org.eclipse.cft.server.ui.disconnectcommand">
  		<enabledWhen>
            	<with variable="selection">
            	    <count value="1" />
-               	<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>    
+               	<test property="org.eclipse.cft.server.ui.isServerStarted" value="true"/>    
 	        </with>  
 		</enabledWhen>
       </handler>
       <handler
         class="org.eclipse.cft.server.ui.internal.actions.CloneServerCommand"
-        commandId="org.cloudfoundry.ide.eclipse.server.ui.cloneservercommand">
+        commandId="org.eclipse.cft.server.ui.cloneservercommand">
  		<enabledWhen>
            	<with variable="selection">
            		<count value="1" />
-               	<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>    
+               	<test property="org.eclipse.cft.server.ui.isServerSupported" value="true"/>    
 	        </with>  
 		</enabledWhen>
       </handler>
       <handler
         class="org.eclipse.cft.server.ui.internal.actions.UpdatePasswordCommand"
-        commandId="org.cloudfoundry.ide.eclipse.server.ui.updatepasswordcommand">
+        commandId="org.eclipse.cft.server.ui.updatepasswordcommand">
  		<enabledWhen>
            	<with variable="selection">
            		<count value="1" />
-               	<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerSupported" value="true"/>    
+               	<test property="org.eclipse.cft.server.ui.isServerSupported" value="true"/>    
 	        </with>  
 		</enabledWhen>
       </handler>
      
       <handler
         class="org.eclipse.cft.server.ui.internal.actions.ShowConsoleViewerCommand"
-        commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.showconsoleviewercommand">
+        commandId="org.eclipse.cft.server.ui.internal.actions.showconsoleviewercommand">
  		<enabledWhen>
            	<with variable="selection">
            		<count value="1" />
            		<and>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isCloudModuleStarted" value="true"/>             		
+               		<test property="org.eclipse.cft.server.ui.isServerStarted" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isCloudModuleStarted" value="true"/>             		
                	</and>    
 	        </with>  
 		</enabledWhen>
       </handler>      
       <handler
         class="org.eclipse.cft.server.ui.internal.actions.UpdateRestartModuleCommand"
-        commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.updaterestartmodulecommand">
+        commandId="org.eclipse.cft.server.ui.internal.actions.updaterestartmodulecommand">
  		<enabledWhen>
            	<with variable="selection">
            		<count value="1" />
            		<and>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isModuleProjectAccessible" value="true"/>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isCloudModuleStarted" value="true"/>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isCloudModuleLocal" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isServerStarted" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isModuleProjectAccessible" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isCloudModuleStarted" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isCloudModuleLocal" value="true"/>
                	</and>    
 	        </with>  
 		</enabledWhen>
       </handler>
       <handler
         class="org.eclipse.cft.server.ui.internal.actions.PushModuleCommand"
-        commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.pushcommand">
+        commandId="org.eclipse.cft.server.ui.internal.actions.pushcommand">
  		<enabledWhen>
            	<with variable="selection">
            		<count value="1" />
            		<and>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isModuleProjectAccessible" value="true"/>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isCloudModuleLocal" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isServerStarted" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isModuleProjectAccessible" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isCloudModuleLocal" value="true"/>
                	</and>    
 	        </with>  
 		</enabledWhen>
       </handler>
       <handler
         class="org.eclipse.cft.server.ui.internal.actions.RemapModuleProjectCommand"
-        commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.remaptoprojectcommand">
+        commandId="org.eclipse.cft.server.ui.internal.actions.remaptoprojectcommand">
  		<enabledWhen>
            	<with variable="selection">
            		<count value="1" />
            		<and>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isModuleProjectAccessible" value="false"/>
+               		<test property="org.eclipse.cft.server.ui.isServerStarted" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isModuleProjectAccessible" value="false"/>
                	</and>    
 	        </with>  
 		</enabledWhen>
       </handler>
       <handler
         class="org.eclipse.cft.server.ui.internal.actions.UnmapProjectCommand"
-        commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.unmapprojectcommand">
+        commandId="org.eclipse.cft.server.ui.internal.actions.unmapprojectcommand">
  		<enabledWhen>
            	<with variable="selection">
            		<count value="1" />
            		<and>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isModuleProjectAccessible" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isServerStarted" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isModuleProjectAccessible" value="true"/>
                	</and>    
 	        </with>  
 		</enabledWhen>
       </handler>
       <handler
         class="org.eclipse.cft.server.ui.internal.actions.OpenHomePageCommand"
-        commandId="org.cloudfoundry.ide.eclipse.server.ui.internal.actions.openhomepagecommand">
+        commandId="org.eclipse.cft.server.ui.internal.actions.openhomepagecommand">
  		<enabledWhen>
            	<with variable="selection">
            		<count value="1" />
            		<and>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isServerStarted" value="true"/>
-               		<test property="org.cloudfoundry.ide.eclipse.server.ui.isCloudModuleStarted" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isServerStarted" value="true"/>
+               		<test property="org.eclipse.cft.server.ui.isCloudModuleStarted" value="true"/>
                	</and>    
 	        </with>  
 		</enabledWhen>
@@ -416,7 +416,7 @@
         point="org.eclipse.wst.server.ui.serverToolTip">
      <serverToolTip
            class="org.eclipse.cft.internal.servercom.ui.CloudFoundryServerTooltip"
-           id="org.cloudfoundry.ide.eclipse.server.ui.serverTooltip"
+           id="org.eclipse.cft.server.ui.serverTooltip"
            serverTypes="org.cloudfoundry.appcloudserver.10">
      </serverToolTip>
   </extension-->
@@ -431,7 +431,7 @@
 	   <decorator
 	         class="org.eclipse.cft.server.ui.internal.CloudFoundryDecorator"
 	         icon="icons/full/obj16/single.png"
-	         id="org.cloudfoundry.ide.eclipse.server.navigatorDecorator"
+	         id="org.eclipse.cft.server.navigatorDecorator"
 	         label="%CLOUD_FOUNDRY_SERVER_DECORATOR_LABEL"
 	         lightweight="true"
 	         location="BOTTOM_RIGHT"
@@ -450,14 +450,14 @@
 	</extension>
 	<extension point="org.eclipse.wst.server.ui.editorPageSections">
 		<section
-			id="org.cloudfoundry.ide.eclipse.server.editor.general"
+			id="org.eclipse.cft.server.editor.general"
          	order="1"
          	insertionId="org.eclipse.wst.server.editor.overview.left"
          	typeIds="org.cloudfoundry.appcloudserver.*"
          	class="org.eclipse.cft.server.ui.internal.editor.CloudFoundryAccountSection">
       	</section>
 		<section
-			id="org.cloudfoundry.ide.eclipse.server.editor.status"
+			id="org.eclipse.cft.server.editor.status"
          	order="2"
          	insertionId="org.eclipse.wst.server.editor.overview.left"
          	typeIds="org.cloudfoundry.appcloudserver.*"
@@ -465,7 +465,7 @@
       	</section>
       	<!-- Removed for CF 1.5.0 
       	<section
-			id="org.cloudfoundry.ide.eclipse.server.editor.insight"
+			id="org.eclipse.cft.server.editor.insight"
          	order="3"
          	insertionId="org.eclipse.wst.server.editor.overview.right"
          	typeIds="org.cloudfoundry.appcloudserver.*"
@@ -474,7 +474,7 @@
       	-->
   <section
         class="org.eclipse.cft.server.ui.internal.editor.DisablePublishSection"
-        id="org.cloudfoundry.ide.eclipse.server.editor.disable.publish"
+        id="org.eclipse.cft.server.editor.disable.publish"
         insertionId="org.eclipse.wst.server.editor.overview.right"
         order="1"
         typeIds="org.cloudfoundry.appcloudserver.*">
@@ -484,7 +484,7 @@
        point="org.eclipse.wst.server.core.launchableAdapters">
     <launchableAdapter
           class="org.eclipse.cft.server.ui.internal.CloudFoundryLaunchableAdapterDelegate"
-          id="org.cloudfoundry.ide.eclipse.server.launchableAdapter"
+          id="org.eclipse.cft.server.launchableAdapter"
           typeIds="org.cloudfoundry.appcloudserver*">
     </launchableAdapter>
  </extension>
@@ -493,7 +493,7 @@
        point="org.eclipse.wst.server.core.clients">
     <client
           class="org.eclipse.cft.server.ui.internal.CloudFoundryLaunchableClient"
-          id="org.cloudfoundry.ide.eclipse.server.launchClient"
+          id="org.eclipse.cft.server.launchClient"
           launchable="org.eclipse.cft.server.ui.internal.CloudFoundryLaunchable"
           name="Cloud Foundry Server">
     </client>
@@ -503,7 +503,7 @@
        point="org.eclipse.wst.server.ui.editorPages">
     <page
           class="org.eclipse.cft.server.ui.internal.editor.CloudFoundryApplicationsEditorPage"
-          id="org.cloudfoundry.ide.eclipse.server.editor.applications"
+          id="org.eclipse.cft.server.editor.applications"
           name="%SERVER_EDITOR_LABEL_APPLICATIONS_AND_SERVICES"
           order="1"
           typeIds="org.cloudfoundry.appcloudserver.*">
@@ -513,7 +513,7 @@
        point="org.eclipse.ui.navigator.navigatorContent">
     <actionProvider
           class="org.eclipse.cft.server.ui.internal.CloudFoundryActionProvider"
-          id="org.cloudfoundry.ide.eclipse.server.ui.navigator.ActionProvider">
+          id="org.eclipse.cft.server.ui.navigator.ActionProvider">
        <enablement>
           <instanceof
                 value="org.eclipse.wst.server.ui.IServerModule">
@@ -527,7 +527,7 @@
           viewerId="org.eclipse.wst.server.ui.ServersView">
        <includes>
           <actionExtension
-                pattern="org.cloudfoundry.ide.eclipse.server.ui.navigator.ActionProvider">
+                pattern="org.eclipse.cft.server.ui.navigator.ActionProvider">
           </actionExtension>
        </includes>
     </viewerActionBinding>
@@ -536,7 +536,7 @@
        point="org.eclipse.ui.console.consolePageParticipants">
     <consolePageParticipant
           class="org.eclipse.cft.server.ui.internal.console.CloudFoundryConsolePageParticipant"
-          id="org.cloudfoundry.ide.eclipse.server.ui.console">
+          id="org.eclipse.cft.server.ui.console">
        <enablement></enablement>
     </consolePageParticipant>
  </extension>
@@ -546,10 +546,10 @@
             class="org.eclipse.jdt.internal.debug.ui.console.JavaConsoleTracker"
             regex="\(\S*${java_extensions_regex}\S*\)"
             qualifier="${java_extensions_regex}"
-            id="org.cloudfoundry.ide.eclipse.server.ui.console.JavaConsoleTracker">
+            id="org.eclipse.cft.server.ui.console.JavaConsoleTracker">
          <enablement>
             <or>
-			  <test property="org.eclipse.ui.console.consoleTypeTest" value="org.cloudfoundry.ide.eclipse.server.ui.console"/>
+			  <test property="org.eclipse.ui.console.consoleTypeTest" value="org.eclipse.cft.server.ui.console"/>
             </or>
          </enablement>
       </consolePatternMatchListener>
@@ -557,10 +557,10 @@
             class="org.eclipse.jdt.internal.debug.ui.console.JavaNativeConsoleTracker"
             regex="\(Native Method\)"
             qualifier="Native Method"
-            id="org.cloudfoundry.ide.eclipse.server.ui.console.JavaNativeConsoleTracker">
+            id="org.eclipse.cft.server.ui.console.JavaNativeConsoleTracker">
          <enablement>
             <or>
-			  <test property="org.eclipse.ui.console.consoleTypeTest" value="org.cloudfoundry.ide.eclipse.server.ui.console"/>
+			  <test property="org.eclipse.ui.console.consoleTypeTest" value="org.eclipse.cft.server.ui.console"/>
             </or>
          </enablement>
       </consolePatternMatchListener>
@@ -568,10 +568,10 @@
             class="org.eclipse.jdt.internal.debug.ui.console.JavaExceptionConsoleTracker"
             regex="\w[^\(\s]+Exception[\s|:]"
             qualifier="Exception"
-            id="org.cloudfoundry.ide.eclipse.server.ui.console.JavaExceptionConsoleTracker">
+            id="org.eclipse.cft.server.ui.console.JavaExceptionConsoleTracker">
          <enablement>
             <or>
-			  <test property="org.eclipse.ui.console.consoleTypeTest" value="org.cloudfoundry.ide.eclipse.server.ui.console"/>
+			  <test property="org.eclipse.ui.console.consoleTypeTest" value="org.eclipse.cft.server.ui.console"/>
             </or>
          </enablement>
       </consolePatternMatchListener>
@@ -588,8 +588,8 @@
    <extension point="org.eclipse.core.expressions.propertyTesters">
       <propertyTester
             class="org.eclipse.cft.server.ui.internal.CloudFoundryPropertyTester"
-            id="org.cloudfoundry.ide.eclipse.server.propertytester"
-            namespace="org.cloudfoundry.ide.eclipse.server.ui"
+            id="org.eclipse.cft.server.propertytester"
+            namespace="org.eclipse.cft.server.ui"
             properties="isModuleStopped, 
             isServerSupported, isServerStopped, isServerStarted, isModuleStarted, isCloudModuleStarted, isCloudModuleLocal, isModuleProjectAccessible"
             type="java.lang.Object">
@@ -598,14 +598,14 @@
    <extension
          point="org.eclipse.ui.preferencePages">
       <page
-            category="org.cloudfoundry.ide.eclipse.server.ui.CloudFoundryPreferencePage"
+            category="org.eclipse.cft.server.ui.CloudFoundryPreferencePage"
             class="org.eclipse.cft.server.ui.internal.CloudFoundryTracePreferencePage"
-            id="org.cloudfoundry.ide.eclipse.server.ui.CloudFoundryTracePreferencePage"
+            id="org.eclipse.cft.server.ui.CloudFoundryTracePreferencePage"
             name="%PREFERENCE_PAGE_NAME_HTTP_TRACING">
       </page>
       <page
             class="org.eclipse.cft.server.ui.internal.CloudFoundryPreferencePage"
-            id="org.cloudfoundry.ide.eclipse.server.ui.CloudFoundryPreferencePage"
+            id="org.eclipse.cft.server.ui.CloudFoundryPreferencePage"
             name="%PREFERENCE_PAGE_NAME_CLOUD_FOUNDRY">
       </page>
    </extension>
@@ -613,19 +613,19 @@
          point="org.eclipse.cft.server.ui.applicationWizard">
       <applicationWizardDelegate
             class="org.eclipse.cft.server.ui.DefaultApplicationWizardDelegate"
-            providerID="org.cloudfoundry.ide.eclipse.server.application.javaweb">
+            providerID="org.eclipse.cft.server.application.javaweb">
       </applicationWizardDelegate>
    </extension>
    <extension
          point="org.eclipse.wst.server.ui.serverCreationWizardPageExtension">
       <serverCreationWizardPageExtension
-            id="org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.serverCreationWizardPageExtension"
+            id="org.eclipse.cft.server.ui.internal.wizards.serverCreationWizardPageExtension"
             class="org.eclipse.cft.server.ui.internal.wizards.CloudFoundryServerWizardUIControl"/>
    </extension>
       <extension
          point="org.eclipse.wst.server.ui.serverEditorOverviewPageModifier">
       <serverEditorOverviewPageModifier
-            id="org.cloudfoundry.ide.eclipse.server.ui.internal.editor.serverEditorOverviewPageExtension"
+            id="org.eclipse.cft.server.ui.internal.editor.serverEditorOverviewPageExtension"
             class="org.eclipse.cft.server.ui.internal.editor.CloudFoundryServerEditorOverviewPageUIControl"/>
    </extension>
 </plugin>
