@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.eclipse.cft.server"
+      id="org.eclipse.cft.server.ui.feature"
       label="%featureName"
       version="1.8.3.qualifier"
       provider-name="%providerName"
@@ -18,12 +18,9 @@
       %license
    </license>
 
-   <plugin
-         id="org.eclipse.cft.server.core"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+   <requires>
+      <import feature="org.eclipse.cft.server.core.feature"/>
+   </requires>
 
    <plugin
          id="org.eclipse.cft.server.rse"

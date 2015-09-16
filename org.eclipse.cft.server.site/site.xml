@@ -12,12 +12,16 @@
  *******************************************************************************/
 -->
 <site>
-   <feature url="features/org.eclipse.cft.server_0.0.0.jar" id="org.eclipse.cft.server" version="0.0.0">
-      <category name="Core / Cloud Foundry Integration"/>
+   <feature url="features/org.eclipse.cft.server.core.feature_0.0.0.jar" id="org.eclipse.cft.server.core.feature" version="0.0.0">
+      <category name="Core / Cloud Foundry Tools"/>
+   </feature>
+   <feature url="features/org.eclipse.cft.server.ui.feature_0.0.0.jar" id="org.eclipse.cft.server.ui.feature" version="0.0.0">
+      <category name="UI / Cloud Foundry Tools"/>
    </feature>
    <feature url="features/org.eclipse.cft.server.sdk_1.8.3.qualifier.jar" id="org.eclipse.cft.server.sdk" version="0.0.0">
-      <category name="Resources / Cloud Foundry Integration"/>
+      <category name="Resources / Cloud Foundry Tools"/>
    </feature>
-   <category-def name="Core / Cloud Foundry Integration" label="Core / Cloud Foundry Integration"/>
-   <category-def name="Resources / Cloud Foundry Integration" label="Resources / Cloud Foundry Integration"/>
+   <category-def name="Core / Cloud Foundry Tools" label="Core / Cloud Foundry Tools"/>
+   <category-def name="UI / Cloud Foundry Tools" label="UI / Cloud Foundry Tools"/>
+   <category-def name="Resources / Cloud Foundry Tools" label="Resources / Cloud Foundry Integration"/>
 </site>

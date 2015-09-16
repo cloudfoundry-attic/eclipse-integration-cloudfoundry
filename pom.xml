@@ -19,7 +19,8 @@
   </scm>
 
   <modules>
-    <module>org.eclipse.cft.server</module>
+    <module>org.eclipse.cft.server.core.feature</module>
+    <module>org.eclipse.cft.server.ui.feature</module>
     <module>org.eclipse.cft.server.core</module>
     <module>org.eclipse.cft.server.rse</module>
     <module>org.eclipse.cft.server.tests</module>

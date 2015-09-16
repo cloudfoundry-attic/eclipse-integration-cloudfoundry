@@ -23,7 +23,11 @@
          version="0.0.0"/>
 
    <includes
-         id="org.eclipse.cft.server"
+         id="org.eclipse.cft.server.core.feature"
+         version="0.0.0"/>
+         
+   <includes
+         id="org.eclipse.cft.server.ui.feature"
          version="0.0.0"/>
 
    <plugin
