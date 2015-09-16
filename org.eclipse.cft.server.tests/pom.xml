@@ -11,7 +11,7 @@
   <artifactId>org.eclipse.cft.server.tests</artifactId>
   <packaging>eclipse-test-plugin</packaging>
   <properties>
-	<test.class>org.cloudfoundry.ide.eclipse.server.tests.AllCloudFoundryTests</test.class>
+	<test.class>org.eclipse.cft.server.tests.AllCloudFoundryTests</test.class>
   </properties>
   <build>
 	<plugins>

@@ -25,7 +25,7 @@
  <extension
        point="org.eclipse.rse.core.subsystemConfigurations">
     <configuration
-          class="org.cloudfoundry.ide.eclipse.server.rse.internal.ApplicationSubSystemConfiguration"
+          class="org.eclipse.cft.server.rse.internal.ApplicationSubSystemConfiguration"
           description="Files deployed to Cloud Foundry"
           id="cloudserver.applications"
           name="Applications and Files"

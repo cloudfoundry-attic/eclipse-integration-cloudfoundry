@@ -122,7 +122,7 @@ IBM - Adding a dynamic provider for CloudFoundry Urls
 IMPORTANT: It is highly recommended that any Url provider implements a cache mechanism when calculating the urls that will be provided to the base framework, specially of those obtained dynamically (as for example, from a web service), since the retrieval methods could be invoked multiple times and no cache is implemented at the base level.
                </documentation>
                <appInfo>
-                  <meta.attribute kind="java" basedOn=":org.cloudfoundry.ide.eclipse.server.core.ICloudFoundryUrlProvider"/>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.cft.server.core.ICloudFoundryUrlProvider"/>
                </appInfo>
             </annotation>
          </attribute>

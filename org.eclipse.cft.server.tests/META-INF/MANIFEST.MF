@@ -18,8 +18,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.core.net,
  org.eclipse.ui.console
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Export-Package: org.cloudfoundry.ide.eclipse.server.core.internal;x-internal:=true,
- org.cloudfoundry.ide.eclipse.server.tests;x-internal:=true,
- org.cloudfoundry.ide.eclipse.server.tests.server;x-internal:=true,
- org.cloudfoundry.ide.eclipse.server.tests.util;x-internal:=true
+Export-Package: org.eclipse.cft.server.tests;x-internal:=true,
+ org.eclipse.cft.server.tests.core;x-internal:=true,
+ org.eclipse.cft.server.tests.server;x-internal:=true,
+ org.eclipse.cft.server.tests.util;x-internal:=true
 Bundle-ClassPath: .

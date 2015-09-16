@@ -55,7 +55,7 @@
                   
                </documentation>
                <appInfo>
-                  <meta.attribute kind="java" basedOn=":org.cloudfoundry.ide.eclipse.server.ui.ICloudFoundryServiceIconProvider"/>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.cft.server.ui.ICloudFoundryServiceIconProvider"/>
                </appInfo>
             </annotation>
          </attribute>

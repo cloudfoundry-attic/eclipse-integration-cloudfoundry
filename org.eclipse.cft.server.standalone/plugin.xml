@@ -32,10 +32,10 @@
 	
 	  <project-facet-version facet="cloudfoundry.standalone.app" version="1.0">
 	    <action type="INSTALL">
-	          <delegate class="org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandaloneFacetHandler$CFFacetInstallDelegate"/>
+	          <delegate class="org.eclipse.cft.server.standalone.internal.application.StandaloneFacetHandler$CFFacetInstallDelegate"/>
 	    </action>
 	    <action type="UNINSTALL">
-	       <delegate class="org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandaloneFacetHandler$CFFacetUninstallDelegate"/>
+	       <delegate class="org.eclipse.cft.server.standalone.internal.application.StandaloneFacetHandler$CFFacetUninstallDelegate"/>
 	    </action>
 	  </project-facet-version>   
    </extension>
@@ -43,7 +43,7 @@
       <extension
          point="org.eclipse.wst.server.core.moduleArtifactAdapters">
       <moduleArtifactAdapter
-            class="org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandaloneArtifactAdapter"
+            class="org.eclipse.cft.server.standalone.internal.application.StandaloneArtifactAdapter"
             id="org.cloudfoundry.ide.eclipse.server.core.StandaloneArtifactAdapter"
             priority="1">
          <enablement>
@@ -58,7 +58,7 @@
     <extension
          point="org.eclipse.wst.server.core.moduleFactories">
       <moduleFactory
-            class="org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandAloneModuleFactory"
+            class="org.eclipse.cft.server.standalone.internal.application.StandAloneModuleFactory"
             id="org.cloudfoundry.ide.eclipse.server.core.StandAloneModuleFactory"
             order="1"
             projects="true">
@@ -71,7 +71,7 @@
     <extension
           point="org.eclipse.cft.server.core.application">
        <applicationDelegate
-             class="org.cloudfoundry.ide.eclipse.server.standalone.internal.application.StandaloneApplicationDelegate"
+             class="org.eclipse.cft.server.standalone.internal.application.StandaloneApplicationDelegate"
              priority="Medium"
              providerID="org.cloudfoundry.ide.eclipse.server.application.standalone">
           <moduleID
@@ -91,7 +91,7 @@
     <extension point="org.eclipse.ui.menus">
     <menuContribution
           allPopups="true"
-          class="org.cloudfoundry.ide.eclipse.server.standalone.internal.ui.ProjectExplorerMenuFactory"
+          class="org.eclipse.cft.server.standalone.internal.ui.ProjectExplorerMenuFactory"
           locationURI="popup:org.eclipse.ui.projectConfigure?endof=additions">
     </menuContribution>
 	</extension>
@@ -99,7 +99,7 @@
     <extension
           point="org.eclipse.cft.server.ui.applicationWizard">
        <applicationWizardDelegate
-             class="org.cloudfoundry.ide.eclipse.server.standalone.internal.ui.StandaloneApplicationWizardDelegate"
+             class="org.eclipse.cft.server.standalone.internal.ui.StandaloneApplicationWizardDelegate"
              providerID="org.cloudfoundry.ide.eclipse.server.application.standalone">
        </applicationWizardDelegate>
     </extension>

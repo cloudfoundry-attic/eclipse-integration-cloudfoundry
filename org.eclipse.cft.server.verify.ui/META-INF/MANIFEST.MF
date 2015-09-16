@@ -8,5 +8,5 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
-Bundle-Activator: org.cloudfoundry.ide.eclipse.server.verify.ui.internal.Activator
+Bundle-Activator: org.eclipse.cft.server.verify.ui.internal.Activator
 

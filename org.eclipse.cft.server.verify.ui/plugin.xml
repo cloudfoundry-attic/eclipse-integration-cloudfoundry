@@ -4,7 +4,7 @@
 
    <extension
          point="org.eclipse.ui.startup">
-      <startup class="org.cloudfoundry.ide.eclipse.server.verify.ui.internal.JREVersionVerifier"/>
+      <startup class="org.eclipse.cft.server.verify.ui.internal.JREVersionVerifier"/>
    </extension>
 
 </plugin>

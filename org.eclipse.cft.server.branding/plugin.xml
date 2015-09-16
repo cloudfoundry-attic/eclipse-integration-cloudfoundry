@@ -19,7 +19,7 @@
 			name="Cloud Foundry (Runtime) v1.0" 
 			description="Cloud Foundry supports J2EE 1.2, 1.3, 1.4 and Java EE 5 Web modules."
 			vendor="Pivotal" 
-			class="org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServerRuntime">
+			class="org.eclipse.cft.server.core.internal.CloudFoundryServerRuntime">
 			<moduleType types="wst.web" versions="1.0" />
 			<moduleType types="jst.web" versions="2.2,2.3,2.4,2.5,3.0,3.1" />
 			<moduleType types="jst.utility" versions="1.0"/>
@@ -30,8 +30,8 @@
 
 	<extension point="org.eclipse.wst.server.core.serverTypes">
 		<serverType
-	        behaviourClass="org.cloudfoundry.ide.eclipse.server.core.internal.client.CloudFoundryServerBehaviour"
-	        class="org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryServer"
+	        behaviourClass="org.eclipse.cft.server.core.internal.client.CloudFoundryServerBehaviour"
+	        class="org.eclipse.cft.server.core.internal.CloudFoundryServer"
 	        description="Publishes and runs J2EE Web projects to Cloud Foundry."
 	        hasConfiguration="false"
 	        id="org.cloudfoundry.appcloudserver.10"
@@ -81,7 +81,7 @@
 	     <runtimeClasspathProvider
 	        id="org.cloudfoundry.appcloudserver.classPathProvider"
 	        runtimeTypeIds="org.cloudfoundry.appcloudserver.runtime.10"
-	        class="org.cloudfoundry.ide.eclipse.server.core.internal.CloudFoundryRuntimeClasspathProvider"/>
+	        class="org.eclipse.cft.server.core.internal.CloudFoundryRuntimeClasspathProvider"/>
      </extension>
      <extension point="org.eclipse.wst.server.ui.serverImages">
 		<image 
@@ -93,7 +93,7 @@
 		<fragment
 			id="org.cloudfoundry.appcloudserver.10"
 			typeIds="org.cloudfoundry.appcloudserver.10"
-			class="org.cloudfoundry.ide.eclipse.server.ui.internal.wizards.CloudFoundryServerWizardFragment"/>
+			class="org.eclipse.cft.server.ui.internal.wizards.CloudFoundryServerWizardFragment"/>
 	</extension>
 	 <extension
        point="org.eclipse.cft.server.core.branding">
