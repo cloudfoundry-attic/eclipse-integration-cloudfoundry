@@ -28,7 +28,7 @@ import org.osgi.framework.BundleContext;
 public class CloudFoundryJavaStandalonePlugin extends AbstractUIPlugin {
 
 	// The plug-in ID
-	public static final String PLUGIN_ID = "org.eclipse.cft.server.java.standalone"; //$NON-NLS-1$
+	public static final String PLUGIN_ID = "org.eclipse.cft.server.standalone"; //$NON-NLS-1$
 
 	// The shared instance
 	private static CloudFoundryJavaStandalonePlugin plugin;
