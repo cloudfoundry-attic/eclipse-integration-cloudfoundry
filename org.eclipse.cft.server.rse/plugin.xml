@@ -30,7 +30,7 @@
           id="cloudserver.applications"
           name="Applications and Files"
           systemTypeIds="org.cloudfoundry.appcloudserver.systemtype"
-          vendor="Cloud Foundry Integration for Eclipse">
+          vendor="Cloud Foundry Tools">
     </configuration>
  </extension>
 </plugin>
