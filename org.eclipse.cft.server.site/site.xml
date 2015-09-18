@@ -23,5 +23,5 @@
    </feature>
    <category-def name="Core / Cloud Foundry Tools" label="Core / Cloud Foundry Tools"/>
    <category-def name="UI / Cloud Foundry Tools" label="UI / Cloud Foundry Tools"/>
-   <category-def name="Resources / Cloud Foundry Tools" label="Resources / Cloud Foundry Integration"/>
+   <category-def name="Resources / Cloud Foundry Tools" label="Resources / Cloud Foundry Tools"/>
 </site>

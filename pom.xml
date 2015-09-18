@@ -61,7 +61,7 @@
     <!-- CloudFloundry Properties -->
     <p2.qualifier>SNAPSHOT</p2.qualifier>
     <p2.sign>false</p2.sign>
-    <p2.repository.name>Cloud Foundry Integration for Eclipse</p2.repository.name>
+    <p2.repository.name>Cloud Foundry Tools</p2.repository.name>
 
 	<!-- Signing -->
 	<signing.skip>true</signing.skip>
@@ -70,7 +70,7 @@
 	<signing.store.password>${STORE_PASSWORD}</signing.store.password>
 	<signing.key.password>${KEY_PASSWORD}</signing.key.password>
 
-    <dist.name>Cloud Foundry Integration for Eclipse</dist.name>
+    <dist.name>Cloud Foundry Tools</dist.name>
     <dist.project>cloudfoundry</dist.project>
     <dist.key>TOOLS</dist.key>
     <dist.target.classifier>cloudfoundry-${dist.target}</dist.target.classifier>
