@@ -1,3 +1,77 @@
+# IMPORTANT BREAKING CHANGES - October 2015
+  
+  Cloud Foundry Integration for Eclipse is now an Eclipse project under [Eclipse Cloud Development](https://projects.eclipse.org/projects/ecd), 
+  and it has been renamed Eclipse Tools for Cloud Foundry (CFT):
+  
+  https://projects.eclipse.org/projects/ecd.cft
+  
+  This move will increase the exposure of the tools to a larger Eclipse user-base, and further enhance its features through additional 
+  contributions and feedback from a wider community.
+  
+## New Repository
+  
+  As part of moving to Eclipse, the tools are now hosted in a new Eclipse GitHub repository:
+  
+  https://github.com/eclipse/cft
+  
+## Breaking Bundle and Extension Point Changes
+  
+  To comply with Eclipse project naming conventions, ALL bundle names and extension point IDs have been renamed in the new repository. 
+  This means that new versions of the tools based off the new GitHub repository will NOT be backward compatible with any older versions 
+  of the tools.
+  
+## New CLA
+  
+  CLA governing third-party contributions in the new repository have also changed, and the new tools will be 
+  dual-licensed: Apache License 2.0 and EPL. All third-party contributors will be required to sign a new CLA before 
+  Pull Requests are accepted and merged in the new repository. Please follow the links above for further information.
+  
+## Third-Party Pull Requests in New Repository
+  
+  Transition is still ongoing, and the new repository will continue to be changed frequently in the first three weeks 
+  of October 2015. It is advisable NOT to submit new Pull Requests to the new repository until after October 20 2015 
+  as it may require re-submission due to merge conflicts. Please check the new repository README for updates.
+  
+## Update Sites
+  
+  For the time being, the update site URLs remain unchanged:
+  
+  Current release:
+  
+  http://dist.springsource.com/release/TOOLS/cloudfoundry
+
+  Nightly build:
+  
+  http://dist.springsource.com/snapshot/TOOLS/cloudfoundry/nightly
+  
+  However, once again, as we move forward with nightly builds based off the new repository and publish new releases, 
+  they will NOT be backward compatible with the old tools. We plan on implementing detection mechanisms such that users 
+  will be warned if the new versions of the tools, whether from the nightly or release sites, or the Eclipse marketplace, 
+  are being installed in targets that already contain the old version. 
+  
+## Ongoing Transition
+
+  We will no longer be accepting Pull Requests, or maintaining any of the branches in the old repository:
+  
+  https://github.com/cloudfoundry/eclipse-integration-cloudfoundry
+  
+  Any new enhancements and bug fixes will be pushed to the new repository.
+  
+  The transition is still ongoing so we will continue to update the new repository README as new changes occur.
+  
+## Raising Bugs and Feature Requests
+
+  As CFT is now an Eclipse project, bugs and new feature requests should be raised via bugzilla:
+  
+  https://bugs.eclipse.org/bugs/
+  
+  We will migrate some of the existing bugs and feature requests to bugzilla as well.
+
+## Next Release - November 2015
+
+  The tentative release date for the first version of CFT based off the new names and IDs, and the new repository, 
+  is the first week of November, 2015.
+  
 # Cloud Foundry Integration for Eclipse
       
   The Cloud Foundry Integration for Eclipse provides first-class support for the [Cloud Foundry
